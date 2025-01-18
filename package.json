@@ -23,13 +23,18 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
     "@pythias/dtf": "^0.0.0",
-    "@repo/dtf": "^0.0.0",
+    "@pythias/shipping": "^0.0.0",
     "@repo/ui": "^0.0.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
+    "changedpi": "^1.0.4",
     "dotenv": "^16.4.7",
-    "mongoose": "^8.9.5"
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "sharp": "^0.33.5"
   }
 }

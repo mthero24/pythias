@@ -31,7 +31,7 @@ function makeNewConnection(uri) {
 
     return db;
 }
-export const TSPprints = makeNewConnection("mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/?retryWrites=true&w=majority");
+export const TSPprints = makeNewConnection(process.env.mongoURL);
 export const cluster1 = makeNewConnection("mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/?retryWrites=true&w=majority");
 export const cluster0 = makeNewConnection("mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/?retryWrites=true&w=majority");
 

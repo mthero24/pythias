@@ -1,30 +1,36 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Items from "../../../../models/Items";
 import Employee from "../../../../models/employeeTracking";
-import Style from "../../../../models/StyleV2";
-export const createImage = (colorName, styleCode, options, width=700) => {
-    let side = 'garment';
-    if(options.side){
-        side = options.side;
+import {setConfig} from "@pythias/dtf"
+const getImages = async (front, back, style, item)=>{
+    let styleImage = style.images.filter(
+        (i) => i.color.toString() == item.color?._id.toString()
+    )[0];
+
+    if (styleImage) {
+        styleImage = styleImage.image + "?width=400";
     }
-    //console.log(side)
-    if(!colorName) return ''
-    let url;
-    if(options.url){
-        url = `https://images3.teeshirtpalace.com/images/productImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?url=${options.url}&width=${width}`;
-    }
-    if(options.sku){
-        url = `https://images3.teeshirtpalace.com/images/productImages/${options.sku}--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?width=${width}`;
-    }
-   // console.log(url, 'url')
-   //console.log(url)
-    return url;
-};
+
+    let frontDesign =
+        front && front.replace(
+        "s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "images2.teeshirtpalace.com/"
+        ) + "?width=400";
+    let backDesign =
+        back && back.replace(
+        "s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "images2.teeshirtpalace.com/"
+        ) + "?width=400";
+    return  {frontDesign, backDesign, styleImage}
+}
 export async function GET(req = NextResponse) {
+    setConfig({
+        internalIP: "localhost:3004"
+    })
     let pieceID
     let item
     if( req.nextUrl.searchParams.get("pieceID")) pieceID = req.nextUrl.searchParams.get("pieceID")
-    if(pieceID) item = await Items.findOne({pieceId: pieceID})
+    if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("styleV2", "code sizes images")
     console.log(item)
     if(item){
         console.log(item)
@@ -55,54 +61,83 @@ export async function GET(req = NextResponse) {
             await item.save();
 
             console.log(item, "item");
-
-            let style = await Style.findOne({ _id: item.styleV2._id })
-                .select("images")
-                .lean();
             // console.log(style)
-
-            let styleImage = style.images.filter(
-                (i) => i.color.toString() == item.color._id.toString()
-            )[0];
-            if (styleImage) {
-                styleImage = styleImage.image + "?width=400";
-            }
-
-            let frontDesign =
-                item.design?.front &&
-                item.design?.front.replace(
-                "s3.wasabisys.com/teeshirtpalace-node-dev/",
-                "images2.teeshirtpalace.com/"
-                ) + "?width=400";
-            let backDesign =
-                item.design.back &&
-                item.design.back.replace(
-                "s3.wasabisys.com/teeshirtpalace-node-dev/",
-                "images2.teeshirtpalace.com/"
-                ) + "?width=400";
+            const {styleImage, frontDesign, backDesign} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
             return NextResponse.json( {error: false,
                     msg: "here is the design",
                     pieceID: item.pieceId,
                     styleImage,
-                    frontDesign: frontDesign,
-                    backDesign,
-                    design: {
-                    front: createImage(
-                        item.color.name,
-                        item.styleV2.code,
-                        { url: item.design?.front },
-                        300
-                    ),
-                    back: item.design.back
-                        ? createImage(
-                            item.color.name,
-                            item.styleV2.code,
-                            { url: item.design.back, side: "back" },
-                            300
-                        )
-                        : null,
-                    }});
+                    frontDesign,
+                    backDesign
+            })
          
         }else return NextResponse.json({error: true, msg: "Item Canceled"});
     }else return NextResponse.json({error: true, msg: "Item not found"});
+}
+
+export async function POST(req = NextApiRequest) {
+    setConfig({
+        internalIP: "localhost:3006"
+    })
+    let data = await req.json()
+    let item = await Items.findOne({
+        pieceId: data.pieceId.toUpperCase().trim(),
+    }).populate("styleV2", "code envleopes box sizes images")
+    console.log(item, "item", item.color, "item color")
+    if (item && !item.canceled) {
+        let envleopes = item.styleV2.envleopes.filter(
+            (envelope) => envelope.size?.toString() == item.size.toString()
+        );
+        console.log(envleopes)
+        if (envleopes.length == 0) {
+        let updatedSize = item.styleV2.sizes.filter(
+            (s) => s.name.toLowerCase() == item.sizeName.toLowerCase()
+        )[0];
+        console.log(updatedSize, "size");
+        item.size = updatedSize._id;
+        envleopes = item.styleV2.envleopes.filter(
+            (envelope) => envelope.size.toString() == item.size.toString()
+        );
+        }
+        let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
+        let imageres = createImage({
+            url: item.design?.front,
+            pieceID: item.pieceId,
+            horizontal: false,
+            size: `${envleopes[0].width}x${envleopes[0].height}`,
+            offset: envleopes[0].vertoffset,
+            style: item.styleV2.code,
+            styleSize: item.sizeName,
+            color: item.color.name,
+            sku: item.sku,
+            shouldFitDesign: shouldFitDesign,
+            printer: data.printer
+        })
+        console.log(imageres)
+        let tracking = new Employee({
+            type: "DTF Load",
+            Date: new Date(Date.now()),
+            //employee: user,
+            order: item.order,
+            pieceID: item.pieceId,
+          });
+          await tracking.save();
+          item.status = "DTF Load";
+          if (!item.steps) item.steps = [];
+          item.steps.push({
+            status: "DTF Load",
+            date: new Date(),
+          });
+          item.lastScan = {
+            station: "DTF Load",
+            date: new Date(Date.now()),
+            //user: user._id,
+          };
+        const {styleImage, frontDesign, backDesign} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
+        return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage });
+    }else if (item && item.canceled) {
+        return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
+    } else {
+        return NextResponse.json({ error: true, msg: "item not found" });
+    }
 }

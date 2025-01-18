@@ -22,7 +22,7 @@ export async function GenerateManifest({PicNumbers, enSettings, businessAddress}
                     <RequestID>19hurt</RequestID>
                     <CertifiedIntermediary>
                         <AccountID>${enSettings.AccountNUmber}</AccountID>
-                        <PassPhrase>${enSettings.PassPhrase}</PassPhrase>p>
+                        <PassPhrase>${enSettings.PassPhrase}</PassPhrase>
                     </CertifiedIntermediary>
                     <GetSCANRequestParameters ImageResolution="300" ImageFormat="jpg">
                         <FromName>${businessAddress.name}</FromName>

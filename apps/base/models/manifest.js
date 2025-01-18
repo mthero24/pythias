@@ -4,4 +4,4 @@ var schema = new mongoose.Schema({
     pic: String,
     Date: Date
 })
-module.exports = TSPprints.model('manifest', schema);
+export default TSPprints.model('manifest', schema);

@@ -1,6 +1,8 @@
 export var Config = {
     "accountKey": undefined,
-    "url": undefined
+    "url": undefined,
+    internalIP: undefined,
+    printers: {},
 }
 
 export function setConfig(config){

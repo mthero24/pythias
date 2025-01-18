@@ -20,7 +20,7 @@ export function Manifest(){
     const handleOpen = async () => {
         console.log("print manifest");
         console.log(open);
-        let result = await axios.get("/api/production/shipping/manifest");
+        let result = await axios.get("/api/production/shipping/manifest").catch(e=>{console.log(e.response.data)});
         if (result.data.error) {
           alert(result.data.msg);
         } else {
