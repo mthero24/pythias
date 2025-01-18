@@ -1,19 +1,46 @@
 "use client";
 import {Grid2, Box, Typography, Card} from "@mui/material"
-export function Stations({stations, station, setStation}){
-    return(
-        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center", paddingTop: "1%", marginTop: "1%"}}>
-            <Box sx={{width: "70%", height: {xs: "150px", md: "100px"}}}>
-                <Grid2 container spacing={2}>
-                    {stations && stations.map(s=>(
-                        <Grid2 size={{md: 2, sm: 3, xs: 6}} key={s}>
-                            <Card sx={{padding: "10%", background: station == s? "#0079DC": "#FFF", color: station == s? "#fff": "#000", cursor: "pointer" }} onClick={()=>{setStation(s)}}>
-                                <Typography textAlign="center" fontSize={"1.5rem"} textTransform={"capitalize"}>{s}</Typography>
-                            </Card>
-                        </Grid2>
-                    ))}
+export function Stations({stations, station, setStation, setAuto}){
+    return (
+      <Box sx={{ display: "flex", flexDirection: "row", paddingTop: "1%" }}>
+        <Box
+          sx={{
+            width: { xs: "99%", sm: "96%", md: "90%" },
+            marginBottom: "1%",
+            marginLeft: { xs: ".5%", sm: "2%", md: "5%" },
+            height: { xs: "65px", sm: "85px", md: "75px", lg: "90px", xl: "100px" },
+            overflow: {xs:"auto", sm: "hidden"},
+          }}
+        >
+          <Grid2 container spacing={2} sx={{ marginBottom: "1%" }}>
+            {stations &&
+              stations.map((s) => (
+                <Grid2 size={{ md: 2, sm: 3, xs: 6 }} key={s}>
+                  <Card
+                    sx={{
+                      padding: { xs: "3%", md: "10%" },
+                      background: station == s ? "#0079DC" : "#FFF",
+                      color: station == s ? "#fff" : "#000",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                        setAuto(false);
+                        setStation(s);
+                        setAuto(true);
+                    }}
+                  >
+                    <Typography
+                      textAlign="center"
+                      fontSize={{ xs: "1rem", md: "1.5rem" }}
+                      textTransform={"capitalize"}
+                    >
+                      {s}
+                    </Typography>
+                  </Card>
                 </Grid2>
-            </Box>
+              ))}
+          </Grid2>
         </Box>
-    )
+      </Box>
+    );
 }

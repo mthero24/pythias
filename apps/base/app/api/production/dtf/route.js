@@ -1,7 +1,7 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Items from "../../../../models/Items";
 import Employee from "../../../../models/employeeTracking";
-import {setConfig} from "@pythias/dtf"
+import {setConfig, createImage} from "@pythias/dtf"
 const getImages = async (front, back, style, item)=>{
     let styleImage = style.images.filter(
         (i) => i.color.toString() == item.color?._id.toString()
@@ -24,8 +24,10 @@ const getImages = async (front, back, style, item)=>{
     return  {frontDesign, backDesign, styleImage}
 }
 export async function GET(req = NextResponse) {
+    let config = JSON.parse(process.env.dtf);
+    console.log(config)
     setConfig({
-        internalIP: "localhost:3004"
+        internalIP: config.localIP
     })
     let pieceID
     let item
@@ -76,24 +78,26 @@ export async function GET(req = NextResponse) {
 }
 
 export async function POST(req = NextApiRequest) {
+    let config = JSON.parse(process.env.dtf);
+    console.log(config);
     setConfig({
-        internalIP: "localhost:3006"
-    })
+      internalIP: config.localIP,
+    });
     let data = await req.json()
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("styleV2", "code envleopes box sizes images")
-    console.log(item, "item", item.color, "item color")
+    //console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
         let envleopes = item.styleV2.envleopes.filter(
             (envelope) => envelope.size?.toString() == item.size.toString()
         );
-        console.log(envleopes)
+        //console.log(envleopes)
         if (envleopes.length == 0) {
         let updatedSize = item.styleV2.sizes.filter(
             (s) => s.name.toLowerCase() == item.sizeName.toLowerCase()
         )[0];
-        console.log(updatedSize, "size");
+        //console.log(updatedSize, "size");
         item.size = updatedSize._id;
         envleopes = item.styleV2.envleopes.filter(
             (envelope) => envelope.size.toString() == item.size.toString()
