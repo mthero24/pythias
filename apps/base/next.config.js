@@ -14,6 +14,7 @@ const nextConfig = {
           "s3.wasabisys.com",
           "localhost",
           "teeshirtpalace-node-dev.s3.wasabisys.com",
+          "www.teeshirtpalace.com"
         ],
       },
 };

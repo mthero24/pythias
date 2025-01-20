@@ -4,3 +4,4 @@ export {GenerateManifest as uspsGenerateManifest} from "./functions/usps/usps";
 export {add} from "./functions/bins/add";
 export {subtract} from "./functions/bins/subtract";
 export { useWindowSize } from "./functions/resizeWindow";
+export {createImage} from "./functions/image"

@@ -1,6 +1,6 @@
+"use server";
 import {Main} from "@pythias/shipping";
 import Bins from "../.../../../../models/Bin"
-
 export default async function Shipping(){
     let stations = JSON.parse(process.env.Shipping).shipStations
     let binCount = await Bins.find({}).countDocuments()

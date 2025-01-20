@@ -6,6 +6,7 @@ import {Scan} from "./scan";
 import { OrderModal } from "./orderModal";
 import {useState, useEffect} from "react";
 import {Box} from "@mui/material"
+
 //import { useWindowSize } from "../exports";
 export function Main({stations, binCount, bins}){
     const [station, setStation] = useState(stations? stations[0]: "station1");
@@ -34,8 +35,8 @@ export function Main({stations, binCount, bins}){
       top: "50%",
       left: "50%",
       transform: "translate(-50%, -50%)",
-      width: size.width - 100,
-      height: size.height - 100,
+      width: {md: size.width - 100, xs: size.width - 25},
+      height: {md: size.height - 100, xs: size.height - 25},
       bgcolor: "background.paper",
       border: "2px solid #000",
       boxShadow: 24,
@@ -60,7 +61,7 @@ export function Main({stations, binCount, bins}){
           setBin={setBin}
           setShow={setShow}
         />
-        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} />
+        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto}/>
       </Box>
     );
 }

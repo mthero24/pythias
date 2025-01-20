@@ -83,6 +83,10 @@ export function Bins({bins, setOrder, setBin, setShow}){
                               : i % 2 == 0
                                 ? "#d2d2d2"
                                 : "#e2e2e2",
+                          color: new Date(b.order.date) <
+                          new Date(Date.now() - 3 * (24 * 60 * 60 * 1000))
+                            ? "#ffffff"
+                            : "#000000"
                         }}
                         onClick={() => {
                           setOrder(b.order);
