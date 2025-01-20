@@ -2,8 +2,9 @@
 import {Button, Container, Modal, Box, Typography} from "@mui/material";
 import {useState} from "react";
 import axios from "axios";
-
-export function Manifest(){
+import { BinSettings } from "./binSettings";
+import {FeedBack} from "./feedback";
+export function Manifest({binCount, setAuto, setBins, modalStyle}){
     const [manifest, setManifest] = useState("https://placehold.co/600x400");
     const [open, setOpen] = useState(false);
     const style = {
@@ -30,26 +31,51 @@ export function Manifest(){
         }
       };
     return (
-        <Container maxWidth="lg" sx={{marginTop: "1%"}}>
+      <Container maxWidth="lf" sx={{ marginTop: "1%" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box
+            onClick={() => {
+              setAuto(true);
+            }}
+          >
             <Button onClick={handleOpen}>Manifest</Button>
             <Modal
-            open={open}
-            onClose={()=>{setOpen(false); setManifest("https://placehold.co/600x400")}}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
+              open={open}
+              onClose={() => {
+                setOpen(false);
+                setManifest("https://placehold.co/600x400");
+              }}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
             >
-                <Box sx={style}>
-                    <Typography
-                    id="modal-modal-title"
-                    variant="h6"
-                    component="h2"
-                    sx={{ textAlign: "center" }}
-                    >
-                    PrintManifest
-                    </Typography>
-                    <img src={manifest} alt={"manifest"} width={1000} height={1000} />
-                </Box>
+              <Box sx={style}>
+                <Typography
+                  id="modal-modal-title"
+                  variant="h6"
+                  component="h2"
+                  sx={{ textAlign: "center" }}
+                >
+                  PrintManifest
+                </Typography>
+                <img
+                  src={manifest}
+                  alt={"manifest"}
+                  width={1000}
+                  height={1000}
+                />
+              </Box>
             </Modal>
-        </Container>
-    )
+          </Box>
+          <FeedBack setAuto={setAuto}
+          />
+          <BinSettings binCount={binCount} setAuto={setAuto} setBinss={setBins} modalStyle={modalStyle}/>
+        </Box>
+      </Container>
+    );
 }
