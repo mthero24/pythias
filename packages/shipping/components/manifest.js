@@ -4,7 +4,7 @@ import {useState} from "react";
 import axios from "axios";
 import { BinSettings } from "./binSettings";
 import {FeedBack} from "./feedback";
-export function Manifest({binCount, setAuto}){
+export function Manifest({binCount, setAuto, setBins, modalStyle}){
     const [manifest, setManifest] = useState("https://placehold.co/600x400");
     const [open, setOpen] = useState(false);
     const style = {
@@ -74,7 +74,7 @@ export function Manifest({binCount, setAuto}){
           </Box>
           <FeedBack setAuto={setAuto}
           />
-          <BinSettings binCount={binCount} setAuto={setAuto} />
+          <BinSettings binCount={binCount} setAuto={setAuto} setBinss={setBins} modalStyle={modalStyle}/>
         </Box>
       </Container>
     );

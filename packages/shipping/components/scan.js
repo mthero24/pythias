@@ -1,8 +1,8 @@
 "use State";
 import {useState, useRef, useEffect} from "react";
 import {Card,TextField,Box, Checkbox, FormControlLabel} from "@mui/material";
-
-export function Scan({auto, setAuto}){
+import axios from "axios";
+export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow}){
     const textFieldRef = useRef(null);
     const [scan, setScan] = useState()
     const [reship, setReship] = useState(false)
@@ -21,6 +21,24 @@ export function Scan({auto, setAuto}){
             setAuto(false)
         }
       }, [auto]);
+    const GetInfo = async ()=>{
+      let res = await axios.post("/api/production/shipping", {scan})
+      if(res.data.error) console.log(res.data.msg)
+      else {
+        if (res.data.item) {
+          setItem(res.data.item);
+          setOrder(res.data.item.order);
+        } else if (res.data.order) {
+          setOrder(res.data.order);
+        } else if (res.data.bin) {
+          setOrder(res.data.bin.order);
+          setBin(res.data.bin);
+        }
+        if(res.data.item || res.data.order || res.data.bin){
+          setShow(true)
+        }
+      }
+    }
     const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
     return (
       <Box
@@ -49,6 +67,7 @@ export function Scan({auto, setAuto}){
             onKeyDown={() => {
               if (event.key == 13 || event.key == "ENTER")
                 setScan(event.target.value);
+                GetInfo();
             }}
           />
           <FormControlLabel

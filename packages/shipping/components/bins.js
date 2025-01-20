@@ -16,7 +16,6 @@ export function Bins({bins, setOrder}){
           {bins &&
             Object.keys(bins).map((t) => (
               <Grid2
-                item
                 size={{ xs: 12, sm: 6 }}
                 key={t}
                 sx={{ width: "100%" }}
@@ -73,7 +72,7 @@ export function Bins({bins, setOrder}){
                     </Grid2>
                   </Box>
                   {bins[t].map((b, i) => (
-                    <Card sx={{ cursor: "pointer", margin: ".4%" }}>
+                    <Card sx={{ cursor: "pointer", margin: ".4%" }} key={i}>
                       <Box
                         sx={{
                           padding: "2%",
