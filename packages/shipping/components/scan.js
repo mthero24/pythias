@@ -22,6 +22,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow}){
         }
       }, [auto]);
     const GetInfo = async ()=>{
+      console.log("getInfo")
       let res = await axios.post("/api/production/shipping", {scan})
       if(res.data.error) console.log(res.data.msg)
       else {
@@ -37,6 +38,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow}){
         if(res.data.item || res.data.order || res.data.bin){
           setShow(true)
         }
+        setScan("")
       }
     }
     const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
@@ -64,9 +66,10 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow}){
             onChange={() => {
               setScan(event.target.value);
             }}
+            value={scan}
             onKeyDown={() => {
-              if (event.key == 13 || event.key == "ENTER")
-                setScan(event.target.value);
+              console.log(event.key, scan)
+              if (event.key == 13 || event.key == "Enter" || event.key=="ENTER")
                 GetInfo();
             }}
           />

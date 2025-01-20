@@ -2,7 +2,7 @@
 import {Card,Typography, Box, Grid2, Button} from "@mui/material";
 
 
-export function Bins({bins, setOrder}){
+export function Bins({bins, setOrder, setBin, setShow}){
 
     return (
       <Box
@@ -85,7 +85,9 @@ export function Bins({bins, setOrder}){
                                 : "#e2e2e2",
                         }}
                         onClick={() => {
-                          setOrder(b);
+                          setOrder(b.order);
+                          setBin(b)
+                          setShow(true)
                         }}
                       >
                         <Grid2 container spacing={2}>
