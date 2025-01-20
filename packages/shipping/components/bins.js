@@ -1,12 +1,4 @@
 "use client";
-<<<<<<< HEAD
-import {Card,Typography, Box, Grid2} from "@mui/material";
-
-export function Bins({bins}){
-    <Grid2 container spacing={1}>
-        {}
-    </Grid2>
-=======
 import {Card,Typography, Box, Grid2, Button} from "@mui/material";
 
 
@@ -146,5 +138,4 @@ export function Bins({bins, setOrder, setBin, setShow}){
         </Grid2>
       </Box>
     );
->>>>>>> 7e7844aeea699f92650949c133f7199a5307c38f
 }
