@@ -24,6 +24,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow}){
     const GetInfo = async ()=>{
       console.log("getInfo")
       let res = await axios.post("/api/production/shipping", {scan})
+      console.log(res.data)
       if(res.data.error) console.log(res.data.msg)
       else {
         if (res.data.item) {

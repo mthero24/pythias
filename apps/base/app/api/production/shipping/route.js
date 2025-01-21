@@ -11,21 +11,23 @@ export async function POST(req= NextApiRequest){
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items").lean()
         let bin 
         try{
-        bin = await Bins.findOne({ number: data.scan.trim() })
-            .populate({ path: "order", populate: "items" })
-            .lean();
+            if(!isNaN(data.scan.trim())){
+                bin = await Bins.findOne({ number: data.scan.trim() })
+                .populate({ path: "order", populate: "items" })
+                .lean();
+            }
         }catch(e){
-            console.log(e)
+            //console.log(e)
         }
         let res = {error: false, msg: "", item, order, bin, }
         if(item){
-            if(canceled()){
+            res.order = item.order
+            if(canceled(item, item.order)){
                 res.error = true
                 res.msg = "Item Canceled"
             }else{
-                if(isSingleItem) res.activate = "ship"
+                if(isSingleItem(item)) res.activate = "ship"
                 else {
-                    res.order = item.order
                     res.activate = "bin"
                     res.bin = await findBin(res.order._id)
                     await addItemToBin(item, res.bin)
@@ -44,13 +46,16 @@ export async function POST(req= NextApiRequest){
         }else if(bin){
             res.order = bin.order
         }
+        console.log(res.activate)
         return NextResponse.json({res})
     }catch(e){
+        console.log("error", e)
         return NextResponse.json({error: true, msg: e})
     }
 }
 
 const isSingleItem = (item)=>{
+    console.log(item.order.items.filter(i=> !i.canceled && !i.shipped).length, "isSingle")
     if(item.order.items.filter(i=> !i.canceled && !i.shipped).length > 1) return false
     else return true
 }
@@ -76,6 +81,7 @@ const addItemToBin = (item, bin)=>{
 const findBin = async (orderId)=>{
     let bin = await Bins.findOne({order: orderId}).populate("order")
     if(!bin) bin = findEmptyBin()
+    return bin
 }
 const findEmptyBin = async ()=>{
     return await Bins.findOne({inUse: false})
