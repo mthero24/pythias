@@ -1,9 +1,9 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Bins from "../../../../../models/Bin"
 import {add, subtract} from "@pythias/shipping"
-
+import Employee from "../../../../models/employeeTracking";
 export async function PUT(req = NextApiRequest) {
-    const defaultBin = {"number":10,"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null}
+    //const defaultBin = {"number":10,"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null}
     let data = await req.json();
     console.log(data)
     if(data.type == "add"){
@@ -91,4 +91,45 @@ export async function PUT(req = NextApiRequest) {
              });
         }
     }
+}
+
+export async function DELETE(req = NextApiRequest) {
+  try{
+    let binNumber = req.nextUrl.searchParams.get("number")
+    let bin = await Bins.findOneAndUpdate({number: binNumber}, {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
+    let tracking = new Employee({
+        type: `Cleared Bin ${binNumber}`,
+        Date: new Date(Date.now()),
+        //employee: user,
+        order: bin.order,
+    });
+    return NextResponse.json({
+      error: false,
+      bins: {
+        readyToShip: await Bins.find({ ready: true })
+          .sort({ number: 1 })
+          .populate({ path: "order", populate: "items" })
+          .lean(),
+        inUse: await Bins.find({ inUse: true })
+          .sort({ number: 1 })
+          .populate({ path: "order", populate: "items" })
+          .lean(),
+      },
+    });
+  }catch(e){
+    return NextResponse.json({
+      error: true,
+      msg: e,
+      bins: {
+        readyToShip: await Bins.find({ ready: true })
+          .sort({ number: 1 })
+          .populate({ path: "order", populate: "items" })
+          .lean(),
+        inUse: await Bins.find({ inUse: true })
+          .sort({ number: 1 })
+          .populate({ path: "order", populate: "items" })
+          .lean(),
+      },
+    });
+  }
 }

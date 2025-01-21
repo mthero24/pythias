@@ -6,15 +6,77 @@ import Item from "../../../../models/Items";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
-    let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"}).lean()
-    let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items").lean()
-    let bin 
     try{
-       bin = await Bins.findOne({ number: data.scan.trim() })
-         .populate({ path: "order", populate: "items" })
-         .lean();
+        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"}).lean()
+        let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items").lean()
+        let bin 
+        try{
+        bin = await Bins.findOne({ number: data.scan.trim() })
+            .populate({ path: "order", populate: "items" })
+            .lean();
+        }catch(e){
+            console.log(e)
+        }
+        let res = {error: false, msg: "", item, order, bin, }
+        if(item){
+            if(canceled()){
+                res.error = true
+                res.msg = "Item Canceled"
+            }else{
+                if(isSingleItem) res.activate = "ship"
+                else {
+                    res.order = item.order
+                    res.activate = "bin"
+                    res.bin = await findBin(res.order._id)
+                    await addItemToBin(item, res.bin)
+                    isReady(res.bin)
+                    await res.bin.save()
+                }
+            }
+        }else if(order){
+            res.bin = findBin(order._id)
+            if(!res.bin.inUse) res.bin = null
+            else {
+                isReady(res.bin)
+                await res.bin.save()
+            }
+            res.activate = "ship"
+        }else if(bin){
+            res.order = bin.order
+        }
+        return NextResponse.json({res})
     }catch(e){
-        console.log(e)
+        return NextResponse.json({error: true, msg: e})
     }
-    return NextResponse.json({item, order, bin})
+}
+
+const isSingleItem = (item)=>{
+    if(item.order.items.filter(i=> !i.canceled && !i.shipped).length > 1) return false
+    else return true
+}
+const canceled = (item, order)=>{
+    if(item.canceled == true || order.canceled == true) return true
+    else return false
+}
+const isReady = (bin)=>{
+    let ready = true;
+    for(let it of bin.order.items){
+        if(!bin.items.includes(it)) ready = false
+    }
+    return ready
+}
+const addItemToBin = (item, bin)=>{
+    if(!bin.items.includes(item._id) ){
+        bin.items.push(item._id)
+    }
+    bin.order = item.order
+    bin.inUse = true
+    return bin
+}
+const findBin = async (orderId)=>{
+    let bin = await Bins.findOne({order: orderId}).populate("order")
+    if(!bin) bin = findEmptyBin()
+}
+const findEmptyBin = async ()=>{
+    return await Bins.findOne({inUse: false})
 }

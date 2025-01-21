@@ -41,7 +41,8 @@ export function Items({order, style}){
                         <Grid2 size={{xs: 7}}>
                             <Grid2 container spacing={1}>
                                 <Grid2 size={{xs: 12}}>
-                                    <Typography  sx={{fontWeight: 600, textTransform: "capitalize"}}>PieceID: {it.pieceId}, Color: {it.colorName}, Size: {it.sizeName}</Typography>
+                                    <Typography  sx={{fontWeight: 600, fontSize: ".9rem", textTransform: "capitalize"}}>PieceID: {it.pieceId}, blank: {it.styleCode}</Typography>
+                                    <Typography  sx={{fontSize: ".7rem", textTransform: "capitalize"}}> Color: {it.colorName}, Size: {it.sizeName}</Typography>
                                 </Grid2>
                                 <Grid2 size={{xs: 6, sm: 3}}>
                                     <Typography sx={headingStyle}>Treated</Typography>
