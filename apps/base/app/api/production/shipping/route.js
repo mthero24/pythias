@@ -7,14 +7,13 @@ export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
     try{
-        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"}).lean()
-        let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items").lean()
+        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
         let bin 
         try{
             if(!isNaN(data.scan.trim())){
                 bin = await Bins.findOne({ number: data.scan.trim() })
-                .populate({ path: "order", populate: "items" })
-                .lean();
+                .populate({ path: "order", populate: "items" });
             }
         }catch(e){
             //console.log(e)
@@ -30,8 +29,13 @@ export async function POST(req= NextApiRequest){
                 else {
                     res.activate = "bin"
                     res.bin = await findBin(res.order._id)
-                    await addItemToBin(item, res.bin)
-                    isReady(res.bin)
+                    let addResult = addItemToBin(item, res.bin)
+                    res.item = addResult.item;
+                    res.bin = addResult.bin
+                    res.bin.ready = isReady(res.bin)
+                    if(res.bin.ready) res.activate = "bin/ship"
+                    //console.log(res.item)
+                    await res.item.save()
                     await res.bin.save()
                 }
             }
@@ -39,7 +43,7 @@ export async function POST(req= NextApiRequest){
             res.bin = findBin(order._id)
             if(!res.bin.inUse) res.bin = null
             else {
-                isReady(res.bin)
+                res.bin.ready = isReady(res.bin)
                 await res.bin.save()
             }
             res.activate = "ship"
@@ -47,7 +51,7 @@ export async function POST(req= NextApiRequest){
             res.order = bin.order
         }
         console.log(res.activate)
-        return NextResponse.json({res})
+        return NextResponse.json({...res})
     }catch(e){
         console.log("error", e)
         return NextResponse.json({error: true, msg: e})
@@ -66,17 +70,20 @@ const canceled = (item, order)=>{
 const isReady = (bin)=>{
     let ready = true;
     for(let it of bin.order.items){
-        if(!bin.items.includes(it)) ready = false
+        if(!bin.items.includes(it._id)) ready = false
     }
+    console.log(ready, "ready")
     return ready
 }
 const addItemToBin = (item, bin)=>{
     if(!bin.items.includes(item._id) ){
         bin.items.push(item._id)
     }
-    bin.order = item.order
-    bin.inUse = true
-    return bin
+    item.inBin = true;
+    item.bin = bin.number;
+    bin.order = item.order;
+    bin.inUse = true;
+    return {item, bin}
 }
 const findBin = async (orderId)=>{
     let bin = await Bins.findOne({order: orderId}).populate("order")

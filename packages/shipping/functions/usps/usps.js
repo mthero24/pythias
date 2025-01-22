@@ -75,3 +75,35 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
     }
     return {error: true, msg: "failed credentials"}
 }
+
+export async function getRatesUSPS({address, weight, dimensions, businessAddress, credentials, service}){
+    let token = await GetToken({credentials})
+    let data = {
+        "originZIPCode": businessAddress.postalCode,
+        "destinationZIPCode": address.zip,
+        "weight": weight / 16,
+        "length": dimensions.length? dimensions.length: 11,
+        "width": dimensions.width? dimensions.width: 8,
+        "height": dimensions.height? dimensions.height: .25,
+        "mailClass": service,
+        "processingCategory": "MACHINABLE",
+        "rateIndicator": "SP",
+        "destinationEntryFacilityType": "NONE",
+        "priceType": "COMMERCIAL",
+        "mailingDate": `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString() : `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${(new Date(Date.now()).getDate() + 1).toString().length > 1? (new Date(Date.now()).getDate() + 1).toString(): `0${(new Date(Date.now()).getDate() + 1).toString()}`}`,
+        "accountType": "EPS",
+    }
+    if(token){
+        let headers = {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+        let resData
+        let res = await axios.post("https://api.usps.com/prices/v3/base-rates/search", data, headers).catch(e=>{resData= e.response.data})
+        console.log(res?.data, resData)
+        if(res?.data.error) return {error:true, msg: res.data.message}
+        else if(resData)return {error:true, msg: resData.error.message}
+        else return {error:false, rate: res.data.totalBasePrice}
+    }
+}

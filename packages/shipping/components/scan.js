@@ -2,7 +2,7 @@
 import {useState, useRef, useEffect} from "react";
 import {Card,TextField,Box, Checkbox, FormControlLabel} from "@mui/material";
 import axios from "axios";
-export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow}){
+export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActivate}){
     const textFieldRef = useRef(null);
     const [scan, setScan] = useState()
     const [reship, setReship] = useState(false)
@@ -30,14 +30,17 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow}){
         if (res.data.item) {
           setItem(res.data.item);
           setOrder(res.data.item.order);
+          setBin(res.data.bin)
         } else if (res.data.order) {
           setOrder(res.data.order);
+          setBin(res.data.bin)
         } else if (res.data.bin) {
           setOrder(res.data.bin.order);
           setBin(res.data.bin);
         }
         if(res.data.item || res.data.order || res.data.bin){
           setShow(true)
+          setActivate(res.data.activate)
         }
         setScan("")
       }

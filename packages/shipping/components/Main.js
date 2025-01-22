@@ -17,6 +17,7 @@ export function Main({stations, binCount, bins}){
     const [auto, setAuto] = useState(true)
     const [size, setSize] = useState({width: 900, height: 900})
     const [show, setShow] = useState(false)
+    const [action, setAction] = useState()
     //const { width, height } = useWindowSize();
     useEffect(()=>{
       if(typeof window != "undefined"){
@@ -52,7 +53,7 @@ export function Main({stations, binCount, bins}){
           setStation={setStation}
           setAuto={setAuto}
         />
-        <Scan auto={auto} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow}/>
+        <Scan auto={auto} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction}/>
         <Bins
           bins={binss}
           setBins={setBins}
@@ -60,8 +61,9 @@ export function Main({stations, binCount, bins}){
           setAuto={setAuto}
           setBin={setBin}
           setShow={setShow}
+          setAction={setAction}
         />
-        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins}/>
+        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction}/>
       </Box>
     );
 }
