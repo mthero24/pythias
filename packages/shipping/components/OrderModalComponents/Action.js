@@ -46,15 +46,7 @@ export function Actions({bin, item, order, style, action, setAction}){
                         <Grid2 size={{xs: 12, sm: 6}} >
                             <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end"}}>
                                 <Box>
-                                    <Typography>USPS First Class Cost: ${order.shippingRates.firstClassRate}</Typography>
-                                    <Typography>USPS Priority Cost: ${order.shippingRates.priorityRate}</Typography>
-                                    <Typography>FedEx Smart Post Cost: ${order.shippingRates.smartPostRate}</Typography>
-                                    <Typography>FedEx Ground Cost: ${order.shippingRates.FedExGroundRate}</Typography>
-                                    <Typography>FedEx Home Cost: ${order.shippingRates.FedExHomeRate}</Typography>
-                                    <Typography>FedEx One Rate Cost: ${order.shippingRates.FedExOneRate}</Typography>
-                                    <Typography>FedEx One Rate Next Day Cost: ${order.shippingRates.FedExOneRateNextDay}</Typography>
-                                    <Typography>FedEx 2nd Day Cost: ${order.shippingRates.FedEx2ndDay}</Typography>
-                                    <Typography>FedEx Next Day Cost: ${order.shippingRates.FedExNextDay}</Typography>
+                                   
                                 </Box>
                             </Box>
                         </Grid2>
