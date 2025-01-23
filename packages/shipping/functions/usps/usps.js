@@ -26,7 +26,7 @@ export async function TrackPackage({tn, credentials}){
             }
         }
         let res = await axios.get(`https://api.usps.com/tracking/v3/tracking/${tn}`, headers).catch(e=>{
-            console.log(e.response.data)
+            //console.log(e.response.data)
         })
         //console.log(res?.data)
         if(res && res.data && res.data.eventSummaries) return res.data.eventSummaries
@@ -35,9 +35,9 @@ export async function TrackPackage({tn, credentials}){
 }
 
 export async function GenerateManifest({PicNumbers, credentials, businessAddress}){
-    console.log("Gen Man", PicNumbers)
+   // console.log("Gen Man", PicNumbers)
     let token = await GetToken({credentials})
-    console.log(token)
+    //console.log(token)
     if(token){
         let headers = {
             headers: {
@@ -68,7 +68,7 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
             },
             "ignoreBadAddress": true
         }, headers).catch(e=>{console.log(e.response);resData= e.response.data})
-        console.log(res?.data, resData)
+        //console.log(res?.data, resData)
         if(res?.data.error) return {error:true, msg: res.data.message}
         else if(resData)return {error:true, msg: resData.error.message}
         else return {error:false, manifest: res.data.SCANFormImage}
@@ -101,7 +101,7 @@ export async function getRatesUSPS({address, weight, dimensions, businessAddress
         }
         let resData
         let res = await axios.post("https://api.usps.com/prices/v3/base-rates/search", data, headers).catch(e=>{resData= e.response.data})
-        console.log(res?.data, resData)
+        //console.log(res?.data, resData)
         if(res?.data.error) return {error:true, msg: res.data.message}
         else if(resData)return {error:true, msg: resData.error.message}
         else return {error:false, rate: res.data.totalBasePrice}

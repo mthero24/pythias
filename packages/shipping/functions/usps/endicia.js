@@ -10,7 +10,7 @@ let options = {
     alternateTextNode: true
 };
 export async function GenerateManifest({PicNumbers, enSettings, businessAddress}){
-    console.log(PicNumbers,)
+    //console.log(PicNumbers,)
     let xml = `
     <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -51,9 +51,9 @@ export async function GenerateManifest({PicNumbers, enSettings, businessAddress}
     }
     let res = await axios.post(`https://labelserver.endicia.com/LabelService/EwsLabelService.asmx`, xml, headers)
     var parser = new xml2js.Parser(options);
-    console.log(res.data)
+    //console.log(res.data)
     let data = await parser.parseStringPromise(res.data);
-    console.log(data["soap:Envelope"]["soap:Body"][0].GetSCANResponse[0].GetSCANResponse[0])
+    //console.log(data["soap:Envelope"]["soap:Body"][0].GetSCANResponse[0].GetSCANResponse[0])
     if(data["soap:Envelope"]["soap:Body"][0].GetSCANResponse[0].GetSCANResponse[0].ErrorMessage){
         return {error: true, msg: data["soap:Envelope"]["soap:Body"][0].GetSCANResponse[0].GetSCANResponse[0].ErrorMessage[0]}
     }else{
@@ -65,7 +65,7 @@ export async function GenerateManifest({PicNumbers, enSettings, businessAddress}
 } 
 
 export async function getRatesEn({address, weight, businessAddress, service, enSettings}){
-    console.log(enSettings)
+    //console.log(enSettings)
     let xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
         xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -106,11 +106,11 @@ export async function getRatesEn({address, weight, businessAddress, service, enS
     }
     let res = await axios.post(`https://labelserver.endicia.com/LabelService/EwsLabelService.asmx`, xml, headers)
     var parser = new xml2js.Parser(options);
-    console.log(res.data)
+    //console.log(res.data)
     let data = await parser.parseStringPromise(res.data);
-    console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0])
+    //console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0])
     if(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Status[0] != "0") {
-        console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Status[0], "printed")
+        //console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Status[0], "printed")
         return {error: true, msg: data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].ErrorMessage[0]}
     }else{
         return {error: false, rate: data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Postage[0].Rate[0]}
