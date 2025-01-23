@@ -22,8 +22,8 @@ export default async function Test(){
         postalCode: "48075",
         country: "US",
       },
-      type: "standard",
-      providers: ["fedex", "endicia"],
+      type: "next day",
+      providers: ["endicia", "fedex"],
       weight: 10,
       enSettings: {
         requesterID: process.env.endiciaRequesterID,
@@ -44,6 +44,11 @@ export default async function Test(){
         accountNumber: process.env.AccountFedExTest,
         key: process.env.ApiKeyTestFedEx,
         secret: process.env.SecretKeyFedExTest,
+      },
+      credentialsUPS: {
+        accountNumber: process.env.UPSAccountNumber,
+        clientID: process.env.UPSClientID,
+        clientSecret: process.env.UPSClientSecret,
       },
     });
     console.log(rates)
