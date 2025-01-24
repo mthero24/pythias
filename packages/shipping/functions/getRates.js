@@ -22,7 +22,8 @@ export async function getRates({
   credentials,
   credentialsFedEx,
   credentialsFedExNew,
-  credentialsUPS
+  credentialsUPS,
+  dimensions
 }) {
   let rates =[];
   let uspsGroundRate;
@@ -30,15 +31,19 @@ export async function getRates({
   let FedExSmartPost;
   let FedExHomeRate;
   let upsGroundRate;
+  console.log(type, "++++++++++++ shipping type ++++++++++++++++++")
   if (type.toLowerCase() == "standard") {
     if (providers.includes("endicia")) {
+      console.log("here")
       let res = await getRatesEn({
         address,
         weight,
         businessAddress,
         service: "GroundAdvantage",
         enSettings,
+        dimensions
       });
+      console.log(res.error)
       if (!res.error) uspsGroundRate = parseFloat(res.rate);
       else uspsGroundRate = res.msg;
       let res2 = await getRatesEn({
@@ -47,9 +52,11 @@ export async function getRates({
         businessAddress,
         service: "Priority",
         enSettings,
+        dimensions
       });
       if (!res2.error) uspsPriorityRate = parseFloat(res2.rate);
       else uspsPriorityRate = res2.msg;
+      rates.push({ label: "USPS Ground Advantage", rate: uspsGroundRate })
       rates.push({ label: "USPS Priority Mail", rate: uspsPriorityRate })
     }
     if (providers.includes("usps")) {
@@ -59,7 +66,7 @@ export async function getRates({
         businessAddress,
         service: "USPS_GROUND_ADVANTAGE",
         credentials,
-        dimensions: { length: 11, width: 8, height: 0.25 },
+        dimensions,
       });
       if (!res.error) uspsGroundRate = parseFloat(res.rate);
       else uspsGroundRate = res.msg;
@@ -69,14 +76,15 @@ export async function getRates({
         businessAddress,
         service: "PRIORITY_MAIL",
         credentials,
-        dimensions: { length: 11, width: 8, height: 0.25 },
+        dimensions,
       });
       if (!res2.error) uspsPriorityRate = parseFloat(res2.rate);
       else uspsPriorityRate = res2.msg;
+      rates.push({ label: "USPS Ground Advantage", rate: uspsGroundRate })
       rates.push({ label: "USPS Priority Mail", rate: uspsPriorityRate })
     }
     if (providers.includes("fedex")) {
-      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "SMART_POST", service: "PRESORTED_STANDARD", packaging: "YOUR_PACKAGING"});
+      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "SMART_POST", service: "PRESORTED_STANDARD", packaging: "YOUR_PACKAGING", dimensions});
       if(res.error) FedExSmartPost = res.msg
       else FedExSmartPost = res.rate;
       let res2 = await getRatesFeOld({
@@ -87,6 +95,7 @@ export async function getRates({
         serviceType: "GROUND_HOME_DELIVERY",
         service: "PRESORTED_STANDARD",
         packaging: "YOUR_PACKAGING",
+        dimensions
       });
       if (res2.error) FedExHomeRate = res2.msg;
       else FedExHomeRate = res2.rate;
@@ -106,6 +115,7 @@ export async function getRates({
         businessAddress,
         service: "Priority",
         enSettings,
+        dimensions
       });
       if (!res2.error) uspsPriorityRate = parseFloat(res2.rate);
       else uspsPriorityRate = res2.msg;
@@ -119,7 +129,7 @@ export async function getRates({
         businessAddress,
         service: "PRIORITY_MAIL",
         credentials,
-        dimensions: { length: 11, width: 8, height: 0.25 },
+        dimensions,
       });
       if (!res2.error) uspsPriorityRate = parseFloat(res2.rate);
       else uspsPriorityRate = res2.msg;
@@ -127,7 +137,7 @@ export async function getRates({
       rates.push({ label: "USPS Priority Mail", rate: uspsPriorityRate })
     }
     if (providers.includes("fedex")) {
-      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "FEDEX_2_DAY", service: "PARCEL_SELECT", packaging: "FEDEX_ENVELOPE"});
+      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "FEDEX_2_DAY", service: "PARCEL_SELECT", packaging: "FEDEX_ENVELOPE", dimensions});
       if(res.error) FedExSmartPost = res.msg
       else FedExSmartPost = res.rate;
       let res2 = await getRatesFeOld({
@@ -138,6 +148,7 @@ export async function getRates({
         serviceType: "GROUND_HOME_DELIVERY",
         service: "PRESORTED_STANDARD",
         packaging: "YOUR_PACKAGING",
+        dimensions
       });
       if (res2.error) FedExHomeRate = res2.msg;
       else FedExHomeRate = res2.rate;
@@ -147,7 +158,7 @@ export async function getRates({
     }
   } else if (type.toLowerCase() == "second day") {
     if (providers.includes("fedex")) {
-      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "FEDEX_2_DAY", service: "PARCEL_SELECT", packaging: "FEDEX_ENVELOPE"});
+      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "FEDEX_2_DAY", service: "PARCEL_SELECT", packaging: "FEDEX_ENVELOPE", dimensions});
       if(res.error) FedExSmartPost = res.msg
       else FedExSmartPost = res.rate;
       let res2 = await getRatesFeOld({
@@ -166,7 +177,7 @@ export async function getRates({
     }
   } else if (type.toLowerCase() == "next day") {
     if (providers.includes("fedex")) {
-      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "STANDARD_OVERNIGHT", service: "PARCEL_SELECT", packaging: "FEDEX_ENVELOPE"});
+      let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "STANDARD_OVERNIGHT", service: "PARCEL_SELECT", packaging: "FEDEX_ENVELOPE", dimensions});
       if(res.error) FedExSmartPost = res.msg
       else FedExSmartPost = res.rate;
       let res2 = await getRatesFeOld({

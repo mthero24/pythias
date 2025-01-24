@@ -8,9 +8,14 @@ import { Actions } from "./OrderModalComponents/Action";
 import CloseIcon from '@mui/icons-material/Close';
 import axios from "axios"
 import { createImage } from "../functions/image";
-import {useState} from "react";
-export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction}){
+import {useState, useEffect} from "react";
+export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station}){
     console.log(createImage("red", "AT", {url: "https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75"}))
+    const [shippingPrices, setShippingPrices] = useState()
+    const [weight, setWeight] = useState(0)
+    const [getWeight, setGetWeight] = useState(false)
+    const [timer, setTimer] = useState(0)
+    const [dimensions, setDimensions] = useState()
     const close = ()=>{
       setShow(false);
       setAuto(true);
@@ -18,7 +23,48 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
       setItem();
       setBin();
       setAction()
+      setShippingPrices()
+      setWeight(0)
+      setDimensions()
     }
+    useEffect(()=>{
+      let getShippingRates = async ()=>{
+        let res = await axios.post("/api/production/shipping/rates", {address: order.shippingAddress, shippingType: order.shippingType, weight, dimensions})
+        if(res.data.error) alert(res.data.msg)
+        else {
+          setShippingPrices(res.data.rates.rates)
+          console.log(res.data.rates.rates)
+        }
+      }
+      if(show && order && weight > 0 && dimensions){
+        getShippingRates()
+      }
+    }, [dimensions, weight])
+    useEffect(()=>{
+      let startTimer = async ()=>{
+        for(let i = 5; i >= 1; i--){
+          setTimer(i)
+          await new Promise((resolve)=>{
+            setTimeout(()=>{
+              resolve()
+            }, 1000)
+          })
+        }
+        await getWeight()
+        setTimer(0)
+      }
+      let getWeight = async ()=>{
+        let res = await axios.get(`/api/production/shipping/scales?station=${station}`)
+        if(res.data.error) {
+          alert(res.data.msg)
+          setWeight(0)
+        }else setWeight(res.data.value)
+        return
+      }
+      if(action == "ship"){
+        startTimer()
+      }
+    }, [show, getWeight])
     return (
       <Modal
         open={show}
@@ -35,9 +81,9 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
             }} />
           </Box>
           <Grid2 container spacing={2}>
-            <BinInfo bin={bin} close={close} setBins={setBins}/>
+            {bin && (<BinInfo bin={bin} close={close} setBins={setBins}/>)}
           </Grid2>
-          {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style}/>}
+          {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style} shippingPrices={shippingPrices} setShippingPrices={setShippingPrices} timer={timer} weight={weight} setGetWeight={setGetWeight} getWeight={getWeight} setDimensions={setDimensions} dimensions={dimensions}/>}
           {order && (
             <Card sx={{height: `${style.height * 0.75}px`, overflow: "auto"}}>
               <Box sx={{display: "flex", flexDirection: 'row', justifyContent: "space-evenly"}}>

@@ -63,7 +63,7 @@ export function Main({stations, binCount, bins}){
           setShow={setShow}
           setAction={setAction}
         />
-        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction}/>
+        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station}/>
       </Box>
     );
 }

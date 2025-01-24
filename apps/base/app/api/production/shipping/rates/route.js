@@ -3,6 +3,8 @@ import {getRates} from "@pythias/shipping";
 
 export async function POST(req= NextApiRequest){
     let data = await req.json();
+    console.log(data)
+    if(!data.address.country) data.address.country = "US"
     try{
         let rates = await getRates({
             address: data.address,
@@ -10,6 +12,7 @@ export async function POST(req= NextApiRequest){
             type: data.shippingType,
             providers: ["endicia", "fedex"],
             weight: data.weight,
+            dimensions: data.dimensions,
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
             accountNumber: process.env.endiciaAccountNUmber,
@@ -38,6 +41,7 @@ export async function POST(req= NextApiRequest){
         });
         return NextResponse.json({error: false, rates})
     }catch(e){
+        console.log(e)
         return NextResponse.json({error: true, msg:e})
     }
 }
