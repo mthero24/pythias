@@ -51,7 +51,7 @@ export function Actions({bin, item, order, style, action, setAction, shippingPri
                         {timer == 0 && weight > 0 &&  (
                             <Grid2 size={12} >
                             <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
-                                <Typography fontSize="3.0rem" fontWeight={600} textAlign={"center"}>Weight: {weight} oz</Typography>
+                                <Typography fontSize="2.5rem" fontWeight={600} textAlign={"center"}>Weight: {weight} oz</Typography>
                                 
                                 {!dimensions && order.shippingType == "Standard" && (
                                     <Standard dimensions={dimensions} setDimensions={setDimensions} />
