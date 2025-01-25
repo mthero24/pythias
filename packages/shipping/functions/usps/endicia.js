@@ -64,7 +64,7 @@ export async function GenerateManifest({PicNumbers, enSettings, businessAddress}
     // return scanForm
 } 
 
-export async function getRatesEn({address, weight, businessAddress, service, enSettings}){
+export async function getRatesEn({address, weight, businessAddress, service, enSettings, dimensions}){
     //console.log(enSettings)
     let xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -77,9 +77,9 @@ export async function getRatesEn({address, weight, businessAddress, service, enS
         <WeightOz>${parseFloat(weight).toFixed(1)}</WeightOz>
         <Extension>5868767931</Extension>
         <MailpieceDimensions>
-        <Length>8</Length>
-        <Width>8</Width>
-        <Height>1</Height>
+        <Length>${dimensions.length}</Length>
+        <Width>${dimensions.width}</Width>
+        <Height>${dimensions.height}</Height>
         </MailpieceDimensions>
         <RequesterID>${enSettings.requesterID}</RequesterID>
         <CertifiedIntermediary>
@@ -108,11 +108,12 @@ export async function getRatesEn({address, weight, businessAddress, service, enS
     var parser = new xml2js.Parser(options);
     //console.log(res.data)
     let data = await parser.parseStringPromise(res.data);
-    //console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0])
+    //console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Postage[0])
     if(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Status[0] != "0") {
-        //console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Status[0], "printed")
+        console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Status[0], "printed")
         return {error: true, msg: data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].ErrorMessage[0]}
     }else{
+        console.log(data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Postage[0])
         return {error: false, rate: data['soap:Envelope']['soap:Body'][0].CalculatePostageRateResponse[0].PostageRateResponse[0].Postage[0].Rate[0]}
     }
 }
