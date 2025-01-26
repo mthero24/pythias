@@ -1,0 +1,9 @@
+{
+    "colors": {
+        "primary": "#DC143C",
+        "secondary": "#F5F5DC",
+        "accent": "#1E2A39",
+        "support": "#FFD700",
+        "neutral": "#E0E0E0"
+    }
+}

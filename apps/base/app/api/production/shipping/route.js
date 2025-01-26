@@ -5,7 +5,7 @@ import Item from "../../../../models/Items";
 
 export async function POST(req= NextApiRequest){
     let data = await req.json();
-    console.log(data)
+    //console.log(data)
     try{
         let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")

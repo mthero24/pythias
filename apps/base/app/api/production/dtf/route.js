@@ -79,7 +79,7 @@ export async function GET(req = NextResponse) {
 
 export async function POST(req = NextApiRequest) {
     let config = JSON.parse(process.env.dtf);
-    console.log(config);
+   // console.log(config);
     setConfig({
       internalIP: config.localIP,
     });
