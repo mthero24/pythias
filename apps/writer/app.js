@@ -3,7 +3,7 @@ let fs = require("fs");
 const sharp = require("sharp");
 const bodyParser = require("body-parser")
 const app = express()
-
+const electron = require('electron')
 
 app.use(
     bodyParser.urlencoded({
@@ -32,6 +32,23 @@ app.post("/", async (req,res)=>{
         console.log(e)
     }
     res.send({error: false, msg: "file written"})
+})
+app.post("/roq", (req, res)=>{
+    let content = `${req.body.barcode};${req.body.barcode}-label.zpl;;;;;${req.body.quantity};;;${req.body.pause};${req.body.QuantityToStack};${req.body.Recipe};${req.body.sleeves};${req.body.body};${req.body.exit}`
+    try{
+        fs.writeFile(`./hotfolder/${req.body.barcode}.csv`, content, (err)=>{
+            if(err) console.log(err)
+        })
+        fs.writeFile(`./hotfolder/${req.body.barcode}-label.zpl`, req.body.label? req.body.label: "no label", (err)=>{
+            if(err) console.log(err)
+        })
+        //waiting.push({id:req.body.barcode, exit: req.body.exit})
+        //if(!monitorRunning) monitor("dummy.csv", req.body.barcode)
+        res.send({code: 200, msg: "files written"})
+    }catch(e){
+        console.log(e)
+        res.send({code: 400, msg: e})
+    }
 })
 
 app.listen(3500, async function () {

@@ -13,11 +13,10 @@ import axios from "axios";
 import Image from "next/image";
 import {Config} from "../config"
 import { DTFBody } from "./DTFBody";
-import {Printers} from "./SelectPrinters"
+import {Printers} from "./printers"
 export function DTFSend({printers}){
-    const [submitted, setSubmitted] = useState([]);
-    const [scan, setScan] = useState("")
     const [printer, setPrinter] = useState(printers? printers[0]: "printer1")
+    const [auto, setAuto] = useState(true)
     const getData = async ()=>{
         console.log(Config)
         let res = await axios.post(`/api/production/dtf`, {pieceId: scan, printer})
@@ -28,8 +27,8 @@ export function DTFSend({printers}){
     }
     return (
         <>
-            <Printers printers={printers} printer={printer} setPrinter={setPrinter}/>
-            <DTFBody submitted={submitted} scan={scan} setScan={setScan} getData={getData} />
+            <Printers printers={printers} printer={printer} setPrinter={setPrinter} setAuto={setAuto}/>
+            <DTFBody auto={auto} setAuto={setAuto} printer={printer} type={"send"}/>
         </>
     )
 }

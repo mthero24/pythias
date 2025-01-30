@@ -1,23 +1,25 @@
 "use client";
-import {Button, Container, Modal, Box, Typography} from "@mui/material";
+import {Button, Container, Modal, Box, Typography, TextField} from "@mui/material";
 import {useState} from "react";
 import axios from "axios";
 import { BinSettings } from "./binSettings";
 import {FeedBack} from "./feedback";
-export function Manifest({binCount, setAuto, setBins, modalStyle}){
+import CloseIcon from '@mui/icons-material/Close';
+export function Manifest({binCount, setAuto, setBins, modalStyle, style}){
     const [manifest, setManifest] = useState("https://placehold.co/600x400");
     const [open, setOpen] = useState(false);
-    const style = {
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: 1100,
-        bgcolor: "background.paper",
-        border: "2px solid #000",
-        boxShadow: 24,
-        p: 4,
-      };
+    const [refundOpen, setRefundOpen] = useState(false)
+    const [trackingNumber, setTrackingNumber] = useState()
+    const submitRefund = async ()=>{
+      console.log("refund")
+      let res = await axios.put("/api/production/shipping/labels", {PIC: trackingNumber})
+      if(res.data.error) alert(res.data.msg)
+      else {
+        alert(res.data.msg)
+        setRefundOpen(false)
+        setTrackingNumber()
+      }
+    }
     const handleOpen = async () => {
         console.log("print manifest");
         console.log(open);
@@ -31,7 +33,7 @@ export function Manifest({binCount, setAuto, setBins, modalStyle}){
         }
       };
     return (
-      <Container maxWidth="lf" sx={{ marginTop: "1%" }}>
+      <Container maxWidth="lg" sx={{ marginTop: "1%" }}>
         <Box
           sx={{
             display: "flex",
@@ -40,8 +42,9 @@ export function Manifest({binCount, setAuto, setBins, modalStyle}){
           }}
         >
           <Box
-            onClick={() => {
-              setAuto(true);
+            sx={{
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <Button onClick={handleOpen}>Manifest</Button>
@@ -55,6 +58,12 @@ export function Manifest({binCount, setAuto, setBins, modalStyle}){
               aria-describedby="modal-modal-description"
             >
               <Box sx={style}>
+              <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", cursor: "pointer"}}>
+                  <CloseIcon onClick={()=>{
+                    setOpen(false);
+                    setManifest("https://placehold.co/600x400");
+                  }} />
+                </Box>
                 <Typography
                   id="modal-modal-title"
                   variant="h6"
@@ -69,6 +78,33 @@ export function Manifest({binCount, setAuto, setBins, modalStyle}){
                   width={1000}
                   height={1000}
                 />
+              </Box>
+            </Modal>
+            <Button onClick={()=>{setRefundOpen(true)}}>Request Refund</Button>
+            <Modal
+              open={refundOpen}
+              onClose={() => {
+                setRefundOpen(false);
+                setTrackingNumber();
+              }}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
+            >
+              <Box sx={style}>
+                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", cursor: "pointer"}}>
+                  <CloseIcon onClick={()=>{
+                    setRefundOpen(false);
+                  }} />
+                </Box>
+                <Typography
+                  id="modal-modal-title"
+                  variant="h6"
+                  component="h2"
+                  sx={{ textAlign: "center", marginTop: "20%" }}
+                >
+                  Request Refund
+                </Typography>
+               <TextField fullWidth label="Tracking Number"  onChange={()=>{setTrackingNumber(event.target.value)}} onKeyDown={()=>{ console.log(event.key);if(event.key == "Enter" || event.key == "ENTER" || event.key ==13) submitRefund()}}/>
               </Box>
             </Modal>
           </Box>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pythias Technologies File Writer</title>
+    <link rel="stylesheet" href="index.css" />
+    <link rel="icon" href="/logo-dark-50.png">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div style="width: 100%;">
+      <div class="image-div">
+        <img src="/logo-dark-400.png" alt="logo" class="image"/>
+      </div>
+      <p id="text"><%=lastFileWritten%></p>
+    </div>
+    
+    <script type="text/javascript">
+      let i = 0
+      let file
+      let getUpdate = async ()=>{
+        let res = await axios.get("/update").catch(e=>{console.log(e.response.data)})
+        //console.log(res?.data)
+        return res.data.lastFileWritten
+      }
+      setInterval(async ()=>{
+        //console.log("setting text")
+        let newFile = await getUpdate()
+        if(newFile !== file) {
+          file = newFile
+          i = 0
+        }
+        let seconds
+        let minutes
+        let hours
+        let days
+        seconds = i % 60
+        minutes = parseInt(i / 60)
+        if(minutes > 60){
+          hours = parseInt(minutes / 60)
+          minutes = minutes % 60
+        }
+        document.getElementById("text").innerHTML = `${file} -- written ${hours > 0? `${hours} hours and`: ""} ${minutes > 0? `${minutes} minutes and`: ""} ${seconds} seconds ago`
+        i++
+      }, 1000)
+    </script>
+  </body>
+</html>

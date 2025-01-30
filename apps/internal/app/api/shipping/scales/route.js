@@ -14,6 +14,7 @@ export async function GET(req = NextApiRequest){
         console.log(res)
         return NextResponse.json({...res})
     }catch(e){
-        return NextResponse.json({error: true, msg: e})
+        console.log("error")
+        return NextResponse.json({error: true, msg: JSON.stringify(e)})
     }
 }

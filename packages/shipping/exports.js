@@ -6,3 +6,6 @@ export {subtract} from "./functions/bins/subtract";
 export { useWindowSize } from "./functions/resizeWindow";
 export {createImage} from "./functions/image";
 export {getRates} from "./functions/getRates";
+export {buyLabel} from "./functions/buyLabel";
+export {print} from "./functions/printLabel";
+export {getRefund} from "./functions/getRefund";

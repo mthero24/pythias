@@ -1,0 +1,33 @@
+body {
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    background-color: #d2d2d2;
+}
+.row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+.image{
+    width: 100px;
+    height: 87px;
+    padding: 2%;
+    
+}
+.image-div{
+    width: 105px;
+    border: 1px solid #000000;
+    border-radius: 100px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+}
+.text{
+    text-align: center;
+    font-weight: 600;
+}
+.text-div{
+    width: 100%;
+}

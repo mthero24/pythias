@@ -46,7 +46,7 @@ export function Main({stations, binCount, bins}){
     };
     return (
       <Box>
-        <Manifest binCount={binCount} setAuto={setAuto} setBins={setBins} modalStyle={modalStyle}/>
+        <Manifest binCount={binCount} setAuto={setAuto} setBins={setBins} modalStyle={modalStyle} style={modalStyle}/>
         <Stations
           stations={stations}
           station={station}

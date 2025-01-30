@@ -25,6 +25,6 @@ export function DTFFind({}){
         setScan("")
     }
     return (
-        <DTFBody submitted={submitted} scan={scan} setScan={setScan} getData={getData} />
+        <DTFBody submitted={submitted} scan={scan} setScan={setScan} getData={getData} type={"find"} />
     )
 }

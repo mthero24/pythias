@@ -2,10 +2,10 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Bins from "../../../../models/Bin";
 import Order from "../../../../models/Order";
 import Item from "../../../../models/Items";
-
+import {isSingleItem, isShipped, canceled} from "../../../../functions/itemFunctions"
 export async function POST(req= NextApiRequest){
     let data = await req.json();
-    //console.log(data)
+    console.log(data)
     try{
         let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
@@ -18,12 +18,35 @@ export async function POST(req= NextApiRequest){
         }catch(e){
             //console.log(e)
         }
+        if(data.reship){
+            console.log("+++++")
+            if(item){
+                for(let i of item.order.items){
+                    i.shipped = false
+                    await i.save()
+                }
+                item.order.shipped = false
+                await item.order.save()
+                item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+            }else if(order){
+                for(let i of order.items){
+                    i.shipped = false
+                    await i.save()
+                }
+                order.shipped = false
+                await order.save()
+                order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
+            }
+        }
         let res = {error: false, msg: "", item, order, bin, }
         if(item){
             res.order = item.order
             if(canceled(item, item.order)){
                 res.error = true
                 res.msg = "Item Canceled"
+            }else if(isShipped(item) == true){
+                res.error = true
+                res.msg = "Order already shipped"
             }else{
                 if(isSingleItem(item)) res.activate = "ship"
                 else {
@@ -50,7 +73,7 @@ export async function POST(req= NextApiRequest){
         }else if(bin){
             res.order = bin.order
         }
-        console.log(res.activate)
+        console.log(res.activate, "activate")
         return NextResponse.json({...res})
     }catch(e){
         console.log("error", e)
@@ -58,15 +81,7 @@ export async function POST(req= NextApiRequest){
     }
 }
 
-const isSingleItem = (item)=>{
-    console.log(item.order.items.filter(i=> !i.canceled && !i.shipped).length, "isSingle")
-    if(item.order.items.filter(i=> !i.canceled && !i.shipped).length > 1) return false
-    else return true
-}
-const canceled = (item, order)=>{
-    if(item.canceled == true || order.canceled == true) return true
-    else return false
-}
+
 const isReady = (bin)=>{
     let ready = true;
     for(let it of bin.order.items){

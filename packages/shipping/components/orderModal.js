@@ -16,6 +16,9 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
     const [getWeight, setGetWeight] = useState(false)
     const [timer, setTimer] = useState(0)
     const [dimensions, setDimensions] = useState()
+    const [label, setLabel] = useState()
+    const [closeTimer, setCloseTimer] = useState(false)
+    const [stopClose, setStopClose] = useState(false)
     const close = ()=>{
       setShow(false);
       setAuto(true);
@@ -26,6 +29,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
       setShippingPrices()
       setWeight(0)
       setDimensions()
+      setLabel()
     }
     useEffect(()=>{
       let getShippingRates = async ()=>{
@@ -40,6 +44,33 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
         getShippingRates()
       }
     }, [dimensions, weight])
+    useEffect(()=>{
+      let countDown = async ()=>{
+          setCloseTimer(true)
+          setStopClose(false)
+          for(let i = 10; i >= 0; i--){
+              setTimer(i)
+              console.log(i, closeTimer, timer,  "close timer")
+              await new Promise((resolve)=>{
+                setTimeout(()=>{
+                  resolve()
+                }, 1000)
+              })
+          }
+          checkClose()
+      }
+      let checkClose = ()=>{
+          if(!stopClose){
+              setCloseTimer()
+              setLabel()
+              close()
+              setCloseTimer(false)
+          }else countDown()
+      }
+      if(label){
+          countDown()
+      }
+  }, [label])
     useEffect(()=>{
       let startTimer = async ()=>{
         for(let i = 5; i >= 1; i--){
@@ -58,7 +89,10 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
         if(res.data.error) {
           alert(res.data.msg)
           setWeight(0)
-        }else setWeight(res.data.value)
+        }else {
+          console.log(res.data, "+++++++++++ result from weight")
+          setWeight(res.data.value)
+        }
         return
       }
       if(action == "ship"){
@@ -83,7 +117,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
           <Grid2 container spacing={2}>
             {bin && (<BinInfo bin={bin} close={close} setBins={setBins}/>)}
           </Grid2>
-          {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style} shippingPrices={shippingPrices} setShippingPrices={setShippingPrices} timer={timer} weight={weight} setGetWeight={setGetWeight} getWeight={getWeight} setDimensions={setDimensions} dimensions={dimensions}/>}
+          {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style} shippingPrices={shippingPrices} setShippingPrices={setShippingPrices} timer={timer} weight={weight} setGetWeight={setGetWeight} getWeight={getWeight} setDimensions={setDimensions} dimensions={dimensions} station={station} close={close} label={label} setLabel={setLabel} closeTimer={closeTimer} setCloseTimer={setCloseTimer} stopClose={stopClose} setStopClose={setStopClose} setBins={setBins}/>}
           {order && (
             <Card sx={{height: `${style.height * 0.75}px`, overflow: "auto"}}>
               <Box sx={{display: "flex", flexDirection: 'row', justifyContent: "space-evenly"}}>

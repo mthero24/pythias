@@ -21,7 +21,7 @@ const getImages = async (front, back, style, item)=>{
         "s3.wasabisys.com/teeshirtpalace-node-dev/",
         "images2.teeshirtpalace.com/"
         ) + "?width=400";
-    return  {frontDesign, backDesign, styleImage}
+    return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName}
 }
 export async function GET(req = NextResponse) {
     let config = JSON.parse(process.env.dtf);
@@ -64,13 +64,15 @@ export async function GET(req = NextResponse) {
 
             console.log(item, "item");
             // console.log(style)
-            const {styleImage, frontDesign, backDesign} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
+            const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
             return NextResponse.json( {error: false,
                     msg: "here is the design",
                     pieceID: item.pieceId,
                     styleImage,
                     frontDesign,
-                    backDesign
+                    backDesign,
+                    styleCode,
+                    colorName
             })
          
         }else return NextResponse.json({error: true, msg: "Item Canceled"});
@@ -84,10 +86,11 @@ export async function POST(req = NextApiRequest) {
       internalIP: config.localIP,
     });
     let data = await req.json()
+    console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("styleV2", "code envleopes box sizes images")
-    //console.log(item, "item", item.color, "item color")
+    console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
         let envleopes = item.styleV2.envleopes.filter(
             (envelope) => envelope.size?.toString() == item.size.toString()
@@ -104,7 +107,7 @@ export async function POST(req = NextApiRequest) {
         );
         }
         let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
-        let imageres = createImage({
+        let imageres = await createImage({
             url: item.design?.front,
             pieceID: item.pieceId,
             horizontal: false,
@@ -137,8 +140,8 @@ export async function POST(req = NextApiRequest) {
             date: new Date(Date.now()),
             //user: user._id,
           };
-        const {styleImage, frontDesign, backDesign} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
-        return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage });
+        const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
+        return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
     } else {

@@ -8,6 +8,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
+    "electron": "^34.0.2",
     "prettier": "^3.2.5",
     "turbo": "^2.3.3",
     "typescript": "5.5.4"
@@ -31,15 +32,18 @@
     "@pythias/dtf": "^0.0.0",
     "@pythias/shipping": "^0.0.0",
     "@repo/ui": "^0.0.0",
+    "atob": "^2.1.2",
     "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
+    "btoa": "^1.2.1",
     "canvas": "^3.1.0",
     "changedpi": "^1.0.4",
     "csvtojson": "^2.0.10",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "ipp": "^2.0.1",
     "jimp": "^1.6.0",
     "mongoose": "^8.9.5",
     "next-auth": "^4.24.11",

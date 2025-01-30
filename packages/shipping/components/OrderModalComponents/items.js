@@ -20,7 +20,7 @@ export function Items({order, style}){
                 sx={{ height: style.height * 0.41, maxHeight: style.height * 0.41, overflow: "auto", margin: "1%" }}
             >
             <Typography fontSize="1.4rem" fontWeight={600} textAlign="center">Order Items</Typography>
-            {order.items.map((it, i) => (
+            {order.items.filter(i=> !i.canceled && !i.shipped).map((it, i) => (
                 <Card
                 key={i}
                 sx={{
