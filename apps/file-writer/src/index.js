@@ -87,6 +87,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 450,
     height: 495,
+    icon: path.join(__dirname, '/public/logo-dark-512.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },

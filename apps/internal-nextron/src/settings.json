@@ -1,0 +1,15 @@
+{
+    "shipping": {
+        "scales": {},
+        "printers": {}
+    },
+    "dtf": {
+        "printers": {}
+    },
+    "roq": {
+        "ip": ""
+    },
+    "labelPrinter":{
+        "ip": ""
+    }
+}
