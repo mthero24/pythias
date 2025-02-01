@@ -4,28 +4,24 @@ import started from 'electron-squirrel-startup';
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import os from "os";
-import { exec } from "child_process";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
-import fs from "fs";
-import sharp from "sharp";
 import express from "express";
 import bodyParser from "body-parser";
 import apiRoutes from "./routes/api.js"
+import uiRoutes from "./routes/ui.js"
 const desktopPath = os.homedir() + "/Documents/hotfolder/";
-
 const publicDirectoryPath = path.join(__dirname, "public");
 let lastFileWritten = "Waiting for file to write";
 const exp = express();
-exp.set("view engine", "ejs");
+exp.set('view engine', 'ejs');
 exp.set("views", __dirname + "/views/");
 exp.use(express.static(process.cwd() + "/views"));
 exp.use(express.static(publicDirectoryPath));
-exp.use("/api", apiRoutes)
 exp.use(
   bodyParser.urlencoded({
     limit: "1000000gb",
@@ -34,19 +30,24 @@ exp.use(
   })
 );
 exp.use(bodyParser.json({ limit: "1000000gb" }));
-exp.get("/", function (req, res) {
-  res.render("index");
-});
+exp.use("/api", apiRoutes)
+exp.use("/", uiRoutes)
 
 
 exp.listen(3005, async function () {
   console.log("writer listening on port 3500");
 });
+
+//electron functions
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 1500,
+    //fullscreen: true,
+    //autoHideMenuBar: true,
+    //kiosk: true,
+    //skipTaskbar: true,
     icon: path.join(__dirname, '/public/logo-dark-512.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -58,7 +59,7 @@ const createWindow = () => {
   mainWindow.loadURL("http://localhost:3005");
 
   // Open the DevTools.
- // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished
