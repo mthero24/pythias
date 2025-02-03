@@ -4,7 +4,7 @@ module.exports = {
         name: "nextjs-web",
         cwd: "./", // Point to the web app's directory
         script: "node_modules/next/dist/bin/next", // Use Next.js binary
-        args: "start -p 3006", // Start on port 3000
+        args: "start -p 3000", // Start on port 3000
         exec_mode: "cluster", // Enable cluster mode to use multiple CPUs
         instances: "max", // Use all available CPU cores
         env: {
