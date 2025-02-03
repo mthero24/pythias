@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const {cluster0} = require('../lib/connection');
+import mongoose from "mongoose";
+import { TSPprints }  from "../lib/connection";
 
 var SchemaObj = new mongoose.Schema({
     sickDaysPerYear: {type: Number, default: 0},

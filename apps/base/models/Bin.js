@@ -1,5 +1,5 @@
-const mongoose= require("mongoose")
-const {TSPprints}= require("../lib/connection")
+import mongoose from "mongoose";
+import { TSPprints }  from "../lib/connection";
 import Order from "./Order"
 let schema = new mongoose.Schema({
     number: {type: Number, unique: true},

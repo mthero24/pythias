@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const { TSPprints } = require("../lib/connection");
+import mongoose from "mongoose";
+import { TSPprints }  from "../lib/connection";
 import Color from "./Color";
 const Schema = mongoose.Schema;
 const SchemaObj = new Schema(

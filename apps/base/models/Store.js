@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const { TSPprints } = require("../lib/connection");
+import { TSPprints }  from "../lib/connection";
 import StyleV2 from "./StyleV2";
 
 const schema = new mongoose.Schema({

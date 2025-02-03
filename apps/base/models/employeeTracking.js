@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const { TSPprints } = require("../lib/connection");
+import { TSPprints }  from "../lib/connection";
 import User from "./User"
 import Order from "./Order";
 import Design from "./Design";

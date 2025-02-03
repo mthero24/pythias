@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { TSPprints } from "../lib/connection";
+import { TSPprints }  from "../lib/connection";
 
 const schema = new mongoose.Schema({
   user: {

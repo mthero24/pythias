@@ -13,7 +13,7 @@ function makeNewConnection(uri) {
     db.on('connected', function () {
         mongoose.set('debug', function (col, method, query, doc) {
             var label = `MongoDB :: ${this.conn.name} ${col}.${method}(${JSON.stringify(query)},${JSON.stringify(doc)})`;
-            // console.time(label); // start timer
+            console.time(label); // start timer
     
             // Execute the query and measure the time it took to run.
             this.conn.db.collection(col).find(query).toArray(function(err, result) {
@@ -32,6 +32,6 @@ function makeNewConnection(uri) {
     return db;
 }
 export const TSPprints = makeNewConnection(process.env.mongoURL);
-export const cluster1 = makeNewConnection("mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/?retryWrites=true&w=majority");
-export const cluster0 = makeNewConnection("mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/?retryWrites=true&w=majority");
+export const cluster0 = makeNewConnection(process.env.MONGODB_URI_VENDORS);
+export const cluster1 = makeNewConnection(process.env.MONGODB_URI_STYLES);
 

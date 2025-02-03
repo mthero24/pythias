@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
+import { TSPprints }  from "../lib/connection";
 import Color from "./Color";
 import Size from "./Size";
 import Style from "./Style";
 import Design from "./Design";
-const { TSPprints } = require("../lib/connection");
 
 const schema = new mongoose.Schema({
   sku: {type: String, required: true},

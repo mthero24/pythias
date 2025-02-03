@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const {cluster1} = require('../lib/connection');
+import mongoose from 'mongoose';
+import {cluster1} from "../lib/connection";
 const Schema = mongoose.Schema;
 const SchemaObj = new Schema({
     style_id: Number,

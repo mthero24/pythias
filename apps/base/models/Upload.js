@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const {TSPprints} = require('../lib/connection');
+import { TSPprints }  from "../lib/connection";
 
 const schema = new mongoose.Schema({
     name: {type: String, required:true},

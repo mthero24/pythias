@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
+import { TSPprints }  from "../lib/connection";
 import bcrypt from "bcryptjs";
-const { TSPprints } = require("../lib/connection");
 
 const schema = new mongoose.Schema({
   password: {

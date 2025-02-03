@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
+import { TSPprints }  from "../lib/connection";
 import Color from "./Color";
 import Size from "./Size";
 import Style from "./Style";
 import Item from "./Items";
 import Store from "./Store";
 import Product from "./Product";
-const { TSPprints } = require("../lib/connection");
+
 const schema = new mongoose.Schema({
   date: {
     type: Date,
