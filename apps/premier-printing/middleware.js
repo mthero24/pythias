@@ -1,37 +1,37 @@
-import { NextResponse, userAgent } from "next/server";
+import {NextRequest, NextResponse, userAgent } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 const protectedRoutes = [
   {
     path: "/admin",
-    roles: ["admin"],
+    roles: ["admin", "production"],
   },
   {
     path: "/account",
-    roles: ["admin", "user"],
+    roles: ["admin", "production"],
   },
   {
     path: "/production",
-    roles: ["admin", "user"],
+    roles: ["admin", "production"],
   },
   {
     path: "/api/admin",
-    roles: ["admin"],
+    roles: ["admin", "production"],
   },
   {
     path: "/api/production",
-    roles: ["admin"],
+    roles: ["admin", "production"],
   },
   {
     path: "/api/account",
-    roles: ["customer", "admin", "user"],
+    roles: ["admin", "production"],
   },
 ];
 
-export async function middleware(req) {
+export async function middleware(req=NextRequest) {
     const protectedRoute = protectedRoutes.find((route) =>
-      pathname.startsWith(route.path)
-    );
+       req.nextUrl.pathname.startsWith(route.path)
+     );
     if (protectedRoute) {
       const token = await getToken({ req });
       console.log(token, "__TOKEN__");
@@ -44,7 +44,7 @@ export async function middleware(req) {
     return NextResponse.next({
       request: {
         // New request headers
-        headers: requestHeaders,
+        //headers: requestHeaders,
       },
     });
 }

@@ -2,8 +2,9 @@ import {Main} from "./main";
 import Blank from "@/modals/Blanks";   
 
 export default async function Blanks(){
-    let blanks = await Blank.find({}).select("code name vendor department sales _id").lean();
-    blanks = JSON.parse(JSON.stringify(blanks))
+    let blanks = await Blank.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});
+    if(blanks)blanks = JSON.parse(JSON.stringify(blanks))
+      else blanks = []
     return (
       <Main blanks={blanks}/>
     )

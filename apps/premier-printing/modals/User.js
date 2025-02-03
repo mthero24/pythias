@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { trusted } from "mongoose";
 const { PremierPrinting } = require("../lib/connection");
 
 const schema = new mongoose.Schema({
@@ -9,8 +10,6 @@ const schema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,
-    unique: [true, "Account already exists with that email"],
   },
   phoneNumber: {
     type: String,
@@ -21,6 +20,8 @@ const schema = new mongoose.Schema({
   lastName: {
     type: String,
   },
+  userName: {type: String, required: true,
+    unique: [true, "Account already exists with that user name"],},
   addresses: [
     {
       name: { type: String, default: "" },
@@ -34,10 +35,7 @@ const schema = new mongoose.Schema({
       billingAddress: { type: Boolean },
     },
   ],
-  percentageDiscount: { type: Number, default: 0 },
   apiKey: { type: String },
-  isAdmin: { type: Boolean, default: false },
-  authorizeCustomerProfileId: String,
   alerts: [
     {
       message: String,
@@ -45,35 +43,8 @@ const schema = new mongoose.Schema({
       read: Boolean,
     },
   ],
-  shopifyAccessToken: { type: String },
-  shopifyShopName: { type: String },
-  etsyAccessToken: { type: String },
-  etsyRefreshToken: { type: String },
-  type: { type: String, default: "customer" },
-  isSalesMan: { type: Boolean, default: false },
-  prices: {},
-  managed: { type: Boolean, default: false },
+  role: { type: String, default: "production" },
   manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  commission: { type: Number, default: 0 },
-  affiliateCode: { type: String, unique: true },
-  appliedAffiliateCode: { type: String },
-  balance: { type: Number, default: 0.0 },
-  paymentMethods: {
-    primaryPaymentMethod: {
-      paymentProfileId: String,
-      paymentType: String,
-      paymentNumber: String,
-      source: String,
-      provider: String,
-    },
-    secondaryPaymentMethods: [{}],
-  },
-  credit: {
-    approved: { type: Boolean, default: false },
-    amountApproved: { type: Number, default: 0 },
-    balance: { type: Number, default: 0 },
-  },
-  tierQuantity: { type: Number, default: 0 },
 });
 
 schema.pre("save", async function () {

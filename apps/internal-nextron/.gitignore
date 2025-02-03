@@ -90,4 +90,6 @@ typings/
 
 # Electron-Forge
 out/
-src/logs
+src/logs.json
+src/users.json
+src/apikeys.json
