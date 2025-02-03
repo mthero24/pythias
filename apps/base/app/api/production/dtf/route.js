@@ -27,7 +27,8 @@ export async function GET(req = NextResponse) {
     let config = JSON.parse(process.env.dtf);
     console.log(config)
     setConfig({
-        internalIP: config.localIP
+        internalIP: config.localIP,
+        apiKey: config.apiKey
     })
     let pieceID
     let item
@@ -81,9 +82,10 @@ export async function GET(req = NextResponse) {
 
 export async function POST(req = NextApiRequest) {
     let config = JSON.parse(process.env.dtf);
-   // console.log(config);
+    console.log(config);
     setConfig({
       internalIP: config.localIP,
+      apiKey: config.apiKey,
     });
     let data = await req.json()
     console.log(data, "data")

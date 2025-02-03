@@ -1,1 +1,1 @@
-{"shipping":{"scales":{"station1":"182.168.5.20"},"printers":{"station1":"192.168.1.136"}},"dtf":{"printer1":"192.168.1.156"},"roq":{"roq1":"192.168.1.13"},"labelPrinters":{"printer1":"192.168.1.50"},"sublimation":{"printer1":"192.168.1.50"},"dtgPrinters":{"printer1":"192.168.1.50"}}
+{"shipping":{"scales":{"station1":"182.168.5.20"},"printers":{"station1":"192.168.1.136"}},"dtf":{"printer1":"localhost:3500"},"roq":{"roq1":"192.168.1.13"},"labelPrinters":{"printer1":"192.168.1.50"},"sublimation":{"printer1":"192.168.1.50"},"dtgPrinters":{"printer1":"192.168.1.50"}}

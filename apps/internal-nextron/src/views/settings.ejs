@@ -9,23 +9,10 @@
     <script src="https://cdn.jsdelivr.net/npm/axios@1.7.9/dist/axios.min.js"></script>
   </head>
   <body style="background: #faf9f9">
-    <nav class="" style="background: #b4d6b4;">
-      <div class="row">
-        <div class="col-sm-3 ">
-          <a class="" href="/"><img src="/logo-dark-small.png" alt="logo" width="100" height="auto" style="margin-left: 20%;"/></a>
-        </div>
-        <div class="col-sm-7">
-        </div>
-        <div class="col-sm-2">
-          <div style="margin-top: 15%; padding: 2%">
-            <a href="/settings"><i class="fa-solid fa-gear" style="color: #332c2c; font-size: 2rem; text-align: right;"></i></a>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <%- include('partials/menu.ejs') %>
     <div class="container-fluid">
         <div class="row" style="margin-top: 2%;">
-          <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="col-sm-6 col-md-4">
             <h2 style="font-size: 1.2rem; text-align: center;">Shipping Settings</h2>
             <div class="card" style="width: 100%; margin-bottom: 1%">
               <div class="card-body">
@@ -68,7 +55,7 @@
               </div>
             </div>
           </div>
-          <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="col-sm-6 col-md-4 ">
             <h2 style="font-size: 1.2rem; text-align: center;">DTF Settings</h2>
             <div class="card" style="width: 100%; margin-bottom: 1%">
               <div class="card-body">
@@ -91,7 +78,7 @@
               </div>
             </div>
           </div>
-          <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="col-sm-6 col-md-4 ">
             <h2 style="font-size: 1.2rem; text-align: center;">ROQ Settings</h2>
             <div class="card" style="width: 100%; margin-bottom: 1%">
               <div class="card-body">
@@ -114,7 +101,7 @@
               </div>
             </div>
           </div>
-          <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="col-sm-6 col-md-4 ">
             <h2 style="font-size: 1.2rem; text-align: center;">Label Printer Settings</h2>
             <div class="card" style="width: 100%; margin-bottom: 1%">
               <div class="card-body">
@@ -137,7 +124,7 @@
               </div>
             </div>
           </div>
-          <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="col-sm-6 col-md-4 ">
             <h2 style="font-size: 1.2rem; text-align: center;">Sublimation Printer Settings</h2>
             <div class="card" style="width: 100%; margin-bottom: 1%">
               <div class="card-body">
@@ -160,7 +147,7 @@
               </div>
             </div>
           </div>
-          <div class="col-sm-6 col-md-4 col-lg-3">
+          <div class="col-sm-6 col-md-4 ">
             <h2 style="font-size: 1.2rem; text-align: center;">DTG Printer Settings</h2>
             <div class="card" style="width: 100%; margin-bottom: 1%">
               <div class="card-body">
@@ -187,6 +174,7 @@
     </div>
     <script type="text/javascript">
       let settings = JSON.parse('<%-JSON.stringify(settings)%>')
+      let key = '<%=key%>'
       let editParam
       let edit = (type, param, ip)=>{
         editParam = param
@@ -196,9 +184,12 @@
       }
       const updateServer = async (settings)=>{
         console.log("updateServer")
-        let res = await axios.post("/update-settings", {settings})
-        console.log(res.data)
-        if(res.data.error) alert(res.data.message)
+        let res = await axios.post("/update-settings", {settings, key})
+        //console.log(res.data)
+        if(res.data.error) {
+          alert(res.data.msg)
+          if(res.data.msg == "invalid key") location.href = "/login"
+        }
         else console.log("updated")
       }
       let save = (type) =>{
