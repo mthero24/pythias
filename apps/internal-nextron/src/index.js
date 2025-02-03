@@ -1,9 +1,11 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import os from "os";
+import pkg from "pdf-to-printer";
+let {print} = pkg
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -39,7 +41,7 @@ exp.listen(3005, async function () {
 });
 
 //electron functions
-const createWindow = () => {
+const createWindow = async () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1000,
@@ -59,9 +61,19 @@ const createWindow = () => {
   mainWindow.loadURL("http://localhost:3005");
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
+  // const printers = await mainWindow.webContents.getPrintersAsync();
+  // console.log(printers);
+  // print(path.join(__dirname, "/assets/DecisionLetter20250129082714.pdf"), {printer:"HP OfficeJet Pro 8020 series [63D443]"});
 };
 
+ipcMain.on("print-document", (event, options) => {
+  // Use a printing library (like `pdf-to-printer`) to print the received HTML
+  // ... handle printing logic here
+  print(path.join(__dirname, `/assets/${options.file}`), {
+    printer: options.printer,
+  });
+});
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

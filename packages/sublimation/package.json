@@ -1,0 +1,15 @@
+{
+  "name": "@pythias/sublimation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "exports": {
+    ".": "./exports"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "michael thero",
+  "license": "ISC",
+  "description": ""
+}

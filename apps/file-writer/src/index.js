@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { fileURLToPath } from 'url'
@@ -30,6 +30,9 @@ exp.use(bodyParser.json({ limit: "1000000gb" }));
 exp.get('/', function(req, res) {
     res.render('index', {lastFileWritten});
 });
+exp.get("/settings", (req,res)=>{
+  res.render("settings")
+})
 exp.get('/update', function(req, res) {
   res.send({lastFileWritten});
 });
@@ -86,19 +89,29 @@ const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 450,
-    height: 495,
+    height: 300,
     icon: path.join(__dirname, '/public/logo-dark-512.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
-
+  ipcMain.handle("dialog:openDirectory", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      properties: ["openDirectory"],
+    });
+    if (canceled) {
+      return;
+    } else {
+      return filePaths[0];
+    }
+  });
   // // and load the index.html of the app.
   // mainWindow.loadFile(path.join(__dirname, 'index.html'));
   mainWindow.loadURL("http://localhost:3500")
+  mainWindow.maximize();
 
   // Open the DevTools.
-  //mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished
