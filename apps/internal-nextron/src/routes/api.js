@@ -4,18 +4,20 @@ import {getSettings}from "../functions/settings.js"
 import { print } from "../functions/printLabel.js";
 import { getWeight } from "../functions/getWeight.js";
 import { addOutput } from "../functions/output.js";
+import axios from "axios";
 router.post("/dtf", async (req,res)=>{
+    const settings = getSettings()
     let data = req.body
     let resData
     console.log(data)
-    addOutput(`Sent image to DTF Printer PieceID: ${data.piceID}`)
-    let resp = await axios.post(`http://${settings.dtf[data.dtf]}/`, {...data}).catch(e=>{resData = e.response.data})
+    addOutput(`Sent image to DTF Printer ${data.printer} PieceID: ${data.sku}`)
+    let resp = await axios.post(`http://${settings.dtf[data.printer]}/`, {...data}).catch(e=>{resData = e.response.data})
     if (resp) return res.send(resp.data);
     else if (resData) {
-      addOutput(`Error writing image on DTF Printer PieceID: ${data.piceID}`)
+      addOutput(`Error writing image on DTF Printer ${data.printer} PieceID: ${data.sku}`)
       return res.send(resData);
     }else
-    addOutput(`Error Could Not Reach DTF Printer PieceID: ${data.piceID}`)
+    addOutput(`Error Could Not Reach DTF Printer ${data.printer} PieceID: ${data.sku}`)
       return res.send({
         error: true,
         msg: "Could not reach file writer!",
