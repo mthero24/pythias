@@ -23,7 +23,7 @@ const getImages = async (front, back, style, item)=>{
         ) + "?width=400";
     return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName}
 }
-export async function GET(req = NextResponse) {
+export async function GET(req = NextApiResponse) {
     let config = JSON.parse(process.env.dtf);
     console.log(config)
     setConfig({
