@@ -222,3 +222,82 @@
 2025-02-03 18:38 -05:00: MongoDB :: connected premierprinting
 2025-02-03 18:38 -05:00: MongoDB :: connected premierprinting
 2025-02-03 18:38 -05:00: MongoDB :: connected premierprinting
+2025-02-03 18:51 -05:00:    ▲ Next.js 15.1.6
+2025-02-03 18:51 -05:00:    - Local:        http://localhost:3000
+2025-02-03 18:51 -05:00:    - Network:      http://192.168.1.14:3000
+2025-02-03 18:51 -05:00: 
+2025-02-03 18:51 -05:00:  ✓ Starting...
+2025-02-03 18:51 -05:00:  ✓ Ready in 589ms
+2025-02-03 18:51 -05:00: MongoDB :: connected premierprinting
+2025-02-03 18:51 -05:00: null '__TOKEN__'
+2025-02-03 18:51 -05:00: undefined '__ROLE__'
+2025-02-03 18:51 -05:00: null '__TOKEN__'
+2025-02-03 18:51 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:53 -05:00: null '__TOKEN__'
+2025-02-03 18:53 -05:00: undefined '__ROLE__'
+2025-02-03 18:54 -05:00: +++++++++++++++++ {
+  userName: 'mthero24',
+  password: 'BadaBing@12',
+  redirect: 'false',
+  csrfToken: '85a53c8ba5df0de264ec75c755f9b88db75589c187644b3d1583bab466974ef0',
+  callbackUrl: 'http://localhost:3000/login',
+  json: 'true'
+}
+2025-02-03 18:54 -05:00: {
+  _id: new ObjectId('67a1134beb7a68c79a36d99c'),
+  password: '$2a$08$LKIrBt.BCZDpq9S/HaxbHu3d1DBBI6GUjiAzEQvPqw4LLOgmP2poa',
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  addresses: [],
+  alerts: [],
+  __v: 0
+}
+2025-02-03 18:54 -05:00: false
+2025-02-03 18:54 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738626853,
+  exp: 1741218853,
+  jti: '031be268-eeac-4cc4-a815-2db9d34d003b'
+} '__TOKEN__'
+2025-02-03 18:54 -05:00: production __ROLE__
+2025-02-03 18:54 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738626853,
+  exp: 1741218853,
+  jti: '031be268-eeac-4cc4-a815-2db9d34d003b'
+} '__TOKEN__'
+2025-02-03 18:54 -05:00: production __ROLE__
+2025-02-03 18:54 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738626853,
+  exp: 1741218853,
+  jti: '031be268-eeac-4cc4-a815-2db9d34d003b'
+} '__TOKEN__'
+2025-02-03 18:54 -05:00: production __ROLE__
