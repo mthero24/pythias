@@ -4,22 +4,6 @@ import {getSettings}from "../functions/settings.js"
 import { print } from "../functions/printLabel.js";
 import { getWeight } from "../functions/getWeight.js";
 import { addOutput } from "../functions/output.js";
-<<<<<<< HEAD
-import axios from "axios";
-router.post("/dtf", async (req,res)=>{
-    const settings = getSettings()
-    let data = req.body
-    let resData
-    console.log(data)
-    addOutput(`Sent image to DTF Printer ${data.printer} PieceID: ${data.sku}`)
-    let resp = await axios.post(`http://${settings.dtf[data.printer]}/`, {...data}).catch(e=>{resData = e.response.data})
-    if (resp) return res.send(resp.data);
-    else if (resData) {
-      addOutput(`Error writing image on DTF Printer ${data.printer} PieceID: ${data.sku}`)
-      return res.send(resData);
-    }else
-    addOutput(`Error Could Not Reach DTF Printer ${data.printer} PieceID: ${data.sku}`)
-=======
 import { getKeys } from "../functions/user.js";
 import axios from "axios"
 const checkKeys = (req,res,next)=>{
@@ -48,7 +32,6 @@ router.post("/dtf", checkKeys, async (req,res)=>{
       return res.send(resData);
     }else
     addOutput(`Error Could Not Reach DTF Printer PieceID: ${data.sku}`)
->>>>>>> 83656d9f4ca7ec389c4960430f86ac00a356ad23
       return res.send({
         error: true,
         msg: "Could not reach file writer!",
