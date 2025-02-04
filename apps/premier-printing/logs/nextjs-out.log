@@ -301,3 +301,12 @@
   jti: '031be268-eeac-4cc4-a815-2db9d34d003b'
 } '__TOKEN__'
 2025-02-03 18:54 -05:00: production __ROLE__
+2025-02-03 18:59 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738626853,
+  exp: 1741218853,
+  jti: '031be268-eeac-4cc4-a815-2db9d34d003b'
+} '__TOKEN__'
+2025-02-03 18:59 -05:00: production __ROLE__

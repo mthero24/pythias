@@ -44,7 +44,7 @@ export async function middleware(req=NextRequest) {
     return NextResponse.next({
       request: {
         // New request headers
-        headers: requestHeaders,
+        //headers: requestHeaders,
       },
     });
 }
