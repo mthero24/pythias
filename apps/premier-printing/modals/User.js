@@ -65,6 +65,7 @@ schema.methods.comparePassword = async function (password) {
   if (!password) throw new Error("Password is missing");
   try {
     const result = await bcrypt.compare(password, this.password);
+    console.log("++++++", result, "++++++++++")
     return result;
   } catch (err) {
     console.log(err);

@@ -1,5 +1,5 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import User from "@/modals/User";
+import User from "./models/User";
 import bcrypt from "bcryptjs";
 
 export const authOptions = {
@@ -17,8 +17,8 @@ export const authOptions = {
         var salt = bcrypt.genSaltSync(10);
         console.log("+++++++++++++++++", credentials)
         let userName = credentials.userName.toLowerCase();
-        const user = await User.findOne({ userName: userName }).lean();
-        
+        const user = await User.findOne({ email: userName }).lean();
+        console.log(user.type, await bcrypt.compare(credentials.password, user.password))
         if (!user) {
           throw new Error("Invalid credentials, please try again!");
         }
@@ -38,12 +38,13 @@ export const authOptions = {
       if (user) {
         token = {
           ...token,
-          userName: user.userName,
-          role: user.role,
+          userName: user.email,
+          role: user.type,
           firstName: user.firstName,
           lastName: user.lastName,
         };
       }
+      console.log(token, "jwt")
       return token;
     },
     session: ({ session, token }) => {
@@ -55,11 +56,12 @@ export const authOptions = {
         _id: token._id,
         role: token.role,
       };
+      console.log(session, "session", token, "token")
       return session;
     },
   },
   pages: {
     signIn: "/login",
-    error: "/login?error=afddsa"
+    error: "/login"
   },
 };

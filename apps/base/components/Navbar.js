@@ -6,6 +6,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
+import {signOut} from "next-auth/react"
 import {
   Divider,
   Drawer,
@@ -17,6 +18,7 @@ import {
 import Link from "next/link";
 import { theme, themeDark } from "../UI/Theme";
 import Image from "next/image"
+import { sign } from "crypto";
 export default function ButtonAppBar() {
   const [drawerVisible, setDrawerVisible] = useState(false);
 
@@ -50,7 +52,7 @@ export default function ButtonAppBar() {
               />
             </Link>
           </Box>
-          <Button color="inherit">
+          <Button color="inherit" onClick={()=>{signOut({callbackUrl: "/"})}}>
             Logout
           </Button>
         </Toolbar>

@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
+import { signOut } from "next-auth/react";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
   Divider,
@@ -51,7 +52,7 @@ export default function ButtonAppBar() {
               />
             </Link>
           </Box>
-          <Button sx={{color: "#565660"}}>
+          <Button sx={{color: "#565660"}} onClick={()=>{signOut({ callbackUrl: "/" })}}>
             Logout
           </Button>
         </Toolbar>
