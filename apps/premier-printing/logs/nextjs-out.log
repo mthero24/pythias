@@ -310,3 +310,45 @@
   jti: '031be268-eeac-4cc4-a815-2db9d34d003b'
 } '__TOKEN__'
 2025-02-03 18:59 -05:00: production __ROLE__
+2025-02-03 19:22 -05:00: null '__TOKEN__'
+2025-02-03 19:22 -05:00: undefined '__ROLE__'
+2025-02-03 19:27 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738609485,
+  exp: 1741201485,
+  jti: '4a2eea9d-c679-4883-957b-45419db59ff2'
+} '__TOKEN__'
+2025-02-03 19:27 -05:00: production __ROLE__
+2025-02-03 19:27 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738609485,
+  exp: 1741201485,
+  jti: '4a2eea9d-c679-4883-957b-45419db59ff2'
+} '__TOKEN__'
+2025-02-03 19:27 -05:00: production __ROLE__
+2025-02-03 19:27 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738609485,
+  exp: 1741201485,
+  jti: '4a2eea9d-c679-4883-957b-45419db59ff2'
+} '__TOKEN__'
+2025-02-03 19:27 -05:00: production __ROLE__
+2025-02-03 19:27 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  userName: 'mthero24',
+  role: 'production',
+  iat: 1738609485,
+  exp: 1741201485,
+  jti: '4a2eea9d-c679-4883-957b-45419db59ff2'
+} '__TOKEN__'
+2025-02-03 19:27 -05:00: production __ROLE__
+2025-02-03 19:27 -05:00: null '__TOKEN__'
+2025-02-03 19:27 -05:00: undefined '__ROLE__'
+2025-02-03 19:27 -05:00: null '__TOKEN__'
+2025-02-03 19:27 -05:00: undefined '__ROLE__'
