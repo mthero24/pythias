@@ -11,7 +11,7 @@ import axios from "axios";
 
 export const Main = ({type})=>{
     const [showPassword, setShowPassword] = useState(false)
-    const [data, setData] = useState({userName: "", password: "", email: "", firstName: "", lastName: ""})
+    const [data, setData] = useState("")
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     
     const handleMouseDownPassword = (event) => {
@@ -22,41 +22,31 @@ export const Main = ({type})=>{
       event.preventDefault();
     };
     const handleLogin = async()=>{
-        if(type == "register"){
-            let result = await axios.post("/api/auth/register", { ...data });
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            const response = await signIn("credentials", {
-                userName: data.userName,
-                first_name: data.firstName,
-                last_name: data.lastName,
-                email: data.email,
-                password: data.password,
-                redirect: false,
-            });
-            console.log(response, "response");
-            if (response.ok) {
-              return location.replace("/account");
+        let username = `${data.split("-")[0].toLowerCase().replace(/;/g, "")}@teeshirtpalace.com`
+        let password = data.split("-")[1].toLowerCase()
+        let newpassword = ""
+        for(let i = 0; i < password.length; i++){
+            if(password[i] == ";") {
+                newpassword = newpassword + password[i + 1].toUpperCase()
+                i++
             }
-            console.log(response);
-        }else{
-            const response = await signIn("credentials", {
-                userName: data.userName,
-                password: data.password,
-                redirect: false,
-            });
-            if (response.ok) {
-                return location.replace("/account");
-            }else{
-                return alert(response.error);
-            }
+            else if(password[i] != ";") newpassword = newpassword + password[i]
+
         }
+        const response = await signIn("credentials", {
+            userName: username,
+            password: newpassword,
+            redirect: false,
+        });
+        if (response.ok) {
+            return location.replace("/production");
+        }else{
+            return alert(response.error);
+        }
+        
     }
     const updateData = (label)=>{
-        console.log(label)
-        let update = {...data}
-        console.log(update[label])
-        update[label] = event.target.value
-        setData({...update})
+        setData(event.target.value)
     }
     return(
         <Box sx={{backgroundImage: `url(/2270.jpg)`, backgroundRepeat: "no-repeat", backgroundPosition: "center", backgroundSize: "cover", width: "100%", height: "100vh" }}>
@@ -68,41 +58,10 @@ export const Main = ({type})=>{
                 <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", background: "#fff", marginTop: "4%"}}>
                     <Box>
                         <Image src={type== "register"? register: login} width={400} height={400} alt="login" style={{width: "100%", height: "auto", padding: "3%"}}/>
-                        <Card sx={{padding: "10%"}}>
-                            <TextField fullWidth label="User Name" value={data.userName} sx={{marginBottom: "2%"}} onChange={()=>{updateData("userName")}} />
-                            {type == "register" && (
-                                <Box>
-                                    <TextField label="First Name"  value={data.firstName} sx={{width: "49%", marginRight: "2%", marginBottom: "2%"}}  onChange={()=>{updateData("firstName")}} />
-                                    <TextField label="last Name"  value={data.lastName} sx={{width: "49%", marginBottom: "2%"}}  onChange={()=>{updateData("lastName")}}/>
-                                    <TextField fullWidth label="Email" value={data.email} sx={{marginBottom: "2%"}}  onChange={()=>{updateData("email")}}/>
-                                </Box>
-                            )}
-                            <FormControl fullWidth sx={{ width: '100%', marginBottom: "2%" }} variant="outlined">
-                                <InputLabel htmlFor="outlined-adornment-password">Password</InputLabel>
-                                <OutlinedInput
-                                    id="outlined-adornment-password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    value={data.password}
-                                    onChange={()=>{updateData("password")}}
-                                    endAdornment={
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                        aria-label={
-                                            showPassword ? 'hide the password' : 'display the password'
-                                        }
-                                        onClick={handleClickShowPassword}
-                                        onMouseDown={handleMouseDownPassword}
-                                        onMouseUp={handleMouseUpPassword}
-                                        edge="end"
-                                        >
-                                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                    }
-                                    label="Password"
-                                />
-                            </FormControl> 
-                            <Button fullWidth sx={{background: "#565660", color: "#fff"}} onClick={handleLogin}>{type}</Button>
+                        <Card sx={{padding: "10%"}}>      
+                            <TextField label="Scan" fullWidth type="password"  value={data} sx={{ marginBottom: "2%"}}  onChange={()=>{updateData()}} onKeyDown={()=>{
+                                if(event.key == 13 || event.key == "Enter" || event.key == "ENTER") handleLogin()
+                            }} />
                         </Card>
                     </Box>
                 </Box>

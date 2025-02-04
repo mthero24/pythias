@@ -266,3 +266,91 @@ For more information, check the blog post at https://a.co/cUPnyil
     at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
     at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
     at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+2025-02-04 11:11 -05:00:  ⨯ Error: Expected to use Webpack bindings (react-server-dom-webpack/server.edge) for React but the current process is referencing '__esModule' from the Turbopack bindings (react-server-dom-turbopack/server.edge). This is likely a bug in our integration of the Next.js server runtime.
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:138:79)
+    at [project]/apps/premier-printing/components/Navbar.js (client proxy) <module evaluation> (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:73:284)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+    at [project]/apps/premier-printing/components/Navbar.js [app-rsc] (ecmascript) (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:98:166)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+2025-02-04 11:29 -05:00:  ⨯ Error: Expected to use Webpack bindings (react-server-dom-webpack/server.edge) for React but the current process is referencing '__esModule' from the Turbopack bindings (react-server-dom-turbopack/server.edge). This is likely a bug in our integration of the Next.js server runtime.
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:138:79)
+    at [project]/apps/premier-printing/components/Navbar.js (client proxy) <module evaluation> (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:73:284)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+    at [project]/apps/premier-printing/components/Navbar.js [app-rsc] (ecmascript) (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:98:166)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+2025-02-04 14:54 -05:00:  ⨯ Error: Expected to use Webpack bindings (react-server-dom-webpack/server.edge) for React but the current process is referencing '__esModule' from the Turbopack bindings (react-server-dom-turbopack/server.edge). This is likely a bug in our integration of the Next.js server runtime.
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:138:79)
+    at [project]/apps/premier-printing/components/Navbar.js (client proxy) <module evaluation> (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:73:284)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+    at [project]/apps/premier-printing/components/Navbar.js [app-rsc] (ecmascript) (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:98:166)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+2025-02-04 14:55 -05:00:  ⨯ Error: Expected to use Webpack bindings (react-server-dom-webpack/server.edge) for React but the current process is referencing '__esModule' from the Turbopack bindings (react-server-dom-turbopack/server.edge). This is likely a bug in our integration of the Next.js server runtime.
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:138:79)
+    at [project]/apps/premier-printing/components/Navbar.js (client proxy) <module evaluation> (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:73:284)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+    at [project]/apps/premier-printing/components/Navbar.js [app-rsc] (ecmascript) (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[root of the server]__c6ac6b._.js:98:166)
+    at instantiateModule (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:590:23)
+    at getOrInstantiateModuleFromParent (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:645:12)
+    at esmImport (C:\Users\mther\Documents\GitHub\v2\Pythias\apps\premier-printing\.next\server\chunks\ssr\[turbopack]_runtime.js:132:20)
+2025-02-04 14:55 -05:00: [next-auth][error][JWT_SESSION_ERROR] 
+https://next-auth.js.org/errors#jwt_session_error decryption operation failed {
+  message: 'decryption operation failed',
+  stack: 'JWEDecryptionFailed: decryption operation failed\n' +
+    '    at gcmDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:7298:15)\n' +
+    '    at decrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:7321:20)\n' +
+    '    at flattenedDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:8864:52)\n' +
+    '    at async compactDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:8920:23)\n' +
+    '    at async jwtDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:10424:23)\n' +
+    '    at async Object.decode (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:18268:25)\n' +
+    '    at async Object.session (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:19574:34)\n' +
+    '    at async AuthHandler (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:21623:37)\n' +
+    '    at async NextAuthRouteHandler (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:24218:30)\n' +
+    '    at async NextAuth._args$ (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:24253:24)',
+  name: 'JWEDecryptionFailed'
+}
+2025-02-04 14:55 -05:00: [next-auth][error][JWT_SESSION_ERROR] 
+https://next-auth.js.org/errors#jwt_session_error decryption operation failed {
+  message: 'decryption operation failed',
+  stack: 'JWEDecryptionFailed: decryption operation failed\n' +
+    '    at gcmDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:7298:15)\n' +
+    '    at decrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:7321:20)\n' +
+    '    at flattenedDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:8864:52)\n' +
+    '    at async compactDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:8920:23)\n' +
+    '    at async jwtDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:10424:23)\n' +
+    '    at async Object.decode (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:18268:25)\n' +
+    '    at async Object.session (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:19574:34)\n' +
+    '    at async AuthHandler (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:21623:37)\n' +
+    '    at async NextAuthRouteHandler (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:24218:30)\n' +
+    '    at async NextAuth._args$ (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:24253:24)',
+  name: 'JWEDecryptionFailed'
+}
+2025-02-04 14:55 -05:00: [next-auth][error][JWT_SESSION_ERROR] 
+https://next-auth.js.org/errors#jwt_session_error decryption operation failed {
+  message: 'decryption operation failed',
+  stack: 'JWEDecryptionFailed: decryption operation failed\n' +
+    '    at gcmDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:7298:15)\n' +
+    '    at decrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:7321:20)\n' +
+    '    at flattenedDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:8864:52)\n' +
+    '    at async compactDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:8920:23)\n' +
+    '    at async jwtDecrypt (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:10424:23)\n' +
+    '    at async Object.decode (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:18268:25)\n' +
+    '    at async Object.session (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:19574:34)\n' +
+    '    at async AuthHandler (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:21623:37)\n' +
+    '    at async NextAuthRouteHandler (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:24218:30)\n' +
+    '    at async NextAuth._args$ (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:24253:24)',
+  name: 'JWEDecryptionFailed'
+}

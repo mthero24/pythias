@@ -40,18 +40,18 @@ const schema = new mongoose.Schema({
   orderId: { type: String },
   style: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: Style,
+    ref: "Style",
   },
   styleV2: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: StyleV2,
+    ref: "StyleV2",
   },
   size: {
     type: mongoose.Schema.Types.ObjectId,
   },
   color: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: Color,
+    ref: "Color",
   },
   sizeName: String,
   styleCode: String,

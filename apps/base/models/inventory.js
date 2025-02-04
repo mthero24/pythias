@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const {cluster0} = require('../lib/connection');
+import mongoose from "mongoose";
+import { TSPprints }  from "../lib/connection";
 const Schema = mongoose.Schema;
 import Color from "./Color";
 import Size from "./Size";
@@ -22,4 +22,4 @@ const SchemaObj = new Schema({
         skus: [String]
     }]
 });
-export default cluster0.model('InventoryV2', SchemaObj, 'inventoryv2');
+export default TSPprints.model('InventoryV2', SchemaObj, 'inventoryv2');

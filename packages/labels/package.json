@@ -1,0 +1,14 @@
+{
+  "name": "@pythias/labels",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "exports": {
+      ".": "./exports"
+    },
+  "author": "michael thero",
+  "license": "ISC"
+}

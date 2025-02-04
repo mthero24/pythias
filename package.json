@@ -31,6 +31,7 @@
     "@mui/material": "^6.4.0",
     "@pythias/dtf": "^0.0.0",
     "@pythias/shipping": "^0.0.0",
+    "@pythias/labels": "^1.0.0",
     "@repo/ui": "^0.0.0",
     "atob": "^2.1.2",
     "aws-sdk": "^2.1692.0",
