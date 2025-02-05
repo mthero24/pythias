@@ -1,6 +1,7 @@
 import Items from "../../../models/Items";
 import Order from "../../../models/Order";
 import Inventory from "../../../models/inventory";
+import Batches from "../../../models/batches";
 import {Main} from "@pythias/labels"
 export default async function PrintLabels(){
     let labels = {
@@ -27,7 +28,7 @@ export default async function PrintLabels(){
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        let inventory_ids = labels[k].map(s=>{return `${s.colorName}-${s.sizeName}-${s.styleCode}`})
+        let inventory_ids = labels[k].map(s=>{return encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`);})
         let inventoryArray = await Inventory.find({
             inventory_id: { $in: inventory_ids },
           })
@@ -72,5 +73,8 @@ export default async function PrintLabels(){
         sku: { $in: ["gift-bag", "gift-message"] },
       })))
     if(labels) labels = JSON.parse(JSON.stringify(labels))
-    return <Main labels={labels} giftLabels={giftMessages} rePulls={rePulls}/>
+    let batches = JSON.parse(
+      JSON.stringify(await Batches.find({}).limit(20).sort({ _id: -1 }).lean())
+    );
+    return <Main labels={labels} giftLabels={giftMessages} rePulls={rePulls} batches={batches}/>
 }
