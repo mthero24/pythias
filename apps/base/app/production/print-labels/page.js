@@ -25,7 +25,7 @@ export default async function PrintLabels(){
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
-        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber")
+        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
         let inventory_ids = labels[k].map(s=>{return encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`);})

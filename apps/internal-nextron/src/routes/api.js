@@ -79,4 +79,15 @@ router.get("/shipping/scales", checkKeys, async (req, res) => {
     return res.send({ error: true, msg: JSON.stringify(e) });
   }
 });
+router.post("/print-labels", checkKeys, async (req,res)=>{
+  let data = req.body;
+  console.log(data.type, "type route");
+  let resp = await print({
+    label: data.label,
+    printer: `http://${settings.labelPrinters[printer1]}:631/ipp/port1`,
+    type: data.type,
+  });
+  console.log(resp)
+  return res.send({ error: true, msg: JSON.stringify(e) });
+});
 export default router

@@ -47,6 +47,8 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
     }
     const sort = (items)=>{
         return items.sort((a,b)=>{
+            if (a.vendor.toUpperCase() > b.vendor.toUpperCase()) return 1;
+            if (a.vendor.toUpperCase() < b.vendor.toUpperCase()) return -1;
             if(a.styleCode.toUpperCase() > b.styleCode.toUpperCase()) return 1
             if(a.styleCode.toUpperCase() < b.styleCode.toUpperCase()) return -1
             if(a.colorName.toUpperCase() > b.colorName.toUpperCase()) return 1
@@ -70,13 +72,13 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
         //console.log(items);
         items = sort(items);
         //console.log(items);
-        let res = await axios("/api/production/print-labels", {items})
+        let res = await axios.post("/api/production/print-labels", {items})
         if(res.data.error) alert(res.data.msg)
         else{
-            setLabels(res.data.labels);
-            setBatches(res.data.batches);
-            setGiftLabels(res.data.giftLabels)
-            setRePulls(res.data.rePulls)
+            // setLabels(res.data.labels);
+            // setBatches(res.data.batches);
+            // setGiftLabels(res.data.giftLabels)
+            // setRePulls(res.data.rePulls)
         }
     }
     let row = {
