@@ -80,14 +80,24 @@ router.get("/shipping/scales", checkKeys, async (req, res) => {
   }
 });
 router.post("/print-labels", checkKeys, async (req,res)=>{
+  const settings = getSettings();
   let data = req.body;
   console.log(data.type, "type route");
-  let resp = await print({
-    label: data.label,
-    printer: `http://${settings.labelPrinters[printer1]}:631/ipp/port1`,
-    type: data.type,
-  });
-  console.log(resp)
-  return res.send({ error: true, msg: JSON.stringify(e) });
+  try{
+    let resp = print({
+      label: data.label,
+      printer: `http://${settings.labelPrinters[data.printer]}:9100/printer/pstprnt`,
+      type: data.type,
+    });
+    addOutput(`Printed Labels`)
+    console.log(resp)
+    if(!resp){
+      return res.send({ error: false, msg: "printed labels" });
+    }
+    return res.send(resp);
+  }catch(e){
+    addOutput(`Error Printing Labels - ${e}`)
+    return res.send({ error: true, msg: e });
+  }
 });
 export default router

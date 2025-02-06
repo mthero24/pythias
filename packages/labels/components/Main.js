@@ -12,7 +12,8 @@ import {
 import PrintIcon from '@mui/icons-material/Print';
 import {useState} from "react";
 import axios from "axios";
-
+import {Sort} from "../functions/sort";
+import { UntrackedLabels } from "./untracked";
 export function Main({labels, rePulls, giftLabels=[], batches}){
     const [useLabels, setLabels] = useState(labels);
     const [rePull, setRePulls] = useState(rePulls);
@@ -20,6 +21,7 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
     const [batch, setBatches] = useState(batches)
     const [selected, setSelected] = useState([])
     const [restore, setRestore] = useState(false)
+    const [showUntracked, setShoeUntracked] = useState(false)
     const [filter, setFilter] = useState()
     const select = (pieceId)=>{
         let sel = [...selected];
@@ -45,41 +47,47 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
          setFilter("RT1");
         setSelected([...sel])
     }
-    const sort = (items)=>{
-        return items.sort((a,b)=>{
-            if (a.vendor.toUpperCase() > b.vendor.toUpperCase()) return 1;
-            if (a.vendor.toUpperCase() < b.vendor.toUpperCase()) return -1;
-            if(a.styleCode.toUpperCase() > b.styleCode.toUpperCase()) return 1
-            if(a.styleCode.toUpperCase() < b.styleCode.toUpperCase()) return -1
-            if(a.colorName.toUpperCase() > b.colorName.toUpperCase()) return 1
-            if(a.colorName.toUpperCase()< b.colorName.toUpperCase()) return -1
-            if(a.sizeName.toUpperCase() > b.sizeName.toUpperCase()) return 1
-            if(a.sizeName.toUpperCase() < b.sizeName.toUpperCase()) return -1
-            return 0  
-        })
-    }
+    
     const print = async (type)=>{
         let items = [];
         if(type == "selected"){
             Object.keys(useLabels).map(l=>{
                 items.push(...useLabels[l].filter(s=> selected.includes(s.pieceId)));
             })
+            items = Sort(items);
+        }else if(type == "gift"){
+            items = gift
         }else {
             items.push(...useLabels[type].map(s=> {
                 if(s.inventory?.quantity > 0) return s}));
             items = items.filter(s=> s != undefined)
+            items = Sort(items);
         }
         //console.log(items);
-        items = sort(items);
         //console.log(items);
         let res = await axios.post("/api/production/print-labels", {items})
+        console.log(res.data)
         if(res.data.error) alert(res.data.msg)
         else{
-            // setLabels(res.data.labels);
-            // setBatches(res.data.batches);
-            // setGiftLabels(res.data.giftLabels)
-            // setRePulls(res.data.rePulls)
+            setLabels(res.data.labels);
+            setBatches(res.data.batches);
+            setGiftLabels(res.data.giftMessages)
+            setRePulls(res.data.rePulls)
+            setSelected([])
         }
+    }
+    const restorePrint = async (options)=>{
+        let res = await axios.post("/api/production/print-labels/restore", options)
+        console.log(res.data)
+        if(res.data.error) alert(res.data.msg)
+        else{
+            setLabels(res.data.labels);
+            setBatches(res.data.batches);
+            setGiftLabels(res.data.giftMessages)
+            setRePulls(res.data.rePulls)
+            setSelected([])
+            setRestore(false)
+        }    
     }
     let row = {
         display: "flex",
@@ -133,7 +141,7 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
             </Typography>
           </Box>
           <Box sx={{ ...row, justifyContent: "center" }}>
-            <Button sx={topButtons}>Print Gift Labels: {gift.length}</Button>
+            <Button sx={topButtons} onClick={()=>{print("gift")}}>Print Gift Labels: {gift.length}</Button>
             <Button
               sx={topButtons}
               onClick={() => {
@@ -142,7 +150,7 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
             >
               Restore Que
             </Button>
-            <Button sx={topButtons}>View Untracked Labels</Button>
+            <Button sx={topButtons} onClick={()=>{setShoeUntracked(!showUntracked)}}>View Untracked Labels</Button>
             <Button sx={topButtons} onClick={selectAllMarketPlaceOrders}>
               Select All Market Place Orders
             </Button>
@@ -154,11 +162,16 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
               {batch &&
                 batch.map((batch) => (
                   <Grid2 size={{ xs: 12, sm: 3 }} key={batch._id}>
-                    <PrintBatchComponent batch={batch} />
+                    <PrintBatchComponent batch={batch} restorePrint={restorePrint} />
                   </Grid2>
                 ))}
             </Grid2>
           </Card>
+        )}
+        {showUntracked && (
+            <Card sx={{ padding: "1%", width: "100%", marginBottom: ".5%" }}>
+                <UntrackedLabels/>
+            </Card>
         )}
         <Grid2 container spacing={1} sx={{ width: "100%" }}>
           {useLabels &&
@@ -375,18 +388,8 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
     );
 }
 
-const PrintBatchComponent = ({ batch }) => {
-  const [lastIndexPrinted, setLastIndexPrinted] = useState();
-
-  const reprintBatch = async (id) => {
-    let result = await axios.post("/api/production/restore", { id });
-    let print = await axios.post("/api/production/printLabels", {
-      type: "reprint",
-      labels: result.data.map((d) => d._id),
-      skipIdx: lastIndexPrinted,
-    });
-    setLastIndexPrinted(0);
-  };
+const PrintBatchComponent = ({ batch, restorePrint }) => {
+  const [lastIndexPrinted, setLastIndexPrinted] = useState(0);
 
   return (
     <Box
@@ -411,11 +414,11 @@ const PrintBatchComponent = ({ batch }) => {
                 label="Last Index Printed"
                 value={lastIndexPrinted}
                 sx={{marginBottom: "1%"}}
-                onKeyDown={()=>{if(event.key == 13 || event.key == "Enter") reprintBatch(batch.batchID)}}
+                onKeyDown={()=>{if(event.key == 13 || event.key == "Enter") restorePrint({batchID: batch.batchID, lastIndex: lastIndexPrinted})}}
                 onChange={(e) => setLastIndexPrinted(e.target.value)}
                 
             />
-            <Button fullWidth sx={{background: "#0079CD", color: "#fff"}}onClick={() => reprintBatch(batch.batchID)}>Reprint</Button>
+            <Button fullWidth sx={{background: "#0079CD", color: "#fff"}}onClick={() => restorePrint({batchID: batch.batchID, lastIndex: lastIndexPrinted})}>Reprint</Button>
         </Box>
     </Box>
   );

@@ -37,7 +37,7 @@ exp.use("/", uiRoutes)
 
 
 exp.listen(3005, async function () {
-  console.log("writer listening on port 3500");
+  console.log("writer listening on port 3005");
 });
 
 //electron functions

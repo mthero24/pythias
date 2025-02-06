@@ -9,9 +9,7 @@ import {
   } from "@mui/material";
 import { useState } from "react";
 import React from "react";
-import axios from "axios";
 import Image from "next/image";
-import {Config} from "../config"
 import {Scan} from "./scan"
 import {createImage} from "../functions/image"
 export function DTFBody({auto, setAuto, printer, type}){

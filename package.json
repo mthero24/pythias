@@ -8,9 +8,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "electron": "^34.0.2",
     "prettier": "^3.2.5",
-    "turbo": "^2.3.3",
+    "turbo": "^2.4.0",
     "typescript": "5.5.4"
   },
   "engines": {
@@ -32,6 +31,7 @@
     "@pythias/dtf": "^0.0.0",
     "@pythias/labels": "^1.0.0",
     "@pythias/shipping": "^0.0.0",
+    "@pythias/sublimation": "^1.0.0",
     "@repo/ui": "^0.0.0",
     "atob": "^2.1.2",
     "aws-sdk": "^2.1692.0",

@@ -1,6 +1,5 @@
-let mongoose = require("mongoose")
-const {cluster0} = require('../lib/connection');
-const Inventory = require('./inventory')
+import mongoose from "mongoose"
+import {TSPprints} from'../lib/connection';
 var schema = new mongoose.Schema({
     orderType: String,
     date: Date,
@@ -16,5 +15,5 @@ var schema = new mongoose.Schema({
     }]
 })
 
-var InventoryOrders = cluster0.model('InventoryOrders', schema);
+var InventoryOrders = TSPprints.model('InventoryOrders', schema);
 module.exports = InventoryOrders;
