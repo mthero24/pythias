@@ -19,7 +19,9 @@ const nextConfig = {
     ],
   },
   env:{
-    localKey:"$2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm"
+    localKey:"$2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm",
+    NEXTAUTH_SECRET: "THe@huilekjasdf",
+    NEXTAUTH_URL: "http://localhost:3004/"
   }
 };
 

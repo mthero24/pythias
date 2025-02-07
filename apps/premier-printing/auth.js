@@ -13,8 +13,7 @@ export const authOptions = {
         userName: {},
         password: {},
       },
-      async authorize(credentials, req) {
-        var salt = bcrypt.genSaltSync(10);
+      async authorize(credentials) {
         console.log("+++++++++++++++++", credentials)
         let userName = credentials.userName.toLowerCase();
         const user = await User.findOne({ userName: userName }).lean();
