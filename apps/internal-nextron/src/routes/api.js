@@ -72,10 +72,11 @@ router.get("/shipping/scales", checkKeys, async (req, res) => {
     let resp = await getWeight({
       url: `http://${settings.shipping.scales[req.query.station]}:3003/getweight`,
     });
-    console.log(resp);
-    return res.send({ ...res });
+    console.log(resp, "resp");
+    addOutput(`${req.query.station} -get weight weight: ${resp.value} ${resp.system}`)
+    return res.send({ ...resp });
   } catch (e) {
-    console.log("error");
+    addOutput(`error ${JSON.stringify(e)}`);
     return res.send({ error: true, msg: JSON.stringify(e) });
   }
 });
