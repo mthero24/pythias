@@ -8,8 +8,8 @@ import {useState, useEffect} from "react";
 import {Box} from "@mui/material"
 
 //import { useWindowSize } from "../exports";
-export function Main({stations, binCount, bins}){
-    const [station, setStation] = useState(stations? stations[0]: "station1");
+export function Main({stations, binCount, bins, pieceId, stat}){
+    const [station, setStation] = useState(stat? stat: stations? stations[0]: "station1");
     const [order, setOrder] = useState();
     const [item, setItem] = useState();
     const [bin, setBin] = useState();
@@ -45,7 +45,7 @@ export function Main({stations, binCount, bins}){
       overflow: "auto"
     };
     return (
-      <Box>
+      <Box sx={{background: "#d2d2d2", padding: "1%"}}>
         <Manifest binCount={binCount} setAuto={setAuto} setBins={setBins} modalStyle={modalStyle} style={modalStyle}/>
         <Stations
           stations={stations}
@@ -53,7 +53,7 @@ export function Main({stations, binCount, bins}){
           setStation={setStation}
           setAuto={setAuto}
         />
-        <Scan auto={auto} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction}/>
+        <Scan auto={auto} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId}/>
         <Bins
           bins={binss}
           setBins={setBins}

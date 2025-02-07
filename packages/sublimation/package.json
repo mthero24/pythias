@@ -11,5 +11,14 @@
   },
   "author": "michael thero",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "atob": "^2.1.2",
+    "btoa": "^1.2.1",
+    "changedpi": "^1.0.4",
+    "concat-stream": "^2.0.0",
+    "jimp": "^1.6.0",
+    "path": "^0.12.7",
+    "pdfkit": "^0.16.0"
+  }
 }

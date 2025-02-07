@@ -73,7 +73,13 @@ export async function POST(req= NextApiRequest){
             order = await order.save();
             // print label
             let bin = await Bin.findOneAndUpdate({order: order._id},  {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
-            let res = await axios.post(`${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station})
+            let headers = {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localKey}`
+                }
+            }
+            let res = await axios.post(`${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
             console.log(res.data)
             if(res.error){
                 return NextResponse.json({error: true, msg: "error printing label"})

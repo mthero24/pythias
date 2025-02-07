@@ -52,6 +52,12 @@ export async function POST(req = NextApiRequest){
         //send to folder
         if(foldSettings){
             let responseData
+            let headers = {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localKey}`
+                }
+            }
             let response = await axios.post(
                 `${process.env.localIP}/api/roq-folder`,
                 {
@@ -69,8 +75,8 @@ export async function POST(req = NextApiRequest){
                   sleeves: foldSettings.sleeve,
                   body: foldSettings.body,
                   exit: item.order.preShipped == true ? "Pack" : "Stack",
-                }
-            ).catch(e=>{responseData = e.response.data});
+                }, headers
+            ).catch(e=>{responseData = e.response?.data});
             item.folded = true
             item.lastScan = {
                 station: `ROQ Folded`,
@@ -84,7 +90,7 @@ export async function POST(req = NextApiRequest){
             });
             await item.save();
             console.log(response?.data, responseData)
-            if(response.data.error) return NextResponse.json(response.data)
+            if(response?.data.error) return NextResponse.json(response.data)
             else if(responseData) return NextResponse.json(responseData)
             else return NextResponse.json({error: false, msg: "added to que", item})
         }

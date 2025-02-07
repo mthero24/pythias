@@ -3,16 +3,16 @@ import {Grid2, Box, Typography, Card} from "@mui/material"
 export function Stations({stations, station, setStation, setAuto}){
     return (
       <Box sx={{ display: "flex", flexDirection: "row", paddingTop: "1%" }}>
-        <Box
+        <Card
           sx={{
             width: { xs: "99%", sm: "96%", md: "90%" },
             marginBottom: "1%",
             marginLeft: { xs: ".5%", sm: "2%", md: "5%" },
-            height: { xs: "65px", sm: "85px", md: "75px", lg: "90px", xl: "100px" },
             overflow: {xs:"auto", sm: "hidden"},
+            padding: ".5%"
           }}
         >
-          <Grid2 container spacing={2} sx={{ marginBottom: "1%" }}>
+          <Grid2 container spacing={2}>
             {stations &&
               stations.map((s) => (
                 <Grid2 size={{ md: 2, sm: 3, xs: 6 }} key={s}>
@@ -40,7 +40,7 @@ export function Stations({stations, station, setStation, setAuto}){
                 </Grid2>
               ))}
           </Grid2>
-        </Box>
+        </Card>
       </Box>
     );
 }

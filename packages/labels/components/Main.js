@@ -8,9 +8,10 @@ import {
   Fab,
   FormControl,
   TextField,
+  FormControlLabel
 } from "@mui/material";
 import PrintIcon from '@mui/icons-material/Print';
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import axios from "axios";
 import {Sort} from "../functions/sort";
 import { UntrackedLabels } from "./untracked";
@@ -18,11 +19,34 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
     const [useLabels, setLabels] = useState(labels);
     const [rePull, setRePulls] = useState(rePulls);
     const [gift, setGiftLabels] = useState(giftLabels);
-    const [batch, setBatches] = useState(batches)
-    const [selected, setSelected] = useState([])
-    const [restore, setRestore] = useState(false)
-    const [showUntracked, setShoeUntracked] = useState(false)
-    const [filter, setFilter] = useState()
+    const [batch, setBatches] = useState(batches);
+    const [selected, setSelected] = useState([]);
+    const [restore, setRestore] = useState(false);
+    const [showUntracked, setShoeUntracked] = useState(false);
+    const [filter, setFilter] = useState();
+    const [returnToQue, setReturnToQue] = useState("");
+    useEffect(()=>{
+      const getUpdate = async()=>{
+        console.log("run Get update")
+        await new Promise((resolve)=>{
+          setTimeout(()=>{
+            resolve()
+          }, 5 * ( 60 * 1000))
+        })
+        console.log("getting update")
+        let res = await axios.get("/api/production/print-labels/updatePage")
+        if(!res.data || res.data.error) alert("could not update page")
+        else{
+          console.log(res.data)
+          setLabels(res.data.labels);
+          setBatches(res.data.batches);
+          setGiftLabels(res.data.giftMessages)
+          setRePulls(res.data.rePulls)
+        } 
+        getUpdate()
+      }
+      getUpdate()
+    },[])
     const select = (pieceId)=>{
         let sel = [...selected];
         if(sel.includes(pieceId)){
@@ -74,6 +98,7 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
             setGiftLabels(res.data.giftMessages)
             setRePulls(res.data.rePulls)
             setSelected([])
+            setFilter()
         }
     }
     const restorePrint = async (options)=>{
@@ -88,6 +113,28 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
             setSelected([])
             setRestore(false)
         }    
+    }
+    const returnToQueFunc = async ()=>{
+      let res = await axios.post("/api/production/print-labels/return-to-que", {pieceId: returnToQue})
+      if(res.data.error) alert(res.data.msg)
+      else{
+        setLabels(res.data.labels);
+        setBatches(res.data.batches);
+        setGiftLabels(res.data.giftMessages)
+        setRePulls(res.data.rePulls)
+        setReturnToQue("")
+      }
+    }
+    const returnInventory = async ()=>{
+      let res = await axios.put("/api/production/print-labels/return-to-que", {pieceId: returnToQue})
+      if(res.data.error) alert(res.data.msg)
+      else{
+        setLabels(res.data.labels);
+        setBatches(res.data.batches);
+        setGiftLabels(res.data.giftMessages)
+        setRePulls(res.data.rePulls)
+        setReturnToQue("")
+      }
     }
     let row = {
         display: "flex",
@@ -135,10 +182,17 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
           </Fab>
         )}
         <Card sx={{ width: "100%", marginBottom: ".5%" }}>
-          <Box sx={{ ...row, justifyContent: "flex-start" }}>
+          <Box sx={{ ...row, justifyContent: "space-between" }}>
             <Typography sx={{ fontWeight: 900 }}>
               RePulled: {rePulls ? rePulls : 0}
             </Typography>
+            <Box>
+              <TextField label="Return Product To Inventory" value={returnToQue} onChange={()=>{setReturnToQue(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter" || event.key == "ENTER") returnInventory()}}/>
+            </Box>
+            <Box>
+              <TextField label="Return Label to Que" value={returnToQue} onChange={()=>{setReturnToQue(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter" || event.key == "ENTER") returnToQueFunc()}}/>
+              <Typography fontSize=".6rem" color="red">Resets Inventory To Zero</Typography>
+            </Box>
           </Box>
           <Box sx={{ ...row, justifyContent: "center" }}>
             <Button sx={topButtons} onClick={()=>{print("gift")}}>Print Gift Labels: {gift.length}</Button>

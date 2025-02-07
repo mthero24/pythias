@@ -20,7 +20,7 @@ export function Bins({bins, setOrder, setBin, setShow, setAction}){
                 key={t}
                 sx={{ width: "100%" }}
               >
-                <Card sx={{ width: "100%" }}>
+                <Card sx={{ width: "100%", minHeight: "100vh" }}>
                   <Typography
                     textAlign={"center"}
                     fontWeight="bold"

@@ -2,9 +2,9 @@
 import {useState, useRef, useEffect} from "react";
 import {Card,TextField,Box, Checkbox, FormControlLabel} from "@mui/material";
 import axios from "axios";
-export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActivate}){
+export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActivate, pieceId}){
     const textFieldRef = useRef(null);
-    const [scan, setScan] = useState()
+    const [scan, setScan] = useState(pieceId)
     const [reship, setReship] = useState(false)
 
     const isReship = ()=>{
@@ -21,6 +21,13 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
             setAuto(false)
         }
       }, [auto]);
+      useEffect(()=>{
+        if(pieceId){
+          setScan(pieceId)
+          GetInfo()
+        }
+      },[pieceId])
+      
     const GetInfo = async ()=>{
       console.log("getInfo")
       let res = await axios.post("/api/production/shipping", {scan, reship})

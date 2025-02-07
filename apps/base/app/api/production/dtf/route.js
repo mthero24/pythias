@@ -85,7 +85,7 @@ export async function POST(req = NextApiRequest) {
     console.log(config);
     setConfig({
       internalIP: config.localIP,
-      apiKey: config.apiKey,
+      apiKey: localKey,
     });
     let data = await req.json()
     console.log(data, "data")

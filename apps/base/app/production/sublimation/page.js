@@ -3,13 +3,14 @@ import Items from "../../../models/Items";
 import Order from "../../../models/Order";
 import Inventory from "../../../models/inventory";
 import {Sort} from "@pythias/labels";
-export default async function Sublimation(){
+export default async function Sublimation(req, res){
+    let stations = JSON.parse(process.env.shipping).shipStations
     let sublimation = await Items.find({
         type: "sublimation",
         inBin: false,
         canceled: false,
         shipped: false,
-        styleCode: {$ne: "POST"},
+        styleCode: {$nin: ["POST", "MSP", "CST"]},
         paid: true,
         order: {$ne: null}
       }).lean()
@@ -48,6 +49,7 @@ export default async function Sublimation(){
         shipped: false,
         styleCode: "POST",
         order: {$ne: null},
+        sizeName: {$not: {$regex : "P"}},
         paid: true,
       }).lean()
     let  premiumPoster = await Items.find({
@@ -69,12 +71,12 @@ export default async function Sublimation(){
         paid: true,
     }).lean()
     console.log(sublimation.length,  posters.length, premiumPoster.length, stickers.length, giftMessages.length, buttons.length, epson.length )
-    let labels = {sublimation, posters, premiumPoster, stickers, giftMessages, buttons, epson}
+    let labels = {sublimation, epson, posters, premiumPoster, stickers, giftMessages, buttons}
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
-        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items")
+        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items status")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
-        labels[k] = labels[k].filter(s=> s.order != undefined)
+        labels[k] = labels[k].filter(s=> s.order != undefined && s.order.status != "Shipped" && s.order.status != "Delivered")
         let inventory_ids = labels[k].map(s=>{return encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`);})
         let inventoryArray = await Inventory.find({
             inventory_id: { $in: inventory_ids },
@@ -104,5 +106,8 @@ export default async function Sublimation(){
         labels[k] = await Sort(labels[k])
     }
     labels = JSON.parse(JSON.stringify(labels))
-    return <Main labels={labels}/>
+    let params = await req.searchParams
+    let station = params.station
+    console.log(station )
+    return <Main labels={labels} stations={stations} stat={station}/>
 }

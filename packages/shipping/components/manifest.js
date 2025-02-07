@@ -1,5 +1,5 @@
 "use client";
-import {Button, Container, Modal, Box, Typography, TextField} from "@mui/material";
+import {Button, Container, Modal, Box, Typography, TextField, Card} from "@mui/material";
 import {useState} from "react";
 import axios from "axios";
 import { BinSettings } from "./binSettings";
@@ -33,7 +33,9 @@ export function Manifest({binCount, setAuto, setBins, modalStyle, style}){
         }
       };
     return (
-      <Container maxWidth="lg" sx={{ marginTop: "1%" }}>
+      <Box sx={{margin: {xs:"0%, 1%", sm: "0% 2%",md:"0% 5%"}}}>
+      <Card sx={{padding: "2%",}}>
+      
         <Box
           sx={{
             display: "flex",
@@ -112,6 +114,7 @@ export function Manifest({binCount, setAuto, setBins, modalStyle, style}){
           />
           <BinSettings binCount={binCount} setAuto={setAuto} setBinss={setBins} modalStyle={modalStyle}/>
         </Box>
-      </Container>
+      </Card>
+      </Box>
     );
 }

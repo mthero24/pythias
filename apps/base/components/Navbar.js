@@ -93,16 +93,6 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Print Labels`} />
           </ListItemButton>
         </Link>
-        <Link href="/production/excess-labels">
-          <ListItemButton>
-            <ListItemText primary={`Excesss Labels`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/items">
-          <ListItemButton>
-            <ListItemText primary={`Track Labels`} />
-          </ListItemButton>
-        </Link>
         <Link href="/production/dtf-send">
           <ListItemButton>
             <ListItemText primary={`Load DTF`} />
@@ -112,12 +102,6 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
         <Link href="/production/dtf-find">
           <ListItemButton>
             <ListItemText primary={`Find DTF`} />
-          </ListItemButton>
-        </Link>
-
-        <Link href="/production/gtx?printer=printer1">
-          <ListItemButton>
-            <ListItemText primary={`GTX Printers`} />
           </ListItemButton>
         </Link>
 
@@ -135,26 +119,6 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
         <Link href="/production/sublimation">
           <ListItemButton>
             <ListItemText primary={`Sublimation`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/buttons">
-          <ListItemButton>
-            <ListItemText primary={`Print Buttons`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/stickers">
-          <ListItemButton>
-            <ListItemText primary={`Stickers`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/gift-messages">
-          <ListItemButton>
-            <ListItemText primary={`Print Gift Messages`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/gift-wrap">
-          <ListItemButton>
-            <ListItemText primary={`Wrapping Station`} />
           </ListItemButton>
         </Link>
         <Link href="/admin/inventory">

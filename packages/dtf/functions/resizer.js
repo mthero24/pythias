@@ -130,7 +130,9 @@ export const createImage = async (
     style,
     pieceID,
     shouldFitDesign = false,
-    printer}
+    printer,
+    localKey
+  }
   ) => {
     console.log("create Image");
     console.log(url);
@@ -195,11 +197,13 @@ export const createImage = async (
     console.log(`Size: ${sizeInKB.toFixed(2)} KB`);
     let resData
     console.log(Config.internalIP)
+    
     let headers = {
       headers: {
-        Authorization: `Bearer $2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm`,
-      },
-    };
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Config.localKey}`
+      }
+  }
     let res = await axios.post(`http://${Config.internalIP}/api/dtf`, {files: [{buffer: finalBuffer, type: "png"}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response.data})
     if(res?.data) return res.data
     else return resData

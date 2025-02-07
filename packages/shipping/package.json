@@ -12,8 +12,6 @@
     ".": "./exports"
   },
   "dependencies": {
-    "xml2js": "^0.6.2",
-    "xml2json-light": "^1.0.6",
-    "xmldom": "^0.6.0"
+    "xml2js": "^0.6.2"
   }
 }
