@@ -29,24 +29,24 @@ const protectedRoutes = [
 ];
 
 export async function middleware(req=NextRequest) {
-    const protectedRoute = protectedRoutes.find((route) =>
-       req.nextUrl.pathname.startsWith(route.path)
-     );
-    if (protectedRoute) {
-      const token = await getToken({ req });
-      console.log(token, "__TOKEN__");
-      const role = token?.role;
-      console.log(role, "__ROLE__");
-      if (!protectedRoute.roles.includes(role)) {
-        return NextResponse.redirect(new URL("/production/login", req.url));
-      }
-    }
-    return NextResponse.next({
-      request: {
-        // New request headers
-        //headers: requestHeaders,
-      },
-    });
+    // const protectedRoute = protectedRoutes.find((route) =>
+    //    req.nextUrl.pathname.startsWith(route.path)
+    //  );
+    // if (protectedRoute) {
+    //   const token = await getToken({ req });
+    //   console.log(token, "__TOKEN__");
+    //   const role = token?.role;
+    //   console.log(role, "__ROLE__");
+    //   if (!protectedRoute.roles.includes(role)) {
+    //     return NextResponse.redirect(new URL("/production/login", req.url));
+    //   }
+    // }
+    // return NextResponse.next({
+    //   request: {
+    //     // New request headers
+    //     //headers: requestHeaders,
+    //   },
+    // });
 }
 
 export const config = {
