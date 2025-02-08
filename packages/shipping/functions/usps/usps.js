@@ -1,6 +1,4 @@
 import axios from "axios"
-import manifest from "../../../../apps/base/models/manifest"
-import fs from "fs"
 async function GetToken({credentials}){
     console.log(credentials)
     let res = await axios.post("https://apis.usps.com/oauth2/v3/token", {
