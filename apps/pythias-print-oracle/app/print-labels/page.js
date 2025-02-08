@@ -1,4 +1,4 @@
-import { LabelsData } from "../../../functions/labels";
+import { LabelsData } from "../../functions/labels";
 import {Main} from "@pythias/labels"
 
 export default async function PrintLabels(){

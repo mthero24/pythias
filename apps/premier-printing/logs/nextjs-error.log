@@ -354,3 +354,9 @@ https://next-auth.js.org/errors#jwt_session_error decryption operation failed {
     '    at async NextAuth._args$ (C:\\Users\\mther\\Documents\\GitHub\\v2\\Pythias\\apps\\premier-printing\\.next\\server\\chunks\\[project]__772366._.js:24253:24)',
   name: 'JWEDecryptionFailed'
 }
+2025-02-08 17:25 -05:00: (node:37880) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
