@@ -3,8 +3,8 @@ import {Box, TextField, Button, FormControl, InputLabel, OutlinedInput, Grid2, I
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {useState} from "react"
-import * as login from '../../public/login.png';
-import * as register from '../../public/register.png';
+import * as login from '../../../public/login.png';
+import * as register from '../../../public/register.png';
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import axios from "axios";
