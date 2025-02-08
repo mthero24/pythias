@@ -83,40 +83,40 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
       </Box>
       <Divider />
       <List sx={{ width: "100%" }}>
-        <Link href="/production">
+        <Link href="/">
           <ListItemButton>
             <ListItemText primary={`Production`} />
           </ListItemButton>
         </Link>
-        <Link href="/production/print-labels">
+        <Link href="/print-labels">
           <ListItemButton>
             <ListItemText primary={`Print Labels`} />
           </ListItemButton>
         </Link>
-        <Link href="/production/dtf-send">
+        <Link href="/dtf-send">
           <ListItemButton>
             <ListItemText primary={`Load DTF`} />
           </ListItemButton>
         </Link>
 
-        <Link href="/production/dtf-find">
+        <Link href="/dtf-find">
           <ListItemButton>
             <ListItemText primary={`Find DTF`} />
           </ListItemButton>
         </Link>
 
-        <Link href="/production/roq-folder">
+        <Link href="/roq-folder">
           <ListItemButton>
             <ListItemText primary={`Folder`} />
           </ListItemButton>
         </Link>
 
-        <Link href="/production/shipping">
+        <Link href="/shipping">
           <ListItemButton>
             <ListItemText primary={`Ship Orders`} />
           </ListItemButton>
         </Link>
-        <Link href="/production/sublimation">
+        <Link href="/sublimation">
           <ListItemButton>
             <ListItemText primary={`Sublimation`} />
           </ListItemButton>

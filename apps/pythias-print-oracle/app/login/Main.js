@@ -39,7 +39,7 @@ export const Main = ({type})=>{
             redirect: false,
         });
         if (response.ok) {
-            return location.replace("/production");
+            return location.replace("/");
         }else{
             return alert(response.error);
         }

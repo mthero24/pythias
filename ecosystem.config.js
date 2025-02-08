@@ -25,7 +25,7 @@ module.exports = {
       },
       {
         name: "nextjs-web",
-        cwd: "apps/pythias-printoracle", // Point to the web app's directory
+        cwd: "apps/pythias-print-oracle", // Point to the web app's directory
         script: "node_modules/next/dist/bin/next", // Use Next.js binary
         args: "start -p 3001", // Start on port 3000
         exec_mode: "cluster", // Enable cluster mode to use multiple CPUs

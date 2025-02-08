@@ -810,3 +810,2064 @@
   jti: '10b51dac-a82c-45b0-87fe-3f4c6302d457'
 } '__TOKEN__'
 2025-02-08 10:43 -05:00: admin __ROLE__
+2025-02-08 17:28 -05:00:    ▲ Next.js 15.1.6
+2025-02-08 17:28 -05:00:    - Local:        http://localhost:3001
+2025-02-08 17:28 -05:00:    - Network:      http://192.168.1.100:3001
+2025-02-08 17:28 -05:00: 
+2025-02-08 17:28 -05:00:  ✓ Starting...
+2025-02-08 17:28 -05:00:  ✓ Ready in 763ms
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: connections
+2025-02-08 17:28 -05:00: mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:28 -05:00: connections
+2025-02-08 17:28 -05:00: mongodb+srv://mthero24:Shower%4012@cluster0-jqk8m.gcp.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:28 -05:00: connections
+2025-02-08 17:28 -05:00: mongodb+srv://mthero24:Shower%4012@cluster1.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: MongoDB :: connected test
+2025-02-08 17:28 -05:00: MongoDB :: connected test
+2025-02-08 17:28 -05:00: MongoDB :: connected test
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00: null '__TOKEN__'
+2025-02-08 17:28 -05:00: undefined '__ROLE__'
+2025-02-08 17:28 -05:00:    ▲ Next.js 15.1.6
+2025-02-08 17:28 -05:00:    - Local:        http://localhost:3001
+2025-02-08 17:28 -05:00:    - Network:      http://192.168.1.100:3001
+2025-02-08 17:28 -05:00: 
+2025-02-08 17:28 -05:00:  ✓ Starting...
+2025-02-08 17:28 -05:00:  ✓ Ready in 572ms
+2025-02-08 17:28 -05:00: connections
+2025-02-08 17:28 -05:00: mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:28 -05:00: connections
+2025-02-08 17:28 -05:00: mongodb+srv://mthero24:Shower%4012@cluster0-jqk8m.gcp.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:28 -05:00: connections
+2025-02-08 17:28 -05:00: mongodb+srv://mthero24:Shower%4012@cluster1.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:28 -05:00: MongoDB :: connected test
+2025-02-08 17:28 -05:00: MongoDB :: connected test
+2025-02-08 17:28 -05:00: MongoDB :: connected test
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:29 -05:00: null '__TOKEN__'
+2025-02-08 17:29 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00:    ▲ Next.js 15.1.6
+2025-02-08 17:30 -05:00:    - Local:        http://localhost:3001
+2025-02-08 17:30 -05:00:    - Network:      http://192.168.1.100:3001
+2025-02-08 17:30 -05:00: 
+2025-02-08 17:30 -05:00:  ✓ Starting...
+2025-02-08 17:30 -05:00:  ✓ Ready in 598ms
+2025-02-08 17:30 -05:00: connections
+2025-02-08 17:30 -05:00: mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:30 -05:00: connections
+2025-02-08 17:30 -05:00: mongodb+srv://mthero24:Shower%4012@cluster0-jqk8m.gcp.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:30 -05:00: connections
+2025-02-08 17:30 -05:00: mongodb+srv://mthero24:Shower%4012@cluster1.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:30 -05:00: MongoDB :: connected test
+2025-02-08 17:30 -05:00: MongoDB :: connected test
+2025-02-08 17:30 -05:00: MongoDB :: connected test
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:30 -05:00: null '__TOKEN__'
+2025-02-08 17:30 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:31 -05:00: null '__TOKEN__'
+2025-02-08 17:31 -05:00: undefined '__ROLE__'
+2025-02-08 17:32 -05:00:    ▲ Next.js 15.1.6
+2025-02-08 17:32 -05:00:    - Local:        http://localhost:3001
+2025-02-08 17:32 -05:00:    - Network:      http://192.168.1.100:3001
+2025-02-08 17:32 -05:00: 
+2025-02-08 17:32 -05:00:  ✓ Starting...
+2025-02-08 17:32 -05:00:  ✓ Ready in 582ms
+2025-02-08 17:32 -05:00: connections
+2025-02-08 17:32 -05:00: mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:32 -05:00: connections
+2025-02-08 17:32 -05:00: mongodb+srv://mthero24:Shower%4012@cluster0-jqk8m.gcp.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:32 -05:00: connections
+2025-02-08 17:32 -05:00: mongodb+srv://mthero24:Shower%4012@cluster1.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:32 -05:00: MongoDB :: connected test
+2025-02-08 17:32 -05:00: MongoDB :: connected test
+2025-02-08 17:32 -05:00: MongoDB :: connected test
+2025-02-08 17:33 -05:00:    ▲ Next.js 15.1.6
+2025-02-08 17:33 -05:00:    - Local:        http://localhost:3001
+2025-02-08 17:33 -05:00:    - Network:      http://192.168.1.100:3001
+2025-02-08 17:33 -05:00: 
+2025-02-08 17:33 -05:00:  ✓ Starting...
+2025-02-08 17:33 -05:00:  ✓ Ready in 587ms
+2025-02-08 17:33 -05:00: connections
+2025-02-08 17:33 -05:00: mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:33 -05:00: connections
+2025-02-08 17:33 -05:00: mongodb+srv://mthero24:Shower%4012@cluster0-jqk8m.gcp.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:33 -05:00: connections
+2025-02-08 17:33 -05:00: mongodb+srv://mthero24:Shower%4012@cluster1.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:33 -05:00: MongoDB :: connected test
+2025-02-08 17:33 -05:00: MongoDB :: connected test
+2025-02-08 17:33 -05:00: MongoDB :: connected test
+2025-02-08 17:33 -05:00: null '__TOKEN__'
+2025-02-08 17:33 -05:00: undefined '__ROLE__'
+2025-02-08 17:33 -05:00: null '__TOKEN__'
+2025-02-08 17:33 -05:00: undefined '__ROLE__'
+2025-02-08 17:33 -05:00: null '__TOKEN__'
+2025-02-08 17:33 -05:00: undefined '__ROLE__'
+2025-02-08 17:33 -05:00: null '__TOKEN__'
+2025-02-08 17:33 -05:00: undefined '__ROLE__'
+2025-02-08 17:34 -05:00: null '__TOKEN__'
+2025-02-08 17:34 -05:00: undefined '__ROLE__'
+2025-02-08 17:34 -05:00: null '__TOKEN__'
+2025-02-08 17:34 -05:00: undefined '__ROLE__'
+2025-02-08 17:34 -05:00: null '__TOKEN__'
+2025-02-08 17:34 -05:00: undefined '__ROLE__'
+2025-02-08 17:34 -05:00:    ▲ Next.js 15.1.6
+2025-02-08 17:34 -05:00:    - Local:        http://localhost:3001
+2025-02-08 17:34 -05:00:    - Network:      http://192.168.1.100:3001
+2025-02-08 17:34 -05:00: 
+2025-02-08 17:34 -05:00:  ✓ Starting...
+2025-02-08 17:34 -05:00:  ✓ Ready in 580ms
+2025-02-08 17:34 -05:00: connections
+2025-02-08 17:34 -05:00: mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:34 -05:00: connections
+2025-02-08 17:34 -05:00: mongodb+srv://mthero24:Shower%4012@cluster0-jqk8m.gcp.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:34 -05:00: connections
+2025-02-08 17:34 -05:00: mongodb+srv://mthero24:Shower%4012@cluster1.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:34 -05:00: MongoDB :: connected test
+2025-02-08 17:34 -05:00: MongoDB :: connected test
+2025-02-08 17:34 -05:00: MongoDB :: connected test
+2025-02-08 17:34 -05:00: +++++++++++++++++ {
+  userName: 'michaelthero@teeshirtpalace.com',
+  password: 'bADAbING@12',
+  redirect: 'false',
+  csrfToken: '759c98f90dd21e77dd07f3bf3edf29c2835f0f2cbe25ee2538d483500cbf4c0e',
+  callbackUrl: 'http://localhost:3001/login',
+  json: 'true'
+}
+2025-02-08 17:34 -05:00: {
+  _id: new ObjectId('643427c421cf891884579461'),
+  password: '$2a$08$eU6ATXKb1fNkaIuarehMZe/gUxmZuKsgqT5j1AHXTloEuG/bcrQFW',
+  email: 'michaelthero@teeshirtpalace.com',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  percentageDiscount: 0,
+  isAdmin: true,
+  addresses: [
+    {
+      name: 'Michael Thero',
+      phone: '5868767931',
+      address1: '1421 hidden view dr',
+      address2: '',
+      city: 'lapeer',
+      state: 'MI',
+      country: '',
+      zip: '48446',
+      _id: new ObjectId('645176afe80a5d9907482536'),
+      billingAddress: true
+    }
+  ],
+  __v: 14,
+  apiKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NDM0MjdjNDIxY2Y4OTE4ODQ1Nzk0NjEiLCJpYXQiOjE2ODExNDUwOTF9.n8z5eI63gF1P1GUul5b4bYtGf7gp0Xqnpgsq57xNtcA',
+  alerts: [],
+  authorizeCustomerProfileId: '1048745167',
+  type: 'production',
+  isSalesMan: true,
+  prices: {
+    '5ce4c3b01b881e6daaa0d200': {
+      '5ce19f77f4bbec0a18743a7d': 39.99,
+      '5ce19f78f4bbec0a18743ae7': 39.99,
+      '5ce19f78f4bbec0a18743b22': 39.99
+    },
+    '5ce4c3b01b881e6daaa0d212': {
+      '5ce19f78f4bbec0a18743b26': 24,
+      '5ce19f77f4bbec0a18743ab0': 24,
+      '5ce19f77f4bbec0a18743a7b': 24,
+      '5ce19f77f4bbec0a18743a97': 24,
+      '5ce19f78f4bbec0a18743ae5': 24,
+      '5ce19f77f4bbec0a18743ab1': 26,
+      '5ce19f78f4bbec0a18743b05': 29,
+      '5ce19f77f4bbec0a18743a7c': 30,
+      '5ce19f77f4bbec0a18743a98': 32,
+      '5ce19f78f4bbec0a18743ae6': 33
+    },
+    '5ce4c3b01b881e6daaa0d1fd': {
+      '5ce19f77f4bbec0a18743a7d': 32.99,
+      '5ce19f77f4bbec0a18743a99': 32.99,
+      '5ce19f78f4bbec0a18743ae7': 32.99,
+      '5ce19f78f4bbec0a18743b22': 32.99,
+      '5ce19f78f4bbec0a18743adc': 32.99
+    },
+    '5ce4c3b01b881e6daaa0d20f': {
+      '5ce19f77f4bbec0a18743a8b': 29.95,
+      '5ce19f78f4bbec0a18743b02': 29.95,
+      '5ce19f78f4bbec0a18743b21': 29.95,
+      '5ce19f78f4bbec0a18743b28': 29.95
+    },
+    '5ce4c3b01b881e6daaa0d217': {
+      '5ce19f77f4bbec0a18743ab0': 64,
+      '5ce19f77f4bbec0a18743a7b': 64,
+      '5ce19f77f4bbec0a18743a97': 64,
+      '5ce19f78f4bbec0a18743ae5': 64,
+      '5ce19f77f4bbec0a18743ab1': 70
+    },
+    '5ce4c3b01b881e6daaa0d218': {
+      '5ce300a401fc973d9b544266': 39.95,
+      '5ce300b201fc973d9b544267': 39.95,
+      '5ce300d701fc973d9b544268': 39.95,
+      '5ce300ee01fc973d9b544269': 39.95,
+      '5ce300f701fc973d9b54426a': 39.95
+    },
+    '5ce4c3b01b881e6daaa0d1f4': {
+      '5ce19f77f4bbec0a18743ab0': 24.99,
+      '5ce19f77f4bbec0a18743a7b': 24.99,
+      '5ce19f77f4bbec0a18743a97': 24.99,
+      '5ce19f78f4bbec0a18743ae5': 24.99,
+      '5ce19f77f4bbec0a18743ab1': 26.99,
+      '5ce19f78f4bbec0a18743b05': 27.99,
+      '5ce19f77f4bbec0a18743a7c': 28.99
+    },
+    '5ce4c3b01b881e6daaa0d202': {
+      '5ce19f77f4bbec0a18743ab0': 32.99,
+      '5ce19f77f4bbec0a18743a7b': 32.99,
+      '5ce19f77f4bbec0a18743a97': 32.99,
+      '5ce19f78f4bbec0a18743ae5': 32.99,
+      '5ce19f77f4bbec0a18743ab1': 34.99
+    },
+    '5ce4c3b01b881e6daaa0d20a': {
+      '5ce19f77f4bbec0a18743ab0': 24.95,
+      '5ce19f77f4bbec0a18743a7b': 24.95,
+      '5ce19f77f4bbec0a18743a97': 24.95,
+      '5ce19f78f4bbec0a18743ae5': 24.95,
+      '5ce19f77f4bbec0a18743ab1': 26.95,
+      '5ce19f78f4bbec0a18743b05': 27.95
+    },
+    '5ce4c3b01b881e6daaa0d214': {
+      '5ce19f77f4bbec0a18743a88': 7.99,
+      '63287379d2257f0594eab664': 11.99,
+      '5ce19f77f4bbec0a18743a87': 9.99,
+      '63287379d2257f0594eab668': 14.99,
+      '5ce19f78f4bbec0a18743b38': 10.99,
+      '63287379d2257f0594eab674': 15.99,
+      '5ce19f78f4bbec0a18743af4': 11.99,
+      '63287379d2257f0594eab671': 19.99,
+      '5ce19f78f4bbec0a18743b1e': 17.99,
+      '63287379d2257f0594eab66d': 27.99,
+      '5ce19f78f4bbec0a18743b3c': 7.99,
+      '63287379d2257f0594eab677': 11.99,
+      '5ce19f77f4bbec0a18743a8a': 9.99,
+      '63287379d2257f0594eab679': 14.99,
+      '5ce19f78f4bbec0a18743b01': 10.99,
+      '63287379d2257f0594eab67d': 15.99
+    },
+    '5ce4c3b01b881e6daaa0d21e': {
+      '5ce300a401fc973d9b544266': 34.99,
+      '5ce300b201fc973d9b544267': 34.99,
+      '5ce300d701fc973d9b544268': 34.99,
+      '5ce300ee01fc973d9b544269': 34.99,
+      '5ce300f701fc973d9b54426a': 34.99
+    },
+    '5ce4c3b11b881e6daaa0d23f': { '5ce5c7bac3c30768234a83bf': 16.99 },
+    '5ce4c3b11b881e6daaa0d247': {
+      '5ce19f77f4bbec0a18743a8b': 29.95,
+      '5ce19f78f4bbec0a18743b02': 29.95,
+      '5ce19f78f4bbec0a18743b21': 29.95,
+      '5ce19f78f4bbec0a18743b28': 29.95
+    },
+    '5ce4c3b11b881e6daaa0d229': {
+      '5ce19f78f4bbec0a18743b26': 28.99,
+      '5ce19f77f4bbec0a18743ab0': 28.99,
+      '5ce19f77f4bbec0a18743a7b': 28.99,
+      '5ce19f77f4bbec0a18743a97': 28.99,
+      '5ce19f78f4bbec0a18743ae5': 28.99,
+      '5ce19f77f4bbec0a18743ab1': 31.99,
+      '5ce19f78f4bbec0a18743b05': 34.99,
+      '5ce19f77f4bbec0a18743a7c': 34.99
+    },
+    '5ce4c3b11b881e6daaa0d22b': {
+      '5ce19f77f4bbec0a18743ab0': 28.99,
+      '5ce19f77f4bbec0a18743a7b': 28.99,
+      '5ce19f77f4bbec0a18743a97': 28.99,
+      '5ce19f78f4bbec0a18743ae5': 28.99,
+      '5ce19f77f4bbec0a18743ab1': 31.99,
+      '5ce19f78f4bbec0a18743b05': 33.99
+    },
+    '5ce4c3b11b881e6daaa0d231': {
+      '5ce19f77f4bbec0a18743a7d': 19.99,
+      '5ce19f77f4bbec0a18743a99': 19.99,
+      '5ce19f78f4bbec0a18743ae7': 19.99,
+      '5ce19f78f4bbec0a18743b22': 19.99
+    },
+    '5ce4c3b11b881e6daaa0d243': {
+      '5ce300a401fc973d9b544266': 28.99,
+      '5ce300b201fc973d9b544267': 28.99,
+      '5ce300d701fc973d9b544268': 28.99,
+      '5ce300ee01fc973d9b544269': 28.99
+    },
+    '5ce4c3b01b881e6daaa0d21d': {
+      '5ce19f77f4bbec0a18743ab0': 44.99,
+      '5ce19f77f4bbec0a18743a7b': 44.99,
+      '5ce19f77f4bbec0a18743a97': 44.99,
+      '5ce19f78f4bbec0a18743ae5': 44.99,
+      '5ce19f77f4bbec0a18743ab1': 51.99,
+      '5ce19f78f4bbec0a18743b05': 53.99,
+      '5ce19f77f4bbec0a18743a7c': 54.99,
+      '5ce19f77f4bbec0a18743a98': 54.99
+    },
+    '5ce4c3b01b881e6daaa0d21f': {
+      '5ce19f78f4bbec0a18743aec': 13.99,
+      '5ce19f78f4bbec0a18743b09': 15.99
+    },
+    '5ce4c3b11b881e6daaa0d245': {
+      '5ce19f78f4bbec0a18743b26': 25.99,
+      '5ce19f77f4bbec0a18743ab0': 25.99,
+      '5ce19f77f4bbec0a18743a7b': 25.99,
+      '5ce19f77f4bbec0a18743a97': 25.99,
+      '5ce19f78f4bbec0a18743ae5': 25.99,
+      '5ce19f77f4bbec0a18743ab1': 27.99,
+      '5ce19f78f4bbec0a18743b05': 28.99,
+      '5ce19f77f4bbec0a18743a7c': 29.99,
+      '5ce19f77f4bbec0a18743a98': 30.99
+    },
+    '5ce4c3b11b881e6daaa0d24b': {
+      '5ce300a401fc973d9b544266': 24.99,
+      '5ce300b201fc973d9b544267': 24.99,
+      '5ce300d701fc973d9b544268': 24.99,
+      '5ce300ee01fc973d9b544269': 24.99,
+      '5ce300f701fc973d9b54426a': 24.99
+    },
+    '5ce4c3b11b881e6daaa0d252': {
+      '5ce19f78f4bbec0a18743b26': 19.99,
+      '5ce19f77f4bbec0a18743ab0': 19.99,
+      '5ce19f77f4bbec0a18743a7b': 19.99,
+      '5ce19f77f4bbec0a18743a97': 19.99,
+      '5ce19f78f4bbec0a18743ae5': 19.99,
+      '5ce19f77f4bbec0a18743ab1': 21.99,
+      '5ce19f78f4bbec0a18743b05': 22.99,
+      '5ce19f77f4bbec0a18743a7c': 23.99,
+      '5ce19f77f4bbec0a18743a98': 24.99,
+      '5ce19f78f4bbec0a18743ae6': 25.99
+    },
+    '5ce4c3b11b881e6daaa0d277': {
+      '5ce19f77f4bbec0a18743ab0': 24.99,
+      '5ce19f77f4bbec0a18743a7b': 24.99,
+      '5ce19f77f4bbec0a18743a97': 24.99,
+      '5ce19f78f4bbec0a18743ae5': 24.99,
+      '5ce19f77f4bbec0a18743ab1': 26.99,
+      '5ce19f78f4bbec0a18743b05': 27.99
+    },
+    '5ce4c3b11b881e6daaa0d28f': {
+      '5ce19f78f4bbec0a18743b26': 23.99,
+      '5ce19f77f4bbec0a18743ab0': 23.99,
+      '5ce19f77f4bbec0a18743a7b': 23.99,
+      '5ce19f77f4bbec0a18743a97': 23.99,
+      '5ce19f78f4bbec0a18743ae5': 23.99,
+      '5ce19f77f4bbec0a18743ab1': 24.99,
+      '5ce19f78f4bbec0a18743b05': 25.99,
+      '5ce19f77f4bbec0a18743a7c': 28.99
+    },
+    '6131028f35299d0d97ae5c69': {
+      '61310e78c486d6136c300b77': 19.95,
+      '5e9a0382f897087098a89f3c': 44.99,
+      '5e9a038f38c1a56781b7eb91': 79.99,
+      '5e9a0373c4a82c7f31fe4e17': 24.99
+    },
+    '5ce4c3b11b881e6daaa0d256': { '5d7adb4b84bb9f40dbcda76d': 19.99 },
+    '5f51316260f6f517a6980553': { '5f513186cf358017ddea348c': 21.99 },
+    '60d4d4a44488e21657c9f114': {
+      '60d4d49ccb2ef5784b21166b': 565,
+      '60d4cca438a3311651e96690': 2.5,
+      '60d4ccf638a3311651e96691': 19,
+      '60d4d480c04c0278453f0aa3': 138,
+      '60d4d48d56f39c788a29dc2e': 250,
+      '60d4ce0fc04c0278453f0a63': 45,
+      '60d4ccbe473897179fccb6a2': 12.5,
+      '60d4d0af0f0a597893863d95': 81.5
+    },
+    '61466ad4f75c2a6a1b3b9789': {
+      '5ce19f78f4bbec0a18743b26': 36,
+      '5ce19f77f4bbec0a18743ab0': 36,
+      '5ce19f77f4bbec0a18743a7b': 36,
+      '5ce19f77f4bbec0a18743a97': 36,
+      '5ce19f78f4bbec0a18743ae5': 36,
+      '5ce19f77f4bbec0a18743ab1': 39,
+      '5ce19f78f4bbec0a18743b05': 40,
+      '5ce19f77f4bbec0a18743a7c': 41
+    },
+    '5ce4c3b11b881e6daaa0d251': {
+      '5ce19f77f4bbec0a18743a7d': 24.99,
+      '5ce19f77f4bbec0a18743a99': 24.99,
+      '5ce19f78f4bbec0a18743ae7': 24.99,
+      '5ce19f78f4bbec0a18743b22': 24.99
+    },
+    '5ce4c3b11b881e6daaa0d27d': {
+      '5ce300a401fc973d9b544266': 19.99,
+      '5ce300b201fc973d9b544267': 19.99,
+      '5ce300d701fc973d9b544268': 19.99,
+      '5ce300ee01fc973d9b544269': 19.99,
+      '5ce300f701fc973d9b54426a': 19.99
+    },
+    '5ce4c3b11b881e6daaa0d28e': {
+      '5ce19f77f4bbec0a18743ab0': 25.99,
+      '5ce19f77f4bbec0a18743a7b': 25.99,
+      '5ce19f77f4bbec0a18743a97': 25.99,
+      '5ce19f78f4bbec0a18743ae5': 25.99,
+      '5ce19f77f4bbec0a18743ab1': 27.99,
+      '5ce19f78f4bbec0a18743b05': 28.99,
+      '5ce19f77f4bbec0a18743a7c': 29.99
+    },
+    '5ce4c3b11b881e6daaa0d292': {
+      '5ce19f77f4bbec0a18743ab0': 25.99,
+      '5ce19f77f4bbec0a18743a7b': 25.99,
+      '5ce19f77f4bbec0a18743a97': 25.99,
+      '5ce19f78f4bbec0a18743ae5': 25.99,
+      '5ce19f77f4bbec0a18743ab1': 27.99,
+      '5ce19f78f4bbec0a18743b05': 28.99
+    },
+    '5cfda17e31cd750867652eee': {
+      '5ce19f77f4bbec0a18743a8c': 31.99,
+      '5ce19f78f4bbec0a18743af1': 31.99,
+      '5ce19f78f4bbec0a18743aed': 31.99,
+      '5ce19f77f4bbec0a18743a81': 27.99,
+      '5ce19f78f4bbec0a18743b3e': 27.99
+    },
+    '5f4e9d55e4704f7e0c667bb0': { '5f4e9eea81ef047dbf39849d': 12.99 },
+    '603819641ba3c91e2d4a7909': { '603819941b70b851eb5343fa': 29.95 },
+    '5ce4c3b11b881e6daaa0d255': {
+      '5ce19f78f4bbec0a18743b07': 26.99,
+      '5ce19f77f4bbec0a18743a7e': 26.99,
+      '5ce19f77f4bbec0a18743a9a': 26.99,
+      '5ce19f78f4bbec0a18743aea': 26.99
+    },
+    '5ce4c3b11b881e6daaa0d260': {
+      '5ce19f78f4bbec0a18743b07': 21,
+      '5ce19f77f4bbec0a18743a7e': 21,
+      '5ce19f77f4bbec0a18743a9a': 21,
+      '5ce19f78f4bbec0a18743ae8': 21,
+      '5ce19f78f4bbec0a18743aea': 21
+    },
+    '5ce4c3b11b881e6daaa0d280': {
+      '5ce19f77f4bbec0a18743ab0': 34.99,
+      '5ce19f77f4bbec0a18743a7b': 34.99,
+      '5ce19f77f4bbec0a18743a97': 34.99,
+      '5ce19f78f4bbec0a18743ae5': 34.99,
+      '5ce19f77f4bbec0a18743ab1': 38.99,
+      '5ce19f78f4bbec0a18743b05': 40.99,
+      '5ce19f77f4bbec0a18743a7c': 41.99,
+      '5ce19f77f4bbec0a18743a98': 42.99
+    },
+    '5f51363ca808103284d9b2ec': { '5f51365ec7a0f625f39df7db': 29.95 },
+    '60b9053604ae9a05d83d3279': {
+      '5ce19f77f4bbec0a18743ab0': 22.99,
+      '5ce19f77f4bbec0a18743a7b': 22.98,
+      '5ce19f77f4bbec0a18743a97': 22.99,
+      '5ce19f78f4bbec0a18743ae5': 22.99,
+      '5ce19f77f4bbec0a18743ab1': 24.99
+    },
+    '611a8d3c0d4c9f113abce452': {
+      '60d4d49ccb2ef5784b21166b': 875,
+      '60d4cca438a3311651e96690': 3.5,
+      '60d4ccf638a3311651e96691': 26,
+      '60d4d480c04c0278453f0aa3': 190,
+      '60d4d48d56f39c788a29dc2e': 380,
+      '60d4ce0fc04c0278453f0a63': 65,
+      '60d4ccbe473897179fccb6a2': 17.5,
+      '60d4d0af0f0a597893863d95': 112.5
+    },
+    '612947678e6ef838b5417d7d': { '612cf417f7e4016dab5ef366': 29.99 },
+    '61957052b409a9535aa4c973': {
+      '5ce19f77f4bbec0a18743a8c': 32.99,
+      '5ce19f78f4bbec0a18743af1': 34.99,
+      '5ce19f78f4bbec0a18743aed': 34.99,
+      '5ce19f77f4bbec0a18743a81': 29.99,
+      '5ce19f78f4bbec0a18743b3e': 29.99
+    },
+    '61957319b409a9535aa4cac8': {
+      '5ce19f77f4bbec0a18743a97': 39.99,
+      '5ce19f78f4bbec0a18743ae5': 39.99,
+      '5ce19f77f4bbec0a18743ab1': 44.99,
+      '5ce19f78f4bbec0a18743b05': 49.99,
+      '5ce19f77f4bbec0a18743a7c': 49.99
+    },
+    '6195742bb409a9535aa4cb0f': {
+      '5ce19f77f4bbec0a18743a97': 49.99,
+      '5ce19f78f4bbec0a18743ae5': 49.99,
+      '5ce19f77f4bbec0a18743ab1': 54.99,
+      '5ce19f78f4bbec0a18743b05': 59.99,
+      '5ce19f77f4bbec0a18743a7c': 59.99
+    },
+    '620bd0809d56d24c59d7ca7b': {
+      '620bd00a289c514c9e06169e': 39.95,
+      '620bd07ba80a7c1e336a0050': 44.95
+    },
+    '620d4d9323f8ed09ef1e0151': {
+      '5ce19f78f4bbec0a18743b07': 24.99,
+      '5ce19f77f4bbec0a18743a7e': 24.99,
+      '5ce19f77f4bbec0a18743a9a': 24.99,
+      '5ce19f78f4bbec0a18743ae8': 24.99
+    },
+    '620d5b157834bd08733ce60b': {
+      '5ce19f77f4bbec0a18743a7d': 24.99,
+      '5ce19f77f4bbec0a18743a99': 24.99,
+      '5ce19f78f4bbec0a18743ae7': 24.99,
+      '5ce19f78f4bbec0a18743b22': 24.99
+    },
+    '620e63c238809d1890cbca2a': {
+      '5ce300a401fc973d9b544266': 24.99,
+      '5ce300b201fc973d9b544267': 24.99,
+      '5ce300d701fc973d9b544268': 24.99,
+      '5ce300ee01fc973d9b544269': 24.99,
+      '5ce300f701fc973d9b54426a': 24.99
+    },
+    '620e6b5e2b2c1e13a71c1ea5': {
+      '5ce19f78f4bbec0a18743b26': 27.99,
+      '5ce19f77f4bbec0a18743ab0': 27.99,
+      '5ce19f77f4bbec0a18743a7b': 27.99,
+      '5ce19f77f4bbec0a18743a97': 27.98,
+      '5ce19f78f4bbec0a18743ae5': 27.99,
+      '5ce19f77f4bbec0a18743ab1': 29.99,
+      '5ce19f78f4bbec0a18743b05': 30.99,
+      '5ce19f77f4bbec0a18743a7c': 31.99
+    },
+    '620ea7249900ce38d826affe': {
+      '5ce19f77f4bbec0a18743ab0': 27.99,
+      '5ce19f77f4bbec0a18743a7b': 27.99,
+      '5ce19f77f4bbec0a18743a97': 27.99,
+      '5ce19f78f4bbec0a18743ae5': 27.99,
+      '5ce19f77f4bbec0a18743ab1': 29.99
+    },
+    '620eb578365a88662804c35e': {
+      '5ce19f78f4bbec0a18743b26': 24.99,
+      '5ce19f77f4bbec0a18743ab0': 24.99,
+      '5ce19f77f4bbec0a18743a7b': 24.99,
+      '5ce19f77f4bbec0a18743a97': 24.99,
+      '5ce19f78f4bbec0a18743ae5': 24.99,
+      '5ce19f77f4bbec0a18743ab1': 26.99
+    },
+    '620fe7fc44d4363fe6bdfbf4': {
+      '5ce19f78f4bbec0a18743b26': 27.99,
+      '5ce19f77f4bbec0a18743ab0': 27.99,
+      '5ce19f77f4bbec0a18743a7b': 27.99,
+      '5ce19f77f4bbec0a18743a97': 27.99,
+      '5ce19f78f4bbec0a18743ae5': 27.99,
+      '5ce19f77f4bbec0a18743ab1': 29.99,
+      '5ce19f78f4bbec0a18743b05': 30.99,
+      '5ce19f77f4bbec0a18743a7c': 31.99
+    },
+    '632a002545fec834abec8487': { '5ce5c7bac3c30768234a83bf': 24.99 },
+    '632a0523b4fd5115f1d0db51': { '5ce5c7bac3c30768234a83bf': 44.99 },
+    '632a0760ce327b69f8f165ee': { '5ce5c7bac3c30768234a83bf': 27.99 },
+    '632a0be76c07d31e22abf9b9': { '5ce5c7bac3c30768234a83bf': 37.99 },
+    '632a0ee40ced961e3947b333': { '5ce5c7bac3c30768234a83bf': 22.99 },
+    '632a1112e54f023464fa1c14': { '5ce5c7bac3c30768234a83bf': 24.99 },
+    '632a13ff2bfe811f2383f900': { '5ce5c7bac3c30768234a83bf': 14.99 },
+    '632a1824e1b29b7231202ad8': { '5ce5c7bac3c30768234a83bf': 24.99 },
+    '632b26ceefd52d79086301f7': { '5ce5c7bac3c30768234a83bf': 34.99 },
+    '632b31a93cdb7b7ee9465484': {
+      '5ce19f77f4bbec0a18743ab0': 52.99,
+      '5ce19f77f4bbec0a18743a7b': 52.99,
+      '5ce19f77f4bbec0a18743a97': 52.99,
+      '5ce19f78f4bbec0a18743ae5': 52.99,
+      '5ce19f77f4bbec0a18743ab1': 58.99
+    },
+    '632b443b4327403f6d549bcc': { '5ce5c7bac3c30768234a83bf': 59.99 },
+    '632b6441ea66b04a797183a9': { '5ce5c7bac3c30768234a83bf': 79.99 },
+    '632c947026c9db6a1cbf6025': { '632c8e2c26c9db6a1cbeafd1': 19.99 },
+    '632c96a67addee0c35dfac1e': { '632c8e2c26c9db6a1cbeafd1': 24.99 },
+    '6336f9654253967d43eb1e16': { '632c8e2c26c9db6a1cbeafd1': 49.99 },
+    '6336fcc608522c6808df30a0': {
+      '5ce19f78f4bbec0a18743b26': 44.99,
+      '5ce19f77f4bbec0a18743ab0': 44.99,
+      '5ce19f77f4bbec0a18743a7b': 44.99,
+      '5ce19f77f4bbec0a18743a97': 44.99,
+      '5ce19f78f4bbec0a18743ae5': 44.99,
+      '5ce19f77f4bbec0a18743ab1': 49.99
+    },
+    '633ed8b17618cf63536fffdd': {
+      '5ce19f78f4bbec0a18743b26': 47.99,
+      '5ce19f77f4bbec0a18743ab0': 47.99,
+      '5ce19f77f4bbec0a18743a7b': 47.99,
+      '5ce19f77f4bbec0a18743a97': 47.99,
+      '5ce19f78f4bbec0a18743ae5': 47.99,
+      '5ce19f77f4bbec0a18743ab1': 49.99,
+      '5ce19f78f4bbec0a18743b05': 51.99,
+      '5ce19f77f4bbec0a18743a7c': 54.99
+    },
+    '633edad5e2968407abf9186a': {
+      '5ce19f78f4bbec0a18743b26': 44.99,
+      '5ce19f77f4bbec0a18743ab0': 44.99,
+      '5ce19f77f4bbec0a18743a7b': 44.99,
+      '5ce19f77f4bbec0a18743a97': 44.99,
+      '5ce19f78f4bbec0a18743ae5': 44.99,
+      '5ce19f77f4bbec0a18743ab1': 49.99,
+      '5ce19f78f4bbec0a18743b05': 51.99,
+      '5ce19f77f4bbec0a18743a7c': 54.99
+    },
+    '63518dc051fb907cd633d6d3': { '632c8e2c26c9db6a1cbeafd1': 21.99 },
+    '63adc7dbbc0a6a25916e3725': {
+      '5ce19f77f4bbec0a18743ab0': 29.99,
+      '5ce19f77f4bbec0a18743a7b': 29.99,
+      '5ce19f77f4bbec0a18743a97': 29.99,
+      '5ce19f78f4bbec0a18743ae5': 29.99,
+      '5ce19f77f4bbec0a18743ab1': 34.99,
+      '5ce19f78f4bbec0a18743b05': 39.99,
+      '5ce19f77f4bbec0a18743a7c': 44.99
+    },
+    '63b5f5e080aac72dc6f25c57': { '632c8e2c26c9db6a1cbeafd1': 59.99 },
+    '63b5f77bcc3ee32dd6cafd84': { '632c8e2c26c9db6a1cbeafd1': 31.99 },
+    '63d0398f84a1e87fc170c33b': {
+      '5ce19f77f4bbec0a18743ab0': 28.99,
+      '5ce19f77f4bbec0a18743a7b': 28.99,
+      '5ce19f77f4bbec0a18743a97': 28.99,
+      '5ce19f78f4bbec0a18743ae5': 28.99,
+      '5ce19f77f4bbec0a18743ab1': 31.99,
+      '5ce19f78f4bbec0a18743b05': 34.99
+    },
+    '63d2b76a00da7159a388cb07': {
+      '5ce19f77f4bbec0a18743ab0': 28.99,
+      '5ce19f77f4bbec0a18743a7b': 28.99,
+      '5ce19f77f4bbec0a18743a97': 28.99,
+      '5ce19f78f4bbec0a18743ae5': 28.99,
+      '5ce19f77f4bbec0a18743ab1': 31.99,
+      '5ce19f78f4bbec0a18743b05': 33.99
+    },
+    '63d83987c00e9d41dcd7a28e': { '5ce5c7bac3c30768234a83bf': 24.99 },
+    '63de9b1af6cac50857fc3e99': {
+      '5ce19f77f4bbec0a18743ab0': 54.99,
+      '5ce19f77f4bbec0a18743a7b': 54.99,
+      '5ce19f77f4bbec0a18743a97': 54.99,
+      '5ce19f78f4bbec0a18743ae5': 54.99,
+      '5ce19f77f4bbec0a18743ab1': 59.99,
+      '5ce19f78f4bbec0a18743b05': 64.99
+    },
+    '63dea00cc294bc08360df72e': {
+      '5ce19f78f4bbec0a18743b26': 26.99,
+      '5ce19f77f4bbec0a18743ab0': 26.99,
+      '5ce19f77f4bbec0a18743a7b': 26.99,
+      '5ce19f77f4bbec0a18743a97': 26.99,
+      '5ce19f78f4bbec0a18743ae5': 26.99,
+      '5ce19f77f4bbec0a18743ab1': 29.99
+    },
+    '63deb7d5713bb0083dcb5234': { '5ce5c7bac3c30768234a83bf': 27.99 },
+    '640cbf901ba8d626e93b8395': {
+      '5ce19f78f4bbec0a18743b26': 59.99,
+      '5ce19f77f4bbec0a18743ab0': 59.99,
+      '5ce19f77f4bbec0a18743a7b': 59.99,
+      '5ce19f77f4bbec0a18743a97': 59.99,
+      '5ce19f78f4bbec0a18743ae5': 59.99,
+      '5ce19f77f4bbec0a18743ab1': 67.99,
+      '5ce19f78f4bbec0a18743b05': 69.99,
+      '5ce19f77f4bbec0a18743a7c': 74.99
+    },
+    '640f73f7f3bcdd6713f86b8e': { '5ce5c7bac3c30768234a83bf': 24.99 },
+    '640f7a3a265e226e118324cd': { '632c8e2c26c9db6a1cbeafd1': 64.99 },
+    '64120f058f917853b5f19229': {
+      '5ce19f78f4bbec0a18743b26': 35,
+      '5ce19f77f4bbec0a18743ab0': 35,
+      '5ce19f77f4bbec0a18743a7b': 35,
+      '5ce19f77f4bbec0a18743a97': 35,
+      '5ce19f78f4bbec0a18743ae5': 35,
+      '5ce19f77f4bbec0a18743ab1': 38,
+      '5ce19f78f4bbec0a18743b05': 39,
+      '5ce19f77f4bbec0a18743a7c': 40
+    },
+    '6414b27066b9a120a1329656': { '5ce5c7bac3c30768234a83bf': 39.99 },
+    '642458e5f8aeef47c105c102': { '5ce5c7bac3c30768234a83bf': 22.99 },
+    '6430351581c40230efc0d1bd': {
+      '5ce19f78f4bbec0a18743b26': 31.99,
+      '5ce19f77f4bbec0a18743ab0': 31.99,
+      '5ce19f77f4bbec0a18743a7b': 31.99,
+      '5ce19f77f4bbec0a18743a97': 31.99,
+      '5ce19f78f4bbec0a18743ae5': 31.99,
+      '5ce19f77f4bbec0a18743ab1': 35.99,
+      '5ce19f78f4bbec0a18743b05': 37.99,
+      '5ce19f77f4bbec0a18743a7c': 39.99
+    },
+    '64481575400497341b481e26': { '5ce5c7bac3c30768234a83bf': 47.99 },
+    '644819d9400497341b481ec1': {
+      '5ce19f77f4bbec0a18743ab0': 27.99,
+      '5ce19f77f4bbec0a18743a7b': 27.99,
+      '5ce19f77f4bbec0a18743a97': 27.99,
+      '5ce19f78f4bbec0a18743ae5': 27.99,
+      '5ce19f77f4bbec0a18743ab1': 31.99,
+      '5ce19f78f4bbec0a18743b05': 33.99
+    },
+    '64481d11400497341b48202d': { '5ce5c7bac3c30768234a83bf': 34.99 },
+    '64528b4fff021c7caaefdf86': {
+      '5ce19f77f4bbec0a18743ab0': 31.99,
+      '5ce19f77f4bbec0a18743a7b': 31.99,
+      '5ce19f77f4bbec0a18743a97': 31.99,
+      '5ce19f78f4bbec0a18743ae5': 31.99
+    },
+    '645401413677be40830bee36': {
+      '5ce19f77f4bbec0a18743ab0': 31.99,
+      '5ce19f77f4bbec0a18743a7b': 31.99,
+      '5ce19f77f4bbec0a18743a97': 31.99,
+      '5ce19f78f4bbec0a18743ae5': 31.99
+    },
+    '645413bd224fac3c32df9cb7': {
+      '5ce19f77f4bbec0a18743ab0': 55,
+      '5ce19f77f4bbec0a18743a7b': 55,
+      '5ce19f77f4bbec0a18743a97': 55,
+      '5ce19f78f4bbec0a18743ae5': 55,
+      '5ce19f77f4bbec0a18743ab1': 59,
+      '5ce19f78f4bbec0a18743b05': 60
+    },
+    '645e2a32258a7e7ab23e13ed': { '5ce5c7bac3c30768234a83bf': 29.99 },
+    '646a2ab3fd310d2bcd119039': { '5ce5c7bac3c30768234a83bf': 39.99 },
+    '649bffd00082721bbf1ac188': { '5ce5c7bac3c30768234a83bf': 34.99 },
+    '649c02760082721bbf1ad795': { '5ce5c7bac3c30768234a83bf': 24.99 },
+    '649c08d30082721bbf1b10ea': { '5ce5c7bac3c30768234a83bf': 19.99 },
+    '64ba8c110065b311bd99515a': {
+      '64ba898e8f42f5255f9c5a2c': 4.5,
+      '64bebfd562df3164103afb2d': 200,
+      '64bebf3462df3164103afaaa': 8,
+      '64bebf4662df3164103afabc': 35,
+      '64bebf5762df3164103afac9': 125,
+      '64bebf6762df3164103afad6': 200,
+      '64bebf8c62df3164103afaf9': 4.5,
+      '64bebfa862df3164103afb06': 8,
+      '64bebfc062df3164103afb13': 35,
+      '64bebfcb62df3164103afb20': 125
+    },
+    '64c3d923952d6257fdd37acc': { '632c8e2c26c9db6a1cbeafd1': 59.99 },
+    '64c3dafa7665cd0cf353f090': { '632c8e2c26c9db6a1cbeafd1': 64.99 },
+    '64c3df2b952d6257fdd3deb3': { '632c8e2c26c9db6a1cbeafd1': 44.99 },
+    '653027b59d05e0521799e0dd': {
+      '5ce19f78f4bbec0a18743b26': 39.99,
+      '5ce19f77f4bbec0a18743ab0': 39.99,
+      '5ce19f77f4bbec0a18743a7b': 39.99,
+      '5ce19f77f4bbec0a18743a97': 39.99,
+      '5ce19f78f4bbec0a18743ae5': 39.99,
+      '5ce19f77f4bbec0a18743ab1': 49.99,
+      '5ce19f78f4bbec0a18743b05': 59.99,
+      '5ce19f77f4bbec0a18743a7c': 64.99
+    },
+    '65315ea1514c2981746ef9e1': {
+      '5ce19f78f4bbec0a18743b26': 47.99,
+      '5ce19f77f4bbec0a18743ab0': 47.99,
+      '5ce19f77f4bbec0a18743a7b': 47.99,
+      '5ce19f77f4bbec0a18743a97': 47.99,
+      '5ce19f78f4bbec0a18743ae5': 47.99,
+      '5ce19f77f4bbec0a18743ab1': 52.99,
+      '5ce19f78f4bbec0a18743b05': 54.99,
+      '5ce19f77f4bbec0a18743a7c': 59.99
+    },
+    '65316373514c2981746efade': {
+      '5ce19f78f4bbec0a18743b26': 44.99,
+      '5ce19f77f4bbec0a18743ab0': 44.99,
+      '5ce19f77f4bbec0a18743a7b': 44.99,
+      '5ce19f77f4bbec0a18743a97': 44.99,
+      '5ce19f78f4bbec0a18743ae5': 44.99,
+      '5ce19f77f4bbec0a18743ab1': 52.99,
+      '5ce19f78f4bbec0a18743b05': 54.99,
+      '5ce19f77f4bbec0a18743a7c': 59.99
+    },
+    '6531665b514c2981746efc08': {
+      '5ce19f78f4bbec0a18743b26': 49.99,
+      '5ce19f77f4bbec0a18743ab0': 49.99,
+      '5ce19f77f4bbec0a18743a7b': 49.99,
+      '5ce19f77f4bbec0a18743a97': 49.99,
+      '5ce19f78f4bbec0a18743ae5': 49.99,
+      '5ce19f77f4bbec0a18743ab1': 57.99,
+      '5ce19f78f4bbec0a18743b05': 62.99,
+      '5ce19f77f4bbec0a18743a7c': 64.99
+    },
+    '65316963514c2981746efd19': {
+      '5ce19f78f4bbec0a18743b26': 49.99,
+      '5ce19f77f4bbec0a18743ab0': 49.99,
+      '5ce19f77f4bbec0a18743a7b': 49.99,
+      '5ce19f77f4bbec0a18743a97': 49.99,
+      '5ce19f78f4bbec0a18743ae5': 49.99,
+      '5ce19f77f4bbec0a18743ab1': 54.99,
+      '5ce19f78f4bbec0a18743b05': 59.99
+    },
+    '654959e31a0d4b8318eae74e': { '5ce5c7bac3c30768234a83bf': 19.99 },
+    '6553a4e3bcfd4612d9308995': {
+      '5ce19f78f4bbec0a18743b26': 54.99,
+      '5ce19f77f4bbec0a18743ab0': 54.99,
+      '5ce19f77f4bbec0a18743a7b': 54.99,
+      '5ce19f77f4bbec0a18743a97': 54.99,
+      '5ce19f78f4bbec0a18743ae5': 54.99,
+      '5ce19f77f4bbec0a18743ab1': 62.99,
+      '5ce19f78f4bbec0a18743b05': 64.99
+    },
+    '6553a6e3bcfd4612d9308a19': {
+      '5ce300a401fc973d9b544266': 52.99,
+      '5ce300b201fc973d9b544267': 52.99,
+      '5ce300d701fc973d9b544268': 52.99,
+      '5ce300ee01fc973d9b544269': 52.99
+    },
+    '6553aa2abcfd4612d9308a93': {
+      '5ce19f78f4bbec0a18743b26': 49.99,
+      '5ce19f77f4bbec0a18743ab0': 49.99,
+      '5ce19f77f4bbec0a18743a7b': 49.99,
+      '5ce19f77f4bbec0a18743a97': 49.99,
+      '5ce19f78f4bbec0a18743ae5': 49.99,
+      '5ce19f77f4bbec0a18743ab1': 57.99,
+      '5ce19f78f4bbec0a18743b05': 59.99
+    },
+    '6553ab35bcfd4612d9308ae9': {
+      '5ce300a401fc973d9b544266': 47.99,
+      '5ce300b201fc973d9b544267': 47.99,
+      '5ce300d701fc973d9b544268': 47.99,
+      '5ce300ee01fc973d9b544269': 47.99
+    },
+    '6553b4b7bcfd4612d9308c9b': {
+      '5ce19f78f4bbec0a18743b26': 29.99,
+      '5ce19f77f4bbec0a18743ab0': 29.99,
+      '5ce19f77f4bbec0a18743a7b': 29.99,
+      '5ce19f77f4bbec0a18743a97': 29.99,
+      '5ce19f78f4bbec0a18743ae5': 29.99,
+      '5ce19f77f4bbec0a18743ab1': 34.99,
+      '5ce19f78f4bbec0a18743b05': 39.99,
+      '5ce19f77f4bbec0a18743a7c': 44.99
+    },
+    '6553ddc8bcfd4612d930d867': {
+      '5ce19f78f4bbec0a18743b26': 39.99,
+      '5ce19f77f4bbec0a18743ab0': 39.99,
+      '5ce19f77f4bbec0a18743a7b': 39.99,
+      '5ce19f77f4bbec0a18743a97': 39.99,
+      '5ce19f78f4bbec0a18743ae5': 39.99,
+      '5ce19f77f4bbec0a18743ab1': 44.99,
+      '5ce19f78f4bbec0a18743b05': 47.99
+    },
+    '65566ec5bcfd4612d93523a7': { '5ce5c7bac3c30768234a83bf': 19.99 },
+    '65567220bcfd4612d9352423': {
+      '5ce19f78f4bbec0a18743b26': 64.99,
+      '5ce19f77f4bbec0a18743ab0': 64.99,
+      '5ce19f77f4bbec0a18743a7b': 64.99,
+      '5ce19f77f4bbec0a18743a97': 64.99,
+      '5ce19f78f4bbec0a18743ae5': 64.99,
+      '5ce19f77f4bbec0a18743ab1': 69.99
+    },
+    '655cb81956503c2b7d879a62': { '5ce5c7bac3c30768234a83bf': 21.99 },
+    '655cbf8671cf4df905f9dd65': {
+      '5ce19f78f4bbec0a18743b26': 79.99,
+      '5ce19f77f4bbec0a18743ab0': 79.99,
+      '5ce19f77f4bbec0a18743a7b': 79.99,
+      '5ce19f77f4bbec0a18743a97': 79.99,
+      '5ce19f78f4bbec0a18743ae5': 79.99,
+      '5ce19f77f4bbec0a18743ab1': 84.99,
+      '5ce19f78f4bbec0a18743b05': 89.99,
+      '5ce19f77f4bbec0a18743a7c': 94.99
+    },
+    '655e082eccd31704b98751b5': { '5ce5c7bac3c30768234a83bf': 29.99 },
+    '655e09ba6f768e2d5481258b': { '5ce5c7bac3c30768234a83bf': 39.99 },
+    '655e0c3c6f768e2d548181ae': { '5ce5c7bac3c30768234a83bf': 24.99 },
+    '655e401d83c36d389f9e240f': { '5ce5c7bac3c30768234a83bf': 15.99 },
+    '6571dce76e176563408c0371': {
+      '5ce19f77f4bbec0a18743ab0': 59.99,
+      '5ce19f77f4bbec0a18743a7b': 59.99,
+      '5ce19f77f4bbec0a18743a97': 59.99,
+      '5ce19f78f4bbec0a18743ae5': 59.99,
+      '5ce19f77f4bbec0a18743ab1': 64.99,
+      '5ce19f78f4bbec0a18743b05': 69.99
+    },
+    '6571dfaaabc858381c587abf': {
+      '5ce19f77f4bbec0a18743ab0': 79.99,
+      '5ce19f77f4bbec0a18743a7b': 79.99,
+      '5ce19f77f4bbec0a18743a97': 79.99,
+      '5ce19f78f4bbec0a18743ae5': 79.99,
+      '5ce19f77f4bbec0a18743ab1': 89.99,
+      '5ce19f78f4bbec0a18743b05': 99.99
+    },
+    '6571e1f26e176563408cde53': {
+      '5ce19f77f4bbec0a18743ab0': 109.99,
+      '5ce19f77f4bbec0a18743a7b': 109.99,
+      '5ce19f77f4bbec0a18743a97': 109.99,
+      '5ce19f78f4bbec0a18743ae5': 109.99,
+      '5ce19f77f4bbec0a18743ab1': 119.99,
+      '5ce19f78f4bbec0a18743b05': 119.99
+    },
+    '65970532e94d58d062a1b3a7': { '603ec911f71dfc4d91968d80': 24.95 }
+  },
+  commission: 0,
+  managed: false,
+  affiliateCode: '43JEW3',
+  balance: 385.77413999999993,
+  credit: { amountApproved: 0, approved: false, balance: 0 },
+  paymentMethods: {
+    primaryPaymentMethod: {
+      paymentProfileId: 'Balance',
+      paymentType: 'Balance',
+      paymentNumber: 'Balance',
+      source: 'Print Oracle',
+      provider: 'Print Oracle'
+    },
+    secondaryPaymentMethods: [ [Object], [Object] ]
+  },
+  tierQuantity: 0
+}
+2025-02-08 17:34 -05:00: {
+  name: undefined,
+  email: 'michaelthero@teeshirtpalace.com',
+  picture: undefined,
+  sub: undefined,
+  userName: undefined,
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero'
+} jwt
+2025-02-08 17:34 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:34 -05:00: admin __ROLE__
+2025-02-08 17:34 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:34 -05:00: admin __ROLE__
+2025-02-08 17:34 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:34 -05:00: admin __ROLE__
+2025-02-08 17:34 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:34 -05:00: admin __ROLE__
+2025-02-08 17:34 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:34 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:35 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:35 -05:00: admin __ROLE__
+2025-02-08 17:36 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:36 -05:00: admin __ROLE__
+2025-02-08 17:36 -05:00: 325 0 31
+2025-02-08 17:36 -05:00: garment
+2025-02-08 17:36 -05:00: red AT {
+  url: 'https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75'
+} 700
+2025-02-08 17:36 -05:00: https://images4.teeshirtpalace.com/images/productImages/SKU--red-at-garment.webp?url=https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75&width=700 url
+2025-02-08 17:36 -05:00: https://images4.teeshirtpalace.com/images/productImages/SKU--red-at-garment.webp?url=https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75&width=700
+2025-02-08 17:36 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:36 -05:00: admin __ROLE__
+2025-02-08 17:36 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:36 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00:    ▲ Next.js 15.1.6
+2025-02-08 17:37 -05:00:    - Local:        http://localhost:3001
+2025-02-08 17:37 -05:00:    - Network:      http://192.168.1.100:3001
+2025-02-08 17:37 -05:00: 
+2025-02-08 17:37 -05:00:  ✓ Starting...
+2025-02-08 17:37 -05:00:  ✓ Ready in 599ms
+2025-02-08 17:37 -05:00: connections
+2025-02-08 17:37 -05:00: mongodb+srv://mthero24:Shower%4012@tspprints.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:37 -05:00: connections
+2025-02-08 17:37 -05:00: mongodb+srv://mthero24:Shower%4012@cluster0-jqk8m.gcp.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:37 -05:00: connections
+2025-02-08 17:37 -05:00: mongodb+srv://mthero24:Shower%4012@cluster1.jqk8m.mongodb.net/test?retryWrites=true&w=majority
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: MongoDB :: connected test
+2025-02-08 17:37 -05:00: MongoDB :: connected test
+2025-02-08 17:37 -05:00: MongoDB :: connected test
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:37 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:37 -05:00: admin __ROLE__
+2025-02-08 17:38 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:38 -05:00: admin __ROLE__
+2025-02-08 17:38 -05:00: 42 6 3 0 10 11 0
+2025-02-08 17:38 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:38 -05:00: admin __ROLE__
+2025-02-08 17:38 -05:00: {
+  email: 'michaelthero@teeshirtpalace.com',
+  role: 'admin',
+  firstName: 'Michael',
+  lastName: 'Thero',
+  iat: 1739054093,
+  exp: 1741646093,
+  jti: '881aa254-12ec-47b3-8ac5-396c27e4016b'
+} '__TOKEN__'
+2025-02-08 17:38 -05:00: admin __ROLE__

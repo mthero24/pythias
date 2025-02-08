@@ -22,3 +22,92 @@ https://next-auth.js.org/errors#no_secret Please define a `secret` in production
     at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
   code: 'NO_SECRET'
 }
+2025-02-08 17:32 -05:00: TypeError: e.nextUrl.pathname.include is not a function
+    at e3 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:34870)
+    at handler (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:35476)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32372)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32359)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:21031)
+    at a.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:23958)
+    at c.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:18158)
+    at c.startActiveSpan (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:33210)
+2025-02-08 17:32 -05:00: TypeError: e.nextUrl.pathname.include is not a function
+    at e3 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:34870)
+    at handler (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:35476)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32372)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32359)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:21031)
+    at a.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:23958)
+    at c.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:18158)
+    at c.startActiveSpan (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:33210)
+2025-02-08 17:32 -05:00: TypeError: e.nextUrl.pathname.include is not a function
+    at e3 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:34870)
+    at handler (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:35476)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32372)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32359)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:21031)
+    at a.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:23958)
+    at c.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:18158)
+    at c.startActiveSpan (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:33210)
+2025-02-08 17:33 -05:00: [Error: Unable to optimize image and unable to fallback to upstream image] {
+  statusCode: 400
+}
+2025-02-08 17:33 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:33 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:33 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:34 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:34 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:34 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
