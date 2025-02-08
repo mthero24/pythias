@@ -1,0 +1,24 @@
+2025-02-08 10:41 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 10:41 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 10:41 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
