@@ -4,6 +4,8 @@ import Inventory from "../models/inventory";
 import Batches from "../models/batches";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
+    // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
+    // console.log("inv count", (await inv).length, "+++++++++++++++++++")
     let labels = {
             Standard: await Items.find({
             styleV2: { $ne: undefined },
@@ -38,10 +40,10 @@ export async function LabelsData(){
         //labels[k].map(l=>{console.log(l.inventory, `${l.colorName}-${l.sizeName}-${l.styleCode}`, k)})
         let missing = labels[k].filter(l=> l.inventory == undefined)
         missing.map(async m=>{
-            let i = await Inventory.findOne({inventory_id: `${m.colorName}-${m.sizeName}-${m.styleCode}`})
+            let i = await Inventory.findOne({inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)})
             if(!i){
                 i = new Inventory({
-                    inventory_id: `${m.colorName}-${m.sizeName}-${m.styleCode}`,
+                    inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`),
                     pending_quantity: 0,
                     quantity: 0,
                     order_at_quantity: 10,

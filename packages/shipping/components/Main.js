@@ -53,7 +53,7 @@ export function Main({stations, binCount, bins, pieceId, stat}){
           setStation={setStation}
           setAuto={setAuto}
         />
-        <Scan auto={auto} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId}/>
+        <Scan auto={auto} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins}/>
         <Bins
           bins={binss}
           setBins={setBins}

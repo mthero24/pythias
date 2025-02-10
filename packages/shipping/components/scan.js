@@ -2,7 +2,7 @@
 import {useState, useRef, useEffect} from "react";
 import {Card,TextField,Box, Checkbox, FormControlLabel} from "@mui/material";
 import axios from "axios";
-export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActivate, pieceId}){
+export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActivate, pieceId, setBins}){
     const textFieldRef = useRef(null);
     const [scan, setScan] = useState(pieceId)
     const [reship, setReship] = useState(false)
@@ -14,11 +14,20 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
         setAuto(true)
     }
     useEffect(() => {
+        const update = async ()=>{
+          let res = await axios.get("/api/production/shipping/update")
+          if(res.data.error){
+            alert(res.data.msg)
+          }
+          else setBins(res.data.bins)
+          console.log("new bins")
+        }
         if(auto){
             if (textFieldRef.current) {
                 textFieldRef.current.focus();
             }
             setAuto(false)
+            update()
         }
       }, [auto]);
       useEffect(()=>{
