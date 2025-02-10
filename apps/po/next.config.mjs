@@ -17,7 +17,7 @@ const nextConfig = {
     ],
   },
   env: {
-    localKey: "$2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm",
+    localKey: "$2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy",
   },
   webpack: (config) => {
     config.node = {

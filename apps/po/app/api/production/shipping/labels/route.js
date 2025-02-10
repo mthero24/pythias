@@ -76,7 +76,7 @@ export async function POST(req= NextApiRequest){
             let headers = {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer $2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm`
+                    "Authorization": `$2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
                 }
             }
             let res = await axios.post(`${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
