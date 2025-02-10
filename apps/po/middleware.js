@@ -36,7 +36,11 @@ export async function middleware(req=NextRequest) {
     const protectedRoute = protectedRoutes.find((route) =>
        req.nextUrl.pathname.startsWith(route.path)
      );
-    if (protectedRoute && !req.nextUrl.pathname.includes("login")) {
+    if (
+      protectedRoute &&
+      !req.nextUrl.pathname.includes("login") &&
+      !req.nextUrl.pathname.includes("/api/production/synergy")
+    ) {
       const token = await getToken({ req });
       console.log(token, "__TOKEN__");
       const role = token?.role;
