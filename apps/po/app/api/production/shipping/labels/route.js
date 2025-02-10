@@ -14,7 +14,7 @@ export async function POST(req= NextApiRequest){
         let label = await buyLabel({
             ...data,
             businessAddress: JSON.parse(process.env.businessAddress),
-            providers: ["usps", "fedex"],
+            providers: ["endicia", "fedex"],
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
             accountNumber: process.env.endiciaAccountNUmber,
@@ -76,10 +76,10 @@ export async function POST(req= NextApiRequest){
             let headers = {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `$2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+                    "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
                 }
             }
-            let res = await axios.post(`${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
+            let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
             console.log(res.data)
             if(res.error){
                 return NextResponse.json({error: true, msg: "error printing label"})

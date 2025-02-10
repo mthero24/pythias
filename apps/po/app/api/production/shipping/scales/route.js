@@ -5,7 +5,7 @@ export async function GET(req = NextApiRequest){
     let headers = {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer $2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm`
+            "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
         }
     }
     let res = await axios.get(`http://${process.env.localIP}/api/shipping/scales?station=${req.nextUrl.searchParams.get("station")}`, headers)

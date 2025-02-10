@@ -1,4 +1,5 @@
 import axios from "axios"
+import fs from "fs"
 async function GetToken({credentials}){
     console.log(credentials)
     let res = await axios.post("https://apis.usps.com/oauth2/v3/token", {
@@ -89,10 +90,12 @@ export async function getRatesUSPS({address, weight, dimensions, businessAddress
         "rateIndicator": "SP",
         "destinationEntryFacilityType": "NONE",
         "priceType": "CONTRACT",
-        "mailingDate": `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString() : `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${(new Date(Date.now()).getDate() + 1).toString().length > 1? (new Date(Date.now()).getDate() + 1).toString(): `0${(new Date(Date.now()).getDate() + 1).toString()}`}`,
+        "mailingDate": `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString() : `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${(new Date(Date.now()).getDate()).toString().length > 1? (new Date(Date.now()).getDate()).toString(): `0${(new Date(Date.now()).getDate()).toString()}`}`,
         "accountType": "EPS",
         "accountNumber": credentials.accountNumber
     }
+    console.log(data)
+    await fs.writeFileSync('data.txt', JSON.stringify(data), 'utf8');
     if(token){
         let headers = {
             headers: {
@@ -101,9 +104,16 @@ export async function getRatesUSPS({address, weight, dimensions, businessAddress
         }
         let resData
         let res = await axios.post("https://apis.usps.com/prices/v3/base-rates/search", data, headers).catch(e=>{resData= e.response.data})
-        //console.log(res?.data, resData)
-        if(res?.data.error) return {error:true, msg: res.data.message}
-        else if(resData)return {error:true, msg: resData.error.message}
+        console.log(res?.data, resData)
+        if(res?.data.error) {
+            await fs.writeFileSync('data2.txt', JSON.stringify(res.data), 'utf8');
+            console.log(res.data.errors)
+            return {error:true, msg: res.data.message}
+        }
+        else if(resData){
+            await fs.writeFileSync('data2.txt', JSON.stringify(resData), 'utf8');
+            return {error:true, msg: resData.error.message} 
+        }
         else return {error:false, rate: res.data.totalBasePrice}
     }else{
         return {error: true, msg: "No Token Returned"}
