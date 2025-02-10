@@ -408,3 +408,471 @@ For more information, check the blog post at https://a.co/cUPnyil
 Please migrate your code to use AWS SDK for JavaScript (v3).
 For more information, check the blog post at https://a.co/cUPnyil
 (Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:10 -05:00: (node:39856) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:20 -05:00: (node:38740) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:25 -05:00: (node:41620) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:26 -05:00: (node:41308) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:42 -05:00: (node:40084) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 21:55 -05:00: (node:37104) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 21:57 -05:00: (node:40148) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:01 -05:00: (node:22084) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:06 -05:00: (node:11168) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:11 -05:00: (node:30004) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:13 -05:00: (node:38592) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:14 -05:00: (node:18560) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:15 -05:00: (node:41880) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:18 -05:00: (node:23364) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:19 -05:00: (node:32272) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:21 -05:00: (node:40364) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:27 -05:00: (node:34012) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:32 -05:00: (node:41768) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:39 -05:00: (node:7196) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:43 -05:00: (node:39104) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:46 -05:00: (node:41872) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:48 -05:00: (node:9940) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:49 -05:00: (node:36536) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:52 -05:00: (node:20036) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:54 -05:00: (node:34064) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:57 -05:00: (node:4660) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 23:00 -05:00: (node:34408) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 23:03 -05:00: (node:41976) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 23:06 -05:00: (node:32220) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 23:13 -05:00: (node:6588) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 23:22 -05:00: (node:1464) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 23:25 -05:00: (node:11868) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 23:28 -05:00: (node:27932) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:10 -05:00: (node:13932) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:12 -05:00: (node:33836) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:14 -05:00: (node:27120) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:16 -05:00: (node:34368) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:19 -05:00: (node:34636) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:22 -05:00: (node:37444) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:26 -05:00: (node:40840) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:28 -05:00: (node:38808) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:29 -05:00: (node:40208) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:31 -05:00: (node:19364) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:35 -05:00: (node:42468) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:38 -05:00: (node:9084) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:38 -05:00: (node:3588) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:38 -05:00: (node:42740) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:40 -05:00: (node:39760) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:43 -05:00: (node:34804) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:46 -05:00: (node:36084) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:47 -05:00: (node:21560) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:49 -05:00: (node:10436) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:53 -05:00: (node:39964) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 00:56 -05:00: (node:40148) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:03 -05:00: (node:42400) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:06 -05:00: (node:13764) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:11 -05:00: (node:41872) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:14 -05:00: (node:19232) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:18 -05:00: (node:27684) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:23 -05:00: (node:39100) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:26 -05:00: (node:11124) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:30 -05:00: (node:34624) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:34 -05:00: (node:37352) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:39 -05:00: (node:3484) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:43 -05:00: (node:32516) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:46 -05:00: (node:42756) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 01:48 -05:00: (node:38748) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 02:08 -05:00: (node:33296) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 02:11 -05:00: (node:31484) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 02:17 -05:00: (node:42612) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 02:24 -05:00: (node:44120) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 02:51 -05:00: (node:41880) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 03:09 -05:00: (node:12076) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 03:11 -05:00: (node:37944) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 03:14 -05:00: (node:45292) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 03:14 -05:00: (node:34604) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 03:16 -05:00: (node:12628) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-09 09:00 -05:00: (node:25740) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+ SDK releases are limited to address critical bug fixes and security issues only.
+
+Please migrate your code to use AWS SDK for JavaScript (v3).
+For more information, check the blog post at https://a.co/cUPnyil
+(Use `node --trace-warnings ...` to show where the warning was created)

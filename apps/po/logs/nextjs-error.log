@@ -1,0 +1,1936 @@
+2025-02-08 10:41 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 10:41 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 10:41 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:32 -05:00: TypeError: e.nextUrl.pathname.include is not a function
+    at e3 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:34870)
+    at handler (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:35476)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32372)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32359)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:21031)
+    at a.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:23958)
+    at c.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:18158)
+    at c.startActiveSpan (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:33210)
+2025-02-08 17:32 -05:00: TypeError: e.nextUrl.pathname.include is not a function
+    at e3 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:34870)
+    at handler (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:35476)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32372)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32359)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:21031)
+    at a.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:23958)
+    at c.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:18158)
+    at c.startActiveSpan (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:33210)
+2025-02-08 17:32 -05:00: TypeError: e.nextUrl.pathname.include is not a function
+    at e3 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:34870)
+    at handler (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:35476)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32372)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:32359)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:13:21031)
+    at a.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:23958)
+    at c.with (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:18158)
+    at c.startActiveSpan (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\middleware.js:1:33210)
+2025-02-08 17:33 -05:00: [Error: Unable to optimize image and unable to fallback to upstream image] {
+  statusCode: 400
+}
+2025-02-08 17:33 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:33 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:33 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:34 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:34 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:34 -05:00: [next-auth][error][NO_SECRET] 
+https://next-auth.js.org/errors#no_secret Please define a `secret` in production. Error [MissingSecretError]: Please define a `secret` in production.
+    at t.assertConfig (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:114475)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:1:107844)
+    at async a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:19771)
+    at async e.length.t (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\auth\[...nextauth]\route.js:25:21261) {
+  code: 'NO_SECRET'
+}
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"styleCode":{"$nin":["POST","MSP","CST"]},"paid":true,"order":{"$ne":null}},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"paid":true,"styleCode":{"$in":["CST","MSP"]},"order":{"$ne":null}},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test items.find({"type":"gift","sku":"gift-message","inBin":false,"canceled":false,"shipped":false,"paid":true,"order":{"$ne":null}},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"styleCode":"POST","order":{"$ne":null},"sizeName":{"$not":{"$regex":"P"}},"paid":true},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"styleCode":"POST","sizeName":{"$regex":"P"},"order":{"$ne":null},"paid":true},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test items.find({"inBin":false,"canceled":false,"shipped":false,"styleCode":"BUMP","order":{"$ne":null},"paid":true},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["65d3983ebc53aae7933e8405","664e5431f0b457e812f8bbbb","665a314f6dcedcdcbef49470","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","66ca816e1688e0d4aa2e1018","66cb43241688e0d4aa2ee793","67565bcbdc26a66fae9c7735","6758e2f2ab7c923886142878","67604b58fcdcf466cfc8b527","6762e61bb71dd06e884de72e","6768948a0ede1bdb58f66f8d","675bc8be4bbe5fd0a111b61b","675bc8be4bbe5fd0a111b61b","6760679fff573f218fb844d7","6760679fff573f218fb844d7","67716d775ff41e3a01713f12","6797fcc15b895380d83f2cf7","67a62c3a50fe26ce08b3cbb0","67a6381450fe26ce08b4a886","67a63a9a5a605809ad7c84b9","67a63a9a5a605809ad7c84b9","67a67b0550fe26ce08b68809","67a6817abe9a6745c0a30c73","67a6ad3b2f389430a34f8d86","67a6ad3b2f389430a34f8d86","67a6ad3b2f389430a34f8d86","67a6ad3b2f389430a34f8d86","67a6ccc10bc678103bbec0b2","67a76b0eba0ca73f77c73d4b","67a76b0eba0ca73f77c73d4b","67a77a3661a9c6c37559eeef","67a77fee00534d051d307438","67a785b300534d051d3140a5","67a785b300534d051d3140a5","67a79341107c160cf1766927","67a7a50361a9c6c3755bb868","67a7bece2f389430a3567994"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["blue-11%20oz-CFM","black-15%20oz-CFM","white-11%20oz-CFM","red-11%20oz-CFM","Forest-15%20oz-CFM","navy-15%20oz-CFM","navy-15%20oz-CFM","white-15%20oz-CFM","white-15%20oz-CFM","blue-15%20oz-CFM","navy-15%20oz-CFM","pink-15%20oz-CFM","orange-15%20oz-CFM","black-15%20oz-CFM","navy-11%20oz-CFM","maroon-11%20oz-CFM","navy-11%20oz-CFM","black-15%20oz-CFM","white-11%20oz-CFM","white-11%20oz-CFM","navy-15%20oz-CFM","white-15%20oz-CFM","white-14%20oz-TMUG"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"blue-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"red-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"Forest-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"blue-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"pink-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"orange-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"maroon-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-14 oz-TMUG"},{})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["6659f3276dcedcdcbef199b2","675837fb8f869c3060414ab1","678d3c22a832e9b4671838ad","6797b99233c9ad9de1d4ef94","67a6776c50fe26ce08b61886","67a7dc1e08cb85af11ffdc16"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["wood-11x17-POST","black-16x20-POST","purple-24x36-POST","orange-24x36-POST"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["668d46877c55f4b1e2e0b2d0","66f7f2cf7cb614230e7fc518","677b221ea40a04c0438e3676"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["navy-11x17P-POST"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["6573c407b3d32f27d7ae2cc8","67a61f736fd9dfb411c684cb","67a62d836fd9dfb411c767eb","67a66678447b409b9b8231f8","67a6774529256db4f31cd65f","67a6b6040bc678103bbe324f","67a77b172f389430a354ba8a","67a7a0a80bc678103bc4e2d4","67a7b18b00534d051d3227af","67a7db3608cb85af11ffdbb6"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a61e87674fcad6581e21ab","67a6458d5ead92fe672618f3","67a6458d5ead92fe672618f3","67a654f60b20bea8ecae9629","67a7a6ca508939fbda6042e3","67a78537f618a871493fc44a","67a7c58f0bc678103bc51bec","67a6b4452f389430a34f8f7e","67a6b4452f389430a34f8f7e","67a6b4452f389430a34f8f7e","67a6dd7e2f389430a3507061"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 17:38 -05:00: (node:37336) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["black-Pack%20Of%201-BTN","purple-Pack%20Of%201-BTN","purple-Pack%20Of%201-BTN","black-Pack%20Of%2025-BTN","galaxy1-Pack%20Of%20100-BTN","purple-Pack%20Of%205-BTN","white-Pack%20Of%205-BTN","blue-Pack%20Of%201-BTN","white-Pack%20Of%201-BTN","black-Pack%20Of%201-BTN","blue-Pack%20Of%205-BTN"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 18:34 -05:00: (node:37336) Warning: Label 'MongoDB :: test bins.countDocuments({},{})' already exists for console.time()
+2025-02-08 18:34 -05:00: (node:37336) Warning: Label 'MongoDB :: test bins.find({"ready":true,"inUse":true},{"sort":{"number":1}})' already exists for console.time()
+2025-02-08 18:34 -05:00: (node:37336) Warning: Label 'MongoDB :: test bins.find({"inUse":true,"ready":false},{"sort":{"number":1}})' already exists for console.time()
+2025-02-08 18:34 -05:00: (node:37336) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a4c916295b652a59d6f16e","67a4e9e06cd7ed1a01140e64","67a53e51711846d22857c0f2","67a58dc605af3ae6aad652b9","67a61edc42d2b3c04f86b3e8","67a4d378295b652a59d79aca","67a6001e42d2b3c04f8698fa","67a4ea52d4b73d0016312045","67a4e8ab7975911f52281a23","67a56b9242d2b3c04f824b2b","67a5674b4c989819c3a33c4b","67a3bd678e9c39c1febdcf80","67a5529cd25e0f6a634e78e9","67a0135140f6d58d1b629b79","679f62f1a13849991024964b","67a4cd22d4b73d00162ee55b","67a576184c989819c3a33f8f","67a4ee7bb13f2ccc0b3df1f4","67a58a7dae74ab506f13b0ae","67a52856b13f2ccc0b3fb8c7","67a54436c3709511e22b6a83","67a546b0d25e0f6a634ddbcf","67a5417b09a15abe63e6f530","67a4d4cd6cd7ed1a0112b118","67a4e8bfe2904c7a935ba269","67a52d32711846d22857bb39","67a4e9d9f961454ee663a48a","67a2c97bfc88475ff11b5c0e","67a58a0b05af3ae6aad65149","67a557cf4376738ee2447f56","67a002cd8b3de19c73a04d74"]}},{})' already exists for console.time()
+2025-02-08 18:34 -05:00: (node:37336) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["679f62f1a138499910249645","679f62f1a138499910249649","67a002cd8b3de19c73a04d66","67a002cd8b3de19c73a04d68","67a002cd8b3de19c73a04d6a","67a002cd8b3de19c73a04d6e","67a002cd8b3de19c73a04d72","67a0135140f6d58d1b629b67","67a0135140f6d58d1b629b6b","67a0135140f6d58d1b629b6f","67a0135140f6d58d1b629b73","67a0135140f6d58d1b629b77","67a2c97bfc88475ff11b5bfc","67a2c97bfc88475ff11b5c00","67a2c97bfc88475ff11b5c04","67a2c97bfc88475ff11b5c08","67a2c97bfc88475ff11b5c0c","67a3bd668e9c39c1febdcf7a","67a3bd668e9c39c1febdcf7e","67a4c916295b652a59d6f158","67a4c916295b652a59d6f15c","67a4c916295b652a59d6f160","67a4c916295b652a59d6f164","67a4c916295b652a59d6f168","67a4c916295b652a59d6f16c","67a4cd22d4b73d00162ee553","67a4cd22d4b73d00162ee555","67a4cd22d4b73d00162ee557","67a4cd22d4b73d00162ee559","67a4d378295b652a59d79ac4","67a4d378295b652a59d79ac8","67a4d4cd6cd7ed1a0112b112","67a4d4cd6cd7ed1a0112b116","67a4e8ab7975911f52281a1d","67a4e8ab7975911f52281a21","67a4e8bfe2904c7a935ba263","67a4e8bfe2904c7a935ba267","67a4e9d9f961454ee663a480","67a4e9d9f961454ee663a484","67a4e9d9f961454ee663a488","67a4e9e06cd7ed1a01140e56","67a4e9e06cd7ed1a01140e5a","67a4e9e06cd7ed1a01140e5e","67a4e9e06cd7ed1a01140e62","67a4ea52d4b73d0016312039","67a4ea52d4b73d001631203d","67a4ea52d4b73d001631203f","67a4ea52d4b73d0016312043","67a4ee7bb13f2ccc0b3df1e1","67a4ee7bb13f2ccc0b3df1e5","67a4ee7bb13f2ccc0b3df1ee","67a52856b13f2ccc0b3fb8c1","67a52856b13f2ccc0b3fb8c5","67a52d32711846d22857bb33","67a52d32711846d22857bb37","67a53e51711846d22857c0e8","67a53e51711846d22857c0ec","67a53e51711846d22857c0f0","67a5417a09a15abe63e6f52a","67a5417a09a15abe63e6f52e","67a54436c3709511e22b6a7d","67a54436c3709511e22b6a81","67a546b0d25e0f6a634ddbc9","67a546b0d25e0f6a634ddbcd","67a5529bd25e0f6a634e78e3","67a5529bd25e0f6a634e78e7","67a557cf4376738ee2447f50","67a557cf4376738ee2447f54","67a5674b4c989819c3a33c45","67a5674b4c989819c3a33c49","67a56b9242d2b3c04f824b21","67a56b9242d2b3c04f824b25","67a56b9242d2b3c04f824b29","67a576184c989819c3a33f89","67a576184c989819c3a33f8d","67a58a0b05af3ae6aad65143","67a58a0b05af3ae6aad65147","67a58a7dae74ab506f13b0a4","67a58a7dae74ab506f13b0a8","67a58a7dae74ab506f13b0ac","67a58dc605af3ae6aad652af","67a58dc605af3ae6aad652b3","67a58dc605af3ae6aad652b7","67a6001e42d2b3c04f8698f0","67a6001e42d2b3c04f8698f4","67a6001e42d2b3c04f8698f8","67a61edc42d2b3c04f86b3de","67a61edc42d2b3c04f86b3e2","67a61edc42d2b3c04f86b3e6"]}},{})' already exists for console.time()
+2025-02-08 19:21 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-08 19:21 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-08 19:22 -05:00: (node:39128) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"V0RS7JU42"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:22 -05:00: (node:39128) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a7f472425b2ab4346d5f4b"]}},{})' already exists for console.time()
+2025-02-08 19:22 -05:00: (node:39128) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a7f472425b2ab4346d5f49"]}},{})' already exists for console.time()
+2025-02-08 19:22 -05:00: (node:39128) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:22 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-08 19:22 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-08 19:25 -05:00:  ⨯ Error: getaddrinfo ENOTFOUND http
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  hostname: 'http',
+  syscall: 'getaddrinfo',
+  code: 'ENOTFOUND',
+  errno: -3008,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [Error: getaddrinfo ENOTFOUND http] {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'http'
+  }
+}
+2025-02-08 19:25 -05:00:  ⨯ Error: getaddrinfo ENOTFOUND http
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  hostname: 'http',
+  syscall: 'getaddrinfo',
+  code: 'ENOTFOUND',
+  errno: -3008,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [Error: getaddrinfo ENOTFOUND http] {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'http'
+  }
+}
+2025-02-08 19:25 -05:00: (node:36016) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"V0RS7JU42"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:25 -05:00: (node:36016) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a7f472425b2ab4346d5f4b"]}},{})' already exists for console.time()
+2025-02-08 19:25 -05:00: (node:36016) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a7f472425b2ab4346d5f49"]}},{})' already exists for console.time()
+2025-02-08 19:25 -05:00: (node:36016) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:25 -05:00:  ⨯ Error: getaddrinfo ENOTFOUND http
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  hostname: 'http',
+  syscall: 'getaddrinfo',
+  code: 'ENOTFOUND',
+  errno: -3008,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [Error: getaddrinfo ENOTFOUND http] {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'http'
+  }
+}
+2025-02-08 19:25 -05:00:  ⨯ Error: getaddrinfo ENOTFOUND http
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  hostname: 'http',
+  syscall: 'getaddrinfo',
+  code: 'ENOTFOUND',
+  errno: -3008,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [Error: getaddrinfo ENOTFOUND http] {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'http'
+  }
+}
+2025-02-08 19:27 -05:00:  ⨯ Error: connect ETIMEDOUT 144.121.188.243:3005
+    at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005)
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  port: 3005,
+  address: '144.121.188.243',
+  syscall: 'connect',
+  code: 'ETIMEDOUT',
+  errno: -4039,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: Error: connect ETIMEDOUT 144.121.188.243:3005
+      at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005) {
+    errno: -4039,
+    code: 'ETIMEDOUT',
+    syscall: 'connect',
+    address: '144.121.188.243',
+    port: 3005
+  }
+}
+2025-02-08 19:27 -05:00:  ⨯ Error: connect ETIMEDOUT 144.121.188.243:3005
+    at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005)
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  port: 3005,
+  address: '144.121.188.243',
+  syscall: 'connect',
+  code: 'ETIMEDOUT',
+  errno: -4039,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: Error: connect ETIMEDOUT 144.121.188.243:3005
+      at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005) {
+    errno: -4039,
+    code: 'ETIMEDOUT',
+    syscall: 'connect',
+    address: '144.121.188.243',
+    port: 3005
+  }
+}
+2025-02-08 19:28 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"V0RS7JU42"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:28 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a7f472425b2ab4346d5f4b"]}},{})' already exists for console.time()
+2025-02-08 19:28 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a7f472425b2ab4346d5f49"]}},{})' already exists for console.time()
+2025-02-08 19:28 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a7f472425b2ab4346d5f4b"]}},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a7f472425b2ab4346d5f49"]}},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a7f472425b2ab4346d5f4b"]}},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a7f472425b2ab4346d5f49"]}},{})' already exists for console.time()
+2025-02-08 19:30 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a7f472425b2ab4346d5f4b"]}},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a7f472425b2ab4346d5f49"]}},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a7f472425b2ab4346d5f4b"]}},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a7f472425b2ab4346d5f49"]}},{})' already exists for console.time()
+2025-02-08 19:31 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"V0RS7JU42"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:40 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:41 -05:00: (node:4012) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 19:41 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 19:41 -05:00: (node:4012) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:42 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 19:43 -05:00: (node:34380) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 19:43 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 19:43 -05:00: (node:34380) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 19:43 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 21:58 -05:00: (node:24180) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 21:58 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:01 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:01 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"styleCode":{"$nin":["POST","MSP","CST"]},"paid":true,"order":{"$ne":null}},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"paid":true,"styleCode":{"$in":["CST","MSP"]},"order":{"$ne":null}},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test items.find({"type":"gift","sku":"gift-message","inBin":false,"canceled":false,"shipped":false,"paid":true,"order":{"$ne":null}},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"styleCode":"POST","order":{"$ne":null},"sizeName":{"$not":{"$regex":"P"}},"paid":true},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test items.find({"type":"sublimation","inBin":false,"canceled":false,"shipped":false,"styleCode":"POST","sizeName":{"$regex":"P"},"order":{"$ne":null},"paid":true},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test items.find({"inBin":false,"canceled":false,"shipped":false,"styleCode":"BUMP","order":{"$ne":null},"paid":true},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["65d3983ebc53aae7933e8405","664e5431f0b457e812f8bbbb","665a314f6dcedcdcbef49470","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","668c62ef7c55f4b1e2dd2018","66ca816e1688e0d4aa2e1018","66cb43241688e0d4aa2ee793","67565bcbdc26a66fae9c7735","6758e2f2ab7c923886142878","67604b58fcdcf466cfc8b527","6762e61bb71dd06e884de72e","6768948a0ede1bdb58f66f8d","675bc8be4bbe5fd0a111b61b","675bc8be4bbe5fd0a111b61b","6760679fff573f218fb844d7","6760679fff573f218fb844d7","67716d775ff41e3a01713f12","6797fcc15b895380d83f2cf7","67a62c3a50fe26ce08b3cbb0","67a6381450fe26ce08b4a886","67a63a9a5a605809ad7c84b9","67a63a9a5a605809ad7c84b9","67a67b0550fe26ce08b68809","67a6817abe9a6745c0a30c73","67a6ad3b2f389430a34f8d86","67a6ad3b2f389430a34f8d86","67a6ad3b2f389430a34f8d86","67a6ad3b2f389430a34f8d86","67a6ccc10bc678103bbec0b2","67a76b0eba0ca73f77c73d4b","67a76b0eba0ca73f77c73d4b","67a77a3661a9c6c37559eeef","67a77fee00534d051d307438","67a785b300534d051d3140a5","67a785b300534d051d3140a5","67a79341107c160cf1766927","67a7a50361a9c6c3755bb868","67a7bece2f389430a3567994","67a80d367845fe2c42a3e5a2"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["blue-11%20oz-CFM","black-15%20oz-CFM","white-11%20oz-CFM","red-11%20oz-CFM","Forest-15%20oz-CFM","navy-15%20oz-CFM","navy-15%20oz-CFM","white-15%20oz-CFM","white-15%20oz-CFM","blue-15%20oz-CFM","navy-15%20oz-CFM","pink-15%20oz-CFM","orange-15%20oz-CFM","black-15%20oz-CFM","navy-11%20oz-CFM","maroon-11%20oz-CFM","navy-11%20oz-CFM","black-15%20oz-CFM","white-11%20oz-CFM","white-11%20oz-CFM","navy-15%20oz-CFM","white-15%20oz-CFM","white-14%20oz-TMUG","white-15%20oz-CFM"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"blue-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"red-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"Forest-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"blue-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"pink-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"orange-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"maroon-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-14 oz-TMUG"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["6659f3276dcedcdcbef199b2","675837fb8f869c3060414ab1","678d3c22a832e9b4671838ad","6797b99233c9ad9de1d4ef94","67a6776c50fe26ce08b61886","67a7dc1e08cb85af11ffdc16"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["wood-11x17-POST","black-16x20-POST","purple-24x36-POST","orange-24x36-POST"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["668d46877c55f4b1e2e0b2d0","66f7f2cf7cb614230e7fc518","677b221ea40a04c0438e3676"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["navy-11x17P-POST"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["6573c407b3d32f27d7ae2cc8","67a61f736fd9dfb411c684cb","67a62d836fd9dfb411c767eb","67a66678447b409b9b8231f8","67a6774529256db4f31cd65f","67a6b6040bc678103bbe324f","67a77b172f389430a354ba8a","67a7a0a80bc678103bc4e2d4","67a7b18b00534d051d3227af","67a7db3608cb85af11ffdbb6","67a7f2188c67d5926187138b"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a61e87674fcad6581e21ab","67a6458d5ead92fe672618f3","67a6458d5ead92fe672618f3","67a654f60b20bea8ecae9629","67a7a6ca508939fbda6042e3","67a78537f618a871493fc44a","67a7c58f0bc678103bc51bec","67a6b4452f389430a34f8f7e","67a6b4452f389430a34f8f7e","67a6b4452f389430a34f8f7e","67a6dd7e2f389430a3507061"]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:04 -05:00: (node:3616) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":["black-Pack%20Of%201-BTN","purple-Pack%20Of%201-BTN","purple-Pack%20Of%201-BTN","black-Pack%20Of%2025-BTN","galaxy1-Pack%20Of%20100-BTN","purple-Pack%20Of%205-BTN","white-Pack%20Of%205-BTN","blue-Pack%20Of%201-BTN","white-Pack%20Of%201-BTN","black-Pack%20Of%201-BTN","blue-Pack%20Of%205-BTN"]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:06 -05:00: (node:34032) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:06 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test bins.countDocuments({},{})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test bins.find({"ready":true,"inUse":true},{"sort":{"number":1}})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test bins.find({"inUse":true,"ready":false},{"sort":{"number":1}})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a4c916295b652a59d6f16e","67a4e9e06cd7ed1a01140e64","67a53e51711846d22857c0f2","67a58dc605af3ae6aad652b9","67a61edc42d2b3c04f86b3e8","67a4d378295b652a59d79aca","67a6001e42d2b3c04f8698fa","67a4ea52d4b73d0016312045","67a4e8ab7975911f52281a23","67a56b9242d2b3c04f824b2b","67a5674b4c989819c3a33c4b","67a3bd678e9c39c1febdcf80","67a5529cd25e0f6a634e78e9","67a0135140f6d58d1b629b79","679f62f1a13849991024964b","67a4cd22d4b73d00162ee55b","67a576184c989819c3a33f8f","67a4ee7bb13f2ccc0b3df1f4","67a58a7dae74ab506f13b0ae","67a52856b13f2ccc0b3fb8c7","67a54436c3709511e22b6a83","67a546b0d25e0f6a634ddbcf","67a5417b09a15abe63e6f530","67a4d4cd6cd7ed1a0112b118","67a4e8bfe2904c7a935ba269","67a52d32711846d22857bb39","67a4e9d9f961454ee663a48a","67a2c97bfc88475ff11b5c0e","67a58a0b05af3ae6aad65149","67a557cf4376738ee2447f56","67a002cd8b3de19c73a04d74"]}},{})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["679f62f1a138499910249645","679f62f1a138499910249649","67a002cd8b3de19c73a04d66","67a002cd8b3de19c73a04d68","67a002cd8b3de19c73a04d6a","67a002cd8b3de19c73a04d6e","67a002cd8b3de19c73a04d72","67a0135140f6d58d1b629b67","67a0135140f6d58d1b629b6b","67a0135140f6d58d1b629b6f","67a0135140f6d58d1b629b73","67a0135140f6d58d1b629b77","67a2c97bfc88475ff11b5bfc","67a2c97bfc88475ff11b5c00","67a2c97bfc88475ff11b5c04","67a2c97bfc88475ff11b5c08","67a2c97bfc88475ff11b5c0c","67a3bd668e9c39c1febdcf7a","67a3bd668e9c39c1febdcf7e","67a4c916295b652a59d6f158","67a4c916295b652a59d6f15c","67a4c916295b652a59d6f160","67a4c916295b652a59d6f164","67a4c916295b652a59d6f168","67a4c916295b652a59d6f16c","67a4cd22d4b73d00162ee553","67a4cd22d4b73d00162ee555","67a4cd22d4b73d00162ee557","67a4cd22d4b73d00162ee559","67a4d378295b652a59d79ac4","67a4d378295b652a59d79ac8","67a4d4cd6cd7ed1a0112b112","67a4d4cd6cd7ed1a0112b116","67a4e8ab7975911f52281a1d","67a4e8ab7975911f52281a21","67a4e8bfe2904c7a935ba263","67a4e8bfe2904c7a935ba267","67a4e9d9f961454ee663a480","67a4e9d9f961454ee663a484","67a4e9d9f961454ee663a488","67a4e9e06cd7ed1a01140e56","67a4e9e06cd7ed1a01140e5a","67a4e9e06cd7ed1a01140e5e","67a4e9e06cd7ed1a01140e62","67a4ea52d4b73d0016312039","67a4ea52d4b73d001631203d","67a4ea52d4b73d001631203f","67a4ea52d4b73d0016312043","67a4ee7bb13f2ccc0b3df1e1","67a4ee7bb13f2ccc0b3df1e5","67a4ee7bb13f2ccc0b3df1ee","67a52856b13f2ccc0b3fb8c1","67a52856b13f2ccc0b3fb8c5","67a52d32711846d22857bb33","67a52d32711846d22857bb37","67a53e51711846d22857c0e8","67a53e51711846d22857c0ec","67a53e51711846d22857c0f0","67a5417a09a15abe63e6f52a","67a5417a09a15abe63e6f52e","67a54436c3709511e22b6a7d","67a54436c3709511e22b6a81","67a546b0d25e0f6a634ddbc9","67a546b0d25e0f6a634ddbcd","67a5529bd25e0f6a634e78e3","67a5529bd25e0f6a634e78e7","67a557cf4376738ee2447f50","67a557cf4376738ee2447f54","67a5674b4c989819c3a33c45","67a5674b4c989819c3a33c49","67a56b9242d2b3c04f824b21","67a56b9242d2b3c04f824b25","67a56b9242d2b3c04f824b29","67a576184c989819c3a33f89","67a576184c989819c3a33f8d","67a58a0b05af3ae6aad65143","67a58a0b05af3ae6aad65147","67a58a7dae74ab506f13b0a4","67a58a7dae74ab506f13b0a8","67a58a7dae74ab506f13b0ac","67a58dc605af3ae6aad652af","67a58dc605af3ae6aad652b3","67a58dc605af3ae6aad652b7","67a6001e42d2b3c04f8698f0","67a6001e42d2b3c04f8698f4","67a6001e42d2b3c04f8698f8","67a61edc42d2b3c04f86b3de","67a61edc42d2b3c04f86b3e2","67a61edc42d2b3c04f86b3e6"]}},{})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test items.findOne({"pieceId":"6Q6UX0JM5"},{})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":["67a6ccc10bc678103bbec0b2"]}},{})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test items.find({"_id":{"$in":["67a6ccc10bc678103bbec0b0"]}},{})' already exists for console.time()
+2025-02-08 22:08 -05:00: (node:34032) Warning: Label 'MongoDB :: test orders.findOne({"poNumber":"6Q6UX0JM5"},{})' already exists for console.time()
+2025-02-08 22:08 -05:00:  ⨯ Error: connect ETIMEDOUT 144.121.188.243:3005
+    at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005)
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  port: 3005,
+  address: '144.121.188.243',
+  syscall: 'connect',
+  code: 'ETIMEDOUT',
+  errno: -4039,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: Error: connect ETIMEDOUT 144.121.188.243:3005
+      at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005) {
+    errno: -4039,
+    code: 'ETIMEDOUT',
+    syscall: 'connect',
+    address: '144.121.188.243',
+    port: 3005
+  }
+}
+2025-02-08 22:08 -05:00:  ⨯ Error: connect ETIMEDOUT 144.121.188.243:3005
+    at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005)
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  port: 3005,
+  address: '144.121.188.243',
+  syscall: 'connect',
+  code: 'ETIMEDOUT',
+  errno: -4039,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: Error: connect ETIMEDOUT 144.121.188.243:3005
+      at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005) {
+    errno: -4039,
+    code: 'ETIMEDOUT',
+    syscall: 'connect',
+    address: '144.121.188.243',
+    port: 3005
+  }
+}
+2025-02-08 22:08 -05:00:  ⨯ Error: connect ETIMEDOUT 144.121.188.243:3005
+    at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005)
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  port: 3005,
+  address: '144.121.188.243',
+  syscall: 'connect',
+  code: 'ETIMEDOUT',
+  errno: -4039,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: Error: connect ETIMEDOUT 144.121.188.243:3005
+      at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005) {
+    errno: -4039,
+    code: 'ETIMEDOUT',
+    syscall: 'connect',
+    address: '144.121.188.243',
+    port: 3005
+  }
+}
+2025-02-08 22:08 -05:00:  ⨯ Error: connect ETIMEDOUT 144.121.188.243:3005
+    at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005)
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async n (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\shipping\scales\route.js:1:1493) {
+  port: 3005,
+  address: '144.121.188.243',
+  syscall: 'connect',
+  code: 'ETIMEDOUT',
+  errno: -4039,
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: Error: connect ETIMEDOUT 144.121.188.243:3005
+      at <unknown> (Error: connect ETIMEDOUT 144.121.188.243:3005) {
+    errno: -4039,
+    code: 'ETIMEDOUT',
+    syscall: 'connect',
+    address: '144.121.188.243',
+    port: 3005
+  }
+}
+2025-02-08 22:11 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:11 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:13 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:13 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:14 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:14 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:14 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 22:14 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:14 -05:00:  ⨯ ReferenceError: localKey is not defined
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1689)
+2025-02-08 22:15 -05:00:  ⨯ TypeError: Cannot read properties of undefined (reading 'styleCode')
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1788)
+2025-02-08 22:15 -05:00:  ⨯ TypeError: Cannot read properties of undefined (reading 'styleCode')
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1788)
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:18 -05:00: (node:3084) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:18 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 22:18 -05:00:  ⨯ TypeError: Cannot read properties of undefined (reading 'styleCode')
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1804)
+2025-02-08 22:18 -05:00:  ⨯ TypeError: Cannot read properties of undefined (reading 'styleCode')
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1804)
+2025-02-08 22:19 -05:00:  ⨯ TypeError: Cannot read properties of undefined (reading 'styleCode')
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1804)
+2025-02-08 22:19 -05:00:  ⨯ TypeError: Cannot read properties of undefined (reading 'styleCode')
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1804)
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+(Use `node --trace-warnings ...` to show where the warning was created)
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"black-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-11 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"navy-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.findOne({"inventory_id":"white-15 oz-CFM"},{})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test orders.find({"_id":{"$in":[]}},{"projection":{"poNumber":1,"items":1,"status":1}})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:22 -05:00: (node:16096) Warning: Label 'MongoDB :: test inventoryv2.find({"inventory_id":{"$in":[]}},{"projection":{"quantity":1,"pending_quantity":1,"inventory_id":1}})' already exists for console.time()
+2025-02-08 22:22 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 22:22 -05:00:  ⨯ Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\data\Helvetica.afm'
+    at Object.Helvetica (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:2563)
+    at new h7 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:3461)
+    at ui.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:97)
+    at uL.font (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:1031)
+    at uL.initFonts (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:712)
+    at new uL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1114)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1864) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\.next\\server\\chunks\\data\\Helvetica.afm'
+}
+2025-02-08 22:22 -05:00:  ⨯ Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\data\Helvetica.afm'
+    at Object.Helvetica (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:2563)
+    at new h7 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:3461)
+    at ui.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:97)
+    at uL.font (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:1031)
+    at uL.initFonts (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:712)
+    at new uL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1114)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1864) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\.next\\server\\chunks\\data\\Helvetica.afm'
+}
+2025-02-08 22:27 -05:00:  ⨯ Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\data\Helvetica.afm'
+    at Object.Helvetica (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:2563)
+    at new h7 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:3461)
+    at ui.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:97)
+    at uL.font (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:1031)
+    at uL.initFonts (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:712)
+    at new uL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1114)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1864) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\.next\\server\\chunks\\data\\Helvetica.afm'
+}
+2025-02-08 22:27 -05:00:  ⨯ Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\data\Helvetica.afm'
+    at Object.Helvetica (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:2563)
+    at new h7 (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:75:3461)
+    at ui.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:97)
+    at uL.font (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:1031)
+    at uL.initFonts (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:96:712)
+    at new uL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1114)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1864) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\.next\\server\\chunks\\data\\Helvetica.afm'
+}
+2025-02-08 22:32 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:32 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:39 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:39 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:44 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:44 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5406)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:46 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5459)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:46 -05:00:  ⨯ Error: unsupported number: NaN
+    at number (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:1:987112)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22519)
+    at Array.map (<anonymous>)
+    at uR.transform (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:3:22512)
+    at uR.addPage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1981)
+    at new uR (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:1658)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5459)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:47 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 22:48 -05:00:  ⨯ ReferenceError: Jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:48 -05:00:  ⨯ ReferenceError: Jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:49 -05:00:  ⨯ ReferenceError: Jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:49 -05:00:  ⨯ ReferenceError: Jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:52 -05:00:  ⨯ ReferenceError: jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:52 -05:00:  ⨯ ReferenceError: jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:53 -05:00:  ⨯ ReferenceError: jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:53 -05:00:  ⨯ ReferenceError: jimp is not defined
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1984)
+2025-02-08 22:55 -05:00:  ⨯ Error: unrecognised content at end of stream
+    at t.process (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:43121)
+    at e.exports (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:33074)
+    at t.read (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:38233)
+    at Object.decode (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:197105)
+    at a.fromBuffer (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:278993)
+    at async c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 22:55 -05:00:  ⨯ Error: unrecognised content at end of stream
+    at t.process (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:43121)
+    at e.exports (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:33074)
+    at t.read (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:38233)
+    at Object.decode (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:197105)
+    at a.fromBuffer (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:278993)
+    at async c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 22:57 -05:00:  ⨯ Error: unrecognised content at end of stream
+    at t.process (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:43121)
+    at e.exports (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:33074)
+    at t.read (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:38233)
+    at Object.decode (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:197105)
+    at a.fromBuffer (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:278993)
+    at async c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 22:57 -05:00:  ⨯ Error: unrecognised content at end of stream
+    at t.process (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:43121)
+    at e.exports (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:33074)
+    at t.read (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:38233)
+    at Object.decode (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:197105)
+    at a.fromBuffer (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:278993)
+    at async c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 23:00 -05:00:  ⨯ Error: unrecognised content at end of stream
+    at t.process (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:43121)
+    at e.exports (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:33074)
+    at t.read (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:38233)
+    at Object.decode (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:197105)
+    at a.fromBuffer (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:278993)
+    at async c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 23:00 -05:00:  ⨯ Error: unrecognised content at end of stream
+    at t.process (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:43121)
+    at e.exports (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:33074)
+    at t.read (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:38233)
+    at Object.decode (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:197105)
+    at a.fromBuffer (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:278993)
+    at async c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5507)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 23:04 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6066)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:04 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at c (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6066)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:07 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6066)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:07 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6066)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:14 -05:00:  ⨯ TypeError: Cannot use 'in' operator to search for 'data' in 1200
+    at new a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277381)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6153)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 23:14 -05:00:  ⨯ TypeError: Cannot use 'in' operator to search for 'data' in 1200
+    at new a (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277381)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6153)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970)
+2025-02-08 23:22 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6087)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:22 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6087)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:24 -05:00:  ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+2025-02-08 23:25 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6102)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:25 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_type",
+    "expected": "object",
+    "received": "number",
+    "path": [],
+    "message": "Expected object, received number"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tR.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.contain (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:292131)
+    at <computed> [as contain] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6102)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:29 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_union",
+    "unionErrors": [
+      {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "object",
+            "received": "number",
+            "path": [],
+            "message": "Expected object, received number"
+          }
+        ],
+        "name": "ZodError"
+      },
+      {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "object",
+            "received": "number",
+            "path": [],
+            "message": "Expected object, received number"
+          }
+        ],
+        "name": "ZodError"
+      }
+    ],
+    "path": [],
+    "message": "Invalid input"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tF.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.resize (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:291159)
+    at <computed> [as resize] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6087)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-08 23:29 -05:00:  ⨯ Error [ZodError]: [
+  {
+    "code": "invalid_union",
+    "unionErrors": [
+      {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "object",
+            "received": "number",
+            "path": [],
+            "message": "Expected object, received number"
+          }
+        ],
+        "name": "ZodError"
+      },
+      {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "object",
+            "received": "number",
+            "path": [],
+            "message": "Expected object, received number"
+          }
+        ],
+        "name": "ZodError"
+      }
+    ],
+    "path": [],
+    "message": "Invalid input"
+  }
+]
+    at get error [as error] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:207163)
+    at tF.parse (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:208437)
+    at Object.resize (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:291159)
+    at <computed> [as resize] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4503.js:145:277712)
+    at d (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6087)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1970) {
+  issues: [Array],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)]
+}
+2025-02-09 00:10 -05:00:  ⨯ TypeError: Invalid URL
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3886)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2906)
+    at new Promise (<anonymous>)
+    at as (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2822)
+    at http (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3163)
+    at aN.aL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:19735)
+    at aN._request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22705)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21157)
+    at aN.<computed> [as get] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22999)
+    at Function.get (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:31504)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5268)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5739)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1870)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5258)
+    at async h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5733)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  code: 'ERR_INVALID_URL',
+  input: 'images2.teeshirtpalace.com/designs/1720521170540.png'
+}
+2025-02-09 00:10 -05:00:  ⨯ TypeError: Invalid URL
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3886)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2906)
+    at new Promise (<anonymous>)
+    at as (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2822)
+    at http (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3163)
+    at aN.aL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:19735)
+    at aN._request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22705)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21157)
+    at aN.<computed> [as get] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22999)
+    at Function.get (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:31504)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5268)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5739)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1870)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5258)
+    at async h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5733)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  code: 'ERR_INVALID_URL',
+  input: 'images2.teeshirtpalace.com/designs/1720521170540.png'
+}
+2025-02-09 00:13 -05:00:  ⨯ TypeError: Invalid URL
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3886)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2906)
+    at new Promise (<anonymous>)
+    at as (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2822)
+    at http (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3163)
+    at aN.aL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:19735)
+    at aN._request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22705)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21157)
+    at aN.<computed> [as get] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22999)
+    at Function.get (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:31504)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5283)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5754)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1870)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5273)
+    at async h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5748)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  code: 'ERR_INVALID_URL',
+  input: 'images2.teeshirtpalace.com/designs/1720521170540.png'
+}
+2025-02-09 00:13 -05:00:  ⨯ TypeError: Invalid URL
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3886)
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2906)
+    at new Promise (<anonymous>)
+    at as (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:2822)
+    at http (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:3163)
+    at aN.aL (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:19735)
+    at aN._request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22705)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21157)
+    at aN.<computed> [as get] (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:22999)
+    at Function.get (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:31504)
+    at g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5283)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5754)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1870)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async g (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5273)
+    at async h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5748)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  code: 'ERR_INVALID_URL',
+  input: 'images2.teeshirtpalace.com/designs/1720521170540.png'
+}
+2025-02-09 00:15 -05:00:  ⨯ Error: Expected positive integer for height but received 1068.75 of type number
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5874)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:15 -05:00:  ⨯ Error: Expected positive integer for height but received 1068.75 of type number
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:5874)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:17 -05:00:  ⨯ Error: Expected array for images to composite but received [object Object] of type object
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6238)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:17 -05:00:  ⨯ Error: Expected array for images to composite but received [object Object] of type object
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6238)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:20 -05:00:  ⨯ Error: Expected width, height and channels for raw pixel input
+    at Array.map (<anonymous>)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6235)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:20 -05:00:  ⨯ Error: Expected width, height and channels for raw pixel input
+    at Array.map (<anonymous>)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6235)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:23 -05:00:  ⨯ Error: Expected width, height and channels for raw pixel input
+    at Array.map (<anonymous>)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6279)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:23 -05:00:  ⨯ Error: Expected width, height and channels for raw pixel input
+    at Array.map (<anonymous>)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6279)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:26 -05:00:  ⨯ Error: Expected integer for left but received 178.125 of type number
+    at Array.map (<anonymous>)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6301)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:26 -05:00:  ⨯ Error: Expected integer for left but received 178.125 of type number
+    at Array.map (<anonymous>)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6301)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:28 -05:00:  ⨯ ReferenceError: trimmedBase64 is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6467)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:28 -05:00:  ⨯ ReferenceError: trimmedBase64 is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6467)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:30 -05:00:  ⨯ ReferenceError: bg is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6503)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:30 -05:00:  ⨯ ReferenceError: bg is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6503)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:32 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6530)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:32 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6530)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:36 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6548)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:36 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6548)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:39 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6543)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:39 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6543)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:41 -05:00:  ⨯ Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\packages\sublimation\functions\public\fonts\LibreBarcode39-Regular.ttf'
+    at oY.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:117)
+    at ll.font (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:6942)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6606)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\packages\\sublimation\\functions\\public\\fonts\\LibreBarcode39-Regular.ttf'
+}
+2025-02-09 00:41 -05:00:  ⨯ Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\packages\sublimation\functions\public\fonts\LibreBarcode39-Regular.ttf'
+    at oY.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:117)
+    at ll.font (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:6942)
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6606)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\packages\\sublimation\\functions\\public\\fonts\\LibreBarcode39-Regular.ttf'
+}
+2025-02-09 00:41 -05:00: (node:22084) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 00:42 -05:00:  ⨯ ReferenceError: fs is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6890)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:42 -05:00:  ⨯ ReferenceError: fs is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6890)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:43 -05:00:  ⨯ ReferenceError: base64 is not defined
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6978)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:43 -05:00:  ⨯ ReferenceError: base64 is not defined
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6978)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 00:43 -05:00: (node:42504) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'
+2025-02-09 00:43 -05:00: [Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\temp\\6Q6UX0JM5.pdf'
+}
+2025-02-09 00:43 -05:00:  ⨯ uncaughtException:  [Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\temp\\6Q6UX0JM5.pdf'
+}
+2025-02-09 00:46 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 00:46 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 00:46 -05:00: (node:38896) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'
+2025-02-09 00:46 -05:00: [Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\temp\\6Q6UX0JM5.pdf'
+}
+2025-02-09 00:46 -05:00:  ⨯ uncaughtException:  [Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\temp\\6Q6UX0JM5.pdf'
+}
+2025-02-09 00:48 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 00:48 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 00:48 -05:00: (node:2924) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'
+2025-02-09 00:48 -05:00: [Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\temp\\6Q6UX0JM5.pdf'
+}
+2025-02-09 00:48 -05:00:  ⨯ uncaughtException:  [Error: ENOENT: no such file or directory, open 'D:\GitHub\pythias\apps\pythias-print-oracle\temp\6Q6UX0JM5.pdf'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\GitHub\\pythias\\apps\\pythias-print-oracle\\temp\\6Q6UX0JM5.pdf'
+}
+2025-02-09 00:50 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 00:50 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 00:50 -05:00: (node:28080) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 00:54 -05:00: (node:31124) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 00:57 -05:00: (node:42980) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:04 -05:00: (node:42176) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:06 -05:00: (node:42792) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:06 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:06 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:06 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:06 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:07 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:07 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:07 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:07 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:07 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:07 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6213)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:11 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6125)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 01:12 -05:00:  ⨯ TypeError: Value is not JSON serializable
+    at l.json (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8048.js:1:22593)
+    at p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1890)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:12 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:13 -05:00:  ⨯ Error: Unknown image format.
+    at o6.open (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:96:8689)
+    at ll.openImage (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:15831)
+    at ll.image (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\8764.js:145:14490)
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6419)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:15 -05:00: (node:2416) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:19 -05:00: (node:37512) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:23 -05:00: (node:42872) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:26 -05:00: (node:31816) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:31 -05:00:  ⨯ ReferenceError: Base64Encode is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6838)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:31 -05:00:  ⨯ ReferenceError: Base64Encode is not defined
+    at h (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6838)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856)
+2025-02-09 01:31 -05:00: (node:18000) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:35 -05:00: (node:41888) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:35 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7007)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-09 01:35 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7007)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1856) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-09 01:40 -05:00: (node:35212) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:40 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7049)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-09 01:40 -05:00:  ⨯ Error [AggregateError]: 
+    at K.from (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:38030)
+    at y.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9596)
+    at d.<computed> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:13770)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7049)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908) {
+  code: 'ECONNREFUSED',
+  errors: [Array],
+  config: [Object],
+  request: [Writable],
+  constructor: [Function],
+  toJSON: [Function: toJSON],
+  [cause]: [AggregateError: ] { code: 'ECONNREFUSED' }
+}
+2025-02-09 01:44 -05:00: (node:34128) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:46 -05:00: (node:39788) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 01:49 -05:00: (node:32088) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ReferenceError: resolve is not defined
+    at D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6862
+    at o.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:1:487864)
+    at o.emit (node:events:526:35)
+    at T (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:53823)
+    at P (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:52739)
+    at process.processTicksAndRejections (node:internal/process/task_queues:84:21)
+2025-02-09 01:49 -05:00: ReferenceError: resolve is not defined
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6862)
+    at o.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:1:487864)
+    at T (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:53823)
+    at P (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:52739)
+2025-02-09 01:49 -05:00:  ⨯ uncaughtException:  ReferenceError: resolve is not defined
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6862)
+    at o.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:1:487864)
+    at T (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:53823)
+    at P (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:52739)
+ReferenceError: resolve is not defined
+    at D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6862
+    at o.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:1:487864)
+    at o.emit (node:events:526:35)
+    at T (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:53823)
+    at P (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:52739)
+    at process.processTicksAndRejections (node:internal/process/task_queues:84:21)
+2025-02-09 02:06 -05:00: ReferenceError: resolve is not defined
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6862)
+    at o.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:1:487864)
+    at T (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:53823)
+    at P (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:52739)
+2025-02-09 02:06 -05:00:  ⨯ uncaughtException:  ReferenceError: resolve is not defined
+    at <unknown> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6862)
+    at o.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:1:487864)
+    at T (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:53823)
+    at P (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\630.js:145:52739)
+2025-02-09 02:09 -05:00: (node:44076) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 02:09 -05:00:  ⨯ Error [AxiosError]: Request failed with status code 404
+    at eT (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:47880)
+    at IncomingMessage.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9448)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7037)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908) {
+  code: 'ERR_BAD_REQUEST',
+  config: [Object],
+  request: [ClientRequest],
+  response: [Object],
+  status: 404,
+  constructor: [Function],
+  toJSON: [Function: toJSON]
+}
+2025-02-09 02:09 -05:00:  ⨯ Error [AxiosError]: Request failed with status code 404
+    at eT (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:47880)
+    at IncomingMessage.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9448)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7037)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908) {
+  code: 'ERR_BAD_REQUEST',
+  config: [Object],
+  request: [ClientRequest],
+  response: [Object],
+  status: 404,
+  constructor: [Function],
+  toJSON: [Function: toJSON]
+}
+2025-02-09 02:12 -05:00: (node:28112) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 02:12 -05:00:  ⨯ Error [AxiosError]: Request failed with status code 404
+    at eT (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:47880)
+    at IncomingMessage.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9448)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7114)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908) {
+  code: 'ERR_BAD_REQUEST',
+  config: [Object],
+  request: [ClientRequest],
+  response: [Object],
+  status: 404,
+  constructor: [Function],
+  toJSON: [Function: toJSON]
+}
+2025-02-09 02:12 -05:00:  ⨯ Error [AxiosError]: Request failed with status code 404
+    at eT (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:47880)
+    at IncomingMessage.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9448)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7114)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908) {
+  code: 'ERR_BAD_REQUEST',
+  config: [Object],
+  request: [ClientRequest],
+  response: [Object],
+  status: 404,
+  constructor: [Function],
+  toJSON: [Function: toJSON]
+}
+2025-02-09 02:18 -05:00: (node:41204) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+You have triggered an unhandledRejection, you may have forgotten to catch a Promise rejection:
+AxiosError: Request failed with status code 404
+    at eT (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:47880)
+    at IncomingMessage.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9448)
+    at IncomingMessage.emit (node:events:526:35)
+    at endReadableNT (node:internal/streams/readable:1589:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7107
+Channel is already closed can't broadcast error:
+TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'ClientRequest'
+    |     property 'res' -> object with constructor 'IncomingMessage'
+    --- property 'req' closes the circle
+    at stringify (<anonymous>)
+    at writeChannelMessage (node:internal/child_process/serialization:159:20)
+    at target._send (node:internal/child_process:852:17)
+    at target.send (node:internal/child_process:752:19)
+    at process.send (C:\Users\mther\AppData\Roaming\nvm\v20.10.0\node_modules\pm2\lib\ProcessContainer.js:52:21)
+    at process.uncaughtListener (C:\Users\mther\AppData\Roaming\nvm\v20.10.0\node_modules\pm2\lib\ProcessContainer.js:276:19)
+    at process.emit (node:events:526:35)
+    at process.emit (C:\Users\mther\AppData\Roaming\nvm\v20.10.0\node_modules\pm2\node_modules\source-map-support\source-map-support.js:516:21)
+    at emit (node:internal/process/promises:150:20)
+    at processPromiseRejections (node:internal/process/promises:284:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:96:32)
+2025-02-09 02:18 -05:00: Error [AxiosError]: Request failed with status code 404
+    at eT (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:47880)
+    at IncomingMessage.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9448)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7107) {
+  code: 'ERR_BAD_REQUEST',
+  config: [Object],
+  request: [ClientRequest],
+  response: [Object],
+  status: 404,
+  constructor: [Function],
+  toJSON: [Function: toJSON]
+}
+2025-02-09 02:18 -05:00:  ⨯ unhandledRejection:  Error [AxiosError]: Request failed with status code 404
+    at eT (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:1:47880)
+    at IncomingMessage.<anonymous> (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:9448)
+    at aN.request (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\6546.js:3:21242)
+    at async (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:7107) {
+  code: 'ERR_BAD_REQUEST',
+  config: [Object],
+  request: [ClientRequest],
+  response: [Object],
+  status: 404,
+  constructor: [Function],
+  toJSON: [Function: toJSON]
+}
+2025-02-09 02:26 -05:00: (node:45540) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 02:53 -05:00: (node:44676) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 03:04 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:04 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:05 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:05 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:06 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:06 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:08 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:08 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6207)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:09 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6224)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:09 -05:00:  ⨯ Error: Expected valid width, height and channels to create a new input image
+    at x (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\chunks\4191.js:1:6224)
+    at async p (D:\GitHub\pythias\apps\pythias-print-oracle\.next\server\app\api\production\sublimation\route.js:1:1908)
+2025-02-09 03:11 -05:00: (node:13936) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 03:14 -05:00: (node:22048) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2025-02-09 03:17 -05:00: (node:24124) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

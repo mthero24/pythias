@@ -5,11 +5,18 @@ import Image from "next/image"
 import {createImage} from "../functions/image";
 import { Stations } from "./stations";
 import Link from "next/link";
+import axios from "axios"
 export function Main({labels, stations, stat}){
     const [useLabels, setLabels] = useState(labels)
     console.log(stat)
     const [station, setStation] = useState(stat? stat: stations? stations[0]: "station1")
     console.log(station)
+    const printSublimationSmall = async (item)=>{
+        console.log(item)
+        let res = await axios.post("/api/production/sublimation", {item})
+        if(res.data.error) alert(res.data.msg)
+        else alert("printed")
+    }
     return (
         <Box sx={{
             display: "flex",
@@ -51,10 +58,13 @@ export function Main({labels, stations, stat}){
                                 </Grid2>
                             </Grid2>
                             {useLabels[l].map(k=>(
-                                <Card key={k._id}>
+                                <Card key={k._id} onClick={()=>{
+                                    if(l == "sublimation"){
+                                        printSublimationSmall(k)
+                                    }
+                                    }}>
                                     <Grid2 container spacing={.3} sx={{padding: '1%'}}>
                                         <Grid2 size={2}>
-                                            {console.log(k.design?.front? k.design.front: k.design?.back)}
                                             <Image src={k.sku == "gift-message"? l.design.front: k.design?.front? `${createImage(k.colorName, k.styleCode, {url: k.design.front}, 400)}`: `${createImage(k.colorName, k.styleCode, {url: k.design.back, side: "back"}, 400)}` } alt="some image" width={400} height={400} style={{width: "100%", height: "auto"}}/>
                                         </Grid2>
                                         <Grid2 size={8} sx={{marginTop: {xs: "1%", lg: "5%"}}}>
@@ -78,7 +88,7 @@ export function Main({labels, stations, stat}){
                                                     <Button size="small" fullWidth sx={{background: "#007FDC", color: "#ffffff", marginLeft: ".5%"}}>Reprint</Button>
                                                 </Grid2>
                                                 <Grid2 size={6}>
-                                                    <Link href={`/production/shipping?pieceId=${k.pieceId}&station=${station}`} target="_blank">
+                                                    <Link href={`/shipping?pieceId=${k.pieceId}&station=${station}`} target="_blank">
                                                         <Button size="small" fullWidth sx={{background: "#007DBA", color: "#ffffff", marginRight: ".5%"}}>{k.order.items.length > 1? "Bin": "Ship"}</Button>
                                                     </Link>
                                                 </Grid2>
