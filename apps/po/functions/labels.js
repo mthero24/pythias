@@ -4,6 +4,9 @@ import Inventory from "../models/inventory";
 import Batches from "../models/batches";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
+    await Items
+    await Order
+    await Inventory
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
     let labels = {
@@ -36,8 +39,8 @@ export async function LabelsData(){
             })
             .select("quantity pending_quantity inventory_id")
             .lean();
-        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.inventory_id == `${s.colorName}-${s.sizeName}-${s.styleCode}`)[0];  return {...s}})
-        //labels[k].map(l=>{console.log(l.inventory, `${l.colorName}-${l.sizeName}-${l.styleCode}`, k)})
+        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0];  return {...s}})
+        labels[k].map(l=>{console.log(l.inventory, encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`), k)})
         let missing = labels[k].filter(l=> l.inventory == undefined)
         missing.map(async m=>{
             let i = await Inventory.findOne({inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)})
@@ -51,7 +54,7 @@ export async function LabelsData(){
                     color: m.color,
                     color_name: m.colorName,
                     size_name: m.sizeName,
-                    barcode_id: `${m.colorName}-${m.sizeName}-${m.styleCode}`
+                    barcode_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)
                 })
                 await i.save()
             }
