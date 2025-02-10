@@ -28,11 +28,6 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
     useEffect(()=>{
       const getUpdate = async()=>{
         console.log("run Get update")
-        await new Promise((resolve)=>{
-          setTimeout(()=>{
-            resolve()
-          }, 5 * ( 60 * 1000))
-        })
         console.log("getting update")
         let res = await axios.get("/api/production/print-labels/updatePage")
         if(!res.data || res.data.error) alert("could not update page")
@@ -43,6 +38,14 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
           setGiftLabels(res.data.giftMessages)
           setRePulls(res.data.rePulls)
         } 
+        await new Promise((resolve) => {
+          setTimeout(
+            () => {
+              resolve();
+            },
+            5 * (60 * 1000)
+          );
+        });
         getUpdate()
       }
       getUpdate()
