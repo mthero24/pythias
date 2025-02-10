@@ -55,7 +55,7 @@ export async function POST(req = NextApiRequest){
             let headers = {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localKey}`
+                    "Authorization": `Bearer $2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm`
                 }
             }
             let response = await axios.post(
