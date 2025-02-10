@@ -41,11 +41,11 @@ export async function POST(req=NextApiResponse) {
     //print labels
     console.log(process.env.localIP, process.env.localKey)
     let headers = {
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localKey}`
-        }
-    }
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer $2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm`,
+      },
+    };
     console.log(headers)
     let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
     console.log(res?.data)
