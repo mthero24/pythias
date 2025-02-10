@@ -1,4 +1,4 @@
-"use client";
+
 export const createImage = (colorName, styleCode, options, width=700) => {
     let side = 'garment';
     if(options.side){
