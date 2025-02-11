@@ -55,6 +55,7 @@ export async function POST(req = NextApiRequest){
         }
         //get fold settings
         let foldSettings = await item.styleV2.fold.filter(f=> f.size.toLowerCase() == item.sizeName.toLowerCase() || f.sizeName?.toLowerCase() == item.sizeName.toLowerCase())[0]
+        console.log(foldSettings)
         //send to folder
         if(foldSettings){
             let responseData
