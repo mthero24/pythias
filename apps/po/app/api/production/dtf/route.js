@@ -122,6 +122,21 @@ export async function POST(req = NextApiRequest) {
             shouldFitDesign: shouldFitDesign,
             printer: data.printer
         })
+        if(item.design && item.design.back){
+            let imageres = await createImage({
+                url: item.design?.back,
+                pieceID: `${item.pieceId}-back`,
+                horizontal: false,
+                size: `${envleopes[0].width}x${envleopes[0].height}`,
+                offset: envleopes[0].vertoffset,
+                style: item.styleV2.code,
+                styleSize: item.sizeName,
+                color: item.color.name,
+                sku: item.sku,
+                shouldFitDesign: shouldFitDesign,
+                printer: data.printer
+            })
+        }
         console.log(imageres)
         let tracking = new Employee({
             type: "DTF Load",
