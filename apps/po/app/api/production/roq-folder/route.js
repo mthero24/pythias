@@ -78,8 +78,8 @@ export async function POST(req = NextApiRequest){
                   codeFormat: 128,
                   pause: "P",
                   QuantityToStack: 8,
-                  Recipe: foldSettings.recipe,
-                  sleeves: foldSettings.sleeve,
+                  Recipe: foldSettings.fold,
+                  sleeves: foldSettings.sleeves,
                   body: foldSettings.body,
                   exit: item.order.preShipped == true ? "Pack" : "Stack",
                 }, headers
