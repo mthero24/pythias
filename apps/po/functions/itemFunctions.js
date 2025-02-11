@@ -5,7 +5,9 @@ export const isSingleItem = (item)=>{
 }
 export const isShipped = async (item)=>{
     console.log(item.order.items.filter(i=> !i.canceled && !i.shipped).length == 0, "isShipped")
+    //console.log(tem.order.items.filter(i=> !i.canceled && !i.shipped).length == 0)
     if(item.order.items.filter(i=> !i.canceled && !i.shipped).length == 0){
+        console.log("return true")
         return true
     }else return false
 }

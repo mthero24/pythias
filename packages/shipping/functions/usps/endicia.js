@@ -201,7 +201,7 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
     let data = await parser.parseStringPromise(res.data);
     console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0])
     console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label)
-    if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse.ErrorMessage){
+    if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage){
         return {error: true, msg: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage[0]}
     }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Base64LabelImage){
         return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Base64LabelImage[0], trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }

@@ -44,9 +44,11 @@ export async function POST(req= NextApiRequest){
             if(canceled(item, item.order)){
                 res.error = true
                 res.msg = "Item Canceled"
-            }else if(isShipped(item) == true){
+            }else if(await isShipped(item) == true){
+
                 res.error = true
                 res.msg = "Order already shipped"
+                console.log(res)
             }else{
                 if(isSingleItem(item)) res.activate = "ship"
                 else {
