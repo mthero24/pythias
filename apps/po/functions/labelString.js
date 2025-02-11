@@ -4,7 +4,7 @@ export const buildLabelData = async (item, i, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let frontBackString;
     //console.log(totalQuantity, "TQ");
-    if (item.design.back) {
+    if (item.design?.back) {
       if (item.design?.front && item.design.back) {
         frontBackString = `^LH12,18^CFS,25,12^AXN,80,50^FO200,540^FDFRONT&BACK^FS`;
       } else {
