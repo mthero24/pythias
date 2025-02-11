@@ -8,6 +8,7 @@ export async function POST(req = NextApiRequest){
     let data = await req.json();
     console.log(data)
     let item = await Items.findOne({pieceId: data.scan,}).populate({path: "order", populate: "items"}).populate("styleV2")
+    console.log(item?.order, "item order",)
     if(item){
         if(canceled(item, item.order) == true) return NextResponse.json({error: true, msg: "Item Canceled"})
         else if(isSingleItem(item) == true && item.order.shippingType == "Standard") {
@@ -16,7 +17,7 @@ export async function POST(req = NextApiRequest){
                 address: item.order.shippingAddress, 
                 poNumber: item.order.poNumber, 
                 weight: item.styleV2.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight, 
-                selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
+                selectedShipping: {provider: "usps", name: "GroundAdvantage"}, dimensions: {width: 8, length: 11, height: 1}, 
                 businessAddress: JSON.parse(process.env.businessAddress),
                 providers: ["endicia", "fedex"],                
                 credentials: {
