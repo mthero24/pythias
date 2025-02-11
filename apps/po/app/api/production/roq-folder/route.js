@@ -33,6 +33,7 @@ export async function POST(req = NextApiRequest){
                     accountNumber: process.env.endiciaAccountNUmber,
                     passPhrase: process.env.endiciaPassPhrase,
                 },
+                dpi: 300
             }
             if(!item.order.preShipped){
                 let label = await buyLabel(send)

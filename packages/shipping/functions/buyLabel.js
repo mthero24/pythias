@@ -5,10 +5,10 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
     credentials,
     credentialsFedEx,
     credentialsFedExNew,
-    credentialsUPS,}){
+    credentialsUPS, dpi}){
     if(selectedShipping.provider == "usps"){
         if(providers.includes("endicia")){
-            let res = await buyShippingLabelEn({address, poNumber, weight, selectedShipping, dimensions, businessAddress, enSettings})
+            let res = await buyShippingLabelEn({address, poNumber, weight, selectedShipping, dimensions, businessAddress, enSettings, dpi})
             return res
         }
         else if(providers.includes("usps")){

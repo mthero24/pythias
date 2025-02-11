@@ -147,7 +147,7 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
         <soap:Body>
         <GetPostageLabel xmlns="www.envmgr.com/LabelService">
         <LabelRequest ${address.country == "US"? `ImageFormat="ZPLII" 
-                        ImageResolution="${dpi != undefined? 300: 203}">`: `LabelType="International"
+                        ImageResolution="${dpi != undefined? dpi: 203}">`: `LabelType="International"
                         LabelSubtype="Integrated"
                         LabelSize="4x6"
                         ImageFormat="ZPLII">`}
