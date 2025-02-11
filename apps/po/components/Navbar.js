@@ -121,7 +121,7 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Sublimation`} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/inventory">
+        <Link href="https://www.printoracle.com/admin/inventory">
           <ListItemButton>
             <ListItemText primary={`Inventory`} />
           </ListItemButton>
