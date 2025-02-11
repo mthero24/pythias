@@ -17,7 +17,7 @@ export async function POST(req = NextApiRequest){
                 weight: item.styleV2.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight, 
                 selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
                 businessAddress: JSON.parse(process.env.businessAddress),
-                providers: ["usps", "fedex"],                
+                providers: ["endicia", "fedex"],                
                 credentials: {
                     clientId: process.env.uspsClientId,
                     clientSecret: process.env.uspsClientSecret,
@@ -25,6 +25,11 @@ export async function POST(req = NextApiRequest){
                     mid: process.env.uspsMID,
                     manifestMID: process.env.manifestMID,
                     accountNumber: process.env.accountNumber
+                },
+                enSettings: {
+                    requesterID: process.env.endiciaRequesterID,
+                    accountNumber: process.env.endiciaAccountNUmber,
+                    passPhrase: process.env.endiciaPassPhrase,
                 },
             }
             if(!item.order.preShipped){
