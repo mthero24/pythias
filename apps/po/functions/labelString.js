@@ -11,6 +11,7 @@ export const buildLabelData = async (item, i, opts={}) => {
         frontBackString = `^LH12,18^CFS,25,12^AXN,80,50^FO200,540^FDBACK ONLY^FS`;
       }
     } else frontBackString = "";
+    if(!item.design) frontBackString = "Missing Design";
     let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,45,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
     let printTypeAbbr;
     if (item?.type && item?.type?.toLowerCase() == "dtf") printTypeAbbr = "DTF";
