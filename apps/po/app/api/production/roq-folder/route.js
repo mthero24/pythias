@@ -6,6 +6,7 @@ import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
 export async function POST(req = NextApiRequest){
     let data = await req.json();
+    console.log(data)
     let item = await Items.findOne({pieceId: data.scan,}).populate({path: "order", populate: "items"}).populate("styleV2")
     if(item){
         if(canceled(item, item.order) == true) return NextResponse.json({error: true, msg: "Item Canceled"})
@@ -64,7 +65,7 @@ export async function POST(req = NextApiRequest){
                 }
             }
             let response = await axios.post(
-                `${process.env.localIP}/api/roq-folder`,
+                `http://${process.env.localIP}/api/roq-folder`,
                 {
                   barcode: item.pieceId,
                   label: item.order.shippingInfo.label,
