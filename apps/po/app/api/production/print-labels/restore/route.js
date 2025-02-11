@@ -43,7 +43,7 @@ export async function POST(req=NextApiResponse) {
     let headers = {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer $2a$10$HN2gb5EVudQkf9op49kKJu3MoQQlPMgN00XUMIoy51EIiHNtbZqNm`,
+        Authorization: `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`,
       },
     };
     console.log(headers)
