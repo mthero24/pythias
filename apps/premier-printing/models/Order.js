@@ -1,10 +1,4 @@
 import mongoose from "mongoose";
-import Color from "./Color";
-import Size from "./Size";
-import Style from "./Style";
-import Item from "./Items";
-import Store from "./Store";
-import Product from "./Product";
 const { PremierPrinting } = require("../lib/connection");
 const schema = new mongoose.Schema({
   date: {

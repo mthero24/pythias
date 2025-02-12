@@ -1,4 +1,4 @@
-import Blanks from "@/modals/Blanks";
+import Blanks from "@/models/Blanks";
 import { serialize } from "@/functions/serialize";
 import { Main } from "./Main";
 export default async function Settings(req) {

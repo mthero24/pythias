@@ -15,7 +15,7 @@ export const metadata = {
   title: "Premier Printing",
   description: "Premier Printing",
   icons: {
-    icon: "/premierprinting-logo-small.png",
+    icon: "/premierprinting-favicon.ico",
   },
 };
 
@@ -24,6 +24,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{background: "#e2e2e2"}}
       >
         <Navbar/>
         {children}

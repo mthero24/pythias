@@ -1,5 +1,5 @@
 import {Main} from "./main";
-import Blank from "@/modals/Blanks";   
+import Blank from "@/models/Blanks";   
 
 export default async function Blanks(){
     let blanks = await Blank.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});

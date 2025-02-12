@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Color from "@/modals/Color";
+import Color from "@/models/Color";
 
 export async function POST(req = NextApiRequest) {
   let data = await req.json();

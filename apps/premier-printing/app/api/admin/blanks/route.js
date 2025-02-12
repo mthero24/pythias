@@ -1,7 +1,7 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Blanks from "@/modals/Blanks";
-import Inventory from "@/modals/inventory";
-import Color from "@/modals/Color";
+import Blanks from "@/models/Blanks";
+import Inventory from "@/models/inventory";
+import Color from "@/models/Color";
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   //console.log(data)

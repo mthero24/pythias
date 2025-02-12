@@ -27,7 +27,9 @@ export function DTFSend({printers}){
     }
     return (
         <>
-            <Printers printers={printers} printer={printer} setPrinter={setPrinter} setAuto={setAuto}/>
+            <Box sx={{padding: ".5%", background: "#d2d2d2"}}>
+                <Printers printers={printers} printer={printer} setPrinter={setPrinter} setAuto={setAuto}/>
+            </Box>
             <DTFBody auto={auto} setAuto={setAuto} printer={printer} type={"send"}/>
         </>
     )

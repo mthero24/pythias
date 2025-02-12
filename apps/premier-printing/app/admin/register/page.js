@@ -1,4 +1,4 @@
-import {Main} from "../login/Main"
+import {Main} from "@/app/login/Main"
 
 export default async function Login(){
     return(

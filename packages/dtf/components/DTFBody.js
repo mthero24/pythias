@@ -13,7 +13,7 @@ import {createImage} from "../functions/image"
 export function DTFBody({auto, setAuto, printer, type}){
     const [submitted, setSubmitted] = useState([]);
     return (
-            <Box sx={{padding: "2%", background: "#d2d2d2", minHeight: "100vh"}}>
+            <Box sx={{padding: ".5%", background: "#d2d2d2", minHeight: "100vh"}}>
                 <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} type={type} />
                 <Box sx={{margin: "0% 5%"}}>
                   <Card sx={{width: "100%"}}>

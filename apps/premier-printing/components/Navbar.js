@@ -14,7 +14,6 @@ import {
   ListItemButton,
   ListItemText,
 } from "@mui/material";
-//import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { theme, themeDark } from "./UI/Theme";
 import Image from "next/image";
@@ -52,9 +51,15 @@ export default function ButtonAppBar() {
               />
             </Link>
           </Box>
-          <Button sx={{color: "#565660"}} onClick={()=>{signOut({ callbackUrl: "/" })}}>
-            Logout
-          </Button>
+          
+            <Button sx={{color: "#565660"}} onClick={()=>{signOut({ callbackUrl: "/" })}}>
+              Logout
+            </Button>
+         
+          {/* {status !== "authenticated" && 
+            <Button sx={{color: "#565660"}} href="/login">
+              Login
+            </Button> */}
         </Toolbar>
       </AppBar>
       <NavDrawer visible={drawerVisible} toggleDrawer={toggleDrawer} />
@@ -77,7 +82,7 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
       onKeyDown={toggleDrawer}
     >
       <Box sx={{ flexGrow: 1 }}>
-        <Link href="/dashboard">
+        <Link href="/admin">
           <img className="img-fluid" width="170" src="/premierprinting-logo.png" />
         </Link>
       </Box>
@@ -85,7 +90,7 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
       <List sx={{ width: "100%" }}>
       <Link href="/admin">
           <ListItemButton>
-            <ListItemText primary={`Admin`} />
+            <ListItemText primary={`Premier Printing`} />
           </ListItemButton>
         </Link>
         <Link href="/admin/blanks">
@@ -103,24 +108,9 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Orders`} />
           </ListItemButton>
         </Link>
-        <Link href="/production">
-          <ListItemButton>
-            <ListItemText primary={`Production`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/printLabels">
+        <Link href="/production/print-labels">
           <ListItemButton>
             <ListItemText primary={`Print Labels`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/excess-labels">
-          <ListItemButton>
-            <ListItemText primary={`Excesss Labels`} />
-          </ListItemButton>
-        </Link>
-        <Link href="/production/items">
-          <ListItemButton>
-            <ListItemText primary={`Track Labels`} />
           </ListItemButton>
         </Link>
         <Link href="/production/dtf-send">

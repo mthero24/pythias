@@ -1,4 +1,4 @@
-import Blank from "@/modals/Blanks";
+import Blank from "@/models/Blanks";
 import { serialize } from "@/functions/serialize";
 import {Main} from "./Main";
 export default async function Show(req, res){

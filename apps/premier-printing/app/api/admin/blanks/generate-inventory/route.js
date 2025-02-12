@@ -1,5 +1,5 @@
 import { generateInventory } from "@/functions/generateInventory";
-import Blanks from "@/modals/Blanks";
+import Blanks from "@/models/Blanks";
 import { NextApiRequest, NextResponse } from "next/server";
 
 export async function POST(req= NextApiRequest){

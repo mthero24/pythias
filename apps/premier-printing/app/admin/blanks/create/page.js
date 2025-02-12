@@ -1,6 +1,6 @@
-import Blanks from "@/modals/Blanks";
-import Color from "@/modals/Color";
-import PrintPricing from "@/modals/PrintPricing";
+import Blanks from "@/models/Blanks";
+import Color from "@/models/Color";
+import PrintPricing from "@/models/PrintPricing";
 import { serialize } from "@/functions/serialize";
 import {Main} from "./Main";
 export default async function Create(req,res) {
