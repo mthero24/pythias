@@ -21,6 +21,9 @@
     "packages/*"
   ],
   "dependencies": {
+    "@aws-sdk/client-iam": "^3.744.0",
+    "@aws-sdk/client-s3": "^3.744.0",
+    "@aws-sdk/credential-provider-ini": "^3.744.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",

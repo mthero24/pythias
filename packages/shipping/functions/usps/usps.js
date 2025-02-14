@@ -2,7 +2,7 @@ import axios from "axios"
 import fs from "fs"
 async function GetToken({credentials}){
     console.log(credentials)
-    let res = await axios.post("https://apis.usps.com/oauth2/v3/token", {
+    let res = await axios.post("https://api.usps.com/oauth2/v3/token", {
         grant_type: "client_credentials",
         client_id: credentials.clientId,
         client_secret: credentials.clientSecret,
@@ -25,7 +25,7 @@ export async function TrackPackage({tn, credentials}){
                 Authorization: `Bearer ${token}`
             }
         }
-        let res = await axios.get(`https://apis.usps.com/tracking/v3/tracking/${tn}`, headers).catch(e=>{
+        let res = await axios.get(`https://api.usps.com/tracking/v3/tracking/${tn}`, headers).catch(e=>{
             //console.log(e.response.data)
         })
         //console.log(res?.data)
@@ -45,7 +45,7 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
             }
         }
         let resData
-        let res = await axios.post("https://apis.usps.com/scan-forms/v3/scan-form", {
+        let res = await axios.post("https://api.usps.com/scan-forms/v3/scan-form", {
             form: "5630",
             imageType: "JPG",
             labelType: "8.5x11LABEL",
@@ -103,8 +103,9 @@ export async function getRatesUSPS({address, weight, dimensions, businessAddress
             }
         }
         let resData
-        let res = await axios.post("https://apis.usps.com/prices/v3/base-rates/search", data, headers).catch(e=>{resData= e.response.data})
+        let res = await axios.post("https://api.usps.com/prices/v3/base-rates/search", data, headers).catch(e=>{resData= e.response.data})
         console.log(res?.data, resData)
+        console.log(resData? resData.error: "")
         if(res?.data.error) {
             await fs.writeFileSync('data2.txt', JSON.stringify(res.data), 'utf8');
             console.log(res.data.errors)

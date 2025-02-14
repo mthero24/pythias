@@ -32,6 +32,7 @@ export async function middleware(req=NextRequest) {
     const protectedRoute = protectedRoutes.find((route) =>
        req.nextUrl.pathname.startsWith(route.path)
      );
+    const requestHeaders = new Headers(req.headers)
     if (protectedRoute) {
       const token = await getToken({ req });
       console.log(token, "__TOKEN__");
@@ -40,11 +41,12 @@ export async function middleware(req=NextRequest) {
       if (!protectedRoute.roles.includes(role)) {
         return NextResponse.redirect(new URL("/login", req.url));
       }
+      requestHeaders.set('user', JSON.stringify(token))
     }
     return NextResponse.next({
       request: {
         // New request headers
-        //headers: requestHeaders,
+        headers: requestHeaders,
       },
     });
 }
