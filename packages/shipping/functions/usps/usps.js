@@ -133,7 +133,7 @@ const paymentAuth = async ({token, credentials})=>{
         }
     }
     let resData
-    let res = await axios.post("https://apis.usps.com/payments/v3/payment-authorization", data, headers).catch(e=>{resData= e.response.data})
+    let res = await axios.post("https://api.usps.com/payments/v3/payment-authorization", data, headers).catch(e=>{resData= e.response.data})
     console.log(res?.data, "res.data", resData, "resData")
     if(res?.data.paymentAuthorizationToken){
         return {error: false, paymentAuth: res?.data.paymentAuthorizationToken}
@@ -197,7 +197,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
                 }
             }
             let resData
-            let res = await axios.post("https://apis.usps.com/labels/v3/label", data, headers).catch(e=>{resData= e.response.data})
+            let res = await axios.post("https://api.usps.com/labels/v3/label", data, headers).catch(e=>{resData= e.response.data})
             if(res?.data.error){
                 console.log("res.data")
                 return {error:true, msg: res.data.message}
@@ -227,7 +227,7 @@ export const refund = async ({trackingNumber, credentials})=>{
                 }
                 }
             let resData
-            let res = await axios.delete(`https://apis.usps.com/labels/v3/label`, headers).catch(e=>{resData= e.response.data})
+            let res = await axios.delete(`https://api.usps.com/labels/v3/label`, headers).catch(e=>{resData= e.response.data})
             console.log(res?.data, resData)
             if(res?.data.error){
                 return {error: true, msg: "error from usps"}
