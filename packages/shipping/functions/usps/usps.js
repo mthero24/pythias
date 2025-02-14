@@ -152,8 +152,8 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
             receiptOption: "NONE"
         },
         "toAddress": {
-          "firstName": address.name.split(" ")[0],
-          "lastName": address.name.split(" ").slice(address.name.split(" ").length - 1).toString(),
+          "firstName": address.name.trim().split(" ")[0],
+          "lastName": address.name.trim().split(" ").slice(address.name.trim().split(" ").length - 1).toString(),
           "streetAddress": address.address1,
           "secondaryAddress": address.address2,
           "city": address.city,
