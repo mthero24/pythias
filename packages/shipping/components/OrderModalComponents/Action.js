@@ -10,6 +10,7 @@ import axios from "axios"
 export function Actions({bin, setBins, item, order, style, action, setAction, shippingPrices, setShippingPrices, timer, weight,setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel}){
     //console.log(style)
     const [shippingSelected, setShippingSelected] = useState({name: "GroundAdvantage"})
+    const [ignoreBadAddress, setIgnoreBadAddress] = useState(false)
     useEffect(()=>{
         if(shippingPrices){
             let res = shippingPrices.sort((a,b)=>{
@@ -27,7 +28,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
         setShippingSelected(shippingPrices?.filter(s=> s.service.name == event.target.value)[0].service)
     }
     const ship = async ()=>{
-        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station})
+        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress})
         console.log(res.data)
         if(res.data.error){
             alert(res.data.msg)
@@ -148,7 +149,14 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                                                 ))}
                                             </RadioGroup>
                                         </FormControl>
-                                        <Button onClick={ship} fullWidth sx={{color: "#ffffff", background: "#0079DC", marginTop: ".5%"}}>Ship</Button>
+                                        <Grid2 container spacing={2}>
+                                            <Grid2 size={11}>
+                                                <Button onClick={ship} fullWidth sx={{color: "#ffffff", background: "#0079DC", marginTop: ".5%"}}>Ship</Button>
+                                            </Grid2>
+                                            <Grid2 size={1}>
+                                                <FormControlLabel control={<Checkbox checked={ignoreBadAddress} onChange={()=>{setIgnoreBadAddress(!ignoreBadAddress); console.log(!ignoreBadAddress)}} />} label="Ignore" />
+                                            </Grid2>
+                                        </Grid2>
                                     </Box>
                                 </Box>
                             </Grid2>

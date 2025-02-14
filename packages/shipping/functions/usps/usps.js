@@ -143,7 +143,7 @@ const paymentAuth = async ({token, credentials})=>{
         return {error: true, msg: "something went wrong"}
     }
 }
-export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi}){
+export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress}){
     //console.log(credentials)
     let token = await GetToken({credentials})
     let data = {
@@ -153,12 +153,13 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
         },
         "toAddress": {
           "firstName": address.name.split(" ")[0],
-          "lastName": address.name.split(" ")[1],
+          "lastName": address.name.split(" ").slice(address.name.split(" ").length - 1).toString(),
           "streetAddress": address.address1,
           "secondaryAddress": address.address2,
           "city": address.city,
           "state": address.state,
           "ZIPCode": address.zip.split("-")[0],
+          "ignoreBadAddress": ignoreBadAddress
         },
         "fromAddress": {
           "firstName": businessAddress.name,
@@ -204,7 +205,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
             }
             else if(resData){
                 console.log(resData, "resData")
-                return {error:true, msg: `${resData.error.message} - ${resData?.error.errors[0].detail} - ${resData?.error.errors[0].source.parameter}`}
+                return {error:true, msg: `${resData.error.message} - ${resData?.error.errors[0]?.detail} - ${resData?.error.errors[0]?.source.parameter}`}
             }
             else return {error:false, label: res.data.labelImage, trackingNumber: res.data.trackingNumber, cost: res.data.postage}
         }
@@ -236,6 +237,28 @@ export const refund = async ({trackingNumber, credentials})=>{
             }
             else return {error: false, msg: res.data.status}
         }else return {error: true, msg: "no payment token received"}
+    }else return {error: true, msg: "no token received"}
+
+}   
+export const checkAddress = async ({address, credentials})=>{
+    let token = await GetToken({credentials})
+    if(token){
+       
+        let headers = {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Accept": "application/json"
+            }
+            }
+        let resData
+        let res = await axios.get(`https://api.usps.com/addresses/v3/address?streetAddress=${address.address1}&secondaryAddress=${address.apt}&city=${address.city}&state=${address.state}&ZIPCode=${address.zip}`, headers).catch(e=>{resData= e.response.data})
+        console.log(res?.data, resData)
+        if(res?.data.error){
+            return {error: true, msg: "error from usps"}
+        }else if(resData){
+            return {error:true, msg: `${resData.error.message} - ${resData?.error.errors[0]?.detail} - ${resData?.error.errors[0]?.source.parameter}`}
+        }
+        else return {error: false, msg: res.data.status}
     }else return {error: true, msg: "no token received"}
 
 }   

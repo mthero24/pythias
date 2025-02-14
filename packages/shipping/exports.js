@@ -9,3 +9,4 @@ export {getRates} from "./functions/getRates";
 export {buyLabel} from "./functions/buyLabel";
 export {print} from "./functions/printLabel";
 export {getRefund} from "./functions/getRefund";
+export {checkAddress} from "./functions/usps/usps"
