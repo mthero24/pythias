@@ -19,6 +19,7 @@ export async function POST(req = NextApiRequest){
                 weight: item.styleV2.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight, 
                 selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
                 businessAddress: JSON.parse(process.env.businessAddress),
+                ignoreBadAddress: false,
                 providers: ["usps", "fedex"],                
                 credentials: {
                     clientId: process.env.uspsClientId,

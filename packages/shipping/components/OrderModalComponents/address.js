@@ -75,9 +75,7 @@ export function Address({order, style, setBins}){
                     <Grid2 size={{xs: 12, md: 12}}>
                         <Button fullWidth sx={{background: "#0079DC", color: "#ffffff"}} onClick={updateAddress}>Update</Button>
                     </Grid2>
-                    <Grid2 size={{xs: 12, md: 12}}>
-                        <Button fullWidth sx={{background: "#0079DC", color: "#ffffff"}} onClick={checkAddress}>Check Address</Button>
-                    </Grid2>
+                    
                     {showAlert && 
                         <Grid2 size={{xs: 12, md: 12}}>
                             <Alert sx={{width: "100%"}} icon={<CheckIcon fontSize="inherit" />} severity="success">
