@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { TSPprints }  from "../lib/connection";
+import { PremierPrinting }  from "../lib/connection";
 import User from "./User"
 import Order from "./Order";
 import Design from "./Design";
@@ -16,4 +16,4 @@ const schema = new mongoose.Schema({
     style: String,
 });
 
-export default TSPprints.model('Employee', schema);
+export default PremierPrinting.model('Employee', schema);

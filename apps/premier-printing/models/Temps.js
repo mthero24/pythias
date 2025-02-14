@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { TSPprints }  from "../lib/connection";
+import { PremierPrinting }  from "../lib/connection";
 import Order from "./Order"
 let schema = new mongoose.Schema({
    light: {
@@ -42,4 +42,4 @@ let schema = new mongoose.Schema({
       String
    ]
 })
-export default TSPprints.model('Temps', schema);
+export default PremierPrinting.model('Temps', schema);
