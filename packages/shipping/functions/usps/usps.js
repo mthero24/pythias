@@ -203,7 +203,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
                 return {error:true, msg: res.data.message}
             }
             else if(resData){
-                console.log("resData")
+                console.log(resData, "resData")
                 return {error:true, msg: `${resData.error.message} - ${resData?.error.errors[0].detail} - ${resData?.error.errors[0].source.parameter}`}
             }
             else return {error:false, label: res.data.labelImage, trackingNumber: res.data.trackingNumber, cost: res.data.postage}

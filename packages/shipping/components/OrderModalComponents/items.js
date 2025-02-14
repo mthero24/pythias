@@ -31,12 +31,14 @@ export function Items({order, style}){
                 >
                     <Grid2 container spacing={1}>
                         <Grid2 size={{xs: 5}}>
+                            {it.design &&
                             <Image
-                                src={it.sku.includes("gift")? it.design?.front.replace("https//:", "https://"): createImage(it.colorName, it.styleCode, {url: it.design.front})}
+                                src={it.sku.includes("gift")? it.design?.front.replace("https//:", "https://"): createImage(it.colorName, it.styleCode, {url: it.design?.front})}
                                 alt={it.pieceId}
                                 width={100}
                                 height={100}
                             />
+                        }
                         </Grid2>
                         <Grid2 size={{xs: 7}}>
                             <Grid2 container spacing={1}>

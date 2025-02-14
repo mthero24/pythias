@@ -41,7 +41,7 @@ export function Main(){
                 </Link>
               </Box>
               <Box sx={{padding: "2%"}}>
-                <Link href="https://www.amazon.com/s?k=simply+sage+market&crid=HG4Q7JYGCXET&sprefix=simply+sage+market%2Caps%2C119&ref=nb_sb_noss_1" target="_blank">
+                <Link href="https://www.amazon.com/stores/SimplySageMarket/page/E2BCEA3C-F5F5-4C70-BFBB-B47E3901C7E8?ref_=ast_bln&store_ref=bl_ast_dp_brandLogo_sto" target="_blank">
                   <Image src={amazon} alt="amazon logo" width={200} height={200} style={{width: "100%", height: "auto"}} />
                 </Link>
               </Box>
