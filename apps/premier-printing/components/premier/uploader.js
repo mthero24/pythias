@@ -10,7 +10,7 @@ const s3 = new S3Client({ credentials:{
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
 }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
-export function Uploader({afterFunction, location, image}){
+export function Uploader({afterFunction, location, image, productImage, primary, bl, color, vh}){
     const onDrop = useCallback(acceptedFiles => {
         // Do something with the files
         console.log(acceptedFiles)
@@ -22,10 +22,11 @@ export function Uploader({afterFunction, location, image}){
         var reader = new FileReader();
         reader.readAsArrayBuffer(file);
         reader.onload = async function () {
-        let base64 = reader.result;
-        console.log(base64, "base64")
-    //   if (resize) base64 = await resizeFunc(base64, width);
-        let url = `designs/${Date.now()}.${file.name.split(".")[1]}`
+            console.log(afterFunction, productImage)
+            let base64 = reader.result;
+            console.log(base64, "base64")
+        //   if (resize) base64 = await resizeFunc(base64, width);
+            let url = productImage? `products/${Date.now()}.${file.name.split(".")[1]}`: `designs/${Date.now()}.${file.name.split(".")[1]}`
             let params = {
             Bucket: "images1.pythiastechnologies.com",
             Key: url,
@@ -37,7 +38,7 @@ export function Uploader({afterFunction, location, image}){
             };
             const data = await s3.send(new PutObjectCommand(params));
             console.log("Success, object uploaded", data);
-            afterFunction({url: `https://images1.pythiastechnologies.com/${url}`, location})
+            afterFunction({url: `https://images1.pythiastechnologies.com/${url}`, location, primary, bl, color})
         };
 
         reader.onerror = function (error) {
@@ -56,39 +57,37 @@ export function Uploader({afterFunction, location, image}){
     }})
 
     return (
-        <Grid2 size={{xs: 6, sm: 4, md: 3}}>
-            <Card sx={{width: "100%", padding: "1%", borderRadius: "9px", cursor: "pointer", height: "100%", background: "#F4E0C7",}}>
-                <div {...getRootProps()}>
-                    <input {...getInputProps()} />
-                    {
-                        isDragActive ?
-                       ( <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center",
-                            marginTop: {xs: "20%", sm: "35%"},
-                            background: "#e2e2e2",
-                            
-                            
-                        }}>
-                            {location && <Typography textAlign="center" fontSize="1.1rem" sx={{padding: "2%", textTransform: "capitalize"}}>{location}</Typography>}
-                            <AttachFileIcon/>
-                            <Typography>Drop Files Here</Typography>
-                            <Typography sx={{fontSize: ".7rem"}}>Or Click To Select File</Typography>
-                        </Box>): image? <Box sx={{padding: "1%", height: "100%"}}>
-                            <Image src={image} alt={location} width={400} height={400} style={{width: "100%", height: "auto"}}/>
-                        </Box>
-                            
-                        :
-                        (<Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center",
-                            marginTop: {xs: "25%", sm: "35%", md: "20%"},
-                        }}>
-                            {location && <Typography textAlign="center" fontSize="1.1rem" sx={{padding: "2%", textTransform: "capitalize"}}>{location}</Typography>}
-                            <AttachFileIcon/>
-                            <Typography sx={{fontSize: ".7rem"}}>Drop New</Typography>
-                            <Typography>Design Image</Typography>
-                            <Typography sx={{fontSize: ".7rem"}}>Or Click To Select File</Typography>
-                        </Box>)
-                    }
-                </div>
-            </Card>
-        </Grid2>
+        <Card sx={{width: "100%", padding: "1%", borderRadius: "9px", cursor: "pointer", height: vh? "100%": "90%", background: "#F4E0C7",}}>
+            <div {...getRootProps()}>
+                <input {...getInputProps()} />
+                {
+                    isDragActive ?
+                    ( <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center",
+                        marginTop: {xs: "20%", sm: "35%"},
+                        background: "#e2e2e2",
+                        
+                        
+                    }}>
+                        {location && <Typography textAlign="center" fontSize="1.1rem" sx={{padding: "2%", textTransform: "capitalize"}}>{location}</Typography>}
+                        <AttachFileIcon/>
+                        <Typography>Drop Files Here</Typography>
+                        <Typography sx={{fontSize: ".7rem"}}>Or Click To Select File</Typography>
+                    </Box>): image? <Box sx={{padding: "1%", height: "100%"}}>
+                        <Image src={image} alt={location} width={200} height={200} style={{width: "100%", height: "auto"}}/>
+                    </Box>
+                        
+                    :
+                    (<Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center",
+                        marginTop: {xs: "25%", sm: "35%", md: "20%"},
+                    }}>
+                        {location && <Typography textAlign="center" fontSize="1.1rem" sx={{padding: "2%", textTransform: "capitalize"}}>{location}</Typography>}
+                        <AttachFileIcon/>
+                        <Typography sx={{fontSize: ".7rem"}}>Drop New</Typography>
+                        <Typography>Image</Typography>
+                        <Typography sx={{fontSize: ".7rem"}}>Or Click To Select File</Typography>
+                    </Box>)
+                }
+            </div>
+        </Card>
     )
 }

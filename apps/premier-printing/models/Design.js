@@ -23,12 +23,22 @@ const schema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "Blank",
     },
-    brands: [String],
+    brand: String,
+    marketPlace: String,
+    colors: [String],
+    sizes:[String]
+  }],
+  b2m: [{
+    brand: String,
     marketPlaces: [String]
   }],
   brands: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Brands",
+  }],
+  marketPlaces: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Marketplaces",
   }],
   user: {
     type: mongoose.Schema.Types.ObjectId,

@@ -10,14 +10,16 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Blank",
   },
-  color: String,
-  mockup: String,
-  images: {
-    front: { type: String },
-    back: { type: String },
-    leftSleeve: { type: String },
-    rightSleeve: { type: String },
+  color: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Color",
   },
+  marketPlace: String,
+  brand: String,
+  type: { type: String,
+    enum : ['primary','secondary'],
+    default: 'secondary'},
+  image: String
 });
 
 export default PremierPrinting.model("ProductImages", schema);

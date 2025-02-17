@@ -1,13 +1,10 @@
 import { CircularProgress } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
-import AWS from "aws-sdk";
-
-const awsConfig = {
-  profile: "wasabi",
-  region: "us-east-1",
-  accessKeyId: "SZR8M2DE7TYQA88VYD3F",
-  secretAccessKey: "jtegESHcnmYv2ZNE5mzLChZ0zeDBUaC3P8abTwh8",
-};
+import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+const s3 = new S3Client({ credentials:{
+  accessKeyId:'XWHXU4FP7MT2V842ITN9',
+ secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
+}, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
 const ImageUpload = ({ filesToUpload = [], onUploadComplete }) => {
   const s3Ref = useRef();
@@ -43,18 +40,16 @@ const ImageUpload = ({ filesToUpload = [], onUploadComplete }) => {
     if (key.includes(".webp")) contentType = "image/webp";
     let buffer = Buffer.from(base64.split(",")[1], "base64");
     var params = {
-      Bucket: "teeshirtpalace-node-dev",
+      Bucket: "images1.pythiastechnologies.com",
       Key: key,
       Body: buffer,
       ACL: "public-read",
       ContentDisposition: "inline",
       ContentType: contentType,
     };
-    AWS.config.update(awsConfig);
-    let ep = new AWS.Endpoint("s3.wasabisys.com");
-    s3Ref.current = new AWS.S3({ endpoint: ep });
-    await s3Ref.current.putObject(params).promise();
-    return `https://s3.wasabisys.com/teeshirtpalace-node-dev/${key}`;
+    const data = await s3.send(new PutObjectCommand(params));
+    console.log("Success, object uploaded", data);
+    return `https://images1.pythiastechnologies.com/${key}`;
   };
 
   const uploadImageFile = async (file, key) => {

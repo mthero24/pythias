@@ -24,7 +24,9 @@ export function Main({designs}){
             <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
                 <Box sx={{ minHeight: "80vh",}}>
                     <Grid2 container spacing={2}>
-                        <Uploader afterFunction={createDesign} />
+                        <Grid2 size={{xs: 6, sm: 4, md: 3}}>
+                            <Uploader afterFunction={createDesign} vh={"100vh"}/>
+                        </Grid2>
                         {designss && designss.map(d=>(
                             <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
                                 <Link href={`/admin/design/${d._id}`}>

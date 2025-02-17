@@ -17,8 +17,8 @@ import Link from "next/link"
 export function Main(){
     return (
     <Box sx={{background: "#e2e2e2", minHeight: "vh"}}>
-    <Container maxWidth="xl" >
-      <Card sx={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "space-between", margin: "2%"}}>
+    <Container maxWidth="lg" >
+      <Card sx={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "space-between", margin: "2% 0%",}}>
         <Box sx={{padding: "4%", width: "55%",  backgroundImage: `url(/2270.jpg)`, backgroundSize: 'cover',}}>
           <Image src={logo} alt="premier printing logo" width={300} height={300} style={{width: "100%", height: "auto"}} />
         </Box>
@@ -69,7 +69,7 @@ export function Main(){
         </Box>
       </Card>
     </Container>
-    <Box sx={{background: theme.palette.primary.faded, padding: "2%", width: "100%", position: "absolute", bottom: 0}}>
+    <Box sx={{background: theme.palette.primary.faded, padding: "2%", width: "100%", position: "relative", bottom: 0}}>
       <Typography sx={{textAlign: "center", fontSize: ".9rem", color: "#fff"}}>©copyright 2025</Typography>
     </Box>
   </Box>
