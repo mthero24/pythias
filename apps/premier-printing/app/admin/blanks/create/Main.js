@@ -1307,7 +1307,7 @@ const ColorImage = ({
               Set Color Swatch
             </Button>
           </Box>
-          <Grid2 container spacing={4}>
+          <Grid2 container spacing={2}>
             {activePrintAreas.map((type) => (
               <Grid2 size={12} key={type}>
                 <div>{type}</div>

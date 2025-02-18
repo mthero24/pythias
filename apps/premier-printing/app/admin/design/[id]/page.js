@@ -6,6 +6,7 @@ import ProductImages from "@/models/ProductImages";
 import { serialize } from "@/functions/serialize";
 import {Main} from "./Main";
 import { notFound } from "next/navigation";
+export const dynamic = 'force-dynamic';
 export default async function DesignPage({params}){
     let {id} = await params;
     let design = await Design.findOne({_id: id}).lean();
