@@ -11,16 +11,16 @@ export function Main({design, blanks, brands, mPs, pI}){
     const [bran, setBrands] = useState(brands)
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [loading, setLoading] = useState(true)
-    const [productImages, setProductImages] = useState(pI)
+   
     useEffect(()=>{
         let d = {...des}
         console.log(blanks[0].colors[0])
         d.blanks= d.blanks.map(bl=>{
-            console.log("bl blank", bl.blank, blanks.filter(b=> b._id.toString() == (bl.blank._id? bl.blank._id.toString(): bl.blank.toString()))[0])
-            let blank = blanks.filter(b=> b._id.toString() == (bl.blank._id? bl.blank._id.toString(): bl.blank.toString()))[0]
-            if(typeof bl.sizes[0] == "string") bl.sizes = blank.sizes.filter(s=> bl.sizes.includes(s._id.toString()))
-            console.log(bl.colors, blank.colors)
-            if(typeof bl.colors[0] == "string") bl.colors = blank.colors.filter(s=> bl.colors.includes(s._id.toString()))
+           // console.log("bl blank", bl.blank, blanks.filter(b=> b._id.toString() == (bl.blank._id? bl.blank._id.toString(): bl.blank.toString()))[0])
+            let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]
+            // if(typeof bl.sizes?[0] == "string") bl.sizes = blank.sizes?.filter(s=> bl.sizes?.includes(s._id.toString()))
+            // console.log(bl.colors, blank.colors)
+            // if(typeof bl.colors[0] == "string") bl.colors = blank.colors.filter(s=> bl.colors.includes(s._id.toString()))
             bl.blank = blank
             return bl
         })
@@ -29,6 +29,7 @@ export function Main({design, blanks, brands, mPs, pI}){
             return brand
         })
         console.log(d.brands, d.blanks, d.marketplaces)
+        d.blanks = d.blanks.filter(b=> b.blank != undefined)
         setDesign({...d})
         setLoading(false)
     },[])
@@ -161,37 +162,7 @@ export function Main({design, blanks, brands, mPs, pI}){
         setDesign({...d})
         updateDesign({...d})
     }
-    const updateSizes = ({bl, values})=>{
-        let d = {...des};
-        let blank = d.blanks.filter(b=> b.blank._id.toString() == bl.blank._id.toString())[0]
-        blank.sizes = blank.blank.sizes.filter(s=> values.includes(s.name))
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const updateColors = ({bl, values})=>{
-        let d = {...des};
-        let blank = d.blanks.filter(b=> b.blank._id.toString() == bl.blank._id.toString())[0]
-        blank.colors = blank.blank.colors.filter(s=> values.includes(s.name))
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const createProductImage = async ({url, primary, bl, color})=>{
-        console.log(primary, primary == true? "primary": "secondary" )
-        let res = await axios.post("/api/admin/create-product-image", {design: des._id, blank: bl.blank._id, marketPlace: bl.marketPlace, brand: bl.brand, color: color._id, image: url, type: primary == true? "primary": "secondary"})
-        if(res.data.error) alert(res.data.msg)
-        else {
-            setProductImages(res.data.productImages)
-        }
-    }
-    const deleteProductImage = async ({image})=>{
-        console.log(image)
-        let res = await axios.put("/api/admin/create-product-image", image)
-        if(res.data.error) console.log(res.data.msg)
-        else{
-            console.log("deleted")
-            setProductImages(res.data.productImages)
-        }
-    }
+    
     const deleteDesignImage = ({location})=>{
         let d = {...des}
         des.images[location] = null;
@@ -335,78 +306,6 @@ export function Main({design, blanks, brands, mPs, pI}){
                                                 isMulti
                                             />
                                             {console.log(des.blanks)}
-                                            {des.blanks?.filter(bl=> bl.brand == b.name && bl.marketPlace == m)?.map(bl=> (
-                                                <Accordion key={bl.code} sx={{marginTop: "1%"}}>
-                                                    <AccordionSummary
-                                                        expandIcon={<ExpandMoreIcon />}
-                                                        aria-controls="panel1-content"
-                                                        id="panel1-header"
-                                                        sx={{padding: "2%"}}
-                                                        >
-                                                        <Typography component="span">{bl.blank?.name} - {bl.blank?.code}</Typography>
-                                                    </AccordionSummary>
-                                                    <AccordionDetails>
-                                                        {!loading &&
-                                                        <Box>
-                                                        <CreatableSelect
-                                                            placeholder="Sizes"
-                                                            options={bl.blank?.sizes.map(s=>{return {value: s.name, label: s.name}})}
-                                                            value={bl.sizes.map(s=>{return {value: s.name, label: s.name}})}
-                                                            onChange={(vals)=>{
-                                                                let values = vals.map(v=>{return v.value})
-                                                                console.log(values)
-                                                                updateSizes({bl, values})
-                                                            }}
-                                                            isMulti
-                                                        />
-                                                        <Box sx={{marginTop: "1%"}}>
-                                                            <CreatableSelect
-                                                                placeholder="Colors"
-                                                                options={bl.blank?.colors?.map(s=>{return {value: s.name, label: s.name}})}
-                                                                value={bl.colors.map(s=>{return {value: s.name, label: s.name}})}
-                                                                onChange={(vals)=>{
-                                                                    let values = vals.map(v=>{return v.value})
-                                                                    console.log(values)
-                                                                    updateColors({bl, values})
-                                                                }}
-                                                                isMulti
-                                                            />
-                                                        </Box>
-                                                        </Box>
-                                                        }
-                                                        {!loading && bl.colors.map(c=>(
-                                                            <Accordion key={c._id}>
-                                                                <AccordionSummary  expandIcon={<ExpandMoreIcon />}
-                                                            aria-controls="panel1-content"
-                                                            id="panel1-header"
-                                                            sx={{padding: "2%"}}>
-                                                                    {c?.name} - {bl.blank?.name} {bl.blank?.code} 
-                                                                </AccordionSummary>
-                                                                <AccordionDetails sx={{padding: "1%", }}>
-                                                                    <Box sx={{maxWidth: "100%", overflow: "auto", height: "30vh", overflowY: "auto"}}>
-                                                                        <Grid2 container spacing={2}>
-                                                                            <Grid2 size={{xs: 12, sm: 4, md: 3}} sx={{width: "300px", padding: "1%"}}>
-                                                                                <Uploader afterFunction={createProductImage} productImage={true} primary={true} bl={bl} color={c} image={productImages.filter(i=> i.marketPlace == bl.marketPlace && i.brand == bl.brand && i.blank.toString() == bl.blank._id.toString() && i.color.toString() == c._id.toString() && i.type == "primary")[0]?.image} location={"primary"}/>
-                                                                                <Button fullWidth onClick={()=>{deleteProductImage({image: productImages.filter(i=> i.marketPlace == bl.marketPlace && i.brand == bl.brand && i.blank.toString() == bl.blank._id.toString() && i.color.toString() == c._id.toString() && i.type == "primary")[0]})}}>Delete Image</Button>
-                                                                            </Grid2>
-                                                                            {productImages.filter(i=> i.marketPlace == bl.marketPlace && i.brand == bl.brand && i.blank.toString() == bl.blank._id.toString() && i.color.toString() == c._id.toString() && i.type == "secondary").length == 0 && <Grid2 size={{xs: 12, sm: 4, md: 3}} sx={{width: "100px", padding: "1%"}}>
-                                                                                <Uploader afterFunction={createProductImage} productImage={true} primary={false} bl={bl} color={c}/>
-                                                                            </Grid2>}
-                                                                            {productImages.filter(i=> i.marketPlace == bl.marketPlace && i.brand == bl.brand && i.blank.toString() == bl.blank._id.toString() && i.color.toString() == c._id.toString() && i.type == "secondary").map(i=>(
-                                                                                <Grid2 size={{xs: 12, sm: 4, md: 3}} sx={{width: "300px", padding: "1%"}} key={i._id}>
-                                                                                    <Uploader afterFunction={createProductImage} productImage={true} primary={false} bl={bl} color={c} image={i.image} location={"secondary"}/>
-                                                                                    <Button fullWidth onClick={()=>{deleteProductImage({image: i})}}>Delete Image</Button>
-                                                                                </Grid2>
-                                                                            ))}
-                                                                        </Grid2>
-                                                                    </Box>
-                                                                </AccordionDetails>
-                                                            </Accordion>
-                                                        ))}
-                                                        
-                                                    </AccordionDetails>
-                                                </Accordion>
-                                            ))}
                                         </AccordionDetails>
                                      </Accordion>
                                ))}                            

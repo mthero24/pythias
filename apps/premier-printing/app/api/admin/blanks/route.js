@@ -2,6 +2,15 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Blanks from "@/models/Blanks";
 import Inventory from "@/models/inventory";
 import Color from "@/models/Color";
+
+export async function GET(){
+  try{
+    let blanks = await Blanks.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});
+    return NextResponse.json({error: false, blanks})
+  }catch(e){
+    return NextResponse.json({error: true, msg: JSON.stringify(e)})
+  }
+}
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   //console.log(data)

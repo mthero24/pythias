@@ -10,6 +10,14 @@ const createSku = ()=>{
     }
     return sku
 }
+export async function GET(){
+    try{
+        let designs = await Design.find({}).sort({date: 1}).limit(200)
+        return NextResponse.json({error: false, designs})
+    }catch(e){
+        return NextResponse.json({error: true, msg: JSON.stringify(e)})
+    }
+}
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     console.log(data)

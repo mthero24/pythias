@@ -5,14 +5,23 @@ import {
   Box,
   Button,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import CustomSearchBar from "@/components/CustomSearchBar";
 import DashCard from "@/components/DashCard";
 import SortableTable from "@/components/SortableTable";
+import axios from "axios";
 import Theme from "@/components/Theme";
 export function Main({ blanks }) {
     const [visibleBlanks, setVisibleBlanks] = useState(blanks);
+    useEffect(()=>{
+      const getBlanks = async ()=>{
+        let res = await axios.get("/api/blanks")
+        if(res.data.error) alert(res.data.msg)
+        else setVisibleBlanks(res.blanks)
+      }
+      getBlanks
+    },[])
     let tableItems = visibleBlanks.map((s) => ({
         code: { value: s.code },
         name: { value: s.name },

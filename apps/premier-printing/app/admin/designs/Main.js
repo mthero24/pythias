@@ -1,6 +1,6 @@
 "use client";
 import {Box, Grid2, Typography, Card, Container, TextField} from "@mui/material";
-import {useState, useCallback} from "react";
+import {useState, useEffect} from "react";
 import Image from "next/image"
 import axios from "axios";
 import Link from "next/link";
@@ -8,7 +8,13 @@ import { Uploader } from "@/components/premier/uploader";
 
 export function Main({designs}){
     const [designss, setDesigns] = useState(designs)
-    
+    useEffect(()=>{
+        const getDesigns = async ()=>{
+            let res = await axios.get("/api/designs")
+            if(res.data.error) alert(res.data.msg)
+            else setDesigns(res.data.designs)
+        }
+    },[])
     const createDesign = async({url})=>{
         let res = await axios.post("/api/admin/designs", {url})
         if(res.data.error) alert(res.data.msg)
