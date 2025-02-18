@@ -40,6 +40,7 @@ export async function POST(req= NextApiRequest){
             clientSecret: process.env.UPSClientSecret,
             },
         });
+        console.log(rates)
         return NextResponse.json({error: false, rates})
     }catch(e){
         console.log(e)

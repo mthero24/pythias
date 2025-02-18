@@ -25,6 +25,7 @@ import axios from "axios";
 import ImageUploadBox from "@/components/ImageUploadBox";
 import LoaderButton from "@/components/LoaderButton";
 import EyeDropper from "@/components/EyeDropper";
+import {ColorImage} from "./ColorImage"
 import "jimp";
 export function Main({ colors, blanks, blank, printPricing }) {
   const [activeColors, setActiveColors] = useState(
@@ -33,43 +34,30 @@ export function Main({ colors, blanks, blank, printPricing }) {
   //console.log(printPricing);
 
   const [activePrintAreas, setActivePrintAreas] = useState(
-    blank && blank.images
-      ? [...new Set(blank.images.map((i) => i.frontBackSwatch))]
-      : []
+    []
   );
+  useEffect(()=>{
+    let active = Object.keys(blank.multiImages).map(s=>{
+      if(blank.multiImages[s].length > 0) return s
+    })
+    active = active.filter(a=> a !== undefined)
+    console.log(active, "active")
+    setActivePrintAreas(active)
+  },[])
   const [boxModalOpen, setBoxModalOpen] = useState(false);
   const [allColors, setAllColors] = useState(colors);
 
   const box = useRef(blank && blank.box ? blank.box : {});
   const boxModalSide = useRef();
   const boxModalOnClick = useRef();
+  const boxImage= useRef()
+  const boxBox = useRef()
   const boxKey = useRef("default");
 
   const cropBoxData = useRef({});
-  const [images, setImages] = useState(blank?.images ? blank.images : []);
-
-  useEffect(() => {
-    setImages((prev) => {
-      let newImgs = prev.filter((i) => activeColors.includes(i.color));
-      return newImgs;
-    });
-  }, [activeColors]);
+  const [images, setImages] = useState(blank.multiImages);
 
   //keep images the same as array BECAUSE it will be easier to filter no?
-  const handleUploadImage = ({ color_id, images }) => {
-    setImages((prev) => {
-      let newArr = [...prev].filter((i) => i.color != color_id);
-
-      for (let key in images) {
-        newArr.push({
-          image: images[key],
-          color: color_id,
-          frontBackSwatch: key,
-        });
-      }
-      return newArr;
-    });
-  };
 
   const toggleActiveColor = (color) => {
     //console.log(color);
@@ -102,7 +90,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
   });
   const onSubmit = async (data) => {
     //console.log("onSubmit()");
-    let blank = { ...data, images, box: box.current, colors: activeColors };
+    let blank = { ...data, multiImages: images, box: box.current, colors: activeColors };
     let result = await axios.post("/api/admin/blanks", { blank });
     //console.log(result);
     alert(result.data);
@@ -203,7 +191,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
       label: d,
     }))
     .sort((a, b) => a.value[0].trim().localeCompare(b.value[0].trim()));
-    console.log(categories, "+++++++++++++++++++");
+    //console.log(categories, "+++++++++++++++++++");
 //
   const sizeOptions = [
     "XS",
@@ -261,6 +249,11 @@ export function Main({ colors, blanks, blank, printPricing }) {
       });
     }
   };
+  
+  const removeSize = (size)=>{
+    removeSizes(size)
+    //sizes = sizes.filter(s=> s.name !== si.name)
+  }
 
   const printAreas = [
     "front",
@@ -270,16 +263,17 @@ export function Main({ colors, blanks, blank, printPricing }) {
     "hood",
     "leg",
     "side",
-    "model front",
-    "model back",
+    "modelFront",
+    "modelBack",
   ];
 
-  const printBoxes = [...new Set(images.map((i) => i.frontBackSwatch))];
 
-  const overridePrintBox = ({ color_id, box }) => {
+  const overridePrintBox = ({ color_id, box, image, side}) => {
     //console.log(color_id, box, "override");
     boxKey.current = color_id;
-    boxModalSide.current = box;
+    boxModalSide.current = side;
+    boxImage.current = image;
+    boxBox.current = box
     setBoxModalOpen(!boxModalOpen);
   };
 
@@ -653,6 +647,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                     key={index}
                     index={index}
                     field={field}
+                    removeSize={removeSize}
                     printPrice={DEFAULT_PRINT_PRICE}
                   />
                 ))}
@@ -788,35 +783,13 @@ export function Main({ colors, blanks, blank, printPricing }) {
             </Grid2>
 
             <Grid2 size={12} sx={{ mb: 4 }}>
-              <Typography>Print Boxes</Typography>
-              {printBoxes.map((box) => (
-                <Button
-                  key={box}
-                  onClick={() => {
-                    boxKey.current = "default";
-                    boxModalSide.current = box;
-                    //console.log(boxModalSide);
-                    setBoxModalOpen(!boxModalOpen);
-                  }}
-                >
-                  Set {box} Box
-                </Button>
-              ))}
+              
             </Grid2>
           </Grid2>
 
           {activeColors
             .map((id) => allColors.filter((c) => c._id == id)[0])
             .map((c) => {
-              let initialImages = {};
-              let images = blank?.images?.filter(
-                (i) => i.color.toString() == c._id.toString()
-              );
-              if (images) {
-                for (let image of images) {
-                  initialImages[image.frontBackSwatch] = image.image;
-                }
-              }
               return (
                 <ColorImage
                   style={blank}
@@ -824,15 +797,12 @@ export function Main({ colors, blanks, blank, printPricing }) {
                   activePrintAreas={activePrintAreas.sort(
                     (a, b) => printAreas.indexOf(a) - printAreas.indexOf(b)
                   )}
-                  overridePrintBox={(box) =>
-                    overridePrintBox({ color_id: c._id, box })
+                  overridePrintBox={({box, side, image}) =>
+                    overridePrintBox({ color_id: c._id, box, image, side })
                   }
                   color={c}
                   cropBoxData={cropBoxData}
-                  initialImages={initialImages}
-                  onUploadImage={(images) =>
-                    handleUploadImage({ images, color_id: c._id })
-                  }
+                  initialImages={images}
                   box={box.current}
                   colorCropBoxData={colorCropBoxData}
                 />
@@ -929,18 +899,15 @@ export function Main({ colors, blanks, blank, printPricing }) {
       </Box>
       <SetBoxModal
         open={boxModalOpen}
-        box={box.current}
-        onClose={({ data }) => {
-          if (data && data != null) {
-            if (!box.current[boxKey.current]) {
-              box.current[boxKey.current] = {};
-            }
-            box.current[boxKey.current][boxModalSide.current] = data;
-          }
+        onClose={() => {
+          
           setBoxModalOpen(false);
         }}
         images={images}
-        boxModalSide={boxModalSide}
+        setImages={setImages}
+        side={boxModalSide.current}
+        image={boxImage.current}
+        box={boxBox.current}
         boxKey={boxKey.current}
       />
     </Container>
@@ -993,19 +960,10 @@ const Rectangle = ({ isSelected, onSelect, onChange, ...props }) => {
   );
 };
 
-const SetBoxModal = ({ open, onClose, images, boxModalSide, box, boxKey }) => {
-  let side = boxModalSide.current;
-  if (!box[boxKey]) {
-    box[boxKey] = {};
-  }
+const SetBoxModal = ({ open, onClose, images, setImages, box, image, side }) => {
+  console.log(image)
+  let initialBox = box;
 
-  let initialBox = box && box["default"] && box["default"][side];
-  if (boxKey != "default") {
-    let foundBox = box && box[boxKey] && box[boxKey][side];
-    if (foundBox) {
-      initialBox = foundBox;
-    }
-  }
 
   let INITIAL_BOX_SETTINGS = {
     x: initialBox ? initialBox.x : 20,
@@ -1013,15 +971,10 @@ const SetBoxModal = ({ open, onClose, images, boxModalSide, box, boxKey }) => {
     width: initialBox ? initialBox.boxWidth : 140,
     height: initialBox ? initialBox.boxHeight : 175,
   };
+  if(!initialBox) box = INITIAL_BOX_SETTINGS
+  let imageSrc = image;
 
-  let imageSrc = images.filter((i) => i.frontBackSwatch == side)[0]?.image;
-  if (boxKey && boxKey != "default") {
-    imageSrc = images.filter(
-      (i) => i.frontBackSwatch == side && i.color == boxKey
-    )[0]?.image;
-  }
-
-  //console.log(imageSrc, "imageSrc:)");
+  console.log(imageSrc, "imageSrc:)", side);
 
   const boxRef = useRef({
     containerWidth: 400,
@@ -1041,13 +994,17 @@ const SetBoxModal = ({ open, onClose, images, boxModalSide, box, boxKey }) => {
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
     // we will reset it back
-    boxRef.current = {
+    box = {
       ...boxRef.current,
       x: e.target.x(),
       y: e.target.y(),
       boxWidth: node.width() * scaleX,
       boxHeight: node.height() * scaleY,
     };
+    let im = {...images}
+    console.log(im)
+    im[side].filter(i=> i.image == image)[0].box = box
+    setImages({...im})
     //console.log(boxRef.current);
   };
 
@@ -1093,328 +1050,6 @@ const SetBoxModal = ({ open, onClose, images, boxModalSide, box, boxKey }) => {
         </Button>
       </Box>
     </Modal>
-  );
-};
-const CropColorSwatchModal = ({
-  open,
-  onClose,
-  color_id,
-  cropBoxData,
-  imageToCrop,
-}) => {
-  const [images, setImages] = useState([]);
-  const [filesToUpload, setFilesToUpload] = useState([]);
-  const cropperRef = useRef();
-  const onCrop = async (img) => {
-    //console.log("onCrop");
-    const cropper = cropperRef.current?.cropper;
-    if (!cropBoxData.current) {
-      cropBoxData.current = cropper.getCropBoxData();
-      //console.log(cropBoxData);
-    }
-    let base64 = cropper.getCroppedCanvas().toDataURL();
-    let jimp = await Jimp.read(base64);
-    jimp = await jimp.resize(64, 64);
-    base64 = await jimp.getBase64Async(Jimp.MIME_JPEG);
-    setFilesToUpload([{ base64, key: `colors/${color_id}.jpg` }]);
-  };
-
-  useEffect(() => {
-    if (images.length) {
-      onClose({ url: images[0] });
-      setImages([]);
-    }
-  }, [images]);
-
-  console.log(cropBoxData);
-
-  useEffect(() => {
-    setTimeout(() => {
-      const cropper = cropperRef.current?.cropper;
-      if (cropper && cropBoxData.current) {
-        //console.log("settting crop box");
-        cropper.setCropBoxData(cropBoxData.current);
-      }
-    }, 1000);
-  }, []);
-
-  const onUploadComplete = (urls) => {
-    setImages((prev) => {
-      return [urls[0]];
-    });
-  };
-
-  return (
-    <Modal
-      open={true}
-      onClose={onClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-      sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
-    >
-      <Box>
-        <Box sx={{ background: "#ffffff22", position: "relative" }}>
-          <Cropper
-            src={imageToCrop}
-            style={{ height: 400, width: 400 }}
-            // Cropper.js options
-            initialAspectRatio={1 / 1}
-            aspectRatio={1 / 1}
-            dragMode={"none"}
-            guides={true}
-            ref={cropperRef}
-          />
-        </Box>
-        <Button onClick={onCrop} sx={{ mt: 2 }} variant="contained">
-          Save Swatch
-        </Button>
-        <ImageUpload
-          filesToUpload={filesToUpload}
-          onUploadComplete={onUploadComplete}
-        />
-      </Box>
-    </Modal>
-  );
-};
-
-const ColorImage = ({
-  color,
-  cropBoxData,
-  onUploadImage,
-  initialImages = {},
-  activePrintAreas,
-  overridePrintBox,
-  box,
-  blank,
-  colorCropBoxData,
-}) => {
-  const [imageToCrop, setImageToCrop] = useState();
-  const cropperRef = useRef();
-  const imageType = useRef();
-  const [images, setImages] = useState(initialImages);
-  const [filesToUpload, setFilesToUpload] = useState([]);
-  const [col, setCol] = useState(color);
-  const [activeColorId, setActiveColorId] = useState();
-
-  function getBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  }
-
-  useEffect(() => {
-    if (onUploadImage) {
-      onUploadImage(images);
-    }
-  }, [images]);
-
-  const handleImageUpload = async ({ type, file }) => {
-    let result = await getBase64(file);
-    imageType.current = type;
-    setImageToCrop(result);
-  };
-
-  const onCrop = (img) => {
-    //console.log("onCrop");
-    const cropper = cropperRef.current?.cropper;
-    cropBoxData.current[imageType.current] = cropper.getCropBoxData();
-    let base64 = cropper.getCroppedCanvas().toDataURL();
-    setFilesToUpload([{ base64, key: `styles/${Date.now()}.png` }]);
-    setImageToCrop(false);
-  };
-
-  const onUploadComplete = (urls) => {
-    setImages((prev) => {
-      return { ...prev, [imageType.current]: urls[0] };
-    });
-  };
-
-  const updateColor = async (newColor) => {
-    //console.log("updateColor()");
-    setCol({ ...col, ...newColor });
-    let result = await axios.put("/api/admin/colors", {
-      color_id: color._id,
-      ...newColor,
-    });
-  };
-
-  useEffect(() => {
-    setTimeout(() => {
-      let cropper = cropperRef.current?.cropper;
-      if (cropper && cropBoxData.current) {
-        //console.log("settting crop box");
-        cropper.setCropBoxData(cropBoxData.current[imageType.current]);
-      }
-    }, 50);
-  }, [imageToCrop]);
-
-  const BoxPreview = ({ side }) => {
-    let boxToUse = box["default"] && box["default"][side];
-    if (box[color._id] && box[color._id][side]) {
-      boxToUse = box[color._id][side];
-    }
-    if (boxToUse) {
-      let scale = 200 / boxToUse.containerHeight;
-      return (
-        <Box
-          sx={{
-            position: "absolute",
-            opacity: 0.7,
-            background: "red",
-            width: boxToUse.boxWidth * scale,
-            height: boxToUse.boxHeight * scale,
-            top: boxToUse.y * scale,
-            left: boxToUse.x * scale,
-          }}
-        ></Box>
-      );
-    }
-    return null;
-  };
-
-  return (
-    <>
-      <Box>
-        <Box sx={{ borderBottom: "1px solid #00000033", py: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Box
-              key={Date.now()}
-              sx={{
-                width: 24,
-                height: 24,
-                background: col.image
-                  ? `url('${col.image}?d=${Date.now()}')`
-                  : col.hexcode,
-                backgroundSize: "contain",
-                mr: 2,
-              }}
-            ></Box>
-            <Typography sx={{}}>{color.name}</Typography>
-            <EyeDropper
-              onColorChange={(hex) =>
-                updateColor({ hexcode: hex, image: null })
-              }
-            />
-            <Select
-              options={["light", "dark"].map((l) => ({ label: l, value: l }))}
-              value={{ value: col.color_type, label: col.color_type }}
-              onChange={({ value }) => updateColor({ color_type: value })}
-            />
-            <Button onClick={() => setActiveColorId(color._id)}>
-              Set Color Swatch
-            </Button>
-          </Box>
-          <Grid2 container spacing={2}>
-            {activePrintAreas.map((type) => (
-              <Grid2 size={12} key={type}>
-                <div>{type}</div>
-                <Box
-                  sx={{
-                    border: "1px dashed black",
-                    width: 200,
-                    height: 200,
-                    justifyContent: "center",
-                    alignItems: "center",
-                    display: "flex",
-                  }}
-                >
-                  {images[type] && (
-                    <Box sx={{ width: 200, height: 200, position: "relative" }}>
-                      <BoxPreview side={type} />
-                      <img src={images[type]} width={200} height={200} />
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: 0,
-                          right: 0,
-                          zIndex: 2,
-                        }}
-                      >
-                        <IconButton
-                          aria-label="close"
-                          onClick={() =>
-                            setImages((prev) => ({ ...prev, [type]: null }))
-                          }
-                        >
-                          <FaWindowClose color="red" />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                  )}
-
-                  {!images[type] && (
-                    <Dropzone
-                      onUpload={(file) => handleImageUpload({ file, type })}
-                    ></Dropzone>
-                  )}
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "center" }}>
-                  <Button onClick={() => overridePrintBox(type)}>
-                    Set Override Box
-                  </Button>
-                </Box>
-              </Grid2>
-            ))}
-          </Grid2>
-        </Box>
-      </Box>
-
-      <Modal
-        open={imageToCrop}
-        onClose={() => setImageToCrop(false)}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column",
-            height: "100%",
-          }}
-        >
-          <Cropper
-            src={imageToCrop}
-            style={{ height: 400, width: 400 }}
-            // Cropper.js options
-            initialAspectRatio={1 / 1}
-            aspectRatio={1 / 1}
-            dragMode={"none"}
-            guides={true}
-            ref={cropperRef}
-          />
-          <Button onClick={onCrop} sx={{ mt: 2 }} variant="contained">
-            Save Crop
-          </Button>
-        </Box>
-      </Modal>
-
-      <ImageUpload
-        filesToUpload={filesToUpload}
-        onUploadComplete={onUploadComplete}
-      />
-
-      {activeColorId && (
-        <CropColorSwatchModal
-          open={activeColorId}
-          onClose={({ url }) => {
-            //console.log(url, "URL");
-            updateColor({ image: url, hexcode: null });
-            setActiveColorId(null);
-          }}
-          cropBoxData={colorCropBoxData}
-          color_id={activeColorId}
-          imageToCrop={
-            activeColorId &&
-            blank?.images?.filter((i) => i.color == activeColorId)[0]?.image
-          }
-        />
-      )}
-    </>
   );
 };
 
@@ -1508,6 +1143,7 @@ const SizeStack = ({
   watch,
   sizeOptions,
   printPrice,
+  removeSize
 }) => {
   const watchedSize = watch(`sizes[${index}].basePrice`) || 0;
   let defaultPrintPrice = Number(watchedSize) + printPrice.price;
@@ -1580,7 +1216,7 @@ const SizeStack = ({
           defaultValue={field.retailPrice}
         />
 
-        <Button color="error" type="button" onClick={() => removeSizes(index)}>
+        <Button color="error" type="button" onClick={() => removeSize(index)}>
           Remove
         </Button>
       </Box>

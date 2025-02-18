@@ -14,6 +14,7 @@ export function Main({designs}){
             if(res.data.error) alert(res.data.msg)
             else setDesigns(res.data.designs)
         }
+        getDesigns()
     },[])
     const createDesign = async({url})=>{
         let res = await axios.post("/api/admin/designs", {url})

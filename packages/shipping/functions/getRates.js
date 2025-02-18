@@ -164,11 +164,28 @@ export async function getRates({
     }
   } else if (type.toLowerCase() == "next day") {
     if (providers.includes("fedex")) {
+      let name = "STANDARD_OVERNIGHT"
       let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "STANDARD_OVERNIGHT", service: "PARCEL_SELECT", packaging:  dimensions.packaging, dimensions});
-      if(res.error) FedExSmartPost = res.msg
-      else FedExSmartPost = res.rate;
-      //console.log(res)
-      rates.push({ label: "FedEx Next Day", rate: FedExSmartPost, service: {provider: "fedex", name: "STANDARD_OVERNIGHT", service: "PARCEL_SELECT", packaging: dimensions.packaging} });
+      if(res.error) {
+        if(res.msg == "STANDARD_OVERNIGHT is not supported for the destination."){
+          let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "PRIORITY_OVERNIGHT", service: "PARCEL_SELECT", packaging:  dimensions.packaging, dimensions});
+          if(res.error) {
+            FedExSmartPost = res.msg
+          }
+          else{
+            FedExSmartPost = res.rate;
+            name="PRIORITY_OVERNIGHT"
+          }
+        }else {
+          FedExSmartPost = res.rate;
+        }
+      }
+      else {
+        FedExSmartPost = res.rate;
+        console.log(res)
+      }
+      console.log({ label: "FedEx Next Day", rate: FedExSmartPost, service: {provider: "fedex", name, service: "PARCEL_SELECT", packaging: dimensions.packaging} })
+        rates.push({ label: "FedEx Next Day", rate: FedExSmartPost, service: {provider: "fedex", name, service: "PARCEL_SELECT", packaging: dimensions.packaging} });
     }
   }
   return {
