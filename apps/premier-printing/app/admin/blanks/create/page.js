@@ -3,6 +3,7 @@ import Color from "@/models/Color";
 import PrintPricing from "@/models/PrintPricing";
 import { serialize } from "@/functions/serialize";
 import {Main} from "./Main";
+export const dynamic = 'force-dynamic'; 
 export default async function Create(req,res) {
     let colors = await Color.find().sort({ _id: -1 }).lean();
     let printPricing = await PrintPricing.findOne().lean();

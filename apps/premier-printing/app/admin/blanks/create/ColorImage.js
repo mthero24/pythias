@@ -24,7 +24,8 @@ export const ColorImage = ({
     color,
     cropBoxData,
     onUploadImage,
-    initialImages = {},
+    images,
+    setImages,
     activePrintAreas,
     overridePrintBox,
     box,
@@ -34,7 +35,6 @@ export const ColorImage = ({
     const [imageToCrop, setImageToCrop] = useState();
     const cropperRef = useRef();
     const imageType = useRef();
-    const [images, setImages] = useState(initialImages);
     const [filesToUpload, setFilesToUpload] = useState([]);
     const [col, setCol] = useState(color);
     const [activeColorId, setActiveColorId] = useState();

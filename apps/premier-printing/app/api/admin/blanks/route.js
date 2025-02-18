@@ -15,20 +15,17 @@ export async function POST(req = NextApiRequest) {
   let data = await req.json();
   //console.log(data)
   let blank = data.blank
+  let newBlank
   try {
-    let exists = await Blanks.findOne({ _id: blank._id });
-    if (exists) {
-      for (let key in blank) {
-        exists[key] = blank[key];
-      }
-      //console.log(exists);
-      await exists.save();
-    } else {
-      let newStyle = new Blanks({ ...blank });
-      await newStyle.save();
-      await generateInventory(newStyle);
+    if(blank._id){
+      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank) 
     }
-    return NextResponse.json(true);
+    else {
+      let newBlank = new Blanks({ ...blank });
+      await newBlank.save();
+      await generateInventory(newBlank);
+    }
+    return NextResponse.json({error: false, blank: newBlank});
   } catch (err) {
     return NextResponse.json(err.toString());
   }

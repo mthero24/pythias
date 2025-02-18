@@ -37,12 +37,14 @@ export function Main({ colors, blanks, blank, printPricing }) {
     []
   );
   useEffect(()=>{
-    let active = Object.keys(blank.multiImages).map(s=>{
-      if(blank.multiImages[s].length > 0) return s
-    })
-    active = active.filter(a=> a !== undefined)
-    console.log(active, "active")
-    setActivePrintAreas(active)
+    if(blank){
+      let active = Object.keys(blank.multiImages).map(s=>{
+        if(blank.multiImages[s].length > 0) return s
+      })
+      active = active.filter(a=> a !== undefined)
+      console.log(active, "active")
+      setActivePrintAreas(active)
+    }
   },[])
   const [boxModalOpen, setBoxModalOpen] = useState(false);
   const [allColors, setAllColors] = useState(colors);
@@ -55,8 +57,26 @@ export function Main({ colors, blanks, blank, printPricing }) {
   const boxKey = useRef("default");
 
   const cropBoxData = useRef({});
-  const [images, setImages] = useState(blank.multiImages);
-
+  const [images, setImages] = useState(blank? blank.multiImages: {front: [],
+    back: [],
+    "sleeve": [],
+    "pocket": [],
+    "hood": [],
+    "leg": [],
+    "side": [],
+    "modelFront": [],
+    "modelBack": [],
+  });
+  useEffect(()=>{
+    if(images){
+      let active = Object.keys(images).map(s=>{
+        if(images[s].length > 0) return s
+      })
+      active = active.filter(a=> a !== undefined)
+      console.log(active, "active")
+      setActivePrintAreas(active)
+    }
+  },[])
   //keep images the same as array BECAUSE it will be easier to filter no?
 
   const toggleActiveColor = (color) => {
@@ -90,11 +110,14 @@ export function Main({ colors, blanks, blank, printPricing }) {
   });
   const onSubmit = async (data) => {
     //console.log("onSubmit()");
+    console.log(images, images)
     let blank = { ...data, multiImages: images, box: box.current, colors: activeColors };
     let result = await axios.post("/api/admin/blanks", { blank });
+    if(result.data.error) alert(result.data.msg)
+    else console.log(result.data.blank, "returned")
     //console.log(result);
-    alert(result.data);
-    location.reload();
+    //alert(result.data);
+    location.href = "/admin/blanks"
   };
 
   const {
@@ -802,7 +825,8 @@ export function Main({ colors, blanks, blank, printPricing }) {
                   }
                   color={c}
                   cropBoxData={cropBoxData}
-                  initialImages={images}
+                  images={images}
+                  setImages={setImages}
                   box={box.current}
                   colorCropBoxData={colorCropBoxData}
                 />
@@ -971,7 +995,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side }) => 
     width: initialBox ? initialBox.boxWidth : 140,
     height: initialBox ? initialBox.boxHeight : 175,
   };
-  if(!initialBox) box = INITIAL_BOX_SETTINGS
+  if(!initialBox) initialBox = INITIAL_BOX_SETTINGS
   let imageSrc = image;
 
   console.log(imageSrc, "imageSrc:)", side);
@@ -1002,7 +1026,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side }) => 
       boxHeight: node.height() * scaleY,
     };
     let im = {...images}
-    console.log(im)
+    console.log(im, image)
     im[side].filter(i=> i.image == image)[0].box = box
     setImages({...im})
     //console.log(boxRef.current);
