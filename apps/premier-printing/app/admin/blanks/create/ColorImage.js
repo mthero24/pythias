@@ -217,7 +217,7 @@ export const ColorImage = ({
                                         </Box>
                                     </Box>
                                     <Box sx={{ display: "flex", justifyContent: "center" }}>
-                                    <Button onClick={() => overridePrintBox({box: i.box, side: type, image: i.image})}>
+                                    <Button onClick={() => overridePrintBox({box: i.box[0], side: type, image: i.image})}>
                                         Set Design Box
                                     </Button>
                                     </Box>
