@@ -16,7 +16,7 @@ export default async function DesignPage({params}){
     let marketPlaces = await MarketPlaces.find({}).lean()
     let productImages = await ProductImages.find({design: design._id})
     if(!design) return notFound();
-    console.log(blanks)
+    //console.log(blanks)
     design = serialize(design);
     blanks = serialize(blanks);
     brands = serialize(brands)

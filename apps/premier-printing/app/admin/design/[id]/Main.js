@@ -5,15 +5,19 @@ import axios from "axios";
 import {useState, useEffect} from "react";
 import { Uploader } from "@/components/premier/uploader";
 import CreatableSelect from "react-select/creatable";
-
+import ProductImageOverlay from "@/components/ProductImageOverlay";
 export function Main({design, blanks, brands, mPs, pI}){
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [loading, setLoading] = useState(true)
     const [imageGroups, setImageGroups] = useState([])
+    const [imageGroupImages, setImageGroupImages] = useState([])
     useEffect(()=>{
         let d = {...des}
+        if(!d.blanks)d.blanks = [];
+        if(!d.brands) d.brands = [];
+        if(d.images == undefined) d.images = {};
         console.log(blanks[0].colors[0])
         d.blanks= d.blanks.map(bl=>{
            // console.log("bl blank", bl.blank, blanks.filter(b=> b._id.toString() == (bl.blank._id? bl.blank._id.toString(): bl.blank.toString()))[0])
@@ -21,6 +25,7 @@ export function Main({design, blanks, brands, mPs, pI}){
             // if(typeof bl.sizes?[0] == "string") bl.sizes = blank.sizes?.filter(s=> bl.sizes?.includes(s._id.toString()))
             // console.log(bl.colors, blank.colors)
             // if(typeof bl.colors[0] == "string") bl.colors = blank.colors.filter(s=> bl.colors.includes(s._id.toString()))
+            bl.colors = blank.colors.filter(c=> bl.colors.map(c=> {bl.colors.map(c=> c.toString()).includes(c._id)}))
             bl.blank = blank
             return bl
         })
@@ -51,6 +56,22 @@ export function Main({design, blanks, brands, mPs, pI}){
             setImageGroups(imGr)
           }
     },[])
+    useEffect(()=>{
+        let images = []
+        des.imageGroup && des.blanks.map((b, j)=>{
+            Object.keys(b.blank.multiImages).map((i,j)=>{
+                //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
+                    let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
+                    image.side = i
+                    if(image.side == "modelFront") image.side = "front"
+                    if(image.side == "modelBack") image.side = "back"
+                    images.push(image)
+                }
+            })
+        })
+        setImageGroupImages(images)
+    },[])
     const getAiDescription = async () => {
         //setLoading(true);
         let d = {...des}
@@ -80,6 +101,8 @@ export function Main({design, blanks, brands, mPs, pI}){
     }
     const updateImage = async ({url,location})=>{
         let d = {...des}
+        console.log(d.images, url, location)
+        if(!d.images) d.images = {}
         console.log(d.images, url, location)
         d.images[location] = url
         setDesign({...d})
@@ -156,14 +179,13 @@ export function Main({design, blanks, brands, mPs, pI}){
         setDesign({...d})
         updateDesign({...d})
     }
-    const updateBlanks = async ({brand, marketplace, values})=>{
+    const updateBlanks = async ({values})=>{
         let d = {...des}
         let codes = values.map(b=>{return b})
         //console.log(values, "values", codes, marketplace, "marketplace")
         values.map(bl=>{
-            console.log(bl, brand.name, marketplace, d.blanks)
             if(!d.blanks) d.blanks = [];
-            let blank = d.blanks?.filter(bla=> bla.blank.code == bl && bla.brand == brand.name && bla.marketPlace == marketplace)[0]
+            let blank = d.blanks?.filter(bla=> bla.blank.code == bl)[0]
             console.log(blank, "not added")
             if(!blank){
                // console.log(blanks, bl.value)
@@ -171,7 +193,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                 console.log(blank, "added")
                 if(blank){
                     d.blanks.push({
-                        blank, brand: brand.name, marketPlace: marketplace
+                        blank
                     })
                 }
             }
@@ -181,7 +203,14 @@ export function Main({design, blanks, brands, mPs, pI}){
         setDesign({...d})
         updateDesign({...d})
     }
-    
+    const updateColors = ({blank, colors}) =>{
+        let d = {...des}
+        console.log(blank)
+        let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
+        b.colors = b.blank.colors.filter(c=> colors.includes(c.name))
+        setDesign({...d})
+        updateDesign({...d})
+    }
     const deleteDesignImage = ({location})=>{
         let d = {...des}
         des.images[location] = null;
@@ -210,7 +239,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                         
                         {imageLocations.map((i, j)=>(
                             <Grid2 size={{xs: 6, sm: 2.4, md: 2.4}} key={j}>
-                                <Uploader location={i} afterFunction={updateImage} image={des.images[i]} />
+                                <Uploader location={i} afterFunction={updateImage} image={des.images? des.images[i]: null} />
                                 <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
                             </Grid2>
                         ))}
@@ -252,7 +281,9 @@ export function Main({design, blanks, brands, mPs, pI}){
                         <TextField placeholder="Description" fullWidth multiline rows={4} value={des.description} onChange={()=>updateTitleSku("description")}/>
                         <Button size="small" sx={{fontSize: ".5rem", margin: "0%"}} onClick={getAiDescription}>Generate Description And Tags</Button>
                     </Grid2>
+                    <Grid2 size={12}><hr/></Grid2>
                     <Grid2 size={{xs: 12, sm: 12}}>
+                        <Typography>Tags</Typography>
                         <CreatableSelect
                             placeholder="Tags"
                             onChange={(val)=>{
@@ -264,7 +295,9 @@ export function Main({design, blanks, brands, mPs, pI}){
                             isMulti
                          />
                     </Grid2>
+                    <Grid2 size={12}><hr/></Grid2>
                     <Grid2 size={{xs: 12, sm: 12}} >
+                        <Typography>Brands</Typography>
                         {!loading &&
                         <CreatableSelect
                             placeholder="Brands"
@@ -280,7 +313,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                          }
                     </Grid2>
                     <Grid2 size={{xs: 12, sm: 12}} >
-                        {des.brands.map(b=>(
+                        {des.brands?.map(b=>(
                             <Accordion key={b._id}>
                             <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
@@ -302,47 +335,52 @@ export function Main({design, blanks, brands, mPs, pI}){
                                     }}
                                    isMulti
                                />
-                               {des.b2m?.filter(b2m=> b2m.brand == b.name)[0]?.marketPlaces.map(m=>(
-                                     <Accordion key={m} sx={{marginTop: "1%"}}>
-                                        <AccordionSummary
-                                            expandIcon={<ExpandMoreIcon />}
-                                            aria-controls="panel1-content"
-                                            id="panel1-header"
-                                            sx={{padding: "2%"}}
-                                            >
-                                            <Typography component="span">{m}</Typography>
-                                        </AccordionSummary>
-                                        <AccordionDetails> 
-                                            <CreatableSelect
-                                                placeholder="Blanks"
-                                                options={blanks.map(m=>{return {value: m.code, label: m.code}})}
-                                                value={des.blanks?.filter(bl=> bl.brand == b.name && bl.marketPlace == m)?.map(bl=> {return {value: bl.blank?.code, label: bl.blank?.code}})}
-                                                onChange={(vals)=>{
-                                                    let values = vals.map(v=>{return v.value})
-                                                    console.log(values)
-                                                    updateBlanks({brand: b, marketplace: m, values})
-                                                }}
-                                                isMulti
-                                            />
-                                            {console.log(des.blanks)}
-                                        </AccordionDetails>
-                                     </Accordion>
-                               ))}                            
                             </AccordionDetails>
                         </Accordion>
                         ))}
                     </Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}} >
-                        <Typography>Color Groups</Typography>
+                    <Grid2 size={12}><hr/></Grid2>
+                    <Grid2 size={{xs: 12, sm: 12}}>
+                        <Typography>Blanks</Typography>
                         <CreatableSelect
-                            placeholder="Color Groups"
-                            //options={][}
-                            //value={}
+                            placeholder="Blanks"
+                            options={blanks.map(m=>{return {value: m.code, label: m.code}})}
+                            value={des.blanks?.map(bl=> {return {value: bl.blank?.code, label: bl.blank?.code}})}
                             onChange={(vals)=>{
-                                
+                                let values = vals.map(v=>{return v.value})
+                                console.log(values)
+                                updateBlanks({values})
                             }}
-                            multi
-                         />
+                            isMulti
+                        />
+                       
+                    </Grid2>
+                    <Grid2 size={{xs: 12, sm: 12}} >
+                        {des.blanks?.map(b=>(
+                            <Accordion key={b.blank._id}>
+                            <AccordionSummary
+                                expandIcon={<ExpandMoreIcon />}
+                                aria-controls="panel1-content"
+                                id="panel1-header"
+                                sx={{padding: "2%"}}
+                                >
+                                <Typography component="span">{b.blank.name}</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <CreatableSelect
+                                    placeholder="Colors"
+                                    options={b.blank.colors?.map(m=>{return {value: m.name, label: m.name}})}
+                                    value={b.colors?.map(m=>{return {value: m.name, label: m.name}})}
+                                    onChange={(vals)=>{
+                                        let values = vals.map(v=>{return v.value})
+                                        console.log(values)
+                                        updateColors({blank: b, colors:values})
+                                    }}
+                                   isMulti
+                               />
+                            </AccordionDetails>
+                        </Accordion>
+                        ))}
                     </Grid2>
                     <Grid2 size={{xs: 12, sm: 12}} >
                         <Typography>Image Group</Typography>
@@ -354,10 +392,41 @@ export function Main({design, blanks, brands, mPs, pI}){
                                 console.log(vals)
                                 let d = {...des}
                                 d.imageGroup = vals.value
+                                let images = []
+                                d.imageGroup && d.blanks.map((b, j)=>{
+                                    Object.keys(b.blank.multiImages).map((i,j)=>{
+                                       //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                                        if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
+                                            let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
+                                            image.side = i
+                                            if(image.side == "modelFront") image.side = "front"
+                                            if(image.side == "modelBack") image.side = "back"
+                                            images.push(image)
+                                        }
+                                    })
+                                })
+                                setImageGroupImages([...images])
                                 setDesign({...d})
-                                updateDesign()
+                                updateDesign({...d})
                             }}
                          />
+                    </Grid2>
+                    <Grid2 size={12}>
+                        <Grid2 container spacing={2}>
+                            {imageGroupImages.map((i,j)=>(
+                                <Grid2 size={{xs: 6, md: 4}} key={j}>
+                                    {console.log(i)}
+                                    <ProductImageOverlay
+                                        imageGroup={des.imageGroup}
+                                        box={
+                                        i.box[0]
+                                        }
+                                        styleImage={i.image}
+                                        designImage={des.images && des.images[i.side]? des.images[i.side]: null }
+                                    />
+                                </Grid2>
+                            ))}
+                        </Grid2>
                     </Grid2>
                 </Grid2>
             </Card>

@@ -23,10 +23,10 @@ const schema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "Blank",
     },
-    brand: String,
-    marketPlace: String,
-    colors: [String],
-    sizes:[String]
+    colors: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Colors",
+    }]
   }],
   b2m: [{
     brand: String,
@@ -40,6 +40,7 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Marketplaces",
   }],
+  imageGroup: {type: String, default: "default"},
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

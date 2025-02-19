@@ -29,15 +29,15 @@ export async function POST(req=NextApiRequest){
         let sku = createSku();
         let design = new Design({
             date: new Date(Date.now()), 
-            images: {front: data.url},
+            images: {},
             //user: user._id,
             name: `${sku}-${Date.now()}`,
             sku: sku
         })
         console.log(design)
         design  = await design.save()
-        let designs = await Design.find({}).sort({date: -1}).limit(200)
-        return NextResponse.json({error: false, designs, design})
+        //let designs = await Design.find({}).sort({date: -1}).limit(200)
+        return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)
         return NextResponse.json({error: true, msg: JSON.stringify(e)})

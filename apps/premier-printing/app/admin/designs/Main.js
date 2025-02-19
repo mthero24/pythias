@@ -1,11 +1,11 @@
 "use client";
-import {Box, Grid2, Typography, Card, Container, TextField} from "@mui/material";
+import {Box, Grid2, Typography, Card, Button, TextField} from "@mui/material";
 import {useState, useEffect} from "react";
 import Image from "next/image"
 import axios from "axios";
 import Link from "next/link";
 import { Uploader } from "@/components/premier/uploader";
-
+import Theme from "@/components/Theme";
 export function Main({designs}){
     const [designss, setDesigns] = useState(designs)
     useEffect(()=>{
@@ -16,15 +16,18 @@ export function Main({designs}){
         }
         getDesigns()
     },[])
-    const createDesign = async({url})=>{
-        let res = await axios.post("/api/admin/designs", {url})
+    const createDesign = async()=>{
+        let res = await axios.post("/api/admin/designs", {})
         if(res.data.error) alert(res.data.msg)
         else{
-            setDesigns(res.data.designs)
+            location.href=`/design/${res.data.design._id}`
         }
     }
     return (
         <Box sx={{padding: "1%", color: "black", minHeight: "vh",}}>
+            <Box sx={{display: "flex",justifyContent: "flex-end", padding: "1%"}}>
+                <Button onClick={()=>{createDesign()}} sx={{background: Theme.colors.primary, color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": {background: Theme.colors.support}}}>Create</Button>
+            </Box>
             <Card sx={{width: "100%", padding: "1%"}}>
                 <TextField label="Search..." fullWidth />
             </Card>
@@ -35,11 +38,13 @@ export function Main({designs}){
                             <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
                                 <Link href={`/admin/design/${d._id}`}>
                                     <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
-                                        <Box sx={{padding: "2%",}}>
-                                            <Image src={d.images.front} width={200} height={200} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "400px"}}/>
+                                        <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "200px"}}>
+                                            <Image src={d.images?.front} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px"}}/>
                                         </Box>
-                                        <Box sx={{padding: "2%"}}>
-                                            <Typography sx={{fontSize: '3rem', color: "black"}}>design</Typography>
+                                        <hr/>
+                                        <Box sx={{padding: "3%"}}>
+                                            <Typography sx={{fontSize: '0.8rem', color: "black"}}>SKU: {d.sku}</Typography>
+                                            <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
                                         </Box>
                                     </Card>
                                 </Link>
