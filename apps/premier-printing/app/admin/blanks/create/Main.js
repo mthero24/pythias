@@ -87,8 +87,8 @@ export function Main({ colors, blanks, blank, printPricing }) {
     "modelFront": [],
     "modelBack": [],
   });
-  console.log(blank.sizeGuide, "sizeGuide")
-  const [sizeChartImages, setSizeChartImages] = useState(blank && blank.sizeGuide && blank.sizeGuide.images? blank.sizeGuide.images: []);
+  console.log(blank?.sizeGuide, "sizeGuide")
+  const [sizeChartImages, setSizeChartImages] = useState(blank && blank?.sizeGuide && blank?.sizeGuide.images? blank?.sizeGuide.images: []);
   const [videos, setVideos] = useState(blank && blank.videos? blank.videos: [])
   useEffect(()=>{
     if(images){

@@ -11,7 +11,7 @@ export function Main({design, blanks, brands, mPs, pI}){
     const [bran, setBrands] = useState(brands)
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [loading, setLoading] = useState(true)
-   
+    const [imageGroups, setImageGroups] = useState([])
     useEffect(()=>{
         let d = {...des}
         console.log(blanks[0].colors[0])
@@ -32,6 +32,24 @@ export function Main({design, blanks, brands, mPs, pI}){
         d.blanks = d.blanks.filter(b=> b.blank != undefined)
         setDesign({...d})
         setLoading(false)
+        if(blanks){
+            console.log(blanks)
+            let imGr = []
+            blanks.map(b=>{
+              if(b.multiImages){
+                Object.keys(b.multiImages).map(i=>{
+                    b.multiImages[i].map(im=>{
+                      //console.log(im, "im")
+                      im.imageGroup?.map(g=>{
+                        if(!imGr.includes(g)) imGr.push(g)
+                      })
+                    })
+                })
+              }
+            })
+            console.log(imGr, "image groups")
+            setImageGroups(imGr)
+          }
     },[])
     const getAiDescription = async () => {
         //setLoading(true);
@@ -54,7 +72,8 @@ export function Main({design, blanks, brands, mPs, pI}){
         }
         //setLoading(false);
     };
-    let imageLocations = ["front", "back", "leftSleeve", "rightSleeve"]
+    let imageLocations = ["front", "back", "leftSleeve", "rightSleeve", "pocket"]
+    
     let updateDesign = async (des)=>{
         let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
         if(res?.data?.error) alert(res.data.msg)
@@ -190,7 +209,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                     <Grid2 container spacing={1}>
                         
                         {imageLocations.map((i, j)=>(
-                            <Grid2 size={{xs: 6, sm: 3, md: 3}} key={j}>
+                            <Grid2 size={{xs: 6, sm: 2.4, md: 2.4}} key={j}>
                                 <Uploader location={i} afterFunction={updateImage} image={des.images[i]} />
                                 <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
                             </Grid2>
@@ -211,7 +230,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                     <Grid2 container spacing={1}>
                         
                         {imageLocations.map((i, j)=>(
-                            <Grid2 size={{xs: 6, sm: 3, md: 3}} key={j}>
+                            <Grid2 size={{xs: 6, sm: 2.4, md: 2.4}} key={j}>
                                 <Uploader location={i} afterFunction={updateEmbroidery}  image={des.embroideryFiles && des.embroideryFiles[i]? "/embplaceholder.jpg": null}/>
                                 <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete File</Button>
                             </Grid2>
@@ -219,7 +238,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                     </Grid2>
                 </AccordionDetails>
             </Accordion>
-            <Card sx={{width: "100%", minHeight: "80vh", padding: "6% 2%"}}>
+            <Card sx={{width: "100%", minHeight: "80vh", padding: "50% 2%", paddingTop: "3%" }}>
                 <Grid2 container spacing={2}>
                     <Grid2 size={{xs: 7, sm: 8}}>
                         <TextField label="Title" fullWidth value={des.name}
@@ -312,6 +331,33 @@ export function Main({design, blanks, brands, mPs, pI}){
                             </AccordionDetails>
                         </Accordion>
                         ))}
+                    </Grid2>
+                    <Grid2 size={{xs: 12, sm: 12}} >
+                        <Typography>Color Groups</Typography>
+                        <CreatableSelect
+                            placeholder="Color Groups"
+                            //options={][}
+                            //value={}
+                            onChange={(vals)=>{
+                                
+                            }}
+                            multi
+                         />
+                    </Grid2>
+                    <Grid2 size={{xs: 12, sm: 12}} >
+                        <Typography>Image Group</Typography>
+                        <CreatableSelect
+                            placeholder="Image Group"
+                            options={imageGroups.map(ig=>{return {value: ig, label: ig}})}
+                            value={{value: des.imageGroup, label: des.imageGroup}}
+                            onChange={(vals)=>{
+                                console.log(vals)
+                                let d = {...des}
+                                d.imageGroup = vals.value
+                                setDesign({...d})
+                                updateDesign()
+                            }}
+                         />
                     </Grid2>
                 </Grid2>
             </Card>

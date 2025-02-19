@@ -31,18 +31,15 @@ export function Main({designs}){
             <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
                 <Box sx={{ minHeight: "80vh",}}>
                     <Grid2 container spacing={2}>
-                        <Grid2 size={{xs: 6, sm: 4, md: 3}}>
-                            <Uploader afterFunction={createDesign} vh={"100vh"}/>
-                        </Grid2>
                         {designss && designss.map(d=>(
                             <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
                                 <Link href={`/admin/design/${d._id}`}>
-                                    <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%", maxHeight: "300px"}}>
-                                        <Box sx={{padding: "2%", height: "100%"}}>
+                                    <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
+                                        <Box sx={{padding: "2%",}}>
                                             <Image src={d.images.front} width={200} height={200} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "400px"}}/>
                                         </Box>
                                         <Box sx={{padding: "2%"}}>
-                                            <Typography sx={{fontSize: '.8rem'}}>{d.name}</Typography>
+                                            <Typography sx={{fontSize: '3rem', color: "black"}}>design</Typography>
                                         </Box>
                                     </Card>
                                 </Link>
