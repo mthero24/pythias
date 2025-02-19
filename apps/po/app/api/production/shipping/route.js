@@ -98,6 +98,11 @@ const addItemToBin = (item, bin)=>{
     }
     item.inBin = true;
     item.bin = bin.number;
+    if(item.steps == undefined) item.steps = []
+    item.steps.push({
+        status: `In Bin: ${bin.number}`,
+        date: new Date(),
+    });
     bin.order = item.order;
     bin.inUse = true;
     return {item, bin}

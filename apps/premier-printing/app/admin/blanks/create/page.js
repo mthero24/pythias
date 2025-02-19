@@ -9,7 +9,7 @@ export default async function Create(req,res) {
     let printPricing = await PrintPricing.findOne().lean();
     let blanks = await Blanks.find()
       .lean()
-      .select("department category brand")
+      .select("department category brand multiImages")
       .lean();
 
     let blank

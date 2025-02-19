@@ -8,7 +8,8 @@ let imageSchema = [{
     type: mongoose.Schema.Types.Mixed,
   }],
   image: String,
-  color: String
+  color: String,
+  imageGroup: {type: Array, default: ["default"]}
 }]
 const SchemaObj = new Schema(
   {

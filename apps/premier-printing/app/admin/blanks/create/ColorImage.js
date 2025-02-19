@@ -19,6 +19,7 @@ import ImageUpload from "@/components/ImageUpload";
 import slugify from "@/utils/slugify";
 import Select from "react-select";
 import EyeDropper from "@/components/EyeDropper";
+import CreatableSelect from "react-select/creatable";
 import "jimp";
 export const ColorImage = ({
     color,
@@ -31,6 +32,8 @@ export const ColorImage = ({
     box,
     blank,
     colorCropBoxData,
+    imageGroups,
+    setImageGroups
   }) => {
     const [imageToCrop, setImageToCrop] = useState();
     const cropperRef = useRef();
@@ -158,7 +161,7 @@ export const ColorImage = ({
                     <Grid2 size={12} key={type}>
                         <div>{type}</div>
                         <Grid2 container spacing={2}>
-                            <Grid2 size={{xs: 12, sm:4, md: 3}}>
+                            <Grid2 size={{xs: 6, sm:4, md: 2}}>
                                 <Box
                                     sx={{
                                     border: "1px dashed black",
@@ -175,7 +178,7 @@ export const ColorImage = ({
                                 </Box>
                             </Grid2>
                             {images[type].filter(i=> i.color == col._id.toString()).map((i, j)=>(
-                                <Grid2  key={j} size={{xs: 12, sm: 4, md: 3}}>
+                                <Grid2  key={j} size={{xs: 6, sm: 4, md: 2}}>
                                     <Box
                                     sx={{
                                         border: "1px dashed black",
@@ -186,40 +189,59 @@ export const ColorImage = ({
                                         display: "flex",
                                     }}
                                     >
-                                        <Box>
                                             
-                                            <Box key={j} sx={{ width: 200, height: 200, position: "relative" }}>
-                                                <BoxPreview side={type} />
-                                                <img src={i.image} width={200} height={200} />
-                                                <Box
-                                                sx={{
-                                                    position: "absolute",
-                                                    top: 0,
-                                                    right: 0,
-                                                    zIndex: 2,
-                                                }}
-                                                >
-                                                <IconButton
-                                                    aria-label="close"
-                                                    onClick={() =>{
-                                                            let im = {...images}
-                                                            console.log(im)
-                                                            im[type] = im[type].filter(ima=> ima.image !== i.image)
-                                                            console.log(im)
-                                                            setImages({...im})
-                                                        }
+                                        <Box key={j} sx={{ width: "100%", height: 200, position: "relative" }}>
+                                            <BoxPreview side={type} />
+                                            <img src={i.image} width={200} height={200} />
+                                            <Box
+                                            sx={{
+                                                position: "absolute",
+                                                top: 0,
+                                                right: 0,
+                                                zIndex: 2,
+                                            }}
+                                            >
+                                            <IconButton
+                                                aria-label="close"
+                                                onClick={() =>{
+                                                        let im = {...images}
+                                                        console.log(im)
+                                                        im[type] = im[type].filter(ima=> ima.image !== i.image)
+                                                        console.log(im)
+                                                        setImages({...im})
                                                     }
-                                                >
-                                                    <FaWindowClose color="red" />
-                                                </IconButton>
-                                                </Box>
+                                                }
+                                            >
+                                                <FaWindowClose color="red" />
+                                            </IconButton>
                                             </Box>
                                         </Box>
                                     </Box>
-                                    <Box sx={{ display: "flex", justifyContent: "center" }}>
-                                    <Button onClick={() => overridePrintBox({box: i.box? i.box[0]: null, side: type, image: i.image})}>
-                                        Set Design Box
-                                    </Button>
+                                    <Box sx={{ display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", width: 200  }}>
+                                        <CreatableSelect
+                                            isMulti
+                                            value={i.imageGroup?.map((id) => ({
+                                            label:id,
+                                            value: id,
+                                            }))}
+                                            onChange={(vals)=>{
+                                                console.log(vals)
+                                                let values =vals.map(v=>{return v.value})
+                                                let im = {...images}
+                                                let image =im[type].filter(ims=> ims.image == i.image)[0]
+                                                image.imageGroup = values
+                                                setImages({...im})
+                                                let ig = [...imageGroups]
+                                                values.map(v=>{
+                                                    if(!ig.includes(v)) ig.push(v)
+                                                })
+                                                setImageGroups(ig)
+                                            }}
+                                            options={imageGroups.map(g=>{return {value: g, label: g}})}
+                                        />
+                                        <Button fullWidth onClick={() => overridePrintBox({box: i.box? i.box[0]: null, side: type, image: i.image})}>
+                                            Set Design Box
+                                        </Button>
                                     </Box>
                                 </Grid2>
                             ))}

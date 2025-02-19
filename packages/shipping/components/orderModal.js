@@ -48,7 +48,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
       let countDown = async ()=>{
           setCloseTimer(true)
           setStopClose(false)
-          for(let i = 10; i >= 0; i--){
+          for(let i = 5; i >= 0; i--){
               setTimer(i)
               console.log(i, closeTimer, timer,  "close timer")
               await new Promise((resolve)=>{
@@ -73,7 +73,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
   }, [label])
     useEffect(()=>{
       let startTimer = async ()=>{
-        for(let i = 5; i >= 1; i--){
+        for(let i = 3; i >= 1; i--){
           setTimer(i)
           await new Promise((resolve)=>{
             setTimeout(()=>{
@@ -109,10 +109,10 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", cursor: "pointer"}}>
-            <CloseIcon onClick={()=>{
+          <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", cursor: "pointer", color: "red"}}>
+            <CloseIcon sx={{color: "red"}} onClick={()=>{
                close()
-            }} />
+            }}/>
           </Box>
           <Grid2 container spacing={2}>
             {bin && (<BinInfo bin={bin} close={close} setBins={setBins}/>)}

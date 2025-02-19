@@ -5,10 +5,11 @@ import {
   Checkbox,
   Container,
   Grid2,
-  IconButton,
   Modal,
   TextField,
   Typography,
+  Fab,
+  IconButton
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, Controller } from "react-hook-form";
@@ -25,9 +26,11 @@ import axios from "axios";
 import ImageUploadBox from "@/components/ImageUploadBox";
 import LoaderButton from "@/components/LoaderButton";
 import EyeDropper from "@/components/EyeDropper";
-import {ColorImage} from "./ColorImage"
+import ReactPlayer from 'react-player';
+import {ColorImage} from "./ColorImage";
 import "jimp";
 export function Main({ colors, blanks, blank, printPricing }) {
+  const [imageGroups, setImageGroups] = useState([])
   const [activeColors, setActiveColors] = useState(
     blank && blank.colors ? blank.colors : []
   );
@@ -44,6 +47,23 @@ export function Main({ colors, blanks, blank, printPricing }) {
       active = active.filter(a=> a !== undefined)
       console.log(active, "active")
       setActivePrintAreas(active)
+    }
+    if(blanks){
+      let imGr = []
+      blanks.map(b=>{
+        if(b.multiImages){
+          Object.keys(b.multiImages).map(i=>{
+              b.multiImages[i].map(im=>{
+                //console.log(im, "im")
+                im.imageGroup?.map(g=>{
+                  if(!imGr.includes(g)) imGr.push(g)
+                })
+              })
+          })
+        }
+      })
+      console.log(imGr, "image groups")
+      setImageGroups(imGr)
     }
   },[])
   const [boxModalOpen, setBoxModalOpen] = useState(false);
@@ -67,6 +87,9 @@ export function Main({ colors, blanks, blank, printPricing }) {
     "modelFront": [],
     "modelBack": [],
   });
+  console.log(blank.sizeGuide, "sizeGuide")
+  const [sizeChartImages, setSizeChartImages] = useState(blank && blank.sizeGuide && blank.sizeGuide.images? blank.sizeGuide.images: []);
+  const [videos, setVideos] = useState(blank && blank.videos? blank.videos: [])
   useEffect(()=>{
     if(images){
       let active = Object.keys(images).map(s=>{
@@ -111,6 +134,8 @@ export function Main({ colors, blanks, blank, printPricing }) {
   const onSubmit = async (data) => {
     //console.log("onSubmit()");
     console.log(images, images)
+    data.sizeGuide.images = sizeChartImages
+    data.videos = videos
     let blank = { ...data, multiImages: images, box: box.current, colors: activeColors };
     let result = await axios.post("/api/admin/blanks", { blank });
     if(result.data.error) alert(result.data.msg)
@@ -356,14 +381,14 @@ export function Main({ colors, blanks, blank, printPricing }) {
   const colorCropBoxData = useRef();
 
   return (
-    <Container>
+    <Container maxWidth="xl">
       <Box>
         <Typography variant="h5" mb={2}>
-          Create New Blank
+          {blank? "Edit Blank": "Create New Blank"}
         </Typography>
         <form onSubmit={handleSubmit(onSubmit)}>
           <Grid2 container spacing={3}>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               
               <TextField
                 label="Blank Name"
@@ -374,7 +399,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.name?.message}</ErrorText>
               )}
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <TextField
                 sx={{ width: "100%" }}
                 label="Blank Code"
@@ -384,7 +409,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.code?.message}</ErrorText>
               )}
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <TextField
                 label="slug"
                 sx={{ width: "100%" }}
@@ -392,7 +417,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 {...register("slug")}
               />
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <label htmlFor="vendor">Vendor</label>
               <Box sx={{ zIndex: 2 }}>
                 <Controller
@@ -413,7 +438,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.vendor?.message}</ErrorText>
               )}
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <label htmlFor="department">Department</label>
               <Controller
                 name="department"
@@ -432,7 +457,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.department?.message}</ErrorText>
               )}
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <label htmlFor="category">Category</label>
               <Box sx={{ zIndex: 2 }}>
                 <Controller
@@ -453,7 +478,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.category?.message}</ErrorText>
               )}
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <label htmlFor="category">Brand</label>
               <Controller
                 name="brand"
@@ -474,7 +499,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.brand?.message}</ErrorText>
               )}
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 12, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <label htmlFor="category">Supplier</label>
               <Box sx={{ zIndex: 2 }}>
                 <Controller
@@ -503,7 +528,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.suppliers?.message}</ErrorText>
               )}
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 12, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <label htmlFor="printTypes">Print Types</label>
               <Box sx={{ zIndex: 2 }}>
                 <Controller
@@ -535,7 +560,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 />
               </Box>
             </Grid2>
-            <Grid2 size={4} sx={{ mb: 4 }}>
+            <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <label htmlFor="handlingTime">Handling Time (Days)</label>
               <Box sx={{ display: "flex" }}>
                 <Controller
@@ -661,7 +686,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
 
             <Grid2 size={12} sx={{ mb: 4 }}>
               <Typography>Sizes</Typography>
-              <Grid2 container>
+              <Grid2 container spacing={2}>
                 {sizes.map((field, index) => (
                   <SizeStack
                     control={control}
@@ -777,32 +802,33 @@ export function Main({ colors, blanks, blank, printPricing }) {
 
             <Grid2 size={12} sx={{ mb: 4 }}>
               <Typography>Print Areas</Typography>
-              <Box sx={{ display: "flex" }}>
+              <Grid2 container spacing={2}>
                 {printAreas.map((p) => (
-                  <Box
-                    sx={{ mr: 2, display: "flex", alignItems: "center" }}
+                  <Grid2 size={{xs: 4, sm: 2.1, md: 1.7}}
                     key={p}
                   >
-                    <Typography>{p}</Typography>
-                    <Checkbox
-                      checked={activePrintAreas.includes(p)}
-                      onChange={(e) => {
-                        if (activePrintAreas.includes(p)) {
-                          setActivePrintAreas((prev) =>
-                            prev.filter((area) => area != p)
-                          );
-                        } else {
-                          setActivePrintAreas((prev) => {
-                            let areas = [...prev];
-                            areas.push(p);
-                            return areas;
-                          });
-                        }
-                      }}
-                    />
-                  </Box>
+                    <Box sx={{ mr: 2, display: "flex", alignItems: "center", alignContent: "center", justifyContent: "flex-end" }}>
+                      <Typography>{p}</Typography>
+                      <Checkbox
+                        checked={activePrintAreas.includes(p)}
+                        onChange={(e) => {
+                          if (activePrintAreas.includes(p)) {
+                            setActivePrintAreas((prev) =>
+                              prev.filter((area) => area != p)
+                            );
+                          } else {
+                            setActivePrintAreas((prev) => {
+                              let areas = [...prev];
+                              areas.push(p);
+                              return areas;
+                            });
+                          }
+                        }}
+                      />
+                    </Box>
+                  </Grid2>
                 ))}
-              </Box>
+              </Grid2>
             </Grid2>
 
             <Grid2 size={12} sx={{ mb: 4 }}>
@@ -829,38 +855,102 @@ export function Main({ colors, blanks, blank, printPricing }) {
                   setImages={setImages}
                   box={box.current}
                   colorCropBoxData={colorCropBoxData}
+                  imageGroups={imageGroups}
+                  setImageGroups={setImageGroups}
                 />
               );
             })}
 
           <Grid2 container>
-            <Grid2 size={12} sx={{ my: 4 }}>
+            <Grid2 size={{xs:3, sm: 3, md: 3}} sx={{ my: 4 }}>
               <Typography>Size Chart</Typography>
               <Box sx={{ display: "flex", height: "100%" }}>
                 <Controller
                   render={({ field: { onChange, value, ref } }) => (
                     <ImageUploadBox
-                      onUploadComplete={(e) => onChange(e)}
-                      onRemove={(e) => {
-                        onChange(e);
+                      onUploadComplete={(e) => {
+                        let sg = [...sizeChartImages]
+                        sg.push(e)
+                        setSizeChartImages([...sg])
                       }}
                     />
                   )}
                   name={`sizeGuide.image`}
                   control={control}
                 />
-
-                <Box sx={{ ml: 4, flex: 1 }}>
-                  {/* <SizeGuideTable
-                  key={sizeWatch.length}
-                  initialSizes={sizeWatch.map(s=> ({name: s.name}))}
-                  /> */}
-                </Box>
               </Box>
             </Grid2>
+            <Grid2 size={12}></Grid2>
+            {sizeChartImages.map((i, j)=>(
+              <Grid2 size={{xs: 6, sm: 4, md: 3}} key={j}>
+                <Box sx={{ display: "flex", height: "100%" }}>
+                  <Box sx={{ position: "relative", p:2 }}>
+                    <img src={i} className="img-fluid" style={{width: "100%"}} />
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0,
+                        zIndex: 2,
+                      }}
+                    >
+                        <IconButton aria-label="close" onClick={()=>{setSizeChartImages(sizeChartImages.filter(im=> im !== i))}}>
+                          <FaWindowClose color="red" />
+                        </IconButton>
+                      
+                    </Box>
+                  </Box>
+                </Box>
+              </Grid2>
+            ))}
           </Grid2>
 
           <hr />
+          <Grid2 container spacing={2}>
+          <Grid2 size={{xs:3, sm: 3, md: 3}} sx={{ my: 4 }}>
+              <Typography>Videos</Typography>
+              <Box sx={{ display: "flex", height: "100%" }}>
+                <Controller
+                  render={({ field: { onChange, value, ref } }) => (
+                    <ImageUploadBox
+                      onUploadComplete={(e) => {
+                        console.log(e)
+                        let sg = [...videos]
+                        sg.push(e)
+                        setVideos([...sg])
+                      }}
+                    />
+                  )}
+                  name={`sizeGuide.image`}
+                  control={control}
+                />
+              </Box>
+            </Grid2>
+            <Grid2 size={12}></Grid2>
+            {videos.map((v, i)=>(
+              <Grid2 size={12} key={i}>
+               <Box sx={{ display: "flex", height: "100%" }} >
+                   <Box sx={{ position: "relative", p:2 }}>
+                     <ReactPlayer url={v} controls={true} />
+                     <Box
+                       sx={{
+                         position: "absolute",
+                         top: 0,
+                         right: 0,
+                         zIndex: 2,
+                       }}
+                     >
+                         <IconButton aria-label="close" onClick={()=>{setVideos(videos.filter(im=> im !== v))}}>
+                           <FaWindowClose color="red" />
+                         </IconButton>
+                       
+                     </Box>
+                   </Box>
+                 </Box>
+             </Grid2>
+            ))}
+          </Grid2>
+          <hr/>
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography>Tearaway Label?</Typography>
             <Controller
@@ -915,10 +1005,11 @@ export function Main({ colors, blanks, blank, printPricing }) {
               )}
             />
           </Box>
-
-          <Button type="submit" variant="contained" sx={{ mt: 3 }}>
-            Create
-          </Button>
+          <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", position: "sticky", bottom: "20px"}}>
+            <Fab type="submit" color="secondary" sx={{ mt: 3, zIndex: 9999, position: "sticky", bottom: "20px" }}>
+              {blank? "Save": "Create"}
+            </Fab>
+          </Box>
         </form>
       </Box>
       <SetBoxModal
@@ -1172,7 +1263,7 @@ const SizeStack = ({
   const watchedSize = watch(`sizes[${index}].basePrice`) || 0;
   let defaultPrintPrice = Number(watchedSize) + printPrice.price;
   return (
-    <Grid2 size={2} key={index}>
+    <Grid2 size={{xs: 6, sm: 4, md: 3}} key={index}>
       <Box
         key={field.id}
         sx={{ display: "flex", m: 1, flexDirection: "column" }}

@@ -70,7 +70,7 @@ const ImageUploadBox = ({
         ...sx
       }}
     >
-      {image && (
+      {/* {image && (
         <Box sx={{ position: "relative", p:2 }}>
           <img src={image} className="img-fluid" />
           <Box
@@ -88,13 +88,11 @@ const ImageUploadBox = ({
             )}
           </Box>
         </Box>
-      )}
+      )} */}
 
-      {!image && (
+     
 
         <Dropzone onUpload={(file) => handleImageUpload({ file })}></Dropzone>
-
-      )}
       <ImageUpload
         filesToUpload={filesToUpload}
         onUploadComplete={(e) => {
