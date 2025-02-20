@@ -1102,6 +1102,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
     }
     if(open){
       getRender()
+      setImageSrc(null)
     }
   },[open])
   // console.log(imageSrc, "imageSrc:)", side);
