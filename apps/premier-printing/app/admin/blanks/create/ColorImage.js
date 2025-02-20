@@ -209,7 +209,6 @@ export const ColorImage = ({
                                                 position: "absolute",
                                                 top: 0,
                                                 right: 0,
-                                                zIndex: 2,
                                             }}
                                             >
                                             <IconButton
@@ -234,7 +233,6 @@ export const ColorImage = ({
                                                 position: "absolute",
                                                 top: 0,
                                                 left: 0,
-                                                zIndex: 2,
                                             }}
                                             >
                                             <IconButton
@@ -247,10 +245,14 @@ export const ColorImage = ({
                                             </Box>
                                         </Box>
                                     </Box>
-                                    <Box sx={{ display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", width: 200  }}>
+                                    <Box sx={{ display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", width: 200, zIndex: 3  }}>
                                         <CreatableSelect
                                             isMulti
-                                            value={i.imageGroup?.map((id) => ({
+                                            value={i.imageGroup?.sort((a,b)=>{
+                                              if(a.toLowerCase() > b.toLowerCase()) return 1
+                                              else if(a.toLowerCase() < b.toLowerCase())return -1
+                                              else return 0  
+                                            }).map((id) => ({
                                             label:id,
                                             value: id,
                                             }))}
