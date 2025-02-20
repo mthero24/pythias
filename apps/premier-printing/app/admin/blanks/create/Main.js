@@ -39,6 +39,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
   const [activePrintAreas, setActivePrintAreas] = useState(
     []
   );
+  const [boxSet, setBoxSet] = useState(false)
   useEffect(()=>{
     if(blank){
       let active = Object.keys(blank.multiImages).map(s=>{
@@ -140,7 +141,8 @@ export function Main({ colors, blanks, blank, printPricing }) {
     let result = await axios.post("/api/admin/blanks", { blank });
     if(result.data.error) alert(result.data.msg)
     else {
-      alert("Saved Data")
+      //alert("Saved Data")
+      location.reload()
       console.log(result.data.blank, "returned")
     }
     //console.log(result);
@@ -388,7 +390,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
         <Typography variant="h5" mb={2}>
           {blank? "Edit Blank": "Create New Blank"}
         </Typography>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form id="form" onSubmit={handleSubmit(onSubmit)}>
           <Grid2 container spacing={3}>
             <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               
@@ -851,6 +853,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
                   overridePrintBox={({box, side, image}) =>
                     overridePrintBox({ color_id: c._id, box, image, side })
                   }
+                  boxSet={boxSet}
                   color={c}
                   cropBoxData={cropBoxData}
                   images={images}
@@ -1008,7 +1011,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
             />
           </Box>
           <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", position: "sticky", bottom: "20px"}}>
-            <Fab type="submit" color="secondary" sx={{ mt: 3, zIndex: 9999, position: "sticky", bottom: "20px" }}>
+            <Fab type="submit" id="fab" color="secondary" sx={{ mt: 3, zIndex: 9999, position: "sticky", bottom: "20px" }}>
               {blank? "Save": "Create"}
             </Fab>
           </Box>
@@ -1020,6 +1023,8 @@ export function Main({ colors, blanks, blank, printPricing }) {
           
           setBoxModalOpen(false);
         }}
+        setBoxSet={setBoxSet}
+        boxSet={boxSet}
         images={images}
         setImages={setImages}
         side={boxModalSide.current}
@@ -1077,7 +1082,7 @@ const Rectangle = ({ isSelected, onSelect, onChange, ...props }) => {
   );
 };
 
-const SetBoxModal = ({ open, onClose, images, setImages, box, image, side }) => {
+const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSet, setBoxSet }) => {
   console.log(image)
   let initialBox = box;
 
@@ -1089,8 +1094,15 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side }) => 
     height: initialBox ? initialBox.boxHeight : 175,
   };
   if(!initialBox) initialBox = INITIAL_BOX_SETTINGS
-  let imageSrc = image;
-
+  const [imageSrc, setImageSrc] = useState()
+  useEffect(()=>{
+    let getRender = async ()=>{
+      let res = await axios.post("/api/renderImages", {box, designImage: null, styleImage: image, imageDimensions: null})
+      if(res.data.base64) setImageSrc(res.data.base64)
+    }
+    getRender()
+    setImageSrc(null)
+  },[open])
   console.log(imageSrc, "imageSrc:)", side);
 
   const boxRef = useRef({
@@ -1103,6 +1115,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side }) => 
       onClose({
         data: boxRef.current && boxRef.current.x ? boxRef.current : null,
       });
+      document.getElementById("fab").click()
     }
   };
 

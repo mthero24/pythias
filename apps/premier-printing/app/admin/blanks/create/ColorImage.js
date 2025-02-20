@@ -36,7 +36,8 @@ export const ColorImage = ({
     blank,
     colorCropBoxData,
     imageGroups,
-    setImageGroups
+    setImageGroups,
+    boxSet
   }) => {
     const [imageToCrop, setImageToCrop] = useState();
     const cropperRef = useRef();
@@ -59,7 +60,7 @@ export const ColorImage = ({
         onUploadImage(images);
       }
     }, [images]);
-  
+    
     const handleImageUpload = async ({ type, file }) => {
       let result = await getBase64(file);
       imageType.current = type;
@@ -239,8 +240,9 @@ export const ColorImage = ({
                                             <IconButton
                                                 aria-label="close"
                                                 onClick={() => overridePrintBox({box: i.box? i.box[0]: null, side: type, image: i.image})}
+                                                boxSet={boxSet}
                                             >
-                                                {i.box && i.box[0]? <CheckBoxIcon color="green" />: <AddBoxIcon color="red" />}
+                                                { i.box && i.box[0]? <CheckBoxIcon color="green" />: <AddBoxIcon color="red" />}
                                             </IconButton>
                                             </Box>
                                         </Box>
@@ -265,7 +267,11 @@ export const ColorImage = ({
                                                 })
                                                 setImageGroups(ig)
                                             }}
-                                            options={imageGroups.map(g=>{return {value: g, label: g}})}
+                                            options={imageGroups.sort((a,b)=>{
+                                              if(a.toLowerCase() > b.toLowerCase()) return 1
+                                              else if(a.toLowerCase() < b.toLowerCase())return -1
+                                              else return 0  
+                                            }).map(g=>{return {value: g, label: g}})}
                                         />
                                     </Box>
                                 </Grid2>
