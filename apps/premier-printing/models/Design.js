@@ -41,6 +41,8 @@ const schema = new mongoose.Schema({
     ref: "Marketplaces",
   }],
   imageGroup: {type: String, default: "default"},
+  imagesAdded: {type: Boolean, default: false},
+  published: {type: Boolean, default: false},
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

@@ -4,41 +4,49 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 import {useState, useEffect} from "react";
 import { Uploader } from "@/components/premier/uploader";
+import { theme, themeDark } from "@/components/UI/Theme";
+import Theme from "@/components/Theme.json"
 import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
-export function Main({design, blanks, brands, mPs, pI}){
+export function Main({design, bls, brands, mPs, pI}){
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [loading, setLoading] = useState(true)
+    const [blanks, setBlanks] = useState(bls)
     const [imageGroups, setImageGroups] = useState([])
     const [imageGroupImages, setImageGroupImages] = useState([])
     useEffect(()=>{
-        let d = {...des}
-        if(!d.blanks)d.blanks = [];
-        if(!d.brands) d.brands = [];
-        if(d.images == undefined) d.images = {};
-        console.log(blanks[0].colors[0])
-        d.blanks= d.blanks.map(bl=>{
-           // console.log("bl blank", bl.blank, blanks.filter(b=> b._id.toString() == (bl.blank._id? bl.blank._id.toString(): bl.blank.toString()))[0])
-            let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]
-            // if(typeof bl.sizes?[0] == "string") bl.sizes = blank.sizes?.filter(s=> bl.sizes?.includes(s._id.toString()))
-            // console.log(bl.colors, blank.colors)
-            // if(typeof bl.colors[0] == "string") bl.colors = blank.colors.filter(s=> bl.colors.includes(s._id.toString()))
-            bl.colors = blank.colors.filter(c=> bl.colors.map(c=> {bl.colors.map(c=> c.toString()).includes(c._id)}))
-            bl.blank = blank
-            return bl
-        })
-        d.brands = d.brands.map(br=>{
-            let brand = brands.filter(b=> b._id.toString() == (br._id? br._id.toString(): br.toString()))[0]
-            return brand
-        })
-        console.log(d.brands, d.blanks, d.marketplaces)
-        d.blanks = d.blanks.filter(b=> b.blank != undefined)
-        setDesign({...d})
-        setLoading(false)
+        console.log(blanks[0].colors)
         if(blanks){
-            console.log(blanks)
+            let d = {...des}
+            if(!d.blanks)d.blanks = [];
+            if(!d.brands) d.brands = [];
+            if(d.images == undefined) d.images = {};
+            console.log(blanks[0].colors[0])
+            d.blanks= d.blanks.map(bl=>{
+            // console.log("bl blank", bl.blank, blanks.filter(b=> b._id.toString() == (bl.blank._id? bl.blank._id.toString(): bl.blank.toString()))[0])
+                let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]
+                // if(typeof bl.sizes?[0] == "string") bl.sizes = blank.sizes?.filter(s=> bl.sizes?.includes(s._id.toString()))
+                // console.log(bl.colors, blank.colors)
+                // if(typeof bl.colors[0] == "string") bl.colors = blank.colors.filter(s=> bl.colors.includes(s._id.toString()))
+                
+                bl.colors = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
+                console.log(bl.colors, "colors")
+                bl.colors = bl.colors.filter(c=> c != undefined)
+                bl.blank = blank
+                return bl
+            })
+            d.blanks.filter(b=> b.blank != undefined)
+            d.brands = d.brands.map(br=>{
+                let brand = brands.filter(b=> b._id.toString() == (br._id? br._id.toString(): br.toString()))[0]
+                return brand
+            })
+            console.log(d.brands, d.blanks, d.marketplaces)
+            d.blanks = d.blanks.filter(b=> b.blank != undefined)
+            setDesign({...d})
+        
+           // console.log(d.blanks)
             let imGr = []
             blanks.map(b=>{
               if(b.multiImages){
@@ -52,21 +60,34 @@ export function Main({design, blanks, brands, mPs, pI}){
                 })
               }
             })
-            console.log(imGr, "image groups")
+            //console.log(imGr, "image groups")
             setImageGroups(imGr)
+            setLoading(false)
           }
-    },[])
+    },[blanks])
     useEffect(()=>{
         let images = []
         des.imageGroup && des.blanks.map((b, j)=>{
             Object.keys(b.blank.multiImages).map((i,j)=>{
                 //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                let foundImages = false
                 if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
                     let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
                     image.side = i
                     if(image.side == "modelFront") image.side = "front"
                     if(image.side == "modelBack") image.side = "back"
                     images.push(image)
+                    foundImages = true
+                }
+                if(!foundImages ){
+                    if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]){
+                        let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]
+                        image.side = i
+                        if(image.side == "modelFront") image.side = "front"
+                        if(image.side == "modelBack") image.side = "back"
+                        images.push(image)
+                        foundImages = true
+                    }
                 }
             })
         })
@@ -225,6 +246,20 @@ export function Main({design, blanks, brands, mPs, pI}){
     }
     return (
         <Box sx={{display: "flex", flexDirection: "column", padding: "3%"}}>
+            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+            <Button sx={{margin: "1% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
+                            let d = {...des};
+                            d.published = !d.published;
+                            setDesign({...d});
+                            updateDesign({...d})
+                            alert(`Design is ${d.published? "published": "unpublished"} and will be ${d.published? "uploaded to all": "removed from all"} market places shortly`)
+                        }}>{des.published? "Unpublish": "Publish"}</Button>
+                        <Button sx={{margin: "1% 2%", background: "#FF2400", color: "#ffffff"}} onClick={async ()=>{
+                            let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
+                            if(res.data.error) alert(res.data.msg)
+                            //else location.href = "/admin/designs"
+                        }}>Delete</Button>
+            </Box>
             <Accordion >
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -234,7 +269,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                     >
                     <Typography component="span">Design Images</Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{padding: "2%", height: "35vh"}}>
+                <AccordionDetails sx={{padding: "2%", height: "45vh"}}>
                     <Grid2 container spacing={1}>
                         
                         {imageLocations.map((i, j)=>(
@@ -243,6 +278,13 @@ export function Main({design, blanks, brands, mPs, pI}){
                                 <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
                             </Grid2>
                         ))}
+                        {!des.imagesAdded && <Button sx={{margin: "6% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
+                            let d = {...des};
+                            d.imagesAdded = true;
+                            setDesign({...d});
+                            updateDesign({...d})
+                            alert("Marked Images Added")
+                        }}>Images Added</Button>}
                     </Grid2>
                 </AccordionDetails>
             </Accordion>
@@ -270,15 +312,15 @@ export function Main({design, blanks, brands, mPs, pI}){
             <Card sx={{width: "100%", minHeight: "80vh", padding: "50% 2%", paddingTop: "3%" }}>
                 <Grid2 container spacing={2}>
                     <Grid2 size={{xs: 7, sm: 8}}>
-                        <TextField label="Title" fullWidth value={des.name}
+                        <TextField label="Title" fullWidth value={des?.name}
                         onChange={()=>updateTitleSku("name")}/>
                     </Grid2>
                     <Grid2 size={{xs: 5, sm: 4}}>
-                        <TextField label="SKU" fullWidth value={des.sku}
+                        <TextField label="SKU" fullWidth value={des?.sku}
                         onChange={()=>updateTitleSku("sku")}/>
                     </Grid2>
                     <Grid2 size={{xs: 12, sm: 12}}>
-                        <TextField placeholder="Description" fullWidth multiline rows={4} value={des.description} onChange={()=>updateTitleSku("description")}/>
+                        <TextField placeholder="Description" fullWidth multiline rows={4} value={des?.description} onChange={()=>updateTitleSku("description")}/>
                         <Button size="small" sx={{fontSize: ".5rem", margin: "0%"}} onClick={getAiDescription}>Generate Description And Tags</Button>
                     </Grid2>
                     <Grid2 size={12}><hr/></Grid2>
@@ -313,7 +355,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                          }
                     </Grid2>
                     <Grid2 size={{xs: 12, sm: 12}} >
-                        {des.brands?.map(b=>(
+                        {!loading && des.brands?.map(b=>(
                             <Accordion key={b._id}>
                             <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
@@ -341,7 +383,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                     </Grid2>
                     <Grid2 size={12}><hr/></Grid2>
                     <Grid2 size={{xs: 12, sm: 12}}>
-                        <Typography>Blanks</Typography>
+                       {!loading && <><Typography>Blanks</Typography>
                         <CreatableSelect
                             placeholder="Blanks"
                             options={blanks.map(m=>{return {value: m.code, label: m.code}})}
@@ -353,10 +395,11 @@ export function Main({design, blanks, brands, mPs, pI}){
                             }}
                             isMulti
                         />
-                       
+                        </>
+                       }
                     </Grid2>
                     <Grid2 size={{xs: 12, sm: 12}} >
-                        {des.blanks?.map(b=>(
+                        {!loading && des.blanks?.map(b=>(
                             <Accordion key={b.blank._id}>
                             <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
@@ -370,7 +413,7 @@ export function Main({design, blanks, brands, mPs, pI}){
                                 <CreatableSelect
                                     placeholder="Colors"
                                     options={b.blank.colors?.map(m=>{return {value: m.name, label: m.name}})}
-                                    value={b.colors?.map(m=>{return {value: m.name, label: m.name}})}
+                                    value={b.colors?.map(m=>{return {value: m?.name, label: m?.name}})}
                                     onChange={(vals)=>{
                                         let values = vals.map(v=>{return v.value})
                                         console.log(values)
@@ -394,14 +437,26 @@ export function Main({design, blanks, brands, mPs, pI}){
                                 d.imageGroup = vals.value
                                 let images = []
                                 d.imageGroup && d.blanks.map((b, j)=>{
-                                    Object.keys(b.blank.multiImages).map((i,j)=>{
+                                    if(b.blank.multiImages)Object.keys(b.blank.multiImages).map((i,j)=>{
                                        //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                                       let foundImages = false
                                         if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
                                             let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
                                             image.side = i
                                             if(image.side == "modelFront") image.side = "front"
                                             if(image.side == "modelBack") image.side = "back"
                                             images.push(image)
+                                            foundImages = true
+                                        }
+                                        if(!foundImages ){
+                                            if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]){
+                                                let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]
+                                                image.side = i
+                                                if(image.side == "modelFront") image.side = "front"
+                                                if(image.side == "modelBack") image.side = "back"
+                                                images.push(image)
+                                                foundImages = true
+                                            }
                                         }
                                     })
                                 })
@@ -415,7 +470,6 @@ export function Main({design, blanks, brands, mPs, pI}){
                         <Grid2 container spacing={2}>
                             {imageGroupImages.map((i,j)=>(
                                 <Grid2 size={{xs: 6, md: 4}} key={j}>
-                                    {console.log(i)}
                                     <ProductImageOverlay
                                         imageGroup={des.imageGroup}
                                         box={

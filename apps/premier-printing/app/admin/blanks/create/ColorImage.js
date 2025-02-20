@@ -20,6 +20,7 @@ import slugify from "@/utils/slugify";
 import Select from "react-select";
 import EyeDropper from "@/components/EyeDropper";
 import CreatableSelect from "react-select/creatable";
+import ProductImageOverlay from "@/components/ProductImageOverlay";
 import "jimp";
 export const ColorImage = ({
     color,
@@ -192,7 +193,14 @@ export const ColorImage = ({
                                             
                                         <Box key={j} sx={{ width: "100%", height: 200, position: "relative" }}>
                                             <BoxPreview side={type} />
-                                            <img src={i.image} width={200} height={200} />
+                                            <ProductImageOverlay
+                                                imageGroup={"something"}
+                                                box={
+                                                null
+                                                }
+                                                styleImage={i.image}
+                                                designImage={null }
+                                            />
                                             <Box
                                             sx={{
                                                 position: "absolute",

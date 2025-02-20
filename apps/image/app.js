@@ -1,25 +1,35 @@
-import sharp from "sharp"
-import {NextApiRequest, NextResponse} from "next/server"
-import axios from "axios"
+import express from "express";
+import bodyParser from "body-parser";
+import sharp from "sharp";
+import axios from "axios";
+const app = express();
+
+app.use(
+    bodyParser.urlencoded({
+        limit: "1000000gb",
+        parameterLimit: 1000000000000,
+        extended: true,
+    })
+)
+app.use(bodyParser.json({ limit: "1000000gb" }));
 const readImage = async (url)=>{
     console.log(url)
     const response = await axios.get(
       url,
       { responseType: "arraybuffer" }
     );
-    console.log(response.headers)
     const buffer = Buffer.from(response.data, "binary");
 
     // Use sharp to process the image
     let image = sharp(buffer);
     return image
 }
-
-export async function POST(req=NextApiRequest){
-    let data = await req.json()
+app.get('/images',  async(req, res) => {
+    let data = req.query
     console.log(data)
     let base64
     if(data.box && data.designImage){
+        data.box = JSON.parse(data.box)
         base64 = await readImage(data.styleImage)
         base64 = base64.resize({
             width: data.box.containerWidth,
@@ -62,6 +72,10 @@ export async function POST(req=NextApiRequest){
         //console.log(base64, "base64")
         base64 = `data:image/png;base64,${base64.toString("base64")}`
     }
-    //console.log(base64)
-    return NextResponse.json({error: false, base64})
-}
+    console.log(base64)
+    res.send({base64})
+});
+  
+app.listen(3008, () => {
+    console.log('Server listening on port 3008');
+  });

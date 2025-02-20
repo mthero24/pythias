@@ -55,3 +55,9 @@ export async function PUT(req=NextApiRequest){
         return NextResponse.json({error: true, msg: JSON.stringify(e)})
     }
 }
+
+export async function DELETE(req, res){
+    console.log(await req.nextUrl.searchParams.get("design"))
+    let design = await Design.findByIdAndDelete(req.nextUrl.searchParams.get("design"))
+    return NextResponse.json({error: false})
+}
