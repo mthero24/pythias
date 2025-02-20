@@ -1100,8 +1100,9 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
       let res = await axios.post("/api/renderImages", {box, designImage: null, styleImage: image, imageDimensions: null})
       if(res.data.base64) setImageSrc(res.data.base64)
     }
-    getRender()
-    setImageSrc(null)
+    if(open){
+      getRender()
+    }
   },[open])
   // console.log(imageSrc, "imageSrc:)", side);
 
