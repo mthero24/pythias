@@ -1102,8 +1102,8 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
     }
     getRender()
     setImageSrc(null)
-  },[open])
-  console.log(imageSrc, "imageSrc:)", side);
+  },[])
+  // console.log(imageSrc, "imageSrc:)", side);
 
   const boxRef = useRef({
     containerWidth: 400,
