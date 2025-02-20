@@ -3,5 +3,6 @@ import {Main} from "./Main"
 export const dynamic = 'force-dynamic';
 export default async function Designs(){
     let designs = await Design.find({}).sort({date: 1}).limit(200)
-    return <Main designs={JSON.parse(JSON.stringify(designs))}/>
+    let count = await Design.find({}).countDocuments()
+    return <Main designs={JSON.parse(JSON.stringify(designs))} count={count}/>
 }   

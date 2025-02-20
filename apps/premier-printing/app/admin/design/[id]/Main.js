@@ -8,7 +8,9 @@ import { theme, themeDark } from "@/components/UI/Theme";
 import Theme from "@/components/Theme.json"
 import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
+import { useRouter } from "next/navigation";
 export function Main({design, bls, brands, mPs, pI}){
+    const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
     const [marketPlaces, setMarketPlaces] = useState(mPs)
@@ -257,7 +259,9 @@ export function Main({design, bls, brands, mPs, pI}){
                         <Button sx={{margin: "1% 2%", background: "#FF2400", color: "#ffffff"}} onClick={async ()=>{
                             let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
                             if(res.data.error) alert(res.data.msg)
-                            //else location.href = "/admin/designs"
+                            else {
+                                router.push("/admin/designs")
+                            }
                         }}>Delete</Button>
             </Box>
             <Accordion >

@@ -6,7 +6,7 @@ import axios from "axios";
 import Link from "next/link";
 import { Uploader } from "@/components/premier/uploader";
 import Theme from "@/components/Theme";
-export function Main({designs}){
+export function Main({designs, count}){
     const [designss, setDesigns] = useState(designs)
     useEffect(()=>{
         const getDesigns = async ()=>{
@@ -25,7 +25,8 @@ export function Main({designs}){
     }
     return (
         <Box sx={{padding: "1%", color: "black", minHeight: "vh",}}>
-            <Box sx={{display: "flex",justifyContent: "flex-end", padding: "1%"}}>
+            <Box sx={{display: "flex",justifyContent: "space-between", padding: "1%"}}>
+                <Typography>There are total of {count} Designs</Typography>
                 <Button onClick={()=>{createDesign()}} sx={{background: Theme.colors.primary, color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": {background: Theme.colors.support}}}>Create</Button>
             </Box>
             <Card sx={{width: "100%", padding: "1%"}}>

@@ -21,6 +21,8 @@ import Select from "react-select";
 import EyeDropper from "@/components/EyeDropper";
 import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import "jimp";
 export const ColorImage = ({
     color,
@@ -226,6 +228,21 @@ export const ColorImage = ({
                                                 <FaWindowClose color="red" />
                                             </IconButton>
                                             </Box>
+                                            <Box
+                                            sx={{
+                                                position: "absolute",
+                                                top: 0,
+                                                left: 0,
+                                                zIndex: 2,
+                                            }}
+                                            >
+                                            <IconButton
+                                                aria-label="close"
+                                                onClick={() => overridePrintBox({box: i.box? i.box[0]: null, side: type, image: i.image})}
+                                            >
+                                                {i.box && i.box[0]? <CheckBoxIcon color="green" />: <AddBoxIcon color="red" />}
+                                            </IconButton>
+                                            </Box>
                                         </Box>
                                     </Box>
                                     <Box sx={{ display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", width: 200  }}>
@@ -250,9 +267,6 @@ export const ColorImage = ({
                                             }}
                                             options={imageGroups.map(g=>{return {value: g, label: g}})}
                                         />
-                                        <Button fullWidth onClick={() => overridePrintBox({box: i.box? i.box[0]: null, side: type, image: i.image})}>
-                                            Set Design Box
-                                        </Button>
                                     </Box>
                                 </Grid2>
                             ))}

@@ -139,10 +139,12 @@ export function Main({ colors, blanks, blank, printPricing }) {
     let blank = { ...data, multiImages: images, box: box.current, colors: activeColors };
     let result = await axios.post("/api/admin/blanks", { blank });
     if(result.data.error) alert(result.data.msg)
-    else console.log(result.data.blank, "returned")
+    else {
+      alert("Saved Data")
+      console.log(result.data.blank, "returned")
+    }
     //console.log(result);
     //alert(result.data);
-    location.href = "/admin/blanks"
   };
 
   const {
