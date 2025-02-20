@@ -6,6 +6,7 @@ import ProductImages from "@/models/ProductImages";
 import { serialize } from "@/functions/serialize";
 import {Main} from "./Main";
 import { notFound } from "next/navigation";
+import * as juniperShop from "./juniperShop.json" 
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({params}){
     let {id} = await params;
@@ -16,12 +17,13 @@ export default async function DesignPage({params}){
     let marketPlaces = await MarketPlaces.find({}).lean()
     let productImages = await ProductImages.find({design: design._id})
     if(!design) return notFound();
-    //console.log(blanks)
+    console.log(blanks)
     design = serialize(design);
     blanks = serialize(blanks);
     brands = serialize(brands)
     marketPlaces = serialize(marketPlaces)
     productImages = serialize(productImages)
+    console.log(juniperShop, "juniper", "give me somethin")
     return (
         <Main design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} />
     )

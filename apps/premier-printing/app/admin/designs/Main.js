@@ -39,7 +39,7 @@ export function Main({designs}){
                                 <Link href={`/admin/design/${d._id}`}>
                                     <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
                                         <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "200px"}}>
-                                            <Image src={d.images?.front} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px"}}/>
+                                            <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.leftSleeve? d.images?.leftSleeve: d.images?.rightSleeve? d.images?.rightSleeve: d.images?.pocket? d.images?.pocket: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px"}}/>
                                         </Box>
                                         <hr/>
                                         <Box sx={{padding: "3%"}}>

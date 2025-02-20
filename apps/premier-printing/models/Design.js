@@ -11,12 +11,14 @@ const schema = new mongoose.Schema({
     back: { type: String },
     leftSleeve: { type: String },
     rightSleeve: { type: String },
+    pocket: {type: String}
   },
   embroideryFiles: {
     front: { type: String },
     back: { type: String },
     leftSleeve: { type: String },
     rightSleeve: { type: String },
+    pocket: {type: String}
   },
   blanks: [{
     blank:{

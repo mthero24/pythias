@@ -42,7 +42,7 @@ export const ColorImage = ({
     const [filesToUpload, setFilesToUpload] = useState([]);
     const [col, setCol] = useState(color);
     const [activeColorId, setActiveColorId] = useState();
-  
+    const [update, setUpdate] = useState(true)
     function getBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -194,7 +194,7 @@ export const ColorImage = ({
                                         <Box key={j} sx={{ width: "100%", height: 200, position: "relative" }}>
                                             <BoxPreview side={type} />
                                             <ProductImageOverlay
-                                                imageGroup={"something"}
+                                                imageGroup={update}
                                                 box={
                                                 null
                                                 }
@@ -212,11 +212,14 @@ export const ColorImage = ({
                                             <IconButton
                                                 aria-label="close"
                                                 onClick={() =>{
+                                                        console.log(i, "iiii")
                                                         let im = {...images}
-                                                        console.log(im)
+                                                        console.log(i, im)
                                                         im[type] = im[type].filter(ima=> ima.image !== i.image)
-                                                        console.log(im)
+                                                        console.log(i, im)
+                                                        // console.log(im)
                                                         setImages({...im})
+                                                        setUpdate(!update)
                                                     }
                                                 }
                                             >
