@@ -156,9 +156,6 @@ export const ColorImage = ({
                 value={{ value: col.color_type, label: col.color_type }}
                 onChange={({ value }) => updateColor({ color_type: value })}
               />
-              <Button onClick={() => setActiveColorId(color._id)}>
-                Set Color Swatch
-              </Button>
             </Box>
             <Grid2 container spacing={2}>
                 {activePrintAreas.map((type) => (
