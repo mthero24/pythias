@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
   Fab,
-  IconButton
+  IconButton,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, Controller } from "react-hook-form";
@@ -28,12 +28,15 @@ import LoaderButton from "@/components/LoaderButton";
 import EyeDropper from "@/components/EyeDropper";
 import ReactPlayer from 'react-player';
 import {ColorImage} from "./ColorImage";
+import { ImageModal } from "./imageModal";
 import "jimp";
 export function Main({ colors, blanks, blank, printPricing }) {
   const [imageGroups, setImageGroups] = useState([])
   const [activeColors, setActiveColors] = useState(
     blank && blank.colors ? blank.colors : []
   );
+  const [color, setColor] = useState(null);
+  const [openImage, setOpenImage] = useState(false)
   //console.log(printPricing);
 
   const [activePrintAreas, setActivePrintAreas] = useState(
@@ -839,37 +842,20 @@ export function Main({ colors, blanks, blank, printPricing }) {
               
             </Grid2>
           </Grid2>
-
-          {activeColors
-            .map((id) => allColors.filter((c) => c._id == id)[0])
-            .sort((a,b)=>{
-              if(a.name.toLowerCase() > b.name.toLowerCase()) return 1
-              else if(a.name.toLowerCase() < b.name.toLowerCase())return -1
-              else return 0  
-            }).map((c) => {
-              return (
-                <ColorImage
-                  style={blank}
-                  key={c._id}
-                  activePrintAreas={activePrintAreas.sort(
-                    (a, b) => printAreas.indexOf(a) - printAreas.indexOf(b)
-                  )}
-                  overridePrintBox={({box, side, image}) =>
-                    overridePrintBox({ color_id: c._id, box, image, side })
-                  }
-                  boxSet={boxSet}
-                  color={c}
-                  cropBoxData={cropBoxData}
-                  images={images}
-                  setImages={setImages}
-                  box={box.current}
-                  colorCropBoxData={colorCropBoxData}
-                  imageGroups={imageGroups}
-                  setImageGroups={setImageGroups}
-                />
-              );
-            })}
-
+          <Grid2 container spacing={2}>
+            {activeColors
+              .map((id) => allColors.filter((c) => c._id == id)[0])
+              .sort((a,b)=>{
+                if(a.name.toLowerCase() > b.name.toLowerCase()) return 1
+                else if(a.name.toLowerCase() < b.name.toLowerCase())return -1
+                else return 0  
+              }).map((c) => (
+                  <Grid2 size={{xs: 6, sm: 4, md: 3}} key={c._id}> 
+                    <Button onClick={()=>{setColor(c); setOpenImage(true)}} fullWidth  sx={{ margin: ".5%", color: c.color_type.toLowerCase() == "dark"? "#fff": "#000", background: c.hexcode}} >{c.name}</Button>
+                  </Grid2>
+              ))}
+            </Grid2>
+            <ImageModal openImage={openImage} setOpenImage={setOpenImage} color={color} blank={blank} activePrintAreas={activePrintAreas} overridePrintBox={overridePrintBox} images={images} boxSet={boxSet} cropBoxData={cropBoxData} setImages={setImages} colorCropBoxData={colorCropBoxData} imageGroups={imageGroups} setImageGroups={setImageGroups} box={box} printAreas={printAreas} />
           <Grid2 container>
             <Grid2 size={{xs:3, sm: 3, md: 3}} sx={{ my: 4 }}>
               <Typography>Size Chart</Typography>
@@ -1105,6 +1091,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
       if(res.data.base64) setImageSrc(res.data.base64)
     }
     if(open){
+      console.log("pulling Image")
       getRender()
       setImageSrc(null)
     }
@@ -1121,7 +1108,6 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
       onClose({
         data: boxRef.current && boxRef.current.x ? boxRef.current : null,
       });
-      document.getElementById("fab").click()
     }
   };
 

@@ -23,6 +23,7 @@ import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import axios from "axios"
 import "jimp";
 export const ColorImage = ({
     color,
@@ -37,7 +38,6 @@ export const ColorImage = ({
     colorCropBoxData,
     imageGroups,
     setImageGroups,
-    boxSet
   }) => {
     const [imageToCrop, setImageToCrop] = useState();
     const cropperRef = useRef();
@@ -238,9 +238,8 @@ export const ColorImage = ({
                                             <IconButton
                                                 aria-label="close"
                                                 onClick={() => overridePrintBox({box: i.box? i.box[0]: null, side: type, image: i.image})}
-                                                boxSet={boxSet}
                                             >
-                                                { i.box && i.box[0]? <CheckBoxIcon color="green" />: <AddBoxIcon color="red" />}
+                                                { i.box && i.box[0]? <CheckBoxIcon sx={{color: "green"}} />: <AddBoxIcon sx={{color: "red"}} />}
                                             </IconButton>
                                             </Box>
                                         </Box>

@@ -21,14 +21,10 @@ export async function POST(req = NextApiRequest) {
 }
 export async function PUT(req = NextApiRequest) {
     let data = await req.json();
-    //console.log(data)
+    console.log(data)
     let { color_id, ...newColor } = data;
-    let exists = await Color.findOne({ _id: color_id });
-    if (exists) {
-      for (let key in newColor) {
-        exists[key] = newColor[key];
-      }
-      await exists.save();
-    }
+
+    let exists = await Color.findByIdAndUpdate(color_id, {...newColor} );
+    
     return NextResponse.json(true);
 }
