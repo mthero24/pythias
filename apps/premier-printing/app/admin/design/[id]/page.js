@@ -11,12 +11,12 @@ export default async function DesignPage({params}){
     let {id} = await params;
     let design = await Design.findOne({_id: id}).lean();
     let blanks = await Blanks.find({}).select("colors code name sizes multiImages").populate("colors").lean()
-    console.log(blanks[0].colors[0], "color")
+    //console.log(blanks[0].colors[0], "color")
     let brands = await Brands.find({}).populate("marketPlaces.marketplace").lean()
     let marketPlaces = await MarketPlaces.find({}).lean()
     let productImages = await ProductImages.find({design: design._id})
     if(!design) return notFound();
-    console.log(blanks)
+    //console.log(blanks)
     design = serialize(design);
     blanks = serialize(blanks);
     brands = serialize(brands)

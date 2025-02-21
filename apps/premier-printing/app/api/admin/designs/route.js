@@ -10,11 +10,32 @@ const createSku = ()=>{
     }
     return sku
 }
-export async function GET(){
+export async function GET(req){
+    let query= {q: req.nextUrl.searchParams.get("q"), page: req.nextUrl.searchParams.get("page")}
     try{
-        let designs = await Design.find({}).sort({date: 1}).limit(200)
+        let designs
+        if(!query.q){
+            if(query.page == undefined || query.page == 1){
+                console.log("page = 1 or undefined")
+                designs = await Design.find({}).sort({date: -1}).limit(200)
+            }else{
+                console.log("page > 1", (query.page - 1) * 200)
+                designs = await Design.find({}).sort({date: -1}).skip((query.page - 1) * 200).limit(200)
+            }
+        }else{
+            if(query.page == 1){
+                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).limit(200)
+                if(designs.length == 0) designs = await Design.find({name: {$regex: query.q, $options: "si"}}).limit(200)
+                console.log(designs.length)
+            }else{
+                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).skip((query.page - 1) * 200).limit(200)
+                if(designs.length == 0) designs = await Design.find({name: {$regex: query.q, $options: "si"}}).skip((query.page - 1) * 200).limit(200)
+                console.log(designs.length)
+            }
+        }
         return NextResponse.json({error: false, designs})
     }catch(e){
+        console.log(e)
         return NextResponse.json({error: true, msg: JSON.stringify(e)})
     }
 }
@@ -36,7 +57,6 @@ export async function POST(req=NextApiRequest){
         })
         console.log(design)
         design  = await design.save()
-        //let designs = await Design.find({}).sort({date: -1}).limit(200)
         return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)
@@ -45,7 +65,7 @@ export async function POST(req=NextApiRequest){
 }
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
-    console.log(data)
+    console.log(data, "put")
     try{
         let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
         console.log(design, "design")

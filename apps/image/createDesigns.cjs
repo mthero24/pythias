@@ -4,8 +4,7 @@ csv()
 .fromFile("./rest.csv")
 .then((jsonObj)=>{
     console.log(jsonObj);
-    let skus = []
-    let designs = []
+    let skus ={}
     jsonObj = jsonObj.map(d=>{
         let sku = d.SKU.split("_")
         sku = sku.splice(3)
@@ -16,13 +15,24 @@ csv()
         }
         newSku = newSku.replace("_", "")
         //console.log(newSku)
-        if(!skus.includes(newSku)){
-            skus.push(newSku)
-            designs.push({title: d.Title?.split("|")[0].trim(), sku: newSku})
+        try{
+            if(!skus[newSku]){
+                skus[newSku] = {}
+                skus[newSku][d.SKU.split("_")[0]] = {}
+                skus[newSku][d.SKU.split("_")[0]].colors = [d.SKU.split("_")[1]]
+            }else{
+                if(!skus[newSku][d.SKU.split("_")[0]]) {
+                    skus[newSku][d.SKU.split("_")[0]] = {}
+                    skus[newSku][d.SKU.split("_")[0]].colors = [d.SKU.split("_")[1]]
+                }
+                else skus[newSku][d.SKU.split("_")[0]].colors.push(d.SKU.split("_")[1])
+            }
+            //console.log(skus)
+        }catch(e){
+            console.log(e)
         }
     })
-    console.log(designs.length)
-    fs.writeFile("./rest.json", JSON.stringify(designs), "utf8", (err)=>{
+    fs.writeFile("./rest.json", JSON.stringify(skus), "utf8", (err)=>{
         if(err) console.log(err)
     })
 })
