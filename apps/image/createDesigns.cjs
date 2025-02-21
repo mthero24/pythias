@@ -4,7 +4,7 @@ csv()
 .fromFile("./rest.csv")
 .then((jsonObj)=>{
     console.log(jsonObj);
-    let skus ={}
+    let skus =
     jsonObj = jsonObj.map(d=>{
         let sku = d.SKU.split("_")
         sku = sku.splice(3)
