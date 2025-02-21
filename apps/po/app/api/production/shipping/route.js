@@ -87,7 +87,7 @@ export async function POST(req= NextApiRequest){
 const isReady = (bin)=>{
     let ready = true;
     for(let it of bin.order.items){
-        if(!bin.items.includes(it._id)) ready = false
+        if(!bin.items.includes(it._id) && it.canceled == false) ready = false
     }
     console.log(ready, "ready")
     return ready

@@ -73,17 +73,19 @@ export function Bins({bins, setOrder, setBin, setShow, setAction}){
                   </Box>
                   {bins[t].map((b, i) => (
                     <Card sx={{ cursor: "pointer", margin: ".4%" }} key={i}>
+                      {b.order == undefined? console.log(b.number): ""}
+                      {b.order &&
                       <Box
                         sx={{
                           padding: "2%",
                           background:
-                            new Date(b.order.date) <
+                            new Date(b.order?.date) <
                             new Date(Date.now() - 3 * (24 * 60 * 60 * 1000))
                               ? "#B80F0A"
                               : i % 2 == 0
                                 ? "#d2d2d2"
                                 : "#e2e2e2",
-                          color: new Date(b.order.date) <
+                          color: new Date(b.order?.date) <
                           new Date(Date.now() - 3 * (24 * 60 * 60 * 1000))
                             ? "#ffffff"
                             : "#000000"
@@ -103,7 +105,7 @@ export function Bins({bins, setOrder, setBin, setShow, setAction}){
                           </Grid2>
                           <Grid2 size={{ xs: 4, md: 3 }}>
                             <Typography textAlign={"center"} fontWeight="bold">
-                              {b.order.poNumber}
+                              {b.order?.poNumber}
                             </Typography>
                           </Grid2>
                           <Grid2 size={{ xs: 3, md: 2 }}>
@@ -135,6 +137,7 @@ export function Bins({bins, setOrder, setBin, setShow, setAction}){
                           </Grid2>
                         </Grid2>
                       </Box>
+                      }
                     </Card>
                   ))}
                 </Card>

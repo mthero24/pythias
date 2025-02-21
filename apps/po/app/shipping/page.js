@@ -13,6 +13,7 @@ export default async function Shipping(req,res){
       .sort({ number: 1 })
       .populate({ path: "order", populate: "items" })
       .lean();
+    console.log(readyToShip[0])
     console.log(binCount, readyToShip.length, inUse.length)
     readyToShip = JSON.parse(JSON.stringify(readyToShip))
     inUse = JSON.parse(JSON.stringify(inUse));
