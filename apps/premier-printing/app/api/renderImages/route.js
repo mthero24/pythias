@@ -1,6 +1,7 @@
 import sharp from "sharp"
 import {NextApiRequest, NextResponse} from "next/server"
 import axios from "axios"
+import "jimp"
 const readImage = async (url)=>{
     console.log(url)
     const response = await axios.get(
@@ -22,18 +23,18 @@ export async function POST(req=NextApiRequest){
     if(data.box && data.designImage){
         base64 = await readImage(data.styleImage)
         base64 = base64.resize({
-            width: data.box.containerWidth,
-            height: data.box.containerHeight,
+            width: data.box.containerWidth + 300,
+            height: data.box.containerHeight + 300,
             fit: sharp.fit.cover,
             position: sharp.strategy.entropy
         })
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
         designBase64 = await designBase64.resize({
-            width: parseInt(data.box.boxWidth),
-            height: parseInt(data.box.boxHeight),
+            width: parseInt(data.box.boxWidth * 1.75),
+            height: parseInt(data.box.boxHeight * 1.75),
             background: {r: 0, g: 0, b: 0, alpha: 0},
-            fit: sharp.fit.contain,
+            fit: sharp.fit.inside,
             position: sharp.strategy.attention,
             fastShrinkOnLoad: false 
         })
@@ -42,9 +43,9 @@ export async function POST(req=NextApiRequest){
             {
                 input: designBase64,
                 blend: 'atop',
-                gravity: "northeast",
-                top: parseInt(data.box.y),
-                left: parseInt(data.box.x),
+                top: parseInt(data.box.y * 1.75),
+                left: parseInt(data.box.x * 1.75),
+                gravity: "center",
             },
 
         ]).png({ quality: 95 })

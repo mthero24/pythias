@@ -70,7 +70,7 @@ export function Main({design, bls, brands, mPs, pI}){
     useEffect(()=>{
         let images = []
         des.imageGroup && des.blanks.map((b, j)=>{
-            Object.keys(b.blank.multiImages).map((i,j)=>{
+            Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
                 //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
                 let foundImages = false
                 if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
