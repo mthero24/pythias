@@ -5,44 +5,29 @@ import Color from "@/models/Color";
 import skus from "./rest.json";
 
 export default async function Test(){
-    // let i = 0
-    // let colors = await Color.find({}).lean()
-    // let upctosku = []
-    // for( let s of skus){
-    //     try{
-    //         let skuArr = s.split("_")
-    //         console.log(skuArr)
-    //         let blank = skuArr[0]
-    //         let color = skuArr[1]
-    //         let size = skuArr[2]
-    //         let sku = skuArr.splice(3)
-    //         //console.log(sku)
-    //         let newSku = ""
-    //         for( let part of sku){
-    //             newSku = `${newSku}_${part}`
-    //         }
-    //         newSku = newSku.replace("_", "")
-    //         console.log(newSku, blank, color, size)
-    //         let skuToUpc = new SkuToUpc({sku: s})
-    //         skuToUpc.blank = await Blank.findOne({code: blank}).select("_id sizes").lean()
-    //         skuToUpc.design = await Design.findOne({sku: newSku}).select("_id").lean()
-    //         skuToUpc.size = size;
-    //         skuToUpc.color = null
-    //         skuToUpc.upc = i;
-    //         if(color){
-    //             for(let c of colors) {
-    //                 //console.log(c.name.replace(/\./g, '').replace(/ /g, ""), color.replace(/\./g, '').replace(/ /g, ""))
-    //                 if(c.name.toLowerCase().replace(/\./g, '').replace(/ /g, "") == color.toLowerCase().replace(/\./g, '').replace(/ /g, "")){
-    //                     skuToUpc.color = c._id
-    //                 }
-    //             }
-    //         }
-    //         i++
-    //         skuToUpc = await skuToUpc.save()
-    //         console.log(skuToUpc)
-    //     }catch(e){
-    //         console.log(e)
-    //     }
-    // }
+    let designs = await Design.find({}).limit(1000)
+    let skip = 1000
+    while(designs.length > 0){
+        for(let d of designs){
+            if(!d.blanks) d.blanks = []
+            let skus = await SkuToUpc.find({design: d._id})
+            console.log(skus.length)
+            let blanks = {}
+            for(let sku of skus){
+                if(!blanks[sku.blank]) blanks[sku.blank] = []
+                if(!blanks[sku.blank].includes(sku.color)) blanks[sku.blank].push(sku.color)
+            }
+            console.log(blanks)
+            for(let b of Object.keys(blanks)){
+                if(!d.blanks.filter(db=> db.blank.toString() == b.toString )[0]){
+                    d.blanks.push({blank: b, colors: blanks[b]})
+                }
+            }
+            console.log(d.blanks)
+            await d.save()
+        }
+        designs = await Design.find({}).skip(skip).limit(1000)
+        skip+= 1000
+    }
     return <h1>test</h1>
 }
