@@ -35,7 +35,7 @@ const schema = new mongoose.Schema(
       ref: "Order",
     },
     orderId: { type: String },
-    Blank: {
+    blank: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Blanks",
     },

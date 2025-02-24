@@ -3,31 +3,35 @@ import Design from "@/models/Design";
 import Blank from "@/models/Blanks";
 import Color from "@/models/Color";
 import skus from "./rest.json";
-
+import { getOrders } from "@pythias/integrations";
 export default async function Test(){
-    // let designs = await Design.find({}).limit(1000)
-    // let skip = 1000
-    // while(designs.length > 0){
-    //     for(let d of designs){
-    //         if(!d.blanks) d.blanks = []
-    //         let skus = await SkuToUpc.find({design: d._id})
-    //         console.log(skus.length)
-    //         let blanks = {}
-    //         for(let sku of skus){
-    //             if(!blanks[sku.blank]) blanks[sku.blank] = []
-    //             if(!blanks[sku.blank].includes(sku.color)) blanks[sku.blank].push(sku.color)
-    //         }
-    //         console.log(blanks)
-    //         for(let b of Object.keys(blanks)){
-    //             if(!d.blanks.filter(db=> db.blank.toString() == b.toString )[0]){
-    //                 d.blanks.push({blank: b, colors: blanks[b]})
-    //             }
-    //         }
-    //         console.log(d.blanks)
-    //         await d.save()
+    // let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    // let skusFound = 0
+    // let skusNotFOund = 0
+    // for(let o of orders){
+    //     for(let i of o.items){
+    //         let sku = await SkuToUpc.findOne({sku: i.sku})
+    //         if(!sku) skusNotFOund++
+    //         else skusFound++
     //     }
-    //     designs = await Design.find({}).skip(skip).limit(1000)
-    //     skip+= 1000
     // }
+    // console.log("found: ", skusFound, "Not Found: ", skusNotFOund)
+    let skusNotFound = 0
+    let skusFound = 0
+    for(let s of skus){
+        let sku = await SkuToUpc.findOne({sku: s.sku})
+        if(sku){
+            sku.upc = s.upc
+            skusFound++
+            await sku.save()
+        }else{
+            let sku = new SkuToUpc({...s})
+            await sku.save()
+            skusNotFound++
+            console.log(s.sku)
+            console.log("no sku: ", skusNotFound, "skusFound: ",skusFound)
+        }
+    }
+    console.log("no sku: ", skusNotFound, "skusFound: ",skusFound)
     return <h1>test</h1>
 }

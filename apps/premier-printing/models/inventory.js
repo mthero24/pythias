@@ -19,6 +19,10 @@ const SchemaObj = new Schema({
     skus: [{
         vendor: String,
         skus: [String]
-    }]
+    }],
+    row: {type: String, default: "0"},
+    unit: {type: String, default: "0"},
+    shelf: {type: String, default: "0"},
+    bin: {type: String, default: "0"}
 });
 export default PremierPrinting.model("InventoryV2", SchemaObj, "inventoryv2");
