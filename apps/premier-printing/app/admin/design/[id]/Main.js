@@ -187,18 +187,18 @@ export function Main({design, bls, brands, mPs, pI}){
         let d = {...des}
         d.marketPlaces = mps;
         console.log(d.marketPlaces)
-        if(!d.b2m) d.b2m = []
-        let b2m = d.b2m.filter(b=> b.brand== brand.name)[0]
+        let b2ms = d.b2m
+        let b2m = b2ms.filter(b=> b.brand== brand.name)[0]
         if(!b2m) {
-            b2m = []
-            b2m.push({
+            b2m = {
                 brand: brand.name,
                 marketPlaces: mps.map(m=> {return m.name})
-            })
-            d.b2m.push(b2m)
+            }
+            b2ms.push(b2m)
         }
         else b2m.marketPlaces =  mps.map(m=> {return m.name})
         console.log(b2m, "b2m", brand.name)
+        d.b2m = b2ms
         setDesign({...d})
         updateDesign({...d})
     }
