@@ -693,11 +693,10 @@ const Index = (props) => {
   
     const handleDelete = async () => {
       if (confirm("Are you sure you want to delete this inventory item?")) {
-        let result = await axios.delete("/api/admin/inventory", {
-          data: {
+        let result = await axios.put("/api/admin/inventory",  {
             inventory_id: activeItem.inventory_id,
           },
-        });
+        );
         setModalVisible(false);
         getInventory();
       }

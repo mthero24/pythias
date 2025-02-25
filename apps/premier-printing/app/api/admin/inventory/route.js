@@ -54,3 +54,9 @@ export async function POST(req=NextApiRequest){
     await inventory.save();
     return NextResponse.json({error: false})
 }
+export async function PUT(req=NextApiRequest){
+    console.log("here")
+    let data = await req.json()
+    let inventory = await Inventory.findOneAndDelete({inventory_id: data.inventory_id});
+    return NextResponse.json({error: false})
+}
