@@ -168,8 +168,53 @@ export function Main({design, bls, brands, mPs, pI}){
             }
         })
         d.brands = brands
+        for(let b of brands){
+            console.log(b.name)
+            if(b.name == "Urban Threads Co." || b.name == "Olive And Ivory"){
+                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
+                console.log(d.b2m)
+            }else if(b.name == "Simply Sage Market"){
+                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's", "Walmart", "Amazon"], d})
+                console.log(d.b2m)
+            }else if(b.name == "Juniper Shop"){
+                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's"], d})
+                console.log(d.b2m)
+            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Wholesale"){
+                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
+                console.log(d.b2m)
+            }
+        }
         setDesign({...d})
         updateDesign({...d})
+    }
+    const updateMarketPlacesBrand= async ({brand, marketplaces, d})=>{
+        console.log(brand, marketplaces)
+        let mps = await marketplaces.map(async m=>{
+            let mp = marketPlaces.filter(lp=> m == lp.name)[0]
+            console.log(mp)
+            if(!mp) {
+                let res = await axios.post("/api/admin/marketplaces", {name: m})
+                mp = res.data.marketplace
+                setMarketPlaces(res.data.marketPlaces)
+            }
+            return mp
+        })
+        mps = await Promise.all(mps)
+        d.marketPlaces = mps;
+        console.log(d.marketPlaces)
+        let b2ms = d.b2m
+        let b2m = b2ms.filter(b=> b.brand== brand.name)[0]
+        if(!b2m) {
+            b2m = {
+                brand: brand.name,
+                marketPlaces: mps.map(m=> {return m.name})
+            }
+            b2ms.push(b2m)
+        }
+        else b2m.marketPlaces =  mps.map(m=> {return m.name})
+        console.log(b2m, "b2m", brand.name)
+        d.b2m = b2ms
+        return {...d}
     }
     const updateMarketPlaces= async ({brand, marketplaces})=>{
         console.log(brand, marketplaces)
