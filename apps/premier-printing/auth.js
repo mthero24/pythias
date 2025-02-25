@@ -15,9 +15,9 @@ export const authOptions = {
       },
       async authorize(credentials) {
         console.log("+++++++++++++++++", credentials)
-        let userName = credentials.userName.toLowerCase();
+        let userName = credentials.userName;
         const user = await User.findOne({ userName: userName }).lean();
-        
+        console.log(user)
         if (!user) {
           throw new Error("Invalid credentials, please try again!");
         }
