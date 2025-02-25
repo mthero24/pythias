@@ -14,19 +14,23 @@ export async function generateInventory(style) {
   for (let size of style.sizes) {
     for (let cid of style.colors) {
       let color = await Color.findById(cid).select("name").lean();
+      //console.log(color, size)
       //console.log(size.name, color._id, style.code);
       let inventory = await Inventory.findOne({
         size_name: size.name,
         color: color._id,
         style_code: style.code,
       });
+      //if(color.name == "Grape")console.log("size: ", size)
       if (!inventory) {
+        //console.log("not inventory")
         inventory = await Inventory.findOne({
           inventory_id: encodeURIComponent(
             `${color.name}-${size.name}-${style.code}`
           ),
         });
         if (inventory) {
+          //console.log("found inventory")
           //console.log(
           //  inventory.size_name,
            // inventory.color,
@@ -49,7 +53,8 @@ export async function generateInventory(style) {
           barcode_id++;
         }
         try {
-          //console.log(style.code, size.name, color.name);
+         //console.log("create inventory")
+          console.log(style.code, size.name, color.name);
           let newInventory = new Inventory({
             inventory_id: encodeURIComponent(
               `${color.name}-${size.name}-${style.code}`

@@ -22,23 +22,23 @@ import {
     FormControl,
     InputLabel,
   } from "@mui/material";
-  import axios from "axios";
-  import React from "react";
-  import { useEffect, useState } from "react";
-  import SearchIcon from "@mui/icons-material/Search";
-  import ModalCloseButton from "@/components/ModalCloseButton";
-  import HighlightOffIcon from "@mui/icons-material/HighlightOff";
-  
-  const companies = [
-    "Sanmar",
-    "SS Activewear",
-    "One Stop",
-    "alphabroder",
-    "Otto Cap",
-    "Lane Seven Apparel"
-  ];
-  
-  const Index = (props) => {
+import axios from "axios";
+import React from "react";
+import { useEffect, useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import ModalCloseButton from "@/components/ModalCloseButton";
+import HighlightOffIcon from "@mui/icons-material/HighlightOff";
+
+const companies = [
+  "Sanmar",
+  "SS Activewear",
+  "One Stop",
+  "alphabroder",
+  "Otto Cap",
+  "Lane Seven Apparel"
+];
+export const dynamic = 'force-dynamic'; 
+const Index = (props) => {
     const [sort, setSort] = useState({});
     const [view, setView] = useState("edit");
     const [activeItem, setActiveItem] = useState(null);

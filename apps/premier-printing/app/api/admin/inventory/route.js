@@ -35,10 +35,10 @@ export async function GET(req){
                     }
                   ]
             };
-            let inventory = await Inventory.find(options).skip(page * 200).sort(sort).limit(200).lean();
+            let inventory = await Inventory.find(options).skip(page * 400).sort({style_code: 1}).limit(400).lean();
             return NextResponse.json(inventory)
         }
-        let inventory = await Inventory.find(options).skip(page * 200).sort({style_code: 1}).limit(200).lean();
+        let inventory = await Inventory.find(options).skip(page * 400).sort({style_code: 1}).limit(400).lean();
         return NextResponse.json(inventory)
 }
 export async function POST(req=NextApiRequest){
