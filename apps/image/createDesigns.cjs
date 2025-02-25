@@ -1,18 +1,15 @@
 const csv=require('csvtojson')
 const fs = require("fs")
 csv()
-.fromFile("./upc2.csv")
+.fromFile("./master.csv")
 .then((jsonObj)=>{
-    console.log(jsonObj);
-    let skus =[]
+    console.log(jsonObj.length);
+    let t2n =[]
     jsonObj = jsonObj.map(d=>{
-        let sku = d.SKU
-        let upc = d["GTIN-12"]
-        if(upc) {
-            skus.push({sku, upc})
-        }
+        //console.log(d.Title, d["Screen #"])
+        t2n.push({title: d.Title, sku: d["Screen #"]})
     })
-    fs.writeFile("./rest.json", JSON.stringify(skus), "utf8", (err)=>{
+    fs.writeFile("./t2n.json", JSON.stringify(t2n), "utf8", (err)=>{
         if(err) console.log(err)
     })
 })
