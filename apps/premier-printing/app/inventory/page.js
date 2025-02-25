@@ -306,6 +306,10 @@ import {
               {inventory.sort((a,b)=>{
                 if(a.style_code < b.style_code) return -1
                 else if(a.style_code > b.style_code) return 1
+                else if(a.color_name > b.color_name) return 1
+                else if(a.color_name < b.color_name) return -1
+                else if(a.size_name.replace("2", "") > b.size_name.replace("2", "")) return 1
+                else if(a.size_name.replace("2", "") < b.size_name.replace("2", "")) return -1
                 else return 0
               }).map((item, idx) => {
                 let inOrderItem = inOrder.filter(
