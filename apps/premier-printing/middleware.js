@@ -15,6 +15,10 @@ const protectedRoutes = [
     roles: ["admin", "production"],
   },
   {
+    path: "/inventory",
+    roles: ["admin", "production"],
+  },
+  {
     path: "/api/admin",
     roles: ["admin", "production"],
   },
