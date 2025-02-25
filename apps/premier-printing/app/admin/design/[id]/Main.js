@@ -170,8 +170,8 @@ export function Main({design, bls, brands, mPs, pI}){
         d.brands = brands
         for(let b of brands){
             console.log(b.name)
-            if(b.name == "Urban Threads Co." || b.name == "Olive And Ivory"){
-                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
+            if(b.name == "Urban Threads Co."){
+                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Shien", "Temu"], d})
                 console.log(d.b2m)
             }else if(b.name == "Simply Sage Market"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's", "Walmart", "Amazon"], d})
@@ -179,7 +179,7 @@ export function Main({design, bls, brands, mPs, pI}){
             }else if(b.name == "Juniper Shop"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's"], d})
                 console.log(d.b2m)
-            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Wholesale"){
+            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Wholesale" || b.name == "Olive And Ivory" || b.name == "Olive And Ivory Wholesale"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
                 console.log(d.b2m)
             }
