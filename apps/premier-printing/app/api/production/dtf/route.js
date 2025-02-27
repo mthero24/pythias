@@ -116,26 +116,27 @@ export async function POST(req = NextApiRequest) {
                 })
             }
         })
-        let tracking = new Employee({
-            type: "DTF Load",
-            Date: new Date(Date.now()),
-            //employee: user,
-            order: item.order,
-            pieceID: item.pieceId,
-          });
-          await tracking.save();
+        // let tracking = new Employee({
+        //     type: "DTF Load",
+        //     Date: new Date(Date.now()),
+        //     //employee: user,
+        //     order: item.order,
+        //     pieceID: item.pieceId,
+        //   });
+        //   await tracking.save();
           item.status = "DTF Load";
           if (!item.steps) item.steps = [];
           item.steps.push({
             status: "DTF Load",
             date: new Date(),
           });
-          item.lastScan = {
-            station: "DTF Load",
-            date: new Date(Date.now()),
-            //user: user._id,
-          };
+        //   item.lastScan = {
+        //     station: "DTF Load",
+        //     date: new Date(Date.now()),
+        //     //user: user._id,
+        //   };
         const {styleImage, frontDesign, backDesign, styleCode, colorName, frontCombo, backCombo} = await getImages(item.design?.front, item.design?.back, item.blank, item)
+        await item.save()
         return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, source: "PP", frontCombo, backCombo });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
