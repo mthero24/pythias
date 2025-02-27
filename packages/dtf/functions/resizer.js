@@ -166,17 +166,17 @@ export const createImage = async (
     );
     console.log(widthInches, heightInches, "width & height of image in inches");
   
-    let wPPI = 2800 / widthInches;
-    let hPPI = 3500 / heightInches;
+    let wPPI = metadata.width / widthInches;
+    let hPPI = metadata.height / heightInches;
   
     if (fitDesignStyleCodes.includes(style) || shouldFitDesign) {
       console.log("fitting design for style: ", style);
       wPPI = metadata.width / widthInches;
       hPPI = metadata.height / heightInches;
     }
-    const PPI = Math.max(wPPI, hPPI);
+    const PPI = parseInt(Math.max(wPPI, hPPI));
   
-    console.log(PPI, "PPI", metadata.width / PPI);
+    console.log(parseInt(PPI), "PPI", metadata.width / PPI);
     // Resize the image to the desired DPI
   
     const resizedImage = await image.png({ quality: 10 }).toBuffer();
