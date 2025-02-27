@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { PremierPrinting }  from "../lib/connection";
 import Blanks from "./Blanks";
+import Design from "./Design"
 const schema = new mongoose.Schema(
   {
     date: {
@@ -38,7 +39,7 @@ const schema = new mongoose.Schema(
     },
    designRef: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Designs",
+      ref: Design,
     },
     size: {
       type: mongoose.Schema.Types.ObjectId,

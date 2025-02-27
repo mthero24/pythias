@@ -21,7 +21,7 @@ export async function LabelsData(){
             paid: true,
             shippingType: "Standard",
             type: { $nin: ["sublimation", "gift"] },
-        }).populate("color").lean(),
+        }).populate("color designRef").lean(),
             Expedited: await Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
@@ -33,7 +33,7 @@ export async function LabelsData(){
             paid: true,
             type: { $nin: ["sublimation", "gift"] },
             shippingType: { $ne: "Standard" },
-        }).populate("color").lean()
+        }).populate("color designRef").lean()
     }
     //console.log(labels)
     let rePulls = 0

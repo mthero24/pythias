@@ -22,10 +22,9 @@ export const buildLabelData = async (item, i, opts={}) => {
     if(!item.design) frontBackString = "Missing Design";
     let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
     let printTypeAbbr;
-    if (item?.type && item?.type?.toLowerCase() == "dtf") printTypeAbbr = "DTF";
-    if (item?.type && item?.type?.toLowerCase() == "gift") printTypeAbbr = "GIFT";
-    if (item?.type && item?.type?.toLowerCase() == "sublimation") printTypeAbbr = "SUB";
-    if (item?.type && item?.type?.toLowerCase() == "embroidery") printTypeAbbr = "EMB";
+    if (item.design && item.design.sku && item.design.sku.includes("PU")) printTypeAbbr = "PUF";
+    if (item.design && item.design.sku && item.design.sku.includes("EMB")) printTypeAbbr = "EMB";
+    else printTypeAbbr = "DTF";
 
     let labelString = `^XA
         ^FO50,50^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS
@@ -41,11 +40,10 @@ export const buildLabelData = async (item, i, opts={}) => {
         ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
             item.colorName
         }, Size: ${item.sizeName}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDShipping: ${item.shippingType}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDShipping: ${item.shippingType} CNT: ${totalQuantity}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-            item.sku.split("-")[0]
-        }^FSCNT: ${totalQuantity}
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,320^FD CNT: ${totalQuantity}^FS
+            item.design && item.design.sku? item.design.sku: item.sku
+        }^FS
         ${
             printTypeAbbr
             ? `^LH12,18^CFS,25,12^AXN,40,50^FO10,350^FD${printTypeAbbr}^FS`
