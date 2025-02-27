@@ -12,11 +12,11 @@ const getImages = async (front, back, style, item, source)=>{
     let frontCombo
     let backCombo
     if(front) {
-        let res = await axios.post("https://pythiastechnologies.com/api/renderImages", {box: styleImage.box[0], styleImage: styleImage.image, designImage: front })
+        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage.box[0], styleImage: styleImage.image, designImage: front })
         frontCombo = res.data.base64
     }
     if(back) {
-        let res = await axios.post("https://pythiastechnologies.com/api/renderImages", {box: backStyleImage.box[0], styleImage: backStyleImage.image, designImage: back })
+        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: backStyleImage.box[0], styleImage: backStyleImage.image, designImage: back })
         backCombo = res.data.base64
     }
     styleImage=styleImage.image
