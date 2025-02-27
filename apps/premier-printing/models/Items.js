@@ -7,15 +7,12 @@ const schema = new mongoose.Schema(
       type: Date,
       default: new Date(),
     },
-    productCost: {
-      type: Number,
-      required: true,
-    },
-    storeCost: {
-      type: Number,
-    },
+    orderItemId: {type: String},
     pieceId: { type: String, required: true, unique: true },
+    upc: {type: String},
     shippingType: { type: String, default: "Standard" },
+    description: String,
+    name: String,
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -37,7 +34,11 @@ const schema = new mongoose.Schema(
     orderId: { type: String },
     blank: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Blanks",
+      ref: Blanks,
+    },
+   designRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Designs",
     },
     size: {
       type: mongoose.Schema.Types.ObjectId,
@@ -72,12 +73,11 @@ const schema = new mongoose.Schema(
     rePulled: { type: Boolean, default: false },
     rePulledTimes: { type: Number, default: 0 },
     design: {
-      front: {
-        type: String,
-      },
-      back: {
-        type: String,
-      },
+      front: { type: String },
+      back: { type: String },
+      leftSleeve: { type: String },
+      rightSleeve: { type: String },
+      pocket: {type: String}
     },
     weight: Number,
     quantity: {
@@ -86,7 +86,6 @@ const schema = new mongoose.Schema(
     },
     sku: {
       type: String,
-      required: true,
     },
     label: { type: String },
     vendor: String,

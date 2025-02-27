@@ -1,46 +1,22 @@
 import mongoose from "mongoose";
 const { PremierPrinting } = require("../lib/connection");
+import Item from "./Items"
 const schema = new mongoose.Schema({
   date: {
     type: Date,
     default: new Date(),
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-  userEmail: {
-    type: String,
-  },
-  store: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Store",
-  },
+  total: Number,
   status: {
     type: String,
     required: true,
-    enum: [
-      "Initializing",
-      "Received",
-      "Failed",
-      "Processing",
-      "Shipped",
-      "shipped",
-      "Delivered",
-      "Complete",
-      "Canceled",
-      "Payment Failed",
-      "Out For Delivery"
-    ],
   },
   poNumber: {
     type: String,
     required: true,
   },
-  uniquePo: {
-    type: String,
-    unique: true,
-  },
+  uniquePo: {type: String},
+  orderKey: String,
   orderId: {
     type: String,
     required: true,
@@ -49,7 +25,7 @@ const schema = new mongoose.Schema({
   items: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Item",
+      ref: Item,
     },
   ],
   shippingAddress: {
@@ -82,24 +58,12 @@ const schema = new mongoose.Schema({
       type: String,
     },
   },
-  productCost: {
-    type: Number,
-    required: true,
-  },
-  shippingCost: {
-    type: Number,
-    required: true,
-  },
-  taxCost: {
-    type: Number,
-    required: true,
-  },
   shippingType: {
     type: String,
     required: true,
   },
   marketplace: { type: String },
-  marketplaceOrderId: { type: String, unique: true, sparse: true },
+  marketplaceOrderId: { type: String, },
   error: { type: String },
   shippingRates: {
     firstClassRate: Number,

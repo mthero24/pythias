@@ -15,7 +15,7 @@ import {useEffect, useState} from "react";
 import axios from "axios";
 import {Sort} from "../functions/sort";
 import { UntrackedLabels } from "./untracked";
-export function Main({labels, rePulls, giftLabels=[], batches}){
+export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [useLabels, setLabels] = useState(labels);
     const [rePull, setRePulls] = useState(rePulls);
     const [gift, setGiftLabels] = useState(giftLabels);
@@ -197,8 +197,8 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
               <Typography fontSize=".6rem" color="red">Resets Inventory To Zero</Typography>
             </Box>
           </Box>
-          <Box sx={{ ...row, justifyContent: "center" }}>
-            <Button sx={topButtons} onClick={()=>{print("gift")}}>Print Gift Labels: {gift.length}</Button>
+          <Box sx={{ ...row, justifyContent: source == "PP"?"space-between": "center" }}>
+            <Button sx={{...topButtons, display: source == "PP"? "none": "block"}} onClick={()=>{print("gift")}}>Print Gift Labels: {gift.length}</Button>
             <Button
               sx={topButtons}
               onClick={() => {
@@ -207,8 +207,8 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
             >
               Restore Que
             </Button>
-            <Button sx={topButtons} onClick={()=>{setShoeUntracked(!showUntracked)}}>View Untracked Labels</Button>
-            <Button sx={topButtons} onClick={selectAllMarketPlaceOrders}>
+            <Button sx={{...topButtons}} onClick={()=>{setShoeUntracked(!showUntracked)}}>View Untracked Labels</Button>
+            <Button sx={{...topButtons, display: source == "PP"? "none": "block"}} onClick={selectAllMarketPlaceOrders}>
               Select All Market Place Orders
             </Button>
           </Box>
@@ -406,7 +406,7 @@ export function Main({labels, rePulls, giftLabels=[], batches}){
                             }}
                           >
                             <Typography sx={{ textAlign: "center" }}>
-                              {i.colorName.split("/")[0]}
+                              {i.colorName?.split("/")[0]}
                             </Typography>
                           </Grid2>
                           <Grid2

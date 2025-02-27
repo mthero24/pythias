@@ -13,11 +13,8 @@ import {
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, Controller } from "react-hook-form";
-import Dropzone from "@/components/Dropzone";
-import { Cropper } from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import { FaWindowClose } from "react-icons/fa";
-import ImageUpload from "@/components/ImageUpload";
 import slugify from "@/utils/slugify";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
@@ -25,9 +22,7 @@ import { Stage, Layer, Transformer, Rect } from "react-konva";
 import axios from "axios";
 import ImageUploadBox from "@/components/ImageUploadBox";
 import LoaderButton from "@/components/LoaderButton";
-import EyeDropper from "@/components/EyeDropper";
 import ReactPlayer from 'react-player';
-import {ColorImage} from "./ColorImage";
 import { ImageModal } from "./imageModal";
 import "jimp";
 export function Main({ colors, blanks, blank, printPricing }) {
@@ -793,16 +788,15 @@ export function Main({ colors, blanks, blank, printPricing }) {
               <CreatableSelect
                 isMulti
                 value={activeColors.map((id) => ({
-                  label: allColors.filter((c) => c._id.toString() == id)[0]
-                    .name,
+                  label: allColors.filter((c) => c._id.toString() == id)[0]?.name,
                   value: id,
                 }))}
                 onChange={handleModifyColors}
                 options={allColors
-                  .sort((a, b) => a.name.localeCompare(b.name))
+                 
                   .map((c) => ({
-                    label: `${c.name} (${c.category})`,
-                    value: c._id,
+                    label: `${c?.name} (${c?.category})`,
+                    value: c?._id,
                   }))}
               />
             </Grid2>
@@ -846,12 +840,13 @@ export function Main({ colors, blanks, blank, printPricing }) {
             {activeColors
               .map((id) => allColors.filter((c) => c._id == id)[0])
               .sort((a,b)=>{
-                if(a.name.toLowerCase() > b.name.toLowerCase()) return 1
-                else if(a.name.toLowerCase() < b.name.toLowerCase())return -1
+                if(a.name?.toLowerCase() > b.name?.toLowerCase()) return 1
+                else if(a.name?.toLowerCase() < b.name?.toLowerCase())return -1
                 else return 0  
               }).map((c) => (
+                  c &&
                   <Grid2 size={{xs: 6, sm: 4, md: 3}} key={c._id}> 
-                    <Button onClick={()=>{setColor(c); setOpenImage(true)}} fullWidth  sx={{ margin: ".5%", color: c.color_type.toLowerCase() == "dark"? "#fff": "#000", background: c.hexcode}} >{c.name}</Button>
+                    <Button onClick={()=>{setColor(c); setOpenImage(true)}} fullWidth  sx={{ margin: ".5%", color: c?.color_type.toLowerCase() == "dark"? "#fff": "#000", background: c.hexcode}} >{c?.name}</Button>
                   </Grid2>
               ))}
             </Grid2>

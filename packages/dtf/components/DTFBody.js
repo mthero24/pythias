@@ -91,7 +91,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                 width: "100%",
                                 height: "auto"
                               }}
-                              src={submitted && submitted.frontDesign? createImage(submitted.colorName, submitted.styleCode, {url: submitted.frontDesign}): "/blank.jpg"}
+                              src={submitted && submitted.frontDesign && submitted.source != "PP"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.frontDesign}): submitted && submitted.frontCombo? submitted.frontCombo: "/blank.jpg"}
                             />
                               </Box>
                           </Grid2>
@@ -113,7 +113,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                     width: "100%",
                                     height: "auto"
                                   }}
-                                  src={submitted && submitted.backDesign? createImage(submitted.colorName, submitted.styleCode, {url: submitted.backDesign}): "/blank.jpg"}
+                                  src={submitted && submitted.backDesign && submitted.source != "PP"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.backDesign}): submitted && submitted.backCombo? submitted.backCombo: "/blank.jpg"}
                               />
                             </Box>
                           </Grid2>

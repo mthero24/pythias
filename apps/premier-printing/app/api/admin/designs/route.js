@@ -2,6 +2,7 @@ import {NextApiRequest, NextResponse} from "next/server";
 import Design from "@/models/Design";
 import { headers } from 'next/headers'
 import User from "@/models/User";
+import Items from "@/models/Items";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const createSku = ()=>{
     let sku = ""
@@ -68,6 +69,7 @@ export async function PUT(req=NextApiRequest){
     console.log(data, "put")
     try{
         let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
+        await Items.updateMany({designRef: design._id}, {design: design.images})
         console.log(design, "design")
         return NextResponse.json({error: false, design})
     }catch(e){

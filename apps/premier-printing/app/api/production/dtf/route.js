@@ -2,26 +2,25 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Items from "../../../../models/Items";
 import Employee from "../../../../models/employeeTracking";
 import {setConfig, createImage} from "@pythias/dtf"
-const getImages = async (front, back, style, item)=>{
-    let styleImage = style.images.filter(
-        (i) => i.color.toString() == item.color?._id.toString()
-    )[0];
-
-    if (styleImage) {
-        styleImage = styleImage.image + "?width=400";
+import axios from "axios";
+const getImages = async (front, back, style, item, source)=>{
+    let styleImage = style.multiImages.front.filter(i=> i.color == item.color.toString())[0]
+    let backStyleImage = style.multiImages.back.filter(i=> i.color == item.color.toString())[0]
+    console.log(styleImage)
+    let frontDesign = front 
+    let backDesign = back
+    let frontCombo
+    let backCombo
+    if(front) {
+        let res = await axios.post("http://localhost:3006/api/renderImages", {box: styleImage.box[0], styleImage: styleImage.image, designImage: front })
+        frontCombo = res.data.base64
     }
-
-    let frontDesign =
-        front && front.replace(
-        "s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "images2.teeshirtpalace.com/"
-        ) + "?width=400";
-    let backDesign =
-        back && back.replace(
-        "s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "images2.teeshirtpalace.com/"
-        ) + "?width=400";
-    return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName}
+    if(back) {
+        let res = await axios.post("http://localhost:3006/api/renderImages", {box: backStyleImage.box[0], styleImage: backStyleImage.image, designImage: back })
+        backCombo = res.data.base64
+    }
+    styleImage=styleImage.image
+    return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName, frontCombo, backCombo}
 }
 export async function GET(req = NextApiResponse) {
     let config = JSON.parse(process.env.dtf);
@@ -33,7 +32,7 @@ export async function GET(req = NextApiResponse) {
     let pieceID
     let item
     if( req.nextUrl.searchParams.get("pieceID")) pieceID = req.nextUrl.searchParams.get("pieceID")
-    if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("styleV2", "code sizes images")
+    if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("blank", "code sizes multiImages")
     console.log(item)
     if(item){
         console.log(item)
@@ -41,7 +40,7 @@ export async function GET(req = NextApiResponse) {
             item.printed = true;
             item.printedDate = new Date();
             if (item.design?.front) item.frontPrinted = true;
-            if (item.design.back) item.backPrinted = true;
+            if (item.design?.back) item.backPrinted = true;
             item.status = "DTF Find";
             if (!item.steps) item.steps = [];
             item.steps.push({
@@ -65,7 +64,7 @@ export async function GET(req = NextApiResponse) {
 
             console.log(item, "item");
             // console.log(style)
-            const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
+            const {styleImage, frontDesign, backDesign, styleCode, colorName, frontCombo, backCombo} = await getImages(item.design?.front, item.design?.back, item.blank, item)
             return NextResponse.json( {error: false,
                     msg: "here is the design",
                     pieceID: item.pieceId,
@@ -73,7 +72,10 @@ export async function GET(req = NextApiResponse) {
                     frontDesign,
                     backDesign,
                     styleCode,
-                    colorName
+                    colorName,
+                    source: "PP",
+                    frontCombo,
+                    backCombo
             })
          
         }else return NextResponse.json({error: true, msg: "Item Canceled"});
@@ -84,60 +86,34 @@ export async function POST(req = NextApiRequest) {
     let config = JSON.parse(process.env.dtf);
     console.log(config);
     setConfig({
-      internalIP: config.localIP,
-      apiKey: "$2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy",
+      internalIP: process.env.localIP,
+      apiKey: "$2a$10$YQO.o7OJKAjfb.PIw6Ev5OHpNSAhkhAQsjvPc5.Qsc.lMdZEqrdhq",
     });
     let data = await req.json()
     console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
-    }).populate("styleV2", "code envleopes box sizes images")
+    }).populate("blank", "code envelopes box sizes multiImages")
     console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
-        let envleopes = item.styleV2.envleopes.filter(
-            (envelope) => envelope.size?.toString() == item.size.toString()
-        );
-        //console.log(envleopes)
-        if (envleopes.length == 0) {
-        let updatedSize = item.styleV2.sizes.filter(
-            (s) => s.name.toLowerCase() == item.sizeName.toLowerCase()
-        )[0];
-        //console.log(updatedSize, "size");
-        item.size = updatedSize._id;
-        envleopes = item.styleV2.envleopes.filter(
-            (envelope) => envelope.size.toString() == item.size.toString()
-        );
-        }
-        let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
-        let imageres = await createImage({
-            url: item.design?.front,
-            pieceID: item.pieceId,
-            horizontal: false,
-            size: `${envleopes[0].width}x${envleopes[0].height}`,
-            offset: envleopes[0].vertoffset,
-            style: item.styleV2.code,
-            styleSize: item.sizeName,
-            color: item.color.name,
-            sku: item.sku,
-            shouldFitDesign: shouldFitDesign,
-            printer: data.printer
-        })
-        if(item.design && item.design.back){
+        Object.keys(item.design).map(async key=>{
+            let envelopes = item.blank.envelopes.filter(
+                (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
+            );
             let imageres = await createImage({
-                url: item.design?.back,
-                pieceID: `${item.pieceId}-back`,
+                url: item.design[key],
+                pieceID: `${item.pieceId}-${key}`,
                 horizontal: false,
-                size: `${envleopes[0].width}x${envleopes[0].height}`,
-                offset: envleopes[0].vertoffset,
-                style: item.styleV2.code,
+                size: `${envelopes[0].width}x${envelopes[0].height}`,
+                offset: envelopes[0].vertoffset,
+                style: item.blank.code,
                 styleSize: item.sizeName,
-                color: item.color.name,
+                color: item.colorName,
                 sku: item.sku,
-                shouldFitDesign: shouldFitDesign,
+                shouldFitDesign: null,
                 printer: data.printer
             })
-        }
-        console.log(imageres)
+        })
         let tracking = new Employee({
             type: "DTF Load",
             Date: new Date(Date.now()),
@@ -157,8 +133,8 @@ export async function POST(req = NextApiRequest) {
             date: new Date(Date.now()),
             //user: user._id,
           };
-        const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
-        return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName });
+        const {styleImage, frontDesign, backDesign, styleCode, colorName, frontCombo, backCombo} = await getImages(item.design?.front, item.design?.back, item.blank, item)
+        return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, source: "PP", frontCombo, backCombo });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
     } else {

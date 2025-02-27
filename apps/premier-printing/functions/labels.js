@@ -11,54 +11,61 @@ export async function LabelsData(){
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
     let labels = {
             Standard: await Items.find({
-            styleV2: { $ne: undefined },
+            blank: { $ne: undefined },
+            colorName: {$ne: null},
+            sizeName: {$ne: null},
+            designRef: {$ne: null},
+            design: {$ne: null},
             labelPrinted: false,
             canceled: false,
             paid: true,
             shippingType: "Standard",
             type: { $nin: ["sublimation", "gift"] },
-        }).lean(),
+        }).populate("color").lean(),
             Expedited: await Items.find({
-            styleV2: { $ne: undefined },
+            blank: { $ne: undefined },
+            colorName: {$ne: null},
+            sizeName: {$ne: null},
+            designRef: {$ne: null},
+            design: {$ne: null},
             labelPrinted: false,
             canceled: false,
             paid: true,
             type: { $nin: ["sublimation", "gift"] },
             shippingType: { $ne: "Standard" },
-        }).lean()
+        }).populate("color").lean()
     }
+    //console.log(labels)
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        let inventory_ids = labels[k].map(s=>{return encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`);})
-        let inventoryArray = await Inventory.find({
-            inventory_id: { $in: inventory_ids },
-            })
-            .select("quantity pending_quantity inventory_id")
+        
+        let inventoryArray = await Inventory.find({})
+            .select("quantity pending_quantity inventory_id color_name size_name style_code")
             .lean();
-        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0];  return {...s}})
-        labels[k].map(l=>{console.log(l.inventory, encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`), k)})
-        let missing = labels[k].filter(l=> l.inventory == undefined)
-        missing.map(async m=>{
-            let i = await Inventory.findOne({inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)})
-            if(!i){
-                i = new Inventory({
-                    inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`),
-                    pending_quantity: 0,
-                    quantity: 0,
-                    order_at_quantity: 10,
-                    desired_order_quantity: 10,
-                    color: m.color,
-                    color_name: m.colorName,
-                    size_name: m.sizeName,
-                    barcode_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)
-                })
-                await i.save()
-            }
-        })
+        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
+        labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})
+        // let missing = labels[k].filter(l=> l.inventory == undefined)
+        // missing.map(async m=>{
+        //     let i = await Inventory.findOne({color_name: )})
+        //     if(!i){
+        //         i = new Inventory({
+        //             inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`),
+        //             pending_quantity: 0,
+        //             quantity: 0,
+        //             order_at_quantity: 10,
+        //             desired_order_quantity: 10,
+        //             color: m.color,
+        //             color_name: m.colorName,
+        //             size_name: m.sizeName,
+        //             barcode_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)
+        //         })
+        //         await i.save()
+        //     }
+        // })
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k])
     }
