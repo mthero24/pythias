@@ -1,5 +1,6 @@
 import Items from "@/models/Items";
 import Inventory from "@/models/inventory";
+import Design from "@/models/Design";
 export const buildLabelData = async (item, i, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let frontBackString;
@@ -22,8 +23,8 @@ export const buildLabelData = async (item, i, opts={}) => {
     if(!item.design) frontBackString = "Missing Design";
     let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
     let printTypeAbbr;
-    if (item.design && item.design.sku && item.design.sku.includes("PU")) printTypeAbbr = "PUF";
-    if (item.design && item.design.sku && item.design.sku.includes("EMB")) printTypeAbbr = "EMB";
+    if (item.designRef && item.designRef.sku && item.designRef.sku.includes("PU")) printTypeAbbr = "PUF";
+    if (item.designRef && item.designRef.sku && item.designRef.sku.includes("EMB")) printTypeAbbr = "EMB";
     else printTypeAbbr = "DTF";
 
     let labelString = `^XA
@@ -33,16 +34,16 @@ export const buildLabelData = async (item, i, opts={}) => {
         } Piece: ${item.pieceId}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#${i + 1}^FS
         ^LH12,18^CFS,25,12^AXN,75,90^FO175,175^FD${item.styleCode}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory.row}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory.unit}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory.shelf}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory.bin}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS
         ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
             item.colorName
         }, Size: ${item.sizeName}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDShipping: ${item.shippingType} CNT: ${totalQuantity}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-            item.design && item.design.sku? item.design.sku: item.sku
+            item.designRef && item.designRef.sku? item.designRef.sku: item.sku
         }^FS
         ${
             printTypeAbbr

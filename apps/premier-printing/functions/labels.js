@@ -47,7 +47,7 @@ export async function LabelsData(){
             .select("quantity pending_quantity inventory_id color_name size_name style_code")
             .lean();
         labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
-        labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})
+        //labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})
         // let missing = labels[k].filter(l=> l.inventory == undefined)
         // missing.map(async m=>{
         //     let i = await Inventory.findOne({color_name: )})
