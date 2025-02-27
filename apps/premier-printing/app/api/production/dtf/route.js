@@ -97,22 +97,24 @@ export async function POST(req = NextApiRequest) {
     console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
         Object.keys(item.design).map(async key=>{
-            let envelopes = item.blank.envelopes.filter(
-                (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
-            );
-            let imageres = await createImage({
-                url: item.design[key],
-                pieceID: `${item.pieceId}-${key}`,
-                horizontal: false,
-                size: `${envelopes[0].width}x${envelopes[0].height}`,
-                offset: envelopes[0].vertoffset,
-                style: item.blank.code,
-                styleSize: item.sizeName,
-                color: item.colorName,
-                sku: item.sku,
-                shouldFitDesign: null,
-                printer: data.printer
-            })
+            if(key != undefined && item.design[key]){
+                let envelopes = item.blank.envelopes.filter(
+                    (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
+                );
+                await createImage({
+                    url: item.design[key],
+                    pieceID: `${item.pieceId}-${key}`,
+                    horizontal: false,
+                    size: `${envelopes[0].width}x${envelopes[0].height}`,
+                    offset: envelopes[0].vertoffset,
+                    style: item.blank.code,
+                    styleSize: item.sizeName,
+                    color: item.colorName,
+                    sku: item.sku,
+                    shouldFitDesign: null,
+                    printer: data.printer
+                })
+            }
         })
         let tracking = new Employee({
             type: "DTF Load",
