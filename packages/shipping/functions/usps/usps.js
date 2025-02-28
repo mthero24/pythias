@@ -180,7 +180,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
           "height": dimensions.height,
           "width": dimensions.width,
           "processingCategory": "NONSTANDARD",
-          "mailingDate": `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString() : `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${(new Date(Date.now()).getDate() + 1).toString().length > 1? (new Date(Date.now()).getDate() + 1).toString(): `0${(new Date(Date.now()).getDate() + 1).toString()}`}`,
+          "mailingDate": `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString() : `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${(new Date(Date.now()).getDate()).toString().length > 1? (new Date(Date.now()).getDate()).toString(): `0${(new Date(Date.now()).getDate()).toString()}`}`,
           "extraServices": [],
           "destinationEntryFacilityType": "NONE"
         }
