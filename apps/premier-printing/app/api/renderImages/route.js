@@ -9,7 +9,7 @@ const readImage = async (url)=>{
       url,
       { responseType: "arraybuffer" }
     );
-    console.log(response.headers)
+    //console.log(response.headers)
     const buffer = Buffer.from(response.data, "binary");
 
     // Use sharp to process the image
@@ -67,13 +67,13 @@ export async function GET(req){
     console.log(req.nextUrl.searchParams.get("blank"))
     let blankCode = req.nextUrl.searchParams.get("blank")
     let colorName = req.nextUrl.searchParams.get("colorName")
-    let designImage = req.nextUrl.searchParams.get("designImage")
+    let designImage = req.nextUrl.searchParams.get("design")
     let side = req.nextUrl.searchParams.get("side")
     console.log(blankCode, colorName, designImage, side)
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
     let color = blank.colors.filter(c=>c.name == colorName)[0]
     let blankImage = blank.multiImages[side].filter(i=> i.color.toString() == color?._id.toString())[0]
-    let data = {box: blankImage.box, styleImage: blankImage.image, designImage}
+    let data = {box: blankImage.box[0], styleImage: blankImage.image, designImage}
     let base64 = await createImage(data)
     base64 = base64.replace(/^data:image\/\w+;base64,/, "")
     let buffer = new Buffer.from(base64, "base64")
