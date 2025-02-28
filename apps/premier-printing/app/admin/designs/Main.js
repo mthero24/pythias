@@ -6,11 +6,11 @@ import axios from "axios";
 import Link from "next/link";
 import { Uploader } from "@/components/premier/uploader";
 import Theme from "@/components/Theme";
+import Search from "./Search";
 export function Main({designs, count, query, pa}){
     const [designss, setDesigns] = useState(designs)
     const [search, setSearch] = useState(query)
     const [page, setPage] = useState(pa? pa: 1)
-    const [perform, setPerform] = useState(false)
     const [hasMore, setHasMore] = useState(true)
     useEffect(()=>{
         const getDesigns = async ()=>{
@@ -29,22 +29,6 @@ export function Main({designs, count, query, pa}){
             getDesigns()
         }
     },[page])
-    useEffect(()=>{
-        const getDesigns = async ()=>{
-            setPage(1)
-            let res = await axios.get(`/api/admin/designs?${search != "" && search != undefined? `q=${search}&`: ""}page=${1}`)
-            if(res.data.error) alert(res.data.msg)
-            else {
-                if(res.data.designs.length < 200) setHasMore(false)
-                setDesigns([...res.data.designs])
-            }
-            setPerform(false)
-        }
-        if(perform){
-            setHasMore(true)
-            getDesigns()
-        }
-    },[perform])
     const createDesign = async()=>{
         let res = await axios.post("/api/admin/designs", {})
         if(res.data.error) alert(res.data.msg)
@@ -58,9 +42,7 @@ export function Main({designs, count, query, pa}){
                 <Typography>There are total of {count} Designs</Typography>
                 <Button onClick={()=>{createDesign()}} sx={{background: Theme.colors.primary, color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": {background: Theme.colors.support}}}>Create</Button>
             </Box>
-            <Card sx={{width: "100%", padding: "1%"}}>
-                <TextField label="Search..." fullWidth onChange={()=>{setSearch(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter") setPerform(true)}}/>
-            </Card>
+            <Search setSearch={setSearch} setDesigns={setDesigns} setHasMore={setHasMore} setPage={setPage} search={search}/>
             <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
                 <Box sx={{ minHeight: "80vh",}}>
                     <Grid2 container spacing={2}>

@@ -9,12 +9,12 @@ import t2n from "./t2n.json";
 import fs from "fs"
 import { getOrders, generatePieceID } from "@pythias/integrations";
 export default async function Test(){
-    let items = await Item.find({status: "shipped", labelPrinted: false})
-    console.log(items.length)
-    for(let i of items){
-        i.labelPrinted = true;
-        await i.save()
-    }
+    // let items = await Item.find({status: "shipped", labelPrinted: false})
+    // console.log(items.length)
+    // for(let i of items){
+    //     i.labelPrinted = true;
+    //     await i.save()
+    // }
     // let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     // let skusFound = 0
     // let skusNotFOund = 0

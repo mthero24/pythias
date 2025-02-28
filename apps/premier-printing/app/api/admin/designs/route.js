@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import User from "@/models/User";
 import Items from "@/models/Items";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+import { DesignSearch } from "@/functions/designSearch";
 const createSku = ()=>{
     let sku = ""
     for(let i = 0; i < 10; i++){
@@ -24,17 +25,9 @@ export async function GET(req){
                 designs = await Design.find({}).sort({date: -1}).skip((query.page - 1) * 200).limit(200)
             }
         }else{
-            if(query.page == 1){
-                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).limit(200)
-                if(designs.length == 0) designs = await Design.find({name: {$regex: query.q, $options: "si"}}).limit(200)
-                console.log(designs.length)
-            }else{
-                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).skip((query.page - 1) * 200).limit(200)
-                if(designs.length == 0) designs = await Design.find({name: {$regex: query.q, $options: "si"}}).skip((query.page - 1) * 200).limit(200)
-                console.log(designs.length)
-            }
+            designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 200})
         }
-        return NextResponse.json({error: false, designs})
+        return NextResponse.json({error: false, designs, count: designs[0]?.meta.count.total})
     }catch(e){
         console.log(e)
         return NextResponse.json({error: true, msg: JSON.stringify(e)})

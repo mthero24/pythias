@@ -1,9 +1,10 @@
 "use client"
-import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal} from "@mui/material"
+import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, TextField} from "@mui/material"
 import {useState, useEffect} from "react"
 import CreatableSelect from "react-select/creatable";
 import axios from "axios"
-import { isAssetError } from "next/dist/client/route-loader";
+import Search from "@/app/admin/designs/Search";
+import Image from "next/image";
 export function Main({ord, blanks}){
     const [order, setOrder] = useState(ord);
     const [item, setItem] = useState(null);
@@ -11,6 +12,7 @@ export function Main({ord, blanks}){
     const [size, setSize] = useState(null)
     const [color, setColor] = useState(null)
     const [openUpdate, setOpenUpdate] = useState(false)
+    const [openDesign, setOpenDesign] =useState(false)
     const handleItemUpdate = (i)=>{
         console.log("handleItemUpdate")
         let b
@@ -65,7 +67,7 @@ export function Main({ord, blanks}){
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
-                                    {i.designRef == undefined && <Button>Missing Design!!</Button>}
+                                    {i.designRef == undefined && <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing Design!!</Button>}
                                     {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
                                 </Box>
                             </AccordionSummary>
@@ -87,7 +89,84 @@ export function Main({ord, blanks}){
                 </Box>
             </Card>
             <UpdateModal open={openUpdate} setOpen={setOpenUpdate} item={item} setItem={setItem} blank={blank} setBlank={setBlank} size={size} setSize={setSize} color={color} setColor={setColor} blanks={blanks} setOrder={setOrder}/>
+            <AddDesignModal open={openDesign} setOpen={setOpenDesign} item={item} setItem={setItem} setOrder={setOrder}/>
         </Box>
+    )
+}
+
+const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "90%",
+        height: "90%",
+        overflow: "auto",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+      };
+      const [designs, setDesigns] = useState([])
+      const [search, setSearch] = useState("")
+      const [page, setPage] = useState(1)
+      const [hasMore, setHasMore] = useState(true)
+      const [design, setDesign] = useState()
+      const updateItem = async ()=>{
+        let res = await axios.put("/api/admin/items", {item})
+        if(res.data.error) alert(res.data.msg)
+        else {
+            setOrder(res.data.order)
+            setItem(null)
+            setOpen(false)
+        }
+    }
+    return (
+        <Modal
+        open={open}
+        onClose={()=>{
+            setOpen(false)
+            setItem(null)
+        }}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+                Update Item: {item?.sku}
+            </Typography>
+            <Search setDesigns={setDesigns} search={search} setSearch={setSearch} setPage={setPage} setHasMore={setHasMore}/>
+            <Grid2 container spacing={2} sx={{marginTop: "1%"}}>
+                {designs && designs.map(d=>(
+                    <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
+                        <Box sx={{opacity: design == d._id? .5: 1,}} onClick={()=>
+                            {
+                                let i = {...item}
+                                i.designRef = d._id
+                                i.design =d.images
+                                setItem({...i})
+                                setDesign(d._id) 
+
+                            }}>
+                            <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
+                                <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "250px", background: "#e2e2e2"}}>
+                                    <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.leftSleeve? d.images?.leftSleeve: d.images?.rightSleeve? d.images?.rightSleeve: d.images?.pocket? d.images?.pocket: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
+                                </Box>
+                                <hr/>
+                                <Box sx={{padding: "3%"}}>
+                                    <Typography sx={{fontSize: '0.8rem', color: "black"}}>SKU: {d.sku}</Typography>
+                                    <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
+                                </Box>
+                            </Card>
+                        </Box>
+                    </Grid2>
+                ))}
+            </Grid2>
+            {hasMore && <Button onClick={()=>{setPage(page + 1)}} fullWidth>Next Page</Button>}
+            <Button fullWidth onClick={()=>{updateItem()}}>Update Item</Button>
+        </Box>
+      </Modal>
     )
 }
 

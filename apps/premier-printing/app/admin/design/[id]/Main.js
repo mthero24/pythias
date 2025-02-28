@@ -73,8 +73,8 @@ export function Main({design, bls, brands, mPs, pI}){
             Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
                 //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
                 let foundImages = false
-                if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
-                    let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
+                if(b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]?._id.toString() == im.color.toString())[0]){
+                    let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]?._id.toString() == im.color.toString())[0]
                     image.side = i
                     if(image.side == "modelFront") image.side = "front"
                     if(image.side == "modelBack") image.side = "back"
@@ -82,8 +82,8 @@ export function Main({design, bls, brands, mPs, pI}){
                     foundImages = true
                 }
                 if(!foundImages ){
-                    if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]){
-                        let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]
+                    if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]?._id.toString() == im.color.toString())[0]){
+                        let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]?._id.toString() == im.color.toString())[0]
                         image.side = i
                         if(image.side == "modelFront") image.side = "front"
                         if(image.side == "modelBack") image.side = "back"
