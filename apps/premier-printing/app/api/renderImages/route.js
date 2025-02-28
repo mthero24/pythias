@@ -49,8 +49,19 @@ const createImage = async (data)=>{
         ]).png({ quality: 95 })
         .toBuffer();
         base64 = `data:image/png;base64,${base64.toString("base64")}`
-    }else{
+    }else if(data.styleImage){
         base64 = await readImage(data.styleImage)
+        base64 = base64.resize({
+            width: 400,
+            height: 400,
+            fit: sharp.fit.cover,
+            position: sharp.strategy.entropy
+        })
+        base64 = await base64.png().toBuffer();
+        //console.log(base64, "base64")
+        base64 = `data:image/png;base64,${base64.toString("base64")}`
+    }else if(data.designImage){
+        base64 = await readImage(data.designImage)
         base64 = base64.resize({
             width: 400,
             height: 400,
@@ -72,9 +83,10 @@ export async function GET(req){
     console.log(blankCode, colorName, designImage, side)
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
     let color = blank.colors.filter(c=>c.name == colorName)[0]
+    console.log(color)
     let blankImage = blank.multiImages[side].filter(i=> i.color.toString() == color?._id.toString())[0]
-    console.log(blankImage.box)
-    let data = {box: blankImage.box[0]? blankImage.box[0]: null, styleImage: blankImage.image, designImage}
+    console.log(blankImage?.box[0], "box")
+    let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage}
     let base64 = await createImage(data)
     base64 = base64.replace(/^data:image\/\w+;base64,/, "")
     let buffer = new Buffer.from(base64, "base64")
