@@ -3,6 +3,7 @@ import Design from "@/models/Design";
 
 export async function DesignSearch ({q, productsPerPage, page}){
     //console.log(options);
+    console.log(q)
   let project;
   //if(process.env.NODE_ENV == "development"){
   project = {

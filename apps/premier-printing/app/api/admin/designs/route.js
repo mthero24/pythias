@@ -16,7 +16,7 @@ export async function GET(req){
     let query= {q: req.nextUrl.searchParams.get("q"), page: req.nextUrl.searchParams.get("page")}
     try{
         let designs
-        if(!query.q || query.q == ""){
+        if(!query.q){
             if(query.page == undefined || query.page == 1){
                 console.log("page = 1 or undefined")
                 designs = await Design.find({}).sort({date: -1}).limit(200)
@@ -25,9 +25,15 @@ export async function GET(req){
                 designs = await Design.find({}).sort({date: -1}).skip((query.page - 1) * 200).limit(200)
             }
         }else{
-            designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 200})
+            if(query.page == 1){
+                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).limit(200)
+                if(designs.length == 0) designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 200})
+            }else{
+                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).skip((query.page - 1) * 200).limit(200)
+                if(designs.length == 0) designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 200})
+            }
         }
-        return NextResponse.json({error: false, designs,})
+        return NextResponse.json({error: false, designs})
     }catch(e){
         console.log(e)
         return NextResponse.json({error: true, msg: JSON.stringify(e)})
