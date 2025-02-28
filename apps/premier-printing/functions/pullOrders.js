@@ -4,21 +4,11 @@ import Item from "@/models/Items";
 import Blank from "@/models/Blanks";
 import Color from "@/models/Color";
 import Order from "@/models/Order";
-import skus from "./rest.json";
-import t2n from "./t2n.json";
-import fs from "fs"
 import { getOrders, generatePieceID } from "@pythias/integrations";
-export default async function Test(){
-    // let items = await Item.find({status: "shipped"})
-    // console.log(items.length)
-    // for(let i of items){
-    //     i.labelPrinted = true;
-    //     await i.save()
-    // }
+async function pullOrders(){
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
-    let skusFound = 0
-    let skusNotFOund = 0
     for(let o of orders){
+        console.log(o.orderStatus, o.carrierCode == "ups"? "Expedited": "Standard",)
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
         if(!order){
             order = new Order({orderId: o.orderId, poNumber: o.orderNumber, orderKey: o.orderKey, date: o.orderDate, status: o.orderStatus,
@@ -32,7 +22,7 @@ export default async function Test(){
                     state: o.shipTo.state,
                     country: o.shipTo.country
                 },
-                shippingType: o.carrierCode == "stamps_com"? "Standard": "Expedited",
+                shippingType: o.carrierCode == "ups"? "Expedited": "Standard",
                 marketplace: o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name,
                 total: o.orderTotal,
                 paid: true
@@ -45,8 +35,6 @@ export default async function Test(){
                         sku = await SkuToUpc.findOne({upc: i.upc})
                     }
                     if(!sku) sku = await SkuToUpc.findOne({sku: i.sku})
-                    if(!sku) skusNotFOund++
-                    else skusFound++
                     for(let j = 0; j < parseInt(i.quantity); j++){
                         let design
                         let blank
@@ -83,7 +71,7 @@ export default async function Test(){
             }
             order.items = items
         }else{
-            if(order.status != o.orderStatus){
+            
                 order.status = o.orderStatus
                 if(order.status == "shipped"){
                     order.items.map(async i=>{
@@ -92,12 +80,19 @@ export default async function Test(){
                         await i.save()
                     })
                 }
-            }
+                if(order.status == "cancelled"){
+                    order.items.map(async i=>{
+                        i.status = order.status;
+                        i.canceled = true;
+                        await i.save()
+                    })
+                }
         }
-        console.log(order)
+        //console.log(order)
         await order.save()
-        //save order
     }
-    // console.log(skusFound, skusNotFOund)
-    return <h1>test</h1>
 }
+pullOrders()
+setInterval(()=>{
+    if(process.env.pm_id == 0)pullOrders()
+}, 1 * 60 *60 *1000)
