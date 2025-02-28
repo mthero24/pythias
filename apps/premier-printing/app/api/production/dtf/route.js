@@ -1,10 +1,21 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Items from "../../../../models/Items";
 import Employee from "../../../../models/employeeTracking";
+import Color from "@/models/Color"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
 const getImages = async (front, back, style, item, source)=>{
     let styleImage = style.multiImages.front.filter(i=> i.color == item.color.toString())[0]
+    if(!styleImage){
+        let color = await Color.findOne({name: item.colorName, _id: {$ne: item.color}})
+        if(color){
+            styleImage = style.multiImages.front.filter(i=> i.color == color._id.toString())[0]
+            if(styleImage) {
+                item.color = color
+                item = await item.save()
+            }
+        }
+    }
     let backStyleImage = style.multiImages.back.filter(i=> i.color == item.color.toString())[0]
     console.log(styleImage)
     let frontDesign = front 
@@ -12,14 +23,14 @@ const getImages = async (front, back, style, item, source)=>{
     let frontCombo
     let backCombo
     if(front) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage.box[0], styleImage: styleImage.image, designImage: front })
+        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage?.box[0], styleImage: styleImage?.image, designImage: front })
         frontCombo = res.data.base64
     }
     if(back) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: backStyleImage.box[0], styleImage: backStyleImage.image, designImage: back })
+        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: backStyleImage?.box[0], styleImage: backStyleImage?.image, designImage: back })
         backCombo = res.data.base64
     }
-    styleImage=styleImage.image
+    styleImage=styleImage?.image
     return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName, frontCombo, backCombo}
 }
 export async function GET(req = NextApiResponse) {
