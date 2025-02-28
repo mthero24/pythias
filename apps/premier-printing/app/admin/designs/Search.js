@@ -12,10 +12,13 @@ export default function Search({search, setSearch, setDesigns, setHasMore, setPa
                 if(res.data.designs.length < 200) setHasMore(false)
                 setDesigns([...res.data.designs])
             }
+            setPerform(!perform); 
         }
-        console.log("search")
-        setHasMore(true)
-        getDesigns()
+        if(perform == true){
+            console.log("search")
+            setHasMore(true)
+            getDesigns()
+        }
     },[perform])
     return(
          <Card sx={{width: "100%", padding: "1%"}}>
