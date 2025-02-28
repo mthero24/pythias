@@ -16,7 +16,7 @@ export async function GET(req){
     let query= {q: req.nextUrl.searchParams.get("q"), page: req.nextUrl.searchParams.get("page")}
     try{
         let designs
-        if(!query.q){
+        if(!query.q || query.q == ""){
             if(query.page == undefined || query.page == 1){
                 console.log("page = 1 or undefined")
                 designs = await Design.find({}).sort({date: -1}).limit(200)
@@ -27,7 +27,7 @@ export async function GET(req){
         }else{
             designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 200})
         }
-        return NextResponse.json({error: false, designs, count: designs[0]?.meta.count.total})
+        return NextResponse.json({error: false, designs,})
     }catch(e){
         console.log(e)
         return NextResponse.json({error: true, msg: JSON.stringify(e)})
