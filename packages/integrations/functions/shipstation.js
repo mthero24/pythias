@@ -7,7 +7,7 @@ export async function getOrders({auth}){
             Authorization: `Basic ${btoa(auth)}`
         }
     }
-    console.log(new Date(Date.now() - 3 * (24 * 60 * 60 * 1000)))
+    console.log(new Date(Date.now() - 7 * (24 * 60 * 60 * 1000)))
     let lastDate = new Date(Date.now() - (7* (24 * 60 * 60 * 1000)))
     console.log(`${lastDate.getMonth().toString().length == 2? lastDate.getMonth(): `0${lastDate.getMonth() + 1}` }/${lastDate.getDate().toString().length == 2? lastDate.getDate(): `0${lastDate.getDate()}`}/${lastDate.getFullYear()}`)
     let res = await axios.get(`https://ssapi.shipstation.com/orders?createDateStart=${lastDate.getMonth().toString().length == 2? lastDate.getMonth(): `0${lastDate.getMonth() + 1}` }/${lastDate.getDate().toString().length == 2? lastDate.getDate(): `0${lastDate.getDate()}`}/${lastDate.getFullYear()}&page=${1}&pageSize=500`, headers).catch(e=>{console.log(e.response.data)})

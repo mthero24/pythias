@@ -8,7 +8,7 @@ import { getOrders, generatePieceID } from "@pythias/integrations";
 async function pullOrders(){
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
-        console.log(o.orderStatus, o.carrierCode == "ups"? "Expedited": "Standard",)
+        console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
         if(!order){
             order = new Order({orderId: o.orderId, poNumber: o.orderNumber, orderKey: o.orderKey, date: o.orderDate, status: o.orderStatus,
@@ -77,7 +77,7 @@ async function pullOrders(){
                     order.items.map(async i=>{
                         i.status = order.status;
                         i.labelPrinted = true;
-                        await i.save()
+                        i = await i.save()
                     })
                 }
                 if(order.status == "cancelled"){
@@ -94,5 +94,8 @@ async function pullOrders(){
 }
 pullOrders()
 setInterval(()=>{
-    if(process.env.pm_id == 0)pullOrders()
+    console.log(process.env.pm_id, typeof process.env.pm_id)
+}, 1000)
+setInterval(()=>{
+    if(process.env.pm_id == 0 || process.env.pm_id == "0") pullOrders()
 }, 1 * 60 *60 *1000)
