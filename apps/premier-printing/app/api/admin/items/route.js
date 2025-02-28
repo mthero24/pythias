@@ -4,6 +4,7 @@ import SkuToUpc from "@/models/skuUpcConversion"
 import Order from "@/models/Order"
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
+    console.log(data.item.blank)
     let item = await Items.findOneAndUpdate({_id: data.item._id}, {...data.item})
     let sku = await SkuToUpc.findOne({sku: item.sku})
     if(sku){

@@ -114,6 +114,7 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
       const [hasMore, setHasMore] = useState(true)
       const [design, setDesign] = useState()
       const updateItem = async ()=>{
+
         let res = await axios.put("/api/admin/items", {item})
         if(res.data.error) alert(res.data.msg)
         else {
@@ -184,7 +185,9 @@ const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, 
       };
     const handleBlankChange = (val)=>{
         let i = {...item}
-        i.blank = val
+        i.blank = blanks.filter(b=> b._id.toString() == val)[0]
+        i.styleCode = i.blank.code
+        setBlank(i.blank)
         console.log(i.blank)
         setItem({...i})
     }
@@ -234,7 +237,7 @@ const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, 
             <Box sx={{margin: "1% 0%"}}>
                 <CreatableSelect
                     placeholder="Blank"
-                    value={{label: blank?.code, value: blank?._id}}
+                    value={item?.blank? {label: item.blank?.code, value: item.blank?._id}: null}
                     options={blanks.map(b=>{
                         return {label: b.code, value: b._id}
                     })}
