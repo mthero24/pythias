@@ -92,10 +92,6 @@ async function pullOrders(){
         await order.save()
     }
 }
-pullOrders()
-setInterval(()=>{
-    console.log(process.env.pm_id, typeof process.env.pm_id)
-}, 1000)
 setInterval(()=>{
     if(process.env.pm_id == 0 || process.env.pm_id == "0") pullOrders()
 }, 1 * 60 *60 *1000)
