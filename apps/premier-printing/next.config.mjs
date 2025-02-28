@@ -5,6 +5,17 @@ const nextConfig = {
             {
                 protocol: "https",
                 hostname: "images1.pythiastechnologies.com",
+              },{
+                protocol: "https",
+                hostname: "pythiastechnologies.com",
+              },
+              {
+                protocol: "https",
+                hostname: "www.pythiastechnologies.com",
+              },
+              {
+                protocol: "http",
+                hostname: "localhost:3006",
               },
         ]
     }

@@ -4,7 +4,7 @@ import Image from "next/image"
 import { createImage } from "../../functions/image";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-export function Items({order, style}){
+export function Items({order, style, source}){
     let headingStyle = {
         textAlign: "center",
          fontWeight:600
@@ -33,7 +33,7 @@ export function Items({order, style}){
                         <Grid2 size={{xs: 5}}>
                             {it.design &&
                             <Image
-                                src={it.sku.includes("gift")? it.design?.front.replace("https//:", "https://"): createImage(it.colorName, it.styleCode, {url: it.design?.front})}
+                                src={it.sku.includes("gift")? it.design?.front.replace("https//:", "https://"): createImage(it.colorName, it.styleCode, {url: it.design?.front}, source)}
                                 alt={it.pieceId}
                                 width={100}
                                 height={100}

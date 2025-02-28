@@ -1,6 +1,7 @@
 import sharp from "sharp"
 import {NextApiRequest, NextResponse} from "next/server"
 import axios from "axios"
+import Blanks from "@/models/Blanks"
 import "jimp"
 const readImage = async (url)=>{
     console.log(url)
@@ -15,10 +16,7 @@ const readImage = async (url)=>{
     let image = sharp(buffer);
     return image
 }
-
-export async function POST(req=NextApiRequest){
-    let data = await req.json()
-    console.log(data)
+const createImage = async (data)=>{
     let base64
     if(data.box && data.designImage){
         base64 = await readImage(data.styleImage)
@@ -63,6 +61,32 @@ export async function POST(req=NextApiRequest){
         //console.log(base64, "base64")
         base64 = `data:image/png;base64,${base64.toString("base64")}`
     }
+    return base64
+}
+export async function GET(req){
+    console.log(req.nextUrl.searchParams.get("blank"))
+    let blankCode = req.nextUrl.searchParams.get("blank")
+    let colorName = req.nextUrl.searchParams.get("colorName")
+    let designImage = req.nextUrl.searchParams.get("designImage")
+    let side = req.nextUrl.searchParams.get("side")
+    console.log(blankCode, colorName, designImage, side)
+    let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
+    let color = blank.colors.filter(c=>c.name == colorName)[0]
+    let blankImage = blank.multiImages[side].filter(i=> i.color.toString() == color?._id.toString())[0]
+    let data = {box: blankImage.box, styleImage: blankImage.image, designImage}
+    let base64 = await createImage(data)
+    base64 = base64.replace(/^data:image\/\w+;base64,/, "")
+    let buffer = new Buffer.from(base64, "base64")
+    return new NextResponse(buffer, {
+        headers:{
+            'Content-Type': 'image/png',
+        }
+    })
+}
+export async function POST(req=NextApiRequest){
+    let data = await req.json()
+    console.log(data)
+    let base64 = await createImage(data)
     //console.log(base64)
     return NextResponse.json({error: false, base64})
 }

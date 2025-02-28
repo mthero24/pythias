@@ -9,7 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from "axios"
 import { createImage } from "../functions/image";
 import {useState, useEffect} from "react";
-export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station}){
+export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source}){
     console.log(createImage("red", "AT", {url: "https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75"}))
     const [shippingPrices, setShippingPrices] = useState()
     const [weight, setWeight] = useState(0)
@@ -133,7 +133,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
               </Box>
               <Grid2 container spacing={2}>
                 <Address order={order} style={style} />
-                <Items order={order} style={style}/>
+                <Items order={order} style={style} source={source}/>
               </Grid2>
             </Card>
           )}

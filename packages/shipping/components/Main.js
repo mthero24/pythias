@@ -8,7 +8,7 @@ import {useState, useEffect} from "react";
 import {Box} from "@mui/material"
 
 //import { useWindowSize } from "../exports";
-export function Main({stations, binCount, bins, pieceId, stat}){
+export function Main({stations, binCount, bins, pieceId, stat, source}){
     const [station, setStation] = useState(stat? stat: stations? stations[0]: "station1");
     const [order, setOrder] = useState();
     const [item, setItem] = useState();
@@ -63,7 +63,7 @@ export function Main({stations, binCount, bins, pieceId, stat}){
           setShow={setShow}
           setAction={setAction}
         />
-        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station}/>
+        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source}/>
       </Box>
     );
 }
