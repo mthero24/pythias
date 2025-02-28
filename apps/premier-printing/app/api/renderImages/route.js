@@ -73,7 +73,8 @@ export async function GET(req){
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
     let color = blank.colors.filter(c=>c.name == colorName)[0]
     let blankImage = blank.multiImages[side].filter(i=> i.color.toString() == color?._id.toString())[0]
-    let data = {box: blankImage.box[0], styleImage: blankImage.image, designImage}
+    console.log(blankImage.box)
+    let data = {box: blankImage.box[0]? blankImage.box[0]: null, styleImage: blankImage.image, designImage}
     let base64 = await createImage(data)
     base64 = base64.replace(/^data:image\/\w+;base64,/, "")
     let buffer = new Buffer.from(base64, "base64")
