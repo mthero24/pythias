@@ -9,7 +9,7 @@ let options = {
     arrayNotation: false,
     alternateTextNode: true
 };
-export async function GenerateManifest({PicNumbers, enSettings, businessAddress}){
+export async function GenerateManifest({PicNumbers, enSettings, businessAddress,}){
     //console.log(PicNumbers,)
     let xml = `
     <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -118,7 +118,7 @@ export async function getRatesEn({address, weight, businessAddress, service, enS
     }
 }
 
-export async function buyShippingLabelEn({address, poNumber, weight, businessAddress, selectedShipping, enSettings, dimensions, dpi}){
+export async function buyShippingLabelEn({address, poNumber, weight, businessAddress, selectedShipping, enSettings, dimensions, dpi, imageFormat}){
     console.log(weight)
     let itemsxml = ``
     // if(address.country != "US"){
@@ -146,11 +146,11 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
         xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
         <soap:Body>
         <GetPostageLabel xmlns="www.envmgr.com/LabelService">
-        <LabelRequest ${address.country == "US"? `ImageFormat="ZPLII" 
+        <LabelRequest ${address.country == "US"? `ImageFormat=${imageFormat? imageFormat: "ZPLII"}" 
                         ImageResolution="${dpi != undefined? dpi: 203}">`: `LabelType="International"
                         LabelSubtype="Integrated"
                         LabelSize="4x6"
-                        ImageFormat="ZPLII">`}
+                        ImageFormat=${imageFormat? imageFormat: "ZPLII"}>`}
         <MailpieceShape>Parcel</MailpieceShape>
         <MailClass>${selectedShipping.name}</MailClass>
         <WeightOz>${parseFloat(weight).toFixed(1)}</WeightOz>

@@ -168,7 +168,7 @@ export async function getRates({
       let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "STANDARD_OVERNIGHT", service: "PARCEL_SELECT", packaging:  dimensions.packaging, dimensions});
       if(res.error) {
         if(res.msg == "STANDARD_OVERNIGHT is not supported for the destination."){
-          let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "PRIORITY_OVERNIGHT", service: "PARCEL_SELECT", packaging:  dimensions.packaging, dimensions});
+          res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "PRIORITY_OVERNIGHT", service: "PARCEL_SELECT", packaging:  dimensions.packaging, dimensions});
           if(res.error) {
             FedExSmartPost = res.msg
           }

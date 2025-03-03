@@ -9,8 +9,42 @@ import t2n from "./t2n.json";
 import fs from "fs"
 import axios from "axios"
 import btoa from "btoa"
+import {getRates}from "@pythias/shipping"
 import { getOrders, generatePieceID } from "@pythias/integrations";
 export default async function Test(){
+    let rates = await getRates({
+        address: {
+            name: "michael thero",
+            address: "1421 hidden view dr",
+            city: "lapeer",
+            state: "MI",
+            country: "US",
+            zip: "48446"
+        },
+        businessAddress:  {
+            name: "Premier Printing",
+            address: "2901 14th N",
+            city: "Ammon",
+            state: "ID",
+            country: "US",
+            zip: "83401"
+        },
+        type: "Standard",
+        providers: ["endicia"],
+        weight: 10,
+        dimensions: {height: .5, width: 8, length: 8},
+        enSettings: {
+        requesterID: process.env.endiciaRequesterID,
+        accountNumber: process.env.endiciaAccountNUmber,
+        passPhrase: process.env.endiciaPassPhrase,
+        },
+        credentialsUPS: {
+        accountNumber: process.env.UPSAccountNumber,
+        clientID: process.env.UPSClientID,
+        clientSecret: process.env.UPSClientSecret,
+        },
+    });
+    console.log(rates)
     // let item = await Item.findOne({upc: {$ne: null}})
     // //console.log(item)
     // let labelString = `^XA
@@ -48,90 +82,90 @@ export default async function Test(){
     //     i.labelPrinted = true;
     //     await i.save()
     // }
-    let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
-    console.log(new Date(orders[orders.length -1].orderDate).toLocaleDateString("En-us"))
-    for(let o of orders){
-        try{
-            let order = await Order.findOne({orderId: o.orderId}).populate("items")
-            if(!order){
-                let marketplace = o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name
-                order = new Order({orderId: o.orderId, poNumber: o.orderNumber, orderKey: o.orderKey, date: o.orderDate, status: o.orderStatus,
-                    uniquePo: `${o.orderNumber}-${o.orderId}-${o.advancedOptions.source? o.advancedOptions.source: o.billTo.name}`,
-                    shippingAddress: {
-                        name: o.shipTo.name,
-                        address1: o.shipTo.street1,
-                        address2: o.shipTo.street2,
-                        city: o.shipTo.city,
-                        zip: o.shipTo.postalCode,
-                        state: o.shipTo.state,
-                        country: o.shipTo.country
-                    },
-                    shippingType: marketplace == "faire" || marketplace == "TSC" || marketplace == "zulily"? "Expedited": "Standard",
-                    marketplace: marketplace,
-                    total: o.orderTotal,
-                    paid: true
-                })
-                let items = []
-                for(let i of o.items){
-                    if(i.sku != ""){
-                        let sku
-                        if(i.upc){
-                            sku = await SkuToUpc.findOne({upc: i.upc})
-                        }
-                        if(!sku) sku = await SkuToUpc.findOne({sku: i.sku})
-                        for(let j = 0; j < parseInt(i.quantity); j++){
-                            let design
-                            let blank
-                            let color
-                            let size
-                            if(sku) {
-                                design = await Design.findOne({_id: sku.design})
-                                blank = await Blank.findOne({_id: sku.blank})
-                                color = await Color.findOne({_id: sku.color})
-                                size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.toLowerCase())[0]   
-                            }else{
-                                blank = await Blank.findOne({code: i.sku.split("_")[0]})
-                                color = await Color.findOne({name: i.sku.split("_")[1]})
-                                if(!color) await Color.findOne({name: i.sku.split("_")[2]})
-                                if(blank){
-                                    size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.toLowerCase())[0] 
-                                    if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.toLowerCase())[0]
-                                }
-                                let dSku = i.sku.split("_").splice(3)
-                                let designSku =""
-                                for(let j = 0; j < dSku.length; j++){
-                                    if(j == 0) designSku = dSku[j]
-                                    else designSku = `${designSku}_${dSku[j]}`
-                                }
-                                design = await Design.findOne({sku: designSku})
-                            }
-                            let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name})
-                            //console.log(item)
-                            await item.save()
-                            items.push(item)
-                        }
-                    }
-                    //console.log(items)
-                }
-                order.items = items
-            }else{
+    // let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    // console.log(new Date(orders[orders.length -1].orderDate).toLocaleDateString("En-us"))
+    // for(let o of orders){
+    //     try{
+    //         let order = await Order.findOne({orderId: o.orderId}).populate("items")
+    //         if(!order){
+    //             let marketplace = o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name
+    //             order = new Order({orderId: o.orderId, poNumber: o.orderNumber, orderKey: o.orderKey, date: o.orderDate, status: o.orderStatus,
+    //                 uniquePo: `${o.orderNumber}-${o.orderId}-${o.advancedOptions.source? o.advancedOptions.source: o.billTo.name}`,
+    //                 shippingAddress: {
+    //                     name: o.shipTo.name,
+    //                     address1: o.shipTo.street1,
+    //                     address2: o.shipTo.street2,
+    //                     city: o.shipTo.city,
+    //                     zip: o.shipTo.postalCode,
+    //                     state: o.shipTo.state,
+    //                     country: o.shipTo.country
+    //                 },
+    //                 shippingType: marketplace == "faire" || marketplace == "TSC" || marketplace == "zulily"? "Expedited": "Standard",
+    //                 marketplace: marketplace,
+    //                 total: o.orderTotal,
+    //                 paid: true
+    //             })
+    //             let items = []
+    //             for(let i of o.items){
+    //                 if(i.sku != ""){
+    //                     let sku
+    //                     if(i.upc){
+    //                         sku = await SkuToUpc.findOne({upc: i.upc})
+    //                     }
+    //                     if(!sku) sku = await SkuToUpc.findOne({sku: i.sku})
+    //                     for(let j = 0; j < parseInt(i.quantity); j++){
+    //                         let design
+    //                         let blank
+    //                         let color
+    //                         let size
+    //                         if(sku) {
+    //                             design = await Design.findOne({_id: sku.design})
+    //                             blank = await Blank.findOne({_id: sku.blank})
+    //                             color = await Color.findOne({_id: sku.color})
+    //                             size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.toLowerCase())[0]   
+    //                         }else{
+    //                             blank = await Blank.findOne({code: i.sku.split("_")[0]})
+    //                             color = await Color.findOne({name: i.sku.split("_")[1]})
+    //                             if(!color) await Color.findOne({name: i.sku.split("_")[2]})
+    //                             if(blank){
+    //                                 size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.toLowerCase())[0] 
+    //                                 if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.toLowerCase())[0]
+    //                             }
+    //                             let dSku = i.sku.split("_").splice(3)
+    //                             let designSku =""
+    //                             for(let j = 0; j < dSku.length; j++){
+    //                                 if(j == 0) designSku = dSku[j]
+    //                                 else designSku = `${designSku}_${dSku[j]}`
+    //                             }
+    //                             design = await Design.findOne({sku: designSku})
+    //                         }
+    //                         let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name})
+    //                         //console.log(item)
+    //                         await item.save()
+    //                         items.push(item)
+    //                     }
+    //                 }
+    //                 //console.log(items)
+    //             }
+    //             order.items = items
+    //         }else{
               
-                    order.status = o.orderStatus
-                    if(order.status == "shipped"){
-                        order.items.map(async i=>{
-                            i.status = order.status;
-                            i.labelPrinted = true;
-                            await i.save()
-                        })
-                    }
-            }
-            //console.log(order)
-            await order.save()
-        }catch(e){
-            console.log(e)
-        }
-        //save order
-    }
+    //                 order.status = o.orderStatus
+    //                 if(order.status == "shipped"){
+    //                     order.items.map(async i=>{
+    //                         i.status = order.status;
+    //                         i.labelPrinted = true;
+    //                         await i.save()
+    //                     })
+    //                 }
+    //         }
+    //         //console.log(order)
+    //         await order.save()
+    //     }catch(e){
+    //         console.log(e)
+    //     }
+    //     //save order
+    // }
     // console.log(skusFound, skusNotFOund)
     return <h1>test</h1>
 }
