@@ -57,8 +57,8 @@ export const buildLabelData = async (item, i, opts={}) => {
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
             item.designRef && item.designRef.sku? item.designRef.sku: item.sku
         }^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,320^FD Sku: ${
-            item.designRef && item.designRef.name? item.designRef.sku: item.sku
+        ^LH12,18^CFS,25,12^AXN,22,30^FO10,320^FD Title: ${
+            item.designRef && item.designRef.name? item.designRef.name: item.sku
         }^FS
         ${
             printTypeAbbr
