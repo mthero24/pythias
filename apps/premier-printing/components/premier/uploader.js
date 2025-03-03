@@ -26,7 +26,7 @@ export function Uploader({afterFunction, location, image, productImage, primary,
             let base64 = reader.result;
             console.log(base64, "base64")
         //   if (resize) base64 = await resizeFunc(base64, width);
-            let url = productImage? `products/${Date.now()}.${file.name.split(".")[1]}`: `designs/${Date.now()}.${file.name.split(".")[1]}`
+            let url = productImage? `products/${Date.now()}.${file.name.split(".")[file.name.split(".").length - 1]}`: `designs/${Date.now()}.${file.name.split(".")[file.name.split(".").length - 1]}`
             let params = {
             Bucket: "images1.pythiastechnologies.com",
             Key: url,

@@ -58,19 +58,6 @@ export async function GET(req = NextApiResponse) {
                 status: "DTF Find",
                 date: new Date(),
             });
-            item.lastScan = {
-                station: "DTF Find",
-                date: new Date(Date.now()),
-                //user: user._id,
-            };
-            let tracking = new Employee({
-                type: "DTF Find",
-                Date: new Date(Date.now()),
-                //employee: user,
-                order: item.order,
-                pieceID: item.pieceId,
-            });
-            await tracking.save();
             await item.save();
 
             console.log(item, "item");

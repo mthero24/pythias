@@ -90,7 +90,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
           alert(res.data.msg)
           setWeight(0)
         }else {
-          console.log(res.data, "+++++++++++ result from weight")
+          console.log(res.data, "+++++++++++ result from weight") //186.25
           setWeight(res.data.value)
         }
         return

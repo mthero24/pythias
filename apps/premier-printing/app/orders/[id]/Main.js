@@ -77,7 +77,7 @@ export function Main({ord, blanks}){
                                     <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
                                         {i.steps.map(s=>(
                                             <Box key={s._id}>
-                                                <Typography>s.status</Typography>
+                                                <Typography>{s.status}</Typography>
                                                 <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
                                             </Box>
                                         ))}

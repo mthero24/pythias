@@ -19,6 +19,7 @@ export function Scan({ setSubmitted, auto, setAuto, printer, type}){
       console.log("getInfo")
       setScan("")
       let res
+      setSubmitted(null)
       if(type == "send") res = await axios.post(`/api/production/dtf`, {pieceId: scan, printer})
       else res = await axios.get(`/api/production/dtf?pieceID=${scan}`)
       console.log(res.data)

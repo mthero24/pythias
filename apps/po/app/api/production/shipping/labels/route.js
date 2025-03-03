@@ -10,6 +10,7 @@ export async function POST(req= NextApiRequest){
     console.log(data)
     //return NextResponse.json({error: true})
     if(!data.address.country) data.address.country = "US"
+
     try{
         let label = await buyLabel({
             ...data,

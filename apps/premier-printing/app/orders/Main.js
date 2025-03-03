@@ -2,14 +2,22 @@
 import {Card, Typography, Box, Grid2, TextField} from "@mui/material"
 import {useState} from "react"
 import { useRouter } from "next/navigation";
+import axios from "axios";
 export function Main({ords}){
     const router = useRouter()
     const [orders, setOrders] = useState(ords)
+    const [search, setSearch] = useState(null)
+    const performSearch = async()=>{
+        let res = await axios.post("/api/orders", {search})
+        if(res.data.error) alert(res.data.msg)
+        else{
+            setOrders(res.data.orders)
+        }
+    }
     return (
-       
         <Box sx={{padding: "3%", background: "#e2e2e2"}}>
              <Card sx={{padding: "2%", margin: "1% 0%"}}>
-                <TextField placeholder="...Search" fullWidth/>
+                <TextField placeholder="...Search" fullWidth onChange={()=>{setSearch(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter") performSearch()}} />
             </Card>
             <Card sx={{minHeight: "100vh"}}>
             <Card sx={{padding: "3%", margin: "1% 1%", textAlign: "center"}} > 

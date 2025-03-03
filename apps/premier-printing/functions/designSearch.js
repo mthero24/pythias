@@ -27,8 +27,8 @@ export async function DesignSearch ({q, productsPerPage, page}){
         compound: {
           must: [
             {phrase: {
-                query: q.toUpperCase(),
-                path: ["name", "tags", "sku"],
+                query: q.split(" "),
+                path: ["name"],
                 slop: 1,
               },}
           ]

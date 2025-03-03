@@ -37,12 +37,18 @@ export async function LabelsData(){
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
-        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items")
-        labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
+        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace")
+        labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        
+        labels[k] = labels[k].map(s=> { if(s.designRef.sku.toUpperCase().includes("EMB")){
+            s.type = "EMB"
+        }else if(s.designRef.sku.toUpperCase().includes("PU")){
+            s.type = "PUF"
+        }else{
+            s.type = "DTF"
+        };  return {...s}})
         let inventoryArray = await Inventory.find({})
-            .select("quantity pending_quantity inventory_id color_name size_name style_code")
+            .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
             .lean();
         labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
         //labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})

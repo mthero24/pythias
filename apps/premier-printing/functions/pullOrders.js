@@ -11,6 +11,7 @@ async function pullOrders(){
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
         if(!order){
+            let marketplace = o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name
             order = new Order({orderId: o.orderId, poNumber: o.orderNumber, orderKey: o.orderKey, date: o.orderDate, status: o.orderStatus,
                 uniquePo: `${o.orderNumber}-${o.orderId}-${o.advancedOptions.source? o.advancedOptions.source: o.billTo.name}`,
                 shippingAddress: {
@@ -22,7 +23,7 @@ async function pullOrders(){
                     state: o.shipTo.state,
                     country: o.shipTo.country
                 },
-                shippingType: o.carrierCode == "ups"? "Expedited": "Standard",
+                shippingType: marketplace == "faire" || marketplace == "TSC" || marketplace == "Zulily"? "Expedited": "Standard",
                 marketplace: o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name,
                 total: o.orderTotal,
                 paid: true
@@ -61,7 +62,7 @@ async function pullOrders(){
                             }
                             design = await Design.findOne({sku: designSku})
                         }
-                        let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name})
+                        let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name})
                         //console.log(item)
                         await item.save()
                         items.push(item)

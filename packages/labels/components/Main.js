@@ -396,7 +396,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                             sx={{ display: { xs: "none", sm: "block" } }}
                           >
                             <Typography sx={{ textAlign: "center" }}>
-                              {i.styleCode}
+                              {i.styleCode}-{i.type}
                             </Typography>
                           </Grid2>
                           <Grid2

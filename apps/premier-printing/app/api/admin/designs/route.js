@@ -16,7 +16,7 @@ export async function GET(req){
     let query= {q: req.nextUrl.searchParams.get("q"), page: req.nextUrl.searchParams.get("page")}
     try{
         let designs
-        if(!query.q){
+        if(!query.q && !query == ""){
             if(query.page == undefined || query.page == 1){
                 console.log("page = 1 or undefined")
                 designs = await Design.find({}).sort({date: -1}).limit(200)
