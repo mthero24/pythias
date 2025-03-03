@@ -167,7 +167,7 @@ export async function getRates({
       let name = "STANDARD_OVERNIGHT"
       let res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "STANDARD_OVERNIGHT", service: "PARCEL_SELECT", packaging:  dimensions.packaging, dimensions});
       if(res.error) {
-        if(res.msg == "STANDARD_OVERNIGHT is not supported for the destination."){
+        //if(res.msg == "STANDARD_OVERNIGHT is not supported for the destination."){
           res = await getRatesFeOld({ credentials: credentialsFedEx, weight: weight / 16, address, businessAddress, serviceType: "PRIORITY_OVERNIGHT", service: "PARCEL_SELECT", packaging:  dimensions.packaging, dimensions});
           if(res.error) {
             FedExSmartPost = res.msg
@@ -176,9 +176,9 @@ export async function getRates({
             FedExSmartPost = res.rate;
             name="PRIORITY_OVERNIGHT"
           }
-        }else {
-          FedExSmartPost = res.rate;
-        }
+        // }else {
+        //   FedExSmartPost = res.rate;
+        // }
       }
       else {
         FedExSmartPost = res.rate;
