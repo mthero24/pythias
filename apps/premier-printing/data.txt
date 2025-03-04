@@ -1,0 +1,1 @@
+{"originZIPCode":"83401","destinationZIPCode":"48446","weight":0.625,"length":8,"width":8,"height":0.5,"mailClass":"usps_priority_mail","processingCategory":"NONSTANDARD","rateIndicator":"SP","destinationEntryFacilityType":"NONE","priceType":"CONTRACT","mailingDate":"2025-03-04","accountType":"EPS"}

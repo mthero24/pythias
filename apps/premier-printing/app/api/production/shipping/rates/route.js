@@ -9,8 +9,8 @@ export async function POST(req= NextApiRequest){
         let rates = await getRates({
             address: data.address,
             businessAddress: JSON.parse(process.env.businessAddress),
-            type: data.shippingType,
-            providers: ["endicia", "fedex"],
+            type: data.marketplace == "faire"? null: data.marketPlace == "Zulily" || data.marketplace == "TSC"? "Expedited": "Standard",
+            providers: ["shipstation", "ups"],
             weight: data.weight,
             dimensions: data.dimensions,
             enSettings: {
@@ -39,8 +39,11 @@ export async function POST(req= NextApiRequest){
             clientID: process.env.UPSClientID,
             clientSecret: process.env.UPSClientSecret,
             },
+            credentialsShipStation: {
+                apiKey: process.env.ssV2
+            },
         });
-        return NextResponse.json({error: false, rates})
+        return NextResponse.json({error: false, rates: rates? rates: []})
     }catch(e){
         console.log(e)
         return NextResponse.json({error: true, msg:e})

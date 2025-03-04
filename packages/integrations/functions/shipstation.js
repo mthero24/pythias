@@ -22,3 +22,25 @@ export async function getOrders({auth}){
     console.log(orders.length)
     return orders
 }
+
+export async function updateOrder({auth, orderId, carrierCode, trackingNumber}){
+    let lastDate = new Date(Date.now())
+    console.log(auth)
+    console.log(btoa(auth))
+    let headers = {
+        headers: {
+            Authorization: `Basic ${btoa(auth)}`
+        }
+    }
+    let res = await axios.post(`https://ssapi.shipstation.com/orders/markasshipped`, {
+        "orderId": orderId,
+        "carrierCode": carrierCode,
+        "shipDate": `${lastDate.getFullYear()}-${lastDate.getMonth().toString().length == 2? lastDate.getMonth(): `0${lastDate.getMonth() + 1}` }-${lastDate.getDate().toString().length == 2? lastDate.getDate(): `0${lastDate.getDate()}`}`,
+        "trackingNumber": trackingNumber,
+        "notifyCustomer": false,
+        "notifySalesChannel": false
+    }, headers).catch(e=> {
+        console.log(e.response.data)
+    })
+    return res
+}

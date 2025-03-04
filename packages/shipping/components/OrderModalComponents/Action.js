@@ -28,7 +28,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
         setShippingSelected(shippingPrices?.filter(s=> s.service.name == event.target.value)[0].service)
     }
     const ship = async ()=>{
-        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress})
+        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress, marketplace: order.marketplace})
         console.log(res.data)
         if(res.data.error){
             alert(res.data.msg)

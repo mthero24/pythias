@@ -12,6 +12,7 @@
     ".": "./exports"
   },
   "dependencies": {
+    "pdfkit": "^0.16.0",
     "xml2js": "^0.6.2"
   }
 }

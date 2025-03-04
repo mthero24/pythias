@@ -5,6 +5,7 @@ import Order from "../../../../../models/Order";
 import manifest from "../../../../../models/manifest";
 import axios from "axios"
 import Bin from "../../../../../models/Bin";
+import {updateOrder} from "@pythias/integrations";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
@@ -14,7 +15,7 @@ export async function POST(req= NextApiRequest){
         let label = await buyLabel({
             ...data,
             businessAddress: JSON.parse(process.env.businessAddress),
-            providers: ["endicia", "fedex"],
+            providers: ["shipstation", "ups"],
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
             accountNumber: process.env.endiciaAccountNUmber,
@@ -44,13 +45,23 @@ export async function POST(req= NextApiRequest){
                 clientID: process.env.UPSClientID,
                 clientSecret: process.env.UPSClientSecret,
             },
+            upsThirdParty: data.marketplace == "Zulily"? process.env.upsZulily: data.marketplace == "TSC"? process.env.upsTSC: null,
+            credentialsShipStation: {
+                apiKey: process.env.ssV2
+            },
+            imageFormat: "PDF"
         });
         if(label.error){
             return NextResponse.json(label)
         }else{
-            let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
-            await man.save()
+            console.log(data)
+            if(data.selectedShipping.provider == "usps"){
+                let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
+                await man.save()
+            }
             let order = await Order.findOne({_id: data.orderId}).populate("items")
+            let re2s = updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
+            //console.log(re2s)
             order.shippingInfo.label = label.label
             order.shippingInfo.shippingCost += parseFloat(label.cost);
             order.status = "Shipped"
@@ -79,7 +90,7 @@ export async function POST(req= NextApiRequest){
                     "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
                 }
             }
-            let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
+            let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: label.label, station: data.station, barcode: "ppp"}, headers)
             console.log(res.data)
             if(res.error){
                 return NextResponse.json({error: true, msg: "error printing label"})

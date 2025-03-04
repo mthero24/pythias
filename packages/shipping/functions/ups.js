@@ -5,6 +5,8 @@ let getNew = new Date(Date.now())
 const csv = require("csvtojson");
 let zones = {}
 let rates = {}
+import jsPDF from 'jspdf';
+import sharp from "sharp"
 
 let getZones = async ()=>{
   let zo = await csv().fromFile('./functions/zone.csv')
@@ -58,7 +60,7 @@ async function auth(credentials) {
       );
 
       const data = await resp.json();
-      if(data.response) console.log(data.response, "auth");
+      //if(data.response) console.log(data.response, "auth");
       getNew = new Date(Date.now() + (parseInt(data.expires_in) * 1000))
       access_token = data.access_token
       return access_token
@@ -66,13 +68,13 @@ async function auth(credentials) {
       return access_token
     }
 }
-export async function ship({order, service, description, packageType, packageDescription, weight, credentials}) {
+export async function ship({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, thirdParty, imageFormat}) {
     let body = {
         "ShipmentRequest": {
           "Request": {
             "RequestOption": "validate'",
             "TransactionReference": {
-              "CustomerContext": order.poNumber
+              "CustomerContext": poNumber
             }
           },
           "Shipment": {
@@ -81,86 +83,91 @@ export async function ship({order, service, description, packageType, packageDes
               NegotiatedRatesIndicator: "Y"
             },
             "Shipper": {
-              Name: order.user.addresses[0].name,
-              "ShipperNumber": process.env.UPSAccountNumber,
+              Name: businessAddress.name,
+              "ShipperNumber": credentials.accountNumber,
               "EMailAddress": "michaelthero@teeshirtpalace.com",
               Address: {
                 AddressLine: [
-                  order.user.addresses[0].address1,
-                  order.user.addresses[0].address2
+                  businessAddress.addressLine1,
+                  businessAddress.addressLine2
                 ],
-                City: order.user.addresses[0].city,
-                StateProvinceCode: order.user.addresses[0].state,
-                PostalCode: order.user.addresses[0].zip,
-                CountryCode: order.user.addresses[0].country
+                City: businessAddress.city,
+                StateProvinceCode: businessAddress.state,
+                PostalCode: businessAddress.postalCode,
+                CountryCode: businessAddress.country
               }
             },
             "ShipTo": {
-              "Name": order.shippingAddress.name,
+              "Name": address.name,
               "Phone": {
-                "Number": order.shippingAddress.phoneNumber? order.shippingAddress.phoneNumber: "0000000000"
+                "Number": address.phoneNumber? address.phoneNumber: "0000000000"
               },
               "EMailAddress": " ",
               "Address": {
                 "AddressLine": [
-                  order.shippingAddress.address1,
-                  order.shippingAddress.address2
+                  address.address1,
+                  address.address2
                 ],
-                "City": order.shippingAddress.city,
-                "StateProvinceCode": order.shippingAddress.state,
-                "PostalCode": order.shippingAddress.zip,
-                "CountryCode": order.shippingAddress.country
+                "City": address.city,
+                "StateProvinceCode": address.state,
+                "PostalCode": address.zip,
+                "CountryCode": address.country
               }
             },
             "AlternateDeliveryAddress": {
-              "Name": order.user.addresses[0].name,
+              "Name": businessAddress.name,
               "Phone": {
-                "Number": order.user.addresses[0].phoneNumber
+                "Number": businessAddress.phoneNumber
               },
-              "EMailAddress": order.emailAddress,
+              "EMailAddress": businessAddress.emailAddress,
               "Address": {
                 "AddressLine": [
-                  order.user.addresses[0].address1,
-                  order.user.addresses[0].address2
+                  businessAddress.addressLine1,
+                  businessAddress.addressLine2
                 ],
-                "City": order.user.addresses[0].city,
-                "StateProvinceCode": order.user.addresses[0].state,
-                "PostalCode": order.user.addresses[0].zip,
-                "CountryCode": order.user.addresses[0].country
+                "City": businessAddress.city,
+                "StateProvinceCode": businessAddress.state,
+                "PostalCode": businessAddress.postalCode,
+                "CountryCode": businessAddress.country
               }
             },
             ShipFrom: {
-              Name: order.user.addresses[0].name,
+              Name: businessAddress.name,
               Address: {
                 AddressLine: [
-                  order.user.addresses[0].address1,
-                  order.user.addresses[0].address2
+                  businessAddress.addressLine1,
+                  businessAddress.addressLine2
                 ],
-                City: order.user.addresses[0].city,
-                StateProvinceCode: order.user.addresses[0].state,
-                PostalCode: order.user.addresses[0].zip,
-                CountryCode: order.user.addresses[0].country
+                City: businessAddress.city,
+                StateProvinceCode: businessAddress.state,
+                PostalCode: businessAddress.postalCode,
+                CountryCode: businessAddress.country
               }
             },
             "PaymentInformation": {
               "ShipmentCharge": {
                 "Type": "01",
-                "BillShipper": {
+                "BillShipper": thirdParty? {
+                  "AccountNumber": thirdParty,
+                  Address: {
+                    CountryCode: "US"
+                  }
+                }:{
                   "AccountNumber": process.env.UPSAccountNumber
                 }
               }
             },
             "Service": {
-              "Code": service,
-              "Description": description
+              "Code": selectedShipping.service,
+              "Description": selectedShipping.description
             },
             USPSEndorsement: "1",
-            PackageID: order.poNumber,
+            PackageID: poNumber,
             "ShipmentServiceOptions": {
               "Notification": {
                 "NotificationCode": "8",
                 "EMail": {
-                  "EMailAddress": order.user.email
+                  "EMailAddress": businessAddress.emailAddress
                 },
                 "Locale": {
                   "Language": "ENG",
@@ -172,8 +179,8 @@ export async function ship({order, service, description, packageType, packageDes
             "Package": {
               "Description": "D2R shipment",
               "Packaging": {
-                "Code": packageType,
-                "Description": packageDescription
+                "Code": selectedShipping.packageType,
+                "Description": selectedShipping.packageDescription
               },
              
               "PackageWeight": {
@@ -181,7 +188,7 @@ export async function ship({order, service, description, packageType, packageDes
                   "Code": "LBS",
                   "Description": "Pounds"
                 },
-                "Weight": weight.toString()
+                "Weight": (weight / 16).toString()
               },
               
             }
@@ -198,7 +205,7 @@ export async function ship({order, service, description, packageType, packageDes
           },
           "LabelSpecification": {
             "LabelImageFormat": {
-              "Code": "ZPL"
+              "Code": imageFormat? imageFormat == "PDF"? "GIF": imageFormat: "ZPL"
             },
             "LabelStockSize": {
               "Height": "6",
@@ -229,10 +236,21 @@ export async function ship({order, service, description, packageType, packageDes
       console.log(data.response.errors, "errors");
       return {error: 101}
     }else{
-      console.log(data.ShipmentResponse.ShipmentResults, "results",  packageType , packageType == "M4");
-     // console.log(data.ShipmentResponse.ShipmentResults.PackageResults, "results");
-      let result = {trackingNumber: data.ShipmentResponse.ShipmentResults.PackageResults.TrackingNumber, label: new Buffer.from(data.ShipmentResponse.ShipmentResults.PackageResults.ShippingLabel.GraphicImage, "base64").toString('ascii'), cost:  service == "M4"?data.ShipmentResponse.ShipmentResults.ShipmentCharges.TotalCharges.MonetaryValue: data.ShipmentResponse.ShipmentResults.NegotiatedRateCharges.TotalCharge.MonetaryValue}
-      return result
+      console.log(data.ShipmentResponse.ShipmentResults, "results",)
+      console.log(data.ShipmentResponse.ShipmentResults.PackageResults.ShippingLabel.ImageFormat, "results",)
+      //console.log(data.ShipmentResponse.ShipmentResults.PackageResults.ShippingLabel.GraphicImage)
+      let pdf = new jsPDF('l', 'in', [4, 6]);
+      let buf = Buffer.from(data.ShipmentResponse.ShipmentResults.PackageResults.ShippingLabel.GraphicImage, "base64")
+      console.log(buf, "buff")
+      let image = sharp(buf)
+      image = await image.png({ quality: 100 }).toBuffer();
+      let trimmedBase64 = `data:image/png;base64,${image.toString("base64")}`;
+      pdf.addImage(trimmedBase64, 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
+      let final = Buffer.from(pdf.output('arraybuffer'))
+      final = final.toString("base64")
+      console.log(final + "==")
+      let result = {trackingNumber: data.ShipmentResponse.ShipmentResults.PackageResults.TrackingNumber, label: final, cost:  selectedShipping.service == "M4"?data.ShipmentResponse.ShipmentResults.ShipmentCharges.TotalCharges.MonetaryValue: data.ShipmentResponse.ShipmentResults.NegotiatedRateCharges? data.ShipmentResponse.ShipmentResults.NegotiatedRateCharges.TotalCharge.MonetaryValue : data.ShipmentResponse.ShipmentResults.ShipmentCharges.TotalCharges.MonetaryValue}
+      return result 
     }
 }
 
@@ -294,7 +312,7 @@ export async function getRatesUPS({address, businessAddress, service, descriptio
               ],
               City: businessAddress.city,
               StateProvinceCode: businessAddress.state,
-              PostalCode: businessAddress.zip,
+              PostalCode: businessAddress.postalCode,
               CountryCode: businessAddress.country
             }
           },

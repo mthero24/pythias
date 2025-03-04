@@ -7,11 +7,11 @@ export default async function Shipping(req,res){
     let binCount = await Bins.find({}).countDocuments()
     let readyToShip = await Bins.find({ ready: true, inUse: true })
       .sort({ number: 1 })
-      .populate({ path: "order", populate: "items" })
+      .populate({ path: "order", populate: "items marketplace" })
       .lean();
     let inUse = await Bins.find({ inUse: true, ready: false })
       .sort({ number: 1 })
-      .populate({ path: "order", populate: "items" })
+      .populate({ path: "order", populate: "items marketplace" })
       .lean();
     console.log(binCount, readyToShip.length, inUse.length)
     readyToShip = JSON.parse(JSON.stringify(readyToShip))

@@ -11,40 +11,150 @@ import axios from "axios"
 import btoa from "btoa"
 import {getRates}from "@pythias/shipping"
 import { getOrders, generatePieceID } from "@pythias/integrations";
+import {buyLabels} from "@pythias/shipping";
 export default async function Test(){
-    let rates = await getRates({
-        address: {
-            name: "michael thero",
-            address: "1421 hidden view dr",
-            city: "lapeer",
-            state: "MI",
-            country: "US",
-            zip: "48446"
-        },
-        businessAddress:  {
-            name: "Premier Printing",
-            address: "2901 14th N",
-            city: "Ammon",
-            state: "ID",
-            country: "US",
-            zip: "83401"
-        },
-        type: "Standard",
-        providers: ["endicia"],
-        weight: 10,
-        dimensions: {height: .5, width: 8, length: 8},
-        enSettings: {
-        requesterID: process.env.endiciaRequesterID,
-        accountNumber: process.env.endiciaAccountNUmber,
-        passPhrase: process.env.endiciaPassPhrase,
-        },
-        credentialsUPS: {
-        accountNumber: process.env.UPSAccountNumber,
-        clientID: process.env.UPSClientID,
-        clientSecret: process.env.UPSClientSecret,
-        },
-    });
-    console.log(rates)
+    // let rates = await getRates({
+    //     address: {
+    //         name: "michael thero",
+    //         address: "1421 hidden view dr",
+    //         city: "lapeer",
+    //         state: "MI",
+    //         country: "US",
+    //         zip: "48446"
+    //     },
+    //     businessAddress:  {
+    //         name: "Premier Printing",
+    //         address: "2901 14th N",
+    //         city: "Ammon",
+    //         state: "ID",
+    //         country: "US",
+    //         zip: "83401"
+    //     },
+    //     type: "Standard",
+    //     providers: ["endicia", "ups"],
+    //     weight: 10,
+    //     dimensions: {height: .5, width: 8, length: 8},
+    //     enSettings: {
+    //     requesterID: process.env.endiciaRequesterID,
+    //     accountNumber: process.env.endiciaAccountNUmber,
+    //     passPhrase: process.env.endiciaPassPhrase,
+    //     },
+    //     credentialsUPS: {
+    //     accountNumber: process.env.upsAccountNumber,
+    //     clientID: process.env.upsClientID,
+    //     clientSecret: process.env.upsClientSecret,
+    //     },
+    // });
+    // console.log(rates)
+    // let rates = await getRates({
+    //     address: {
+    //         name: "michael thero",
+    //         address1: "1421 hidden view dr",
+    //         city: "lapeer",
+    //         state: "MI",
+    //         country: "US",
+    //         zip: "48446"
+    //     },
+    //     weight: 10,
+    //     type: "Expedited",
+    //     selectedShipping: {provider: "usps", name: "GroundAdvantage",},
+    //     businessAddress: JSON.parse(process.env.businessAddress),
+    //     providers: ["shipstation", "ups"],
+    //     enSettings: {
+    //     requesterID: process.env.endiciaRequesterID,
+    //     accountNumber: process.env.endiciaAccountNUmber,
+    //     passPhrase: process.env.endiciaPassPhrase,
+    //     },
+    //     credentials: {
+    //         clientId: process.env.uspsClientId,
+    //         clientSecret: process.env.uspsClientSecret,
+    //         crid: process.env.uspsCRID,
+    //         mid: process.env.uspsMID,
+    //         manifestMID: process.env.manifestMID,
+    //         accountNumber: process.env.accountNumber
+    //     },
+    //     credentialsFedEx: {
+    //         accountNumber: process.env.tpalfedexaccountnumber,
+    //         meterNumber: process.env.tpalfedexmeternumber,
+    //         key: process.env.tpalfedexkey,
+    //         password: process.env.tpalfedexpassword,
+    //     },
+    //     credentialsFedExNew: {
+    //         accountNumber: process.env.AccountFedExTest,
+    //         key: process.env.ApiKeyTestFedEx,
+    //         secret: process.env.SecretKeyFedExTest,
+    //     },
+    //     credentialsUPS: {
+    //         accountNumber: process.env.UPSAccountNumber,
+    //         clientID: process.env.UPSClientID,
+    //         clientSecret: process.env.UPSClientSecret,
+    //     },
+    //     upsThirdParty:  process.env.upsZulily,
+    //     imageFormat: "PDF",
+    //     credentialsShipStation: {
+    //         apiKey: `SEBwOjXwy9XE01lg+UWRuCMKeq/4uWOMBPHV7pWTtjQ`
+    //     },
+    //     dimensions:{
+    //         width: 8,
+    //         length: 8,
+    //         height: .5
+    //     }
+    // })
+    // console.log(rates)
+    // let label = await buyLabel({
+    //     address: {
+    //         name: "michael thero",
+    //         address1: "1421 hidden view dr",
+    //         city: "lapeer",
+    //         state: "MI",
+    //         country: "US",
+    //         zip: "48446"
+    //     },
+    //     weight: 10,
+    //     selectedShipping: {provider: "usps", name: "GroundAdvantage",},
+    //     businessAddress: JSON.parse(process.env.businessAddress),
+    //     providers: ["shipstation", "ups"],
+    //     enSettings: {
+    //     requesterID: process.env.endiciaRequesterID,
+    //     accountNumber: process.env.endiciaAccountNUmber,
+    //     passPhrase: process.env.endiciaPassPhrase,
+    //     },
+    //     credentials: {
+    //         clientId: process.env.uspsClientId,
+    //         clientSecret: process.env.uspsClientSecret,
+    //         crid: process.env.uspsCRID,
+    //         mid: process.env.uspsMID,
+    //         manifestMID: process.env.manifestMID,
+    //         accountNumber: process.env.accountNumber
+    //     },
+    //     credentialsFedEx: {
+    //         accountNumber: process.env.tpalfedexaccountnumber,
+    //         meterNumber: process.env.tpalfedexmeternumber,
+    //         key: process.env.tpalfedexkey,
+    //         password: process.env.tpalfedexpassword,
+    //     },
+    //     credentialsFedExNew: {
+    //         accountNumber: process.env.AccountFedExTest,
+    //         key: process.env.ApiKeyTestFedEx,
+    //         secret: process.env.SecretKeyFedExTest,
+    //     },
+    //     credentialsUPS: {
+    //         accountNumber: process.env.UPSAccountNumber,
+    //         clientID: process.env.UPSClientID,
+    //         clientSecret: process.env.UPSClientSecret,
+    //     },
+    //     upsThirdParty:  process.env.upsZulily,
+    //     imageFormat: "PDF",
+    //     credentialsShipStation: {
+    //         apiKey: `SEBwOjXwy9XE01lg+UWRuCMKeq/4uWOMBPHV7pWTtjQ`
+    //     },
+    //     dimensions:{
+    //         width: 8,
+    //         length: 8,
+    //         height: .5
+    //     }
+    // });
+    // console.log(label)
     // let item = await Item.findOne({upc: {$ne: null}})
     // //console.log(item)
     // let labelString = `^XA
@@ -60,19 +170,21 @@ export default async function Test(){
     // ^XZ`;
     // labelString = btoa(labelString)
     // console.log(labelString)
-    // let headers = {
-    //     headers: {
-    //         "Content-Type": "application/json",
-    //         "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
-    //     }
+    // if(label.label){
+        // let headers = {
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //         "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
+        //     }
+        // }
+        // let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: label.label, station: "station1", barcode: "jjj"}, headers)
+        // console.log(res.data, "res.data")
     // }
-    // let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelString, printer: "printer1"}, headers)
-
     // let somePDF = await fs.readFileSync("./app/test/some2.pdf")
     // somePDF = btoa(somePDF)
     // console.log(somePDF)
-    // let res = await axios.post("http://192.168.1.27:3500/print-shipping", {barcode: "here", label: somePDF,  station: "station2"}, headers ).catch(e=>{console.log(e)})
-    // console.log(res?.data)
+    //let res = await axios.post("http://localhost:3500/print-shipping", {barcode: "here", label: label.label,  station: "station2"}, headers ).catch(e=>{console.log(e)})
+    //console.log(res?.data)
 
 
     
@@ -82,7 +194,24 @@ export default async function Test(){
     //     i.labelPrinted = true;
     //     await i.save()
     // }
-    // let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    // let headers = {
+    //     headers: {
+    //         "Content-Type": "application/json",
+    //         "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
+    //     }
+    // }
+    // let headers = {
+    //     headers: {
+    //         "Content-Type": "application/json",
+    //         "api-key": `SEBwOjXwy9XE01lg+UWRuCMKeq/4uWOMBPHV7pWTtjQ`
+    //     }
+    // }
+    // // // let res = await axios.get(`http://${process.env.localIP}/api/shipping/scales?station=station2`, headers)
+    // // // console.log(res.data)
+    let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    // // console.log(orders[orders.length - 4])
+    // let res = await axios.get(`https://api.shipstation.com/v2/shipments?page=1&page_size=10&sort_dir=desc&sort_by=created_at`, headers).catch(e=> {console.log(e)})
+    // console.log(res?.data)
     // console.log(new Date(orders[orders.length -1].orderDate).toLocaleDateString("En-us"))
     // for(let o of orders){
     //     try{

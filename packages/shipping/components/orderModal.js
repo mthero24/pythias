@@ -33,7 +33,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
     }
     useEffect(()=>{
       let getShippingRates = async ()=>{
-        let res = await axios.post("/api/production/shipping/rates", {address: order.shippingAddress, shippingType: order.shippingType, weight, dimensions})
+        let res = await axios.post("/api/production/shipping/rates", {address: order.shippingAddress, marketplace: order.marketplace, shippingType: order.shippingType, weight, dimensions})
         if(res.data.error) alert(res.data.msg)
         else {
           setShippingPrices(res.data.rates.rates)
