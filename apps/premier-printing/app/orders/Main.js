@@ -1,12 +1,12 @@
 "use client";
-import {Card, Typography, Box, Grid2, TextField} from "@mui/material"
+import {Card, Typography, Box, Grid2, TextField, Pagination, PaginationItem, Link,} from "@mui/material"
 import {useState} from "react"
 import { useRouter } from "next/navigation";
 import axios from "axios";
-export function Main({ords}){
+export function Main({ords, pages, page, q}){
     const router = useRouter()
     const [orders, setOrders] = useState(ords)
-    const [search, setSearch] = useState(null)
+    const [search, setSearch] = useState(q)
     const performSearch = async()=>{
         let res = await axios.post("/api/orders", {search})
         if(res.data.error) alert(res.data.msg)
@@ -14,6 +14,10 @@ export function Main({ords}){
             setOrders(res.data.orders)
         }
     }
+    const handleChange = (event, value) => {
+        console.log(value)
+        router.push(`/orders?page=${value}`)
+      };
     return (
         <Box sx={{padding: "3%", background: "#e2e2e2"}}>
              <Card sx={{padding: "2%", margin: "1% 0%"}}>
@@ -64,6 +68,11 @@ export function Main({ords}){
                         </Grid2>
                     </Card>
                 ))}
+                <Box sx={{padding: "2%", display: "flex", flexDirection: "row", justifyContent: "center"}}>
+                    <Pagination count={pages? pages: 20} color="secondary" size="large" boundaryCount={2} defaultPage={page? page: 1} 
+                    onChange={handleChange}
+                    />
+                </Box>
             </Card>
         </Box>
     )

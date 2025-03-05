@@ -10,7 +10,7 @@ let serviceCodes ={
     },
 }
 
-export async function ShipStationShip({address, poNumber, weight, businessAddress, credentials, selectedShipping, dimensions}){
+export async function ShipStationShip({address, poNumber, weight, businessAddress, credentials, selectedShipping, dimensions, dpi}){
     let headers = {
         headers: {
             "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export async function ShipStationShip({address, poNumber, weight, businessAddres
         is_return_label: false,
         validate_address: 'validate_and_clean',
         label_download_type: 'inLine',
-        label_format: 'pdf',
+        label_format: dpi? "ZPL": 'pdf',
         display_scheme: 'label',
         label_layout: '4x6',
     }

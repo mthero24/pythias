@@ -3,7 +3,7 @@ import {Box, Card} from "@mui/material"
 import {Scan} from "./scan";
 import {Images} from "./images"
 import {useState,} from "react";
-export const Main = ({})=>{
+export const Main = ({source})=>{
     const [auto, setAuto] = useState(true)
     const [item, setItem] = useState()
     return (
@@ -11,7 +11,7 @@ export const Main = ({})=>{
             <Scan auto={auto} setAuto={setAuto} setItem={setItem}/>
             <Box sx={{margin: "0% 5%"}}>
                 <Card>
-                    {item && <Images item={item} />}
+                    {item && <Images item={item} source={source} />}
                 </Card>
             </Box>
         </Box>

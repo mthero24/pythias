@@ -1,25 +1,29 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Items from "../../../../models/Items";
-import manifest from "../../../../models/manifest";
-import {isSingleItem, isShipped, canceled} from "../../../../functions/itemFunctions"
+import Items from "@/models/Items";
+import Order from "@/models/Order"
+import manifest from "@/models/manifest";
+import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
+const ups =["faire", "Zulily", "TSC"]
 export async function POST(req = NextApiRequest){
     let data = await req.json();
     console.log(data)
-    let item = await Items.findOne({pieceId: data.scan,}).populate({path: "order", populate: "items"}).populate("styleV2")
+    let item = await Items.findOne({pieceId: data.scan,}).populate("blank")
+    if(item) item.order = await Order.findOne({_id: item.order}).populate("items")
     console.log(item?.order, "item order",)
     if(item){
+        console.log(isSingleItem(item))
         if(canceled(item, item.order) == true) return NextResponse.json({error: true, msg: "Item Canceled"})
-        else if(isSingleItem(item) == true && item.order.shippingType == "Standard") {
+        else if(isSingleItem(item) == true && !ups.includes(item.order.marketplace)) {
             //buy label ## address, poNumber, weight, selectedShipping, dimensions, businessAddress, providers, enSettings, credentials,
             let send = {
                 address: item.order.shippingAddress, 
                 poNumber: item.order.poNumber, 
-                weight: item.styleV2.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight, 
-                selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
+                weight: item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight?item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight: 8, 
+                selectedShipping: {provider: "usps", name: "usps_ground_advantage"}, dimensions: {width: 8, length: 11, height: 1}, 
                 businessAddress: JSON.parse(process.env.businessAddress),
-                providers: ["usps", "fedex"],                
+                providers: ["shipstation", "ups"],                
                 credentials: {
                     clientId: process.env.uspsClientId,
                     clientSecret: process.env.uspsClientSecret,
@@ -32,6 +36,9 @@ export async function POST(req = NextApiRequest){
                     requesterID: process.env.endiciaRequesterID,
                     accountNumber: process.env.endiciaAccountNUmber,
                     passPhrase: process.env.endiciaPassPhrase,
+                },
+                credentialsShipStation: {
+                    apiKey: process.env.ssV2
                 },
                 dpi: 300
             }
@@ -56,7 +63,7 @@ export async function POST(req = NextApiRequest){
             }
         }
         //get fold settings
-        let foldSettings = await item.styleV2.fold.filter(f=> f.size.toLowerCase() == item.sizeName.toLowerCase() || f.sizeName?.toLowerCase() == item.sizeName.toLowerCase())[0]
+        let foldSettings = await item.blank.fold.filter(f=> f.size.toLowerCase() == item.sizeName.toLowerCase() || f.sizeName?.toLowerCase() == item.sizeName.toLowerCase())[0]
         console.log(foldSettings)
         //send to folder
         if(foldSettings){
@@ -64,7 +71,7 @@ export async function POST(req = NextApiRequest){
             let headers = {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+                    "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
                 }
             }
             let response = await axios.post(
@@ -72,7 +79,7 @@ export async function POST(req = NextApiRequest){
                 {
                   barcode: item.pieceId,
                   label: item.order.shippingInfo.label,
-                  style: item.styleV2.code,
+                  style: item.blank.code,
                   design: item.sku.split("-")[0],
                   size: item.sizeName,
                   color: item.color,
@@ -101,7 +108,7 @@ export async function POST(req = NextApiRequest){
             console.log(response?.data, responseData)
             if(response?.data.error) return NextResponse.json(response.data)
             else if(responseData) return NextResponse.json(responseData)
-            else return NextResponse.json({error: false, msg: "added to que", item})
+            else return NextResponse.json({error: false, msg: "added to que", item, source: "PP"})
         }
         else return NextResponse.json({error: true, msg: "Could Not Find Fold Settings"})
     }else{

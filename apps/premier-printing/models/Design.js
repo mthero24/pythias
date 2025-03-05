@@ -6,19 +6,27 @@ const schema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
   tags: [{ type: String }],
+  isLicenseDesign: {type: Boolean, default: false},
+  LicenseHolder: { type: mongoose.Schema.Types.ObjectId,
+    ref: "LicenseHolders",},
+  printType: { type: String,
+    enum : ['EMB','VIN', 'SCN', 'DTF'],
+    default: 'DTF'},
   images: {
     front: { type: String },
     back: { type: String },
-    leftSleeve: { type: String },
-    rightSleeve: { type: String },
-    pocket: {type: String}
+    upperSleeve: { type: String },
+    lowerSleeve: { type: String },
+    pocket: {type: String},
+    center: {type: String}
   },
   embroideryFiles: {
     front: { type: String },
     back: { type: String },
-    leftSleeve: { type: String },
-    rightSleeve: { type: String },
-    pocket: {type: String}
+    upperSleeve: { type: String },
+    lowerSleeve: { type: String },
+    pocket: {type: String},
+    center: {type: String}
   },
   blanks: [{
     blank:{

@@ -5,6 +5,7 @@ let schema = new mongoose.Schema({
     number: {type: Number, unique: true},
     sku: {type: String, unique: true},
     upc: {type:String, unique: true},
-    quantity: {type: Number, default: 0}
+    quantity: {type: Number, default: 0},
+    inUse: {type: Boolean, default: false}
 })
 export default PremierPrinting.model("ReturnBin", schema);

@@ -70,7 +70,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                 {action.includes("bin") && (
                     <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", padding: "1%"}}>
                         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                            <Image src={item?.sku.includes("gift")? item?.design?.front.replace("https//:", "https://"): createImage(item?.colorName, item?.styleCode, {url: item?.design.front})}
+                            <Image src={item?.sku.includes("gift")? item?.design?.front.replace("https//:", "https://"): createImage(item?.colorName, item?.styleCode, {url: item?.design?.front})}
                             alt={item?.pieceId}
                             width={300}
                             height={300}

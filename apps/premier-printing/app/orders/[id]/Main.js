@@ -67,7 +67,7 @@ export function Main({ord, blanks}){
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
-                                    {i.designRef == undefined && <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing Design!!</Button>}
+                                    { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
                                     {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
                                 </Box>
                             </AccordionSummary>

@@ -116,7 +116,7 @@ export function Main({design, bls, brands, mPs, pI}){
         }
         //setLoading(false);
     };
-    let imageLocations = ["front", "back", "leftSleeve", "rightSleeve", "pocket"]
+    let imageLocations = ["front", "back", "upperSleeve", "lowerSleeve", "pocket", "center"]
     
     let updateDesign = async (des)=>{
         let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
@@ -171,15 +171,15 @@ export function Main({design, bls, brands, mPs, pI}){
         for(let b of brands){
             console.log(b.name)
             if(b.name == "Urban Threads Co."){
-                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Shien", "Temu"], d})
+                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Shein", "Temu"], d})
                 console.log(d.b2m)
             }else if(b.name == "Simply Sage Market"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's", "Walmart", "Amazon"], d})
                 console.log(d.b2m)
-            }else if(b.name == "Juniper Shop"){
+            }else if(b.name == "The Juniper Shop"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's"], d})
                 console.log(d.b2m)
-            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Wholesale" || b.name == "Olive And Ivory" || b.name == "Olive And Ivory Wholesale"){
+            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Co Wholesale" || b.name == "Olive And Ivory" || b.name == "Olive And Ivory Wholesale"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
                 console.log(d.b2m)
             }
@@ -322,18 +322,12 @@ export function Main({design, bls, brands, mPs, pI}){
                     <Grid2 container spacing={1}>
                         
                         {imageLocations.map((i, j)=>(
-                            <Grid2 size={{xs: 6, sm: 2.4, md: 2.4}} key={j}>
+                            <Grid2 size={{xs: 6, sm: 2, md: 2}} key={j}>
                                 <Uploader location={i} afterFunction={updateImage} image={des.images? des.images[i]: null} />
                                 <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
                             </Grid2>
                         ))}
-                        {!des.imagesAdded && <Button sx={{margin: "6% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
-                            let d = {...des};
-                            d.imagesAdded = true;
-                            setDesign({...d});
-                            updateDesign({...d})
-                            alert("Marked Images Added")
-                        }}>Images Added</Button>}
+                        
                     </Grid2>
                 </AccordionDetails>
             </Accordion>
@@ -350,7 +344,7 @@ export function Main({design, bls, brands, mPs, pI}){
                     <Grid2 container spacing={1}>
                         
                         {imageLocations.map((i, j)=>(
-                            <Grid2 size={{xs: 6, sm: 2.4, md: 2.4}} key={j}>
+                            <Grid2 size={{xs: 6, sm: 2, md: 2}} key={j}>
                                 <Uploader location={i} afterFunction={updateEmbroidery}  image={des.embroideryFiles && des.embroideryFiles[i]? "/embplaceholder.jpg": null}/>
                                 <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete File</Button>
                             </Grid2>
@@ -385,6 +379,39 @@ export function Main({design, bls, brands, mPs, pI}){
                             })}
                             isMulti
                          />
+                    </Grid2>
+                    <Grid2 size={12}><hr/></Grid2>
+                    <Grid2 size={12}>
+                        <Grid2 container spacing={2}>
+                            <Grid2 size={6}>
+                                <CreatableSelect
+                                    placeholder="Print Type"
+                                    options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinal", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
+                                    value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinal": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
+                                    onChange={(vals)=>{
+                                        console.log(vals)
+                                        let d = {...des}
+                                        d.printType = vals.value
+                                        setDesign({...d})
+                                        updateDesign({...d})
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={6}>
+                                <CreatableSelect
+                                    placeholder="License Holder"
+                                    options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinal", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
+                                    value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinal": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
+                                    onChange={(vals)=>{
+                                        console.log(vals)
+                                        let d = {...des}
+                                        d.printType = vals.value
+                                        setDesign({...d})
+                                        updateDesign({...d})
+                                    }}
+                                />
+                            </Grid2>
+                        </Grid2>
                     </Grid2>
                     <Grid2 size={12}><hr/></Grid2>
                     <Grid2 size={{xs: 12, sm: 12}} >
