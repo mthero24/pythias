@@ -41,9 +41,9 @@ export async function POST(req= NextApiRequest){
                 secret: process.env.SecretKeyFedExTest,
             },
             credentialsUPS: {
-                accountNumber: process.env.UPSAccountNumber,
-                clientID: process.env.UPSClientID,
-                clientSecret: process.env.UPSClientSecret,
+                accountNumber: process.env.upsAccountNumber,
+                clientID: process.env.upsClientId,
+                clientSecret: process.env.upsClientSecret,
             },
             upsThirdParty: data.marketplace == "Zulily"? process.env.upsZulily: data.marketplace == "TSC"? process.env.upsTSC: null,
             credentialsShipStation: {
