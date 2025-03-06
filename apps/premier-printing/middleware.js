@@ -3,8 +3,24 @@ import { getToken } from "next-auth/jwt";
 
 const protectedRoutes = [
   {
-    path: "/admin",
+    path: "/admin/blanks",
+    roles: ["admin"],
+  },
+  {
+    path: "/admin/license",
+    roles: ["admin"],
+  },
+  {
+    path: "/admin/designs",
     roles: ["admin", "production"],
+  },
+  {
+    path: "/admin/design",
+    roles: ["admin", "production"],
+  },
+  {
+    path: "/admin",
+    roles: ["admin"],
   },
   {
     path: "/account",
