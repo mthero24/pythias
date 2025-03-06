@@ -36,7 +36,7 @@ export async function POST(req= NextApiRequest){
             },
             credentialsUPS: {
                 accountNumber: process.env.upsAccountNumber,
-                clientID: process.env.upsClientID,
+                clientID: process.env.upsClientId,
                 clientSecret: process.env.upsClientSecret,
             },
             credentialsShipStation: {
