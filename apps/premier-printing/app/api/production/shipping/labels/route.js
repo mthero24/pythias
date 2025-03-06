@@ -45,7 +45,7 @@ export async function POST(req= NextApiRequest){
                 clientID: process.env.upsClientId,
                 clientSecret: process.env.upsClientSecret,
             },
-            upsThirdParty: data.marketplace == "Zulily"? process.env.upsZulily: data.marketplace == "TSC"? process.env.upsTSC: null,
+            thirdParty: data.marketplace == "Zulily"? process.env.upsZulily: data.marketplace.trim() == "TSC"? process.env.upsTSC: null,
             credentialsShipStation: {
                 apiKey: process.env.ssV2
             },
