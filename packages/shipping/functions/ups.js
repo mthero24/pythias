@@ -69,6 +69,7 @@ async function auth(credentials) {
     }
 }
 export async function ship({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, thirdParty, imageFormat}) {
+    console.log(thirdParty, "+++++++++++++++++++++ third party")
     let body = {
         "ShipmentRequest": {
           "Request": {
@@ -153,7 +154,7 @@ export async function ship({address, poNumber, weight, selectedShipping, dimensi
                     CountryCode: "US"
                   }
                 }:{
-                  "AccountNumber": process.env.UPSAccountNumber
+                  "AccountNumber": credentials.upsAccountNumber
                 }
               }
             },
@@ -277,7 +278,7 @@ export async function getRatesUPS({address, businessAddress, service, descriptio
         },
         Shipment: {
           Shipper: {
-            Name: "Print Oracle",
+            Name: businessAddress.name,
             ShipperNumber: credentials.accountNumber,
             Address: {
               AddressLine: [
