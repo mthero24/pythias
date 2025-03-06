@@ -76,9 +76,10 @@ const schema = new mongoose.Schema(
     design: {
       front: { type: String },
       back: { type: String },
-      leftSleeve: { type: String },
-      rightSleeve: { type: String },
-      pocket: {type: String}
+      upperSleeve: { type: String },
+      lowerSleeve: { type: String },
+      pocket: {type: String},
+      center: {type: String}
     },
     weight: Number,
     quantity: {

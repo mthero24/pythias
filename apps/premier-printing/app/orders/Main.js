@@ -16,7 +16,7 @@ export function Main({ords, pages, page, q}){
     }
     const handleChange = (event, value) => {
         console.log(value)
-        router.push(`/orders?page=${value}`)
+        location.href = `/orders?page=${value}`
       };
     return (
         <Box sx={{padding: "3%", background: "#e2e2e2"}}>
@@ -45,7 +45,7 @@ export function Main({ords, pages, page, q}){
                     </Card>
                 {orders.map(o=>(
                     <Card key={o.poNumber} sx={{padding: "3%", margin: "1% 1%", textAlign: "center", cursor: "pointer", background: o.items.map(i=> {
-                        if(o.status != "shipped" && (i.design == undefined || i.designRef == undefined || i.size == undefined || i.blank == undefined || i.color == undefined)) {
+                        if(o.status != "shipped" && (i.design == undefined )) {
                             return true
                         }
                     }).filter(j=> j!= undefined).length > 0? "red": ""}} onClick={()=>router.push(`/orders/${o._id}`)}> 
