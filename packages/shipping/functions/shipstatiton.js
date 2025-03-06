@@ -33,7 +33,7 @@ export async function ShipStationShip({address, poNumber, weight, businessAddres
             address_line2: address.address2,
             city_locality: address.city,
             state_province: address.state,
-            postal_code: address.zip,
+            postal_code: address?.zip?.split("-")[0],
             country_code: address.country,
             address_residential_indicator: 'unknown',
             },

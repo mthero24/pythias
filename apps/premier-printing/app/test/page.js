@@ -208,7 +208,7 @@ export default async function Test(){
     // }
     // // // let res = await axios.get(`http://${process.env.localIP}/api/shipping/scales?station=station2`, headers)
     // // // console.log(res.data)
-    let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    //let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     // // console.log(orders[orders.length - 4])
     // let res = await axios.get(`https://api.shipstation.com/v2/shipments?page=1&page_size=10&sort_dir=desc&sort_by=created_at`, headers).catch(e=> {console.log(e)})
     // console.log(res?.data)
