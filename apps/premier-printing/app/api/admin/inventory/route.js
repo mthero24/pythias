@@ -43,7 +43,7 @@ export async function GET(req){
 }
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    console.log(data)
+    //console.log(data)
     let inventory = await Inventory.findOne({inventory_id: data.inventory_id});
     inventory.quantity = Number(data.quantity);
     inventory.unit_cost = Number(data.cost);

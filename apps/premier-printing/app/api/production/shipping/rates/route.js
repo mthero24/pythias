@@ -14,30 +14,30 @@ export async function POST(req= NextApiRequest){
             weight: data.weight,
             dimensions: data.dimensions,
             enSettings: {
-            requesterID: process.env.endiciaRequesterID,
-            accountNumber: process.env.endiciaAccountNUmber,
-            passPhrase: process.env.endiciaPassPhrase,
+                requesterID: process.env.endiciaRequesterID,
+                accountNumber: process.env.endiciaAccountNUmber,
+                passPhrase: process.env.endiciaPassPhrase,
             },
             credentials: {
-            clientId: process.env.uspsClientId,
-            clientSecret: process.env.uspsClientSecret,
-            accountNumber: process.env.accountNumber
+                clientId: process.env.uspsClientId,
+                clientSecret: process.env.uspsClientSecret,
+                accountNumber: process.env.accountNumber
             },
             credentialsFedEx: {
-            accountNumber: process.env.tpalfedexaccountnumber,
-            meterNumber: process.env.tpalfedexmeternumber,
-            key: process.env.tpalfedexkey,
-            password: process.env.tpalfedexpassword,
+                accountNumber: process.env.tpalfedexaccountnumber,
+                meterNumber: process.env.tpalfedexmeternumber,
+                key: process.env.tpalfedexkey,
+                password: process.env.tpalfedexpassword,
             },
             credentialsFedExNew: {
-            accountNumber: process.env.AccountFedExTest,
-            key: process.env.ApiKeyTestFedEx,
-            secret: process.env.SecretKeyFedExTest,
+                accountNumber: process.env.AccountFedExTest,
+                key: process.env.ApiKeyTestFedEx,
+                secret: process.env.SecretKeyFedExTest,
             },
             credentialsUPS: {
-            accountNumber: process.env.UPSAccountNumber,
-            clientID: process.env.UPSClientID,
-            clientSecret: process.env.UPSClientSecret,
+                accountNumber: process.env.upsAccountNumber,
+                clientID: process.env.upsClientID,
+                clientSecret: process.env.upsClientSecret,
             },
             credentialsShipStation: {
                 apiKey: process.env.ssV2

@@ -88,9 +88,14 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
       </Box>
       <Divider />
       <List sx={{ width: "100%" }}>
-      <Link href="/admin">
+        <Link href="/admin">
           <ListItemButton>
             <ListItemText primary={`Premier Printing`} />
+          </ListItemButton>
+        </Link>
+        <Link href="/admin/license">
+          <ListItemButton>
+            <ListItemText primary={`Licenses`} />
           </ListItemButton>
         </Link>
         <Link href="/admin/blanks">
@@ -124,7 +129,21 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Find DTF`} />
           </ListItemButton>
         </Link>
-
+        <Link href="/production/embroidery">
+          <ListItemButton>
+            <ListItemText primary={`Embroidery`} />
+          </ListItemButton>
+        </Link>
+        <Link href="/production/vinal">
+          <ListItemButton>
+            <ListItemText primary={`Vinal`} />
+          </ListItemButton>
+        </Link>
+        <Link href="/production/returns">
+          <ListItemButton>
+            <ListItemText primary={`Returns`} />
+          </ListItemButton>
+        </Link>
         <Link href="/production/roq-folder">
           <ListItemButton>
             <ListItemText primary={`Folder`} />

@@ -1,7 +1,8 @@
 "use client";
 import {Box, Button, Typography, Modal, Card, TextField, Grid2} from "@mui/material";
 import CreatableSelect from "react-select/creatable";
-import {useState} from "react";
+import {useState, useEffect} from "react";
+import axios from "axios";
 const style = {
     position: 'absolute',
     top: '50%',
@@ -14,14 +15,29 @@ const style = {
     p: 4,
   };
 
-export function AddModal({open, setOpen}){
+export function AddModal({open, setOpen, li, setLi, setLicenses}){
     const blank = {
         "name": null,
         licenseType: null,
         paymentType: null,
         amount: 0
     }
-    const [license, setLicense] = useState(blank)
+    const [license, setLicense] = useState(li? li: blank)
+    useEffect(()=>{
+        if(li){
+            setLicense(li)
+        }
+    },[li])
+    let create = async ()=>{
+        let res = await axios.post("/api/admin/license", {license})
+        if(res.data.error) alert(res.data.msg)
+        else{
+            setLicense(blank)
+            setLi(null)
+            setOpen(false)
+            setLicenses(res.data.licenses)
+        }
+    }
     return (
         <Modal
         open={open}
@@ -68,7 +84,7 @@ export function AddModal({open, setOpen}){
                     }}/>
                 </Grid2>
                 <Grid2 size={12}>
-                    <Button fullWidth>Create</Button>
+                    <Button fullWidth sx={{background: "#e2e2e2", color: "#000"}} onClick={()=>{create()}}>Create</Button>
                 </Grid2>
              </Grid2>
         </Box>
