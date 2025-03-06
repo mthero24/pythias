@@ -235,7 +235,7 @@ export async function ship({address, poNumber, weight, selectedShipping, dimensi
     const data = await resp.json();
     if(data.response){
       console.log(data.response.errors, "errors");
-      return {error: 101}
+      return {error: 101, msg: JSON.stringify(data.response.errors)}
     }else{
       console.log(data.ShipmentResponse.ShipmentResults, "results",)
       console.log(data.ShipmentResponse.ShipmentResults.PackageResults.ShippingLabel.ImageFormat, "results",)
