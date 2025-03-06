@@ -70,15 +70,19 @@ async function auth(credentials) {
 }
 export async function ship({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, thirdParty, imageFormat}) {
     console.log(thirdParty, "+++++++++++++++++++++ third party")
-    let bill = thirdParty? {"BillShipper":{
-      "AccountNumber": credentials.upsAccountNumber}}: 
-            {BillThirdParty:{
-              "AccountNumber": thirdParty,
-              Address: {
-                CountryCode: "US"
-              }}
-            }
-    
+    let bill 
+    if(!thirdParty){
+      bill =  {"BillShipper":{
+        "AccountNumber": credentials.upsAccountNumber}}
+    }
+    else bill = {BillThirdParty:{
+      "AccountNumber": thirdParty,
+      Address: {
+        PostalCode: "83401",
+        CountryCode: "US"
+      }}
+    }
+    console.log(bill)
     let body = {
         "ShipmentRequest": {
           "Request": {
@@ -157,7 +161,7 @@ export async function ship({address, poNumber, weight, selectedShipping, dimensi
             "PaymentInformation": {
               "ShipmentCharge": {
                 "Type": "01",
-                bill
+                ...bill
               }
             },
             "Service": {
@@ -217,7 +221,7 @@ export async function ship({address, poNumber, weight, selectedShipping, dimensi
           }
         }
       }
-
+  console.log(body.ShipmentRequest.Shipment.PaymentInformation)
   const version = 'v1';
   let authorizeToken = await auth(credentials);
   console.log(authorizeToken, "token")
