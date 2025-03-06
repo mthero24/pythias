@@ -70,6 +70,15 @@ async function auth(credentials) {
 }
 export async function ship({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, thirdParty, imageFormat}) {
     console.log(thirdParty, "+++++++++++++++++++++ third party")
+    let bill = thirdParty? {"BillShipper":{
+      "AccountNumber": credentials.upsAccountNumber}}: 
+            {BillThirdParty:{
+              "AccountNumber": thirdParty,
+              Address: {
+                CountryCode: "US"
+              }}
+            }
+    
     let body = {
         "ShipmentRequest": {
           "Request": {
@@ -148,14 +157,7 @@ export async function ship({address, poNumber, weight, selectedShipping, dimensi
             "PaymentInformation": {
               "ShipmentCharge": {
                 "Type": "01",
-                "BillShipper": thirdParty? {
-                  "AccountNumber": thirdParty,
-                  Address: {
-                    CountryCode: "US"
-                  }
-                }:{
-                  "AccountNumber": credentials.upsAccountNumber
-                }
+                bill
               }
             },
             "Service": {
