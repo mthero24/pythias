@@ -38,7 +38,7 @@ export async function updateOrder({auth, orderId, carrierCode, trackingNumber}){
         "shipDate": `${lastDate.getFullYear()}-${lastDate.getMonth().toString().length == 2? lastDate.getMonth(): `0${lastDate.getMonth() + 1}` }-${lastDate.getDate().toString().length == 2? lastDate.getDate(): `0${lastDate.getDate()}`}`,
         "trackingNumber": trackingNumber,
         "notifyCustomer": false,
-        "notifySalesChannel": false
+        "notifySalesChannel": true
     }, headers).catch(e=> {
         console.log(e.response.data)
     })
