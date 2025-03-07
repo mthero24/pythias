@@ -15,23 +15,23 @@ import {buyLabels} from "@pythias/shipping";
 import {updateOrder} from "@pythias/integrations";
 export default async function Test(){
 
-    let orders = await Order.find({"shippingInfo.labels": {$size: 1}, poNumber: "53813"}).limit(100).select("orderId shippingInfo")
-    //updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
-    let skip = 100
+    // let orders = await Order.find({"shippingInfo.labels": {$size: 1}, poNumber: "53813"}).limit(100).select("orderId shippingInfo")
+    // //updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
+    // let skip = 100
    // let ord = orders[0]
     // console.log({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId: ord.orderId, carrierCode: "usps", trackingNumber: ord.shippingInfo.labels[0].trackingNumber})
     // await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:ord.orderId, carrierCode: "usps", trackingNumber: ord.shippingInfo.labels[0].trackingNumber})
     // console.log(orders.length, orders[0].shippingInfo.labels[0] )
-    while(orders.length > 0){
-        for(let ord of orders){
-            console.log({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId: ord.orderId, carrierCode: "usps", trackingNumber: ord.shippingInfo.labels[0].trackingNumber})
-            let res = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:ord.orderId, carrierCode: "usps", trackingNumber: ord.shippingInfo.labels[0].trackingNumber})
-            console.log(res.data)
-        }
-        orders = await Order.find({"shippingInfo.labels": {$size: 1}, poNumber: "53813"}).skip(skip).limit(100).select("orderId shippingInfo")
-        skip += 100
-        console.log(skip)
-    }
+    // while(orders.length > 0){
+    //     for(let ord of orders){
+    //         console.log({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId: ord.orderId, carrierCode: "usps", trackingNumber: ord.shippingInfo.labels[0].trackingNumber})
+    //         let res = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:ord.orderId, carrierCode: "usps", trackingNumber: ord.shippingInfo.labels[0].trackingNumber})
+    //         console.log(res.data)
+    //     }
+    //     orders = await Order.find({"shippingInfo.labels": {$size: 1}, poNumber: "53813"}).skip(skip).limit(100).select("orderId shippingInfo")
+    //     skip += 100
+    //     console.log(skip)
+    // }
     // let rates = await getRates({
     //     address: {
     //         name: "michael thero",

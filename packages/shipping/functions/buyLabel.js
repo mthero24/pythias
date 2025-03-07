@@ -18,7 +18,7 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
             let res = await purchaseLabel({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, dpi, ignoreBadAddress: true, imageFormat })
             return res
         }else if(providers.includes("shipstation")){
-            let res = await ShipStationShip({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials: credentialsShipStation, dpi, ignoreBadAddress: true, imageFormat })
+            let res = await ShipStationShip({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials: credentialsShipStation, dpi, ignoreBadAddress, imageFormat })
             return res
         }else return {error: true, msg: "no usps provider selected please add endicia or usps to the providers array"}
     }else if(selectedShipping.provider == "fedex"){
