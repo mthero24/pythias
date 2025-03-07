@@ -1,14 +1,13 @@
 import mongoose from "mongoose";
-const { PremierPrinting } = require("../lib/connection");
-
+import { PremierPrinting }from "../lib/connection";
 const schema = new mongoose.Schema({
   sku: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   description: { type: String },
   tags: [{ type: String }],
   isLicenseDesign: {type: Boolean, default: false},
-  LicenseHolder: { type: mongoose.Schema.Types.ObjectId,
-    ref: "LicenseHolders",},
+  licenseHolder: { type: mongoose.Schema.Types.ObjectId,
+    ref: "LicenseHolders"},
   printType: { type: String,
     enum : ['EMB','VIN', 'SCN', 'DTF'],
     default: 'DTF'},

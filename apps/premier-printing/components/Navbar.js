@@ -71,17 +71,17 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
   <Drawer open={visible} anchor={anchor} onClose={toggleDrawer}>
     <Box
       sx={{
-        width: anchor === "top" || anchor === "bottom" ? "auto" : 250,
+        width:"auto",
         p: 3,
         background: theme.palette.primary.main,
         color: "#fff",
-        minHeight: "100%"
+        height: "150%",
       }}
       role="presentation"
       onClick={toggleDrawer}
       onKeyDown={toggleDrawer}
     >
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1, }}>
         <Link href="/admin">
           <img className="img-fluid" width="170" src="/premierprinting-logo.png" />
         </Link>
@@ -139,11 +139,6 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Vinal`} />
           </ListItemButton>
         </Link>
-        <Link href="/production/returns">
-          <ListItemButton>
-            <ListItemText primary={`Returns`} />
-          </ListItemButton>
-        </Link>
         <Link href="/production/roq-folder">
           <ListItemButton>
             <ListItemText primary={`Folder`} />
@@ -158,6 +153,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
         <Link href="/inventory">
           <ListItemButton>
             <ListItemText primary={`Inventory`} />
+          </ListItemButton>
+        </Link>
+        <Link href="/production/returns">
+          <ListItemButton>
+            <ListItemText primary={`Returns`} />
           </ListItemButton>
         </Link>
       </List>

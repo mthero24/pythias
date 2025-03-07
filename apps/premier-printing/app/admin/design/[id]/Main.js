@@ -9,7 +9,7 @@ import Theme from "@/components/Theme.json"
 import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
 import { useRouter } from "next/navigation";
-export function Main({design, bls, brands, mPs, pI}){
+export function Main({design, bls, brands, mPs, pI, licenses}){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -400,12 +400,12 @@ export function Main({design, bls, brands, mPs, pI}){
                             <Grid2 size={6}>
                                 <CreatableSelect
                                     placeholder="License Holder"
-                                    options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinal", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
-                                    value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinal": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
+                                    options={[{label: "License Holder", value: null}, ...licenses.map(l=> {return {label: l.name, value: l._id}})]}
+                                    value={des.licenseHolder? {label: licenses.filter(l=> l._id.toString() == des.licenseHolder.toString())[0]?.name, value: des.licenseHolder}: null}
                                     onChange={(vals)=>{
                                         console.log(vals)
                                         let d = {...des}
-                                        d.printType = vals.value
+                                        d.licenseHolder = vals.value
                                         setDesign({...d})
                                         updateDesign({...d})
                                     }}

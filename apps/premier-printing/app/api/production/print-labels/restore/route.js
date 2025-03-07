@@ -1,23 +1,29 @@
-import Items from "../../../../../models/Items";
-import Order from "../../../../../models/Order";
+import Items from "@/models/Items";
+import Order from "@/models/Order";
 import {NextApiResponse, NextResponse} from "next/server";
 import {Sort} from "@pythias/labels";
-import { buildLabelData } from "../../../../../functions/labelString";
+import { buildLabelData } from "@/functions/labelString";
 import axios from "axios"
-import { LabelsData } from "../../../../../functions/labels";
+import { LabelsData } from "@/functions/labels";
+import Inventory from "@/models/inventory";
 import btoa from "btoa"
 export async function POST(req=NextApiResponse) {
     let data = await req.json()
     console.log(data)
     let labelsString = ``
-    let items = await Items.find({batchID: data.batchID}).lean()
+    let inventoryArray = await Inventory.find({})
+    .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
+    .lean();
+    let items = await Items.find({batchID: data.batchID}).populate("designRef").lean()
+
     console.log(items.length, "length of items +++")
     let standardOrders = items.map(s=> s.order)
-    standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items").lean()
+    standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items, marketplace").lean()
     console.log(standardOrders.length, "standatd orders")
     items = items.map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
     console.log(items.length, "before filter")
     items = items.filter(s=> s.order != undefined)
+    items = items.map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
     items = Sort(items)
     console.log(items.length)
     let preLabels = items.map(async (i, j)=>{

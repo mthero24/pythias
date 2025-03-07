@@ -48,14 +48,14 @@ export function AddModal({open, setOpen, li, setLi, setLicenses}){
         <Box sx={style}>
              <Grid2 container spacing={1}>
                 <Grid2 size={{xs: 6,sm: 3}}>
-                    <TextField fullWidth label="Name Of License Holder" onChange={()=>{
+                    <TextField fullWidth label="Name Of License Holder" value={license.name} onChange={()=>{
                         let li = {...license}
                         li.name = event.target.value
                         setLicense({...li})
                     }}/>
                 </Grid2>
                 <Grid2 size={{xs: 6,sm: 3}}>
-                    <TextField fullWidth label="License Type" onChange={()=>{
+                    <TextField fullWidth label="License Type" value={license.licenseType}  onChange={()=>{
                         let li = {...license}
                         li.licenseType = event.target.value
                         setLicense({...li})
@@ -77,14 +77,14 @@ export function AddModal({open, setOpen, li, setLi, setLicenses}){
                     </Box>
                 </Grid2>
                 <Grid2 size={{xs: 6,sm: 3}}>
-                    <TextField fullWidth label="Payment Amount" onChange={()=>{
+                    <TextField fullWidth label="Payment Amount" value={license.amount} onChange={()=>{
                         let li = {...license}
                         li.amount = event.target.value
                         setLicense({...li})
                     }}/>
                 </Grid2>
                 <Grid2 size={12}>
-                    <Button fullWidth sx={{background: "#e2e2e2", color: "#000"}} onClick={()=>{create()}}>Create</Button>
+                    <Button fullWidth sx={{background: "#e2e2e2", color: "#000"}} onClick={()=>{create()}}>{li? "Edit": "Create"}</Button>
                 </Grid2>
              </Grid2>
         </Box>

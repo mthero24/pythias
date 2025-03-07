@@ -34,6 +34,9 @@ export async function LabelsData(){
         }).populate("color designRef").lean()
     }
     //console.log(labels)
+    let inventoryArray = await Inventory.find({})
+    .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
+    .lean();
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
@@ -47,9 +50,6 @@ export async function LabelsData(){
         }else{
             s.type = "DTF"
         };  return {...s}})
-        let inventoryArray = await Inventory.find({})
-            .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
-            .lean();
         labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
         //labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})
         // let missing = labels[k].filter(l=> l.inventory == undefined)
