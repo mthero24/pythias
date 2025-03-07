@@ -32,14 +32,15 @@ export async function updateOrder({auth, orderId, carrierCode, trackingNumber}){
             Authorization: `Basic ${btoa(auth)}`
         }
     }
-    let res = await axios.post(`https://ssapi.shipstation.com/orders/markasshipped`, {
+    let body = {
         "orderId": orderId,
         "carrierCode": carrierCode,
-        "shipDate": `${lastDate.getFullYear()}-${lastDate.getMonth().toString().length == 2? lastDate.getMonth(): `0${lastDate.getMonth() + 1}` }-${lastDate.getDate().toString().length == 2? lastDate.getDate(): `0${lastDate.getDate()}`}`,
         "trackingNumber": trackingNumber,
         "notifyCustomer": false,
         "notifySalesChannel": true
-    }, headers).catch(e=> {
+    }
+    console.log(body)
+    let res = await axios.post(`https://ssapi.shipstation.com/orders/markasshipped`, body, headers).catch(e=> {
         console.log(e.response.data)
     })
     return res

@@ -84,7 +84,7 @@ export async function ShipStationShip({address, poNumber, weight, businessAddres
             comparison_rate_type: 'retail'
         },
         is_return_label: false,
-        validate_address: 'validate_and_clean',
+        validate_address: 'no_validation',
         label_download_type: 'inLine',
         label_format: dpi? "ZPL": 'pdf',
         display_scheme: 'label',

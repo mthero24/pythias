@@ -43,9 +43,9 @@ export async function LabelsData(){
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        labels[k] = labels[k].map(s=> { if(s.designRef.sku.toUpperCase().includes("EMB")){
+        labels[k] = labels[k].map(s=> { if(s.designRef?.sku?.toUpperCase().includes("EMB")){
             s.type = "EMB"
-        }else if(s.designRef.sku.toUpperCase().includes("PU")){
+        }else if(s.designRef?.sku.toUpperCase().includes("PU")){
             s.type = "PUF"
         }else{
             s.type = "DTF"
