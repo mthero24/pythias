@@ -1,6 +1,5 @@
 "use client";
 import {Scan} from "./scan"
-import { Bins } from "./bins"
 import { BinSettings } from "./binSettings"
 import { BinModal } from "./BinModal";
 import {Box, Card, Typography, Grid2} from "@mui/material"
