@@ -16,15 +16,17 @@ export function Scan({ setSubmitted, auto, setAuto, printer, type}){
         }
       }, [auto]);
     const GetInfo = async ()=>{
-      console.log("getInfo")
+      console.log("getInfo", "this info")
       setScan("")
       let res
       setSubmitted(null)
       if(type == "send") res = await axios.post(`/api/production/dtf`, {pieceId: scan, printer})
       else res = await axios.get(`/api/production/dtf?pieceID=${scan}`)
-      console.log(res.data)
       if(res.data.error) return alert(res.data.msg)
-      else setSubmitted(res.data);
+      else {
+        console.log(res.data.centerDesign)
+        setSubmitted(res.data);
+      }
     }
     return (
       <Box

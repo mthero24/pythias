@@ -59,6 +59,7 @@ export function BinSettings({binCount, setAuto, setBinss, modalStyle}){
             onChange={() => {
               setUpdate(parseInt(event.target.value));
             }}
+            fullWidth
             onKeyDown={() => {
               console.log(event.key);
               if (event.key == 13 || event.key == "Enter") processUpdate();

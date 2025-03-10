@@ -10,14 +10,14 @@ import React from "react";
 import Image from "next/image";
 import {Scan} from "./scan"
 import {createImage} from "../functions/image"
-export function DTFBody({auto, setAuto, printer, type}){
+export function DTFBody({auto, setAuto, printer}){
     const [submitted, setSubmitted] = useState([]);
     useEffect(()=>{
       console.log(submitted, "submitted use Effect")
     },[submitted])
     return (
             <Box sx={{padding: ".5%", background: "#d2d2d2", minHeight: "100vh"}}>
-                <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} type={type} />
+                <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer}/>
                 <Box sx={{margin: "0% 5%"}}>
                   <Card sx={{width: "100%"}}>
                     <Container maxWidth="sm">

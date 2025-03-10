@@ -14,17 +14,8 @@ import Image from "next/image";
 import {Config} from "../config"
 import { DTFBody } from "./DTFBody";
 export function DTFFind({}){
-    const [submitted, setSubmitted] = useState([]);
-    const [scan, setScan] = useState("")
-    const getData = async ()=>{
-        console.log(Config)
-        let res = await axios.get(`/api/production/dtf?pieceID=${scan}`)
-        console.log(res.data)
-        if(res.data.error) return alert(res.data.msg)
-        else setSubmitted(res.data);
-        setScan("")
-    }
+    const [auto, setAuto] = useState(true)
     return (
-        <DTFBody submitted={submitted} scan={scan} setScan={setScan} getData={getData} type={"find"} />
+        <DTFBody auto={auto} setAuto={setAuto} type={"find"} />
     )
 }

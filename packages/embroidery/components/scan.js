@@ -19,11 +19,11 @@ export function Scan({ setSubmitted, auto, setAuto, printer}){
       console.log("getInfo")
       setScan("")
       let res
-      //setSubmitted(null)
+      setSubmitted(null)
       res = await axios.post(`/api/production/embroidery`, {pieceId: scan, printer})
       console.log(res.data)
       if(res.data.error) return alert(res.data.msg)
-      else console.log(res.data) //setSubmitted(res.data); 
+      else setSubmitted(res.data); 
     }
     return (
       <Box

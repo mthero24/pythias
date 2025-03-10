@@ -17,14 +17,6 @@ import {Printers} from "./printers"
 export function DTFSend({printers}){
     const [printer, setPrinter] = useState(printers? printers[0]: "printer1")
     const [auto, setAuto] = useState(true)
-    const getData = async ()=>{
-        console.log(Config)
-        let res = await axios.post(`/api/production/dtf`, {pieceId: scan, printer})
-        console.log(res.data)
-        if(res.data.error) return alert(res.data.msg)
-        else setSubmitted(res.data);
-        setScan("")
-    }
     return (
         <>
             <Box sx={{padding: ".5%", background: "#d2d2d2"}}>

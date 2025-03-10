@@ -20,7 +20,7 @@ export function BinSettings({binCount, setAuto, setBinss, modalStyle}){
             type= "subtract"
             execute= false
         }
-        let res = await axios.put("/api/production/shipping/bins", {binCount: bins, newCount: update, type, execute}).catch(e=>{console.log(e.response.data)})
+        let res = await axios.put("/api/production/returns/bins", {binCount: bins, newCount: update, type, execute}).catch(e=>{console.log(e.response.data)})
         if(res.data.error) alert(res.data.msg)
         if(type == "add"){
           setBinss(res.data.bins)
@@ -45,7 +45,7 @@ export function BinSettings({binCount, setAuto, setBinss, modalStyle}){
     }
     return (
       <Box
-        sx={{ padding: ".5%", display: { xs: "none", md: "block" } }}
+        sx={{ padding: ".5%" }}
         onClick={() => {
           if (disable) setAuto(true);
         }}
@@ -59,6 +59,7 @@ export function BinSettings({binCount, setAuto, setBinss, modalStyle}){
             onChange={() => {
               setUpdate(parseInt(event.target.value));
             }}
+            fullWidth
             onKeyDown={() => {
               console.log(event.key);
               if (event.key == 13 || event.key == "Enter") processUpdate();

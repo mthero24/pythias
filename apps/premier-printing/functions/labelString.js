@@ -46,7 +46,7 @@ export const buildLabelData = async (item, i, opts={}) => {
         } Piece: ${item.pieceId}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#${i + 1}^FS
         ^LH12,18^CFS,25,12^AXN,75,90^FO100,175^FD${item.styleCode}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,70^FDDate:${new Date(item.date).toLocaleDateString("En-us")}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,70^FD${new Date(item.date).toLocaleDateString("En-us")}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
