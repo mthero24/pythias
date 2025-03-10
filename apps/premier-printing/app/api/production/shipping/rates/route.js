@@ -9,7 +9,7 @@ export async function POST(req= NextApiRequest){
         let rates = await getRates({
             address: data.address,
             businessAddress: JSON.parse(process.env.businessAddress),
-            type: data.marketplace == "faire"? null: data.marketPlace == "Zulily" || data.marketplace == "TSC"? "Expedited": "Standard",
+            type: data.marketplace == "faire"? null: data.marketplace == "Zulily" || data.marketplace == "TSC"? "Expedited": "Standard",
             providers: ["shipstation", "ups"],
             weight: data.weight,
             dimensions: data.dimensions,
