@@ -78,7 +78,9 @@ export function Main({ colors, blanks, blank, printPricing }) {
   const cropBoxData = useRef({});
   const [images, setImages] = useState(blank? blank.multiImages: {front: [],
     back: [],
-    "sleeve": [],
+    "upperSleeve": [],
+    "lowerSleeve": [],
+    "centerSleeve": [],
     "pocket": [],
     "hood": [],
     "leg": [],
@@ -308,7 +310,9 @@ export function Main({ colors, blanks, blank, printPricing }) {
   const printAreas = [
     "front",
     "back",
-    "sleeve",
+    "upperSleeve",
+    "lowerSleeve",
+    "center",
     "pocket",
     "hood",
     "leg",
