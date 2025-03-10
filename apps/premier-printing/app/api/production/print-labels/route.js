@@ -15,6 +15,13 @@ const subtractInventory = async (items)=>{
         await inv.save()
     })
 }
+export const config = {
+    api: {
+      bodyParser: {
+        sizeLimit: '10mb',
+      },
+    },
+  }
 export async function POST(req=NextApiRequest){
     let data = await req.json();
     let labelsString = ``
