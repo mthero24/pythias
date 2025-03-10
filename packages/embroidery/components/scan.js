@@ -2,7 +2,7 @@
 import {useState, useRef, useEffect} from "react";
 import {Card,TextField,Box, Checkbox, FormControlLabel} from "@mui/material";
 import axios from "axios";
-export function Scan({ setSubmitted, auto, setAuto, printer, type}){
+export function Scan({ setSubmitted, auto, setAuto, printer}){
     const textFieldRef = useRef(null);
     const [scan, setScan] = useState()
 
@@ -20,8 +20,7 @@ export function Scan({ setSubmitted, auto, setAuto, printer, type}){
       setScan("")
       let res
       setSubmitted(null)
-      if(type == "send") res = await axios.post(`/api/production/dtf`, {pieceId: scan, printer})
-      else res = await axios.get(`/api/production/dtf?pieceID=${scan}`)
+      res = await axios.post(`/api/production/embroidery`, {pieceId: scan, printer})
       console.log(res.data)
       if(res.data.error) return alert(res.data.msg)
       else setSubmitted(res.data);
