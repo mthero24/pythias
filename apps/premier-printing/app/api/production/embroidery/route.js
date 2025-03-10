@@ -2,10 +2,10 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Items from "@/models/Items";
 import Employee from "@/models/employeeTracking";
 import Color from "@/models/Color"
-
+import {sendFile} from "@pythias/embroidery"
 import axios from "axios";
 const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, style, item, source)=>{
-    let styleImage = style.multiImages.front.filter(i=> i.color == item.color.toString())[0]
+    let styleImage = style.multiImages.front?.filter(i=> i.color == item.color.toString())[0]
     if(!styleImage){
         let color = await Color.findOne({name: item.colorName, _id: {$ne: item.color}})
         if(color){
@@ -16,11 +16,11 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
             }
         }
     }
-    let backStyleImage = style.multiImages.back.filter(i=> i.color == item.color.toString())[0]
-    let upperSleeveStyleImage = style.multiImages.upperSleeve.filter(i=> i.color == item.color.toString())[0]
-    let lowerSleeveStyleImage = style.multiImages.lowerSleeve.filter(i=> i.color == item.color.toString())[0]
-    let centerStyleImage = style.multiImages.center.filter(i=> i.color == item.color.toString())[0]
-    let pocketStyleImage = style.multiImages.pocket.filter(i=> i.color == item.color.toString())[0]
+    let backStyleImage = style.multiImages.back?.filter(i=> i.color == item.color.toString())[0]
+    let upperSleeveStyleImage = style.multiImages.upperSleeve?.filter(i=> i.color == item.color.toString())[0]
+    let lowerSleeveStyleImage = style.multiImages.lowerSleeve?.filter(i=> i.color == item.color.toString())[0]
+    let centerStyleImage = style.multiImages.center?.filter(i=> i.color == item.color.toString())[0]
+    let pocketStyleImage = style.multiImages.pocket?.filter(i=> i.color == item.color.toString())[0]
     console.log(styleImage)
     let frontDesign = front 
     let backDesign = back
@@ -62,7 +62,9 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
     return  {frontDesign, backDesign, upperSleeveDesign, lowerSleeveDesign, pocketDesign, centerDesign, styleImage, styleCode: style.code, colorName: item.colorName, frontCombo, backCombo, upperSleeveCombo, lowerSleeveCombo, centerCombo, pocketCombo}
 }
 
-
+export async function GET(){
+    return NextResponse.json({error: false})
+}
 export async function POST(req = NextApiRequest) {
     let data = await req.json()
     console.log(data, "data")
@@ -74,7 +76,7 @@ export async function POST(req = NextApiRequest) {
         Object.keys(item.designRef.embroideryFiles).map(async key=>{
             if(key != undefined && item.designRef.embroideryFiles[key]){
                 await sendFile({
-                    url: item.design[key],
+                    url: item.designRef.embroideryFiles[key],
                     pieceID: `${item.pieceId}-${key}`,
                     style: item.blank.code,
                     styleSize: item.sizeName,
@@ -92,9 +94,9 @@ export async function POST(req = NextApiRequest) {
             status: "Embroidery Load",
             date: new Date(),
         });
-        const result = await getImages(item.design?.front, item.design?.back, item.blank, item)
+        const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
         await item.save()
-        return NextResponse.json({ error: false, msg: "added to que", ...result, source: "PP", frontCombo, backCombo });
+        return NextResponse.json({ error: false, msg: "added to que", ...result, source: "PP"});
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
     } else {
