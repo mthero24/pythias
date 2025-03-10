@@ -19,7 +19,7 @@ export const createImage = (colorName, styleCode, options, source, width=700) =>
         console.log(url, 'url')
         //console.log(url)
     }else{
-        url = `https://www.pythiastechnologies.com:3006/api/renderImages?colorName=${colorName}&blank=${styleCode}&design=${options.url}&side=${options.side? options.side: "front"}`
+        url = `https://www.pythiastechnologies.com/api/renderImages?colorName=${colorName}&blank=${styleCode}&design=${options.url}&side=${options.side? options.side: "front"}`
     }    
     return url;
 };
