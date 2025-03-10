@@ -80,6 +80,7 @@ export const ColorImage = ({
         console.log("upload complete", imageType.current)
         let im = {...images}
         console.log(im)
+        if(!im[imageType.current]) im[imageType.current] = []
         im[imageType.current].push({color: col._id, image: urls[0]})
         console.log(im)
         setImages({...im})
@@ -178,7 +179,7 @@ export const ColorImage = ({
                                     ></Dropzone>
                                 </Box>
                             </Grid2>
-                            {images[type].filter(i=> i.color == col._id.toString()).map((i, j)=>(
+                            {images[type] && images[type].filter(i=> i.color == col._id.toString()).map((i, j)=>(
                                 <Grid2  key={j} size={{xs: 6, sm: 4, md: 2}}>
                                     <Box
                                     sx={{
