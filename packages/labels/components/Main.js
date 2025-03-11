@@ -6,9 +6,8 @@ import {
   Typography,
   Button,
   Fab,
-  FormControl,
   TextField,
-  FormControlLabel
+  ButtonGroup
 } from "@mui/material";
 import PrintIcon from '@mui/icons-material/Print';
 import {useEffect, useState} from "react";
@@ -211,6 +210,26 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             <Button sx={{...topButtons, display: source == "PP"? "none": "block"}} onClick={selectAllMarketPlaceOrders}>
               Select All Market Place Orders
             </Button>
+              <ButtonGroup>
+                <TextField type="date" onChange={()=>{
+                  let sel = []
+                  Object.keys(useLabels).map((l, i) => {
+                    sel.push(
+                      ...useLabels[l].map((k) => {
+                        console.log(new Date(k.order.date),  new Date(event.target.value), new Date(k.order.date) > new Date(event.target.value))
+                        if (new Date(k.order.date) > new Date(event.target.value) && new Date(k.order.date) < new Date(new Date(event.target.value).getTime() + 24 * (60 * 60 * 1000)))
+                          return k.pieceId;
+                      })
+                    );
+                  });
+                  sel = sel.filter(s=> s != undefined)
+                  console.log(sel)
+                  setSelected([...sel])
+                }}/>
+                <Button size="small" sx={{...topButtons, display: source == "PP"? "block": "none"}} onClick={selectAllMarketPlaceOrders}>
+                  Select
+                </Button>
+              </ButtonGroup>
           </Box>
         </Card>
         {restore && (

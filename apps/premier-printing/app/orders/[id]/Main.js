@@ -62,7 +62,7 @@ export function Main({ord, blanks}){
                 <Box sx={{margin: "2% 0%"}}>
                     {order.items.map(i=>(
                         <Accordion key={i._id} sx={{margin: "1% 0%"}}>
-                            <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
+                            <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
                                 <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
                                     <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
