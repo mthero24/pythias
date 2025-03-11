@@ -7,10 +7,12 @@ import * as fedexen from "../../images/fedexen.jpg"
 import * as fedexpak from "../../images/fedexpak.jpg"
 import {useState, useEffect} from "react"
 import axios from "axios"
+import { faSleigh } from "@fortawesome/free-solid-svg-icons";
 export function Actions({bin, setBins, item, order, style, action, setAction, shippingPrices, setShippingPrices, timer, weight,setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source}){
     //console.log(style)
     const [shippingSelected, setShippingSelected] = useState({name: "GroundAdvantage"})
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false)
+    const [processing, setProcessing] = useState(faSleigh)
     useEffect(()=>{
         if(shippingPrices){
             let res = shippingPrices.sort((a,b)=>{
@@ -28,6 +30,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
         setShippingSelected(shippingPrices?.filter(s=> s.service.name == event.target.value)[0].service)
     }
     const ship = async ()=>{
+        setProcessing(true)
         let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress, marketplace: order.marketplace})
         console.log(res.data)
         if(res.data.error){
@@ -37,6 +40,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
             setLabel(res.data.label)
             setBins(res.data.bins)
             setShippingPrices()
+            setProcessing(false)
         }
     }
     const reprint = async (label)=>{
@@ -151,7 +155,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                                         </FormControl>
                                         <Grid2 container spacing={2}>
                                             <Grid2 size={11}>
-                                                <Button onClick={ship} fullWidth sx={{color: "#ffffff", background: "#0079DC", marginTop: ".5%"}}>Ship</Button>
+                                                <Button onClick={ship} fullWidth disabled={processing} sx={{color: "#ffffff", background: "#0079DC", marginTop: ".5%"}}>Ship</Button>
                                             </Grid2>
                                             <Grid2 size={1}>
                                                 <FormControlLabel control={<Checkbox checked={ignoreBadAddress} onChange={()=>{setIgnoreBadAddress(!ignoreBadAddress); console.log(!ignoreBadAddress)}} />} label="Ignore" />
