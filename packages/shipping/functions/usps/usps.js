@@ -50,7 +50,7 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
             imageType: "JPG",
             labelType: "8.5x11LABEL",
             mailingDate: `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString(): `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${new Date(Date.now()).getDate().toString().length > 1? new Date(Date.now()).getDate().toString(): `0${new Date(Date.now()).getDate().toString()}`}`,
-            overwriteMailingDate: false,
+            overwriteMailingDate: true,
             entryFacilityZIPCode: businessAddress.postalCode,
             destinationEntryFacilityType: "NONE",
             shipment: {
@@ -68,7 +68,7 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
             },
             "ignoreBadAddress": true
         }, headers).catch(e=>{console.log(e.response);resData= e.response.data})
-        //console.log(res?.data, resData)
+        console.log(res?.data, resData?.error?.errors)
         if(res?.data.error) return {error:true, msg: res.data.message}
         else if(resData)return {error:true, msg: resData.error.message}
         else return {error:false, manifest: res.data.SCANFormImage}

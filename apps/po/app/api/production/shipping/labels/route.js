@@ -49,8 +49,10 @@ export async function POST(req= NextApiRequest){
         if(label.error){
             return NextResponse.json(label)
         }else{
-            let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
-            await man.save()
+            if(data.selectedShipping.provider == "usps"){
+                let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
+                await man.save()
+            }
             let order = await Order.findOne({_id: data.orderId}).populate("items")
             order.shippingInfo.label = label.label
             order.shippingInfo.shippingCost += parseFloat(label.cost);
