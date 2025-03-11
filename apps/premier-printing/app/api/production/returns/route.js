@@ -26,7 +26,7 @@ export async function POST(req=NextApiRequest){
             bin.color = skuUpcConversion.color
             bin.size = skuUpcConversion.size
         }
-        bin.inUse = true
+        if(bin.upc) bin.inUse = true
         await bin.save()
     }
     bin.inUse = true
