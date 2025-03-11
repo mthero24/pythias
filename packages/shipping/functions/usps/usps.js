@@ -41,7 +41,8 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
     if(token){
         let headers = {
             headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
+                "Accept": "application/vnd.usps.labels+json"
             }
         }
         let resData
