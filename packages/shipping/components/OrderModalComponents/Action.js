@@ -13,7 +13,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
     //console.log(style)
     const [shippingSelected, setShippingSelected] = useState({name: "GroundAdvantage"})
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false)
-    const [processing, setProcessing] = useState(faSleigh)
+    const [processing, setProcessing] = useState(false)
     useEffect(()=>{
         if(shippingPrices){
             let res = shippingPrices.sort((a,b)=>{
