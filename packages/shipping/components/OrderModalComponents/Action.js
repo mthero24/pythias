@@ -157,7 +157,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                                         <Grid2 container spacing={2}>
                                             <Grid2 size={11}>
                                                 <Button onClick={ship} fullWidth sx={{color: "#ffffff", background: "#0079DC", marginTop: ".5%"}}>Ship</Button>
-                                                <LoaderOverlay open={processing}/>
+                                                {processing && <LoaderOverlay open={processing}/>}
                                             </Grid2>
                                             <Grid2 size={1}>
                                                 <FormControlLabel control={<Checkbox checked={ignoreBadAddress} onChange={()=>{setIgnoreBadAddress(!ignoreBadAddress); console.log(!ignoreBadAddress)}} />} label="Ignore" />
