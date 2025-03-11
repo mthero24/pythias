@@ -40,7 +40,6 @@ export async function POST(req = NextApiRequest){
                 credentialsShipStation: {
                     apiKey: process.env.ssV2
                 },
-                dpi: 300
             }
             if(!item.order.preShipped){
                 let label = await buyLabel(send)
@@ -79,6 +78,7 @@ export async function POST(req = NextApiRequest){
                 {
                   barcode: item.pieceId,
                   label: item.order.shippingInfo.label,
+                  labelType: "pdf",
                   style: item.blank.code,
                   design: item.sku.split("-")[0],
                   size: item.sizeName,
