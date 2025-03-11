@@ -7,7 +7,7 @@ import * as fedexen from "../../images/fedexen.jpg"
 import * as fedexpak from "../../images/fedexpak.jpg"
 import {useState, useEffect} from "react"
 import axios from "axios"
-export function Actions({bin, setBins, item, order, style, action, setAction, shippingPrices, setShippingPrices, timer, weight,setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel}){
+export function Actions({bin, setBins, item, order, style, action, setAction, shippingPrices, setShippingPrices, timer, weight,setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source}){
     //console.log(style)
     const [shippingSelected, setShippingSelected] = useState({name: "GroundAdvantage"})
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false)
@@ -70,7 +70,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                 {action.includes("bin") && (
                     <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", padding: "1%"}}>
                         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
-                            <Image src={item?.sku.includes("gift")? item?.design?.front.replace("https//:", "https://"): createImage(item?.colorName, item?.styleCode, {url: item?.design?.front})}
+                            <Image src={item?.sku.includes("gift")? item?.design?.front.replace("https//:", "https://"): createImage(item?.colorName, item?.styleCode, {url: item?.design?.front}, source)}
                             alt={item?.pieceId}
                             width={300}
                             height={300}

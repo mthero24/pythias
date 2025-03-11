@@ -2,7 +2,7 @@
 import {Scan} from "./scan"
 import { BinSettings } from "./binSettings"
 import { BinModal } from "./BinModal";
-import {Box, Card, Typography, Grid2} from "@mui/material"
+import {Box, Card, Typography, Grid2, Button} from "@mui/material"
 import {useState}from "react"
 export function Main({binCount, binsInUse, source}){
     const [bin, setBin] = useState(null)
@@ -23,8 +23,9 @@ export function Main({binCount, binsInUse, source}){
         overflow: "auto"
       };
     return <Box sx={{padding: "3%", background: "#e2e2e2", minHeight: "92vh"}}>
-        <Card sx={{padding: "2%", margin: "2%", display: "flex", flexBasis: "row", justifyContent: "center"}}>
+        <Card sx={{padding: "2%", margin: "2%", display: "flex", flexBasis: "row", justifyContent: "space-between"}}>
             <BinSettings binCount={binCount} setAuto={setAuto} setBinss={setBins} modalStyle={modalStyle} />
+            <Button sx={{background:"#d2d2d2", color: "#000"}}>Print Labels</Button>
         </Card>
         <Scan setBin={setBin} bin={bin} auto={auto} setAuto={setAuto} setOpen={setOpen} />
         <BinModal open={open} setOpen={setOpen} setAuto bin={bin} setBin={setBin} setBins={setBins} modalStyle={modalStyle} source={source}/>

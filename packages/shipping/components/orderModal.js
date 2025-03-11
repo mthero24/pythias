@@ -117,7 +117,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
           <Grid2 container spacing={2}>
             {bin && (<BinInfo bin={bin} close={close} setBins={setBins}/>)}
           </Grid2>
-          {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style} shippingPrices={shippingPrices} setShippingPrices={setShippingPrices} timer={timer} weight={weight} setGetWeight={setGetWeight} getWeight={getWeight} setDimensions={setDimensions} dimensions={dimensions} station={station} close={close} label={label} setLabel={setLabel} closeTimer={closeTimer} setCloseTimer={setCloseTimer} stopClose={stopClose} setStopClose={setStopClose} setBins={setBins}/>}
+          {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style} shippingPrices={shippingPrices} setShippingPrices={setShippingPrices} timer={timer} weight={weight} setGetWeight={setGetWeight} getWeight={getWeight} setDimensions={setDimensions} dimensions={dimensions} station={station} close={close} label={label} setLabel={setLabel} closeTimer={closeTimer} setCloseTimer={setCloseTimer} stopClose={stopClose} setStopClose={setStopClose} setBins={setBins} source={source}/>}
           {order && (
             <Card sx={{height: `${style.height * 0.75}px`, overflow: "auto"}}>
               <Box sx={{display: "flex", flexDirection: 'row', justifyContent: "space-evenly"}}>

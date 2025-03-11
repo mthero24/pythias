@@ -56,6 +56,7 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+  cleaned: {type: Boolean, default: false}
 });
 
 export default PremierPrinting.model("Design", schema);
