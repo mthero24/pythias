@@ -6,6 +6,7 @@ import * as boxes from "../../images/boxes.webp"
 import * as fedexen from "../../images/fedexen.jpg"
 import * as fedexpak from "../../images/fedexpak.jpg"
 import {useState, useEffect} from "react"
+import LoaderOverlay from "./LoaderOverlay";
 import axios from "axios"
 import { faSleigh } from "@fortawesome/free-solid-svg-icons";
 export function Actions({bin, setBins, item, order, style, action, setAction, shippingPrices, setShippingPrices, timer, weight,setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source}){
@@ -155,7 +156,8 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                                         </FormControl>
                                         <Grid2 container spacing={2}>
                                             <Grid2 size={11}>
-                                                <Button onClick={ship} fullWidth disabled={processing} sx={{color: "#ffffff", background: "#0079DC", marginTop: ".5%"}}>Ship</Button>
+                                                <Button onClick={ship} fullWidth sx={{color: "#ffffff", background: "#0079DC", marginTop: ".5%"}}>Ship</Button>
+                                                <LoaderOverlay open={processing}/>
                                             </Grid2>
                                             <Grid2 size={1}>
                                                 <FormControlLabel control={<Checkbox checked={ignoreBadAddress} onChange={()=>{setIgnoreBadAddress(!ignoreBadAddress); console.log(!ignoreBadAddress)}} />} label="Ignore" />
