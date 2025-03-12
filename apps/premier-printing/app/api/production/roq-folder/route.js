@@ -6,6 +6,7 @@ import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
 import {updateOrder} from "@pythias/integrations";
+import { truncate } from "fs";
 const ups =["faire", "Zulily", "TSC"]
 export async function POST(req = NextApiRequest){
     let data = await req.json();
@@ -59,6 +60,10 @@ export async function POST(req = NextApiRequest){
                 });
                 item.shipped = true
                 item.status = "Shipped"
+                item.steps.push({
+                    status: `Shipped`,
+                    date: new Date(),
+                });
                 let re2s = updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:item.order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
                 await item.order.save();
             }
@@ -95,15 +100,11 @@ export async function POST(req = NextApiRequest){
                   exit: item.order.preShipped == true ? "Pack" : "Stack",
                 }, headers
             ).catch(e=>{responseData = e.response?.data});
-            item.folded = true
-            item.lastScan = {
-                station: `ROQ Folded`,
-                date: new Date(Date.now()),
-            };
+            item.folded = truncate
             item.status = item.order.preShipped ? "Shipped" : "Folded";
             if (!item.steps) item.steps = [];
             item.steps.push({
-            status: item.status,
+            status: "Folded",
             date: new Date(),
             });
             await item.save();
