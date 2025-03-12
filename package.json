@@ -40,6 +40,7 @@
     "@pythias/returns": "^1.0.0",
     "@pythias/licenses":"^1.0.0",
     "@pythias/embroidery":"^1.0.0",
+    "@pythias/repull":"^1.0.0",
     "@repo/ui": "^0.0.0",
     "atob": "^2.1.2",
     "aws-sdk": "^2.1692.0",

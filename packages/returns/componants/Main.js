@@ -9,6 +9,7 @@ export function Main({binCount, binsInUse, source}){
     const [auto, setAuto] = useState(true)
     const [bins, setBins] = useState(binsInUse? binsInUse: [])
     const [open, setOpen] =useState(false)
+    const [labelModal, setLabelModal] = useState(false)
     let modalStyle = {
         position: "absolute",
         top: "50%",

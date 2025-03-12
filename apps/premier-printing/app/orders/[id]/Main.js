@@ -5,6 +5,7 @@ import CreatableSelect from "react-select/creatable";
 import axios from "axios"
 import Search from "@/app/admin/designs/Search";
 import Image from "next/image";
+import {Repull} from "@pythias/repull"
 export function Main({ord, blanks}){
     const [order, setOrder] = useState(ord);
     const [item, setItem] = useState(null);
@@ -90,6 +91,7 @@ export function Main({ord, blanks}){
             </Card>
             <UpdateModal open={openUpdate} setOpen={setOpenUpdate} item={item} setItem={setItem} blank={blank} setBlank={setBlank} size={size} setSize={setSize} color={color} setColor={setColor} blanks={blanks} setOrder={setOrder}/>
             <AddDesignModal open={openDesign} setOpen={setOpenDesign} item={item} setItem={setItem} setOrder={setOrder}/>
+            <Repull />
         </Box>
     )
 }

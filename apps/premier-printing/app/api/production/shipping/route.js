@@ -2,10 +2,33 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Bins from "../../../../models/Bin";
 import Order from "../../../../models/Order";
 import Item from "../../../../models/Items";
+import axios from "axios";
 import {isSingleItem, isShipped, canceled} from "../../../../functions/itemFunctions"
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
+    if(data.reprint){
+        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let order
+        if(item){
+            order = item.order
+        }else{
+            order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
+        }
+        let headers = {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
+            }
+        }
+        let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
+        console.log(res.data)
+        if(res.error){
+            return NextResponse.json({error: true, msg: "error printing label"})
+        }else{
+            return NextResponse.json({...res.data})
+        }
+    }
     try{
         let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")

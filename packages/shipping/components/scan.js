@@ -2,10 +2,11 @@
 import {useState, useRef, useEffect} from "react";
 import {Card,TextField,Box, Checkbox, FormControlLabel} from "@mui/material";
 import axios from "axios";
-export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActivate, pieceId, setBins}){
+export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActivate, pieceId, setBins, source, station}){
     const textFieldRef = useRef(null);
     const [scan, setScan] = useState(pieceId)
     const [reship, setReship] = useState(false)
+    const [reprint, setReprint] = useState(false)
 
     const isReship = ()=>{
        // console.log(event.target.checked)
@@ -13,6 +14,10 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
         else setReship(false)
         setAuto(true)
     }
+    const isReprint = ()=>{
+      // console.log(event.target.checked)
+       setReprint(!reprint)
+   }
     useEffect(() => {
         const update = async ()=>{
           let res = await axios.get("/api/production/shipping/update")
@@ -39,7 +44,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
       
     const GetInfo = async ()=>{
       console.log("getInfo")
-      let res = await axios.post("/api/production/shipping", {scan, reship})
+      let res = await axios.post("/api/production/shipping", {scan, reship, reprint, station})
       console.log(res.data)
       if(res.data.error) {
         alert(res.data.msg)
@@ -47,23 +52,28 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
         setReship(false)
       }
       else {
-        if (res.data.item) {
-          setItem(res.data.item);
-          setOrder(res.data.item.order);
-          setBin(res.data.bin)
-        } else if (res.data.order) {
-          setOrder(res.data.order);
-          setBin(res.data.bin)
-        } else if (res.data.bin) {
-          setOrder(res.data.bin.order);
-          setBin(res.data.bin);
-        }
-        if(res.data.item || res.data.order || res.data.bin){
-          setShow(true)
-          setActivate(res.data.activate)
+        if(!reprint){
+          if (res.data.item) {
+            setItem(res.data.item);
+            setOrder(res.data.item.order);
+            setBin(res.data.bin)
+          } else if (res.data.order) {
+            setOrder(res.data.order);
+            setBin(res.data.bin)
+          } else if (res.data.bin) {
+            setOrder(res.data.bin.order);
+            setBin(res.data.bin);
+          }
+          if(res.data.item || res.data.order || res.data.bin){
+            setShow(true)
+            setActivate(res.data.activate)
+          }
+        }else{
+          alert("label reprinted")
         }
         setScan("")
         setReship(false)
+        setReprint(false)
       }
     }
     const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
@@ -109,6 +119,17 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
             }
             label="Reship"
           />
+          {source == "PP" && <FormControlLabel
+            control={
+              <Checkbox
+                {...label}
+                checked={reprint}
+                onClick={isReprint}
+                sx={{ "& .MuiSvgIcon-root": { fontSize: 28 }, marginLeft: "15%" }}
+              />
+            }
+            label="Reprint"
+          />}
         </Card>
       </Box>
     );
