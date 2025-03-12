@@ -1,5 +1,5 @@
 import Items from "../../../../models/Items";
-import Bin from "./../../../models/Bin";
+import Bin from "../../../../models/Bin";
 import {NextApiRequest, NextResponse} from "next/server";
 
 export async function POST(req=NextApiRequest){
