@@ -92,26 +92,6 @@ export async function pullOrders(){
             }
             order.items = items
         }else{
-            if(o.customerNotes){
-                console.log(o.customerNotes.split("<br/>"))
-                let notesObj = {}
-                o.customerNotes.split("<br/>").map(b=>{
-                    let sp = b.split(":")
-                    notesObj[sp[0].toLowerCase().replace(/ /g, "_").trim()] = sp[1].trim()
-                })
-                console.log(notesObj)
-                if(notesObj.order_placed_from == "Kohl's"){
-                    order.marketplace = "kohls"
-                    order.kohlsId= notesObj.order_id
-                } 
-                if(notesObj.channel == "shein"){
-                    order.marketplace = "shein"
-                    order.sheinId= notesObj.source_order_id
-                }
-                console.log(order.poNumber, order.marketplace)
-                //await order.save()
-                
-            }
             order.status = o.orderStatus
             if(order.status == "shipped"){
                 order.items.map(async i=>{
