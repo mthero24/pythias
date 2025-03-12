@@ -1,9 +1,10 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Bins from "../../../../models/Bin";
-import Order from "../../../../models/Order";
-import Item from "../../../../models/Items";
+import Bins from "@/models/Bin";
+import Order from "@/models/Order";
+import Item from ".@/models/Items";
+import {updateOrder} from "@pythias/integrations";
 import axios from "axios";
-import {isSingleItem, isShipped, canceled} from "../../../../functions/itemFunctions"
+import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
@@ -23,6 +24,7 @@ export async function POST(req= NextApiRequest){
         }
         let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
         console.log(res.data)
+        let re2s = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
         if(res.error){
             return NextResponse.json({error: true, msg: "error printing label"})
         }else{

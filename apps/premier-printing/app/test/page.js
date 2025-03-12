@@ -9,10 +9,7 @@ import t2n from "./t2n.json";
 import fs from "fs"
 import axios from "axios"
 import btoa from "btoa"
-import {getRates}from "@pythias/shipping"
-import { getOrders, generatePieceID } from "@pythias/integrations";
-import {buyLabels} from "@pythias/shipping";
-import {updateOrder} from "@pythias/integrations";
+import {getToken} from "@pythias/integrations"
 export default async function Test(){
     // let design = await Design.findOne({cleaned: {$in: [false, null]}, sku: {$regex: "_F", $options: "xi"}}) 
     // console.log(design.sku)
@@ -25,10 +22,8 @@ export default async function Test(){
     //     else console.log(false)
     // }
     // console.log(designSku, designs.length)
-    let order = await Order.findOne({poNumber: "102002436960923"})
-    //console.log(order.shippingInfo.label)
-    let buffer = Buffer.from(order.shippingInfo.label.replace("data:application/zpl;base64,", ""), "base64")
-    console.log(buffer.toString("utf-8"))
-    
+    console.log( process.env.jsMiraklClientSecret, process.env.jsMiraklClientSecret, process.env.jsMiraklSellerCompanyId, "page")
+    let token = await getToken({clientId: process.env.jsMiraklClientId, clientSecret: process.env.jsMiraklClientSecret, companyId: process.env.jsMiraklSellerCompanyId})
+    console.log(token)
     return <h1>test</h1>
 }

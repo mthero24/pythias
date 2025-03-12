@@ -75,9 +75,9 @@ export function Main({ord, blanks}){
                             <AccordionDetails>
                             <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >
                                     <Typography>Piece Id: {i.pieceId}</Typography>
-                                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
+                                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center",}}>
                                         {i.steps.map(s=>(
-                                            <Box key={s._id}>
+                                            <Box key={s._id} sx={{ margin: "1%", width: "100px"}}>
                                                 <Typography>{s.status}</Typography>
                                                 <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
                                             </Box>

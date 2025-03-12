@@ -60,7 +60,7 @@ export async function POST(req= NextApiRequest){
                 await man.save()
             }
             let order = await Order.findOne({_id: data.orderId}).populate("items")
-            let re2s = updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
+            let re2s = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
             //console.log(re2s)
             order.shippingInfo.label = label.label
             order.shippingInfo.shippingCost += parseFloat(label.cost);
