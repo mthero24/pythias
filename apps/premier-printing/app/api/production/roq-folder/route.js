@@ -5,6 +5,7 @@ import manifest from "@/models/manifest";
 import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
+import {updateOrder} from "@pythias/integrations";
 const ups =["faire", "Zulily", "TSC"]
 export async function POST(req = NextApiRequest){
     let data = await req.json();
@@ -58,6 +59,7 @@ export async function POST(req = NextApiRequest){
                 });
                 item.shipped = true
                 item.status = "Shipped"
+                let re2s = updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:item.order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
                 await item.order.save();
             }
         }

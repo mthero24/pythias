@@ -186,7 +186,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         <Card sx={{ width: "100%", marginBottom: ".5%" }}>
           <Box sx={{ ...row, justifyContent: "space-between" }}>
             <Typography sx={{ fontWeight: 900 }}>
-              RePulled: {rePulls ? rePulls : 0}
+              RePulled: {rePull ? rePull : 0}
             </Typography>
             <Box>
               <TextField label="Return Product To Inventory" value={returnToQue} onChange={()=>{setReturnToQue(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter" || event.key == "ENTER") returnInventory()}}/>

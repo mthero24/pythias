@@ -6,7 +6,7 @@ import {Scan} from "./scan";
 import { OrderModal } from "./orderModal";
 import {useState, useEffect} from "react";
 import {Box} from "@mui/material"
-
+import { Repull } from "../../repull/exports";
 //import { useWindowSize } from "../exports";
 export function Main({stations, binCount, bins, pieceId, stat, source}){
     const [station, setStation] = useState(stat? stat: stations? stations[0]: "station1");
@@ -64,6 +64,7 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
           setAction={setAction}
         />
         <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source}/>
+        <Repull/>
       </Box>
     );
 }

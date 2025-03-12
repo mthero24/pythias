@@ -10,6 +10,7 @@ import React from "react";
 import Image from "next/image";
 import {Scan} from "./scan"
 import {createImage} from "../functions/image"
+import { Repull } from "../../repull/exports";
 export function DTFBody({auto, setAuto, printer}){
     const [submitted, setSubmitted] = useState([]);
     useEffect(()=>{
@@ -236,6 +237,7 @@ export function DTFBody({auto, setAuto, printer}){
                   </Container>
                   </Card>
                 </Box>
+                <Repull />
             </Box>
         )
 }
