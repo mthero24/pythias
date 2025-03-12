@@ -5,7 +5,7 @@ import Blank from "@/models/Blanks";
 import Color from "@/models/Color";
 import Order from "@/models/Order";
 import { getOrders, generatePieceID } from "@pythias/integrations";
-async function pullOrders(){
+export async function pullOrders(){
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
@@ -28,6 +28,26 @@ async function pullOrders(){
                 total: o.orderTotal,
                 paid: true
             })
+            if(o.customerNotes){
+                console.log(o.customerNotes.split("<br/>"))
+                let notesObj = {}
+                o.customerNotes.split("<br/>").map(b=>{
+                    let sp = b.split(":")
+                    notesObj[sp[0].toLowerCase().replace(/ /g, "_").trim()] = sp[1].trim()
+                })
+                console.log(notesObj)
+                if(notesObj.order_placed_from == "Kohl's"){
+                    order.marketplace = "kohls"
+                    order.poNumber= notesObj.order_id
+                } 
+                if(notesObj.channel == "shein"){
+                    order.marketplace = "shein"
+                    order.poNumber= notesObj.source_order_id
+                }
+                console.log(order.poNumber, order.marketplace)
+                //await order.save()
+                
+            }
             let items = []
             for(let i of o.items){
                 if(i.sku != ""){
@@ -72,22 +92,41 @@ async function pullOrders(){
             }
             order.items = items
         }else{
-            
-                order.status = o.orderStatus
-                if(order.status == "shipped"){
-                    order.items.map(async i=>{
-                        i.status = order.status;
-                        i.labelPrinted = true;
-                        i = await i.save()
-                    })
+            if(o.customerNotes){
+                console.log(o.customerNotes.split("<br/>"))
+                let notesObj = {}
+                o.customerNotes.split("<br/>").map(b=>{
+                    let sp = b.split(":")
+                    notesObj[sp[0].toLowerCase().replace(/ /g, "_").trim()] = sp[1].trim()
+                })
+                console.log(notesObj)
+                if(notesObj.order_placed_from == "Kohl's"){
+                    order.marketplace = "kohls"
+                    order.kohlsId= notesObj.order_id
+                } 
+                if(notesObj.channel == "shein"){
+                    order.marketplace = "shein"
+                    order.sheinId= notesObj.source_order_id
                 }
-                if(order.status == "cancelled"){
-                    order.items.map(async i=>{
-                        i.status = order.status;
-                        i.canceled = true;
-                        await i.save()
-                    })
-                }
+                console.log(order.poNumber, order.marketplace)
+                //await order.save()
+                
+            }
+            order.status = o.orderStatus
+            if(order.status == "shipped"){
+                order.items.map(async i=>{
+                    i.status = order.status;
+                    i.labelPrinted = true;
+                    i = await i.save()
+                })
+            }
+            if(order.status == "cancelled" || order.status == "refunded"){
+                order.items.map(async i=>{
+                    i.status = order.status;
+                    i.canceled = true;
+                    await i.save()
+                })
+            }
         }
         //console.log(order)
         await order.save()

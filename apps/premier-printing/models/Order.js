@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 const { PremierPrinting } = require("../lib/connection");
 import Item from "./Items"
+import brand from "./Brands"
 const schema = new mongoose.Schema({
   date: {
     type: Date,
@@ -15,6 +16,8 @@ const schema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  kohlsId: String,
+  sheinId: String,
   uniquePo: {type: String},
   orderKey: String,
   orderId: {
@@ -63,6 +66,11 @@ const schema = new mongoose.Schema({
     required: true,
   },
   marketplace: { type: String },
+  brand:  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: brand,
+  },
+  brandName: "String",
   marketplaceOrderId: { type: String, },
   error: { type: String },
   shippingRates: {
