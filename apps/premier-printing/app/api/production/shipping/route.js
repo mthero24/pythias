@@ -24,7 +24,7 @@ export async function POST(req= NextApiRequest){
         }
         let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
         console.log(res.data)
-        let re2s = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
+        let re2s = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: order.shippingInfo.labels[0].trackingNumber})
         if(res.error){
             return NextResponse.json({error: true, msg: "error printing label"})
         }else{
