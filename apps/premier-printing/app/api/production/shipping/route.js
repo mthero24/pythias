@@ -85,6 +85,11 @@ export async function POST(req= NextApiRequest){
                     res.bin.ready = isReady(res.bin)
                     if(res.bin.ready) res.activate = "bin/ship"
                     //console.log(res.item)
+                    if (!item.steps) item.steps = [];
+                    res.item.steps.push({
+                        status: `In Bin ${res.bin.number}`,
+                        date: new Date(),
+                    });
                     await res.item.save()
                     await res.bin.save()
                 }

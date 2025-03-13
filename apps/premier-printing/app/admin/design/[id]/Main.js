@@ -18,6 +18,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
     const [blanks, setBlanks] = useState(bls)
     const [imageGroups, setImageGroups] = useState([])
     const [imageGroupImages, setImageGroupImages] = useState([])
+    const [imageBlank, setImageBlank] = useState({})
     useEffect(()=>{
         console.log(blanks[0].colors)
         if(blanks){
@@ -386,8 +387,8 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                             <Grid2 size={6}>
                                 <CreatableSelect
                                     placeholder="Print Type"
-                                    options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinal", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
-                                    value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinal": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
+                                    options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinyl", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
+                                    value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinyl": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
                                     onChange={(vals)=>{
                                         console.log(vals)
                                         let d = {...des}
@@ -501,8 +502,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                         </Accordion>
                         ))}
                     </Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}} >
-                        <Typography>Image Group</Typography>
+                    <Grid2 size={{xs: 4, sm: 4}} >
                         <CreatableSelect
                             placeholder="Image Group"
                             options={imageGroups.map(ig=>{return {value: ig, label: ig}})}
@@ -541,6 +541,19 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                 updateDesign({...d})
                             }}
                          />
+                    </Grid2>
+                    <Grid2 size={{xs: 4, sm: 4}} >
+                        <CreatableSelect
+                            placeholder="Image Group"
+                            options={des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})}
+                            value={imageBlank}
+                            onChange={(val)=>{
+                                setImageBlank(val)
+                            }}
+                         />
+                    </Grid2>
+                    <Grid2 size={{xs: 4, sm: 4}} >
+
                     </Grid2>
                     <Grid2 size={12}>
                         <Grid2 container spacing={2}>

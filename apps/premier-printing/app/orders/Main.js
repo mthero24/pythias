@@ -60,7 +60,7 @@ export function Main({ords, pages, page, q}){
                                 <Typography>{o.items.length}</Typography>
                             </Grid2>
                             <Grid2 size={2}>
-                                <Typography>{new Date(o.date).toLocaleDateString("En-us")}</Typography>
+                                <Typography>{new Date(o.date).toLocaleDateString("en-US")}</Typography>
                             </Grid2>
                             <Grid2 size={2}>
                                 <Typography>${parseFloat(o.total).toFixed(2)}</Typography>
