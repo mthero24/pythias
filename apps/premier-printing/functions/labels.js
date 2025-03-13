@@ -20,7 +20,7 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: "Standard",
-        }).populate("color designRef").lean(),
+        }).populate("color", "name").populate("designRef", "sku").lean(),
             Expedited: await Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
@@ -31,7 +31,7 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: { $ne: "Standard" },
-        }).populate("color designRef").lean()
+        }).populate("color", "name").populate("designRef", "sku").lean()
     }
     //console.log(labels)
     let inventoryArray = await Inventory.find({})

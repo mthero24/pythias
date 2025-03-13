@@ -73,8 +73,9 @@ export const UntrackedLabels = () => {
                   <Typography fontWeight={800}>{label.pieceId}</Typography>
                   <Typography>{label.sku}</Typography>
                   <Typography fontSize={14} fontWeight={300}>
-                    {new Date(label.labelLastPrinted).toLocaleDateString("en-US")}{" "}
-                    {new Date(label.labelLastPrinted).toLocaleTimeString("en-US")}
+                    {label.labelPrintedDates.map(d=>(
+                      new Date(d).toLocaleDateString("EN-us")
+                    ))}
                   </Typography>
                 </Box>
               }
