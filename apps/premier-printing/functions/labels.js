@@ -20,7 +20,7 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: "Standard",
-        }).populate("color", "name").populate("designRef", "sku").lean(),
+        }).populate("color", "name").populate("designRef", "sku name printType").lean(),
             Expedited: await Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
@@ -31,10 +31,10 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: { $ne: "Standard" },
-        }).populate("color", "name").populate("designRef", "sku").lean()
+        }).populate("color", "name").populate("designRef", "sku name printType").lean()
     }
     //console.log(labels)
-    let inventoryArray = await Inventory.find({})
+    let inventoryArray = await Inventory.find({}).select("row unit shelf bin ordered color_name size_name stye_code quantity pending_quantity").lean()
     .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
     .lean();
     let rePulls = 0
@@ -43,7 +43,7 @@ export async function LabelsData(){
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        labels[k] = labels[k].map(s=> { if(s.designRef?.sku?.toUpperCase().includes("EMB")){
+        labels[k] = labels[k].map(s=> { if(s.designRef?.printType =="EMB"){
             s.type = "EMB"
         }else if(s.designRef?.sku.toUpperCase().includes("PU")){
             s.type = "PUF"

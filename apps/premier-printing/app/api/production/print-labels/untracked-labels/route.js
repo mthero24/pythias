@@ -16,15 +16,13 @@ export async function GET(req=NextApiResponse){
         let items = await Items.find({
           labelPrinted: true,
           labelPrintedDates: { $gt: date, $lt: endDate },
-          treated: false,
           printed: false,
           folded: false,
           shipped: false,
           canceled: false,
           styleCode: { $nin: skip },
         })
-          .sort({ labelLastPrinted: -1 })
-          .limit(1000).populate("color", "name").populate("designRef", "sku")
+          .sort({ labelLastPrinted: -1 }).populate("color", "name").populate("designRef", "sku name printType")
           .lean();
         console.log(items.length)
          let inventoryArray = await Inventory.find({}).select("row unit shelf bin ordered color_name size_name stye_code quantity pending_quantity").lean()
