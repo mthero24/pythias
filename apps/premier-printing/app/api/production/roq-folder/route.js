@@ -100,12 +100,12 @@ export async function POST(req = NextApiRequest){
                   exit: item.order.preShipped == true ? "Pack" : "Stack",
                 }, headers
             ).catch(e=>{responseData = e.response?.data});
-            item.folded = truncate
+            item.folded = true
             item.status = item.order.preShipped ? "Shipped" : "Folded";
             if (!item.steps) item.steps = [];
             item.steps.push({
-            status: "Folded",
-            date: new Date(),
+                status: "Folded",
+                date: new Date(),
             });
             await item.save();
             console.log(response?.data, responseData)

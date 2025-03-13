@@ -1112,6 +1112,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
 
   const updateBox = (e) => {
     let node = e.target;
+    console.log(e.target)
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
     // we will reset it back
@@ -1124,7 +1125,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
     };
     let im = {...images}
     console.log(im, image)
-    im[side].filter(i=> i.image == image)[0].box = box
+    im[side].filter(i=> i.image == image)[0].box[0] = box
     setImages({...im})
     //console.log(boxRef.current);
   };

@@ -12,7 +12,7 @@ import btoa from "btoa"
 import {getOrderKohls} from "@pythias/integrations"
 import {pullOrders} from "@/functions/pullOrders";
 export default async function Test(){
-    //pullOrders()
+    pullOrders()
     // let design = await Design.findOne({cleaned: {$in: [false, null]}, sku: {$regex: "_F", $options: "xi"}}) 
     // console.log(design.sku)
     // let designSku = design.sku.split("_")[0]
