@@ -1079,6 +1079,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
   let INITIAL_BOX_SETTINGS = {
     x: initialBox ? initialBox.x : 20,
     y: initialBox ? initialBox.y : 50,
+    rotation: initialBox ? initialBox.rotation : 0,
     width: initialBox ? initialBox.boxWidth : 140,
     height: initialBox ? initialBox.boxHeight : 175,
   };
@@ -1120,12 +1121,14 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
       ...boxRef.current,
       x: e.target.x(),
       y: e.target.y(),
+      rotation: e.target.rotation(),
       boxWidth: node.width() * scaleX,
       boxHeight: node.height() * scaleY,
     };
     let im = {...images}
-    console.log(im, image)
+    console.log(im, image, box)
     im[side].filter(i=> i.image == image)[0].box[0] = box
+    console.log(im[side].filter(i=> i.image == image)[0].box[0])
     setImages({...im})
     //console.log(boxRef.current);
   };
