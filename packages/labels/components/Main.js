@@ -216,8 +216,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                   Object.keys(useLabels).map((l, i) => {
                     sel.push(
                       ...useLabels[l].map((k) => {
-                        console.log(new Date(k.order.date),  new Date(event.target.value), new Date(k.order.date) > new Date(event.target.value))
-                        if (new Date(k.order.date) > new Date(event.target.value) && new Date(k.order.date) < new Date(new Date(event.target.value).getTime() + 24 * (60 * 60 * 1000)))
+                        console.log(new Date(k.order.date).toLocaleDateString("en-US"),  new Date(new Date(event.target.value).getTime() + (24 * 60 * 60 * 1000)).toLocaleDateString("en-US"), new Date(k.order.date).toLocaleDateString("en-US") == new Date(event.target.value))
+                        if (new Date(k.order.date).toLocaleDateString("en-US") == new Date(new Date(event.target.value).getTime() + (24 * 60 * 60 * 1000)).toLocaleDateString("en-US"))
                           return k.pieceId;
                       })
                     );
