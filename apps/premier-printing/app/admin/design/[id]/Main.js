@@ -18,7 +18,8 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
     const [blanks, setBlanks] = useState(bls)
     const [imageGroups, setImageGroups] = useState([])
     const [imageGroupImages, setImageGroupImages] = useState([])
-    const [imageBlank, setImageBlank] = useState({})
+    const [imageBlank, setImageBlank] = useState({label: "Blank", value: null})
+    const [imageColor, setImageColor] = useState({label: "Color", value: null})
     useEffect(()=>{
         console.log(blanks[0].colors)
         if(blanks){
@@ -544,16 +545,25 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                     </Grid2>
                     <Grid2 size={{xs: 4, sm: 4}} >
                         <CreatableSelect
-                            placeholder="Image Group"
-                            options={des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})}
-                            value={imageBlank}
+                            placeholder="Blank"
+                            options={[ ...des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})]}
+                            value={imageBlank? imageBlank: {label: "Blank", value: null}}
                             onChange={(val)=>{
                                 setImageBlank(val)
                             }}
                          />
                     </Grid2>
                     <Grid2 size={{xs: 4, sm: 4}} >
-
+                            {console.log(des.blanks, imageBlank.value)}
+                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
+                            {imageBlank  &&  <CreatableSelect
+                            placeholder="Blank"
+                            options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
+                            value={imageColor? imageColor: {label: "Color", value: null}}
+                            onChange={(val)=>{
+                                setImageColor(val)
+                            }}
+                         />}
                     </Grid2>
                     <Grid2 size={12}>
                         <Grid2 container spacing={2}>

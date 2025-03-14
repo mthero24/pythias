@@ -1127,6 +1127,7 @@ const SetBoxModal = ({ open, onClose, images, setImages, box, image, side, boxSe
     };
     let im = {...images}
     console.log(im, image, box)
+    if(!im[side].filter(i=> i.image == image)[0].box) im[side].filter(i=> i.image == image)[0].box = [];
     im[side].filter(i=> i.image == image)[0].box[0] = box
     console.log(im[side].filter(i=> i.image == image)[0].box[0])
     setImages({...im})
