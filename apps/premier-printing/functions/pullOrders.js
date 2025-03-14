@@ -75,13 +75,15 @@ export async function pullOrders(){
                                 size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase())[0] 
                                 if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase())[0]
                             }
-                            let dSku = i.sku.split("_").splice(3)
+                            let dSku = i.sku?.split("_").splice(3)
                             let designSku =""
-                            for(let j = 0; j < dSku.length; j++){
-                                if(j == 0) designSku = dSku[j]
-                                else designSku = `${designSku}_${dSku[j]}`
+                            if(dSku){
+                                for(let j = 0; j < dSku.length; j++){
+                                    if(j == 0) designSku = dSku[j]
+                                    else designSku = `${designSku}_${dSku[j]}`
+                                }
+                                design = await Design.findOne({sku: designSku})
                             }
-                            design = await Design.findOne({sku: designSku})
                         }
                         if(blank && blank.code.includes("PPSET")){
                             let sb = await Blanks.findOne({code: blank.code.split("_")[1]})
