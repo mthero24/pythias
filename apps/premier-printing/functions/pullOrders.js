@@ -6,7 +6,7 @@ import Color from "@/models/Color";
 import Order from "@/models/Order";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import Blanks from "@/models/Blanks";
-async function pullOrders(){
+export async function pullOrders(){
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
