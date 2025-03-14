@@ -1,11 +1,12 @@
 "use client"
-import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, TextField} from "@mui/material"
+import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, Link} from "@mui/material"
 import {useState, useEffect} from "react"
 import CreatableSelect from "react-select/creatable";
 import axios from "axios"
 import Search from "@/app/admin/designs/Search";
 import Image from "next/image";
 import {Repull} from "@pythias/repull"
+const ups = ["TSC", "Zulily"]
 export function Main({ord, blanks}){
     const [order, setOrder] = useState(ord);
     const [item, setItem] = useState(null);
@@ -60,34 +61,44 @@ export function Main({ord, blanks}){
                         </Card>
                     </Grid2>
                 </Grid2>
-                <Box sx={{margin: "2% 0%"}}>
-                    {order.items.map(i=>(
-                        <Accordion key={i._id} sx={{margin: "1% 0%"}}>
-                            <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
-                                <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
-                                    <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
-                                    <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
-                                    <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
-                                    { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
-                                    {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
-                                </Box>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                            <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >
-                                    <Typography>Piece Id: {i.pieceId}</Typography>
-                                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center",}}>
-                                        {i.steps.map(s=>(
-                                            <Box key={s._id} sx={{ margin: "1%", width: "100px"}}>
-                                                <Typography>{s.status}</Typography>
-                                                <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
-                                            </Box>
-                                        ))}
+                <Grid2 size={{xs: 12, sm:8}}>
+                    <Box sx={{margin: "2% 0%"}}>
+                        {order.items.map(i=>(
+                            <Accordion key={i._id} sx={{margin: "1% 0%"}}>
+                                <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
+                                    <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
+                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
+                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
+                                        <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
+                                        { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
+                                        {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
                                     </Box>
-                                </Box>
-                            </AccordionDetails>
-                        </Accordion>
-                    ))}
-                </Box>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >
+                                        <Typography>Piece Id: {i.pieceId}</Typography>
+                                        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center",}}>
+                                            {i.steps.map(s=>(
+                                                <Box key={s._id} sx={{ margin: "1%", width: "100px"}}>
+                                                    <Typography>{s.status}</Typography>
+                                                    <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                </AccordionDetails>
+                            </Accordion>
+                        ))}
+                    </Box>
+                </Grid2>
+                <Grid2 size={{xs:12, sm: 4}}>
+                    <Card sx={{padding: "2%", textAlign: "center"}}>
+                        <Typography>Shipping Info</Typography>
+                        {order.shippingInfo.labels.map(l=>(
+                            <Typography key={l._id}>Tracking: <Link target="_blank" href={ups.includes(order.marketplace)? `https://www.ups.com/track?track=yes&trackNums=${l.trackingNumber}&loc=en_US&requester=ST/`: `https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=${l.trackingNumber}`}>{l.trackingNumber}</Link></Typography>
+                        ))}
+                    </Card>
+                </Grid2>
             </Card>
             <UpdateModal open={openUpdate} setOpen={setOpenUpdate} item={item} setItem={setItem} blank={blank} setBlank={setBlank} size={size} setSize={setSize} color={color} setColor={setColor} blanks={blanks} setOrder={setOrder}/>
             <AddDesignModal open={openDesign} setOpen={setOpenDesign} item={item} setItem={setItem} setOrder={setOrder}/>
