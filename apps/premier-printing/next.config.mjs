@@ -14,6 +14,10 @@ const nextConfig = {
                 hostname: "www.pythiastechnologies.com",
               },
               {
+                protocol: "https",
+                hostname: "simplysage.pythiastechnologies.com",
+              },
+              {
                 protocol: "http",
                 hostname: "localhost",
               },
