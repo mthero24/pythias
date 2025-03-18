@@ -32,10 +32,6 @@ const createImage = async (data)=>{
         })
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
-        if(data.box.rotation){
-            console.log(data.box.rotation, "rotation")
-            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
-        }
         designBase64 = await designBase64.resize({
             width: parseInt(data.box.boxWidth * 1.75),
             height: parseInt(data.box.boxHeight * 1.75),
@@ -44,6 +40,10 @@ const createImage = async (data)=>{
             position: sharp.strategy.attention,
             fastShrinkOnLoad: false 
         })
+        if(data.box.rotation){
+            console.log(data.box.rotation, "rotation")
+            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
+        }
         console.log(data.box)
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
@@ -56,11 +56,10 @@ const createImage = async (data)=>{
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(data.box.y * 1.75),
-                left: parseInt(data.box.x * 1.75) + (offset > 0? offset: (offset * -1)),
+                top: parseInt(data.box.y * 1.75) + parseInt(2.14 * data.box.rotation),
+                left: parseInt(data.box.x * 1.75) + offset + (data.box.rotation? data.box.rotation > 0?parseInt(2.14 * data.box.rotation): parseInt(2.14 * (data.box.rotation) * -1) : 0),
                 gravity: "center",
             },
-
         ]).png({ quality: 95 })
         .toBuffer();
         base64 = `data:image/png;base64,${base64.toString("base64")}`
