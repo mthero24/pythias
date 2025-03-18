@@ -42,8 +42,10 @@ const createImage = async (data)=>{
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
         const metadata = await designBase64.metadata()
+        console.log(data.box)
         if(data.box.rotation){
-            designBase64.rotate(box.rotation)
+            console.log(data.box.rotation, "rotation")
+            designBase64.rotate(parseInt(box.rotation))
         }
         designBase64 = await designBase64.toBuffer();
         console.log(metadata.width, 'meta', parseInt(data.box.boxWidth * 1.75), "box")
