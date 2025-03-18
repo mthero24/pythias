@@ -8,7 +8,7 @@ const readImage = async (url)=>{
     const response = await axios.get(
       url,
       { responseType: "arraybuffer" }
-    ).catch(e=>{console.log(e.response)});
+    ).catch(e=>{});
     //console.log(response.headers)
     if(response){
         const buffer = Buffer.from(response.data, "binary");
@@ -22,6 +22,7 @@ const readImage = async (url)=>{
 const createImage = async (data)=>{
     let base64
     base64 = await readImage(data.styleImage)
+    console.log(data.box && data.designImage && base64)
     if(data.box && data.designImage && base64){
         base64 = base64.resize({
             width: data.box.containerWidth + 300,
@@ -31,6 +32,10 @@ const createImage = async (data)=>{
         })
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
+        if(data.box.rotation){
+            console.log(data.box.rotation, "rotation")
+            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
+        }
         designBase64 = await designBase64.resize({
             width: parseInt(data.box.boxWidth * 1.75),
             height: parseInt(data.box.boxHeight * 1.75),
@@ -39,14 +44,10 @@ const createImage = async (data)=>{
             position: sharp.strategy.attention,
             fastShrinkOnLoad: false 
         })
+        console.log(data.box)
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
         const metadata = await designBase64.metadata()
-        console.log(data.box)
-        if(data.box.rotation){
-            console.log(data.box.rotation, "rotation")
-            designBase64.rotate(parseInt(box.rotation))
-        }
         designBase64 = await designBase64.toBuffer();
         console.log(metadata.width, 'meta', parseInt(data.box.boxWidth * 1.75), "box")
         let offset = parseInt(((data.box.boxWidth * 1.75) - metadata.width) / 2)
@@ -56,7 +57,7 @@ const createImage = async (data)=>{
                 input: designBase64,
                 blend: 'atop',
                 top: parseInt(data.box.y * 1.75),
-                left: parseInt(data.box.x * 1.75) + offset,
+                left: parseInt(data.box.x * 1.75) + (offset > 0? offset: (offset * -1)),
                 gravity: "center",
             },
 
@@ -90,17 +91,17 @@ const createImage = async (data)=>{
     return base64
 }
 export async function GET(req){
-    console.log(req.nextUrl.searchParams.get("blank"))
+    //console.log(req.nextUrl.searchParams.get("blank"))
     let blankCode = req.nextUrl.searchParams.get("blank")
     let colorName = req.nextUrl.searchParams.get("colorName")
     let designImage = req.nextUrl.searchParams.get("design")
     let side = req.nextUrl.searchParams.get("side")
-    console.log(blankCode, colorName, designImage, side)
+    //console.log(blankCode, colorName, designImage, side)
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
     let color = blank.colors.filter(c=>c.name == colorName)[0]
-    console.log(color)
+    //console.log(color)
     let blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString())[0]
-    console.log(blankImage?.box[0], "box")
+    //console.log(blankImage?.box[0], "box")
     let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage}
     let base64 = await createImage(data)
     base64 = base64.replace(/^data:image\/\w+;base64,/, "")
@@ -113,7 +114,7 @@ export async function GET(req){
 }
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    console.log(data)
+    //console.log(data)
     let base64 = await createImage(data)
     //console.log(base64)
     return NextResponse.json({error: false, base64})
