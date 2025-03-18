@@ -562,6 +562,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                             value={imageBlank? imageBlank: {label: "Blank", value: null}}
                             onChange={(val)=>{
                                 setImageBlank(val)
+                                setImageColor({})
                             }}
                          />
                     </Grid2>
@@ -573,6 +574,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                             options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
                             value={imageColor? imageColor: {label: "Color", value: null}}
                             onChange={(val)=>{
+
                                 setImageColor(val)
                             }}
                          />}
