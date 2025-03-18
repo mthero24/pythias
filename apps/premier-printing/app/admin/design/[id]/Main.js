@@ -72,31 +72,42 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
     useEffect(()=>{
         let images = []
         des.imageGroup && des.blanks.map((b, j)=>{
-            Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
-                //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
-                let foundImages = false
-                if(b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]?._id.toString() == im.color.toString())[0]){
-                    let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]?._id.toString() == im.color.toString())[0]
-                    image.side = i
-                    if(image.side == "modelFront") image.side = "front"
-                    if(image.side == "modelBack") image.side = "back"
-                    images.push(image)
-                    foundImages = true
-                }
-                if(!foundImages ){
-                    if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]?._id.toString() == im.color.toString())[0]){
-                        let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]?._id.toString() == im.color.toString())[0]
+            if(imageBlank && imageBlank.value && b.blank.code.toString() == imageBlank.value.toString()){
+                console.log(imageBlank, "useEffect")
+                console.log(b.blank.code.toString(), imageBlank.value.toString(), b.blank.code.toString() == imageBlank.value.toString())
+                console.log(imageColor)
+                Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
+                    //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                    console.log(des.imageGroup)
+                    console.log(imageBlank)
+                    console.log(imageColor)
+                    let color = b.colors.filter(c=> c.name == imageColor.value)[0]
+                    console.log(color, "color")
+                    let foundImages = false
+                    if(b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())[0]){
+                        let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())[0]
                         image.side = i
                         if(image.side == "modelFront") image.side = "front"
                         if(image.side == "modelBack") image.side = "back"
+                        console.log(image)
                         images.push(image)
                         foundImages = true
                     }
-                }
-            })
+                    if(!foundImages ){
+                        if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
+                            let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
+                            image.side = i
+                            if(image.side == "modelFront") image.side = "front"
+                            if(image.side == "modelBack") image.side = "back"
+                            images.push(image)
+                            foundImages = true
+                        }
+                    }
+                })
+            }
         })
         setImageGroupImages(images)
-    },[])
+    },[imageBlank, imageColor])
     const getAiDescription = async () => {
         //setLoading(true);
         let d = {...des}
