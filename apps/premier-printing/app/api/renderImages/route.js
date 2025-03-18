@@ -56,8 +56,8 @@ const createImage = async (data)=>{
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(data.box.y * 1.75) + parseInt(2.14 * data.box.rotation),
-                left: parseInt(data.box.x * 1.75) + offset + (data.box.rotation? data.box.rotation > 0?parseInt(2.14 * data.box.rotation): parseInt(2.14 * (data.box.rotation) * -1) : 0),
+                top: parseInt(data.box.y * 1.75) + (data.box.rotation? parseInt(3.1415926535 * data.box.rotation): 0),
+                left: parseInt(data.box.x * 1.75) + offset + (data.box.rotation? data.box.rotation > 0?parseInt(3.1415926535 * data.box.rotation): parseInt(3.1415926535 * (data.box.rotation) * -1) : 0),
                 gravity: "center",
             },
         ]).png({ quality: 95 })
