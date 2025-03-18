@@ -84,15 +84,16 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                     let color = b.colors.filter(c=> c.name == imageColor.value)[0]
                     console.log(color, "color")
                     let foundImages = false
-                    if(b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())[0]){
-                        let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())[0]
+                    let useImages = b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())
+                    useImages.map(im=>{
+                        let image = im
                         image.side = i
                         if(image.side == "modelFront") image.side = "front"
                         if(image.side == "modelBack") image.side = "back"
                         console.log(image)
                         images.push(image)
                         foundImages = true
-                    }
+                    })
                     if(!foundImages ){
                         if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
                             let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
