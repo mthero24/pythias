@@ -70,7 +70,6 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
           }
     },[blanks])
     useEffect(()=>{
-        setImageGroupImages([])
         let images = []
         des.imageGroup && des.blanks.map((b, j)=>{
             if(imageBlank && imageBlank.value && b.blank.code.toString() == imageBlank.value.toString()){
@@ -107,7 +106,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 })
             }
         })
-        setImageGroupImages(images)
+        setImageGroupImages([...images])
     },[imageBlank, imageColor])
     const getAiDescription = async () => {
         //setLoading(true);
