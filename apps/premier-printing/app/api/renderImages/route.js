@@ -8,18 +8,21 @@ const readImage = async (url)=>{
     const response = await axios.get(
       url,
       { responseType: "arraybuffer" }
-    );
+    ).catch(e=>{console.log(e.response)});
     //console.log(response.headers)
-    const buffer = Buffer.from(response.data, "binary");
+    if(response){
+        const buffer = Buffer.from(response.data, "binary");
 
-    // Use sharp to process the image
-    let image = sharp(buffer);
-    return image
+        // Use sharp to process the image
+        let image = sharp(buffer);
+        return image
+    }
+    return null
 }
 const createImage = async (data)=>{
     let base64
-    if(data.box && data.designImage){
-        base64 = await readImage(data.styleImage)
+    base64 = await readImage(data.styleImage)
+    if(data.box && data.designImage && base64){
         base64 = base64.resize({
             width: data.box.containerWidth + 300,
             height: data.box.containerHeight + 300,
@@ -37,20 +40,28 @@ const createImage = async (data)=>{
             fastShrinkOnLoad: false 
         })
         designBase64 = await designBase64.toBuffer();
+        designBase64 = await sharp(designBase64)
+        const metadata = await designBase64.metadata()
+        if(data.box.rotation){
+            designBase64.rotate(box.rotation)
+        }
+        designBase64 = await designBase64.toBuffer();
+        console.log(metadata.width, 'meta', parseInt(data.box.boxWidth * 1.75), "box")
+        let offset = parseInt(((data.box.boxWidth * 1.75) - metadata.width) / 2)
+        console.log(offset, "offset")
         base64 = await base64.composite([
             {
                 input: designBase64,
                 blend: 'atop',
                 top: parseInt(data.box.y * 1.75),
-                left: parseInt(data.box.x * 1.75),
+                left: parseInt(data.box.x * 1.75) + offset,
                 gravity: "center",
             },
 
         ]).png({ quality: 95 })
         .toBuffer();
         base64 = `data:image/png;base64,${base64.toString("base64")}`
-    }else if(data.styleImage){
-        base64 = await readImage(data.styleImage)
+    }else if(data.styleImage && base64){
         base64 = base64.resize({
             width: 400,
             height: 400,
@@ -62,15 +73,17 @@ const createImage = async (data)=>{
         base64 = `data:image/png;base64,${base64.toString("base64")}`
     }else if(data.designImage){
         base64 = await readImage(data.designImage)
-        base64 = base64.resize({
-            width: 400,
-            height: 400,
-            fit: sharp.fit.cover,
-            position: sharp.strategy.entropy
-        })
-        base64 = await base64.png().toBuffer();
-        //console.log(base64, "base64")
-        base64 = `data:image/png;base64,${base64.toString("base64")}`
+        if(base64){
+            base64 = base64.resize({
+                width: 400,
+                height: 400,
+                fit: sharp.fit.cover,
+                position: sharp.strategy.entropy
+            })
+            base64 = await base64.png().toBuffer();
+            //console.log(base64, "base64")
+            base64 = `data:image/png;base64,${base64.toString("base64")}`
+        }
     }
     return base64
 }
