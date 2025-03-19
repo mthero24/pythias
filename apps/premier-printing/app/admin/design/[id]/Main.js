@@ -574,7 +574,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                             options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
                             value={imageColor? imageColor: {label: "Color", value: null}}
                             onChange={(val)=>{
-                                setImageBlank([])
+                                setImageGroupImages([])
                                 setImageColor(val)
                             }}
                          />}
