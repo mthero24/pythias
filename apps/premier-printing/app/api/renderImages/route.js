@@ -53,7 +53,7 @@ const createImage = async (data)=>{
         const metadata2 = await designBase64.metadata()
         designBase64 = await designBase64.toBuffer();
         console.log(metadata.width, 'meta', metadata2.width, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
-        let offset = parseInt(((data.box.boxWidth * 1.75) -( metadata2.width) - (data.box.rotation? data.box.rotation: 0)) / 2)
+        let offset = parseInt(((data.box.boxWidth * 1.75) -( metadata2.width)) / 2)
         console.log(offset, "offset")
         base64 = await base64.composite([
             {
