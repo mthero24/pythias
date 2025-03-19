@@ -571,6 +571,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                         }}
                                     />
                                 </Box>
+                                <Button>Add Alternative Images</Button>
                             </AccordionDetails>
                         </Accordion>
                         ))}
