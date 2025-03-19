@@ -653,7 +653,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                         setDefaultImages={setDefaultImages}
                                         styleImage={i.image}
                                         side={i.side}
-                                        dI={des.blanks.filter(b=> b.blank.code == imageBlank.value)[0].defaultImages.filter(dI=> dI.color == i.color && dI.side == i.side)[0]?.id}
+                                        dI={des.blanks.filter(b=> b.blank.code == imageBlank.value)[0].defaultImages?.filter(dI=> dI.color == i.color && dI.side == i.side)[0]?.id}
                                         designImage={des.images && des.images[i.side]? des.images[i.side]: null }
                                     />
                                 </Grid2>
