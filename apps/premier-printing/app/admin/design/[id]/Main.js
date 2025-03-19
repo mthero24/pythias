@@ -36,6 +36,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 // if(typeof bl.colors[0] == "string") bl.colors = blank.colors.filter(s=> bl.colors.includes(s._id.toString()))
                 
                 bl.colors = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
+                bl.defaultColor = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})[0]
                 console.log(bl.colors, "colors")
                 bl.colors = bl.colors.filter(c=> c != undefined)
                 bl.blank = blank
@@ -94,7 +95,26 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                         images.push(image)
                         foundImages = true
                     })
-                    if(!foundImages ){
+                    // if(!foundImages ){
+                    //     if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
+                    //         let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
+                    //         image.side = i
+                    //         if(image.side == "modelFront") image.side = "front"
+                    //         if(image.side == "modelBack") image.side = "back"
+                    //         images.push(image)
+                    //         foundImages = true
+                    //     }
+                    // }
+                })
+                if(images.length == 0){
+                    Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
+                        //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                        console.log(des.imageGroup)
+                        console.log(imageBlank)
+                        console.log(imageColor)
+                        let color = b.colors.filter(c=> c.name == imageColor.value)[0]
+                        console.log(color, "color")
+                        let foundImages = false
                         if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
                             let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
                             image.side = i
@@ -103,8 +123,8 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                             images.push(image)
                             foundImages = true
                         }
-                    }
-                })
+                    })
+                }
             }
         })
         setImageGroupImages([...images])
@@ -290,6 +310,36 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
         console.log(blank)
         let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
         b.colors = b.blank.colors.filter(c=> colors.includes(c.name))
+        setDesign({...d})
+        updateDesign({...d})
+    }
+    const updateDefaultColor = ({blank, color}) =>{
+        let d = {...des}
+        console.log(blank)
+        let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
+        console.log(color)
+        b.defaultColor = b.blank.colors.filter(c=> color.value == c.name)[0]
+        setDesign({...d})
+        updateDesign({...d})
+    }
+    const setDefaultImages = ({id, side})=>{
+        let d = {...des}
+        console.log(id, "id")
+        let b = d.blanks.filter(bl=> bl.blank.code == imageBlank.value)[0]
+        console.log(b)
+        if(b.defaultImages == undefined) b.defaultImages = []
+        let dI = b.defaultImages.filter(df=> df.color == b.colors.filter(c=> c.name == imageColor.value)[0]?._id)[0]
+        let others = b.defaultImages.filter(df=> df.color != b.colors.filter(c=> c.name == imageColor.value)[0]?._id)
+        console.log(b.defaultImages, others, "others")
+        if(!dI) dI = {id, side, color: b.colors.filter(c=> c.name == imageColor.value)[0]?._id}
+        else {
+            dI.id = id
+            dI.side = side,
+            dI.color = b.colors.filter(c=> c.name == imageColor.value)[0]?._id
+        }
+        others.push(dI)
+        b.defaultImages = others
+        console.log(b.defaultImages)
         setDesign({...d})
         updateDesign({...d})
     }
@@ -511,6 +561,16 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                     }}
                                    isMulti
                                />
+                               <Box sx={{margin: ".5% 0%"}}>
+                                    <CreatableSelect
+                                        placeholder="Default Color"
+                                        options={b.colors?.map(m=>{return {value: m.name, label: m.name}})}
+                                        value={b.defaultColor? {value: b.defaultColor?.name, label: b.defaultColor.name}: null}
+                                        onChange={(vals)=>{
+                                            updateDefaultColor({blank:b, color:vals})
+                                        }}
+                                    />
+                                </Box>
                             </AccordionDetails>
                         </Accordion>
                         ))}
@@ -588,7 +648,11 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                         box={
                                         i.box[0]
                                         }
+                                        id={i._id}
+                                        setDefaultImages={setDefaultImages}
                                         styleImage={i.image}
+                                        side={i.side}
+                                        dI={des.blanks.filter(b=> b.blank.code == imageBlank.value)[0].defaultImages.filter(dI=> dI.color == i.color && dI.side == i.side)[0]?.id}
                                         designImage={des.images && des.images[i.side]? des.images[i.side]: null }
                                     />
                                 </Grid2>

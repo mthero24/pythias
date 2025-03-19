@@ -35,6 +35,15 @@ const schema = new mongoose.Schema({
     colors: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Colors",
+    }],
+    defaultColor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Colors",
+    },
+    defaultImages: [{
+      id: String,
+      color: String,
+      side: String
     }]
   }],
   b2m: [{

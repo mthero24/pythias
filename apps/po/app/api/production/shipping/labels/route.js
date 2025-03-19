@@ -62,6 +62,7 @@ export async function POST(req= NextApiRequest){
                 label: label.label,
                 cost: parseFloat(label.cost),
                 trackingInfo: ["Label Purchased"],
+                provider: label.selectedShipping.provider
             });
             for (let item of order.items) {
                 item.shipped = true;

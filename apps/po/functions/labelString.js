@@ -27,16 +27,11 @@ export const buildLabelData = async (item, i, opts={}) => {
         ^LH6,6^CFS,30,6^AXN,22,30^FO15,60^FDPiece: ${item.pieceId}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO20,330^FD#${i + 1}^FS
         ^LH12,18^CFS,25,12^AXN,75,90^FO120,250^FD${item.styleCode}^FS
-        ^LH12,18^CFS,25,12^AXN,30,35^FO20,360^FDColor: ${
+        ^LH12,18^CFS,25,12^AXN,30,35^FO20,360^FD${
             item.colorName
-        }, Size: ${item.sizeName}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO20,400^FDVendor: ${
-            item.vendor ? item.vendor : "TSP"
         }^FS
+        ^LH12,18^CFS,25,12^AXN,30,35^FO20,390^FD${item.sizeName}^FS
          ^LH12,18^CFS,25,12^AXN,22,30^FO20,430^FDShipping: ${item.shippingType}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO20,480^FD PrintO Design: ${
-            item.sku.split("-")[0]
-        }^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO20,500^FDCNT: ${totalQuantity}^FS
         ${
             printTypeAbbr

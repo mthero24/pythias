@@ -107,7 +107,8 @@ const schema = new mongoose.Schema({
         label: String,
         cost: Number,
         trackingInfo: [String],
-        delivered: { type: Boolean, default: false }
+        delivered: { type: Boolean, default: false },
+        provider: String
       },
     ],
     shippingCost: { type: Number, default: 0 },
