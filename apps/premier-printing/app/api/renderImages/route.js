@@ -32,6 +32,10 @@ const createImage = async (data)=>{
         })
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
+        if(data.box.rotation){
+            console.log(data.box.rotation, "rotation")
+            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
+        }
         designBase64 = await designBase64.resize({
             width: parseInt(data.box.boxWidth * 1.75),
             height: parseInt(data.box.boxHeight * 1.75),
@@ -43,10 +47,10 @@ const createImage = async (data)=>{
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
         const metadata = await designBase64.metadata()
-        if(data.box.rotation){
-            console.log(data.box.rotation, "rotation")
-            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
-        }
+        // if(data.box.rotation){
+        //     console.log(data.box.rotation, "rotation")
+        //     designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
+        // }
         console.log(data.box)
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
