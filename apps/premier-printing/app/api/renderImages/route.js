@@ -54,6 +54,7 @@ const createImage = async (data)=>{
         designBase64 = await designBase64.toBuffer();
         console.log(metadata.width, 'meta', metadata2.width, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
         let offset = parseInt(((data.box.boxWidth * 1.75) - (metadata.width)) / 2)
+        let offsetHeight = parseInt(((data.box.boxHeight * 1.75) - (metadata.height)) / 2)
         let x = parseInt(data.box.x * 1.75)
         let y = parseInt(data.box.y * 1.75)
         console.log(x, "x", y, "y")
@@ -70,7 +71,7 @@ const createImage = async (data)=>{
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(y),
+                top: parseInt(y) + offsetHeight? offsetHeight: 0,
                 left: parseInt(x) + (offset? offset: 0),
                 gravity: "center",
             },
