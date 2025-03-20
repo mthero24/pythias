@@ -32,10 +32,6 @@ const createImage = async (data)=>{
         })
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
-        if(data.box.rotation){
-            console.log(data.box.rotation, "rotation")
-            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
-        }
         designBase64 = await designBase64.resize({
             width: parseInt(data.box.boxWidth * 1.75),
             height: parseInt(data.box.boxHeight * 1.75),
@@ -44,6 +40,10 @@ const createImage = async (data)=>{
             position: sharp.strategy.attention,
             fastShrinkOnLoad: false 
         })
+        if(data.box.rotation){
+            console.log(data.box.rotation, "rotation")
+            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
+        }
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
         const metadata2 = await designBase64.metadata()
@@ -55,8 +55,8 @@ const createImage = async (data)=>{
         console.log(metadata.width, metadata.height, 'meta', metadata2.width,  metadata2.height, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
         let offset = data.box.rotation && data.box.rotation == 0? parseInt(((data.box.boxWidth * 1.75) - (metadata.width)) / 2): 0
         let offsetHeight = parseInt(((metadata.height) - (data.box.boxHeight * 1.75)) / 2)
-        let x = data.box.x
-        let y = data.box.y
+        let x = data.box.x * 1.75
+        let y = data.box.y * 1.75
         console.log(x, "x", y, "y")
         if(data.box.rotation){
             let radians = data.box.rotation * (Math.PI / 180)
@@ -71,8 +71,8 @@ const createImage = async (data)=>{
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(y * 1.75),
-                left: parseInt(x * 1.75) + (offset? offset: 0),
+                top: parseInt(y),
+                left: parseInt(x) + (offset? offset: 0),
                 gravity: "center",
             },
         ]).png({ quality: 95 })
