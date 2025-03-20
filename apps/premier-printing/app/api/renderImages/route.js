@@ -55,8 +55,8 @@ const createImage = async (data)=>{
         console.log(metadata.width, 'meta', metadata2.width, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
         let offset = parseInt(((metadata.width) - (data.box.boxWidth * 1.75)) / 2)
         let offsetHeight = parseInt(((metadata.height) - (data.box.boxHeight * 1.75)) / 2)
-        let x = parseInt(data.box.x * 1.75)
-        let y = parseInt(data.box.y * 1.75)
+        let x = data.box.x * 1.75
+        let y = data.box.y * 1.75
         console.log(x, "x", y, "y")
         if(data.box.rotation){
             let radians = data.box.rotation * (Math.PI / 180)
