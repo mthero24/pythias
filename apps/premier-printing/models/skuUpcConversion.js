@@ -9,6 +9,7 @@ let schema = new mongoose.Schema({
     color: { type: mongoose.Schema.Types.ObjectId, ref: Color},
     size: String,
     blank: { type: mongoose.Schema.Types.ObjectId, ref: Blank},
-    design: { type: mongoose.Schema.Types.ObjectId, ref: Design}
+    design: { type: mongoose.Schema.Types.ObjectId, ref: Design},
+    gtin: String
 })
 export default PremierPrinting.model("SkuToUpc", schema);
