@@ -32,7 +32,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
     }
     const ship = async ()=>{
         setProcessing(true)
-        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress, marketplace: order.marketplace, items: order.items.map(i=>{ return {itemDescription: item.sku, itemTotalValue: item.productCost, itemQuantity: parseInt(item.quantity), countryofOrigin: "US", weightUOM: "lb", itemTotalWeight: (weight / order.items.length)/ 16 }})})
+        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress, marketplace: order.marketplace, items: order.items.map(i=>{ return {itemDescription: i.sku, itemTotalValue: i.productCost, itemQuantity: parseInt(i.quantity), countryofOrigin: "US", weightUOM: "lb", itemTotalWeight: (weight / order.items.length)/ 16 }})})
         console.log(res.data)
         if(res.data.error){
             alert(res.data.msg)
