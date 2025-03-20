@@ -60,7 +60,7 @@ const createImage = async (data)=>{
         if(data.box.rotation){
             let radians = data.box.rotation * (Math.PI / 180)
             x = (x * Math.cos(radians)) - (y * Math.sin(radians))
-            y = (x * Math.cos(radians)) + (y * Math.sin(radians))
+            y = (x * Math.sin(radians)) + (y * Math.cos(radians))
             console.log(x, "x", y, "y")
         }
         console.log(offset, "offset")
