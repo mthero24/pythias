@@ -63,7 +63,7 @@ const createImage = async (data)=>{
             let newX = (x * Math.cos(radians)) - (y * Math.sin(radians))
             let newY = (x * Math.sin(radians)) + (y * Math.cos(radians))
             x= newX;
-            y=newY
+            //y=newY
             console.log(x, "x", y, "y")
         }
         console.log(offset, "offset", offsetHeight, "offset height")
