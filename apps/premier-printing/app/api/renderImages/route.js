@@ -56,10 +56,12 @@ const createImage = async (data)=>{
         let offset = parseInt(((data.box.boxWidth * 1.75) - (metadata.width)) / 2)
         let x = parseInt(data.box.x * 1.75)
         let y = parseInt(data.box.y * 1.75)
+        console.log(x, "x", y, "y")
         if(data.box.rotation){
             let radians = data.box.rotation * (Math.PI / 180)
             x = (x * Math.cos(radians)) - (y * Math.sin(radians))
             y = (x * Math.cos(radians)) + (y * Math.sin(radians))
+            console.log(x, "x", y, "y")
         }
         console.log(offset, "offset")
         base64 = await base64.composite([
