@@ -60,7 +60,7 @@ const createImage = async (data)=>{
         if(data.box.rotation){
             let radians = data.box.rotation * (Math.PI / 180)
             let newX = (x * Math.cos(radians)) - (y * Math.sin(radians))
-            let newY = (x * Math.sin(radians)) - (y * Math.cos(radians))
+            let newY = (x * Math.sin(radians)) + (y * Math.cos(radians))
             x= newX;
             y=newY
             console.log(x, "x", y, "y")
