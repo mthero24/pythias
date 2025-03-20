@@ -144,8 +144,18 @@ const paymentAuth = async ({token, credentials})=>{
         return {error: true, msg: "something went wrong"}
     }
 }
-export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress}){
+export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items}){
     //console.log(credentials)
+    let customsForm
+    if(address.state == "AP" || address.state == "AA" || address.state == "AE"){
+        
+        customsForm = {
+            AESITN: "NO EEI 30.37(a)",
+            customsContentType: "MERCHANDISE",
+            contents: items
+        }
+    }
+    console.log("cutoms", customsForm)
     let token = await GetToken({credentials})
     let data = {
         imageInfo: {
@@ -184,7 +194,8 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
           "mailingDate": `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString() : `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${(new Date(Date.now()).getDate()).toString().length > 1? (new Date(Date.now()).getDate()).toString(): `0${(new Date(Date.now()).getDate()).toString()}`}`,
           "extraServices": [],
           "destinationEntryFacilityType": "NONE"
-        }
+        },
+        customsForm
     }
     console.log(data)
     if(token){
