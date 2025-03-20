@@ -54,13 +54,20 @@ const createImage = async (data)=>{
         designBase64 = await designBase64.toBuffer();
         console.log(metadata.width, 'meta', metadata2.width, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
         let offset = parseInt(((data.box.boxWidth * 1.75) - (metadata2.width)) / 2)
+        let x = parseInt(data.box.x * 1.75)
+        let y = parseInt(data.box.y * 1.75)
+        if(data.box.rotation){
+            let radians = data.box.rotation * (Math.PI / 180)
+            x = (x * Math.cos(radians)) - (y * Math.sin(radians))
+            y = (x * Math.cos(radians)) + (y * Math.sin(radians))
+        }
         console.log(offset, "offset")
         base64 = await base64.composite([
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(data.box.x * 1.75),
-                left: parseInt(data.box.y * 1.75) + (offset? offset: 0),
+                top: parseInt(y),
+                left: parseInt(x) + (offset? offset: 0),
                 gravity: "center",
             },
         ]).png({ quality: 95 })
