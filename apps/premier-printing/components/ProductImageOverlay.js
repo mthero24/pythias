@@ -17,7 +17,7 @@ const ProductImageOverlay = ({
   side,
   dI
 }) => {
-  console.log("id", id, "dI", dI)
+  console.log(side, designImage)
   const containerRef = useRef();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [imageDimensions, setImageDimensions] = useState({
