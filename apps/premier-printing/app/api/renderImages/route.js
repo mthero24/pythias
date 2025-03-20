@@ -72,7 +72,7 @@ const createImage = async (data)=>{
                 input: designBase64,
                 blend: 'atop',
                 top: parseInt(y),
-                left: parseInt(x) + (offset? offset: 0),
+                left: parseInt(x) ,
                 gravity: "center",
             },
         ]).png({ quality: 95 })
