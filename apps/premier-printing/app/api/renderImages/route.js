@@ -55,11 +55,11 @@ const createImage = async (data)=>{
         console.log(metadata.width, metadata.height, 'meta', metadata2.width,  metadata2.height, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
         let offset = data.box.rotation && data.box.rotation == 0? parseInt(((data.box.boxWidth * 1.75) - (metadata.width)) / 2): 0
         let offsetHeight = parseInt(((metadata.height) - (data.box.boxHeight * 1.75)) / 2)
-        let x = data.box.x
-        let y = data.box.y
+        let x = data.box.x * 1.75
+        let y = data.box.y * 1.75
         console.log(x, "x", y, "y")
         if(data.box.rotation){
-            let radians = Math.abs(data.box.rotation) * (Math.PI / 180)
+            let radians = data.box.rotation * (Math.PI / 180)
             let newX = data.box.rotation > 0? (x * Math.cos(radians)) + (y * Math.sin(radians)): (x * Math.cos(radians)) - (y * Math.sin(radians))
             let newY = data.box.rotation > 0?(-1 * (x * Math.sin(radians))) + (y * Math.cos(radians)): (x * Math.sin(radians)) + (y * Math.cos(radians))
             x= newX;
