@@ -66,7 +66,7 @@ const createImage = async (data)=>{
             y=newY
             console.log(x, "x", y, "y")
         }
-        console.log(offset, "offset")
+        console.log(offset, "offset", offsetHeight, "offset height")
         base64 = await base64.composite([
             {
                 input: designBase64,
