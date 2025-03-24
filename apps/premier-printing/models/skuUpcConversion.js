@@ -4,8 +4,8 @@ import Color from "./Color";
 import Blank from "./Blanks";
 import Design from "./Design";
 let schema = new mongoose.Schema({
-    sku: {type: String, unique: true},
-    upc: {type:String, unique: true},
+    sku: {type: String, unique: true, sparse: true},
+    upc: {type:String, unique: true, sparse: true},
     color: { type: mongoose.Schema.Types.ObjectId, ref: Color},
     size: String,
     blank: { type: mongoose.Schema.Types.ObjectId, ref: Blank},
