@@ -8,6 +8,8 @@ export function Refund({ords, pa}){
     const [orders, setOrders] = useState(ords)
     const refund = async({order, label})=>{
         let res = await axios.post("/api/production/shipping/refund", {order, label, page})
+        console.log(res)
+        if(res.data.orders) setOrders(res.data.orders)
     }
     const hide = async({order, label})=>{
         let res = await axios.put("/api/production/shipping/refund", {order, label, page})
@@ -37,7 +39,7 @@ export function Refund({ords, pa}){
             </Card>
             <Card sx={{minHeight: "95vh"}}>
                 {orders.map((o, i)=>(
-                    o.shippingInfo.labels.filter(l=> !l.delivered && l.trackingNumber.length > 12).map(l=>(
+                    o.shippingInfo.labels.filter(l=> !l.delivered ).map(l=>(
                         <Card key={l._id} sx={{padding: "3%", background: (i % 2 == 0? "#d2d2d2": "#fff")}}>
                             <Grid2 container spacing={2}>
                                 <Grid2 size={1}>
@@ -46,10 +48,10 @@ export function Refund({ords, pa}){
                                 <Grid2 size={2}>
                                     <Typography>{o.poNumber}</Typography>
                                 </Grid2>
-                                <Grid2 size={2}>
+                                <Grid2 size={3}>
                                     <Typography>{l.trackingNumber}</Typography>
                                 </Grid2>
-                                <Grid2 size={4}>
+                                <Grid2 size={3}>
                                     <Typography>{l.trackingInfo[0]}</Typography>
                                 </Grid2>
                                 <Grid2 size={1}>

@@ -240,11 +240,13 @@ export const refund = async ({trackingNumber, credentials})=>{
                 }
                 }
             let resData
+            console.log(trackingNumber)
             let res = await axios.delete(`https://api.usps.com/labels/v3/label/${trackingNumber}`, headers).catch(e=>{resData= e.response.data})
             console.log(res?.data, resData)
             if(res?.data.error){
                 return {error: true, msg: "error from usps"}
             }else if(resData){
+                console.log(resData.error.errors)
                 return {error:true, msg: `${resData.error.message} - ${resData?.error.errors[0]?.detail} - ${resData?.error.errors[0]?.source.parameter}`}
             }
             else return {error: false, msg: res.data.status}
