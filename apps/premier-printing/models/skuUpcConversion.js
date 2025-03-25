@@ -10,6 +10,7 @@ let schema = new mongoose.Schema({
     size: String,
     blank: { type: mongoose.Schema.Types.ObjectId, ref: Blank},
     design: { type: mongoose.Schema.Types.ObjectId, ref: Design},
-    gtin: String
+    gtin: String,
+    recycle: {type: Boolean, default: false}
 })
 export default PremierPrinting.model("SkuToUpc", schema);

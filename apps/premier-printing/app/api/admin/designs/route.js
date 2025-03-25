@@ -5,6 +5,7 @@ import User from "@/models/User";
 import Items from "@/models/Items";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
+import { createUpc, MarkRecycle } from "@/functions/createUpcs";
 const createSku = ()=>{
     let sku = ""
     for(let i = 0; i < 10; i++){
@@ -68,6 +69,11 @@ export async function PUT(req=NextApiRequest){
     console.log(data, "put")
     try{
         let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
+        if(design.published){
+            createUpc(design)
+        }else{
+            MarkRecycle(design)
+        }
         await Items.updateMany({designRef: design._id}, {design: design.images})
         console.log(design, "design")
         return NextResponse.json({error: false, design})

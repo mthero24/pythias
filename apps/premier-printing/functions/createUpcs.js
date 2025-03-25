@@ -5,7 +5,7 @@ export async function createUpc({design}){
         "The Juniper Shop": ["TC", "TD", "FST", "TSWT", "TH", "RSTLS", "RSYSWT", "TTK", "YC", "YSWT", "YH", "RSYLS", "YTK", "YFTH", "RSO", "FSO", "ID", "LSO"],
         "Simply Sage Market": ["C", "SWT", "GDT", "GDSWT", "GDLS", "LGDSP", "LGDSWT", "LGDSET", "GDLSSET", "GDTSET", "RT", "BCT", "TK", "QZF", "HT", "H", "PPSET", "RB", "FTH", "CTH"]
     }
-    let recycle = []
+    let recycle = await SkuToUpc.find({recycle: true})
     for(let blank of design.blanks){
         for(let color of blank.colors){
             for(let size of blank.blank.sizes){
@@ -26,7 +26,7 @@ export async function createUpc({design}){
                 if(sku1 && sku1.gtin){
                     gtin = {prefix: sku1.gtin.substring(1,8),gtin: sku1.gtin}
                 }else if(sku1 && sku1.upc && sku1.upc.length == 12){
-                    gtin = `00${sku1.upc}`
+                    gtin = {prefix: `0${sku1.upc.substring(0,6)}`,gtin: `00${sku1.upc}`}`00${sku1.upc}`
                 }else if(recycle.length > 0){
                     gtin = recycle.pop()
                 }else{
@@ -81,4 +81,9 @@ export async function createUpc({design}){
         }
     }
     return "done"
+}
+
+export async function MarkRecycle(design){
+    let skus = await SkuToUpc.updateMany({design: design._id}, {recycle: true})
+    return
 }

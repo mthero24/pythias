@@ -1,5 +1,5 @@
 "use client";
-import {Box, Grid2, TextField, Accordion, AccordionActions, AccordionSummary, AccordionDetails, Button, Typography, Card} from "@mui/material";
+import {Box, Grid2, TextField, Accordion, Modal, AccordionSummary, AccordionDetails, Button, Typography, Card} from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 import {useState, useEffect} from "react";
@@ -20,6 +20,8 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
     const [imageGroupImages, setImageGroupImages] = useState([])
     const [imageBlank, setImageBlank] = useState({label: "Blank", value: null})
     const [imageColor, setImageColor] = useState({label: "Color", value: null})
+    const [upcBlank, setUpcBlank] = useState(null)
+    const [upcModal, setUpcModal] = useState(false)
     useEffect(()=>{
         console.log(blanks[0].colors)
         if(blanks){
@@ -571,7 +573,13 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                         }}
                                     />
                                 </Box>
-                                <Button>Add Alternative Images</Button>
+                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                                    <Button>Add Alternative Images</Button>
+                                    <Button onClick={()=>{
+                                        setUpcBlank(b.blank)
+                                        setUpcModal(true)
+                                    }}>See Sku List</Button>
+                                </Box>
                             </AccordionDetails>
                         </Accordion>
                         ))}
@@ -662,6 +670,93 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                     </Grid2>
                 </Grid2>
             </Card>
+            <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} />
         </Box>
+    )
+}
+
+const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
+    let [upc, setUpc] = useState([])
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "90%",
+        height: "80vh",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        overflow: "auto"
+      };
+    useEffect(()=>{
+        const getUpcs = async()=>{
+            let res = await axios.get(`/api/upc?design=${design._id}&blank=${blank._id}`)
+            console.log(res.data)
+            setUpc(res.data.upc)
+        }
+        getUpcs()
+    }, [open])
+    return (
+        <Modal
+        open={open}
+        onClose={()=>{setOpen(false); setBlank(null); setUpc([])}}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+            <Grid2 container spacing={2} sx={{textAlign: "center", padding: ".5%"}}>
+                <Grid2 size={3}>
+                    <Typography>Sku</Typography>
+                </Grid2>
+                <Grid2 size={1}>
+                    <Typography>GTIN</Typography>
+                </Grid2>
+                <Grid2 size={1}>
+                    <Typography>UPC</Typography>
+                </Grid2>
+                <Grid2 size={2}>
+                    <Typography>Design Name</Typography>
+                </Grid2>
+                <Grid2 size={2}>
+                    <Typography>Blank Name</Typography>
+                </Grid2>
+                <Grid2 size={1}>
+                    <Typography>Size</Typography>
+                </Grid2>
+                <Grid2 size={2}>
+                    <Typography>Color</Typography>
+                </Grid2>
+            </Grid2>
+          {upc.map((u, i)=>(
+            <Card sx={{padding: "2%", background: i % 2 == 0? "#e2e2e2": "#ffffff"}} key={u._id}>
+                <Grid2 container spacing={2} sx={{textAlign: "center"}}>
+                    <Grid2 size={3}>
+                        <Typography>{u.sku}</Typography>
+                    </Grid2>
+                    <Grid2 size={1}>
+                        <Typography>{u.gtin}</Typography>
+                    </Grid2>
+                    <Grid2 size={1}>
+                        <Typography>{u.upc}</Typography>
+                    </Grid2>
+                    <Grid2 size={2}>
+                        <Typography>{u.design.name}</Typography>
+                    </Grid2>
+                    <Grid2 size={2}>
+                        <Typography>{u.blank.name}</Typography>
+                    </Grid2>
+                    <Grid2 size={1}>
+                        <Typography>{u.size}</Typography>
+                    </Grid2>
+                    <Grid2 size={2}>
+                        <Typography>{u.color.name}</Typography>
+                    </Grid2>
+                </Grid2>
+            </Card>
+          ))}
+        </Box>
+      </Modal>
     )
 }

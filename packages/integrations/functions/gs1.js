@@ -14,14 +14,14 @@ export async function NextGTIN({auth}){
     let prefix = resPre.data.filter(p=> p.remainingCapacity > 0)[0]
     console.log(prefix.prefix)
     if(prefix){
-        let resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{e.response?.data})
+        let resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{console.log(e.response?.data)})
         while(!resNext){
             await new Promise((resolve)=>{
                 setTimeout(()=>{
                     resolve()
                 },5000)
             })
-            resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{e.response?.data})
+            resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{console.log(e.response?.data)})
         }
         console.log(resNext?.data)
         if(resNext?.data && resNext.data.gtin) return resNext.data
@@ -41,3 +41,7 @@ export async function CreateUpdateUPC({auth, body}){
     return {error: res?.data?.product == undefined, product: res?.data?.product}
 }
 
+export async function GetUpc({gtin}){
+    let res = await axios.get(`https://api.gs1us.org/api/v1/myproduct/${gtin}`, headers).catch(e=> console.log(e.response?.data))
+    return res?.data
+}
