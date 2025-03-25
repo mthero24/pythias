@@ -5,7 +5,7 @@ import CreatableSelect from "react-select/creatable";
 import axios from "axios"
 import Search from "@/app/admin/designs/Search";
 import Image from "next/image";
-export function Main({s}){
+export function Main({s, count}){
     const [sku, setSku] = useState(s)
     const [edit, setEdit] = useState(null)
     const [addDesign, setAddDesign] = useState(false)
@@ -13,7 +13,7 @@ export function Main({s}){
     const [sizeColor, setSizeColor] = useState(false)
     return (
         <Box sx={{background: "#e2e2e2", padding: "3%"}}>
-            <Typography sx={{fontSize: "2rem"}}>Fixable: {sku.length}</Typography>
+            <Typography sx={{fontSize: "2rem"}}>Fixable: {count}</Typography>
             <Grid2 container spacing={2}>
             {sku.map((s,i)=>(
                 <Grid2 size={3} key={s._id}>
