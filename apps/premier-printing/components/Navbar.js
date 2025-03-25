@@ -113,7 +113,7 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Designs`} />
           </ListItemButton>
         </Link>
-        <Link href="/fix-upc">
+        <Link href="/admin/fix-upc">
           <ListItemButton>
             <ListItemText primary={`Fix Upc`} />
           </ListItemButton>
