@@ -15,10 +15,10 @@ import { Style } from "@mui/icons-material";
 import { createUpc } from "@/functions/createUpcs";
 export default async function Test(){
     //let res = await axios.get(`https://api.gs1us.org/api/v1/myproduct/${g}`, headers).catch(e=> console.log(e.response?.data))
-    let designs = await Design.find({published: true}).populate("blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(400)
-    for(let design of designs){
-        console.log(new Date(design._id.getTimestamp()))
-        await createUpc({design})
-    }
+    // let designs = await Design.find({published: true}).populate("blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(400)
+    // for(let design of designs){
+    //     console.log(new Date(design._id.getTimestamp()))
+    //     await createUpc({design})
+    // }
     return <h1>test</h1>
 }
