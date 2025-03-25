@@ -9,77 +9,16 @@ import t2n from "./t2n.json";
 import fs from "fs"
 import axios from "axios"
 import btoa from "btoa"
-import {getOrderKohls} from "@pythias/integrations"
+import {getOrderKohls, NextGTIN, CreateUpdateUPC} from "@pythias/integrations"
 import {pullOrders} from "@/functions/pullOrders";
-import {gtins} from "@/functions/gtin";
+import { Style } from "@mui/icons-material";
+import { createUpc } from "@/functions/createUpcs";
 export default async function Test(){
-    for(let g of gtins){
-        console.log(g)
-        let headers = {
-            headers:{
-                "Cache-Control": "no-cache",
-                ApiKey: process.env.gs1PrimaryProductKey,
-                "X-Product-Owner-Account-Id": process.env.gs1AccountNumber
-            }
-        }
-        let res = await axios.get(`https://api.gs1us.org/api/v1/myproduct/${g}`, headers).catch(e=> console.log(e.response?.data))
-        console.log(res?.data)
-        let sizes = {small: "S", medium: "M", large: "L", ym: "M", ys: "S", yl: "L", yxs: "XS", yxl: "XL"}
-        if(res.data?.sku){
-            let skuToUpc = await SkuToUpc.findOne({sku: res.data.sku}).populate("design")
-            if(skuToUpc){
-                console.log(skuToUpc, "last")
-                skuToUpc.upc = res.data.gtin.replace("00", "");
-                skuToUpc.gtin = res.data.gtin;
-                //skuToUpc.design = "67b7832e21740b02a42523dc"
-                skuToUpc.size= sizes[res.data.sku.split("_")[2]?.toLowerCase()]? sizes[res.data.sku.split("_")[2]?.toLowerCase()]: res.data.sku.split("_")[2]
-                //skuToUpc.color= await Color.findOne({name: res.data.sku.split("_")[1]}) 
-                await skuToUpc.save()
-                console.log(skuToUpc)
-            }else{
-                skuToUpc = await SkuToUpc.findOne({upc: res.data.gtin.replace("00", "")}).populate("design")
-                if(skuToUpc){
-                    console.log(skuToUpc, "last")
-                    skuToUpc.upc = res.data.gtin.replace("00", "");
-                    skuToUpc.gtin = res.data.gtin;
-                    //skuToUpc.design = "67b7832e21740b02a42523dc"
-                    skuToUpc.size= sizes[res.data.sku.split("_")[2]?.toLowerCase()]? sizes[res.data.sku.split("_")[2]?.toLowerCase()]: res.data.sku.split("_")[2]
-                    //skuToUpc.color= await Color.findOne({name: res.data.sku.split("_")[1]}) 
-                    await skuToUpc.save()
-                    console.log(skuToUpc)
-                }else{
-                    skuToUpc = new SkuToUpc({
-                        sku: res.data.sku,
-                        blank: await Blank.findOne({code: res.data?.sku.split("_")[0]}),
-                        upc: res.data.gtin.replace("00", ""),
-                        size: sizes[res.data.sku.split("_")[2]?.toLowerCase()]? sizes[res.data.sku.split("_")[2]?.toLowerCase()]: res.data.sku.split("_")[2],
-                        //color: await Color.findOne({name: res.data.sku.split("_")[3]}),
-                        gtin: res.data.gtin
-                    })
-                    await skuToUpc.save()
-                }
-            }
-        }else{
-            let skuToUpc = await SkuToUpc.findOne({upc: res.data.gtin.replace("00", "")})
-            if(skuToUpc){
-                console.log(skuToUpc, "last")
-                skuToUpc.upc = res.data.gtin.replace("00", "");
-                skuToUpc.gtin = res.data.gtin;
-                await skuToUpc.save()
-                console.log(skuToUpc)
-            }else{
-                try{
-                    skuToUpc = new SkuToUpc({
-                        sku: res.data.sku,
-                        upc: res.data.gtin.replace("00", ""),
-                        gtin: res.data.gtin
-                    })
-                    await skuToUpc.save()
-                }catch(e){
-                    console.log(e)
-                }
-            }
-        }
+    //let res = await axios.get(`https://api.gs1us.org/api/v1/myproduct/${g}`, headers).catch(e=> console.log(e.response?.data))
+    let designs = await Design.find({published: true}).populate("blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(400)
+    for(let design of designs){
+        console.log(new Date(design._id.getTimestamp()))
+        await createUpc({design})
     }
     return <h1>test</h1>
 }

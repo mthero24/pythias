@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { PremierPrinting }from "../lib/connection";
+import Color from "./Color"
 const schema = new mongoose.Schema({
   sku: { type: String, required: true, unique: true },
   name: { type: String, required: true },
@@ -34,11 +35,11 @@ const schema = new mongoose.Schema({
     },
     colors: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Colors",
+      ref: Color,
     }],
     defaultColor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Colors",
+      ref: Color,
     },
     defaultImages: [{
       id: String,
