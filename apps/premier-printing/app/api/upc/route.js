@@ -10,6 +10,6 @@ export async function GET(req){
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
     let upc = await UpcToSku.findByIdAndUpdate(data.upc._id, data.upc)
-    let skus = await await UpcToSku.find({$or: [{color: null, blank: {$ne: null}}]}).populate("design", "name").populate("color", "name").populate({path: "blank", select:"code name sizes colors", populate: "colors"}).limit(50)
+    let skus = await await UpcToSku.find({$or: [{design: null, blank: {$ne: null}},{color: null, blank: {$ne: null}}]}).populate("design", "name").populate("color", "name").populate({path: "blank", select:"code name sizes colors", populate: "colors"}).limit(50)
     return NextResponse.json({error: false, skus})
 }
