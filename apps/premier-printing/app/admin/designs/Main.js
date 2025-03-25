@@ -48,7 +48,7 @@ export function Main({designs, count, query, pa}){
                     <Grid2 container spacing={2}>
                         {designss && designss.map(d=>(
                             <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
-                                <Link href={`/admin/design/${d._id}`}>
+                                <Link href={`/admin/design/${d._id}`} target="_blank">
                                     <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
                                         <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "250px", background: "#e2e2e2"}}>
                                             <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.upperSleeve? d.images?.upperSleeve: d.images?.lowerSleeve? d.images?.lowerSleeve: d.images?.pocket? d.images?.pocket:  d.images?.center?  d.images?.center: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>

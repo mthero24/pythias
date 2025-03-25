@@ -677,6 +677,8 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
 
 const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
     let [upc, setUpc] = useState([])
+    let [edit, setEdit] = useState(null)
+    let [type, setType] = useState(null)
     const style = {
         position: 'absolute',
         top: '50%',
@@ -742,16 +744,17 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
                         <Typography>{u.upc}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
-                        <Typography>{u.design.name}</Typography>
+                        <Typography>{u.design?.name}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
-                        <Typography>{u.blank.name}</Typography>
+                        <Typography>{u.blank?.name}</Typography>
                     </Grid2>
                     <Grid2 size={1}>
                         <Typography>{u.size}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
-                        <Typography>{u.color.name}</Typography>
+                        {u.color && <Typography>{u.color?.name}</Typography>}
+                        {!u.color && <Button>Add Color</Button>}
                     </Grid2>
                 </Grid2>
             </Card>

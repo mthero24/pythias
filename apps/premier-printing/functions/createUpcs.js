@@ -23,16 +23,17 @@ export async function createUpc({design}){
                 let sku = `${blank.blank.code}_${color.name}_${size.name}_${design.sku}`
                 let gtin
                 let sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
+                if(!sku1 && recycle.length > 0){
+                    sku1 = recycle.pop()
+                }
                 if(sku1 && sku1.gtin){
-                    gtin = {prefix: sku1.gtin.substring(1,8),gtin: sku1.gtin}
+                    gtin = {prefix: sku1.gtin.substring(1,8), gtin: sku1.gtin}
                 }else if(sku1 && sku1.upc && sku1.upc.length == 12){
-                    gtin = {prefix: `0${sku1.upc.substring(0,6)}`,gtin: `00${sku1.upc}`}`00${sku1.upc}`
-                }else if(recycle.length > 0){
-                    gtin = recycle.pop()
+                    gtin = {prefix: `0${sku1.upc.substring(0,6)}`, gtin: `00${sku1.upc}`}
                 }else{
                     gtin = await NextGTIN({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}})
                 }
-                console.log(gtin)
+                console.log(gtin, "gtin")
                 let data = {
                     sku,
                     ...gtin,
@@ -64,6 +65,7 @@ export async function createUpc({design}){
                         skuToUpc.blank= blank.blank._id,
                         skuToUpc.color= color._id,
                         skuToUpc.size= size.name
+                        skuToUpc.recycle = false
                     }else{
                         skuToUpc = new SkuToUpc({
                             sku: sku,
@@ -72,7 +74,8 @@ export async function createUpc({design}){
                             design: design._id,
                             blank: blank.blank._id,
                             color: color._id,
-                            size: size.name
+                            size: size.name,
+                            recycle: false
                         })
                     }
                     await skuToUpc.save()
