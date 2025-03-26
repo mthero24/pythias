@@ -20,5 +20,6 @@ export default async function Test(){
     //     console.log(new Date(design._id.getTimestamp()))
     //     await createUpc({design})
     // }
+    await SkuToUpc.updateMany({recycle: true, blank: {$ne: null}}, {recycle: false})
     return <h1>test</h1>
 }

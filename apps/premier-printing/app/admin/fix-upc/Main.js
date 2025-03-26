@@ -6,6 +6,7 @@ import axios from "axios"
 import Search from "@/app/admin/designs/Search";
 import Image from "next/image";
 export function Main({s, count}){
+    const [cunt, setCount] = useState(count)
     const [sku, setSku] = useState(s)
     const [edit, setEdit] = useState(null)
     const [addDesign, setAddDesign] = useState(false)
@@ -13,7 +14,7 @@ export function Main({s, count}){
     const [sizeColor, setSizeColor] = useState(false)
     return (
         <Box sx={{background: "#e2e2e2", padding: "3%"}}>
-            <Typography sx={{fontSize: "2rem"}}>Fixable: {count}</Typography>
+            <Typography sx={{fontSize: "2rem"}}>Fixable: {cunt}</Typography>
             <Grid2 container spacing={2}>
             {sku.map((s,i)=>(
                 <Grid2 size={3} key={s._id}>
@@ -32,13 +33,13 @@ export function Main({s, count}){
                 </Grid2>
             ))}
             </Grid2>
-            <AddDesignModal open={addDesign} setOpen={setAddDesign} upc={edit} setUpc={setEdit} setSku={setSku} />
-            <UpdateModal open={sizeColor} setOpen={setSizeColor} upc={edit} setUpc={setEdit} blank={blank} setBlank={setBlank} setSku={setSku}/>
+            <AddDesignModal open={addDesign} setOpen={setAddDesign} upc={edit} setUpc={setEdit} setSku={setSku} setCount={setCount}/>
+            <UpdateModal open={sizeColor} setOpen={setSizeColor} upc={edit} setUpc={setEdit} blank={blank} setBlank={setBlank} setSku={setSku}setCount={setCount}/>
         </Box>
     )
 }
 
-const AddDesignModal = ({open, setOpen, upc, setUpc, setSku})=>{
+const AddDesignModal = ({open, setOpen, upc, setUpc, setSku,setCount})=>{
     const style = {
         position: 'absolute',
         top: '50%',
@@ -62,6 +63,7 @@ const AddDesignModal = ({open, setOpen, upc, setUpc, setSku})=>{
         if(res.data.error) alert(res.data.msg)
         else {
             setSku(res.data.skus)
+            setCount(res.data.count)
             setUpc(null)
             setOpen(false)
             setSearch("")
@@ -84,6 +86,7 @@ const AddDesignModal = ({open, setOpen, upc, setUpc, setSku})=>{
             </Typography>
             <Search setDesigns={setDesigns} search={search} setSearch={setSearch} setPage={setPage} setHasMore={setHasMore}/>
             <Grid2 container spacing={2} sx={{marginTop: "1%"}}>
+                <Button fullWidth onClick={()=>{updateItem()}}>Update Item</Button>
                 {designs && designs.map(d=>(
                     <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
                         <Box sx={{opacity: design == d._id? .5: 1,}} onClick={()=>
@@ -116,7 +119,7 @@ const AddDesignModal = ({open, setOpen, upc, setUpc, setSku})=>{
     )
 }
 
-const UpdateModal = ({open, setOpen, upc, setUpc, blank, setBlank, setSku})=>{
+const UpdateModal = ({open, setOpen, upc, setUpc, blank, setBlank, setSku, setCount})=>{
     const style = {
         position: 'absolute',
         top: '50%',
@@ -145,6 +148,7 @@ const UpdateModal = ({open, setOpen, upc, setUpc, blank, setBlank, setSku})=>{
         if(res.data.error) alert(res.data.msg)
         else {
             setSku(res.data.skus)
+            setCount(res.data.count)
             setUpc(null)
             setBlank(null)
             setOpen(false)
