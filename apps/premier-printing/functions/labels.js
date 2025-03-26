@@ -35,8 +35,6 @@ export async function LabelsData(){
     }
     //console.log(labels)
     let inventoryArray = await Inventory.find({}).select("row unit shelf bin ordered color_name size_name stye_code quantity pending_quantity").lean()
-    .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
-    .lean();
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
