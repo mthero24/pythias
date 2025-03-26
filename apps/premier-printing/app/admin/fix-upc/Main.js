@@ -12,6 +12,15 @@ export function Main({s, count}){
     const [addDesign, setAddDesign] = useState(false)
     const [blank, setBlank] = useState(null)
     const [sizeColor, setSizeColor] = useState(false)
+    const updateItem = async (edit)=>{
+        let res = await axios.put("/api/upc", {upc: edit})
+        if(res.data.error) alert(res.data.msg)
+        else {
+            setSku(res.data.skus)
+            setCount(res.data.count)
+            setEdit(null)
+        }
+    }
     return (
         <Box sx={{background: "#e2e2e2", padding: "3%"}}>
             <Typography sx={{fontSize: "2rem"}}>Fixable: {cunt}</Typography>
@@ -28,7 +37,12 @@ export function Main({s, count}){
                             <Typography  sx={{padding: ".5%"}}>Color: {s.color? s.color.name: "none"}</Typography>
                             <Typography sx={{padding: ".5%"}}>Size: {s.size}</Typography>
                         </Box>
-                        <Typography sx={{padding: ".5%"}}>Recycle: {s.recycle? "TRUE": "FALSE"}</Typography>
+                        <Typography sx={{padding: ".5%", color: "blue", cursor: "pointer",}} onClick={()=>{
+                            let i = {...s}
+                            i.recycle = true
+                            setEdit({...i})
+                            updateItem({...i})
+                        }}>Recycle: {s.recycle? "TRUE": "FALSE"}</Typography>
                     </Card>
                 </Grid2>
             ))}

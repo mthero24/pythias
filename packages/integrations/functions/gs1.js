@@ -37,7 +37,7 @@ export async function CreateUpdateUPC({auth, body}){
             "X-Product-Owner-Account-Id": auth.accountNumber
         }
     }
-    let res = await axios.post(`https://api.gs1us.org/api/v1/myproduct/${body.gtin}`, body, headers).catch(e=>{console.log(e.response.data)})
+    let res = await axios.post(`https://api.gs1us.org/api/v1/myproduct/${body.gtin}`, body, headers).catch(e=>{console.log(e.response?.data)})
     return {error: res?.data?.product == undefined, product: res?.data?.product}
 }
 
