@@ -215,7 +215,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
             }else if(b.name == "The Juniper Shop"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's"], d})
                 console.log(d.b2m)
-            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Co Wholesale" || b.name == "Olive And Ivory" || b.name == "Olive And Ivory Wholesale"){
+            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Co Wholesale" || b.name == "Olive And Ivory" || b.name == "Olive and Ivory Wholesale" || b.name == "Olive And Ivory Wholesale"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
                 console.log(d.b2m)
             }
