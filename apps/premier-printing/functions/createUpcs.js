@@ -5,7 +5,6 @@ export async function createUpc({design}){
         "The Juniper Shop": ["TC", "TD", "FST", "TSWT", "TH", "RSTLS", "RSYSWT", "TTK", "YC", "YSWT", "YH", "RSYLS", "YTK", "YFTH", "RSO", "FSO", "ID", "LSO"],
         "Simply Sage Market": ["C", "SWT", "GDT", "GDSWT", "GDLS", "LGDSP", "LGDSWT", "LGDSET", "GDLSSET", "GDTSET", "RT", "BCT", "TK", "QZF", "HT", "H", "PPSET", "RB", "FTH", "CTH"]
     }
-    let recycle = await SkuToUpc.find({recycle: true})
     for(let blank of design.blanks){
         for(let color of blank.colors){
             for(let size of blank.blank.sizes){
@@ -23,14 +22,21 @@ export async function createUpc({design}){
                 let sku = `${blank.blank.code}_${color.name}_${size.name}_${design.sku}`
                 let gtin
                 let sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
-                if(!sku1 && recycle.length > 0){
-                    sku1 = recycle.pop()
+                if(!sku1){
+                    sku1 = await SkuToUpc.findOne({recycle: true})
+                    sku1.recycle = false
+                    sku1 = await sku1.save()
+                    console.log("recycle upc")
+                }else{
+                    console.log("found upc")
+                    continue
                 }
                 if(sku1 && sku1.gtin){
                     gtin = {prefix: sku1.gtin.substring(1,8), gtin: sku1.gtin}
                 }else if(sku1 && sku1.upc && sku1.upc.length == 12){
                     gtin = {prefix: `0${sku1.upc.substring(0,6)}`, gtin: `00${sku1.upc}`}
                 }else{
+                    console.log("new upc")
                     gtin = await NextGTIN({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}})
                 }
                 console.log(gtin, "gtin")
@@ -56,8 +62,10 @@ export async function createUpc({design}){
                 }
                 let res = await CreateUpdateUPC({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}, body: data})
                 if(!res.error){
-                    let skuToUpc = await SkuToUpc.findOne({$or: [{gtin: res.product.gtin}, {upc: res.product.gtin.replace("00", "")}, {sku: sku}]})
+                    console.log(res.product.gtin)
+                    let skuToUpc = await SkuToUpc.findOne({gtin: res.product.gtin})
                     if(skuToUpc){
+                        console.log("overrider")
                         skuToUpc.upc= res.product.gtin.replace("00", ""),
                         skuToUpc.sku= sku
                         skuToUpc.gtin= res.product.gtin,
@@ -67,6 +75,7 @@ export async function createUpc({design}){
                         skuToUpc.size= size.name
                         skuToUpc.recycle = false
                     }else{
+                        console.log("new")
                         skuToUpc = new SkuToUpc({
                             sku: sku,
                             upc: res.product.gtin.replace("00", ""),
