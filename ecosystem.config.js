@@ -10,14 +10,14 @@ module.exports = {
         env: {
           NODE_ENV: "production", // Set production environment
         },
-        output: "./logs/nextjs-out.log", // Output log file
-        error: "./logs/nextjs-error.log", // Error log file
+        output: null, // Output log file
+        error: null, // Error log file
         merge_logs: true,
         log_rotate: true,
         max_size: "10M",
         retain: "10",
         log_date_format: "YYYY-MM-DD HH:mm Z",
-  
+        
         max_memory_restart: "5G",
         max_restarts: 10,
         min_uptime: "30s",
@@ -33,8 +33,8 @@ module.exports = {
         env: {
           NODE_ENV: "production", // Set production environment
         },
-        output: "./logs/nextjs-out.log", // Output log file
-        error: "./logs/nextjs-error.log", // Error log file
+        output: null, // Output log file
+        error: null, // Error log file
         merge_logs: true,
         log_rotate: true,
         max_size: "10M",
@@ -56,8 +56,8 @@ module.exports = {
         env: {
           NODE_ENV: "production", // Set production environment
         },
-        output: "./logs/nextjs-out.log", // Output log file
-        error: "./logs/nextjs-error.log", // Error log file
+        output: null, // Output log file
+        error: null, // Error log file
         merge_logs: true,
         log_rotate: true,
         max_size: "10M",
