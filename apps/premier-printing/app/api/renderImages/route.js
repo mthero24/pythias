@@ -77,14 +77,14 @@ const createImage = async (data)=>{
             y= newY
             console.log(x, "x", y, "y")
             offset = parseInt(((data.box.boxWidth) - x) /2)
-            //offsetHeight = parseInt(((data.box.boxHeight) - y) /2)
+            offsetHeight = parseInt(((data.box.boxHeight) - y))
         }
         console.log(offset, "offset", offsetHeight, "offset height")
         base64 = await base64.composite([
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(y - (offsetHeight? offsetHeight: 0)),
+                top: parseInt(y + (offsetHeight? offsetHeight: 0)),
                 left: parseInt(x + (offset? offset: 0)),
                 gravity: "center",
             },
