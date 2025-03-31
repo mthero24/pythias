@@ -25,28 +25,36 @@ const createImage = async (data)=>{
     //onsole.log(data.box && data.designImage && base64)
     if(data.box && data.designImage && base64){
         base64 = base64.resize({
-            width: data.box.containerWidth + 300,
-            height: data.box.containerHeight + 300,
+            width: data.box.containerWidth ,
+            height: data.box.containerHeight,
             fit: sharp.fit.cover,
             position: sharp.strategy.entropy
         })
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
-        designBase64 = await designBase64.resize({
-            width: parseInt(data.box.boxWidth * 1.75),
-            height: parseInt(data.box.boxHeight * 1.75),
-            background: {r: 0, g: 0, b: 0, alpha: 0},
-            fit: sharp.fit.inside,
-            position: sharp.strategy.attention,
-            fastShrinkOnLoad: false 
-        })
+        if(data.box.rotation){
+            console.log(data.box.rotation, "rotation")
+            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}}).resize({
+                width: parseInt(data.box.boxWidth),
+                height: parseInt(data.box.boxHeight),
+                background: {r: 0, g: 0, b: 0, alpha: 0},
+                fit: sharp.fit.inside,
+                position: sharp.strategy.attention,
+                fastShrinkOnLoad: false 
+            })
+        }else{
+            designBase64 = await designBase64.resize({
+                width: parseInt(data.box.boxWidth ),
+                height: parseInt(data.box.boxHeight),
+                background: {r: 0, g: 0, b: 0, alpha: 0},
+                fit: sharp.fit.inside,
+                position: sharp.strategy.attention,
+                fastShrinkOnLoad: false 
+            })
+        }
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
         const metadata = await designBase64.metadata()
-        if(data.box.rotation){
-            console.log(data.box.rotation, "rotation")
-            designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}})
-        }
         designBase64 = await designBase64.toBuffer();
         designBase64 = await sharp(designBase64)
         const metadata2 = await designBase64.metadata()
@@ -55,27 +63,29 @@ const createImage = async (data)=>{
         console.log(metadata2.width - metadata.width, "mw - 2w", metadata2.height - metadata.height, "mh - 2h")
         let row = (metadata2.width - metadata.width) / 2
         let roh = metadata2.height - metadata.height
-        console.log(metadata.width, metadata.height, 'meta', metadata2.width,  metadata2.height, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
-        let offset = parseInt(((data.box.boxWidth * 1.75) - (metadata2.width)) /2)
-        let offsetHeight = parseInt(((metadata2.height) - (data.box.boxHeight * 1.75) / 2))
-        let x = data.box.x * 1.75
-        let y = data.box.y * 1.75
+        console.log(metadata.width, metadata.height, 'meta', metadata2.width,  metadata2.height, (metadata2.height/ 2), parseInt((data.box.boxHeight)/ 2), 'meta2', parseInt(data.box.boxWidth), parseInt(data.box.boxHeight), "box")
+        let offset = parseInt(((data.box.boxWidth) - (metadata2.width)) /2)
+        let offsetHeight
+        let x = data.box.x 
+        let y = data.box.y
         console.log(x, "x", y, "y")
-        // if(data.box.rotation){
-        //     let radians = data.box.rotation * (Math.PI / 180)
-        //     let newX = data.box.rotation > 0? (x * Math.cos(radians)) + (y * Math.sin(radians)): (x * Math.cos(radians)) - (y * Math.sin(radians))
-        //     let newY = data.box.rotation > 0?(-1 * (x * Math.sin(radians))) + (y * Math.cos(radians)): (x * Math.sin(radians)) + (y * Math.cos(radians))
-        //     x= newX;
-        //     //y=newY
-        //     console.log(x, "x", y, "y")
-        // }
+        if(data.box.rotation){
+            let radians = data.box.rotation * (Math.PI / 180)
+            let newX =  (x * Math.cos(radians)) - (y * Math.sin(radians))
+            let newY =  (x * Math.sin(radians)) + (y * Math.cos(radians))
+            x= newX;
+            y= newY
+            console.log(x, "x", y, "y")
+            offset = parseInt(((data.box.boxWidth) - x) /2)
+            //offsetHeight = parseInt(((data.box.boxHeight) - y) /2)
+        }
         console.log(offset, "offset", offsetHeight, "offset height")
         base64 = await base64.composite([
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(y - roh + -(roh > 0? offsetHeight: 0)),
-                left: parseInt(x + row) + (offset? offset: 0),
+                top: parseInt(y - (offsetHeight? offsetHeight: 0)),
+                left: parseInt(x + (offset? offset: 0)),
                 gravity: "center",
             },
         ]).png({ quality: 95 })
