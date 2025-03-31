@@ -1,6 +1,7 @@
 import SkuToUpc from "@/models/skuUpcConversion";
 import Design from "@/models/Design";
-import {createObjectCsvWriter} from "csv-writer";
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
 import Item from "@/models/Items";
 import Blank from "@/models/Blanks";
 import Color from "@/models/Color";
@@ -14,9 +15,13 @@ import {getOrderKohls, NextGTIN, CreateUpdateUPC} from "@pythias/integrations"
 import {pullOrders} from "@/functions/pullOrders";
 import { Style } from "@mui/icons-material";
 import { createUpc } from "@/functions/createUpcs"
+const doUPC = async ({design})=>{
+    let soemthing = await createUpc({design})
+    return soemthing
+}
 export default async function Test(){
     //let res = await axios.get(`https://api.gs1us.org/api/v1/myproduct/${g}`, headers).catch(e=> console.log(e.response?.data))
-    let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(400)
+    let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(10)
     let brands = {}
     let variants = {}
     let bl = 0
@@ -45,6 +50,11 @@ export default async function Test(){
                          for(let c of b.colors){
                             for(let s of b.blank.sizes){
                                 let upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
+                                if(!upc) {
+                                    await doUPC({design})
+                                    upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
+                                }
+                                
                                 let v = {
                                     upc: upc?.upc,
                                     sku: upc?.sku,
@@ -79,7 +89,7 @@ export default async function Test(){
     }
     //console.log(brands)
     Object.keys(brands).map(b=>{
-       Object.keys(brands[b]).map(m=>{
+       Object.keys(brands[b]).map(async m=>{
             console.log(b, m, brands[b][m].length)
             if(m.toLowerCase() == "target"){
                 console.log("make a target product csv")
@@ -125,7 +135,7 @@ export default async function Test(){
                     let bullet4 = ""
                     let bullet1 = ""
                     let bullet2 = ""
-                    for(let bl of p.blank.bulletPoints){
+                    for(let bl of p.blank.blank.bulletPoints){
                         if(bl.title == "fabric"){
                             material += ` ${bl.description}`
                             bullet4 += ` ${bl.description}`
@@ -140,8 +150,8 @@ export default async function Test(){
                     return {
                         name: p.name,
                         brand: p.brand,
-                        description: `${p.design.description} ${p.blank.description}`,
-                        options: ["size", "color"],
+                        description: `${p.design.description} ${p.blank.blank.description}`,
+                        options: '["size", "color"]',
                         material: material,
                         pattern: "Solid",
                         bullet_1: bullet1,
@@ -150,32 +160,112 @@ export default async function Test(){
                         bullet_4: bullet4,
                         fabric_weight_type: "",
                         garment_construction_details: "",
-                        gender: p.blank.department == "Womens"? "Womens": "uni-sex",
+                        gender: p.blank.blank.department == "Womens"? "Womens": "uni-sex",
                         pattern_group: "Solid",
-                        size_grouping: p.blank.department,
-                        targeted_audience: p.blank.department == "kids"? "kids (0-18)": "Adult (18 Years and Up)",
+                        size_grouping: p.blank.blank.department,
+                        targeted_audience: p.blank.blank.department.toLowerCase() == "kids"? "kids (0-18)": "Adult (18 Years and Up)",
                         textile_dry_recommendation: bullet2,
                         "textile_wash_recommendation": bullet2,
                         garment_fit: bullet1,
                         garment_closure_type_tops: "Pull Over",
-                        garment_neckline_type: p.blank.neckline? p.blank.neckline: "Crew",
-                        garment_sleeve_length_type: p.blank.sleeves? p.blank.sleeves: "Short Sleeve",
-                        garment_sleeve_style: p.blank.sleeveStyle? p.blank.sleeveStyle: "Basic Sleeve",
-                        garment_torso_length: p.blank.torsoLength? p.Blank.torsoLength: "Basic Sleeve",
+                        garment_neckline_type: p.blank.blank.neckline? p.blank.blank.neckline: "Crew",
+                        garment_sleeve_length_type: p.blank.blank.sleeves? p.blank.blank.sleeves: "Short Sleeve",
+                        garment_sleeve_style: p.blank.blank.sleeveStyle? p.blank.blank.sleeveStyle: "Basic Sleeve",
+                        garment_torso_length: p.blank.blank.torsoLength? p.blank.blank.torsoLength: "To Waist",
                         item_style: p.blank.name,
-                        target_posting_template: p.blank.postingTemplate? p.blank.postingTemplate: "Shirts New",
+                        target_posting_template: p.blank.blank.postingTemplate? p.blank.blank.postingTemplate: "Shirts New",
                         target_listing_action: "Full",
                         import_description: "made in the USA and imported",
                         prop_65: "No",
-                        garment_collar_type: p.blank.collar? p.blank.collar: "No Collar",
+                        garment_collar_type: p.blank.blank.collar? p.blank.blank.collar: "No Collar",
                         tax: "General Clothing",
                         apparel_material_1: material,
                         apparel_and_accessories_subtype: p.blank.category,
-                        textile_construction: p.blank.construction? p.blank.construction:"Woven"
+                        textile_construction: p.blank.blank.construction? p.blank.blank.construction:"Woven"
                     }
                 })
+                const csvWriter = createCsvWriter({
+                    path: `./${b}-${m}.csv`,
+                    header,
+                });
+                await csvWriter.writeRecords(products)
                 console.log("product", products.length, products[0])
                 console.log("make a target variant csv")
+                let header2 = [
+                    {id: "variant.product_id", Title: "variant.product_id"},
+                    {id: "variant.name", Title: "variant.name"},
+                    {id: "variant.description", Title: "variant.description"},
+                    {id: "variant.sku", Title: "variant.sku"},
+                    {id: "variant.barcode", Title: "variant.barcode"},
+                    {id: "variant.price", Title: "variant.price"},
+                    {id: "variant.comp", Title: "variant.comp"},
+                    {id: "variant.position", Title: "variant.position"},
+                    {id: "variant.images", Title: "variant.images"},
+                    {id: "variant.inventory", Title: "variant.inventory"},
+                    {id: "variant.package_width", Title: "variant.package_width"},
+                    {id: "variant.package_height", Title: "variant.package_height"},
+                    {id: "variant.package_length", Title: "variant.package_length"},
+                    {id: "variant.package_weight", Title: "variant.package_weight"},
+                    {id: "variant.pattern", Title: "variant.pattern"},
+                    {id: "variant.color_family", Title: "variant.color_family"},
+                    {id: "variant.color", Title: "variant.color"},
+                    {id: "variant.gender", Title: "variant.gender"},
+                    {id: "variant.size", Title: "variant.size"},
+                ]
+                const csvWriter2 = createCsvWriter({
+                    path: `./${b}-${m}-variants.csv`,
+                    header: header2,
+                });
+                for(let p of brands[b][m]){
+                    //console.log(p)
+                    if(p.variants){
+                        let variants = []
+                        for(let v of p.variants){
+                            //console.log(v.size.retailPrice, "size price")
+                            let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
+                            //console.log(price, "price")
+                            if(Object.keys(p.design.images).length > 1) price+= 2
+                            //console.log(price)
+                            if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
+                           // console.log(price)
+                            let images = []
+                            let blankImages = p.blank.blank.multiImages
+                            let imageGroup = p.design.imageGroup
+                            let bImages = []
+                            Object.keys(p.blank.blank.multiImages).map(bmi=>{
+                                let useImages = p.blank.blank.multiImages[bmi].filter(i=> i.imageGroup == p.design.imageGroup && i.color.toString() == v.color._id.toString())
+                                console.log(useImages)
+                                for(let im of useImages){
+                                    console.log(`https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blank=${im.image}&colorName=${v.color.name}&design=${p.design.images[bmi]}&side=${bmi}`)
+                                }
+                            })
+                            variants.push( {
+                                "variant.product_id": "",
+                                "variant.name": `${p.name} - ${v.size.name} - ${v.color.name}`,
+                                "variant.description": `${p.design.description} - ${v.size.name} - ${v.color.name} ${p.blank.blank.description}`,
+                                "variant.sku": v.sku,
+                                "variant.barcode": v.upc,
+                                "variant.price": price.toFixed(2),
+                                "variant.comp": price.toFixed(2),
+                                "variant.position": v.size.name == "XS" || v.size.name == "2T" || v.size.name == "NB"? 10: v.size.name == "S" || v.size.name == "3T" || v.size.name == "6M"? 20: v.size.name == "M" || v.size.name == "4T" || v.size.name == "12M"? 30: v.size.name == "L" || v.size.name == "5/6" || v.size.name == "18M"? 40: v.size.name == "XL" || v.size.name == "24M"? 50: v.size.name == "2XL"? 60: 10,
+                                "variant.images": "",
+                                "variant.inventory": 1000,
+                                "variant.package_width": 9,
+                                "variant.package_height": 1,
+                                "variant.package_length": 13,
+                                "variant.weight": v.size.weight? v.size.weight: 0.3,
+                                "variant.pattern": "Solid",
+                                "variant.color_family": v.color.name,
+                                "variant.color": v.color.name,
+                                "variant.gender":  p.blank.blank.department == "Womens"? "Womens": "uni-sex",
+                                "variant.size": v.size.name
+                            })
+                        }
+                        //console.log(variants, "variants")
+                        //return variants
+                        await csvWriter2.writeRecords(variants)
+                    }
+                }
             }
        })
     })

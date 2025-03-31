@@ -21,12 +21,15 @@ export async function createUpc({design}){
                 let brand = brands["The Juniper Shop"].includes(blank.blank.code)? "The Juniper Shop" : "Simply Sage Market"
                 let sku = `${blank.blank.code}_${color.name}_${size.name}_${design.sku}`
                 let gtin
-                let sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
+                let sku1 = await SkuToUpc.findOne({sku: sku})
+                if(!sku1) sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
                 if(!sku1){
                     sku1 = await SkuToUpc.findOne({recycle: true})
-                    sku1.recycle = false
-                    sku1 = await sku1.save()
-                    console.log("recycle upc")
+                    if(sku1){
+                        sku1.recycle = false
+                        sku1 = await sku1.save()
+                        console.log("recycle upc")
+                    }
                 }else{
                     console.log("found upc")
                     continue

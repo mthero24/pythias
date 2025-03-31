@@ -57,7 +57,7 @@ const createImage = async (data)=>{
         let roh = metadata2.height - metadata.height
         console.log(metadata.width, metadata.height, 'meta', metadata2.width,  metadata2.height, 'meta2', parseInt(data.box.boxWidth * 1.75), "box")
         let offset = parseInt(((data.box.boxWidth * 1.75) - (metadata2.width)) /2)
-        let offsetHeight = parseInt(((metadata2.height) - (data.box.boxHeight * 1.75)) / 2)
+        let offsetHeight = parseInt(((metadata2.height) - (data.box.boxHeight * 1.75)) /2 )
         let x = data.box.x * 1.75
         let y = data.box.y * 1.75
         console.log(x, "x", y, "y")
@@ -74,7 +74,7 @@ const createImage = async (data)=>{
             {
                 input: designBase64,
                 blend: 'atop',
-                top: parseInt(y - roh - offsetHeight),
+                top: parseInt(y - roh - (roh > 0? offsetHeight: 0)),
                 left: parseInt(x + row) + (offset? offset: 0),
                 gravity: "center",
             },
@@ -110,6 +110,7 @@ const createImage = async (data)=>{
 export async function GET(req){
     //console.log(req.nextUrl.searchParams.get("blank"))
     let blankCode = req.nextUrl.searchParams.get("blank")
+    let bm = req.nextUrl.searchParams.get("blankImage")
     let colorName = req.nextUrl.searchParams.get("colorName")
     let designImage = req.nextUrl.searchParams.get("design")
     let side = req.nextUrl.searchParams.get("side")
@@ -117,7 +118,11 @@ export async function GET(req){
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
     let color = blank.colors.filter(c=>c.name == colorName)[0]
     //console.log(color)
-    let blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString())[0]
+    let blankImage
+    if(bm){
+        blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
+    }
+    else blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString())[0]
     //console.log(blankImage?.box[0], "box")
     let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage}
     let base64 = await createImage(data)
