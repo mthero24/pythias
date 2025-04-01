@@ -11,7 +11,7 @@ import t2n from "./t2n.json";
 import fs from "fs"
 import axios from "axios"
 import btoa from "btoa"
-import {getOrderKohls, NextGTIN, CreateUpdateUPC} from "@pythias/integrations"
+import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getTokenWalmart} from "@pythias/integrations"
 import {pullOrders} from "@/functions/pullOrders";
 import { Style } from "@mui/icons-material";
 import { createUpc } from "@/functions/createUpcs"
@@ -20,8 +20,10 @@ const doUPC = async ({design})=>{
     return soemthing
 }
 export default async function Test(){
+    let token = await getTokenWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId})
+    console.log(token)
     //let res = await axios.get(`https://api.gs1us.org/api/v1/myproduct/${g}`, headers).catch(e=> console.log(e.response?.data))
-    // let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(10)
+    // let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(600)
     // let brands = {}
     // let variants = {}
     // let bl = 0

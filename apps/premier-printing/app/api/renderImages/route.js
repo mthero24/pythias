@@ -23,7 +23,7 @@ const createImage = async (data)=>{
     let base64
     base64 = await readImage(data.styleImage)
     //onsole.log(data.box && data.designImage && base64)
-    if(data.box && data.designImage && base64){
+    if(data.box && data.designImage && data.designImage != "undefined" && base64){
         base64 = base64.resize({
             width: data.box.containerWidth ,
             height: data.box.containerHeight,
@@ -76,8 +76,8 @@ const createImage = async (data)=>{
             x= newX;
             y= newY
             console.log(x, "x", y, "y")
-            offset = parseInt(((data.box.boxWidth) - x) /2)
-            offsetHeight = parseInt(((data.box.boxHeight) - y))
+            offset = parseInt(((data.box.x) - x))
+            offsetHeight = parseInt(((data.box.y) - y))
         }
         console.log(offset, "offset", offsetHeight, "offset height")
         base64 = await base64.composite([
