@@ -20,8 +20,8 @@ const doUPC = async ({design})=>{
     return soemthing
 }
 export default async function Test(){
-    let token = await getTokenWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId})
-    console.log(token)
+    // let token = await getTokenWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId})
+    // console.log(token)
     //let res = await axios.get(`https://api.gs1us.org/api/v1/myproduct/${g}`, headers).catch(e=> console.log(e.response?.data))
     // let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(600)
     // let brands = {}
