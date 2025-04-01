@@ -9,4 +9,4 @@ export {NextGTIN, CreateUpdateUPC} from "./functions/gs1";
 //acenda
 
 export {getTokenAcenda} from "./functions/acenda"
-export {getTokenWalmart} from "./functions/walmart"
+export {getItemsWalmart, retireItemWalmart} from "./functions/walmart"
