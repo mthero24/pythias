@@ -87,3 +87,83 @@ export const retireItemWalmart = async ({clientId, clientSecret, partnerId, sku}
     }
 }
 
+export const bulkUploadWalmart = async ({clientId, clientSecret, partnerId, type, file})=>{
+    let token = await getTokenWalmart({clientId, clientSecret, partnerId})
+    //console.log(token, "token")
+    let headers={
+        headers: {
+            Accept: "application/json",
+            "WM_SEC.ACCESS_TOKEN": token,
+            "WM_PARTNER.ID": partnerId,
+            "WM_SVC.NAME": "pythias",
+            "WM_QOS.CORRELATION_ID": "pythias",
+            "WM_CONSUMER.CHANNEL.TYPE": "some-channel"
+        }
+    }
+    let errorRes
+    let res = await axios.post(`https://marketplace.walmartapis.com/v3/feeds?feedType=${type}`, file, headers).catch(e=> {errorRes = e.response.data})
+    console.log(errorRes, res?.data)
+    if(errorRes){
+        return null
+    }else{
+        return res?.data.feedId
+    }
+}
+export const getSpecWalmart = async ({clientId, clientSecret, partnerId,})=>{
+    let token = await getTokenWalmart({clientId, clientSecret, partnerId})
+    console.log(token, "token")
+    let headers={
+        headers: {
+            Accept: "application/json",
+            "WM_SEC.ACCESS_TOKEN": token,
+            "WM_PARTNER.ID": partnerId,
+            "WM_SVC.NAME": "pythias",
+            "WM_QOS.CORRELATION_ID": "pythias",
+            "WM_CONSUMER.CHANNEL.TYPE": "some-channel"
+        }
+    }
+    let body = {
+        "feedType": "MP_WFS_ITEM",
+        "version": "5.0.20240517-04_08_27-api",
+        "productTypes": [
+            "Baby Blankets", "Fashion"
+        ]
+    }
+    let errorRes
+    let res = await axios.post(`https://marketplace.walmartapis.com/v3/items/spec`, body, headers).catch(e=> {errorRes = e.response.data})
+    console.log(errorRes, res?.data, res?.data?.schema.properties.MPItem)
+    if(errorRes){
+        return null
+    }else{
+        return res?.data.feedId
+    }
+}
+export const getFeedWalmart = async ({clientId, clientSecret, partnerId,})=>{
+    let token = await getTokenWalmart({clientId, clientSecret, partnerId})
+    console.log(token, "token")
+    let headers={
+        headers: {
+            Accept: "application/json",
+            "WM_SEC.ACCESS_TOKEN": token,
+            "WM_PARTNER.ID": partnerId,
+            "WM_SVC.NAME": "pythias",
+            "WM_QOS.CORRELATION_ID": "pythias",
+            "WM_CONSUMER.CHANNEL.TYPE": "some-channel"
+        }
+    }
+    let body = {
+        "feedType": "MP_ITEM",
+        "version": "4.8",
+        "productTypes": [
+          "Fashion"
+        ]
+    }
+    let errorRes
+    let res = await axios.get(`https://marketplace.walmartapis.com/v3/feeds?feedId=1832833987955790BFEAC76CDF36C391@AXkBCgA`, headers).catch(e=> {errorRes = e.response.data})
+    console.log(errorRes, res?.data, res.data.results)
+    if(errorRes){
+        return null
+    }else{
+        return res?.data.feedId
+    }
+}

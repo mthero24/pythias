@@ -1,7 +1,7 @@
 import axios from "axios"
 export const getTokenAcenda = async ({clientId, clientSecret})=>{
-    let header = {
-        header: {
+    let headers = {
+        headers: {
             "Content-Type": "application/x-www-form-urlencoded"
         }
     }
@@ -11,11 +11,48 @@ export const getTokenAcenda = async ({clientId, clientSecret})=>{
     urlencoded.append("grant_type", "client_credentials");
     console.log(urlencoded)
     let errorRes
-    let res = await axios.post("https://login.acenda.io/auth/realms/acenda/protocol/openid-connect/token", urlencoded, header).catch(e=> {errorRes = e.response.data})
+    let res = await axios.post("https://login.acenda.io/auth/realms/acenda/protocol/openid-connect/token", urlencoded, headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
     console.log(errorRes, res?.data)
     if(errorRes){
         return null
     }else{
-        return res?.data
+        return res?.data.access_token
+    }
+}
+
+export const getWarehouseAcenda = async ({clientId, clientSecret, organization}) =>{
+    let token = await getTokenAcenda({clientId, clientSecret})
+    console.log(token , "token")
+    let headers = {
+        headers: {
+            "X-Astur-Organization": organization,
+            AUTHORIZATION: `Bearer ${token}`
+        }
+    }
+    let errorRes
+    let res = await axios.get("https://api.acenda.io/v1/warehouse", headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
+    console.log(errorRes, res?.data)
+    if(errorRes){
+        return null
+    }else{
+        return res?.data.results
+    }
+}
+export const getCatalogAcenda = async ({clientId, clientSecret, organization}) =>{
+    let token = await getTokenAcenda({clientId, clientSecret})
+    console.log(token , "token")
+    let headers = {
+        headers: {
+            "X-Astur-Organization": organization,
+            AUTHORIZATION: `Bearer ${token}`
+        }
+    }
+    let errorRes
+    let res = await axios.get("https://api.acenda.io/v1/catalog?limit=10&query={\"sku\":\"C_Raspberry_2XL_18699W_F\"}", headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
+    console.log(errorRes, res?.data)
+    if(errorRes){
+        return null
+    }else{
+        return res?.data.result
     }
 }
