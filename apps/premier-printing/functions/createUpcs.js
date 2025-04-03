@@ -31,7 +31,7 @@ export async function createUpc({design}){
                         console.log("recycle upc")
                     }
                 }else{
-                    console.log("found upc")
+                    //console.log("found upc")
                     continue
                 }
                 if(sku1 && sku1.gtin){

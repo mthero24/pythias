@@ -9,10 +9,10 @@ export const getTokenAcenda = async ({clientId, clientSecret})=>{
     urlencoded.append("client_id", clientId);
     urlencoded.append("client_secret", clientSecret);
     urlencoded.append("grant_type", "client_credentials");
-    console.log(urlencoded)
+   // console.log(urlencoded)
     let errorRes
     let res = await axios.post("https://login.acenda.io/auth/realms/acenda/protocol/openid-connect/token", urlencoded, headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
-    console.log(errorRes, res?.data)
+    //console.log(errorRes, res?.data)
     if(errorRes){
         return null
     }else{
@@ -48,7 +48,25 @@ export const getCatalogAcenda = async ({clientId, clientSecret, organization}) =
         }
     }
     let errorRes
-    let res = await axios.get("https://api.acenda.io/v1/catalog?limit=10&query={\"sku\":\"C_Raspberry_2XL_18699W_F\"}", headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
+    let res = await axios.get("https://api.acenda.io/v1/catalog", headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
+    console.log(errorRes, res?.data)
+    if(errorRes){
+        return null
+    }else{
+        return res?.data.result
+    }
+}
+export const getSkuAcenda = async ({clientId, clientSecret, organization, sku}) =>{
+    let token = await getTokenAcenda({clientId, clientSecret})
+    //console.log(token , "token")
+    let headers = {
+        headers: {
+            "X-Astur-Organization": organization,
+            AUTHORIZATION: `Bearer ${token}`
+        }
+    }
+    let errorRes
+    let res = await axios.get(`https://api.acenda.io/v1/catalog?query={"sku":"${sku}"}`, headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
     console.log(errorRes, res?.data)
     if(errorRes){
         return null

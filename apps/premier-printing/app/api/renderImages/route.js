@@ -22,7 +22,7 @@ const readImage = async (url)=>{
 const createImage = async (data)=>{
     let base64
     base64 = await readImage(data.styleImage)
-    //onsole.log(data.box && data.designImage && base64)
+    console.log(data)
     if(data.box && data.designImage && data.designImage != "undefined" && base64){
         base64 = base64.resize({
             width: data.box.containerWidth ,
@@ -137,13 +137,15 @@ export async function GET(req){
     let colorName = req.nextUrl.searchParams.get("colorName")
     let designImage = req.nextUrl.searchParams.get("design")
     let side = req.nextUrl.searchParams.get("side")
-    //console.log(blankCode, colorName, designImage, side)
+    console.log(blankCode, bm, colorName, designImage, side)
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
     let color = blank.colors.filter(c=>c.name == colorName)[0]
     //console.log(color)
     let blankImage
     if(bm){
         blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
+        if(!blankImage && side == "front") blankImage = blank.multiImages["modelFront"]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
+        if(!blankImage && side == "back") blankImage = blank.multiImages["modelBack"]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
     }
     else blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString())[0]
     //console.log(blankImage?.box[0], "box")
