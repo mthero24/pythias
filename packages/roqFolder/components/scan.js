@@ -38,11 +38,10 @@ export function Scan({auto, setAuto, setItem}){
       setItem(null)
       if(scan.length > 0 && !scans.includes(scan)){
         if(scans.length > 0){
-          let sc = [...scans]
-          sc = sc.pop()
-          setScans([...sc])
+          let sc = scans.pop()
+          setScans([... sc, scan])
         }else{
-          setScans([scan])
+          setScans([...scans, scan])
         }
         let res = await axios.post("/api/production/roq-folder", {scan, shipSingles})
         console.log(res.data)
@@ -59,8 +58,7 @@ export function Scan({auto, setAuto, setItem}){
       }else{
         setScan("")
         if(scans.length > 0){
-          let sc = [...scans]
-          sc = sc.pop()
+          let sc = scans.pop()
           setScans([...sc])
         }
       }
