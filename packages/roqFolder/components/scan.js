@@ -38,7 +38,9 @@ export function Scan({auto, setAuto, setItem}){
       setItem(null)
       if(scan.length > 0 && !scans.includes(scan)){
         if(scans.length > 0){
-          setScans([...scans.pop(), scan])
+          let sc = [...scans]
+          sc = sc.pop()
+          setScans([...sc])
         }else{
           setScans([scan])
         }
@@ -57,7 +59,9 @@ export function Scan({auto, setAuto, setItem}){
       }else{
         setScan("")
         if(scans.length > 0){
-          setScans([...scans.pop()])
+          let sc = [...scans]
+          sc = sc.pop()
+          setScans([...sc])
         }
       }
     }
