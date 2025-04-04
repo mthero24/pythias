@@ -66,8 +66,8 @@ export const getSkuAcenda = async ({clientId, clientSecret, organization, sku}) 
         }
     }
     let errorRes
-    let res = await axios.get(`https://api.acenda.io/v1/catalog?query={"sku":"${sku}"}`, headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
-    console.log(errorRes, res?.data)
+    let res = await axios.get(`https://api.acenda.io/v1/catalog?query={"sku":"${sku}"}`, headers).catch(e=> {errorRes = e.response?.data})
+    //console.log(errorRes, res?.data)
     if(errorRes){
         return null
     }else{

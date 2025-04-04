@@ -7,7 +7,7 @@ export function Scan({auto, setAuto, setItem}){
     const [scan, setScan] = useState()
     const [shipSingles, setShipSingles] = useState(true)
     const [error, setError] = useState()
-
+    const [scans, setScans] = useState([])
     const hasError = async (e)=>{
       for(let i = 0; i< 51; i++){
         setError(i % 2 == 0? e: null)
@@ -35,17 +35,24 @@ export function Scan({auto, setAuto, setItem}){
     const GetInfo = async ()=>{
       console.log("getInfo")
       setError(null)
-      let res = await axios.post("/api/production/roq-folder", {scan, shipSingles})
-      console.log(res.data)
-      if(res.data.error) {
-        hasError(res.data.msg)
-        setItem()
-        setScan("")
-      }
-      else {
-          setItem(res.data.item)
+      setItem(null)
+      if(scan.length > 0 && !scans.includes(scan)){
+        setScans([...scans.pop(), scan])
+        let res = await axios.post("/api/production/roq-folder", {scan, shipSingles})
+        console.log(res.data)
+        if(res.data.error) {
+          hasError(res.data.msg)
+          setItem()
           setScan("")
-          setError(null)
+        }
+        else {
+            setItem(res.data.item)
+            setScan("")
+            setError(null)
+        }
+      }else{
+        setScan("")
+        setScans([...scans.pop()])
       }
     }
     const label = { inputProps: { 'aria-label': 'Checkbox demo' } };

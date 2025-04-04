@@ -1014,7 +1014,6 @@ export function Main({ colors, blanks, blank, printPricing }) {
       <SetBoxModal
         open={boxModalOpen}
         onClose={() => {
-          
           setBoxModalOpen(false);
         }}
         setBoxSet={setBoxSet}

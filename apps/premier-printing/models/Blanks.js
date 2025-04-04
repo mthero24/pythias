@@ -108,8 +108,8 @@ const SchemaObj = new Schema(
       type: mongoose.Schema.Types.Mixed,
     },
     sizeGuide: {
-      csv: String,
-      image: [String],
+      image: String,
+      images: [String],
     },
     videos: [String],
     sales: { type: Number, default: 0 },
