@@ -27,7 +27,7 @@ export default async function Test(){
             await retireItemWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, sku: item.sku})
         }
     }
-    //await getSpecWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId,})
+    await getSpecWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId,})
     //removeOutOfStockItemsWalmart()
     // let item = await getSkuAcenda({clientId: process.env.acendaClientIdSS, clientSecret: process.env.acendaClientSecretSS, organization: process.env.acendaOrganizationSS, sku: "LGDSET_Espresso_L_3383B_F" })
     // if(item[0]){
