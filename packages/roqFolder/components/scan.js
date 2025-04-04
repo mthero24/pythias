@@ -37,7 +37,11 @@ export function Scan({auto, setAuto, setItem}){
       setError(null)
       setItem(null)
       if(scan.length > 0 && !scans.includes(scan)){
-        setScans([...scans.pop(), scan])
+        if(scans.length > 0){
+          setScans([...scans.pop(), scan])
+        }else{
+          setScans([scan])
+        }
         let res = await axios.post("/api/production/roq-folder", {scan, shipSingles})
         console.log(res.data)
         if(res.data.error) {
@@ -52,7 +56,9 @@ export function Scan({auto, setAuto, setItem}){
         }
       }else{
         setScan("")
-        setScans([...scans.pop()])
+        if(scans.length > 0){
+          setScans([...scans.pop()])
+        }
       }
     }
     const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
