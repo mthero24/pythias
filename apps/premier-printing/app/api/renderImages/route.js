@@ -103,12 +103,20 @@ const createImage = async (data)=>{
             },
         ]).png({ quality: 95 })
         .toBuffer();
+        base64 = await sharp(base64)
+        base64 = base64.resize({
+            width: 700,
+            height: 700,
+            fit: sharp.fit.inside,
+            position: sharp.strategy.entropy
+        })
+        base64 = await base64.png().toBuffer();
         base64 = `data:image/png;base64,${base64.toString("base64")}`
     }else if(data.styleImage && base64){
         base64 = base64.resize({
-            width: 400,
-            height: 400,
-            fit: sharp.fit.cover,
+            width: 700,
+            height: 700,
+            fit: sharp.fit.inside,
             position: sharp.strategy.entropy
         })
         base64 = await base64.png().toBuffer();
@@ -118,9 +126,9 @@ const createImage = async (data)=>{
         base64 = await readImage(data.designImage)
         if(base64){
             base64 = base64.resize({
-                width: 400,
-                height: 400,
-                fit: sharp.fit.cover,
+                width: 700,
+                height: 700,
+                fit: sharp.fit.inside,
                 position: sharp.strategy.entropy
             })
             base64 = await base64.png().toBuffer();
