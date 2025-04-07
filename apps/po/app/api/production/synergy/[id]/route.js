@@ -199,20 +199,21 @@ export async function GET(request, { params }) {
         if (item.color.color_type == "dark") {
         for (let pro of item.styleV2.profiles) {
             if (pro.type == "dark") {
-            Profile.highlight = pro.highlight + 1;
+            //Profile.highlight = pro.highlight + 1;
             // Profile.mask = pro.mask + 1;
             }
         }
         } else {
         for (let pro of item.styleV2.profiles) {
             if (pro.type == "light") {
-            Profile.highlight = pro.highlight + 1;
+            //Profile.highlight = pro.highlight + 1;
             // Profile.mask = pro.mask + 1;
             }
         }
         }
-        if (item.color.name == "red" || item.color.name == "orange")
-        Profile.highlight + 1;
+        if (item.color.name == "red" || item.color.name == "orange"){
+
+        }
     }
     await tracking.save();
     console.log(firefly);
