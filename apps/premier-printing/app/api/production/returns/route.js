@@ -5,30 +5,24 @@ import Bins from "@/models/returnBins"
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    let bin = await Bins.findOne({$or: [{sku: data.upc}, {upc: data.upc}]}).populate("design color blank")
+    let skuToUpc = await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]})
+    let bin = await Bins.findOne({blank: skuToUpc.blank, color: skuToUpc.color, size: skuToUpc.size}).populate("design color blank")
     console.log(bin)
     if(!bin){
+        if(!bininventory) bin.inventory = []
+        if(!bin.skus) bin.upcs = []
         bin= await Bins.findOne({inUse: false})
-        let item = await Items.findOne({$or: [{sku: data.upc}, {upc: data.upc}]}).populate("designRef color blank")
-        if(item){
-            bin.design = item.designRef
-            bin.upc = item.upc
-            bin.sku = item.sku
-            bin.blank = item.blank
-            bin.color = item.color
-            bin.size = item.sizeName
-        }else{
-            let skuUpcConversion = (await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]})).populate("design color blank")
-            bin.design = skuUpcConversion.design
-            bin.upc = skuUpcConversion.upc
-            bin.sku = skuUpcConversion.sku
-            bin.blank = skuUpcConversion.blank
-            bin.color = skuUpcConversion.color
-            bin.size = skuUpcConversion.size
-        }
-        if(bin.upc) bin.inUse = true
+        bin.design = skuUpcConversion.design
+        bin.blank = skuUpcConversion.blank
+        bin.color = skuUpcConversion.color
+        bin.size = skuUpcConversion.size
+        bin.upcs.push(skuToUpc.upc)
+        bin.skus.push(skuToUpc.sku)
+        bin.inUse = true
         await bin.save()
     }
+    bin.upcs.push(skuToUpc.upc)
+    bin.skus.push(skuToUpc.sku)
     bin.inUse = true
     await bin.save()
     console.log(bin, "later bin")
