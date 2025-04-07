@@ -3,10 +3,10 @@ import { PremierPrinting } from "../lib/connection";
 import Design from "./Design"
 import Blank from "./Blanks"
 import Color from "./Color"
+import { Inventory2Outlined } from "@mui/icons-material";
 let schema = new mongoose.Schema({
     number: {type: Number, unique: true},
-    sku: {type: String, unique: true, sparse: true},
-    upc: {type:String, unique: true, sparse: true},
+    inventory: [{upc: String, sku: String, count: Number}],
     design:  {
         type: mongoose.Schema.Types.ObjectId,
         ref: Design,
