@@ -1,18 +1,21 @@
-import mongoose from "mongoose";
-import { TSPprints }  from "../lib/connection";
+const mongoose = require("mongoose");
+const { TSPprints } = require("../lib/connection");
 import Color from "./Color";
 const Schema = mongoose.Schema;
+
 const SchemaObj = new Schema(
   {
     name: { type: String, required: true },
     code: { type: String, unique: true, required: true },
     brand: String,
     active: { type: Boolean, default: true },
+    isAdminOnly: { type: Boolean, default: false },
     suppliers: [{ type: String }],
     description: String,
     department: String,
     retailPrice: Number,
     category: [String],
+    isCategoryMain: Boolean,
     subcategory: String,
     handlingTime: {
       min: Number,
@@ -54,6 +57,19 @@ const SchemaObj = new Schema(
         height: { type: Number, default: 15 },
         vertoffset: { type: Number, default: 0.4 },
         horizoffset: { type: Number, default: 0 },
+        placement: String
+      },
+    ],
+    envelopes: [
+      {
+        size: String,
+        sizeName: String,
+        platen: { type: Number, default: 2 },
+        width: { type: Number, default: 11 },
+        height: { type: Number, default: 15 },
+        vertoffset: { type: Number, default: 0.4 },
+        horizoffset: { type: Number, default: 0 },
+        placement: String
       },
     ],
     profiles: [
@@ -165,6 +181,7 @@ const SchemaObj = new Schema(
         color: String,
         image: String,
         frontBackSwatch: String,
+        isGlobal: { type: Boolean, default: false },
       },
     ],
     //box.default['garment]
@@ -217,9 +234,10 @@ const SchemaObj = new Schema(
     defaultStyle: { type: Boolean, default: false },
     printTypes: [{ type: String }],
     sizeChart: { type: String },
-    searchTagKeywords: [{type: String}],
-    searchTagModifiers: [{type: String}],
-    tags: [{type: String}],
+    searchTagKeywords: [{ type: String }],
+    searchTagModifiers: [{ type: String }],
+    tags: [{ type: String }],
+    printAreas: [{ type: String }],
   },
   { strict: false }
 );
