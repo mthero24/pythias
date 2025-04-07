@@ -201,7 +201,8 @@ export async function updateListings(){
                         if(skus.length == 0) await doUPC({design})
                             for(let c of b.colors){
                             for(let s of b.blank.sizes){
-                                let upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
+                                let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
+                                if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
                                 if(upc){
                                     let v = {
                                         upc: upc?.upc,

@@ -27,6 +27,15 @@ export async function createUpc({design}){
                 let sku1 = await SkuToUpc.findOne({sku: sku})
                 console.log(sku1?.sku, "sku1 sku found")
                 if(!sku1) sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
+                if(sku1 && sku1.gtin){
+                    sku1.sku= sku
+                    sku1.design= design._id,
+                    sku1.blank= blank.blank._id,
+                    sku1.color= color._id,
+                    sku1.size= size.name
+                    await sku1.save()
+                    continue
+                }
                 if(!sku1){
                     sku1 = await SkuToUpc.findOne({recycle: true})
                     if(sku1){
@@ -67,7 +76,19 @@ export async function createUpc({design}){
                 let res = await CreateUpdateUPC({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}, body: data})
                 if(!res.error){
                     console.log(res.product.gtin)
-                    let skuToUpc = await SkuToUpc.findOne({sku: sku})
+                    let skuToUpc 
+                    if(sku1){
+                        skuToUpc = await SkuToUpc.findOne({_id: sku1._id})
+                    }
+                    if(!skuToUpc){
+                        skuToUpc = await SkuToUpc.findOne({sku: sku})
+                    }
+                    if(!skuToUpc){
+                        skuToUpc = await SkuToUpc.findOne({upc: res.product.gtin.replace("00", "")})
+                    }
+                    if(!skuToUpc){
+                        skuToUpc = await SkuToUpc.findOne({gtin: res.product.gtin})
+                    }
                     if(skuToUpc){
                         console.log("overrider")
                         skuToUpc.upc= res.product.gtin.replace("00", ""),
