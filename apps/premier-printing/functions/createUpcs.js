@@ -6,7 +6,9 @@ export async function createUpc({design}){
         "Simply Sage Market": ["C", "SWT", "GDT", "GDSWT", "GDLS", "LGDSP", "LGDSWT", "LGDSET", "GDLSSET", "GDTSET", "RT", "BCT", "TK", "QZF", "HT", "H", "PPSET", "RB", "FTH", "CTH"]
     }
     for(let blank of design.blanks){
+        //console.log(blank.blank.code)
         for(let color of blank.colors){
+            //console.log(color.name)
             for(let size of blank.blank.sizes){
                 //console.log(blank.blank.code, color, size, design.sku)
                 let designImage
@@ -20,8 +22,10 @@ export async function createUpc({design}){
                 }
                 let brand = brands["The Juniper Shop"].includes(blank.blank.code)? "The Juniper Shop" : "Simply Sage Market"
                 let sku = `${blank.blank.code}_${color.name}_${size.name}_${design.sku}`
+                console.log(sku)
                 let gtin
                 let sku1 = await SkuToUpc.findOne({sku: sku})
+                console.log(sku1?.sku, "sku1 sku found")
                 if(!sku1) sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
                 if(!sku1){
                     sku1 = await SkuToUpc.findOne({recycle: true})
@@ -30,9 +34,6 @@ export async function createUpc({design}){
                         sku1 = await sku1.save()
                         console.log("recycle upc")
                     }
-                }else{
-                    //console.log("found upc")
-                    continue
                 }
                 if(sku1 && sku1.gtin){
                     gtin = {prefix: sku1.gtin.substring(1,8), gtin: sku1.gtin}
@@ -66,7 +67,7 @@ export async function createUpc({design}){
                 let res = await CreateUpdateUPC({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}, body: data})
                 if(!res.error){
                     console.log(res.product.gtin)
-                    let skuToUpc = await SkuToUpc.findOne({gtin: res.product.gtin})
+                    let skuToUpc = await SkuToUpc.findOne({sku: sku})
                     if(skuToUpc){
                         console.log("overrider")
                         skuToUpc.upc= res.product.gtin.replace("00", ""),

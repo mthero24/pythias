@@ -14,12 +14,8 @@ import {pullOrders} from "@/functions/pullOrders";
 import { Style } from "@mui/icons-material";
 import { createUpc } from "@/functions/createUpcs"
 import {updateListings} from "@/functions/updateListings"
-const doUPC = async ({design})=>{
-    let soemthing = await createUpc({design})
-    return soemthing
-}
 export default async function Test(){
-    await updateListings()
+    //await updateListings()
     const removeOutOfStockItemsWalmart = async ()=>{
         let items = await getItemsWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, params: [{limit: "300"}]})
         for(let item of items){
