@@ -21,7 +21,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                 <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} type={type} />
                 <Box sx={{margin: "0% 5%"}}>
                   <Card sx={{width: "100%"}}>
-                    <Container maxWidth="sm">
+                    <Container maxWidth={submitted?.type == "new"? "md": "sm"}>
                     {submitted && submitted.type == undefined &&
                     <Grid2 container spacing={2}>
                         <Grid2

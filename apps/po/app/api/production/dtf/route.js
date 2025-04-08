@@ -75,7 +75,8 @@ export async function GET(req = NextApiResponse) {
                     frontDesign,
                     backDesign,
                     styleCode,
-                    colorName
+                    colorName,
+                    images: item.design, type: "new"
             })
          
         }else return NextResponse.json({error: true, msg: "Item Canceled"});
