@@ -248,12 +248,13 @@ export function DTFBody({auto, setAuto, printer, type}){
                                   height={500}
                                   style={{
                                     width: "100%",
-                                    height: "auto"
+                                    height: "auto",
+                                    background: "#e2e2e2"
                                   }}
                                   src={createImage(submitted.colorName, submitted.styleCode, {url: submitted.images[im], printArea: im})}
                               />
                             </Box>
-                            <Box>
+                            <Box sx={{ background: "#e2e2e2", padding: "1%"}}>
                               <Image
                                   width={500}
                                   alt="back design"
