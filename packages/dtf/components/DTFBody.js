@@ -240,29 +240,29 @@ export function DTFBody({auto, setAuto, printer, type}){
                     (
                       <Box>
                         {Object.keys(submitted.images).map(im=>(
-                          <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                            <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%",}}>
+                          <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%", margin: "2%"}}>
+                            <Box>
                               <Image
-                                  width={350}
+                                  width={500}
                                   alt="back design"
-                                  height={350}
-                                  style={{
-                                    width: "100%",
-                                    height: "auto"
-                                  }}
-                                  src={submitted.images[im]}
-                              />
-                            </Box>
-                            <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%",}}>
-                              <Image
-                                  width={350}
-                                  alt="back design"
-                                  height={350}
+                                  height={500}
                                   style={{
                                     width: "100%",
                                     height: "auto"
                                   }}
                                   src={createImage(submitted.colorName, submitted.styleCode, {url: submitted.images[im], printArea: im})}
+                              />
+                            </Box>
+                            <Box>
+                              <Image
+                                  width={500}
+                                  alt="back design"
+                                  height={500}
+                                  style={{
+                                    width: "100%",
+                                    height: "auto"
+                                  }}
+                                  src={submitted.images[im]}
                               />
                             </Box>
                           </Box>
