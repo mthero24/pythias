@@ -25,27 +25,28 @@ const createImage = async (data)=>{
     console.log(data)
     if(data.box && data.designImage && data.designImage != "undefined" && base64){
         base64 = base64.resize({
-            width: data.box.containerWidth ,
-            height: data.box.containerHeight,
+            width: 2400 ,
+            height: 2400,
             fit: sharp.fit.cover,
             position: sharp.strategy.entropy
         })
+        
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
         if(data.box.rotation && data.box.rotation != 0){
             console.log(data.box.rotation, "rotation")
             designBase64 = designBase64.rotate(parseInt(data.box.rotation), {background: {r: 0, g: 0, b: 0, alpha: 0}}).resize({
-                width: parseInt(data.box.boxWidth),
-                height: parseInt(data.box.boxHeight),
+                width: parseInt(data.box.boxWidth * 6),
+                height: parseInt(data.box.boxHeight * 6),
                 background: {r: 0, g: 0, b: 0, alpha: 0},
-                fit: Math.abs(data.box.rotation) > 7? sharp.fit.outside: sharp.fit.inside,
+                fit: Math.abs(data.box.rotation) > 10? sharp.fit.outside: sharp.fit.inside,
                 position: sharp.strategy.attention,
                 fastShrinkOnLoad: false 
             })
         }else{
             designBase64 = await designBase64.resize({
-                width: parseInt(data.box.boxWidth ),
-                height: parseInt(data.box.boxHeight),
+                width: parseInt(data.box.boxWidth * 6 ),
+                height: parseInt(data.box.boxHeight * 6),
                 background: {r: 0, g: 0, b: 0, alpha: 0},
                 fit: sharp.fit.inside,
                 position: sharp.strategy.attention,
@@ -62,11 +63,11 @@ const createImage = async (data)=>{
         designBase64 = await designBase64.toBuffer();
         console.log(metadata2.width - metadata.width, "mw - 2w", metadata2.height - metadata.height, "mh - 2h")
         console.log(metadata.width, metadata.height, 'meta', metadata2.width,  metadata2.height, (metadata2.height/ 2), parseInt((data.box.boxHeight)/ 2), 'meta2', parseInt(data.box.boxWidth), parseInt(data.box.boxHeight), "box")
-        let offset = parseInt(((data.box.boxWidth) - (metadata2.width)) /2)
+        let offset = parseInt(((data.box.boxWidth * 6) - (metadata2.width)) /2)
         console.log("offset", offset)
         let offsetHeight
-        let x = data.box.x 
-        let y = data.box.y
+        let x = data.box.x * 6
+        let y = data.box.y * 6
         console.log(x, "x", y, "y")
         if(data.box.rotation && data.box.rotation != 0){
             let rotation = data.box.rotation
@@ -77,11 +78,11 @@ const createImage = async (data)=>{
             if(rotation < -10){
                 newX =  (x * Math.cos(radians)) + (y * Math.sin(radians))
                 newY =  (x * Math.sin(radians)) + (y * Math.cos(radians))
-                offset = parseInt(((data.box.x) - newX) + 20)
+                offset = Math.abs(parseInt(((data.box.x * 6) - newX) - rotation))
             }else if(rotation > 7){
                 newX =  (x * Math.cos(radians)) - (y * Math.sin(radians))
                 newY =  (x * Math.sin(radians)) + (y * Math.cos(radians))
-                offset = parseInt(((data.box.x) - newX) - 25)
+                offset = parseInt(((data.box.x * 6) - newX) - 25)
             }else{
                 newX =  (x * Math.cos(radians)) - (y * Math.sin(radians))
                 newY =  (x * Math.sin(radians)) + (y * Math.cos(radians))
@@ -103,19 +104,11 @@ const createImage = async (data)=>{
             },
         ]).png({ quality: 95 })
         .toBuffer();
-        base64 = await sharp(base64)
-        base64 = base64.resize({
-            width: 700,
-            height: 700,
-            fit: sharp.fit.inside,
-            position: sharp.strategy.entropy
-        })
-        base64 = await base64.png().toBuffer();
         base64 = `data:image/png;base64,${base64.toString("base64")}`
     }else if(data.styleImage && base64){
         base64 = base64.resize({
-            width: 700,
-            height: 700,
+            width: 2400,
+            height: 2400,
             fit: sharp.fit.inside,
             position: sharp.strategy.entropy
         })
@@ -126,8 +119,8 @@ const createImage = async (data)=>{
         base64 = await readImage(data.designImage)
         if(base64){
             base64 = base64.resize({
-                width: 700,
-                height: 700,
+                width: 2400,
+                height: 2400,
                 fit: sharp.fit.inside,
                 position: sharp.strategy.entropy
             })

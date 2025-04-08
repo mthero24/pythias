@@ -124,3 +124,7 @@ export async function MarkRecycle(design){
     let skus = await SkuToUpc.updateMany({design: design._id}, {recycle: true})
     return
 }
+export async function UnMarkRecycle(design){
+    let skus = await SkuToUpc.updateMany({design: design._id}, {recycle: false})
+    return
+}

@@ -174,7 +174,7 @@ const doUPC = async ({design})=>{
     return soemthing
 }
 export async function updateListings(){
-    let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(760)
+    let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(800)
     let brands = {}
     let i = 0
     //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)

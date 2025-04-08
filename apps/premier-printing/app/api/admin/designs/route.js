@@ -5,7 +5,7 @@ import User from "@/models/User";
 import Items from "@/models/Items";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
-import { createUpc, MarkRecycle } from "@/functions/createUpcs";
+import { createUpc, MarkRecycle, UnMarkRecycle } from "@/functions/createUpcs";
 const createSku = ()=>{
     let sku = ""
     for(let i = 0; i < 10; i++){
@@ -71,7 +71,8 @@ export async function PUT(req=NextApiRequest){
         design = await Design.findOne({_id: design._id}).populate("blanks.blank blanks.colors blanks.defaultColor")
         console.log(design.published)
         if(design.published){
-            await createUpc({design})
+            //await createUpc({design})
+            UnMarkRecycle(design)
         }else{
             MarkRecycle(design)
         }
