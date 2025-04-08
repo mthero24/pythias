@@ -48,8 +48,13 @@ export async function GET(request, { params }) {
         console.log(fly.type == item.color.color_type);
         if (fly.type == item.color.color_type) firefly = fly;
     }
-    let envelope = envleopes[0];
-    console.log(envelope);
+    let frontEnvelope = item.styleV2.envelopes.filter(
+        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && placement == "front"
+    );
+    let backEnvelope = item.styleV2.envelopes.filter(
+        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && placement == "back"
+    );
+    let envelope = (item.frontTreated == false && item.design?.front != undefined) || item.design.back == undefined ? frontEnvelope : backEnvelope
     let pretreatment = pretreatments[0];
     console.log(item.design);
     let demenstions = await getimagesize(

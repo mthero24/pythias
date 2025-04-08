@@ -94,41 +94,14 @@ export async function POST(req = NextApiRequest) {
     }).populate("styleV2", "code envleopes box sizes images")
     console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
-        let envleopes = item.styleV2.envleopes.filter(
-            (envelope) => envelope.size?.toString() == item.size.toString()
-        );
-        //console.log(envleopes)
-        if (envleopes.length == 0) {
-        let updatedSize = item.styleV2.sizes.filter(
-            (s) => s.name.toLowerCase() == item.sizeName.toLowerCase()
-        )[0];
-        //console.log(updatedSize, "size");
-        item.size = updatedSize._id;
-        envleopes = item.styleV2.envleopes.filter(
-            (envelope) => envelope.size.toString() == item.size.toString()
-        );
-        }
-        let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
-        let imageres = await createImage({
-            url: item.design?.front,
-            pieceID: item.pieceId,
-            horizontal: false,
-            size: `${envleopes[0].width}x${envleopes[0].height}`,
-            offset: envleopes[0].vertoffset,
-            style: item.styleV2.code,
-            styleSize: item.sizeName,
-            color: item.color.name,
-            sku: item.sku,
-            shouldFitDesign: shouldFitDesign,
-            printer: data.printer
-        })
-        if(item.design && item.design.back){
-            let imageres = await createImage({
-                url: item.design?.back,
-                pieceID: `${item.pieceId}-back`,
+        Object.keys(item.design).map(async im=>{
+            let envelope = item.styleV2.envelopes.filter(ev=> ev.sizeName == item.sizeName && im == ev.placement)[0]
+            await createImage({
+                url: item.design?.front,
+                pieceID: item.pieceId,
                 horizontal: false,
-                size: `${envleopes[0].width}x${envleopes[0].height}`,
-                offset: envleopes[0].vertoffset,
+                size: `${envelope.width}x${envelope.height}`,
+                offset: envelope.vertoffset,
                 style: item.styleV2.code,
                 styleSize: item.sizeName,
                 color: item.color.name,
@@ -136,8 +109,8 @@ export async function POST(req = NextApiRequest) {
                 shouldFitDesign: shouldFitDesign,
                 printer: data.printer
             })
-        }
-        console.log(imageres)
+        })
+        //console.log(imageres)
         let tracking = new Employee({
             type: "DTF Load",
             Date: new Date(Date.now()),
