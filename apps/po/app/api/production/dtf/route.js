@@ -99,10 +99,10 @@ export async function POST(req = NextApiRequest) {
     if (item && !item.canceled) {
         let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
         Object.keys(item.design).map(async im=>{
-            //console.log(item.styleV2.envelopes)
+            console.log(item.styleV2.envelopes)
             if(im && im != ""){
-                console.log(item.design[im], im, "im")
-                let envelope = item.styleV2.envelopes.filter(ev=> ev.sizeName == item.sizeName && im == ev.placement)[0]
+                console.log(item.design[im], item.size, im, "im")
+                let envelope = item.styleV2.envelopes.filter(ev=> (ev.sizeName == item.sizeName || ev.size.toString() == item.size.toString()) && im == ev.placement)[0]
                 console.log(envelope)
                 await createImage({
                     url: item.design[im],
