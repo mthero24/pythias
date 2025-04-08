@@ -10,17 +10,19 @@ const getImages = async (front, back, style, item)=>{
     if (styleImage) {
         styleImage = styleImage.image + "?width=400";
     }
-
-    let frontDesign =
-        front && front.replace(
-        "s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "images2.teeshirtpalace.com/"
-        ) + "?width=400";
-    let backDesign =
-        back && back.replace(
-        "s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "images2.teeshirtpalace.com/"
-        ) + "?width=400";
+    let backDesigns = ["namePlate", "back"]
+    let frontDesign
+    let backDesign
+    Object.keys(item.design).map(d=>{
+        if(!backDesigns.includes(d)) frontDesign = item.design[d]?.replace(
+            "s3.wasabisys.com/teeshirtpalace-node-dev/",
+            "images2.teeshirtpalace.com/"
+            ) + "?width=400";
+        else backDesign = item.design[d]?.replace(
+            "s3.wasabisys.com/teeshirtpalace-node-dev/",
+            "images2.teeshirtpalace.com/"
+            ) + "?width=400";
+    })
     return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName}
 }
 export async function GET(req = NextApiResponse) {
@@ -91,24 +93,30 @@ export async function POST(req = NextApiRequest) {
     console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
-    }).populate("styleV2", "code envleopes box sizes images")
-    console.log(item, "item", item.color, "item color")
+    }).populate("styleV2", "code envelopes box sizes images")
+    console.log(item.design, "item",)
     if (item && !item.canceled) {
+        let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
         Object.keys(item.design).map(async im=>{
-            let envelope = item.styleV2.envelopes.filter(ev=> ev.sizeName == item.sizeName && im == ev.placement)[0]
-            await createImage({
-                url: item.design?.front,
-                pieceID: item.pieceId,
-                horizontal: false,
-                size: `${envelope.width}x${envelope.height}`,
-                offset: envelope.vertoffset,
-                style: item.styleV2.code,
-                styleSize: item.sizeName,
-                color: item.color.name,
-                sku: item.sku,
-                shouldFitDesign: shouldFitDesign,
-                printer: data.printer
-            })
+            //console.log(item.styleV2.envelopes)
+            if(im && im != ""){
+                console.log(item.design[im], im, "im")
+                let envelope = item.styleV2.envelopes.filter(ev=> ev.sizeName == item.sizeName && im == ev.placement)[0]
+                console.log(envelope)
+                await createImage({
+                    url: item.design[im],
+                    pieceID: item.pieceId,
+                    horizontal: false,
+                    size: `${envelope.width}x${envelope.height}`,
+                    offset: envelope.vertoffset,
+                    style: item.styleV2.code,
+                    styleSize: item.sizeName,
+                    color: item.color.name,
+                    sku: item.sku,
+                    shouldFitDesign: shouldFitDesign,
+                    printer: data.printer
+                })
+            }
         })
         //console.log(imageres)
         let tracking = new Employee({
@@ -130,7 +138,7 @@ export async function POST(req = NextApiRequest) {
             date: new Date(Date.now()),
             //user: user._id,
           };
-        const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design?.front, item.design?.back, item.styleV2, item)
+        const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design.front, item.design.back, item.styleV2, item)
         return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
