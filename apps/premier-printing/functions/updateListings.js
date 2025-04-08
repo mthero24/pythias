@@ -6,6 +6,9 @@ import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmar
 import { createUpc } from "@/functions/createUpcs"
 
 const createTargetProduct = ({p, product, material, bullet1, bullet2, bullet4})=>{
+    console.log(
+        "create product"
+    )
     return {
         id: product && product[0]? product[0].id: null,
         name: p.name,
@@ -46,6 +49,7 @@ const createTargetProduct = ({p, product, material, bullet1, bullet2, bullet4})=
     }
 }
 const createTargetVariant = ({p,item, v, price, bImages, material, bullet1, bullet2, bullet4})=>{
+    console.log("make variant")
     return {
         id: item && item[0]? item[0].id: null,
         "name": `${p.name} - ${v.size.name} - ${v.color.name}`,
@@ -239,7 +243,7 @@ export async function updateListings(){
     }
     Object.keys(brands).map(b=>{
         Object.keys(brands[b]).map(async m=>{
-            console.log(b, m, brands[b][m].length)
+            //console.log(b, m, brands[b][m].length)
             if(m.toLowerCase() == "target"){
                 console.log("make a target product csv")
                 
@@ -255,7 +259,7 @@ export async function updateListings(){
                     let bullet4 = ""
                     let bullet1 = ""
                     let bullet2 = ""
-                    console.log(p.blank.blank.bulletPoints)
+                    //console.log(p.blank.blank.bulletPoints)
                     for(let bl of p.blank.blank.bulletPoints){
                         if(bl.title.toLowerCase() == "fabric"){
                             material += ` ${bl.description}`
@@ -378,13 +382,14 @@ export async function updateListings(){
                         }
                     }
                 }
+               // console.log(targetHeader)
                 const csvWriter = createCsvWriter({
                     path: `./${b}-${m}.csv`,
-                    targetHeader,
+                    header: targetHeader,
                 });
                 //console.log(products)
-                await csvWriter.writeRecords(products)
-                console.log("product", products.length, products[0])
+                //console.log("product", products.length)
+                await csvWriter.writeRecords([...products])
             }
             // if(m.toLowerCase() == "walmart"){
             //     console.log("walmart")

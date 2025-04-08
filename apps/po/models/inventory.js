@@ -29,6 +29,10 @@ const SchemaObj = new Schema(
         skus: [String],
       },
     ],
+    row: {type: String, default: "0"},
+    unit: {type: String, default: "0"},
+    shelf: {type: String, default: "0"},
+    bin: {type: String, default: "0"}
   },
   { suppressWarning: true }
 );

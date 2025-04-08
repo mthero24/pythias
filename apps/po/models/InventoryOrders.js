@@ -15,5 +15,4 @@ var schema = new mongoose.Schema({
     }]
 })
 
-var InventoryOrders = TSPprints.model('InventoryOrders', schema);
-module.exports = InventoryOrders;
+export const InventoryOrders = TSPprints.model('InventoryOrders', schema);
