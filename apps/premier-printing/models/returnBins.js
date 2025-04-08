@@ -6,7 +6,10 @@ import Color from "./Color"
 import { Inventory2Outlined } from "@mui/icons-material";
 let schema = new mongoose.Schema({
     number: {type: Number, unique: true},
-    inventory: [{upc: String, sku: String, count: Number}],
+    inventory: [{upc: String, sku: String, quantity: {type: Number, default: 0}, design:  {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Design,
+    },}],
     design:  {
         type: mongoose.Schema.Types.ObjectId,
         ref: Design,
@@ -20,7 +23,6 @@ let schema = new mongoose.Schema({
         ref: Color,
     },
     size: String,
-    quantity: {type: Number, default: 0},
     inUse: {type: Boolean, default: false}
 })
 export default PremierPrinting.model("ReturnBin", schema);

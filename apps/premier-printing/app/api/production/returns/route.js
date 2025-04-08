@@ -5,45 +5,55 @@ import Bins from "@/models/returnBins"
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    let skuToUpc = await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]})
-    let bin = await Bins.findOne({blank: skuToUpc.blank, color: skuToUpc.color, size: skuToUpc.size}).populate("design color blank")
-    console.log(bin)
-    if(!bin){
-        if(!bininventory) bin.inventory = []
-        if(!bin.skus) bin.upcs = []
-        bin= await Bins.findOne({inUse: false})
-        bin.design = skuUpcConversion.design
-        bin.blank = skuUpcConversion.blank
-        bin.color = skuUpcConversion.color
-        bin.size = skuUpcConversion.size
-        bin.upcs.push(skuToUpc.upc)
-        bin.skus.push(skuToUpc.sku)
+    let skuToUpc = await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]}).populate("design", "images sku")
+    if(skuToUpc){
+        let bin = await Bins.findOne({blank: skuToUpc.blank, color: skuToUpc.color, size: skuToUpc.size}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
+        console.log(bin)
+        if(!bin){
+            bin= await Bins.findOne({inUse: false})
+            bin.blank = skuUpcConversion.blank
+            bin.color = skuUpcConversion.color
+            bin.size = skuUpcConversion.size
+            bin.inUse = true
+        }
+        let inv = bin.inventory.filter(iv=> iv.upc == data.upc || iv.sku == data.upc)[0]
+        if(inv){
+            inv.quantity++
+            console.log(inv.quantity, "quantity")
+        }else{
+            inv = {
+                upc: skuToUpc.upc,
+                sku: skuToUpc.sku,
+                design: skuToUpc.design,
+                quantity: 1
+            }
+            bin.inventory.push(inv)
+        }
         bin.inUse = true
         await bin.save()
+        let bins = await Bins.find({inUse: true}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
+        //console.log(bin, "later bin")
+        return NextResponse.json({error: false, bin, bins})
     }
-    bin.upcs.push(skuToUpc.upc)
-    bin.skus.push(skuToUpc.sku)
-    bin.inUse = true
-    await bin.save()
-    console.log(bin, "later bin")
-    return NextResponse.json({error: false, bin})
+    return NextResponse.json({error: true, msg: "Look up SKU or UPC on the design page!!!"})
 
 }
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
-    let newQty = parseInt(data.bin.quantity) + parseInt(data.qty)
-    if(newQty <= 0){
-        data.bin.quantity = 0
-        data.bin.design = null;
-        data.bin.upc = null;
-        data.bin.sku = null;
-        data.bin.blank = null
-        data.bin.size = null
-        data.bin.inUse = false
-        await Bins.findByIdAndUpdate(data.bin._id, {inUse: false, quantity: 0})
-    }else{
-        await Bins.findByIdAndUpdate(data.bin._id, {quantity: newQty})
-    }
-    let bins = await Bins.find({inUse: true}).populate("design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
-    return NextResponse.json({error: false, bins})
+    console.log(data.bin)
+    await Bins.findByIdAndUpdate(data.bin._id, {...data.bin})
+    return NextResponse.json({error: false})
+}
+export async function DELETE(req){
+    let binId = await req.nextUrl.searchParams.get("bin")
+    let bin = await Bins.findOne({_id: binId}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name") 
+    bin.blank = null
+    bin.color = null
+    bin.size = null
+    bin.inventory = []
+    bin.inUse = false
+    await bin.save()
+    let bins = await Bins.find({inUse: true}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
+    //console.log(bin, "later bin")
+    return NextResponse.json({error: false, bin, bins})
 }

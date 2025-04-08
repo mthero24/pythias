@@ -156,6 +156,9 @@ export async function GET(req){
         if(!blankImage && side == "back") blankImage = blank.multiImages["modelBack"]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
     }
     else blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString())[0]
+    if(side == "back" && blankImage == undefined){
+        blankImage = blank.multiImages["modelBack"]?.filter(i=> i.color.toString() == color?._id.toString())[0]
+    }
     //console.log(blankImage?.box[0], "box")
     let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage}
     let base64 = await createImage(data)

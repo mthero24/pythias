@@ -61,7 +61,7 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
     styleImage=styleImage?.image
     return  {frontDesign, backDesign, upperSleeveDesign, lowerSleeveDesign, pocketDesign, centerDesign, styleImage, styleCode: style.code, colorName: item.colorName, frontCombo, backCombo, upperSleeveCombo, lowerSleeveCombo, centerCombo, pocketCombo}
 }
-export async function GET(req = NextApiResponse) {
+export async function GET(req) {
     let config = JSON.parse(process.env.dtf);
     console.log(config)
     setConfig({
