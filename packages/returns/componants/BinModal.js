@@ -31,7 +31,7 @@ export function BinModal({open, setOpen, setAuto, bin, setBins, setBin, modalSty
                         <Grid2 size={2}>
                         {Object.keys(i?.design?.images? i?.design?.images: {}).map(d=>(
                             <Box>
-                                {i.design.images[d] != "" && <Image src={createImage(bin.color.name, bin.blank.code, {side: d, url: i.design.images[d]}, source )} alt={i.upc} width={400} height={400} style={{width: "100%", height: "auto", padding: "2%", background: "#e2e2e2"}}/>}
+                                {i.design.images[d] != "" && i.design.images[d] != undefined && <Image src={createImage(bin.color.name, bin.blank.code, {side: d, url: i.design.images[d]}, source )} alt={i.upc} width={400} height={400} style={{width: "100%", height: "auto", padding: "2%", background: "#e2e2e2"}}/>}
                             </Box>
                            
                         ))}
