@@ -52,7 +52,7 @@ const schema = new mongoose.Schema(
     },
     color: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Color",
+      ref: Color,
     },
     sizeName: String,
     styleCode: String,

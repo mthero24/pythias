@@ -1,7 +1,7 @@
 import Inventory from "@/models/inventory";
 import Item from "@/models/Items";
 import StyleV2 from "@/models/StyleV2";
-import InventoryOrders from "@/models/InventoryOrders";
+import {InventoryOrders} from "@/models/InventoryOrders";
 import {NextApiRequest, NextResponse} from "next/server";
 
 export async function POST(req=NextApiRequest){
@@ -66,7 +66,9 @@ export async function POST(req=NextApiRequest){
       }
     }
     console.log("hm");
-    order.received = true;
-    await order.save();
+    if(order){
+        order.received = true;
+        await order.save();
+    }
     return NextResponse.json({error: false, printOut});
 }

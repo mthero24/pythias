@@ -19,15 +19,16 @@ export async function GET(req){
     return NextResponse.json(inventoryOrders);
 }
 
-export async function POST(){
+export async function POST(req=NextApiRequest){
+  let data = await req.json()
     let inventory_items = await Inventory.find({
     inventory_id: {
-        $in: [...new Set(req.body.inOrder.map((i) => i.inventory_id))],
+        $in: [...new Set(data.inOrder.map((i) => i.inventory_id))],
     },
     });
 
-    for (let key of Object.keys(req.body.po)) {
-        let order_items = req.body.inOrder.filter((i) => i.vendor == key);
+    for (let key of Object.keys(data.po)) {
+        let order_items = data.inOrder.filter((i) => i.vendor == key);
         let items = order_items.map((item) => {
             let inventory_item = inventory_items.filter(
             (i) => i.inventory_id == item.inventory_id
@@ -46,7 +47,7 @@ export async function POST(){
             let state_keys = [...new Set(items.map((i) => i.state))];
             console.log(state_keys);
             for (let state of state_keys) {
-            let name = req.body.po[key];
+            let name = data.po[key];
             if (state) {
                 name += `-${state}`;
             }
