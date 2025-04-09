@@ -108,7 +108,7 @@ export async function POST(req = NextApiRequest) {
                 console.log(envelope)
                 await createImage({
                     url: item.design[im],
-                    pieceID: item.pieceId,
+                    pieceID: `${item.pieceId}-${im}`,
                     horizontal: false,
                     size: `${envelope.width}x${envelope.height}`,
                     offset: envelope.vertoffset,
