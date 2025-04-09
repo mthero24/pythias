@@ -38,7 +38,7 @@ export async function GET(request, { params }) {
     let envleopes = item.styleV2.envleopes.filter(
         (envelope) => envelope.sizeName == item.sizeName || envelope.size == item.size.toString()
     );
-    console.log(envleopes, "fff");
+    //console.log(envleopes, "fff");
     let pretreatments = item.styleV2.pretreatments.filter(
         (pre) => pre.type == item.color.color_type
     );
@@ -50,14 +50,14 @@ export async function GET(request, { params }) {
     }
     let frontEnvelope = item.styleV2.envelopes.filter(
         (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && envelope.placement == "front"
-    );
+    )[0];
     let backEnvelope = item.styleV2.envelopes.filter(
         (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && envelope.placement == "back"
-    );
+    )[0];
     let envelope = (item.frontTreated == false && item.design?.front != undefined) || item.design.back == undefined ? frontEnvelope : backEnvelope
     let pretreatment = pretreatments[0];
-    console.log(item.design);
-    let demenstions = await getimagesize(
+    console.log(envelope, "envelope");
+    let dimensions = await getimagesize(
         (item.frontTreated == false && item.design?.front != undefined) ||
         item.design.back == undefined
         ? item.design?.front.replace(
@@ -69,8 +69,8 @@ export async function GET(request, { params }) {
             "https://images2.teeshirtpalace.com"
             )
     );
-    console.log(demenstions, "dementions");
-    let height = (envelope.height / 3500) * demenstions.height - 0.5;
+    console.log(dimensions, "dimensions", typeof envelope.height);
+    let height = (envelope.height / 3500) * dimensions.height - 0.5;
     console.log("height", height);
     if (
         height >
@@ -187,7 +187,7 @@ export async function GET(request, { params }) {
         blackBalance: 0, //-5 to 5
     };
     if (item.styleV2.code == "WRT") item.color.category == "Standard";
-    console.log(item.color);
+    //console.log(item.color);
     if (
         item.color.name.toLowerCase() == "white" ||
         (item.color.category == "2 tone" && item.styleV2.code != "EZ145")
@@ -200,7 +200,7 @@ export async function GET(request, { params }) {
         Profile.highlight = 4;
         Profile.mask = 3;
     } else {
-        console.log(item.styleV2.profiles);
+        //console.log(item.styleV2.profiles);
         if (item.color.color_type == "dark") {
         for (let pro of item.styleV2.profiles) {
             if (pro.type == "dark") {
@@ -221,7 +221,7 @@ export async function GET(request, { params }) {
         }
     }
     await tracking.save();
-    console.log(firefly);
+    //console.log(firefly);
     //set material thickness by style
     let xml = `<?xml version="1.0" encoding="utf-16"?>
                         <ProductInfo xmlns="http://schemas.datacontract.org/2004/07/LoadZoneAPI" 
@@ -463,7 +463,7 @@ export async function GET(request, { params }) {
                         <Version>1</Version>
                     </ProductInfo>
                 `;
-    console.log(xml);
+    //console.log(xml);
     item.treatedDate = new Date();
     item.printedDate = new Date();
     item.treated = true;
