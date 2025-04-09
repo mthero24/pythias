@@ -10,8 +10,8 @@ export async function POST(req=NextApiRequest){
         type: { $nin: ["sublimation", "gift"] },
       })
         .populate("order", "poNumber")
-        .populate("color blank")
-        .select("color sizeName blank")
+        .populate("color styleV2")
+        .select("color sizeName styleV2")
         .lean();
   
     items = items.filter((i) => i.color && i.sizeName && i.blank);

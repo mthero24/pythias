@@ -118,12 +118,17 @@ const printLabels = async (labelSort) => {
   for (let l of labelSort) {
     labels += l.label;
   }
-  let printJob = await axios.post("http://144.121.188.243:3003/print", {
-    label: labels,
-    printer: "http://192.168.1.78:9100/printer/pstprnt",
-    base64: false,
-  });
-  return printJob.status == 200;
+  let headers = {
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+        }
+    }
+    console.log(headers)
+    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labels, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
+    console.log(res?.data)
+    res.data.status = 200
+  return res.data;
 };
 
 const markLabelsPrinted = async (labelSort, opts = {}) => {
