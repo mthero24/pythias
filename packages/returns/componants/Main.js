@@ -67,10 +67,10 @@ export function Main({binCount, binsInUse, source}){
                         <Typography>{b.number}</Typography>
                     </Grid2>
                     <Grid2 size={3}>
-                        <Typography>{b.blank.code}</Typography>
+                        <Typography>{b?.blank?.code}</Typography>
                     </Grid2>
                     <Grid2 size={3}>
-                        <Typography>{b.color.name}</Typography>
+                        <Typography>{b?.color?.name}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
                         <Typography>{b.size}</Typography>
