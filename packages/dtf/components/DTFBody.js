@@ -251,7 +251,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                     height: "auto",
                                     background: "#e2e2e2"
                                   }}
-                                  src={createImage(submitted.colorName, submitted.styleCode, {url: submitted.images[im].replace("s3.wasabisys.com/teeshirtpalace-node-dev", "images4.teeshirtpalace.com"), side: im == "back" || im == "namePlate"? "back": "front", printArea: im})}
+                                  src={createImage(submitted.colorName, submitted.styleCode, {url: submitted.images[im], side: im == "back" || im == "namePlate"? "back": "front", printArea: im})}
                               />
                             </Box>
                             <Box sx={{ background: "#e2e2e2", padding: "1%"}}>

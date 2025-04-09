@@ -119,6 +119,7 @@ const printLabels = async (labelSort) => {
   for (let l of labelSort) {
     labels += l.label;
   }
+  console.log(labels)
   let headers = {
         headers: {
             "Content-Type": "application/json",
@@ -300,24 +301,25 @@ const buildLabelData = async (items, opts = {}) => {
 };
 
 export async function POST(req=NextApiResponse) {
-
+    let data = await req.json()
     let printedOn = new Date();
     let batchID = "";
 
     for (let i = 0; i < 9; i++) {
         batchID = batchID + letters[Math.floor(Math.random() * letters.length)];
     }
-    if (req.body.batchID) {
-        batchID = req.body.batchID;
+    if (data.batchID) {
+        batchID = data.batchID;
     }
     let items;
-    if (req.body.labels) {
-        items = await Item.find({ _id: { $in: req.body.labels } }).populate(
+    console.log(data.labels, data.labels, "data.labels")
+    if (data.labels) {
+        items = await Item.find({ _id: { $in: data.labels.printOut } }).populate(
         "order styleV2 size color"
         );
     } else {
         let shippingType = "Standard";
-        if (req.body.type != "Standard") shippingType = { $ne: "Standard" };
+        if (data.type != "Standard") shippingType = { $ne: "Standard" };
         items = await Item.find({
         labelPrinted: false,
         paid: true,
@@ -352,12 +354,12 @@ export async function POST(req=NextApiResponse) {
         //only print in stock items
         items = inStockItems;
     }
-
+    console.log(items)
     let labelSort = await buildLabelData(items, {
-        printPO: req.body.printPO,
+        printPO: data.printPO,
     });
 
-    let skipIdx = req.body?.skipIdx;
+    let skipIdx = data?.skipIdx;
     if (skipIdx) {
         labelSort = labelSort.slice(skipIdx, labelSort.length);
     }
@@ -368,9 +370,9 @@ export async function POST(req=NextApiResponse) {
         let updated = await markLabelsPrinted(labelSort, {
         batchID,
         printedOn,
-        type: req.body.type,
+        type: data.type,
         });
-        if (req.body.type != "reprint") {
+        if (data.type != "reprint") {
         let batch = new Batch({ batchID, count: updated, date: new Date() });
         await batch.save();
         }
