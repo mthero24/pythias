@@ -70,7 +70,9 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
             "ignoreBadAddress": true
         }, headers).catch(e=>{console.log(e.response);resData= e.response.data})
         console.log(res?.data, resData?.error?.errors)
-        if(res?.data.error) return {error:true, msg: res.data.message}
+        if(res?.data.error) {
+            return {error:true, msg: res.data.message}
+        }
         else if(resData)return {error:true, msg: resData.error.message}
         else return {error:false, manifest: res.data.SCANFormImage}
     }

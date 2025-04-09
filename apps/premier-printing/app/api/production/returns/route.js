@@ -5,15 +5,15 @@ import Bins from "@/models/returnBins"
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    let skuToUpc = await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]}).populate("design", "images sku")
+    let skuToUpc = await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]}).populate("design", "images sku").populate("blank color")
     if(skuToUpc){
         let bin = await Bins.findOne({blank: skuToUpc.blank, color: skuToUpc.color, size: skuToUpc.size}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
         console.log(bin)
-        if(!bin){
+        if(!bin && skuToUpc){
             bin= await Bins.findOne({inUse: false})
-            bin.blank = skuUpcConversion.blank
-            bin.color = skuUpcConversion.color
-            bin.size = skuUpcConversion.size
+            bin.blank = skuToUpc.blank
+            bin.color = skuToUpc.color
+            bin.size = skuToUpc.size
             bin.inUse = true
         }
         let inv = bin.inventory.filter(iv=> iv.upc == data.upc || iv.sku == data.upc)[0]

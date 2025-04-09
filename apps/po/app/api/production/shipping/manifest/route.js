@@ -2,7 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Manifest from "../../../../../models/manifest"
 import { uspsGenerateManifest } from "@pythias/shipping";
 export async function GET(req = NextApiRequest) {
-    let manifests = await Manifest.find({}).limit(1000);
+    let manifests = await Manifest.find({Date: {$gt: new Date(Date.now() - 8 * (60 * 60 * 1000))}}).limit(1000);
     console.log(manifests.length)
     let skip = 1000
     let PicNumbers = [];
