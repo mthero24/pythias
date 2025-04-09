@@ -3,6 +3,7 @@ import Item from "@/models/Items";
 import Inventory from "@/models/inventory"
 import Batch from "@/models/batches";
 import axios from "axios";
+import btoa from "btoa";
 import {NextApiResponse, NextResponse} from "next/server";
 let letters = [
   "a",
@@ -125,7 +126,7 @@ const printLabels = async (labelSort) => {
         }
     }
     console.log(headers)
-    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labels, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
+    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: btoa(labels), printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
     console.log(res?.data)
     res.data.status = 200
   return res.data;
