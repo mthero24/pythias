@@ -14,11 +14,11 @@ export async function POST(req=NextApiRequest){
         .select("color sizeName styleV2")
         .lean();
   
-    items = items.filter((i) => i.color && i.sizeName && i.blank);
+    items = items.filter((i) => i.color && i.sizeName && i.styleV2);
     items = items.filter((i) => i.order && i.order.poNumber);
   
     let inventory_ids = items.map((i) =>
-        encodeURIComponent(`${i.color.name}-${i.sizeName}-${i.blank.code}`)
+        encodeURIComponent(`${i.color.name}-${i.sizeName}-${i.styleV2.code}`)
     );
     console.log(inventory_ids, "ids");
     let inventory_items = {};

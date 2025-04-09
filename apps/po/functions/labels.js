@@ -40,25 +40,25 @@ export async function LabelsData(){
             .select("quantity pending_quantity inventory_id")
             .lean();
         labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0];  return {...s}})
-        labels[k].map(l=>{console.log(l.inventory, encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`), k)})
-        let missing = labels[k].filter(l=> l.inventory == undefined)
-        missing.map(async m=>{
-            let i = await Inventory.findOne({inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)})
-            if(!i){
-                i = new Inventory({
-                    inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`),
-                    pending_quantity: 0,
-                    quantity: 0,
-                    order_at_quantity: 10,
-                    desired_order_quantity: 10,
-                    color: m.color,
-                    color_name: m.colorName,
-                    size_name: m.sizeName,
-                    barcode_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)
-                })
-                await i.save()
-            }
-        })
+        //labels[k].map(l=>{console.log(l.inventory, encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`), k)})
+        // let missing = labels[k].filter(l=> l.inventory == undefined)
+        // missing.map(async m=>{
+        //     let i = await Inventory.findOne({inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)})
+        //     if(!i){
+        //         i = new Inventory({
+        //             inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`),
+        //             pending_quantity: 0,
+        //             quantity: 0,
+        //             order_at_quantity: 10,
+        //             desired_order_quantity: 10,
+        //             color: m.color,
+        //             color_name: m.colorName,
+        //             size_name: m.sizeName,
+        //             barcode_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)
+        //         })
+        //         await i.save()
+        //     }
+        // })
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k])
     }

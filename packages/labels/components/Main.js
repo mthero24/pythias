@@ -397,7 +397,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                               {i.inventory
                                 ? i.inventory.quantity +
                                   i.inventory.pending_quantity
-                                : 0}
+                                : "NAN"}
                             </Typography>
                           </Grid2>
                           <Grid2 size={{ xs: 6, sm: 4, md: 3 }}>

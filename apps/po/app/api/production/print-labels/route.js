@@ -11,8 +11,10 @@ let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n",
 const subtractInventory = async (items)=>{
     items.map(async i=>{
         let inv = await Inventory.findOne({_id: i.inventory._id})
+        //console.log(inv, "invetory subrtact")
         inv.quantity -= 1
         await inv.save()
+        //console.log(inv, "invetory subrtact")
     })
 }
 export const config = {
