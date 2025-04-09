@@ -49,10 +49,10 @@ export async function GET(request, { params }) {
         if (fly.type == item.color.color_type) firefly = fly;
     }
     let frontEnvelope = item.styleV2.envelopes.filter(
-        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && placement == "front"
+        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && envelope.placement == "front"
     );
     let backEnvelope = item.styleV2.envelopes.filter(
-        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && placement == "back"
+        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && envelope.placement == "back"
     );
     let envelope = (item.frontTreated == false && item.design?.front != undefined) || item.design.back == undefined ? frontEnvelope : backEnvelope
     let pretreatment = pretreatments[0];
