@@ -170,7 +170,7 @@ const Index = (props) => {
     }, [sort]);
   
     return (
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{background: "#ffffff"}}>
         <div style={{ paddingBottom: 50 }}>
           <Typography variant="h4" component="h1" mb={3}>
             Inventory
