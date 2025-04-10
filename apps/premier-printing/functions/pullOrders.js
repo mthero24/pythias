@@ -7,6 +7,7 @@ import Order from "@/models/Order";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import Blanks from "@/models/Blanks";
 export async function pullOrders(){
+    console.log("pull orders")
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
@@ -17,12 +18,12 @@ export async function pullOrders(){
                 uniquePo: `${o.orderNumber}-${o.orderId}-${o.advancedOptions.source? o.advancedOptions.source: o.billTo.name}`,
                 shippingAddress: {
                     name: o.shipTo.name,
-                    address1: o.shipTo.street1,
+                    address1: o.shipTo.street1? o.shipTo.street1: "not provided",
                     address2: o.shipTo.street2,
-                    city: o.shipTo.city,
-                    zip: o.shipTo.postalCode,
-                    state: o.shipTo.state,
-                    country: o.shipTo.country
+                    city: o.shipTo.city? o.shipTo.city: "not provided",
+                    zip: o.shipTo.postalCode?  o.shipTo.postalCode: "not provided",
+                    state: o.shipTo.state? o.shipTo.state: "not provided",
+                    country: o.shipTo.country? o.shipTo.country: "not provided"
                 },
                 shippingType: marketplace == "faire" || marketplace == "TSC" || marketplace == "Zulily"? "Expedited": "Standard",
                 marketplace: o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name,

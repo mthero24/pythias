@@ -64,7 +64,7 @@ export function Main({binCount, binsInUse, source}){
                 <Card  sx={{padding: "2%", cursor: "pointer", background: i % 2 == 0? "#e2e2e2": ""}} onClick={()=>{setBin(b); setOpen(true)}} key={i}>
                      <Grid2 container spacing={2} sx={{textAlign: "center"}}>
                     <Grid2 size={2}>
-                        <Typography>{b.number}</Typography>
+                        <Typography>{b?.number}</Typography>
                     </Grid2>
                     <Grid2 size={3}>
                         <Typography>{b?.blank?.code}</Typography>
@@ -73,7 +73,7 @@ export function Main({binCount, binsInUse, source}){
                         <Typography>{b?.color?.name}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
-                        <Typography>{b.size}</Typography>
+                        <Typography>{b?.size}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
                         <Button onClick={()=>{
