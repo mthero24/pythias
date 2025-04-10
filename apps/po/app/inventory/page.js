@@ -470,6 +470,7 @@ const Index = (props) => {
             my: 6,
             overflowY: "auto",
             position: "relative",
+            color:"#000"
           }}
         >
           <ModalCloseButton onClick={() => setModalVisible(false)} />
@@ -646,7 +647,7 @@ const Index = (props) => {
           <Typography>Place Inventory Order</Typography>
   
           {companies.map((company) => (
-            <Box key={company} sx={{ my: 2 }}>
+            <Box key={company} sx={{ my: 2, color: "#000" }}>
               <Typography>{company} #</Typography>
               <TextField
                 onChange={(e) => handleChange(company, e.target.value)}
