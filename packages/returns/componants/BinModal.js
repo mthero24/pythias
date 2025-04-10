@@ -22,7 +22,7 @@ export function BinModal({open, setOpen, setAuto, bin, setBins, setBin, modalSty
                 <Grid2 container spacing={2} sx={{padding: "2%", textAlign: "center"}}>
                     <Grid2 size={12}>
                         <Typography>Blank: {bin?.blank?.code}</Typography>
-                        <Typography>Size: {bin?.size}, Color: {bin?.color.name}</Typography>
+                        <Typography>Size: {bin?.size}, Color: {bin?.color?.name}</Typography>
                     </Grid2>
                 </Grid2>
                 {bin?.inventory.map(i=>(

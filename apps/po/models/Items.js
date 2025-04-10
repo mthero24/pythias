@@ -79,7 +79,7 @@ const schema = new mongoose.Schema(
     canceled: { type: Boolean, default: false },
     rePulled: { type: Boolean, default: false },
     rePulledTimes: { type: Number, default: 0 },
-    design: Object,
+    design: {},
     weight: Number,
     quantity: {
       type: String,
