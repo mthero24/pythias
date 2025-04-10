@@ -5,6 +5,19 @@ import Color from "./Color";
 import Size from "./Size";
 import Style from "./Style";
 import StyleV2 from "./StyleV2";
+const PRINT_AREAS = [
+  "front",
+  "back",
+  "leftPocket",
+  "rightPocket",
+  "middleChestLarge",
+  "middleChestSmall",
+  "nameplate",
+  "leftSleeve",
+  "rightSleeve",
+  "left",
+  "right",
+];
 const schema = new mongoose.Schema(
   {
     date: {
@@ -80,17 +93,24 @@ const schema = new mongoose.Schema(
     rePulled: { type: Boolean, default: false },
     rePulledTimes: { type: Number, default: 0 },
     design: {
-      "front": String,
-      "back": String,
-      "leftPocket": String,
-      "rightPocket": String,
-      "middleChestLarge": String,
-      "middleChestSmall": String,
-      "nameplate": String,
-      "leftSleeve": String,
-      "rightSleeve": String,
-      "left": String,
-      "right": String,
+      type: Object,
+      default: () => {
+        const design = {};
+        PRINT_AREAS.forEach((area) => {
+          design[area] = String;
+        });
+        return design;
+      },
+    },
+    printFiles: {
+      type: Object,
+      default: () => {
+        const printFiles = {};
+        PRINT_AREAS.forEach((area) => {
+          printFiles[area] = String;
+        });
+        return printFiles;
+      },
     },
     weight: Number,
     quantity: {
