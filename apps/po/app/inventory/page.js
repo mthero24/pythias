@@ -170,9 +170,9 @@ const Index = (props) => {
     }, [sort]);
   
     return (
-      <Container maxWidth="lg" sx={{background: "#ffffff"}}>
+      <Container maxWidth="lg" sx={{background: "#fff"}}>
         <div style={{ paddingBottom: 50 }}>
-          <Typography variant="h4" component="h1" mb={3}>
+          <Typography variant="h4" component="h1" mb={3} color="#000">
             Inventory
           </Typography>
   
@@ -240,10 +240,10 @@ const Index = (props) => {
           </Box>
   
           <Box sx={{ my: 3 }}>
-            <Typography>Total Value: ${totalVal.toLocaleString()}</Typography>
+            <Typography color="#000">Total Value: ${totalVal.toLocaleString()}</Typography>
           </Box>
   
-          <Typography>Sort Order</Typography>
+          <Typography color="#000">Sort Order</Typography>
           <Box sx={{ backgroundColor: "#f1f1f1", p: 2, display: "flex" }}>
             {Object.keys(sort).map((key) => (
               <Box
