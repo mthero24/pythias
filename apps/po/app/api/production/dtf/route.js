@@ -95,7 +95,7 @@ export async function POST(req = NextApiRequest) {
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("styleV2", "code envelopes box sizes images")
-    console.log(item.design, "item",)
+    console.log(item?.design, "item",)
     if (item && !item.canceled) {
         let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
         Object.keys(item.design).map(async im=>{
