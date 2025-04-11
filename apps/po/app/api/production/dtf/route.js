@@ -103,7 +103,7 @@ export async function POST(req = NextApiRequest) {
             if(im && im != ""){
                 console.log(item.design[im], item.size, im, "im")
                 //console.log(item.styleV2.envelopes)
-                let envelope = item.styleV2.envelopes.filter(ev=> (ev.sizeName == item.sizeName || ev.size.toString() == item.size.toString()) && im == ev.placement)[0]
+                let envelope = item.styleV2.envelopes.filter(ev=> (ev.sizeName == item.sizeName || ev.size?.toString() == item.size?.toString()) && im == ev.placement)[0]
                 if(!envelope) envelope = item.styleV2.envelopes.filter(ev=> im == ev.placement)[0]
                 console.log(envelope)
                 await createImage({
