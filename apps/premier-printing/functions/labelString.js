@@ -28,7 +28,7 @@ export const buildLabelData = async (item, i, opts={}) => {
     else printTypeAbbr = "DTF";
 
     let labelString = `
-      ${item.order.marketplace == "target"? `^XA
+      ${item.order.marketplace == "target" || item.order.marketplace == "Target Plus US Marketplace"? `^XA
         ^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc? item.upc: "no upc present"}^FS
         ^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS
