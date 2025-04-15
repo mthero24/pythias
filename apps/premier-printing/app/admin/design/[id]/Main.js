@@ -9,6 +9,7 @@ import Theme from "@/components/Theme.json"
 import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
 import { useRouter } from "next/navigation";
+import { AltImageModal } from "./AltImagesModal";
 export function Main({design, bls, brands, mPs, pI, licenses}){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
@@ -22,6 +23,8 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
     const [imageColor, setImageColor] = useState({label: "Color", value: null})
     const [upcBlank, setUpcBlank] = useState(null)
     const [upcModal, setUpcModal] = useState(false)
+    const [open, setOpen] = useState(false)
+    const [blankForAlt, setBlankForAlt] = useState(null)
     useEffect(()=>{
         console.log(blanks[0].colors)
         if(blanks){
@@ -574,7 +577,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                     />
                                 </Box>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                                    <Button>Add Alternative Images</Button>
+                                    <Button onClick={()=>{setOpen(true)}}>Add Alternative Images</Button>
                                     <Button onClick={()=>{
                                         setUpcBlank(b.blank)
                                         setUpcModal(true)
@@ -671,6 +674,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 </Grid2>
             </Card>
             <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} />
+            <AltImageModal open={open} setOpen={setOpen} design={des} />
         </Box>
     )
 }
