@@ -33,7 +33,7 @@ const ProductImageOverlay = ({
 
   useEffect(() => {
     let getRender = async ()=>{
-      let res = await axios.post("/api/renderImages", {box, designImage, styleImage, imageDimensions})
+      let res = await axios.post("/api/renderImages", {box, designImage, styleImage, imageDimensions, width: 200})
       if(res.data.base64) setBase64(res.data.base64)
     }
     getRender()

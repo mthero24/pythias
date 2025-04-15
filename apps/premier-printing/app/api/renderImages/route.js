@@ -20,27 +20,34 @@ const readImage = async (url)=>{
     return null
 }
 const createImage = async (data)=>{
+    let multiplier = 1
     let base64
+    if(data.width){
+        multiplier = data.width / data.box.containerWidth
+    }else{
+        data.width = 400
+    }
     base64 = await readImage(data.styleImage)
     console.log(data)
     if(data.box && data.designImage && data.designImage != "undefined" && base64){
         base64 = base64.resize({
-            width: 2400 ,
-            height: 2400,
+            width: data.width,
+            height: data.width,
             fit: sharp.fit.cover,
-            position: sharp.strategy.entropy
+            position: sharp.strategy.entropy,
+            background: {r: 255, g: 255, b: 255, alpha: 1},
         })
         
         let designBase64 = await readImage(data.designImage)
         designBase64 = designBase64.trim()
-        let x = data.box.x * 6
-        let y = data.box.y * 6
+        let x = data.box.x * multiplier
+        let y = data.box.y * multiplier
         let originalSize
         if(data.box.rotation && data.box.rotation != 0){
             console.log(data.box.rotation, "rotation")
             designBase64 = await designBase64.resize({
-                width: parseInt(data.box.boxWidth * 6),
-                height: parseInt(data.box.boxHeight * 6) ,
+                width: parseInt(data.box.boxWidth * multiplier),
+                height: parseInt(data.box.boxHeight * multiplier) ,
                 background: {r: 255, g: 255, b: 255, alpha: 0},
                 fit: sharp.fit.inside,
                 position: "left top",
@@ -78,8 +85,8 @@ const createImage = async (data)=>{
             y -= (rotatedTopLeftY + offsetH);
         }else{
             designBase64 = await designBase64.resize({
-                width: parseInt(data.box.boxWidth * 6 ),
-                height: parseInt(data.box.boxHeight * 6),
+                width: parseInt(data.box.boxWidth * multiplier ),
+                height: parseInt(data.box.boxHeight * multiplier),
                 background: {r: 255, g: 255, b: 255, alpha: 0},
                 fit: sharp.fit.inside,
                 position: sharp.strategy.attention,
@@ -99,7 +106,7 @@ const createImage = async (data)=>{
         //     //offset = parseInt(((data.box.x) - x))
         //    // offsetHeight = parseInt(((data.box.y) - y))
         // }
-        let offset = (originalSize.width - (data.box.boxWidth * 6)) / 2
+        let offset = (originalSize.width - (data.box.boxWidth * multiplier)) / 2
         base64 = await base64.composite([
             {
                 input: designBase64,
@@ -113,8 +120,8 @@ const createImage = async (data)=>{
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }else if(data.styleImage && base64){
         base64 = base64.resize({
-            width: 2400,
-            height: 2400,
+            width: data.width,
+            height: data.width,
             fit: sharp.fit.inside,
             position: sharp.strategy.entropy
         })
@@ -125,8 +132,8 @@ const createImage = async (data)=>{
         base64 = await readImage(data.designImage)
         if(base64){
             base64 = base64.resize({
-                width: 2400,
-                height: 2400,
+                width: data.width,
+                height: data.width,
                 fit: sharp.fit.inside,
                 position: sharp.strategy.entropy
             })
@@ -144,6 +151,7 @@ export async function GET(req){
     let colorName = req.nextUrl.searchParams.get("colorName")
     let designImage = req.nextUrl.searchParams.get("design")
     let side = req.nextUrl.searchParams.get("side")
+    let width = parseInt(req.nextUrl.searchParams.get("width"))
     console.log(blankCode, bm, colorName, designImage, side)
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
     let color = blank.colors.filter(c=>c.name == colorName)[0]
@@ -159,7 +167,7 @@ export async function GET(req){
         blankImage = blank.multiImages["modelBack"]?.filter(i=> i.color.toString() == color?._id.toString())[0]
     }
     //console.log(blankImage?.box[0], "box")
-    let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage}
+    let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage, width}
     let base64 = await createImage(data)
     base64 = base64.replace(/^data:image\/\w+;base64,/, "")
     let buffer = new Buffer.from(base64, "base64")

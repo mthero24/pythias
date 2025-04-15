@@ -1,10 +1,13 @@
-import {Box, Modal, Typography} from "@mui/material"
+import {Box, Modal, Typography, Card, Grid2} from "@mui/material"
+import {useState, useEffect} from "react"
+import { Uploader } from "@/components/premier/uploader";
 const style = {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 400,
+    width: "90%",
+    height: "90vh",
     bgcolor: 'background.paper',
     border: '2px solid #000',
     boxShadow: 24,
@@ -12,6 +15,7 @@ const style = {
   };
   
 export function AltImageModal({open, setOpen, blank, design}){
+    console.log(blank)
     return (
         <Modal
         open={open}
@@ -20,12 +24,18 @@ export function AltImageModal({open, setOpen, blank, design}){
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Text in a modal
-          </Typography>
-          <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-          </Typography>
+          {blank?.colors.map(c=>(
+            <Card key={c.name} sx={{padding: ".5%", margin: ".5%"}}>
+                <Typography key={c.name}>{c.name}</Typography>
+                <Grid2 container spacing={2}>
+                    <Grid2 size={2}>
+                        <Box sx={{width: "100%", minHeight: "100px", padding: "3%", margin: "2%"}}>
+                            <Uploader location={null} afterFunction={null} image={ null} />
+                        </Box>
+                    </Grid2>
+                </Grid2>
+            </Card>
+          ))}
         </Box>
       </Modal>
     )

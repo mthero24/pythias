@@ -577,7 +577,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                     />
                                 </Box>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                                    <Button onClick={()=>{setOpen(true)}}>Add Alternative Images</Button>
+                                    <Button onClick={()=>{setOpen(true); setBlankForAlt(b); console.log(b)}}>Add Alternative Images</Button>
                                     <Button onClick={()=>{
                                         setUpcBlank(b.blank)
                                         setUpcModal(true)
@@ -674,7 +674,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 </Grid2>
             </Card>
             <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} />
-            <AltImageModal open={open} setOpen={setOpen} design={des} />
+            <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des}  />
         </Box>
     )
 }
