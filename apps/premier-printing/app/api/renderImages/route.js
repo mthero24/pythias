@@ -54,6 +54,9 @@ const createImage = async (data)=>{
             designBase64 = await designBase64
           .rotate(parseInt(data.box.rotation), { background: { r: 255, g: 255, b: 255, alpha: 0 } })
           .toBuffer();
+            designBase64 = await sharp(designBase64)
+            let newSize = await designBase64.metadata();
+            designBase64 = await designBase64.toBuffer()
            // Convert rotation angle to radians
             const angleInRadians = (parseInt(data.box.rotation) * Math.PI) / 180;
             const cosTheta = Math.cos(angleInRadians);
@@ -69,8 +72,10 @@ const createImage = async (data)=>{
             centerY + ((0 - centerX) * sinTheta) + ((0 - centerY) * cosTheta);
             // Adjust the position to compensate for the rotation
             console.log(rotatedTopLeftX, rotatedTopLeftY, "rotated")
-            x -= (rotatedTopLeftX + 50);
-            y -= (rotatedTopLeftY + 100);
+            let offsetH = (newSize.height - originalHeight) / 2
+            let offsetW = (newSize.width - originalWidth) / 2
+            x -= (rotatedTopLeftX + offsetW);
+            y -= (rotatedTopLeftY + offsetH);
         }else{
             designBase64 = await designBase64.resize({
                 width: parseInt(data.box.boxWidth * 6 ),
