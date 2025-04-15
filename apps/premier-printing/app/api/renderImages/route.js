@@ -22,7 +22,7 @@ const readImage = async (url)=>{
 const createImage = async (data)=>{
     let multiplier = 1
     let base64
-    if(data.width){
+    if(data.width && data.box){
         multiplier = data.width / data.box.containerWidth
     }else{
         data.width = 400
