@@ -674,7 +674,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 </Grid2>
             </Card>
             <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} />
-            <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des}  />
+            <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
         </Box>
     )
 }
