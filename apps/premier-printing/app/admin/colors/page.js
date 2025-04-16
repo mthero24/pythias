@@ -1,6 +1,7 @@
 import Color from "@/models/Color";
 import { serialize } from "@/functions/serialize";
 import { Main } from "./Main";
+export const dynamic = 'force-dynamic';
 export default async function Colors(){
     let colors = await Color.find({}).lean()
     colors = serialize(colors)
