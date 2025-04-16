@@ -93,7 +93,7 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Premier Printing`} />
           </ListItemButton>
         </Link>
-        <Link href="/register">
+        <Link href="/admin/register">
           <ListItemButton>
             <ListItemText primary={`Register`} />
           </ListItemButton>
@@ -101,6 +101,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
         <Link href="/admin/license">
           <ListItemButton>
             <ListItemText primary={`Licenses`} />
+          </ListItemButton>
+        </Link>
+        <Link href="/admin/colors">
+          <ListItemButton>
+            <ListItemText primary={`Colors`} />
           </ListItemButton>
         </Link>
         <Link href="/admin/blanks">

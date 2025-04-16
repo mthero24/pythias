@@ -90,8 +90,7 @@ export const ColorImage = ({
       //console.log("updateColor()");
       setCol({ ...col, ...newColor });
       let result = await axios.put("/api/admin/colors", {
-        color_id: color._id,
-        ...newColor,
+        color: {...newColor},
       });
     };
   

@@ -9,6 +9,7 @@ const SchemaObj = new Schema(
     option_id: Number,
     category: String,
     color_type: String,
+    colorFamily: String
   },
   { strict: false }
 );

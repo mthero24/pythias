@@ -22,9 +22,16 @@ export async function POST(req = NextApiRequest) {
 export async function PUT(req = NextApiRequest) {
     let data = await req.json();
     console.log(data)
-    let { color_id, ...newColor } = data;
-
-    let exists = await Color.findByIdAndUpdate(color_id, {...newColor} );
-    
-    return NextResponse.json(true);
+    let { color } = data;
+    console.log(color)
+    let exists = await Color.findByIdAndUpdate(color._id, color );
+    let colors = await Color.find({}).lean()
+  
+    return NextResponse.json({error: false, colors});
+}
+export async function DELETE(req = NextApiRequest) {
+  let id = await req.nextUrl.searchParams.get("id")
+  await Color.findOneAndDelete({_id: id})
+  let colors = await Color.find({})
+  return NextResponse.json({error: false, colors});
 }
