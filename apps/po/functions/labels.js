@@ -37,9 +37,9 @@ export async function LabelsData(){
         let inventoryArray = await Inventory.find({
             inventory_id: { $in: inventory_ids },
             })
-            .select("quantity pending_quantity inventory_id")
+            .select("quantity pending_quantity inventory_id row unit shelf bin")
             .lean();
-        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0];  return {...s}})
+        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0]; return {...s}})
         //labels[k].map(l=>{console.log(l.inventory, encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`), k)})
         // let missing = labels[k].filter(l=> l.inventory == undefined)
         // missing.map(async m=>{

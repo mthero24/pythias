@@ -8,14 +8,16 @@ import {buildLabelData} from "../../../../functions/labelString"
 import Inventory from "../../../../models/inventory";
 let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G","H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",];
 
-const subtractInventory = async (items)=>{
-    for(let i of items){
-        let inv = await Inventory.findOne({_id: i.inventory._id})
-        //console.log(inv, "invetory subrtact")
-        inv.quantity -= 1
-        await inv.save()
-        //console.log(inv, "invetory subrtact")
-    }
+const subtractInventory = async (item)=>{
+    let inv = await Inventory.findOne({_id: item.inventory._id})
+    //console.log(inv, "invetory subrtact")
+    inv.quantity -= 1
+    await inv.save()
+    //console.log(inv, "invetory subrtact")
+}
+const checkInventory = async (item)=>{
+    let inv = await Inventory.findOne({_id: item.inventory._id})
+    return inv.quantity
 }
 export const config = {
     api: {
@@ -32,13 +34,20 @@ export async function POST(req=NextApiRequest){
     for(let i = 0; i< 9; i++)
         batchID += letters[Math.floor(Math.random() * letters.length)]
     // build labels
-    let preLabels = data.items.map(async (i, j)=>{
+    let preLabels = []
+    let pieceIds = []
+    let j = 1
+    for(let i of data.items){
+        let quantity = await checkInventory(i)
+        if(quantity > 0){
             let label = await buildLabelData(i, j)
-            //console.log(label)
-            return label
-    })
+            preLabels.push(label)
+            pieceIds.push(i.pieceId)
+            j++
+            await subtractInventory(i)
+        }
+    }
     // full fill promises
-    preLabels = await Promise.all(preLabels);
     preLabels.map(l=> labelsString += l)
     console.log(preLabels.length, "+++++++" ,preLabels)
     //create label string
@@ -58,8 +67,6 @@ export async function POST(req=NextApiRequest){
     let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
     console.log(res?.data)
     //update data
-    subtractInventory(data.items)
-    let pieceIds = data.items.map(i=> i.pieceId)
     console.log(pieceIds)
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
     await batch.save()

@@ -1,11 +1,13 @@
 import {NextGTIN, CreateUpdateUPC} from "@pythias/integrations"
 import SkuToUpc from "@/models/skuUpcConversion"
-export async function createUpc({design}){
+export async function createUpc({design, blank}){
+    let filterBlank = blank
     let brands= {
         "The Juniper Shop": ["TC", "TD", "FST", "TSWT", "TH", "RSTLS", "RSYSWT", "TTK", "YC", "YSWT", "YH", "RSYLS", "YTK", "YFTH", "RSO", "FSO", "ID", "LSO"],
         "Simply Sage Market": ["C", "SWT", "GDT", "GDSWT", "GDLS", "LGDSP", "LGDSWT", "LGDSET", "GDLSSET", "GDTSET", "RT", "BCT", "TK", "QZF", "HT", "H", "PPSET", "RB", "FTH", "CTH"]
     }
-    for(let blank of design.blanks){
+
+    for(let blank of (filterBlank? design.blanks.filter(b=> b.blank._id.toString() == filterBlank.toString()): design.blanks)){
         //console.log(blank.blank.code)
         for(let color of blank.colors){
             //console.log(color.name)
@@ -36,14 +38,14 @@ export async function createUpc({design}){
                     await sku1.save()
                     continue
                 }
-                if(!sku1){
-                    sku1 = await SkuToUpc.findOne({recycle: true})
-                    if(sku1){
-                        sku1.recycle = false
-                        sku1 = await sku1.save()
-                        console.log("recycle upc")
-                    }
-                }
+                // if(!sku1){
+                //     sku1 = await SkuToUpc.findOne({recycle: true})
+                //     if(sku1){
+                //         sku1.recycle = false
+                //         sku1 = await sku1.save()
+                //         console.log("recycle upc")
+                //     }
+                // }
                 if(sku1 && sku1.gtin){
                     gtin = {prefix: sku1.gtin.substring(1,8), gtin: sku1.gtin}
                 }else if(sku1 && sku1.upc && sku1.upc.length == 12){
