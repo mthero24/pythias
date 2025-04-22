@@ -1,9 +1,15 @@
 import SkuToUpc from "@/models/skuUpcConversion";
 import Design from "@/models/Design";
+import CSVUpdates from "@/models/CSVUpdates"
+import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
 import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmart, retireItemWalmart, getSpecWalmart, bulkUploadWalmart, getFeedWalmart, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda} from "@pythias/integrations"
 import { createUpc } from "@/functions/createUpcs"
+const s3 = new S3Client({ credentials:{
+    accessKeyId:'XWHXU4FP7MT2V842ITN9',
+   secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
+}, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
 const createTargetProduct = ({p, product, material,material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
     console.log(
@@ -178,184 +184,211 @@ const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
     return soemthing
 }
-export async function updateListings(){
-    let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(10)
-    let brands = {}
-    let i = 0
-    //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
-    for(let design of designs){
-        console.log(i, "designs finished")
-        i++
-        //console.log(design.blanks.length)
-        if(design.blanks.length > 0){
-            for(let brand of design.brands){
-                // console.log(brand)
-                //console.log(design.b2m.filter(b2m=> b2m.brand == brand.name)[0])
-                let b2m = design.b2m.filter(b2m=> b2m.brand == brand.name)[0]
-                if(b2m){
-                    //console.log(b2m)
-                    if(!brands[brand.name]) brands[brand.name] = {}
-                    for(let m of b2m.marketPlaces){
-                        let marketplace = m
-                        if(m == "Shien") marketplace = "Shein"
-                        if(m == "shopify") marketplace = "Shopify"
-                        if(m == "amazon") marketplace = "Amazon"
-                        if(!brands[brand.name][marketplace]) brands[brand.name][marketplace] = []
-                        //console.log(brands[brand.name][marketplace].length)
-                    }
-                    for(let b of design.blanks){
-                        //console.log(`${brand.name} ${design.name} ${b.blank.name}`, brand.name, `${design.description} ${b.blank.description}`)
-                        let variants = []
-                        let skus = await SkuToUpc.find({design: design._id, blank: b.blank._id})
-                        await doUPC({design, blank: b.blank._id})
-                            for(let c of b.colors){
-                            for(let s of b.blank.sizes){
-                                let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
-                                if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
-                                if(upc){
-                                    let v = {
-                                        upc: upc?.upc,
-                                        sku: upc?.sku,
-                                        gtin: upc?.gtin,
-                                        size: s,
-                                        color: c
-                                    }
-                                    variants.push(v)
-                                }
-                            }
-                        }
-                        let product = {
-                            name: `${brand.name} ${design.name} ${b.blank.name}`,
-                            brand: brand.name,
-                            design: design,
-                            blank: b,
-                            options: ["color", "size"],
-                            variants: variants
-
-                            
-                        }
+const update = async(csvupdate, url, brand, marketplace )=>{
+    console.log(brand, marketplace)
+    let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
+    if(!csvUpdate.files) csvUpdate.files={}
+    console.log(csvUpdate.files)
+    csvUpdate.files[`${brand}_${marketplace}`] = `https://images1.pythiastechnologies.com/${url}`
+    csvUpdate.dataParsed = true
+    csvUpdate.csvReady= true
+    csvUpdate.active = false
+    csvUpdate.markModified("files")
+    console.log(csvUpdate.files)
+    csvUpdate = await csvUpdate.save()
+}
+export async function updateListings(csvupdate){
+    let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
+    try{
+        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(25)
+        let brands = {}
+        let i = 0
+        //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
+        for(let design of designs){
+            console.log(i, "designs finished")
+            i++
+            //console.log(design.blanks.length)
+            if(design.blanks.length > 0){
+                for(let brand of design.brands){
+                    // console.log(brand)
+                    //console.log(design.b2m.filter(b2m=> b2m.brand == brand.name)[0])
+                    let b2m = design.b2m.filter(b2m=> b2m.brand == brand.name)[0]
+                    if(b2m){
+                        //console.log(b2m)
+                        if(!brands[brand.name]) brands[brand.name] = {}
                         for(let m of b2m.marketPlaces){
                             let marketplace = m
                             if(m == "Shien") marketplace = "Shein"
                             if(m == "shopify") marketplace = "Shopify"
                             if(m == "amazon") marketplace = "Amazon"
-                            if(brand.name == "The Juniper Shop" && product.blank.blank.department.toLowerCase() == "kids"){
-                                brands[brand.name][marketplace].push(product)
-                            }else if(brand.name == "Simply Sage Market" && product.blank.blank.department.toLowerCase() != "kids"){
-                                brands[brand.name][marketplace].push(product)
-                            }else if(brand.name != "The Juniper Shop" && brand.name != "Simply Sage Market"){
-                                brands[brand.name][marketplace].push(product)
+                            if(!brands[brand.name][marketplace]) brands[brand.name][marketplace] = []
+                            //console.log(brands[brand.name][marketplace].length)
+                        }
+                        for(let b of design.blanks){
+                            //console.log(`${brand.name} ${design.name} ${b.blank.name}`, brand.name, `${design.description} ${b.blank.description}`)
+                            let variants = []
+                            let skus = await SkuToUpc.find({design: design._id, blank: b.blank._id})
+                            await doUPC({design, blank: b.blank._id})
+                                for(let c of b.colors){
+                                for(let s of b.blank.sizes){
+                                    let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
+                                    if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
+                                    if(upc){
+                                        let v = {
+                                            upc: upc?.upc,
+                                            sku: upc?.sku,
+                                            gtin: upc?.gtin,
+                                            size: s,
+                                            color: c
+                                        }
+                                        variants.push(v)
+                                    }
+                                }
+                            }
+                            let product = {
+                                name: `${brand.name} ${design.name} ${b.blank.name}`,
+                                brand: brand.name,
+                                design: design,
+                                blank: b,
+                                options: ["color", "size"],
+                                variants: variants
+
+                                
+                            }
+                            for(let m of b2m.marketPlaces){
+                                let marketplace = m
+                                if(m == "Shien") marketplace = "Shein"
+                                if(m == "shopify") marketplace = "Shopify"
+                                if(m == "amazon") marketplace = "Amazon"
+                                if(brand.name == "The Juniper Shop" && product.blank.blank.department.toLowerCase() == "kids"){
+                                    brands[brand.name][marketplace].push(product)
+                                }else if(brand.name == "Simply Sage Market" && product.blank.blank.department.toLowerCase() != "kids"){
+                                    brands[brand.name][marketplace].push(product)
+                                }else if(brand.name != "The Juniper Shop" && brand.name != "Simply Sage Market"){
+                                    brands[brand.name][marketplace].push(product)
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
-    Object.keys(brands).map(b=>{
-        Object.keys(brands[b]).map(async m=>{
-            //console.log(b, m, brands[b][m].length)
-            if(m.toLowerCase() == "target"){
-                console.log("make a target product csv")
-                
-                let products = [] 
-                for(let p of brands[b][m]){
-                    let credentials
-                    if(b == "Simply Sage Market"){
-                        credentials = {clientId: process.env.acendaClientIdSS, clientSecret: process.env.acendaClientSecretSS, organization: process.env.acendaOrganizationSS}
-                    }else if(b == "The Juniper Shop") {
-                        credentials = {clientId: process.env.acendaClientIdJS, clientSecret: process.env.acendaClientSecretJS, organization: process.env.acendaOrganizationJS}
-                    }
-                    let material 
-                    let material_1
-                    let material_percentage_1
-                    let material_2
-                    let material_percentage_2
-                    let textile_dry_recommendation 
-                    let textile_wash_recommendation
-                    let garment_fit
-                    let bullet4 = ""
-                    let bullet1 = ""
-                    let bullet2 = ""
-                    //console.log(p.blank.blank.bulletPoints)
-                    for(let bl of p.blank.blank.bulletPoints){
-                        console.log(bl.title, "title")
-                        if(bl.title.toLowerCase() == "fabric"){
-                            bullet1 += ` ${bl.description}`
-                        }
-                        if(bl.title.toLowerCase() == "fit"){
-                            bullet4 += ` ${bl.description}`
-                        }
-                        if(bl.title.toLowerCase() == "care instructions"){
-                            bullet2 += ` ${bl.description}`
-                        }
-                        if(bl.title == "material" || bl.title.toLowerCase() == "Apparel Material"){
-                            material = bl.description
-                        }
-                        if(bl.title == "material_1"){
-                            material_1 = bl.description
-                        }
-                        if(bl.title == "material_percentage_1"){
-                            material_percentage_1 = bl.description
-                        }
-                        if(bl.title == "material_2" ){
-                            material_2 = bl.description
-                        }
-                        if(bl.title == "material_percentage_2"){
-                            material_percentage_2 = bl.description
-                        }
-                        if(bl.title == "textile_dry_recommendation" || bl.title.toLowerCase() == "Garment Dry Recommendation"){
-                            textile_dry_recommendation = bl.description
-                        }
-                        if(bl.title == "textile_wash_recommendation" || bl.title.toLowerCase() == "Garment Wash Recommendation"){
-                            textile_wash_recommendation = bl.description
-                        }
-                        if(bl.title == "garment_fit" || bl.title.toLowerCase() == "Garment Fit"){
-                            garment_fit = bl.description
-                        }
-                    }
+        csvUpdate.infoGathered = true
+        csvUpdate = await csvUpdate.save()
+        Object.keys(brands).map(b=>{
+            Object.keys(brands[b]).map(async m=>{
+                //console.log(b, m, brands[b][m].length)
+                if(m.toLowerCase() == "target"){
+                    console.log("make a target product csv")
                     
-                    if(p.variants.length > 0 && p.variants[0].sku){
-                        let product = await getSkuAcenda({...credentials, sku: `${p.design.sku}_${p.blank.blank.code}` })
-                        let item = await getSkuAcenda({...credentials, sku: p.variants[0].sku })
-                        if(item && item[0] && item[0].group_skus && !product){
-                            product = await getSkuAcenda({...credentials, sku: item[0].group_skus[0] })
+                    let products = [] 
+                    for(let p of brands[b][m]){
+                        let credentials
+                        if(b == "Simply Sage Market"){
+                            credentials = {clientId: process.env.acendaClientIdSS, clientSecret: process.env.acendaClientSecretSS, organization: process.env.acendaOrganizationSS}
+                        }else if(b == "The Juniper Shop") {
+                            credentials = {clientId: process.env.acendaClientIdJS, clientSecret: process.env.acendaClientSecretJS, organization: process.env.acendaOrganizationJS}
                         }
-                        products.push(createTargetProduct({product, p, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation,  bullet1, bullet2, bullet4, garment_fit}))
-                        for(let v of p.variants){
-                            if(v.gtin){
-                                let item = await getSkuAcenda({...credentials, sku: v.sku })
-                                let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
-                                //console.log(price, "price")
-                                if(Object.keys(p.design.images).length > 1) price+= 2
-                                //console.log(price)
-                                if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
-                                if(v.size == "2XL") price = price -2
-                                // console.log(price)
-                                let bImages = []
-                                if(p.design.overrideImages && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][p.color._id]) bImages = p.design.overrideImages[p.blank.blank._id][p.color._id]
-                                else{
-                                    for(let side of Object.keys(p.design.images)){
-                                        //console.log(p.blank.defaultImages, "default images")
-                                        let defaults = p.blank.defaultImages?.filter(im=> im.color == v.color._id.toString() && im.side == side)
-                                        if(defaults?.length > 0){
-                                            let sideImages =p.blank.blank.multiImages[side].filter(i=> i._id.toString() == defaults[0].id.toString()).map(im=>{
-                                                return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
-                                            })
-                                            for(let im of sideImages){
-                                                if(!bImages.includes(im)) bImages.push(im)
+                        let material 
+                        let material_1
+                        let material_percentage_1
+                        let material_2
+                        let material_percentage_2
+                        let textile_dry_recommendation 
+                        let textile_wash_recommendation
+                        let garment_fit
+                        let bullet4 = ""
+                        let bullet1 = ""
+                        let bullet2 = ""
+                        //console.log(p.blank.blank.bulletPoints)
+                        for(let bl of p.blank.blank.bulletPoints){
+                            console.log(bl.title, "title")
+                            if(bl.title.toLowerCase() == "fabric"){
+                                bullet1 += ` ${bl.description}`
+                            }
+                            if(bl.title.toLowerCase() == "fit"){
+                                bullet4 += ` ${bl.description}`
+                            }
+                            if(bl.title.toLowerCase() == "care instructions"){
+                                bullet2 += ` ${bl.description}`
+                            }
+                            if(bl.title == "material" || bl.title.toLowerCase() == "Apparel Material"){
+                                material = bl.description
+                            }
+                            if(bl.title == "material_1"){
+                                material_1 = bl.description
+                            }
+                            if(bl.title == "material_percentage_1"){
+                                material_percentage_1 = bl.description
+                            }
+                            if(bl.title == "material_2" ){
+                                material_2 = bl.description
+                            }
+                            if(bl.title == "material_percentage_2"){
+                                material_percentage_2 = bl.description
+                            }
+                            if(bl.title == "textile_dry_recommendation" || bl.title.toLowerCase() == "Garment Dry Recommendation"){
+                                textile_dry_recommendation = bl.description
+                            }
+                            if(bl.title == "textile_wash_recommendation" || bl.title.toLowerCase() == "Garment Wash Recommendation"){
+                                textile_wash_recommendation = bl.description
+                            }
+                            if(bl.title == "garment_fit" || bl.title.toLowerCase() == "Garment Fit"){
+                                garment_fit = bl.description
+                            }
+                        }
+                        
+                        if(p.variants.length > 0 && p.variants[0].sku){
+                            let product = await getSkuAcenda({...credentials, sku: `${p.design.sku}_${p.blank.blank.code}` })
+                            let item = await getSkuAcenda({...credentials, sku: p.variants[0].sku })
+                            if(item && item[0] && item[0].group_skus && !product){
+                                product = await getSkuAcenda({...credentials, sku: item[0].group_skus[0] })
+                            }
+                            products.push(createTargetProduct({product, p, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation,  bullet1, bullet2, bullet4, garment_fit}))
+                            for(let v of p.variants){
+                                if(v.gtin){
+                                    let item = await getSkuAcenda({...credentials, sku: v.sku })
+                                    let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
+                                    //console.log(price, "price")
+                                    if(Object.keys(p.design.images).length > 1) price+= 2
+                                    //console.log(price)
+                                    if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
+                                    if(v.size == "2XL") price = price -2
+                                    // console.log(price)
+                                    let bImages = []
+                                    if(p.design.overrideImages && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][p.color._id]) bImages = p.design.overrideImages[p.blank.blank._id][p.color._id]
+                                    else{
+                                        for(let side of Object.keys(p.design.images)){
+                                            //console.log(p.blank.defaultImages, "default images")
+                                            let defaults = p.blank.defaultImages?.filter(im=> im.color == v.color._id.toString() && im.side == side)
+                                            if(defaults?.length > 0){
+                                                let sideImages =p.blank.blank.multiImages[side].filter(i=> i._id.toString() == defaults[0].id.toString()).map(im=>{
+                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                })
+                                                for(let im of sideImages){
+                                                    if(!bImages.includes(im)) bImages.push(im)
+                                                }
                                             }
                                         }
-                                    }
-                                    for(let side of Object.keys(p.design.images)){
-                                        if(p.design.images[side] != undefined){
-                                        // console.log(side, p.design.images[side], v.color._id.toString(), p.design.imageGroup)
-                                            let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
-                                            //console.log(sideImages.length, "sideImages imageGroup")
-                                            if(side == "front" || side == "back"){
-                                                let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
-                                                if(modelImages.length > 0){
-                                                    let images = modelImages.map(im=>{
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                            // console.log(side, p.design.images[side], v.color._id.toString(), p.design.imageGroup)
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
+                                                //console.log(sideImages.length, "sideImages imageGroup")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        //console.log(images)
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
                                                         return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
@@ -364,55 +397,26 @@ export async function updateListings(){
                                                     }
                                                 }
                                             }
-                                            if(sideImages.length > 0){
-                                                let images = sideImages.map(im=>{
-                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
-                                                })
-                                                //console.log(images)
-                                                for(let im of images){
-                                                    if(!bImages.includes(im)) bImages.push(im)
-                                                }
-                                            }
                                         }
                                     }
-                                }
-                                if(bImages.length < 6 && p.design.imageGroup != "default"){
-                                    for(let side of Object.keys(p.design.images)){
-                                        if(p.design.images[side] != undefined){
-                                            let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() &&  i.imageGroup.includes("default"))
-                                            //console.log(sideImages.length, "sideImages default")
-                                            if(side == "front" || side == "back"){
-                                                let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes("default"))
-                                                if(modelImages.length > 0){
-                                                    let images = modelImages.map(im=>{
-                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
-                                                    })
-                                                    for(let im of images){
-                                                        if(!bImages.includes(im)) bImages.push(im)
+                                    if(bImages.length < 6 && p.design.imageGroup != "default"){
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() &&  i.imageGroup.includes("default"))
+                                                //console.log(sideImages.length, "sideImages default")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes("default"))
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            if(sideImages.length > 0){
-                                                let images = sideImages.map(im=>{
-                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
-                                                })
-                                                //console.log(images)
-                                                for(let im of images){
-                                                    if(!bImages.includes(im)) bImages.push(im)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if(bImages.length < 6){
-                                    for(let side of Object.keys(p.design.images)){
-                                        if(p.design.images[side] != undefined){
-                                            let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString())
-                                            //console.log(sideImages.length, "sideImages color")
-                                            if(side == "front" || side == "back"){
-                                                let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString())
-                                                if(modelImages.length > 0){
-                                                    let images = modelImages.map(im=>{
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
                                                         return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
@@ -421,82 +425,123 @@ export async function updateListings(){
                                                     }
                                                 }
                                             }
-                                            if(sideImages.length > 0){
-                                                let images = sideImages.map(im=>{
-                                                    return `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
-                                                })
-                                                //console.log(images)
-                                                for(let im of images){
-                                                    if(!bImages.includes(im)) bImages.push(im)
+                                        }
+                                    }
+                                    if(bImages.length < 6){
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString())
+                                                //console.log(sideImages.length, "sideImages color")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString())
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        //console.log(images)
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
+                                                        return `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                    })
+                                                    //console.log(images)
+                                                    for(let im of images){
+                                                        if(!bImages.includes(im)) bImages.push(im)
+                                                    }
                                                 }
                                             }
                                         }
                                     }
+                                    //console.log(bImages, "bImages")
+                                    products.push(createTargetVariant({p,item,v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation, bullet1, bullet2, bullet4, garment_fit}) )
                                 }
-                                //console.log(bImages, "bImages")
-                                products.push(createTargetVariant({p,item,v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation, bullet1, bullet2, bullet4, garment_fit}) )
                             }
                         }
                     }
+                // console.log(targetHeader)
+                    const csvStringifier = createCsvStringifier({
+                        header: targetHeader,
+                    });
+                    //console.log(products)
+                    //console.log("product", products.length)
+                    let csvString =  await csvStringifier.stringifyRecords([...products])
+                    csvString = `
+                        ${csvStringifier.getHeaderString()}${csvString}
+                    `
+                    let url = `csv/${b}/${m}/${Date.now()}.csv`
+                    let params = {
+                        Bucket: "images1.pythiastechnologies.com",
+                        Key: url,
+                        Body: csvString.toString("base64"),
+                        ACL: "public-read",
+                        ContentEncoding: "base64",
+                        ContentDisposition: "inline",
+                        ContentType: "text/csv",
+                        };
+                    const data = await s3.send(new PutObjectCommand(params));
+                    //console.log(csvStringifier.getHeaderString());
+                    await update(csvupdate, url, b, m)
                 }
-               // console.log(targetHeader)
-                const csvWriter = createCsvWriter({
-                    path: `./${b}-${m}.csv`,
-                    header: targetHeader,
-                });
-                //console.log(products)
-                //console.log("product", products.length)
-                await csvWriter.writeRecords([...products])
-            }
-            // if(m.toLowerCase() == "walmart"){
-            //     console.log("walmart")
-            //     let items = []
-            //     //make items
-            //     brands[b][m].map(p=>{
-            //         for(let v of p.variants){
-            //             let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
-            //             //console.log(price, "price")
-            //             if(Object.keys(p.design.images).length > 1) price+= 2
-            //             //console.log(price)
-            //             if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
-            //             let bImages = []
-            //                 Object.keys(p.blank.blank.multiImages).map(bmi=>{
-            //                     let useImages = p.blank.blank.multiImages[bmi].filter(i=> i.imageGroup == p.design.imageGroup && i.color.toString() == v.color._id.toString())
-            //                     //console.log(useImages)
-            //                     for(let im of useImages){
-            //                         console.log(`https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blank=${im.image}&colorName=${v.color.name}&design=${p.design.images[bmi]}&side=${bmi}`)
-            //                         bImages.push(`https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blank=${im.image}&colorName=${v.color.name}&design=${p.design.images[bmi]}&side=${bmi}`)
-            //                     }
-            //                 })
-            //             let item = {
-            //                 mart: "WALMART_US",
-            //                 sellingChannel: "online",
-            //                 sku: v.sku,
-            //                 upc: v.upc,
-            //                 gtin: v.gtin,
-            //                 productName: p.name,
-            //                 shelf: ["Home page", "clothing",`${p.blank.blank.department} clothing`],
-            //                 productType: p.blank.blank.category,
-            //                 publishedStatus: "PUBLISHED",
-            //                 price: {currency: "USD", amount: price},
-            //                 variantGroupId: `${p.design.sku}_${p.blank.blank.code}`,
-            //                 image_url: bImages[0],
-            //                 variantGroupInfo: {
-            //                     isPrimary: v.size.name == "L" && v.color._id == p.blank.primaryColor? true: false,
-            //                     groupingAttributes: [
-            //                         {name: "actual_color", value: v.color.name},
-            //                         {name: "clothing_size", value: v.size.name}
-            //                     ]
-            //                 }
-            //             }
-            //             items.push(item)
-            //         }
-            //     })
-            //     //uploadFeed
-            //     console.log(items, "items")
-            //     let res = await bulkUploadWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, type: "MP_ITEM", file: {items}})
-            //     console.log(res, "feedId")
-            // }
+                // if(m.toLowerCase() == "walmart"){
+                //     console.log("walmart")
+                //     let items = []
+                //     //make items
+                //     brands[b][m].map(p=>{
+                //         for(let v of p.variants){
+                //             let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
+                //             //console.log(price, "price")
+                //             if(Object.keys(p.design.images).length > 1) price+= 2
+                //             //console.log(price)
+                //             if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
+                //             let bImages = []
+                //                 Object.keys(p.blank.blank.multiImages).map(bmi=>{
+                //                     let useImages = p.blank.blank.multiImages[bmi].filter(i=> i.imageGroup == p.design.imageGroup && i.color.toString() == v.color._id.toString())
+                //                     //console.log(useImages)
+                //                     for(let im of useImages){
+                //                         console.log(`https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blank=${im.image}&colorName=${v.color.name}&design=${p.design.images[bmi]}&side=${bmi}`)
+                //                         bImages.push(`https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blank=${im.image}&colorName=${v.color.name}&design=${p.design.images[bmi]}&side=${bmi}`)
+                //                     }
+                //                 })
+                //             let item = {
+                //                 mart: "WALMART_US",
+                //                 sellingChannel: "online",
+                //                 sku: v.sku,
+                //                 upc: v.upc,
+                //                 gtin: v.gtin,
+                //                 productName: p.name,
+                //                 shelf: ["Home page", "clothing",`${p.blank.blank.department} clothing`],
+                //                 productType: p.blank.blank.category,
+                //                 publishedStatus: "PUBLISHED",
+                //                 price: {currency: "USD", amount: price},
+                //                 variantGroupId: `${p.design.sku}_${p.blank.blank.code}`,
+                //                 image_url: bImages[0],
+                //                 variantGroupInfo: {
+                //                     isPrimary: v.size.name == "L" && v.color._id == p.blank.primaryColor? true: false,
+                //                     groupingAttributes: [
+                //                         {name: "actual_color", value: v.color.name},
+                //                         {name: "clothing_size", value: v.size.name}
+                //                     ]
+                //                 }
+                //             }
+                //             items.push(item)
+                //         }
+                //     })
+                //     //uploadFeed
+                //     console.log(items, "items")
+                //     let res = await bulkUploadWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, type: "MP_ITEM", file: {items}})
+                //     console.log(res, "feedId")
+                // }
+            })
         })
-    })
+    }catch(e){
+        console.log(csvupdate, "update", e)
+        let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
+        csvUpdate.active= false
+        csvUpdate.error = true
+        csvUpdate = await csvUpdate.save()
+    }
 }

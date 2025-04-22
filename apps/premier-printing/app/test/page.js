@@ -9,13 +9,12 @@ import t2n from "./t2n.json";
 import fs from "fs"
 import axios from "axios"
 import btoa from "btoa"
-import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmart, retireItemWalmart, getSpecWalmart, bulkUploadWalmart, getFeedWalmart, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda} from "@pythias/integrations"
 import {pullOrders} from "@/functions/pullOrders";
 import { Style } from "@mui/icons-material";
 import { createUpc } from "@/functions/createUpcs"
 import {updateListings} from "@/functions/updateListings"
 export default async function Test(){
-    await updateListings()
+    //await updateListings()
     //await pullOrders()
     const removeOutOfStockItemsWalmart = async ()=>{
         let items = await getItemsWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, params: [{limit: "300"}]})

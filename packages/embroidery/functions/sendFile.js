@@ -10,10 +10,12 @@ export async function sendFile({url,pieceID,printer,key, localIP}){
     let headers = {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer $2a$10$JZrqzFlmXbhUOy92szsDkejVy6xoYm48hPJP2VhYtMeOBNyM7o8pm`
+            "Authorization": `Bearer ${key}`
         }
     }
-    let res = await axios.post(`http://localhost:3005/api/embroidery`, {files: [{buffer: buffer, type: url.split(".")[url.split(".").length - 1]}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response.data})
+    let resData
+    let res = await axios.post(`${localIP}/api/embroidery`, {files: [{buffer: buffer, type: url.split(".")[url.split(".").length - 1]}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response.data})
+    console.log(resData, res?.data)
     if(res?.data) return res.data
     else return resData
 }

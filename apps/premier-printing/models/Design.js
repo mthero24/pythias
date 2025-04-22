@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { PremierPrinting }from "../lib/connection";
 import Color from "./Color"
+import Brands from "./Brands"
 const schema = new mongoose.Schema({
   sku: { type: String, required: true, unique: true },
   name: { type: String, required: true },
@@ -53,7 +54,7 @@ const schema = new mongoose.Schema({
   }],
   brands: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Brands",
+    ref: Brands,
   }],
   marketPlaces: [{
     type: mongoose.Schema.Types.ObjectId,
