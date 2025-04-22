@@ -434,7 +434,7 @@ export async function GET(request, { params }) {
                                 <TotalQuantity>1</TotalQuantity>
                                 <TrackingID i:nil="true"/>
                                 
-                                <VerticalOffset>${0.5}</VerticalOffset>
+                                <VerticalOffset>${envelope.vertoffset}</VerticalOffset>
                                 <Width>${width}</Width>     
                             </ArtInfo>
                         </Art>
