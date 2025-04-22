@@ -39,7 +39,7 @@ export default async function POST(req= NextApiRequest){
     // });
     // //console.log(products)
     // //console.log("product", products.length)
-    await csvWriter.writeRecords([...sets])
+    //await csvWriter.writeRecords([...sets])
     // let rates = await getRates({
     //     address: {
     //         name: "michael thero",
