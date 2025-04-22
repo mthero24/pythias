@@ -1,7 +1,7 @@
 import Items from "@/models/Items"
 import Styles from "@/models/StyleV2"
 import fs from "fs";
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+//const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 import {getRates} from "@pythias/shipping";
 
 export default async function POST(req= NextApiRequest){
