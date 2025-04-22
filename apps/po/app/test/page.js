@@ -5,38 +5,38 @@ const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 import {getRates} from "@pythias/shipping";
 
 export default async function POST(req= NextApiRequest){
-    let styles = await Styles.find({})
-    let items = await Items.find({date: {$gt: new Date("2024-04-17")}, canceled: false, styleCode: {$ne: null}}).limit(100000)
-    console.log(items.length, " How Many Items")
-    let breakdown = {}
-    let skip = 100000
-    while(items.length > 0){
-        for(let i of items){
-            if(!breakdown[i.styleCode]) breakdown[i.styleCode] = 0
-            breakdown[i.styleCode]++
-        }
-        items = await Items.find({date: {$gt: new Date("2024-04-17")}, canceled: false, styleCode: {$ne: null}}).skip(skip).limit(100000)
-        skip += 100000
-        console.log(skip)
-    }
-    console.log(breakdown)
-    for(let style of styles){
-        if(!breakdown[style.code]) breakdown[style.code] = 0
-    }
-    let sets = []
-    for(let style of Object.keys(breakdown)){
-        console.log(style, "style")
-        sets.push({style: style, sold: breakdown[style]})
-    }
-    console.log(sets)
-    let targetHeader = [
-        {id: "style", title: "Style Code"},
-        {id: "sold", title: "Amount Sold"},
-    ]
-    const csvWriter = createCsvWriter({
-        path: `.items-sold.csv`,
-        header: targetHeader,
-    });
+    // let styles = await Styles.find({})
+    // let items = await Items.find({date: {$gt: new Date("2024-04-17")}, canceled: false, styleCode: {$ne: null}}).limit(100000)
+    // console.log(items.length, " How Many Items")
+    // let breakdown = {}
+    // let skip = 100000
+    // while(items.length > 0){
+    //     for(let i of items){
+    //         if(!breakdown[i.styleCode]) breakdown[i.styleCode] = 0
+    //         breakdown[i.styleCode]++
+    //     }
+    //     items = await Items.find({date: {$gt: new Date("2024-04-17")}, canceled: false, styleCode: {$ne: null}}).skip(skip).limit(100000)
+    //     skip += 100000
+    //     console.log(skip)
+    // }
+    // console.log(breakdown)
+    // for(let style of styles){
+    //     if(!breakdown[style.code]) breakdown[style.code] = 0
+    // }
+    // let sets = []
+    // for(let style of Object.keys(breakdown)){
+    //     console.log(style, "style")
+    //     sets.push({style: style, sold: breakdown[style]})
+    // }
+    // console.log(sets)
+    // let targetHeader = [
+    //     {id: "style", title: "Style Code"},
+    //     {id: "sold", title: "Amount Sold"},
+    // ]
+    // const csvWriter = createCsvWriter({
+    //     path: `.items-sold.csv`,
+    //     header: targetHeader,
+    // });
     // //console.log(products)
     // //console.log("product", products.length)
     await csvWriter.writeRecords([...sets])
