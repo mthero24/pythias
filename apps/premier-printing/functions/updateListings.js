@@ -229,7 +229,7 @@ export async function updateListings(csvupdate){
                             let variants = []
                             let skus = await SkuToUpc.find({design: design._id, blank: b.blank._id})
                             await doUPC({design, blank: b.blank._id})
-                                for(let c of b.colors){
+                            for(let c of b.colors){
                                 for(let s of b.blank.sizes){
                                     let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
                                     if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})

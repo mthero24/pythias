@@ -23,9 +23,9 @@ export function AltImageModal({open, setOpen, blank, design, setDesign, updateDe
         if(!des.overrideImages[bl]) des.overrideImages[bl] = {}
         if(!des.overrideImages[bl][color]) des.overrideImages[bl][color] = []
         des.overrideImages[bl][color].push(url)
-        console.log(setDesign)
+        console.log(des.overrideImages[bl][color])
         setDesign({...des})
-        updateDesign({...des})
+        await updateDesign({...des})
     }
     return (
         <Modal

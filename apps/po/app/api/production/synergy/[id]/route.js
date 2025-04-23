@@ -259,7 +259,7 @@ export async function GET(request, { params }) {
                                 <CropToImage>false</CropToImage>
                                 <FinishedQuantity>1</FinishedQuantity>
                                 <Height>${height.toFixed(2)}</Height>
-                                <HorizontalOffset>0</HorizontalOffset>
+                                <HorizontalOffset>${envelope.horizoffset}</HorizontalOffset>
                                 <ImageHorizontalAlignment i:nil="true"/>
                                 <ImageScaleMethod>FIT_ART_TO_ENVELOPE</ImageScaleMethod>
                                 <ImageVerticalAlignment>CENTER</ImageVerticalAlignment>
