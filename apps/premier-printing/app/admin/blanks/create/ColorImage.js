@@ -88,10 +88,12 @@ export const ColorImage = ({
   
     const updateColor = async (newColor) => {
       //console.log("updateColor()");
+      console.log({ ...col, ...newColor })
       setCol({ ...col, ...newColor });
       let result = await axios.put("/api/admin/colors", {
-        color: {...newColor},
+        color: {...col, ...newColor},
       });
+      console.log(result)
     };
   
     useEffect(() => {

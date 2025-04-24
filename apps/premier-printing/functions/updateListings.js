@@ -180,6 +180,33 @@ let targetHeader = [
     {id: "images.default.6.alternate.url", title: "images.default.6.alternate.url"},
     {id: "images.default.7.alternate.url", title: "images.default.7.alternate.url"},
 ]
+let kohlsHeader = [
+    {id: "product_category", title: "id"},
+    {id: "upc_number", title: "upc_number"},
+    {id: "title", title: "title"},
+    {id: "brand", title: "brand"},
+    {id: "meta_description", title: "meta_description"},
+    {id: "style_number", title: "style_number"},
+    {id: "style_description", title: "style_description"},
+    {id: "display_color", title: "display_color"},
+    {id: "color_family", title: "color_family"},
+    {id: "main_image", title: "main_image"},
+    {id: "alt_image_1", title: "alt_image_1"},
+    {id: "alt_image_2", title: "alt_image_2"},
+    {id: "alt_image_3", title: "alt_image_3"},
+    {id: "alt_image_4", title: "alt_image_4"},
+    {id: "feature_1", title: "feature_1"},
+    {id: "feature_2", title: "feature_2"},
+    {id: "feature_3", title: "feature_3"},
+    {id: "feature_4", title: "feature_4"},
+    {id: "feature_5", title: "feature_5"},
+    {id: "feature_6", title: "feature_6"},
+    {id: "fabric_material", title: "fabric_material"},
+    {id: "origin", title: "origin"},
+    {id: "choking_hazard", title: "choking_hazard"},
+    {id: "perishable_indicator", title: "perishable_indicator"},
+    {id: "containsPFAS", title: "containsPFAS"},
+]
 const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
     return soemthing
@@ -200,7 +227,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(1000)
+        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(600)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)

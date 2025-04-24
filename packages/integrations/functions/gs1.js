@@ -10,20 +10,28 @@ export async function NextGTIN({auth}){
         }
     }
     let resPre = await axios.get("https://api.gs1us.org/api/v1/myprefix", headers).catch(e=>{console.log(e.response.data)})
-    console.log(resPre.data)
-    let prefix = resPre.data.filter(p=> p.remainingCapacity > 0)[0]
-    console.log(prefix.prefix)
+    while(!resPre){
+        await new Promise((resolve)=>{
+            setTimeout(()=>{
+                resolve()
+            },1000)
+        })
+        resPre = await axios.get("https://api.gs1us.org/api/v1/myprefix", headers).catch(e=>{console.log(e.response.data)})
+    }
+    //console.log(resPre?.data)
+    let prefix = resPre?.data.filter(p=> p.remainingCapacity > 0)[0]
+    //console.log(prefix.prefix)
     if(prefix){
         let resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{console.log(e.response?.data)})
         while(!resNext){
             await new Promise((resolve)=>{
                 setTimeout(()=>{
                     resolve()
-                },5000)
+                },1000)
             })
             resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{console.log(e.response?.data)})
         }
-        console.log(resNext?.data)
+        //console.log(resNext?.data)
         if(resNext?.data && resNext.data.gtin) return resNext.data
     }
     return null

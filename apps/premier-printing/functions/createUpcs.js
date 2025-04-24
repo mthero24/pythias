@@ -2,6 +2,7 @@ import {NextGTIN, CreateUpdateUPC} from "@pythias/integrations"
 import SkuToUpc from "@/models/skuUpcConversion"
 export async function createUpc({design, blank}){
     let filterBlank = blank
+    console.log(filterBlank, "filter blank +++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     let brands= {
         "The Juniper Shop": ["TC", "TD", "FST", "TSWT", "TH", "RSTLS", "RSYSWT", "TTK", "YC", "YSWT", "YH", "RSYLS", "YTK", "YFTH", "RSO", "FSO", "ID", "LSO"],
         "Simply Sage Market": ["C", "SWT", "GDT", "GDSWT", "GDLS", "LGDSP", "LGDSWT", "LGDSET", "GDLSSET", "GDTSET", "RT", "BCT", "TK", "QZF", "HT", "H", "PPSET", "RB", "FTH", "CTH"]

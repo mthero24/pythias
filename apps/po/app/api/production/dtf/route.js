@@ -96,7 +96,7 @@ export async function POST(req = NextApiRequest) {
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("styleV2", "code envelopes box sizes images")
     console.log(item?.design, "item",)
-    if (item && !item.canceled) {
+    if (item && !item.canceled && !item.shipped) {
         let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
         Object.keys(item.design).map(async im=>{
             //console.log(item.styleV2.envelopes)
@@ -145,7 +145,9 @@ export async function POST(req = NextApiRequest) {
         return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: item.design, type: "new" });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
-    } else {
+    } else if (item && item.shipped) {
+        return NextResponse.json({ error: true, msg: "item Shipped", design: item.design });
+    }else {
         return NextResponse.json({ error: true, msg: "item not found" });
     }
 }
