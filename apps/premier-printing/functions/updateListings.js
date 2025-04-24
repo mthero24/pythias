@@ -4,7 +4,7 @@ import CSVUpdates from "@/models/CSVUpdates"
 import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
-import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmart, retireItemWalmart, getSpecWalmart, bulkUploadWalmart, getFeedWalmart, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda} from "@pythias/integrations"
+import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmart, retireItemWalmart, getSpecWalmart, bulkUploadWalmart, getFeedWalmart, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda} from "@pythias/integrations"
 import { createUpc } from "@/functions/createUpcs"
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
@@ -13,7 +13,7 @@ const s3 = new S3Client({ credentials:{
 
 const createTargetProduct = ({p, product, material,material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
     console.log(
-        "create product"
+        "create product", `${p.design.sku}_${p.blank.blank.code}`
     )
     return {
         id: product && product[0]? product[0].id: null,
@@ -57,7 +57,7 @@ const createTargetProduct = ({p, product, material,material_1, material_percenta
     }
 }
 const createTargetVariant = ({p,item, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
-    console.log("make variant")
+    console.log("make variant", v.sku)
     const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
     return {
         id: item && item[0]? item[0].id: null,
@@ -227,7 +227,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(600)
+        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(1000)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -255,7 +255,7 @@ export async function updateListings(csvupdate){
                             //console.log(`${brand.name} ${design.name} ${b.blank.name}`, brand.name, `${design.description} ${b.blank.description}`)
                             let variants = []
                             let skus = await SkuToUpc.find({design: design._id, blank: b.blank._id})
-                            await doUPC({design, blank: b.blank._id})
+                            if(skus.length < (b.colors.length * b.blank.sizes.length)) await doUPC({design, blank: b.blank._id})
                             for(let c of b.colors){
                                 for(let s of b.blank.sizes){
                                     let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
@@ -309,7 +309,10 @@ export async function updateListings(csvupdate){
                     console.log("make a target product csv")
                     
                     let products = [] 
+                    let j = 0
                     for(let p of brands[b][m]){
+                        j++
+                        console.log(brands[b][m].length, j)
                         let credentials
                         if(b == "Simply Sage Market"){
                             credentials = {clientId: process.env.acendaClientIdSS, clientSecret: process.env.acendaClientSecretSS, organization: process.env.acendaOrganizationSS}
@@ -329,7 +332,7 @@ export async function updateListings(csvupdate){
                         let bullet2 = ""
                         //console.log(p.blank.blank.bulletPoints)
                         for(let bl of p.blank.blank.bulletPoints){
-                            console.log(bl.title, "title")
+                            //console.log(bl.title, "title")
                             if(bl.title.toLowerCase() == "fabric"){
                                 bullet1 += ` ${bl.description}`
                             }
@@ -372,9 +375,16 @@ export async function updateListings(csvupdate){
                                 product = await getSkuAcenda({...credentials, sku: item[0].group_skus[0] })
                             }
                             products.push(createTargetProduct({product, p, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation,  bullet1, bullet2, bullet4, garment_fit}))
+                            let inventory = []
                             for(let v of p.variants){
                                 if(v.gtin){
                                     let item = await getSkuAcenda({...credentials, sku: v.sku })
+                                    inventory.push({
+                                        quantity: 1000,
+                                        sku: v.sku,
+                                        tracking: "basic",
+                                        warehouse_id: 1
+                                    })
                                     let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
                                     //console.log(price, "price")
                                     if(Object.keys(p.design.images).length > 1) price+= 2
@@ -383,7 +393,7 @@ export async function updateListings(csvupdate){
                                     if(v.size == "2XL") price = price -2
                                     // console.log(price)
                                     let bImages = []
-                                    if(p.design.overrideImages && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][p.color._id]) bImages = p.design.overrideImages[p.blank.blank._id][p.color._id]
+                                    if(p.design.overrideImages && v.color && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][v.color._id] && p.design.overrideImages[p.blank.blank._id][v.color._id].length > 0) bImages = p.design.overrideImages[p.blank.blank._id][v.color._id]
                                     else{
                                         for(let side of Object.keys(p.design.images)){
                                             //console.log(p.blank.defaultImages, "default images")
@@ -487,6 +497,7 @@ export async function updateListings(csvupdate){
                                     products.push(createTargetVariant({p,item,v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation, bullet1, bullet2, bullet4, garment_fit}) )
                                 }
                             }
+                            await addInventoryAcenda({...credentials, inventory})
                         }
                     }
                 // console.log(targetHeader)

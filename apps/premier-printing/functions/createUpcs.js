@@ -2,7 +2,7 @@ import {NextGTIN, CreateUpdateUPC} from "@pythias/integrations"
 import SkuToUpc from "@/models/skuUpcConversion"
 export async function createUpc({design, blank}){
     let filterBlank = blank
-    console.log(filterBlank, "filter blank +++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    console.log(design.sku, filterBlank, "filter blank +++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     let brands= {
         "The Juniper Shop": ["TC", "TD", "FST", "TSWT", "TH", "RSTLS", "RSYSWT", "TTK", "YC", "YSWT", "YH", "RSYLS", "YTK", "YFTH", "RSO", "FSO", "ID", "LSO"],
         "Simply Sage Market": ["C", "SWT", "GDT", "GDSWT", "GDLS", "LGDSP", "LGDSWT", "LGDSET", "GDLSSET", "GDTSET", "RT", "BCT", "TK", "QZF", "HT", "H", "PPSET", "RB", "FTH", "CTH"]
@@ -25,10 +25,10 @@ export async function createUpc({design, blank}){
                 }
                 let brand = brands["The Juniper Shop"].includes(blank.blank.code)? "The Juniper Shop" : "Simply Sage Market"
                 let sku = `${blank.blank.code}_${color.name}_${size.name}_${design.sku}`
-                console.log(sku)
+                //console.log(sku)
                 let gtin
                 let sku1 = await SkuToUpc.findOne({sku: sku})
-                console.log(sku1?.sku, "sku1 sku found")
+                //console.log(sku1?.sku, "sku1 sku found")
                 if(!sku1) sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
                 if(sku1 && sku1.gtin){
                     sku1.sku= sku
@@ -55,7 +55,7 @@ export async function createUpc({design, blank}){
                     console.log("new upc")
                     gtin = await NextGTIN({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}})
                 }
-                console.log(gtin, "gtin")
+                //console.log(gtin, "gtin")
                 let data = {
                     sku,
                     ...gtin,

@@ -38,6 +38,24 @@ export const getWarehouseAcenda = async ({clientId, clientSecret, organization})
         return res?.data.results
     }
 }
+export const addInventoryAcenda = async ({clientId, clientSecret, organization, inventory}) =>{
+    let token = await getTokenAcenda({clientId, clientSecret})
+    console.log(token , "token")
+    let headers = {
+        headers: {
+            "X-Astur-Organization": organization,
+            AUTHORIZATION: `Bearer ${token}`
+        }
+    }
+    let errorRes
+    let res = await axios.post("https://api.acenda.io/v1/inventory_detail/bulk", inventory, headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
+    console.log(errorRes, res?.data)
+    if(errorRes){
+        return null
+    }else{
+        return res?.data.results
+    }
+}
 export const getCatalogAcenda = async ({clientId, clientSecret, organization}) =>{
     let token = await getTokenAcenda({clientId, clientSecret})
     console.log(token , "token")
