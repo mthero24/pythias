@@ -15,10 +15,12 @@ export async function POST(req = NextApiRequest) {
   let data = await req.json();
   //console.log(data)
   let blank = data.blank
+  console.log(blank)
   let newBlank
   try {
     if(blank._id){
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank) 
+      newBlank = await Blanks.findById(blank._id) 
     }
     else {
       let newBlank = new Blanks({ ...blank });

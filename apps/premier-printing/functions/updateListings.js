@@ -23,37 +23,8 @@ const createTargetProduct = ({p, product, material,material_1, material_percenta
         description: `${p.design.description} ${p.blank.blank.description}`,
         "options.0": 'size',
         "options.1": 'color',
-        material_1: material,
-        material_percentage_1, 
-        material_2, 
-        material_percentage_2,
-        garment_fit,
-        pattern: "Solid",
-        bullet_1: bullet1,
-        bullet_2: bullet2,
-        bullet_3: "Great to pair with any casual outfit.",
-        bullet_4: bullet4,
-        fabric_weight_type: "Light Weight Fabric",
-        garment_construction_details: "",
-        gender: p.blank.blank.department == "Womens"? "Womens": "uni-sex",
-        pattern_group: "Solid",
-        size_grouping: p.blank.blank.department,
-        targeted_audience: p.blank.blank.category[0].toLowerCase() == "baby"? "Infant (0-12month)": p.blank.blank.name.includes("Toddler")? "Toddler (1-3 years)": p.blank.blank.department.toLowerCase() == "kids"? "Child (3-9 years)": "Adult (18 Years and Up)",
-        textile_dry_recommendation,
-        textile_wash_recommendation,
-        garment_closure_type_tops: p.blank.blank.name.includes("Zip")? "Zipper": "Pull Over",
-        garment_neckline_type: p.blank.blank.name.includes("Hat")? null: "Crew",
-        garment_sleeve_length_type: p.blank.blank.name.includes("Long Sleeve") || p.blank.blank.name.includes("Sweatshirt") || p.blank.blank.name.includes("Hoodie") || p.blank.blank.name.includes("fleece")? "Long Sleeve": p.blank.blank.name.includes("Hat") || p.blank.blank.name.includes("Tote") || p.blank.blank.name.includes("Pillow")? null: "Short Sleeve",
-        garment_sleeve_style: p.blank.blank.name.includes("flutter Sleeve")? "Flutter Sleeve": "Basic Sleeve",
-        garment_torso_length: p.blank.blank.name.includes("Crop")? "Above Waist": "To Waist",
-        item_style: p.blank.name,
-        import_description: "made in the USA and imported",
-        prop_65: "No",
-        tax: "General Clothing",
-        apparel_material_1: material,
-        apparel_and_accessories_subtype: p.blank.blank.category? p.blank.blank.category[0]: p.blank.blank.department,
-        textile_construction: p.blank.blank.construction? p.blank.blank.construction:"Woven",
-        group: "product"
+        group: "product",
+        ...p.brand.brand.targetHeader
     }
 }
 const createTargetVariant = ({p,item, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
@@ -66,46 +37,11 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
         "description": `${p.design.description} ${p.blank.blank.description}`,
         brand: p.brand,
         "sku": v.sku,
-        material_1: material,
-        material_percentage_1, 
-        material_2, 
-        material_percentage_2,
-        garment_fit,
-        pattern: "Solid",
-        bullet_1: bullet1,
-        bullet_2: bullet2,
-        bullet_3: "Great to pair with any casual outfit.",
-        bullet_4: bullet4,
-        size_grouping: p.blank.blank.department,
-        targeted_audience: p.blank.blank.category[0].toLowerCase() == "baby"? "Infant (0-12month)": p.blank.blank.name.includes("Toddler")? "Toddler (1-3 years)": p.blank.blank.department.toLowerCase() == "kids"? "Child (3-9 years)": "Adult (18 Years and Up)",
-        textile_dry_recommendation,
-        textile_wash_recommendation,
-        garment_closure_type_tops: p.blank.blank.name.includes("Zip")? "Zipper": "Pull Over",
-        garment_neckline_type: p.blank.blank.name.includes("Hat")? null: "Crew",
-        garment_sleeve_length_type: p.blank.blank.name.includes("Long Sleeve") || p.blank.blank.name.includes("Sweatshirt") || p.blank.blank.name.includes("Hoodie") || p.blank.blank.name.includes("fleece")? "Long Sleeve": p.blank.blank.name.includes("Hat") || p.blank.blank.name.includes("Tote") || p.blank.blank.name.includes("Pillow")? null: "Short Sleeve",
-        garment_sleeve_style: p.blank.blank.name.includes("flutter Sleeve")? "Flutter Sleeve": "Basic Sleeve",
-        garment_torso_length: p.blank.blank.name.includes("Crop")? "Above Waist": "To Waist",
-        item_style: p.blank.name,
-        import_description: "made in the USA and imported",
-        prop_65: "No",
-        garment_collar_type: p.blank.blank.collar? p.blank.blank.collar: "No Collar",
-        tax: "General Clothing",
-        apparel_material_1: material,
-        apparel_and_accessories_subtype: p.blank.blank.category? p.blank.blank.category[0]: p.blank.blank.department,
-        textile_construction: p.blank.blank.construction? p.blank.blank.construction:"Woven",
         "variant.barcode": v.upc,
         "variant.price": price.toFixed(2),
         "pricing_item.price.amount": price.toFixed(2),
-        "variant.position": v.size.name == "XS" || v.size.name == "2T" || v.size.name == "NB"? 10: v.size.name == "S" || v.size.name == "3T" || v.size.name == "6M"? 20: v.size.name == "M" || v.size.name == "4T" || v.size.name == "12M"? 30: v.size.name == "L" || v.size.name == "5/6" || v.size.name == "18M"? 40: v.size.name == "XL" || v.size.name == "24M"? 50: v.size.name == "2XL"? 60: 10,
-        "variant.inventory": 1000,
-        "variant.package_width": 9,
-        "variant.package_height": 1,
-        "variant.package_length": 13,
-        "variant.weight": v.size.weight? v.size.weight: 0.3,
-        "pattern": "Solid",
         "variant.color_family": v.color.colorFamily,
         "variant.color": v.color.name,
-        "gender":  p.blank.blank.department == "Womens"? "Womens": "uni-sex",
         "variant.size": v.size.name,
         group: "variant",
         "group_skus.0": `${p.design.sku}_${p.blank.blank.code}`,
@@ -117,9 +53,35 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
         "images.default.5.alternate.url": bImages[3],
         "images.default.6.alternate.url": bImages[4],
         "images.default.7.alternate.url": bImages[5],
+        ...p.brand.brand.targetHeader
     }
 }
-
+const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, feature_4, product_category, url})=>{
+    console.log("make variant", v.sku)
+    const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
+    let constants = {}
+    Object.keys(p.blank.blank.kohlsHeader).map(k=>{
+        if(k != "nrf_size") constants[k] = p.blank.blank.kohlsHeader[k]
+    })
+    let variant = {
+        "title": `${p.name} - ${v.size.name} - ${v.color.name}`,
+        "meta_description": `${p.design.description}`,
+        brand: p.brand,
+        style_number: `${p.blank.blank.code}_${p.design.sku}`,
+        style_description: `${p.blank.blank.description}`,      
+        "upc_number": v.upc,
+        "color_family": v.color.colorFamily,
+        "display_color": v.color.name,
+        "main_image": bImages[0],
+        "alt_image_1": bImages[1],
+        "alt_image_2": bImages[2],
+        "alt_image_3": p.blank.blank.sizeGuide?.images? p.blank.blank.sizeGuide?.images[0]: null,
+        seller_url: `${url}/${p.design.name.replace(/ /g, "-")}-${p.blank.blank.name.replace(/ /g, "-")}`,
+        ...constants
+    }
+    variant[p.blank.blank.kohlsHeader["nrf_size"]] = v.size.name
+    return variant
+}
 let targetHeader = [
     {id: "id", title: "id"},
     {id: "name", title: "name"},
@@ -128,45 +90,45 @@ let targetHeader = [
     {id: "description", title: "fields.description"},
     {id: "options.0", title: "options.0"},
     {id: "options.1", title: "options.1"},
-    {id: "material_1", title: "fields.apparel_material_1"},
-    {id: "material_percentage_1", title: "fields.apparel_material_1_percentage"},
-    {id: "material_2", title: "fields.apparel_material_2"},
-    {id: "material_percentage_2", title: "fields.apparel_material_2_percentage"},
-    {id: "pattern", title: "fields.pattern"},
-    {id: "bullet_1", title: "fields.bullet_1"},
-    {id: "bullet_2", title: "fields.bullet_2"},
-    {id: "bullet_3", title: "fields.bullet_3"},
-    {id: "bullet_4", title: "fields.bullet_4"},
-    {id: "fabric_weight_type", title: "fields.fabric_weight_type"},
-    {id: "garment_construction_details", title: "fields.garment_construction_details"},
-    {id: "gender", title: "fields.gender"},
-    {id: "pattern_group", title: "fields.pattern_group"},
-    {id: "size_grouping", title: "fields.size_grouping"},
-    {id: "targeted_audience", title: "fields.targeted_audience"},
-    {id: "textile_dry_recommendation", title: "fields.textile_dry_recommendation"},
-    {id: "textile_wash_recommendation", title: "fields.textile_wash_recommendation"},
-    {id: "garment_fit", title: "fields.garment_fit"},
-    {id: "garment_closure_type_tops", title: "fields.garment_closure_type_tops"},
-    {id: "garment_neckline_type", title: "fields.garment_neckline_type"},
-    {id: "garment_sleeve_length_type", title: "fields.garment_sleeve_length_type"},
-    {id: "garment_sleeve_style", title: "fields.garment_sleeve_style"},
-    {id: "garment_torso_length", title: "fields.garment_torso_length"},
-    {id: "import_description", title: "fields.import_description"},
-    {id: "prop_65", title: "fields.prop_65"},
-    {id: "tax", title: "fields.tax"},
-    {id: "apparel_and_accessories_subtype", title: "fields.subtype"},
-    {id: "season", title: "fields.season_or_event_depiction"},
-    {id: "season", title: "fields.season"},
-    {id: "textile_construction", title: "fields.textile_construction"},
+    {id: "fields.apparel_material_1", title: "fields.apparel_material_1"},
+    {id: "fields.apparel_material_1_percentage", title: "fields.apparel_material_1_percentage"},
+    {id: "fields.apparel_material_2", title: "fields.apparel_material_2"},
+    {id: "fields.apparel_material_2_percentage", title: "fields.apparel_material_2_percentage"},
+    {id: "fields.pattern", title: "fields.pattern"},
+    {id: "fields.bullet_1", title: "fields.bullet_1"},
+    {id: "fields.bullet_2", title: "fields.bullet_2"},
+    {id: "fields.bullet_3", title: "fields.bullet_3"},
+    {id: "fields.bullet_4", title: "fields.bullet_4"},
+    {id: "fields.fabric_weight_type", title: "fields.fabric_weight_type"},
+    {id: "fields.garment_construction_details", title: "fields.garment_construction_details"},
+    {id: "fields.gender", title: "fields.gender"},
+    {id: "fields.pattern_group", title: "fields.pattern_group"},
+    {id: "fields.size_grouping", title: "fields.size_grouping"},
+    {id: "fields.targeted_audience", title: "fields.targeted_audience"},
+    {id: "fields.textile_dry_recommendation", title: "fields.textile_dry_recommendation"},
+    {id: "fields.textile_wash_recommendation", title: "fields.textile_wash_recommendation"},
+    {id: "fields.garment_fit", title: "fields.garment_fit"},
+    {id: "fields.garment_closure_type_tops", title: "fields.garment_closure_type_tops"},
+    {id: "fields.garment_neckline_type", title: "fields.garment_neckline_type"},
+    {id: "fields.garment_sleeve_length_type", title: "fields.garment_sleeve_length_type"},
+    {id: "fields.garment_sleeve_style", title: "fields.garment_sleeve_style"},
+    {id: "fields.garment_torso_length", title: "fields.garment_torso_length"},
+    {id: "fields.import_description", title: "fields.import_description"},
+    {id: "fields.prop_65", title: "fields.prop_65"},
+    {id: "fields.tax", title: "fields.tax"},
+    {id: "fields.subtype", title: "fields.subtype"},
+    {id: "fields.season_or_event_depiction", title: "fields.season_or_event_depiction"},
+    {id: "fields.season", title: "fields.season"},
+    {id: "fields.textile_construction", title: "fields.textile_construction"},
     {id: "group", title: "group"},
     {id: "variant.barcode", title: "upc"},
     {id: "gtin", title: "gtin"},
     {id: "variant.price", title: "pricing_item.msrp.amount"},
     {id: "pricing_item.price.amount", title: "pricing_item.price.amount"},
-    {id: "variant.package_width", title: "fields.package_width.value"},
-    {id: "variant.package_height", title: "fields.package_height.value"},
-    {id: "variant.package_length", title: "fields.package_length.value"},
-    {id: "variant.package_weight", title: "fields.package_weight.value"},
+    {id: "fields.package_width.value", title: "fields.package_width.value"},
+    {id: "fields.package_height.value", title: "fields.package_height.value"},
+    {id: "fields.package_length.value", title: "fields.package_length.value"},
+    {id: "fields.package_weight.value", title: "fields.package_weight.value"},
     {id: "variant.color_family", title: "fields.color_family"},
     {id: "variant.color", title: "fields.color"},
     {id: "variant.size", title: "fields.size"},
@@ -206,6 +168,47 @@ let kohlsHeader = [
     {id: "choking_hazard", title: "choking_hazard"},
     {id: "perishable_indicator", title: "perishable_indicator"},
     {id: "containsPFAS", title: "containsPFAS"},
+    {id: "seller_url", title: "seller_url"},
+    {id: "prop_65", title: "prop_65"},
+    {id: "is_ltl_item", title: "is_ltl_item"},
+    {id: "Priority", title: "Priority"},
+    {id: "gender-5_14_1_99999_111_721", title: "gender-5_14_1_99999_111_721"},
+    {id: "consumer_material-5_14_1_99999_111_721", title: "consumer_material-5_14_1_99999_111_721"},
+    {id: "consumer_occasion-5_14_1_99999_111_721", title: "consumer_occasion-5_14_1_99999_111_721"},
+    {id: "consumer_silhouette-5_14_1_99999_111_721", title: "consumer_silhouette-5_14_1_99999_111_721"},
+    {id: "feature-5_14_1_99999_111_721", title: "feature-5_14_1_99999_111_721"},
+    {id: "persona_category-5_14_1_99999_111_721", title: "persona_category-5_14_1_99999_111_721"},
+    {id: "persona_group-5_14_1_99999_111_721", title: "persona_group-5_14_1_99999_111_721"},
+    {id: "persona_subject-5_14_1_99999_111_721", title: "persona_subject-5_14_1_99999_111_721"},
+    {id: "persona_theme-5_14_1_99999_111_721", title: "persona_theme-5_14_1_99999_111_721"},
+    {id: "age_category-5_14_1_99999_111_721", title: "age_category-5_14_1_99999_111_721"},
+    {id: "consumer_pattern-5_14_1_99999_111_721", title: "consumer_pattern-5_14_1_99999_111_721"},
+    {id: "nrf_size-5_14_1_99999_111_721", title: "nrf_size-5_14_1_99999_111_721"},
+    {id: "gender-5_14_1_99999_111_723", title: "gender-5_14_1_99999_111_723"},
+    {id: "consumer_material-5_14_1_99999_111_723", title: "consumer_material-5_14_1_99999_111_723"},
+    {id: "consumer_occasion-5_14_1_99999_111_723", title: "consumer_occasion-5_14_1_99999_111_723"},
+    {id: "consumer_silhouette-5_14_1_99999_111_723", title: "consumer_silhouette-5_14_1_99999_111_723"},
+    {id: "feature-5_14_1_99999_111_723", title: "feature-5_14_1_99999_111_723"},
+    {id: "persona_category-5_14_1_99999_111_723", title: "persona_category-5_14_1_99999_111_723"},
+    {id: "persona_group-5_14_1_99999_111_723", title: "persona_group-5_14_1_99999_111_723"},
+    {id: "persona_subject-5_14_1_99999_111_723", title: "persona_subject-5_14_1_99999_111_723"},
+    {id: "persona_theme-5_14_1_99999_111_723", title: "persona_theme-5_14_1_99999_111_723"},
+    {id: "age_category-5_14_1_99999_111_723", title: "age_category-5_14_1_99999_111_723"},
+    {id: "consumer_pattern-5_14_1_99999_111_723", title: "consumer_pattern-5_14_1_99999_111_723"},
+    {id: "nrf_size-5_14_1_99999_111_723", title: "nrf_size-5_14_1_99999_111_723"},
+    {id: "gender-5_14_1_99999_125_1035", title: "gender-5_14_1_99999_125_1035"},
+    {id: "consumer_material-5_14_1_99999_125_1035", title: "consumer_material-5_14_1_99999_125_1035"},
+    {id: "consumer_occasion-5_14_1_99999_125_1035", title: "consumer_occasion-5_14_1_99999_125_1035"},
+    {id: "consumer_silhouette-5_14_1_99999_125_1035", title: "consumer_silhouette-5_14_1_99999_125_1035"},
+    {id: "feature-5_14_1_99999_125_1035", title: "feature-5_14_1_99999_125_1035"},
+    {id: "persona_category-5_14_1_99999_125_1035", title: "persona_category-5_14_1_99999_125_1035"},
+    {id: "persona_group-5_14_1_99999_125_1035", title: "persona_group-5_14_1_99999_125_1035"},
+    {id: "persona_subject-5_14_1_99999_125_1035", title: "persona_subject-5_14_1_99999_125_1035"},
+    {id: "persona_theme-5_14_1_99999_125_1035", title: "persona_theme-5_14_1_99999_125_1035"},
+    {id: "recommended_usage-5_14_1_99999_125_1035", title: "recommended_usage-5_14_1_99999_125_1035"},
+    {id: "age_category-5_14_1_99999_125_1035", title: "age_category-5_14_1_99999_125_1035"},
+    {id: "consumer_pattern-5_14_1_99999_125_1035", title: "consumer_pattern-5_14_1_99999_125_1035"},
+    {id: "nrf_size-5_14_1_99999_125_1035", title: "nrf_size-5_14_1_99999_125_1035"},
 ]
 const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
@@ -227,7 +230,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(1000)
+        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(10)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -305,6 +308,179 @@ export async function updateListings(csvupdate){
         Object.keys(brands).map(b=>{
             Object.keys(brands[b]).map(async m=>{
                 //console.log(b, m, brands[b][m].length)
+                if(m.toLowerCase() == "kohl's"){
+                    console.log("make a target product csv")
+                    
+                    let products = [] 
+                    let j = 0
+                    for(let p of brands[b][m]){
+                        j++
+                        console.log(brands[b][m].length, j)
+                        let material 
+                        let textile_wash_recommendation
+                        let garment_fit
+                        let feature_4 = ""
+                        let feature_1 = ""
+                        let feature_2 = ""
+                        //console.log(p.blank.blank.bulletPoints)
+                        for(let bl of p.blank.blank.bulletPoints){
+                            //console.log(bl.title, "title")
+                            if(bl.title.toLowerCase() == "fabric"){
+                                feature_1 += ` ${bl.description}`
+                            }
+                            if(bl.title.toLowerCase() == "fit"){
+                                feature_4 += ` ${bl.description}`
+                            }
+                            if(bl.title.toLowerCase() == "care instructions"){
+                                feature_2 += ` ${bl.description}`
+                            }
+                            if(bl.title == "material" || bl.title.toLowerCase() == "Apparel Material"){
+                                material = bl.description
+                            }
+                        }
+                        
+                        if(p.variants.length > 0 && p.variants[0].sku){
+                            for(let v of p.variants){
+                                if(v.gtin){
+                                    let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
+                                    //console.log(price, "price")
+                                    if(Object.keys(p.design.images).length > 1) price+= 2
+                                    //console.log(price)
+                                    if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
+                                    if(v.size == "2XL") price = price -2
+                                    // console.log(price)
+                                    let bImages = []
+                                    if(p.design.overrideImages && v.color && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][v.color._id] && p.design.overrideImages[p.blank.blank._id][v.color._id].length > 0) bImages = p.design.overrideImages[p.blank.blank._id][v.color._id]
+                                    else{
+                                        for(let side of Object.keys(p.design.images)){
+                                            //console.log(p.blank.defaultImages, "default images")
+                                            let defaults = p.blank.defaultImages?.filter(im=> im.color == v.color._id.toString() && im.side == side)
+                                            if(defaults?.length > 0){
+                                                let sideImages =p.blank.blank.multiImages[side].filter(i=> i._id.toString() == defaults[0].id.toString()).map(im=>{
+                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                })
+                                                for(let im of sideImages){
+                                                    if(!bImages.includes(im)) bImages.push(im)
+                                                }
+                                            }
+                                        }
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                            // console.log(side, p.design.images[side], v.color._id.toString(), p.design.imageGroup)
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
+                                                //console.log(sideImages.length, "sideImages imageGroup")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        //console.log(images)
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                    })
+                                                    //console.log(images)
+                                                    for(let im of images){
+                                                        if(!bImages.includes(im)) bImages.push(im)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if(bImages.length < 6 && p.design.imageGroup != "default"){
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() &&  i.imageGroup.includes("default"))
+                                                //console.log(sideImages.length, "sideImages default")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes("default"))
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                    })
+                                                    //console.log(images)
+                                                    for(let im of images){
+                                                        if(!bImages.includes(im)) bImages.push(im)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if(bImages.length < 6){
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString())
+                                                //console.log(sideImages.length, "sideImages color")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString())
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        //console.log(images)
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
+                                                        return `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                    })
+                                                    //console.log(images)
+                                                    for(let im of images){
+                                                        if(!bImages.includes(im)) bImages.push(im)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    let product_category = p.blank.blank.kohlsHeader?.product_category
+                                    //console.log(bImages, "bImages")
+                                    products.push(createKohlsVariant({p,v, bImages, material, feature_1, feature_2, feature_4, garment_fit, product_category, url: `https://www.${b == "Simply Sage Market"? "simplysagemarket.com": "thejunipershop.com"}/products`}) )
+                                }
+                            }
+                        }
+                    }
+                // console.log(targetHeader)
+                    const csvStringifier = createCsvStringifier({
+                        header: kohlsHeader,
+                    });
+                    //console.log(products)
+                    //console.log("product", products.length)
+                    let csvString =  await csvStringifier.stringifyRecords([...products])
+                    csvString = `
+                        ${csvStringifier.getHeaderString()}${csvString}
+                    `
+                    let url = `csv/${b}/${m}/${Date.now()}.csv`
+                    let params = {
+                        Bucket: "images1.pythiastechnologies.com",
+                        Key: url,
+                        Body: csvString.toString("base64"),
+                        ACL: "public-read",
+                        ContentEncoding: "base64",
+                        ContentDisposition: "inline",
+                        ContentType: "text/csv",
+                        };
+                    const data = await s3.send(new PutObjectCommand(params));
+                    //console.log(csvStringifier.getHeaderString());
+                    await update(csvupdate, url, b, m)
+                }
                 if(m.toLowerCase() == "target"){
                     console.log("make a target product csv")
                     

@@ -39,6 +39,7 @@ export const getWarehouseAcenda = async ({clientId, clientSecret, organization})
     }
 }
 export const addInventoryAcenda = async ({clientId, clientSecret, organization, inventory}) =>{
+    //console.log(inventory, "inventory")
     let token = await getTokenAcenda({clientId, clientSecret})
     console.log(token , "token")
     let headers = {
@@ -49,7 +50,8 @@ export const addInventoryAcenda = async ({clientId, clientSecret, organization, 
     }
     let errorRes
     let res = await axios.post("https://api.acenda.io/v1/inventory_detail/bulk", inventory, headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
-    console.log(errorRes, res?.data)
+    console.log(errorRes, res?.data.result)
+    if(errorRes) console.log("error +++++++++++++++")
     if(errorRes){
         return null
     }else{

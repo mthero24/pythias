@@ -3,6 +3,7 @@ import { Typography, Container, Button, Modal, Box, TextField } from "@mui/mater
 import axios from "axios";
 import Link from "next/link";
 import LoaderOverlay from "@/components/LoaderOverlay";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import {useState} from "react";
 export function Main({style}){
     const [loading, setLoading] = useState(false);
@@ -54,6 +55,9 @@ export function Main({style}){
             <Button onClick={()=>{setHeadingModal(true); setHeading(style.kohlsHeader); setHeadingName("kohlsHeader")}}>
               Kohls CSV Headers
             </Button>
+            <Button onClick={()=>{setHeadingModal(true); setHeading(style.targetHeader); setHeadingName("targetHeader")}}>
+              Target CSV Headers
+            </Button>
             <HeaderModal open={headingModal} setOpen={setHeadingModal} header={heading} setHeader={setHeading} style={style} headingName={headingName} />
           </div>
         </div>
@@ -74,6 +78,43 @@ const modalStyle = {
   p: 4,
 };
 const HeaderModal = ({open, setOpen, header, setHeader, headingName, style})=>{
+  const [newItem, setNewItem] = useState({})
+  const save = async()=>{
+    let he = {...header}
+    he[Object.keys(newItem)[0]] = newItem[Object.keys(newItem)[0]]
+    console.log(style)
+    console.log(he)
+    style[headingName] = {...he}
+    let res = await axios.post("/api/admin/blanks", {blank: style}) 
+    console.log(res?.data)
+    let it = {}
+    setNewItem({...it})
+    setHeader({...res?.data.blank[headingName]})
+  }
+  const setKey = ()=>{
+    let it = {}
+    it[event.target.value] = newItem[Object.keys(newItem)[0]]
+    setNewItem({...it})
+    console.log(it)
+  }
+  const setValue = ()=>{
+    let it = {...newItem}
+    it[Object.keys(it)[0]] = event.target.value
+    setNewItem({...it})
+    console.log(it)
+  }
+  const deleteValue = async (k)=>{
+    let he = {}
+    for(let key of Object.keys(header)){
+      if(key != k ){
+        he[key] = header[key]
+      }
+    }
+    style[headingName] = {...he}
+    let res = await axios.post("/api/admin/blanks", {blank: style}) 
+    console.log(res?.data)
+    setHeader({...res?.data.blank[headingName]})
+  }
   return(
     <Modal
       open={open}
@@ -87,16 +128,17 @@ const HeaderModal = ({open, setOpen, header, setHeader, headingName, style})=>{
         </Typography>
         <Box sx={{display: "flex", flexDirection: "column", alignContent:"center", alignItems: "center", padding: "3%"}}>
           <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start", width: "50%"}}>
-              <TextField label="heading" fullWidth />
+              <TextField label="heading" fullWidth value={Object.keys(newItem)[0]} onChange={()=>{setKey()}}/>
               <Typography sx={{padding: "2%"}}>:</Typography>
-              <TextField label="value" fullWidth />
+              <TextField label="value" fullWidth onChange={()=>{setValue()}}/>
           </Box>
-          <Button fullWidth>Save</Button>
+          <Button fullWidth onClick={()=>{save()}} sx={{marginBottom: "3%"}}>Save</Button>
           {Object.keys(header? header: {}).map(h=>(
-            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start", width: "50%"}} key={h}>
+            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start", width: "55%", margin: "1%"}} key={h}>
               <TextField label="heading" fullWidth value={h} />
               <Typography sx={{padding: "2%"}}>:</Typography>
               <TextField label="value" fullWidth value={header[h]} />
+              <DeleteForeverIcon sx={{color: "red", margin: "2% 0%", cursor: "pointer"}} onClick={()=>{deleteValue(h)}} />
           </Box>
           ))}
         </Box>
