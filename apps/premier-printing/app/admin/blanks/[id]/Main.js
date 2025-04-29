@@ -5,11 +5,12 @@ import Link from "next/link";
 import LoaderOverlay from "@/components/LoaderOverlay";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import {useState} from "react";
-export function Main({style}){
+export function Main({blank}){
     const [loading, setLoading] = useState(false);
     const [headingModal, setHeadingModal] = useState(false)
     const [heading, setHeading] = useState({})
     const [headingName, setHeadingName] = useState("")
+    const [style, setStyle] = useState(blank)
     const handleDelete = async () => {
       if (confirm("Delete?")) {
         let result = await axios.delete(`/api/admin/blanks?id=${style._id}`, {id: style._id});
@@ -58,7 +59,7 @@ export function Main({style}){
             <Button onClick={()=>{setHeadingModal(true); setHeading(style.targetHeader); setHeadingName("targetHeader")}}>
               Target CSV Headers
             </Button>
-            <HeaderModal open={headingModal} setOpen={setHeadingModal} header={heading} setHeader={setHeading} style={style} headingName={headingName} />
+            <HeaderModal open={headingModal} setOpen={setHeadingModal} header={heading} setHeader={setHeading} style={style} setStyle={setStyle} headingName={headingName} />
           </div>
         </div>
         {loading && <LoaderOverlay />}
@@ -76,8 +77,9 @@ const modalStyle = {
   border: '2px solid #000',
   boxShadow: 24,
   p: 4,
+  overflow: "auto"
 };
-const HeaderModal = ({open, setOpen, header, setHeader, headingName, style})=>{
+const HeaderModal = ({open, setOpen, header, setHeader, headingName, style, setStyle})=>{
   const [newItem, setNewItem] = useState({})
   const save = async()=>{
     let he = {...header}
@@ -88,8 +90,9 @@ const HeaderModal = ({open, setOpen, header, setHeader, headingName, style})=>{
     let res = await axios.post("/api/admin/blanks", {blank: style}) 
     console.log(res?.data)
     let it = {}
-    setNewItem({...it})
+    setNewItem({"":""})
     setHeader({...res?.data.blank[headingName]})
+    setStyle(res?.data.blank)
   }
   const setKey = ()=>{
     let it = {}
@@ -114,6 +117,7 @@ const HeaderModal = ({open, setOpen, header, setHeader, headingName, style})=>{
     let res = await axios.post("/api/admin/blanks", {blank: style}) 
     console.log(res?.data)
     setHeader({...res?.data.blank[headingName]})
+    setStyle(res?.data.blank)
   }
   return(
     <Modal
@@ -130,7 +134,7 @@ const HeaderModal = ({open, setOpen, header, setHeader, headingName, style})=>{
           <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start", width: "50%"}}>
               <TextField label="heading" fullWidth value={Object.keys(newItem)[0]} onChange={()=>{setKey()}}/>
               <Typography sx={{padding: "2%"}}>:</Typography>
-              <TextField label="value" fullWidth onChange={()=>{setValue()}}/>
+              <TextField label="value" fullWidth value={newItem[Object.keys(newItem)[0]]} onChange={()=>{setValue()}}/>
           </Box>
           <Button fullWidth onClick={()=>{save()}} sx={{marginBottom: "3%"}}>Save</Button>
           {Object.keys(header? header: {}).map(h=>(

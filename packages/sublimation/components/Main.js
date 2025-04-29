@@ -85,7 +85,7 @@ export function Main({labels, stations, stat}){
                                                     <Typography textAlign={"center"} fontSize="1rem" fontWeight={600}>{k.sizeName}</Typography>
                                                 </Grid2>
                                                 <Grid2 size={6} >
-                                                    <Button size="small" fullWidth sx={{background: "#007FDC", color: "#ffffff", marginLeft: ".5%"}}>Reprint</Button>
+                                                    <Button size="small" fullWidth sx={{background: "#007FDC", color: "#ffffff", marginLeft: ".5%"}} >Reprint</Button>
                                                 </Grid2>
                                                 <Grid2 size={6}>
                                                     <Link href={`/shipping?pieceId=${k.pieceId}&station=${station}`} target="_blank">

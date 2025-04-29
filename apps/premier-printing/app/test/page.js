@@ -16,13 +16,43 @@ import {updateListings} from "@/functions/updateListings"
 export default async function Test(){
     //await updateListings()
     //await pullOrders()
-    const removeOutOfStockItemsWalmart = async ()=>{
-        let items = await getItemsWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, params: [{limit: "300"}]})
-        for(let item of items){
-            console.log(item, item.variantGroupInfo,"retire item")
-            await retireItemWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, sku: item.sku})
+    // const removeOutOfStockItemsWalmart = async ()=>{
+    //     let items = await getItemsWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, params: [{limit: "300"}]})
+    //     for(let item of items){
+    //         console.log(item, item.variantGroupInfo,"retire item")
+    //         await retireItemWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, sku: item.sku})
+    //     }
+    // }
+    const productStageUrl = "https://stage-api.target.com/sellers/v1/​";
+    const taxonomyStageUrl = "https://api-target.com/item_taxonomies/v2/taxonomy"
+    const prodTargetPlusAPISpecsUrl = "https://plus.target.com/docs/spec/seller#overview"
+
+
+
+    let headers = {
+        headers: {
+            "x-api-key": process.env.stagingTargetApiKey,
+            "x-seller-id": process.env.stagingTargetSellerId,
+            "x-seller-token": process.env.stagingTargetSellerToken
         }
     }
+    console.log(headers)
+    // let res = await axios.post(`https://stage-api.target.com/sellers/v1/sellers/${process.env.stagingTargetSellerId}/report_requests`, {type: "ALLOWED_ITEM_TYPES", report_input: "base64", report_format: "csv"}, headers).catch(err=>{console.log(err.response.data)})
+    // console.log(res.data)
+    let res = await axios.get(`https://stage-api.target.com/sellers/v1/sellers/${process.env.stagingTargetSellerId}/report_requests`, headers).catch(err=>{console.log(err.response.data)})
+    if(res) {
+        console.log(res.data[res.data.length - 1])
+        let res2 = await axios.get(res.data[res.data.length - 1].download_url, headers).catch(err=>{console.log(err.response.data)})
+        if(res2) {
+            console.log(res2.headers)
+            console.log(res2.data,  Buffer.from(res2.data, "binary"))
+            fs.writeFile("target.txt", Buffer.from(res2.data, "binary"), (err)=>{
+                if(err) console.log(err)
+            })
+        }
+        
+    }
+    
     //await getSpecWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId,})
     //removeOutOfStockItemsWalmart()
     // let item = await getSkuAcenda({clientId: process.env.acendaClientIdSS, clientSecret: process.env.acendaClientSecretSS, organization: process.env.acendaOrganizationSS, sku: "LGDSET_Espresso_L_3383B_F" })

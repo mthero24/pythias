@@ -5,7 +5,11 @@ import fs from "fs";
 import {getRates} from "@pythias/shipping";
 
 export default async function POST(req= NextApiRequest){
-    // let styles = await Styles.find({})
+    let AT = await Styles.findOne({code: "AT"})
+    let other = await Styles.findOne({code: "BSM23"})
+    console.log(other)
+    other.envelopes = AT.envelopes
+    other.save()
     // let items = await Items.find({date: {$gt: new Date("2024-04-17")}, canceled: false, styleCode: {$ne: null}}).limit(100000)
     // console.log(items.length, " How Many Items")
     // let breakdown = {}
