@@ -24,11 +24,11 @@ const createTargetProduct = ({p, product, material,material_1, material_percenta
         "options.0": 'size',
         "options.1": 'color',
         group: "product",
-        ...p.brand.brand.targetHeader
+        ...p.blank.blank.targetHeader
     }
 }
 const createTargetVariant = ({p,item, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
-    console.log("make variant", v.sku)
+    console.log("make variant", v.sku, p.blank.blank.targetHeader)
     const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
     return {
         id: item && item[0]? item[0].id: null,
@@ -53,7 +53,7 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
         "images.default.5.alternate.url": bImages[3],
         "images.default.6.alternate.url": bImages[4],
         "images.default.7.alternate.url": bImages[5],
-        ...p.brand.brand.targetHeader
+        ...p.blank.blank.targetHeader
     }
 }
 const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, feature_4, product_category, url})=>{
@@ -230,7 +230,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(10)
+        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(1050)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
