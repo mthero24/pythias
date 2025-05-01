@@ -102,6 +102,7 @@ const schema = new mongoose.Schema(
     printedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     refunded: { type: Boolean, default: false },
     buttonPrinted: { type: Boolean, default: false },
+    dtfScan: { type: Boolean, default: false },
     lastScan: {
       station: String,
       date: Date,

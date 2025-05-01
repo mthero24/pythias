@@ -123,7 +123,7 @@ const isReady = (bin)=>{
     return ready
 }
 const addItemToBin = (item, bin)=>{
-    if(!bin.items.includes(item._id) ){
+    if(!bin.items.map(i=> {return i.toString()}).includes(item._id.toString()) ){
         bin.items.push(item._id)
     }
     item.inBin = true;

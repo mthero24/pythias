@@ -37,19 +37,19 @@ export default async function Test(){
         }
     }
     console.log(headers)
-    // let res = await axios.post(`https://stage-api.target.com/sellers/v1/sellers/${process.env.stagingTargetSellerId}/report_requests`, {type: "ALLOWED_ITEM_TYPES", report_input: "base64", report_format: "csv"}, headers).catch(err=>{console.log(err.response.data)})
+    // let res = await axios.post(`https://stage-api.target.com/sellers/v1/sellers/${process.env.stagingTargetSellerId}/report_requests`, {type: "BULK_PRODUCT_DATA_TEMPLATE", parameters:{item_type_id: "1743507941"}}, headers).catch(err=>{console.log(err.response.data)})
     // console.log(res.data)
-    let res = await axios.get(`https://stage-api.target.com/sellers/v1/sellers/${process.env.stagingTargetSellerId}/report_requests`, headers).catch(err=>{console.log(err.response.data)})
+    let res = await axios.get(`https://stage-api.target.com/sellers/v1/sellers/${process.env.stagingTargetSellerId}/report_requests?page=5`, headers).catch(err=>{console.log(err.response.data)})
     if(res) {
-        console.log(res.data[res.data.length - 1])
-        let res2 = await axios.get(res.data[res.data.length - 1].download_url, headers).catch(err=>{console.log(err.response.data)})
-        if(res2) {
-            console.log(res2.headers)
-            console.log(res2.data,  Buffer.from(res2.data, "binary"))
-            fs.writeFile("target.txt", Buffer.from(res2.data, "binary"), (err)=>{
-                if(err) console.log(err)
-            })
-        }
+        console.log(res.data)
+        // let res2 = await axios.get(res.data[res.data.length - 1].download_url, headers).catch(err=>{console.log(err.response.data)})
+        // if(res2) {
+        //     console.log(res2.data)
+        //     console.log(res2.data,  Buffer.from(res2.data, "binary"))
+        //     fs.writeFile("target.txt", Buffer.from(res2.data, "binary"), (err)=>{
+        //         if(err) console.log(err)
+        //     })
+        // }
         
     }
     

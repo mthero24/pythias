@@ -96,7 +96,8 @@ export async function POST(req = NextApiRequest) {
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("styleV2", "code envelopes box sizes images")
     console.log(item?.design, "item",)
-    if (item && !item.canceled && !item.shipped) {
+    if (item && !item.canceled && !item.shipped && !item.dtfScan) {
+        item.dtfScan = true
         let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
         Object.keys(item.design).map(async im=>{
             //console.log(item.styleV2.envelopes)
@@ -141,12 +142,17 @@ export async function POST(req = NextApiRequest) {
             date: new Date(Date.now()),
             //user: user._id,
           };
+          await item.save();
         const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design.front, item.design.back, item.styleV2, item)
         return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: item.design, type: "new" });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
     } else if (item && item.shipped) {
         return NextResponse.json({ error: true, msg: "item Shipped", design: item.design });
+    } else if (item && item.dtfScan) {
+        item.dtfScan = false
+        await item.save();
+        return NextResponse.json({ error: true, msg: "Item Already Scanned Into DTF Scan Again To Resend", design: item.design });
     }else {
         return NextResponse.json({ error: true, msg: "item not found" });
     }
