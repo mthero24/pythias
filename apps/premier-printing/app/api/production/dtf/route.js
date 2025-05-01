@@ -115,7 +115,8 @@ export async function POST(req = NextApiRequest) {
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("blank", "code envelopes box sizes multiImages")
     console.log(item, "item", item.color, "item color")
-    if (item && !item.canceled) {
+    if (item && !item.canceled && !item.dtfScan) {
+        item.dtfScan = true
         Object.keys(item.design).map(async key=>{
             if(key != undefined && item.design[key]){
                 let envelopes = item.blank.envelopes.filter(
@@ -160,6 +161,10 @@ export async function POST(req = NextApiRequest) {
         return NextResponse.json({ error: false, msg: "added to que", ...result, source: "PP" });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
+    }else if (item && item.dtfScan) {
+        item.dtfScan = false
+        await item.save()
+        return NextResponse.json({ error: true, msg: "Item already Scanned Into DTF. If You Want To Resend It Scan It Again!", design: item.design });
     } else {
         return NextResponse.json({ error: true, msg: "item not found" });
     }
