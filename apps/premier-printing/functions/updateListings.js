@@ -28,7 +28,7 @@ const createTargetProduct = ({p, product, material,material_1, material_percenta
     }
 }
 const createTargetVariant = ({p,item, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
-    console.log("make variant", v.sku, p.blank.blank.targetHeader)
+    console.log("make variant", v.sku)
     const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
     return {
         id: item && item[0]? item[0].id: null,
@@ -57,7 +57,7 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
     }
 }
 const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, feature_4, product_category, url})=>{
-    console.log("make variant", v.sku)
+    console.log("make variant kohls", v.sku)
     const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
     let constants = {}
     Object.keys(p.blank.blank.kohlsHeader).map(k=>{

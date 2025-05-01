@@ -5,8 +5,8 @@ import fs from "fs";
 import {getRates} from "@pythias/shipping";
 
 export default async function POST(req= NextApiRequest){
-    let AT = await Styles.findOne({code: "AT"})
-    let other = await Styles.findOne({code: "BSM23"})
+    let AT = await Styles.findOne({code: "WCT"})
+    let other = await Styles.findOne({code: "3023CL"})
     console.log(other)
     other.envelopes = AT.envelopes
     other.save()

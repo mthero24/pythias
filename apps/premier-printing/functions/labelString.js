@@ -1,8 +1,10 @@
 import Items from "@/models/Items";
 import Inventory from "@/models/inventory";
+import ReturnBins from "@/models/returnBins"
 import Design from "@/models/Design";
 export const buildLabelData = async (item, i, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
+    let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
     let frontBackString;
     //console.log(totalQuantity, "TQ");
     let inventory = await Inventory.findOne({inventory_id: `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`}).select(" bin row shelf unit").lean()
@@ -47,10 +49,10 @@ export const buildLabelData = async (item, i, opts={}) => {
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#${i + 1}^FS
         ^LH12,18^CFS,25,12^AXN,75,90^FO100,175^FD${item.styleCode}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,70^FD${new Date(item.date).toLocaleDateString("En-us")}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
+        ${hasReturn == null? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `R Bin${hasReturn.number}`}
         ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
             item.colorName
         }, Size: ${item.sizeName}^FS
