@@ -5,6 +5,15 @@ import Design from "@/models/Design";
 export const buildLabelData = async (item, i, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
+    if(hasReturn){
+      for(let i of hasReturn.inventory){
+        if(i.upc == item.upc || i.sku == item.sku){
+          i.quantity -= 1
+        }
+      }
+      hasReturn.markModified("inventory")
+      await hasReturn.save()
+    }
     let frontBackString;
     //console.log(totalQuantity, "TQ");
     let inventory = await Inventory.findOne({inventory_id: `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`}).select(" bin row shelf unit").lean()

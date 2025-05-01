@@ -126,12 +126,15 @@ export const getSpecWalmart = async ({clientId, clientSecret, partnerId,})=>{
         "feedType": "MP_WFS_ITEM",
         "version": "5.0.20240517-04_08_27-api",
         "productTypes": [
-            "Baby Blankets", "Fashion"
+            "Baby Blankets", "Baby Bodysuit"
         ]
     }
     let errorRes
     let res = await axios.post(`https://marketplace.walmartapis.com/v3/items/spec`, body, headers).catch(e=> {errorRes = e.response.data})
     console.log(errorRes, res?.data, res?.data?.schema.properties.MPItem)
+    console.log(res.data.schema, "++++++++++++ schema ++++++")
+    console.log(res.data.schema.properties, "++++++++++++ properties ++++++")
+    console.log(res.data.schema.properties.MPItem.items.properties, "++++++++++++ properties ++++++")
     if(errorRes){
         return null
     }else{
@@ -155,7 +158,7 @@ export const getFeedWalmart = async ({clientId, clientSecret, partnerId,})=>{
         "feedType": "MP_ITEM",
         "version": "4.8",
         "productTypes": [
-          "Fashion"
+          "Baby Blankets"
         ]
     }
     let errorRes
