@@ -2,22 +2,26 @@ import Items from "@/models/Items";
 import Inventory from "@/models/inventory";
 import ReturnBins from "@/models/returnBins"
 import Design from "@/models/Design";
+let updateReturnBin = async (re, upc, sku)=>{
+  let hasReturn = await ReturnBins.findOne({_id: re._id})
+  for(let i of hasReturn.inventory){
+    if(i.upc == upc || i.sku == sku){
+      i.quantity -= 1
+    }
+  }
+  hasReturn.markModified("inventory")
+  await hasReturn.save()
+}
 export const buildLabelData = async (item, i, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
     if(hasReturn){
-      for(let i of hasReturn.inventory){
-        if(i.upc == item.upc || i.sku == item.sku){
-          i.quantity -= 1
-        }
-      }
-      hasReturn.markModified("inventory")
-      await hasReturn.save()
+      updateReturnBin(hasReturn, item.upc, item.sku)
     }
     let frontBackString;
     //console.log(totalQuantity, "TQ");
     let inventory = await Inventory.findOne({inventory_id: `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`}).select(" bin row shelf unit").lean()
-    console.log(inventory, "inventory", `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`)
+    //console.log(inventory, "inventory", `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`)
     if (item.design?.back) {
       if (item.design?.front && item.design.back) {
         frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,350^FDFRONT&BACK^FS`;
