@@ -80,6 +80,7 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         ...constants
     }
     variant[p.blank.blank.kohlsHeader["nrf_size"]] = v.size.name
+    if(variant.product_category.includes("{gender}")) variant.product_category = variant.product_category.replace("{gender}", "Girl")
     return variant
 }
 let targetHeader = [
@@ -143,7 +144,7 @@ let targetHeader = [
     {id: "images.default.7.alternate.url", title: "images.default.7.alternate.url"},
 ]
 let kohlsHeader = [
-    {id: "product_category", title: "id"},
+    {id: "product_category", title: "product_category"},
     {id: "upc_number", title: "upc_number"},
     {id: "title", title: "title"},
     {id: "brand", title: "brand"},
