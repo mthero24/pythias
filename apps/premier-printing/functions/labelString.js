@@ -3,14 +3,18 @@ import Inventory from "@/models/inventory";
 import ReturnBins from "@/models/returnBins"
 import Design from "@/models/Design";
 let updateReturnBin = async (re, upc, sku)=>{
-  let hasReturn = await ReturnBins.findOne({_id: re._id})
-  for(let i of hasReturn.inventory){
-    if(i.upc == upc || i.sku == sku){
-      i.quantity -= 1
+  try{
+    let hasReturn = await ReturnBins.findOne({_id: re._id})
+    for(let i of hasReturn.inventory){
+      if(i.upc == upc || i.sku == sku){
+        i.quantity -= 1
+      }
     }
+    hasReturn.markModified("inventory")
+    await hasReturn.save()
+  }catch(e){
+    console.log(e)
   }
-  hasReturn.markModified("inventory")
-  await hasReturn.save()
 }
 export const buildLabelData = async (item, i, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();

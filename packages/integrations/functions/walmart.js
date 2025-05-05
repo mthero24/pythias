@@ -1,6 +1,7 @@
 import axios from "axios"
 import btoa from "btoa"
 import { getToken } from "next-auth/jwt"
+import fs from "fs"
 const getTokenWalmart = async ({clientId, clientSecret, partnerId})=>{
     //console.log(clientId, clientSecret)
     let headers={
@@ -109,7 +110,7 @@ export const bulkUploadWalmart = async ({clientId, clientSecret, partnerId, type
         return res?.data.feedId
     }
 }
-export const getSpecWalmart = async ({clientId, clientSecret, partnerId,})=>{
+export const getSpecWalmart = async ({clientId, clientSecret, partnerId, type})=>{
     let token = await getTokenWalmart({clientId, clientSecret, partnerId})
     console.log(token, "token")
     let headers={
@@ -126,15 +127,23 @@ export const getSpecWalmart = async ({clientId, clientSecret, partnerId,})=>{
         "feedType": "MP_WFS_ITEM",
         "version": "5.0.20240517-04_08_27-api",
         "productTypes": [
-            "Baby Blankets", "Baby Bodysuit"
+           type
         ]
     }
     let errorRes
     let res = await axios.post(`https://marketplace.walmartapis.com/v3/items/spec`, body, headers).catch(e=> {errorRes = e.response.data})
-    console.log(errorRes, res?.data, res?.data?.schema.properties.MPItem)
-    console.log(res.data.schema, "++++++++++++ schema ++++++")
-    console.log(res.data.schema.properties, "++++++++++++ properties ++++++")
-    console.log(res.data.schema.properties.MPItem.items.properties, "++++++++++++ properties ++++++")
+    console.log(errorRes, res?.data, res?.data?.schema.properties.MPItem.items.properties.Visible.properties[type])
+    // console.log(res.data.schema, "++++++++++++ schema ++++++")
+    // console.log(res.data.schema.properties, "++++++++++++ properties ++++++")
+    // console.log(res.data.schema.properties.MPItem.items.properties, "++++++++++++ properties ++++++")
+    let thisOne = Object.keys(res?.data?.schema.properties.MPItem.items.properties.Visible.properties["T-Shirts"].properties).map(v=>{
+        return {property: v, type: res?.data?.schema.properties.MPItem.items.properties.Visible.properties["T-Shirts"].properties[v].type, enum: res?.data?.schema.properties.MPItem.items.properties.Visible.properties["T-Shirts"].properties[v].enum, properties: res?.data?.schema.properties.MPItem.items.properties.Visible.properties["T-Shirts"].properties[v].properties, items: res?.data?.schema.properties.MPItem.items.properties.Visible.properties["T-Shirts"].properties[v].items, examples: res?.data?.schema.properties.MPItem.items.properties.Visible.properties["T-Shirts"].properties[v].examples}
+    })
+    console.log(thisOne)
+    let write = {required: res?.data?.schema.properties.MPItem.items.properties.Visible.properties["T-Shirts"].required, all: thisOne }
+    // fs.writeFile("walmart_t-shirts", JSON.stringify(write), "utf-8", (err)=>{
+    //     if(err) console.log(err)
+    // })
     if(errorRes){
         return null
     }else{
