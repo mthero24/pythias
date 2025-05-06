@@ -6,7 +6,7 @@ module.exports = {
         script: "node_modules/next/dist/bin/next", // Use Next.js binary
         args: "start -p 3000", // Start on port 3000
         exec_mode: "cluster", // Enable cluster mode to use multiple CPUs
-        instances: "7", // Use all available CPU cores
+        instances: "15", // Use all available CPU cores
         env: {
           NODE_ENV: "production", // Set production environment
         },
