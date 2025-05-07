@@ -15,7 +15,7 @@ export async function POST(req= NextApiRequest){
         let label = await buyLabel({
             ...data,
             businessAddress: JSON.parse(process.env.businessAddress),
-            providers: ["usps", "fedex"],
+            providers: ["endicia", "fedex"],
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
             accountNumber: process.env.endiciaAccountNUmber,
