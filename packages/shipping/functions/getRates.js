@@ -65,7 +65,7 @@ export async function getRates({
         address,
         weight,
         businessAddress,
-        service: "USPS_GROUND_ADVANTAGE",
+        service: "GroundAdvantage",
         credentials,
         dimensions,
       });
@@ -75,7 +75,7 @@ export async function getRates({
         address,
         weight,
         businessAddress,
-        service: "PRIORITY_MAIL",
+        service: "Priority",
         credentials,
         dimensions,
       });
