@@ -195,21 +195,24 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
             "SaopAction": "www.envmgr.com/LabelService/GetPostageLabel"
         }
     }
-    let res = await axios.post(`https://labelserver.endicia.com/LabelService/EwsLabelService.asmx?wsdl`, xml, headers)
+    console.log(xml)
+    let res = await axios.post(`https://labelserver.endicia.com/LabelService/EwsLabelService.asmx?wsdl`, xml, headers).catch(e=>{console.log(e.response)})
     var parser = new xml2js.Parser(options);
     //console.log(res.data)
-    let data = await parser.parseStringPromise(res.data);
-    console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0])
-    console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label)
-    if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage){
-        return {error: true, msg: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage[0]}
-    }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Base64LabelImage){
-        return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Base64LabelImage[0], trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }
-    }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label[0].Image?.length){
-        console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label[0].Image[0]["_"])
-        return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label[0].Image[0]["_"], trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }
-    }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Image){
-        return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Image._t[0] + "=", trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }
+    if(res){
+        let data = await parser.parseStringPromise(res?.data);
+        console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0])
+        console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label)
+        if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage){
+            return {error: true, msg: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage[0]}
+        }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Base64LabelImage){
+            return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Base64LabelImage[0], trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }
+        }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label[0].Image?.length){
+            console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label[0].Image[0]["_"])
+            return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label[0].Image[0]["_"], trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }
+        }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Image){
+            return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Image._t[0] + "=", trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }
+        }
     }
 }
 
