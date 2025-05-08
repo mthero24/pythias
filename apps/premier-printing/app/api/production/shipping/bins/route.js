@@ -1,7 +1,6 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Bins from "../../../../../models/Bin"
 import {add, subtract} from "@pythias/shipping"
-import Employee from "../../../../../models/employeeTracking";
 export async function PUT(req = NextApiRequest) {
     //const defaultBin = {"number":10,"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null}
     let data = await req.json();

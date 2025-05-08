@@ -1,6 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Items from "../../../../models/Items";
-import Employee from "../../../../models/employeeTracking";
 import {setConfig, createImage} from "@pythias/dtf"
 const getImages = async (front, back, style, item)=>{
     let styleImage = style.images.filter(
@@ -55,14 +54,7 @@ export async function GET(req = NextApiResponse) {
                 date: new Date(Date.now()),
                 //user: user._id,
             };
-            let tracking = new Employee({
-                type: "DTF Find",
-                Date: new Date(Date.now()),
-                //employee: user,
-                order: item.order,
-                pieceID: item.pieceId,
-            });
-            await tracking.save();
+            
             await item.save();
 
             console.log(item, "item");
@@ -123,14 +115,7 @@ export async function POST(req = NextApiRequest) {
             }
         })
         //console.log(imageres)
-        let tracking = new Employee({
-            type: "DTF Load",
-            Date: new Date(Date.now()),
-            //employee: user,
-            order: item.order,
-            pieceID: item.pieceId,
-          });
-          await tracking.save();
+        
           item.status = "DTF Load";
           if (!item.steps) item.steps = [];
           item.steps.push({

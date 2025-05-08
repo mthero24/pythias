@@ -137,14 +137,7 @@ export async function POST(req = NextApiRequest) {
                 })
             }
         })
-        // let tracking = new Employee({
-        //     type: "DTF Load",
-        //     Date: new Date(Date.now()),
-        //     //employee: user,
-        //     order: item.order,
-        //     pieceID: item.pieceId,
-        //   });
-        //   await tracking.save();
+      
           item.status = "DTF Load";
           if (!item.steps) item.steps = [];
           item.steps.push({
