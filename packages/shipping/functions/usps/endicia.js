@@ -162,7 +162,7 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
         <FromCompany>${businessAddress.name.replace(/[^\w\s]/gi, '')}</FromCompany>
         <ReturnAddress1>${businessAddress.address1? businessAddress.address1.replace(/[^\w\s]/gi, ''): businessAddress.addressLine1.replace(/[^\w\s]/gi, '') }</ReturnAddress1>
         ${businessAddress.address2 || businessAddress.addressLine2? `<ReturnAddress2>${business.address2? business.address2.replace(/[^\w\s]/gi, ''): business.addressLine2.replace(/[^\w\s]/gi, '')}</ReturnAddress2>`:""}
-        <FromCity>${businessAddress.city.replace(/[^\w\s]/gi, '')}</FromCity>
+        
         <FromState>${businessAddress.state.replace(/[^\w\s]/gi, '')}</FromState>
         <FromPhone>${businessAddress.phoneNumber? businessAddress.phoneNumber.replace(/[^\w\s]/gi, ''): "2485497922"}</FromPhone>
         <FromPostalCode>${businessAddress.zip? businessAddress.zip.replace(/[^\w\s]/gi, ''): businessAddress.postalCode?.replace(/[^\w\s]/gi, '')}</FromPostalCode>
