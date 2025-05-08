@@ -72,4 +72,5 @@ schema.methods.comparePassword = async function (password) {
   }
 };
 
-export default PremierPrinting.model("User", schema);
+
+
