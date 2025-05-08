@@ -3,7 +3,7 @@ import Temps from "@/models/Temps";
 import Colors from "@/models/Color";
 import Style from "@/models/Blanks";
 import { createImage } from "@/functions/image";
-import employeeTracking from "@/models/employeeTracking";
+//import employeeTracking from "@/models/employeeTracking";
 import { NextApiRequest, NextResponse, useParams } from "next/server";
 
 const getimagesize = async (options) => {
@@ -116,13 +116,7 @@ export async function GET(request, { params }) {
     //         time: 60
     //     }
     // }
-    let tracking = new employeeTracking({
-        type: "treat",
-        Date: new Date(Date.now()),
-        employee: "645a8f227086bbdf4e142825",
-        order: item.order,
-        pieceID: item.pieceId,
-    });
+   
     await tracking.save();
     let pressTime;
     let pressTemp;
