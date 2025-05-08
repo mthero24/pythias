@@ -65,7 +65,7 @@ export async function getRates({
         address,
         weight,
         businessAddress,
-        service: "GroundAdvantage",
+        service: "USPS_GROUND_ADVANTAGE",
         credentials,
         dimensions,
       });
