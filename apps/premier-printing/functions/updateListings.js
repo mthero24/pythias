@@ -68,7 +68,7 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         "meta_description": `${p.design.description}`,
         brand: p.brand,
         style_number: `${p.blank.blank.code}_${p.design.sku}`,
-        style_description: `${p.blank.blank.description}`,      
+        style_description: `${p.brand}`,      
         "upc_number": v.upc,
         "color_family": v.color.colorFamily,
         "display_color": v.color.name,
