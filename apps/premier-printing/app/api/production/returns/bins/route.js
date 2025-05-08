@@ -1,7 +1,7 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Bins from "@/models/returnBins"
 import {add, subtract} from "@pythias/shipping"
-import Employee from "@/models/employeeTracking";
+//import Employee from "@/models/employeeTracking";
 export async function PUT(req = NextApiRequest) {
     //const defaultBin = {"number":10,"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null}
     let data = await req.json();
@@ -87,12 +87,12 @@ export async function DELETE(req = NextApiRequest) {
   try{
     let binNumber = req.nextUrl.searchParams.get("number")
     let bin = await Bins.findOneAndUpdate({number: binNumber}, {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
-    let tracking = new Employee({
-        type: `Cleared Bin ${binNumber}`,
-        Date: new Date(Date.now()),
-        //employee: user,
-        order: bin.order,
-    });
+    // let tracking = new Employee({
+    //     type: `Cleared Bin ${binNumber}`,
+    //     Date: new Date(Date.now()),
+    //     //employee: user,
+    //     order: bin.order,
+    // });
     return NextResponse.json({
       error: false,
       bins: {
