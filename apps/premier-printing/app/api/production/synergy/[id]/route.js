@@ -3,7 +3,6 @@ import Temps from "@/models/Temps";
 import Colors from "@/models/Color";
 import Style from "@/models/Blanks";
 import { createImage } from "@/functions/image";
-//import employeeTracking from "@/models/employeeTracking";
 import { NextApiRequest, NextResponse, useParams } from "next/server";
 
 const getimagesize = async (options) => {

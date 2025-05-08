@@ -75,7 +75,7 @@ export async function getRates({
         address,
         weight,
         businessAddress,
-        service: "Priority",
+        service: "PRIORITY_MAIL",
         credentials,
         dimensions,
       });

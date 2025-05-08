@@ -1,6 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Items from "../../../../models/Items";
-//import Employee from "../../../../models/employeeTracking";
 import Color from "@/models/Color"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
