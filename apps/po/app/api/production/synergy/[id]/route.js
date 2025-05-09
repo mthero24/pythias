@@ -213,7 +213,6 @@ export async function GET(request, { params }) {
 
         }
     }
-    await tracking.save();
     //console.log(firefly);
     //set material thickness by style
     let xml = `<?xml version="1.0" encoding="utf-16"?>
