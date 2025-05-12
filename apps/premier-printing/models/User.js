@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { trusted } from "mongoose";
-const { PremierPrinting } = require("../lib/connection");
+import { PremierPrinting } from "../lib/connection";
 
 const schema = new mongoose.Schema({
   password: {
@@ -72,5 +72,4 @@ schema.methods.comparePassword = async function (password) {
   }
 };
 
-
-
+export default PremierPrinting.model("User", schema);
