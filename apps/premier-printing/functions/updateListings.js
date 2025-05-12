@@ -57,8 +57,24 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
     }
 }
 const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, feature_4, product_category, url})=>{
+    let sizes = {
+        xs: "X SMALL",
+        s: "SMALL",
+        m: "MEDIUM",
+        l: "LARGE",
+        xl: "X LARGE",
+        "2xl": "XX LARGE",
+        "2t": "2T",
+        "3t": "3T",
+        "4t": "4T",
+        "5/6t": "5T-6T",
+        "6m": "6 MONTHS",
+        "12m": "12 MONTHS",
+        "18m": "18 MONTHS",
+        "24M": "24 MONTHS",
+        "nb": "NEWBORN"
+    }
     console.log("make variant kohls", v.sku)
-    const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
     let constants = {}
     Object.keys(p.blank.blank.kohlsHeader).map(k=>{
         if(k != "nrf_size") constants[k] = p.blank.blank.kohlsHeader[k]
@@ -79,7 +95,10 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         seller_url: `${url}/${p.design.name.replace(/ /g, "-")}-${p.blank.blank.name.replace(/ /g, "-")}`,
         ...constants
     }
-    variant[p.blank.blank.kohlsHeader["nrf_size"]] = v.size.name
+    variant[p.blank.blank.kohlsHeader["nrf_size"]] = sizes[v.size.name.toLowerCase()]
+    if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().subString(0, 250)
+    if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().subString(0, 250)
+    console.log(variant["feature_1"])
     if(variant.product_category.includes("{gender}")) variant.product_category = variant.product_category.replace("{gender}", "Girl")
     return variant
 }
@@ -231,7 +250,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(1050)
+        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(2000)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
