@@ -68,10 +68,11 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         "3t": "3T",
         "4t": "4T",
         "5/6t": "5T-6T",
+        "5t": "5T-6T",
         "6m": "6 MONTHS",
         "12m": "12 MONTHS",
         "18m": "18 MONTHS",
-        "24M": "24 MONTHS",
+        "24m": "24 MONTHS",
         "nb": "NEWBORN"
     }
     console.log("make variant kohls", v.sku)
@@ -87,7 +88,7 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         style_description: `${p.brand}`,      
         "upc_number": v.upc,
         "color_family": v.color.colorFamily,
-        "display_color": v.color.name,
+        "display_color": v.color.name.toString().substring(0, 22),
         "main_image": bImages[0],
         "alt_image_1": bImages[1],
         "alt_image_2": bImages[2],
@@ -96,8 +97,8 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         ...constants
     }
     variant[p.blank.blank.kohlsHeader["nrf_size"]] = sizes[v.size.name.toLowerCase()]
-    if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().subString(0, 250)
-    if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().subString(0, 250)
+    if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().substring(0, 250)
+    if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().substring(0, 250)
     console.log(variant["feature_1"])
     if(variant.product_category.includes("{gender}")) variant.product_category = variant.product_category.replace("{gender}", "Girl")
     return variant
@@ -229,6 +230,11 @@ let kohlsHeader = [
     {id: "age_category-5_14_1_99999_125_1035", title: "age_category-5_14_1_99999_125_1035"},
     {id: "consumer_pattern-5_14_1_99999_125_1035", title: "consumer_pattern-5_14_1_99999_125_1035"},
     {id: "nrf_size-5_14_1_99999_125_1035", title: "nrf_size-5_14_1_99999_125_1035"},
+    {id: "nrf_size-5_6_3_1_125_1035", title: "nrf_size-5_6_3_1_125_1035"},
+    {id: "nrf_size-5_6_3_4_125_1035", title: "nrf_size-5_6_3_4_125_1035"},
+    {id: "nrf_size-5_6_2_99999_42_331", title: "nrf_size-5_6_2_99999_42_331"},
+    {id: "nrf_size-5_6_2_99999_86_647", title: "nrf_size-5_6_2_99999_86_647"},
+    {id: "nrf_size-5_6_3_4_42_331", title: "nrf_size-5_6_3_4_42_331"}
 ]
 const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
@@ -250,7 +256,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(2000)
+        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(10)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
