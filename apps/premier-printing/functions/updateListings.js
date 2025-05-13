@@ -81,7 +81,7 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         if(k != "nrf_size") constants[k] = p.blank.blank.kohlsHeader[k]
     })
     let variant = {
-        "title": `${p.name} - ${v.size.name} - ${v.color.name}`,
+        "title": `${p.name.substring(0, 100)}`,
         "meta_description": `${p.design.description}`,
         brand: p.brand,
         style_number: `${p.blank.blank.code}_${p.design.sku}`,
@@ -174,6 +174,7 @@ let kohlsHeader = [
     {id: "display_color", title: "display_color"},
     {id: "color_family", title: "color_family"},
     {id: "main_image", title: "main_image"},
+    {id: "care", title: "care"},
     {id: "alt_image_1", title: "alt_image_1"},
     {id: "alt_image_2", title: "alt_image_2"},
     {id: "alt_image_3", title: "alt_image_3"},
