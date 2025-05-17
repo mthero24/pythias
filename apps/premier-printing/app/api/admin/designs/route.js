@@ -66,6 +66,7 @@ export async function POST(req=NextApiRequest){
 }
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
+    console.log(data.design.blanks)
     try{
         let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
         design = await Design.findOne({_id: design._id}).populate("blanks.blank blanks.colors blanks.defaultColor")
@@ -77,6 +78,8 @@ export async function PUT(req=NextApiRequest){
             MarkRecycle(design)
         }
         await Items.updateMany({designRef: design._id}, {design: design.images})
+        console.log(design.gender, "design")
+        console.log(design.blanks[0])
         return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)

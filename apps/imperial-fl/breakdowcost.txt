@@ -1,0 +1,13 @@
+
+
+travel expenses   7000 
+2ndFlight         1000                       monthly production:   3250
+pay              12000                       monthly integration:  0
+jerry             2000                       total                 3250
+equipment         2000
+multiplier        5600
+total            29000
+
+build custom order creator,
+build out production
+build out shopify amazon tik tok and etsy integration.

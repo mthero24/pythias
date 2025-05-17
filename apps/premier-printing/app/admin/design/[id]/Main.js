@@ -25,6 +25,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
     const [upcModal, setUpcModal] = useState(false)
     const [open, setOpen] = useState(false)
     const [blankForAlt, setBlankForAlt] = useState(null)
+    const genders = ["Girls", "Boys", "Mens", "Womens"]
     useEffect(()=>{
         console.log(blanks[0].colors)
         if(blanks){
@@ -34,15 +35,11 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
             if(d.images == undefined) d.images = {};
             console.log(blanks[0].colors[0])
             d.blanks= d.blanks.map(bl=>{
-            // console.log("bl blank", bl.blank, blanks.filter(b=> b._id.toString() == (bl.blank._id? bl.blank._id.toString(): bl.blank.toString()))[0])
-                let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]
-                // if(typeof bl.sizes?[0] == "string") bl.sizes = blank.sizes?.filter(s=> bl.sizes?.includes(s._id.toString()))
-                // console.log(bl.colors, blank.colors)
-                // if(typeof bl.colors[0] == "string") bl.colors = blank.colors.filter(s=> bl.colors.includes(s._id.toString()))
-                
+                let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]                
                 bl.colors = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
-                bl.defaultColor = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})[0]
-                console.log(bl.colors, "colors")
+                console.log(bl.colors.filter(c=> c._id?.toString() == bl.defaultColor?.toString())[0])
+                bl.defaultColor = bl.colors.filter(c=> (c._id?c._id.toString(): c.toString()) == (bl.defaultColor._id? bl.defaultColor._id.toString(): bl.defaultColor.toString()))[0]
+                console.log(bl.colors, bl.defaultColor, "default")
                 bl.colors = bl.colors.filter(c=> c != undefined)
                 bl.blank = blank
                 return bl
@@ -55,8 +52,6 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
             console.log(d.brands, d.blanks, d.marketplaces)
             d.blanks = d.blanks.filter(b=> b.blank != undefined)
             setDesign({...d})
-        
-           // console.log(d.blanks)
             let imGr = []
             blanks.map(b=>{
               if(b.multiImages){
@@ -70,7 +65,6 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 })
               }
             })
-            //console.log(imGr, "image groups")
             setImageGroups(imGr)
             setLoading(false)
           }
@@ -480,6 +474,21 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                     }}
                                 />
                             </Grid2>
+                            <Grid2 size={6}>
+                                {console.log(des.gender, "gender")}
+                                <CreatableSelect
+                                    placeholder="Gender"
+                                    options={[{label: "Gender", value: null}, ...genders.map(l=> {return {label: l, value: l}})]}
+                                    value={des.gender? {label: des.gender, value: des.gender}: null}
+                                    onChange={(vals)=>{
+                                        console.log(vals)
+                                        let d = {...des}
+                                        d.gender = vals.value
+                                        setDesign({...d})
+                                        updateDesign({...d})
+                                    }}
+                                />
+                            </Grid2>
                         </Grid2>
                     </Grid2>
                     <Grid2 size={12}><hr/></Grid2>
@@ -567,6 +576,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                    isMulti
                                />
                                <Box sx={{margin: ".5% 0%"}}>
+                                    {console.log(b.defaultColor?.name, b.blank.code)}
                                     <CreatableSelect
                                         placeholder="Default Color"
                                         options={b.colors?.map(m=>{return {value: m.name, label: m.name}})}

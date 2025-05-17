@@ -59,6 +59,9 @@ export function Main({blank}){
             <Button onClick={()=>{setHeadingModal(true); setHeading(style.targetHeader); setHeadingName("targetHeader")}}>
               Target CSV Headers
             </Button>
+             <Button onClick={()=>{setHeadingModal(true); setHeading(style.shopSimonHeader); setHeadingName("shopSimonHeader")}}>
+              Shop-Simon CSV Headers
+            </Button>
             <HeaderModal open={headingModal} setOpen={setHeadingModal} header={heading} setHeader={setHeading} style={style} setStyle={setStyle} headingName={headingName} />
           </div>
         </div>
