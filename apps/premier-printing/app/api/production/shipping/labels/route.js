@@ -15,7 +15,7 @@ export async function POST(req= NextApiRequest){
         let label = await buyLabel({
             ...data,
             businessAddress: data.marketplace == "TCS"? {name: "TSC Distribution Center", businessName: "ATTN: Online Orders", address: "100 Rains Drive", city: "Fanklin", state: "KY", postalCode: "42134", country: "US"}: JSON.parse(process.env.businessAddress),
-            providers: ["shipstation", "ups"],
+            providers: ["usps", "ups"],
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
             accountNumber: process.env.endiciaAccountNUmber,

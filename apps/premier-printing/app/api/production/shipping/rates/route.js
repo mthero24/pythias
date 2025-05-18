@@ -10,7 +10,7 @@ export async function POST(req= NextApiRequest){
             address: data.address,
             businessAddress: JSON.parse(process.env.businessAddress),
             type: data.marketplace == "faire"? null: data.marketplace == "Zulily" || data.marketplace == "TSC"? "Expedited": "Standard",
-            providers: ["shipstation", "ups"],
+            providers: ["usps", "ups"],
             weight: data.weight,
             dimensions: data.dimensions,
             enSettings: {
