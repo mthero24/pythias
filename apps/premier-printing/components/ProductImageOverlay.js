@@ -10,6 +10,8 @@ const ProductImageOverlay = ({
   styleImage,
   box,
   id,
+  style,
+  colorName,
   defaultId,
   setDefaultImages,
   designImage = "https://upload.wikimedia.org/wikipedia/commons/c/ca/1x1.png",
@@ -33,11 +35,13 @@ const ProductImageOverlay = ({
 
   useEffect(() => {
     let getRender = async ()=>{
-      let res = await axios.post("/api/renderImages", {box, designImage, styleImage, imageDimensions, width: 400})
-      if(res.data.base64) setBase64(res.data.base64)
+      //let res = await axios.post("/api/renderImages", {box, designImage, styleImage, imageDimensions, width: 400})
+      console.log(designImage, colorName)
+      console.log(`http://localhost:3010/images?blank=${style}&blankImage=${styleImage}&side=${side}&colorName=${colorName.value}&design=${designImage}&width=400`)
+      setBase64(`/api/renderImages/${style}-${side}-${colorName.value}.jpg?blank=${style}&blankImage=${styleImage}&side=${side}&colorName=${colorName.value}&design=${designImage}&width=400`)
     }
     getRender()
-    setBase64(null)
+    
   }, [imageGroup]);
 
 
@@ -54,7 +58,7 @@ const ProductImageOverlay = ({
         flexDirection: "column"
       }}
     >
-      {base64 && base64.length > 0 && (
+      {base64 && (
         <Fade in={true} timeout={750}>
           <img
             src={base64}

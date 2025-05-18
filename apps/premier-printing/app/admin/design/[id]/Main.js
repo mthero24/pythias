@@ -38,7 +38,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]                
                 bl.colors = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
                 console.log(bl.colors.filter(c=> c._id?.toString() == bl.defaultColor?.toString())[0])
-                bl.defaultColor = bl.colors.filter(c=> (c._id?c._id.toString(): c.toString()) == (bl.defaultColor._id? bl.defaultColor._id.toString(): bl.defaultColor.toString()))[0]
+                bl.defaultColor = bl.colors.filter(c=> (c._id?c._id.toString(): c.toString()) == (bl.defaultColor?._id? bl.defaultColor._id.toString(): bl.defaultColor?.toString()))[0]
                 console.log(bl.colors, bl.defaultColor, "default")
                 bl.colors = bl.colors.filter(c=> c != undefined)
                 bl.blank = blank
@@ -88,6 +88,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                     useImages.map(im=>{
                         let image = im
                         image.side = i
+                        image.style=b.blank.code
                         if(image.side == "modelFront") image.side = "front"
                         if(image.side == "modelBack") image.side = "back"
                         console.log(image)
@@ -117,6 +118,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                         if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
                             let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
                             image.side = i
+                            image.style=b.blank.code
                             if(image.side == "modelFront") image.side = "front"
                             if(image.side == "modelBack") image.side = "back"
                             images.push(image)
@@ -671,6 +673,8 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                         i.box[0]
                                         }
                                         id={i._id}
+                                        style={i.style}
+                                        colorName={imageColor}
                                         setDefaultImages={setDefaultImages}
                                         styleImage={i.image}
                                         side={i.side}

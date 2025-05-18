@@ -24,7 +24,7 @@ const readImage = async (url)=>{
     let image = sharp(buffer);
     return image
 }
-app.get('/images',  async(req, res) => {
+app.get('*',  async(req, res) => {
     let data = req.query
     console.log(data)
     let base64
