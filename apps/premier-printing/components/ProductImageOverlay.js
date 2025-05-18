@@ -38,7 +38,7 @@ const ProductImageOverlay = ({
       //let res = await axios.post("/api/renderImages", {box, designImage, styleImage, imageDimensions, width: 400})
       console.log(designImage, colorName)
       console.log(`http://localhost:3010/images?blank=${style}&blankImage=${styleImage}&side=${side}&colorName=${colorName.value}&design=${designImage}&width=400`)
-      setBase64(`/api/renderImages?blank=${style}&blankImage=${styleImage}&side=${side}&colorName=${colorName.value}&design=${designImage}&width=400`)
+      setBase64(`/api/renderImages/${style}-${side}.jpg?blank=${style}&blankImage=${styleImage}&side=${side}&colorName=${colorName.value}&design=${designImage}&width=400`)
     }
     getRender()
     
