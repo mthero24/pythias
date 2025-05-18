@@ -188,7 +188,7 @@ app.get("/*", async (req, res)=>{
         if(base64){
             base64 = base64.replace(/^data:image\/\w+;base64,/, "")
             let buffer = new Buffer.from(base64, "base64")
-            return res.send(buffer)
+            return res.status(200).send(buffer)
         }
         // console.log("no base64")
         // res.status(500).send()
