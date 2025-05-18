@@ -1,6 +1,5 @@
 import {NextRequest, NextResponse, userAgent } from "next/server";
 import { getToken } from "next-auth/jwt";
-import rateLimit from 'express-rate-limit';
 const protectedRoutes = [
   {
     path: "/admin/blanks",
@@ -54,27 +53,25 @@ const apiLimiter = rateLimit({
   message: 'Too many requests, please try again later.',
 });
 export async function middleware(req=NextRequest, res) {
-  apiLimiter(req, res, async () => {
-    const protectedRoute = protectedRoutes.find((route) =>
-       req.nextUrl.pathname.startsWith(route.path)
-     );
-    const requestHeaders = new Headers(req.headers)
-    if (protectedRoute) {
-      const token = await getToken({ req });
-      console.log(token, "__TOKEN__");
-      const role = token?.role;
-      console.log(role, "__ROLE__");
-      if (!protectedRoute.roles.includes(role)) {
-        return NextResponse.redirect(new URL("/login", req.url));
-      }
-      requestHeaders.set('user', JSON.stringify(token))
+  const protectedRoute = protectedRoutes.find((route) =>
+      req.nextUrl.pathname.startsWith(route.path)
+    );
+  const requestHeaders = new Headers(req.headers)
+  if (protectedRoute) {
+    const token = await getToken({ req });
+    console.log(token, "__TOKEN__");
+    const role = token?.role;
+    console.log(role, "__ROLE__");
+    if (!protectedRoute.roles.includes(role)) {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
-    return NextResponse.next({
-      request: {
-        // New request headers
-        headers: requestHeaders,
-      },
-    });
+    requestHeaders.set('user', JSON.stringify(token))
+  }
+  return NextResponse.next({
+    request: {
+      // New request headers
+      headers: requestHeaders,
+    },
   });
 }
 
