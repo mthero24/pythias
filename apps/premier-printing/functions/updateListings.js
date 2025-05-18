@@ -386,7 +386,7 @@ export async function updateListings(csvupdate){
                                             let defaults = p.blank.defaultImages?.filter(im=> im.color == v.color._id.toString() && im.side == side)
                                             if(defaults?.length > 0){
                                                 let sideImages =p.blank.blank.multiImages[side].filter(i=> i._id.toString() == defaults[0].id.toString()).map(im=>{
-                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                 })
                                                 for(let im of sideImages){
                                                     if(!bImages.includes(im)) bImages.push(im)
@@ -402,7 +402,7 @@ export async function updateListings(csvupdate){
                                                     let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
                                                     if(modelImages.length > 0){
                                                         let images = modelImages.map(im=>{
-                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                         })
                                                         //console.log(images)
                                                         for(let im of images){
@@ -412,7 +412,7 @@ export async function updateListings(csvupdate){
                                                 }
                                                 if(sideImages.length > 0){
                                                     let images = sideImages.map(im=>{
-                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
                                                     for(let im of images){
@@ -431,7 +431,7 @@ export async function updateListings(csvupdate){
                                                     let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes("default"))
                                                     if(modelImages.length > 0){
                                                         let images = modelImages.map(im=>{
-                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                         })
                                                         for(let im of images){
                                                             if(!bImages.includes(im)) bImages.push(im)
@@ -440,7 +440,7 @@ export async function updateListings(csvupdate){
                                                 }
                                                 if(sideImages.length > 0){
                                                     let images = sideImages.map(im=>{
-                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
                                                     for(let im of images){
@@ -459,7 +459,7 @@ export async function updateListings(csvupdate){
                                                     let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString())
                                                     if(modelImages.length > 0){
                                                         let images = modelImages.map(im=>{
-                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                         })
                                                         //console.log(images)
                                                         for(let im of images){
@@ -469,7 +469,7 @@ export async function updateListings(csvupdate){
                                                 }
                                                 if(sideImages.length > 0){
                                                     let images = sideImages.map(im=>{
-                                                        return `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                        return `https://simplysage.pythiastechnologies.com/api/renderImages/${p.blank.blank.code}-${v.color.name}-${p.design.sku}-${side}.jpg?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
                                                     for(let im of images){
@@ -605,7 +605,7 @@ export async function updateListings(csvupdate){
                                             let defaults = p.blank.defaultImages?.filter(im=> im.color == v.color._id.toString() && im.side == side)
                                             if(defaults?.length > 0){
                                                 let sideImages =p.blank.blank.multiImages[side].filter(i=> i._id.toString() == defaults[0].id.toString()).map(im=>{
-                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                 })
                                                 for(let im of sideImages){
                                                     if(!bImages.includes(im)) bImages.push(im)
@@ -621,7 +621,7 @@ export async function updateListings(csvupdate){
                                                     let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
                                                     if(modelImages.length > 0){
                                                         let images = modelImages.map(im=>{
-                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                         })
                                                         //console.log(images)
                                                         for(let im of images){
@@ -631,7 +631,7 @@ export async function updateListings(csvupdate){
                                                 }
                                                 if(sideImages.length > 0){
                                                     let images = sideImages.map(im=>{
-                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
                                                     for(let im of images){
@@ -650,7 +650,7 @@ export async function updateListings(csvupdate){
                                                     let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes("default"))
                                                     if(modelImages.length > 0){
                                                         let images = modelImages.map(im=>{
-                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                         })
                                                         for(let im of images){
                                                             if(!bImages.includes(im)) bImages.push(im)
@@ -659,7 +659,7 @@ export async function updateListings(csvupdate){
                                                 }
                                                 if(sideImages.length > 0){
                                                     let images = sideImages.map(im=>{
-                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
                                                     for(let im of images){
@@ -678,7 +678,7 @@ export async function updateListings(csvupdate){
                                                     let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString())
                                                     if(modelImages.length > 0){
                                                         let images = modelImages.map(im=>{
-                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                         })
                                                         //console.log(images)
                                                         for(let im of images){
@@ -688,7 +688,7 @@ export async function updateListings(csvupdate){
                                                 }
                                                 if(sideImages.length > 0){
                                                     let images = sideImages.map(im=>{
-                                                        return `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=1200`
+                                                        return `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
                                                     })
                                                     //console.log(images)
                                                     for(let im of images){
