@@ -14,6 +14,7 @@ export async function POST(req= NextApiRequest){
     try{
         let label = await buyLabel({
             ...data,
+            imageType: "PDF",
             businessAddress: data.marketplace == "TCS"? {name: "TSC Distribution Center", businessName: "ATTN: Online Orders", address: "100 Rains Drive", city: "Fanklin", state: "KY", postalCode: "42134", country: "US"}: JSON.parse(process.env.businessAddress),
             providers: ["usps", "ups"],
             enSettings: {

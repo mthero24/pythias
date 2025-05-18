@@ -8,14 +8,14 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
     credentialsFedEx,
     credentialsFedExNew,
     credentialsShipStation,
-    credentialsUPS, dpi, ignoreBadAddress, imageFormat, thirdParty, items}){
+    credentialsUPS, dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType}){
     if(selectedShipping.provider == "usps"){
         if(providers.includes("endicia")){
             let res = await buyShippingLabelEn({address, poNumber, weight, selectedShipping, dimensions, businessAddress, enSettings, dpi,imageFormat, items})
             return res
         }
         else if(providers.includes("usps")){
-            let res = await purchaseLabel({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, dpi, ignoreBadAddress: true, imageFormat, items })
+            let res = await purchaseLabel({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, dpi, ignoreBadAddress: true, imageFormat, items, imageType })
             return res
         }else if(providers.includes("shipstation")){
             let res = await ShipStationShip({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials: credentialsShipStation, dpi, ignoreBadAddress, imageFormat, items })
