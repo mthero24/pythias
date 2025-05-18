@@ -19,9 +19,9 @@ export async function POST(req= NextApiRequest){
             passPhrase: process.env.endiciaPassPhrase,
             },
             credentials: {
-            clientId: process.env.uspsClientId,
-            clientSecret: process.env.uspsClientSecret,
-            accountNumber: process.env.accountNumber
+                clientId: process.env.uspsClientId,
+                clientSecret: process.env.uspsClientSecret,
+                accountNumber: process.env.accountNumber
             },
             credentialsFedEx: {
             accountNumber: process.env.tpalfedexaccountnumber,

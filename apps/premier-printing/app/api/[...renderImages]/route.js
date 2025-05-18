@@ -29,7 +29,8 @@ const createImage = async (data)=>{
     }
     base64 = await readImage(data.styleImage)
     console.log(data)
-    if(data.box && data.designImage && data.designImage != "undefined" && base64){
+    console.log(data.designImage != "null", "design image")
+    if(data.box && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64){
         base64 = base64.resize({
             width: data.width,
             height: data.width,
@@ -126,9 +127,9 @@ const createImage = async (data)=>{
             position: sharp.strategy.entropy
         })
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
-        //console.log(base64, "base64")
+        console.log(base64, "base64")
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
-    }else if(data.designImage){
+    }else if(data.designImage && data.designImage != "undefined" && data.designImage != "null"){
         base64 = await readImage(data.designImage)
         if(base64){
             base64 = base64.resize({
@@ -169,13 +170,15 @@ export async function GET(req){
     //console.log(blankImage?.box[0], "box")
     let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage, width}
     let base64 = await createImage(data)
-    base64 = base64.replace(/^data:image\/\w+;base64,/, "")
-    let buffer = new Buffer.from(base64, "base64")
-    return new NextResponse(buffer, {
-        headers:{
-            'Content-Type': 'image/jpeg',
-        }
-    })
+    if(base64){
+        base64 = base64?.replace(/^data:image\/\w+;base64,/, "")
+        let buffer = new Buffer.from(base64, "base64")
+        return new NextResponse(buffer, {
+            headers:{
+                'Content-Type': 'image/jpeg',
+            }
+        })
+    }
 }
 export async function POST(req=NextApiRequest){
     let data = await req.json()

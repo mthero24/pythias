@@ -35,6 +35,7 @@ export const ColorImage = ({
     overridePrintBox,
     box,
     blank,
+    style,
     colorCropBoxData,
     imageGroups,
     setImageGroups,
@@ -200,8 +201,11 @@ export const ColorImage = ({
                                                 box={
                                                 null
                                                 }
+                                                colorName={col.name}
+                                                style={style?.code}
                                                 styleImage={i.image}
-                                                designImage={null }
+                                                designImage={null}
+                                                side={type}
                                             />
                                             <Box
                                             sx={{
