@@ -70,6 +70,7 @@ const schema = new mongoose.Schema({
   overrideImages: Object,
   cleaned: {type: Boolean, default: false},
   gender: String,
+  season: String,
   sendToMarketplaces: {type: Boolean, default: false},
 });
 

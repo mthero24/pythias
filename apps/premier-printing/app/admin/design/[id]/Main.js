@@ -498,6 +498,21 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                     }}
                                 />
                             </Grid2>
+                            <Grid2 size={6}>
+                                {console.log(des.gender, "gender")}
+                                <CreatableSelect
+                                    placeholder="Season"
+                                    options={[]}
+                                    value={des.season? {label: des.season, value: des.season}: null}
+                                    onChange={(vals)=>{
+                                        console.log(vals)
+                                        let d = {...des}
+                                        d.season = vals.value
+                                        setDesign({...d})
+                                        updateDesign({...d})
+                                    }}
+                                />
+                            </Grid2>
                         </Grid2>
                     </Grid2>
                     <Grid2 size={12}><hr/></Grid2>

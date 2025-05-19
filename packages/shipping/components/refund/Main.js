@@ -52,7 +52,7 @@ export function Refund({ords, pa}){
                                     <Typography>{l.trackingNumber}</Typography>
                                 </Grid2>
                                 <Grid2 size={3}>
-                                    <Typography>{l.trackingInfo[l.trackingInfo.length - 1]} {l.trackingInfo.length}</Typography>
+                                    <Typography>{l.trackingInfo[0]} {l.trackingInfo.length}</Typography>
                                 </Grid2>
                                 <Grid2 size={1}>
                                     <Typography>{l.delivered? "true": "false"}</Typography>
