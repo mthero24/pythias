@@ -104,7 +104,10 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
     if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().substring(0, 250)
     if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().substring(0, 250)
     console.log(variant["feature_1"])
-    if(variant.product_category.includes("{gender}")) variant.product_category = variant.product_category.replace("{gender}", "Girl")
+    if(variant.product_category.includes("{gender}")) {
+        if(p.design.gender) variant.product_category = variant.product_category.replace("{gender}", p.design.gender)
+        else variant.product_category = variant.product_category.replace("{gender}", "Girl")
+    }
     return variant
 }
 let targetHeader = [
@@ -239,7 +242,9 @@ let kohlsHeader = [
     {id: "nrf_size-5_6_3_4_125_1035", title: "nrf_size-5_6_3_4_125_1035"},
     {id: "nrf_size-5_6_2_99999_42_331", title: "nrf_size-5_6_2_99999_42_331"},
     {id: "nrf_size-5_6_2_99999_86_647", title: "nrf_size-5_6_2_99999_86_647"},
-    {id: "nrf_size-5_6_3_4_42_331", title: "nrf_size-5_6_3_4_42_331"}
+    {id: "nrf_size-5_6_3_4_42_331", title: "nrf_size-5_6_3_4_42_331"},
+    {id: "price", title: "price"},
+    {id: "quantity", title: "quantity"}
 ]
 const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
