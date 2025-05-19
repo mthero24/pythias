@@ -1,16 +1,19 @@
 "use client";
-import {Box, Typography,LinearProgress , Card, Button, Grid2, Link } from "@mui/material"
+import {Box, Typography,LinearProgress , Card, Button, Grid2, Link, Checkbox, FormGroup, FormControlLabel } from "@mui/material"
 import {useState, useEffect} from "react"
 import axios from "axios"
-export function Main({act, past}){
+export function Main({act, past, brands}){
     const [active, setActive] = useState(act? act: false)
     const [files, setFiles] = useState(past)
+    const [sendTo, setSendTo] = useState({target: true, kohls: true, simplySimon: true})
     console.log(files, "files")
     const start = async ()=>{
-        let res = await axios.post("/api/admin/create-csv")
+        let res = await axios.post("/api/admin/create-csv", sendTo)
         if(res.data.error) setActive(false)
         else {
             console.log(res.data.past, "past")
+            let send = {target: true, kohls: true, simplySimon: true}
+            setSendTo({...send})
             setActive({...res.data.csvupdate})
             setFiles(res.data.past)
         }
@@ -43,6 +46,26 @@ export function Main({act, past}){
                                 <Button fullWidth onClick={start}>Start Update</Button>
                             </Box>
                         </Box>
+                        <FormGroup>
+                            <FormControlLabel control={<Checkbox checked={sendTo.kohls} onClick={()=>{
+                            let send = {...sendTo}
+                            if(event.target.checked) send.kohls = true
+                            else send.kohls = false
+                            setSendTo({...send})
+                            }} />} label="Kohls" />
+                            <FormControlLabel required control={<Checkbox checked={sendTo.target} onClick={()=>{
+                                let send = {...sendTo}
+                                if(event.target.checked) send.target = true
+                                else send.target = false
+                                setSendTo({...send})
+                            }}/>} label="Target" />
+                            <FormControlLabel required control={<Checkbox checked={sendTo.simplySimon} onClick={()=>{
+                                let send = {...sendTo}
+                                if(event.target.checked) send.simplySimon = true
+                                else send.simplySimon = false
+                                setSendTo({...send})
+                            }}/>} label="Simply Simon" />
+                        </FormGroup>
                     </>
                 )}
                  {active && (

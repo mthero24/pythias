@@ -70,6 +70,7 @@ const schema = new mongoose.Schema({
   overrideImages: Object,
   cleaned: {type: Boolean, default: false},
   gender: String,
+  sendToMarketplaces: {type: Boolean, default: false},
 });
 
 export default PremierPrinting.model("Design", schema);

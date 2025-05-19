@@ -254,10 +254,10 @@ const update = async(csvupdate, url, brand, marketplace )=>{
     console.log(csvUpdate.files)
     csvUpdate = await csvUpdate.save()
 }
-export async function updateListings(csvupdate){
+export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(1500)
+        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(2000)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -337,7 +337,7 @@ export async function updateListings(csvupdate){
         Object.keys(brands).map(b=>{
             Object.keys(brands[b]).map(async m=>{
                 //console.log(b, m, brands[b][m].length)
-                if(m.toLowerCase() == "kohl's"){
+                if(m.toLowerCase() == "kohl's" && sendTo.kohls == true){
                     console.log("make a target product csv")
                     
                     let products = [] 
@@ -510,7 +510,7 @@ export async function updateListings(csvupdate){
                     //console.log(csvStringifier.getHeaderString());
                     await update(csvupdate, url, b, m)
                 }
-                if(m.toLowerCase() == "target"){
+                if(m.toLowerCase() == "target" && sendTo.target == true){
                     console.log("make a target product csv")
                     
                     let products = [] 
@@ -780,6 +780,10 @@ export async function updateListings(csvupdate){
                 // }
             })
         })
+        for(let design of designs){
+            design.sendToMarketplaces = false
+            await design.save()
+        }
     }catch(e){
         console.log(csvupdate, "update", e)
         let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
