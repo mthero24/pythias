@@ -64,7 +64,8 @@ export function Main({designs, count, query, pa}){
                                             <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
                                         </Box>
                                     </Link>
-                                    {d.sendToMarketplaces == false && !checked.includes(d._id.toString()) && <Button onClick={()=>{
+                                    {console.log(d)}
+                                    {(d.sendToMarketplaces == false || d.sendToMarketplaces == undefined) && !checked.includes(d._id.toString()) && <Button onClick={()=>{
                                         console.log(d)
                                         d.sendToMarketplaces = true
                                         console.log(d)
