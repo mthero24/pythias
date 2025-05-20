@@ -162,7 +162,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
     let token = await GetToken({credentials})
     let data = {
         imageInfo: {
-            imageType:imageFormat? imageFormat: dpi? "ZPL300DPI": "ZPL203DPI",
+            imageType: imageFormat? imageFormat: dpi? "ZPL300DPI": "ZPL203DPI",
             receiptOption: "NONE"
         },
         "toAddress": {
@@ -222,7 +222,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
                 console.log(resData, "resData")
                 return {error:true, msg: `${resData.error.message} - ${resData?.error.errors[0]?.detail} - ${resData?.error.errors[0]?.source.parameter}`}
             }
-            else return {error:false, label: imageType == "PDF"? res.data.labelImage.replace("data:application/pdf;base64,", "") :res.data.labelImage, trackingNumber: res.data.trackingNumber, cost: res.data.postage}
+            else return {error:false, label: imageFormat == "PDF"? res.data.labelImage.replace("data:application/pdf;base64,", "") :res.data.labelImage, trackingNumber: res.data.trackingNumber, cost: res.data.postage}
         }
         else return paymentAutho
     }else {
