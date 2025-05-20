@@ -146,11 +146,7 @@ const paymentAuth = async ({token, credentials})=>{
         return {error: true, msg: "something went wrong"}
     }
 }
-<<<<<<< HEAD
-export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageType}){
-=======
 export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageFormat}){
->>>>>>> fbb077855373c3f6f8d0d5936dd33fdd4ad3ad11
     //console.log(credentials)
     let customsForm
     if(address.state == "AP" || address.state == "AA" || address.state == "AE"){
@@ -166,11 +162,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
     let token = await GetToken({credentials})
     let data = {
         imageInfo: {
-<<<<<<< HEAD
-            imageType: imageType? imageType: dpi? "ZPL300DPI": "ZPL203DPI",
-=======
             imageType:imageFormat? imageFormat: dpi? "ZPL300DPI": "ZPL203DPI",
->>>>>>> fbb077855373c3f6f8d0d5936dd33fdd4ad3ad11
             receiptOption: "NONE"
         },
         "toAddress": {
