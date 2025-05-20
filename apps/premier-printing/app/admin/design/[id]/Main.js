@@ -323,6 +323,15 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
         setDesign({...d})
         updateDesign({...d})
     }
+    const updateNRFSize = ({blank, nrf_size}) =>{
+        let d = {...des}
+        console.log(blank)
+        let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
+        //console.log(color)
+        b.nrf_size = nrf_size
+        setDesign({...d})
+        updateDesign({...d})
+    }
     const setDefaultImages = ({id, side})=>{
         let d = {...des}
         console.log(id, "id")
@@ -607,6 +616,17 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                         value={b.defaultColor? {value: b.defaultColor?.name, label: b.defaultColor.name}: null}
                                         onChange={(vals)=>{
                                             updateDefaultColor({blank:b, color:vals})
+                                        }}
+                                    />
+                                </Box>
+                                <Box sx={{margin: ".5% 0%"}}>
+                                    {console.log(b.defaultColor?.name, b.blank.code)}
+                                    <CreatableSelect
+                                        placeholder="NRF Size"
+                                        options={[]}
+                                        value={b.nrf_size? {value: b.nrf_size, label: b.nrf_size}: null}
+                                        onChange={(vals)=>{
+                                            updateNRFSize({blank:b, nrf_size: vals.value})
                                         }}
                                     />
                                 </Box>
