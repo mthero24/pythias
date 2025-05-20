@@ -23,16 +23,17 @@ export async function POST(req = NextApiRequest){
                 address: item.order.shippingAddress, 
                 poNumber: item.order.poNumber, 
                 weight: item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight?item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight: 8, 
-                selectedShipping: {provider: "usps", name: "usps_ground_advantage"}, dimensions: {width: 8, length: 11, height: 1}, 
+                selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
                 businessAddress: JSON.parse(process.env.businessAddress),
-                providers: ["shipstation", "ups"],                
+                providers: ["usps", "ups"],                
                 credentials: {
                     clientId: process.env.uspsClientId,
                     clientSecret: process.env.uspsClientSecret,
                     crid: process.env.uspsCRID,
                     mid: process.env.uspsMID,
                     manifestMID: process.env.manifestMID,
-                    accountNumber: process.env.accountNumber
+                    accountNumber: process.env.accountNumber,
+                    api: "apis"
                 },
                 enSettings: {
                     requesterID: process.env.endiciaRequesterID,
@@ -42,6 +43,7 @@ export async function POST(req = NextApiRequest){
                 credentialsShipStation: {
                     apiKey: process.env.ssV2
                 },
+                imageFormat: "PDF"
             }
             if(!item.order.preShipped){
                 let label = await buyLabel(send)

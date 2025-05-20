@@ -28,7 +28,8 @@ export async function POST(req= NextApiRequest){
                 crid: process.env.uspsCRID,
                 mid: process.env.uspsMID,
                 manifestMID: process.env.manifestMID,
-                accountNumber: process.env.accountNumber
+                accountNumber: process.env.accountNumber,
+                api: "apis"
             },
             credentialsFedEx: {
                 accountNumber: process.env.tpalfedexaccountnumber,

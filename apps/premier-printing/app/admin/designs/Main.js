@@ -12,6 +12,11 @@ export function Main({designs, count, query, pa}){
     const [search, setSearch] = useState(query)
     const [page, setPage] = useState(pa? pa: 1)
     const [hasMore, setHasMore] = useState(true)
+    const [checked, setChecked] = useState([])
+    let updateDesign = async (des)=>{
+        let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
+        if(res?.data?.error) alert(res.data.msg)
+    }
     useEffect(()=>{
         const getDesigns = async ()=>{
             let res = await axios.get(`/api/admin/designs?${search != "" && search != undefined? `q=${search}&`: ""}page=${page}`)
@@ -48,8 +53,8 @@ export function Main({designs, count, query, pa}){
                     <Grid2 container spacing={2}>
                         {designss && designss.map(d=>(
                             <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
-                                <Link href={`/admin/design/${d._id}`} target="_blank">
-                                    <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
+                                <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
+                                    <Link href={`/admin/design/${d._id}`} target="_blank">
                                         <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "250px", background: "#e2e2e2"}}>
                                             <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.upperSleeve? d.images?.upperSleeve: d.images?.lowerSleeve? d.images?.lowerSleeve: d.images?.pocket? d.images?.pocket:  d.images?.center?  d.images?.center: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
                                         </Box>
@@ -58,8 +63,18 @@ export function Main({designs, count, query, pa}){
                                             <Typography sx={{fontSize: '0.8rem', color: "black"}}>SKU: {d.sku}</Typography>
                                             <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
                                         </Box>
-                                    </Card>
-                                </Link>
+                                    </Link>
+                                    {console.log(d)}
+                                    {(d.sendToMarketplaces == false || d.sendToMarketplaces == undefined) && !checked.includes(d._id.toString()) && <Button onClick={()=>{
+                                        console.log(d)
+                                        d.sendToMarketplaces = true
+                                        console.log(d)
+                                        updateDesign({...d})
+                                        let c = [...checked]
+                                        c.push(d._id.toString)
+                                        setChecked(c)
+                                    }}>Resend To Market Places</Button>}
+                                </Card>                                
                             </Grid2>
                         ))}
                     </Grid2>

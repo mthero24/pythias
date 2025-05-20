@@ -12,6 +12,12 @@ export async function DesignSearch ({q, productsPerPage, page}){
     name: 1,
     images: 1,
     sku: 1,
+    sendToMarketplaces: 1,
+    b2m: 1,
+    blanks: 1,
+    brands: 1,
+    cleaned: 1,
+    description: 1,
     score: {
       $meta: "searchScore",
     },

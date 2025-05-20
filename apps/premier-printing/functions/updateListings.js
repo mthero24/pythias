@@ -21,6 +21,8 @@ const createTargetProduct = ({p, product, material,material_1, material_percenta
         brand: p.brand,
         sku: `${p.design.sku}_${p.blank.blank.code}`,
         description: `${p.design.description} ${p.blank.blank.description}`,
+        "fields.season_or_event_depiction": p.design.season,
+        "fields.season": p.design.season,
         "options.0": 'size',
         "options.1": 'color',
         group: "product",
@@ -44,6 +46,8 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
         "variant.color": v.color.name,
         "variant.size": v.size.name,
         group: "variant",
+        "fields.season_or_event_depiction": p.design.season,
+        "fields.season": p.design.season,
         "group_skus.0": `${p.design.sku}_${p.blank.blank.code}`,
         "images.default.main.url": bImages[0],
         "images.default.1.alternate.url": bImages[1],
@@ -100,7 +104,10 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
     if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().substring(0, 250)
     if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().substring(0, 250)
     console.log(variant["feature_1"])
-    if(variant.product_category.includes("{gender}")) variant.product_category = variant.product_category.replace("{gender}", "Girl")
+    if(variant.product_category.includes("{gender}")) {
+        if(p.design.gender) variant.product_category = variant.product_category.replace("{gender}", p.design.gender)
+        else variant.product_category = variant.product_category.replace("{gender}", "Girl")
+    }
     return variant
 }
 let targetHeader = [
@@ -235,7 +242,9 @@ let kohlsHeader = [
     {id: "nrf_size-5_6_3_4_125_1035", title: "nrf_size-5_6_3_4_125_1035"},
     {id: "nrf_size-5_6_2_99999_42_331", title: "nrf_size-5_6_2_99999_42_331"},
     {id: "nrf_size-5_6_2_99999_86_647", title: "nrf_size-5_6_2_99999_86_647"},
-    {id: "nrf_size-5_6_3_4_42_331", title: "nrf_size-5_6_3_4_42_331"}
+    {id: "nrf_size-5_6_3_4_42_331", title: "nrf_size-5_6_3_4_42_331"},
+    {id: "price", title: "price"},
+    {id: "quantity", title: "quantity"}
 ]
 const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
@@ -254,10 +263,10 @@ const update = async(csvupdate, url, brand, marketplace )=>{
     console.log(csvUpdate.files)
     csvUpdate = await csvUpdate.save()
 }
-export async function updateListings(csvupdate){
+export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(1500)
+        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(2000)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -337,7 +346,7 @@ export async function updateListings(csvupdate){
         Object.keys(brands).map(b=>{
             Object.keys(brands[b]).map(async m=>{
                 //console.log(b, m, brands[b][m].length)
-                if(m.toLowerCase() == "kohl's"){
+                if(m.toLowerCase() == "kohl's" && sendTo.kohls == true){
                     console.log("make a target product csv")
                     
                     let products = [] 
@@ -510,7 +519,7 @@ export async function updateListings(csvupdate){
                     //console.log(csvStringifier.getHeaderString());
                     await update(csvupdate, url, b, m)
                 }
-                if(m.toLowerCase() == "target"){
+                if(m.toLowerCase() == "target" && sendTo.target == true){
                     console.log("make a target product csv")
                     
                     let products = [] 
@@ -780,6 +789,10 @@ export async function updateListings(csvupdate){
                 // }
             })
         })
+        for(let design of designs){
+            design.sendToMarketplaces = false
+            await design.save()
+        }
     }catch(e){
         console.log(csvupdate, "update", e)
         let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})

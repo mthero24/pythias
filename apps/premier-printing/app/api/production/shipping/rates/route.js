@@ -21,7 +21,8 @@ export async function POST(req= NextApiRequest){
             credentials: {
                 clientId: process.env.uspsClientId,
                 clientSecret: process.env.uspsClientSecret,
-                accountNumber: process.env.accountNumber
+                accountNumber: process.env.accountNumber,
+                api: "apis"
             },
             credentialsFedEx: {
                 accountNumber: process.env.tpalfedexaccountnumber,

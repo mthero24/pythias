@@ -2,7 +2,7 @@ import axios from "axios"
 import fs from "fs"
 async function GetToken({credentials}){
     console.log(credentials)
-    let res = await axios.post("https://api.usps.com/oauth2/v3/token", {
+    let res = await axios.post(`https://${credentials.api? credentials.api: "api"}.usps.com/oauth2/v3/token`, {
         grant_type: "client_credentials",
         client_id: credentials.clientId,
         client_secret: credentials.clientSecret,
@@ -25,7 +25,7 @@ export async function TrackPackage({tn, credentials}){
                 Authorization: `Bearer ${token}`
             }
         }
-        let res = await axios.get(`https://api.usps.com/tracking/v3/tracking/${tn}`, headers).catch(e=>{
+        let res = await axios.get(`https://${credentials.api? credentials.api: "api"}.usps.com/tracking/v3/tracking/${tn}`, headers).catch(e=>{
             //console.log(e.response.data)
         })
         //console.log(res?.data)
@@ -46,7 +46,7 @@ export async function GenerateManifest({PicNumbers, credentials, businessAddress
             }
         }
         let resData
-        let res = await axios.post("https://api.usps.com/scan-forms/v3/scan-form", {
+        let res = await axios.post(`https://${credentials.api? credentials.api: "api"}.usps.com/scan-forms/v3/scan-form`, {
             form: "5630",
             imageType: "JPG",
             labelType: "8.5x11LABEL",
@@ -106,7 +106,7 @@ export async function getRatesUSPS({address, weight, dimensions, businessAddress
             }
         }
         let resData
-        let res = await axios.post("https://api.usps.com/prices/v3/base-rates/search", data, headers).catch(e=>{resData= e.response.data})
+        let res = await axios.post(`https://${credentials.api? credentials.api: "api"}.usps.com/prices/v3/base-rates/search`, data, headers).catch(e=>{resData= e.response.data})
         console.log(res?.data, resData)
         console.log(resData? resData.error: "")
         if(res?.data.error) {
@@ -136,7 +136,7 @@ const paymentAuth = async ({token, credentials})=>{
         }
     }
     let resData
-    let res = await axios.post("https://api.usps.com/payments/v3/payment-authorization", data, headers).catch(e=>{resData= e.response.data})
+    let res = await axios.post(`https://${credentials.api? credentials.api: "api"}.usps.com/payments/v3/payment-authorization`, data, headers).catch(e=>{resData= e.response.data})
     console.log(res?.data, "res.data", resData, "resData")
     if(res?.data.paymentAuthorizationToken){
         return {error: false, paymentAuth: res?.data.paymentAuthorizationToken}
@@ -146,7 +146,11 @@ const paymentAuth = async ({token, credentials})=>{
         return {error: true, msg: "something went wrong"}
     }
 }
+<<<<<<< HEAD
 export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageType}){
+=======
+export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageFormat}){
+>>>>>>> fbb077855373c3f6f8d0d5936dd33fdd4ad3ad11
     //console.log(credentials)
     let customsForm
     if(address.state == "AP" || address.state == "AA" || address.state == "AE"){
@@ -158,10 +162,15 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
         }
     }
     console.log("cutoms", customsForm)
+    console.log(address)
     let token = await GetToken({credentials})
     let data = {
         imageInfo: {
+<<<<<<< HEAD
             imageType: imageType? imageType: dpi? "ZPL300DPI": "ZPL203DPI",
+=======
+            imageType:imageFormat? imageFormat: dpi? "ZPL300DPI": "ZPL203DPI",
+>>>>>>> fbb077855373c3f6f8d0d5936dd33fdd4ad3ad11
             receiptOption: "NONE"
         },
         "toAddress": {
@@ -175,8 +184,8 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
           "ignoreBadAddress": ignoreBadAddress
         },
         "fromAddress": {
-          "firstName": businessAddress.name,
-          "lastName": businessAddress.companyName,
+          "firstName": businessAddress.name.split(" ")[0],
+          "lastName": businessAddress.companyName? businessAddress.companyName: businessAddress.name.split(" ")[1],
           "streetAddress": businessAddress.address1? businessAddress.address1: businessAddress.addressLine1,
           "secondaryAddress": businessAddress.address2? businessAddress.address2: businessAddress.addressLine2,
           "city": businessAddress.city,
@@ -212,7 +221,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
                 }
             }
             let resData
-            let res = await axios.post("https://api.usps.com/labels/v3/label", data, headers).catch(e=>{resData= e.response.data})
+            let res = await axios.post(`https://${credentials.api? credentials.api: "api"}.usps.com/labels/v3/label`, data, headers).catch(e=>{resData= e.response.data})
             if(res?.data.error){
                 console.log("res.data")
                 return {error:true, msg: res.data.message}
@@ -243,7 +252,7 @@ export const refund = async ({trackingNumber, credentials})=>{
                 }
             let resData
             console.log(trackingNumber)
-            let res = await axios.delete(`https://api.usps.com/labels/v3/label/${trackingNumber}`, headers).catch(e=>{resData= e.response.data})
+            let res = await axios.delete(`https://${credentials.api? credentials.api: "api"}.usps.com/labels/v3/label/${trackingNumber}`, headers).catch(e=>{resData= e.response.data})
             console.log(res?.data, resData)
             if(res?.data.error){
                 return {error: true, msg: "error from usps"}
@@ -267,7 +276,7 @@ export const checkAddress = async ({address, credentials})=>{
             }
             }
         let resData
-        let res = await axios.get(`https://api.usps.com/addresses/v3/address?streetAddress=${address.address1}&secondaryAddress=${address.apt}&city=${address.city}&state=${address.state}&ZIPCode=${address.zip}`, headers).catch(e=>{resData= e.response.data})
+        let res = await axios.get(`https://${credentials.api? credentials.api: "api"}.usps.com/addresses/v3/address?streetAddress=${address.address1}&secondaryAddress=${address.apt}&city=${address.city}&state=${address.state}&ZIPCode=${address.zip}`, headers).catch(e=>{resData= e.response.data})
         console.log(res?.data, resData)
         if(res?.data.error){
             return {error: true, msg: "error from usps"}

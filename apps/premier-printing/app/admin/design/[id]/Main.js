@@ -365,14 +365,21 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                             setDesign({...d});
                             updateDesign({...d})
                             alert(`Design is ${d.published? "published": "unpublished"} and will be ${d.published? "uploaded to all": "removed from all"} market places shortly`)
-                        }}>{des.published? "Unpublish": "Publish"}</Button>
-                        <Button sx={{margin: "1% 2%", background: "#FF2400", color: "#ffffff"}} onClick={async ()=>{
-                            let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
-                            if(res.data.error) alert(res.data.msg)
-                            else {
-                                router.push("/admin/designs")
-                            }
-                        }}>Delete</Button>
+            }}>{des.published? "Unpublish": "Publish"}</Button>
+            {!des.sendToMarketplaces && <Button sx={{margin: "1% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
+                            let d = {...des};
+                            d.sendToMarketplaces = true;
+                            setDesign({...d});
+                            updateDesign({...d})
+                            alert(`Design will resend to market places next time files are made`)
+            }}>Resend To Market Places</Button>}
+            <Button sx={{margin: "1% 2%", background: "#FF2400", color: "#ffffff"}} onClick={async ()=>{
+                let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
+                if(res.data.error) alert(res.data.msg)
+                else {
+                    router.push("/admin/designs")
+                }
+            }}>Delete</Button>
             </Box>
             <Accordion >
                 <AccordionSummary
@@ -486,6 +493,21 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                         console.log(vals)
                                         let d = {...des}
                                         d.gender = vals.value
+                                        setDesign({...d})
+                                        updateDesign({...d})
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={6}>
+                                {console.log(des.gender, "gender")}
+                                <CreatableSelect
+                                    placeholder="Season"
+                                    options={[]}
+                                    value={des.season? {label: des.season, value: des.season}: null}
+                                    onChange={(vals)=>{
+                                        console.log(vals)
+                                        let d = {...des}
+                                        d.season = vals.value
                                         setDesign({...d})
                                         updateDesign({...d})
                                     }}
