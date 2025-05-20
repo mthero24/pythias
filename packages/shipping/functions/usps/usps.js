@@ -98,7 +98,7 @@ export async function getRatesUSPS({address, weight, dimensions, businessAddress
         "accountNumber": credentials.accountNumber
     }
     console.log(data)
-    await fs.writeFileSync('data.txt', JSON.stringify(data), 'utf8');
+    //await fs.writeFileSync('data.txt', JSON.stringify(data), 'utf8');
     if(token){
         let headers = {
             headers: {
@@ -110,12 +110,12 @@ export async function getRatesUSPS({address, weight, dimensions, businessAddress
         console.log(res?.data, resData)
         console.log(resData? resData.error: "")
         if(res?.data.error) {
-            await fs.writeFileSync('data2.txt', JSON.stringify(res.data), 'utf8');
+            //await fs.writeFileSync('data2.txt', JSON.stringify(res.data), 'utf8');
             console.log(res.data.errors)
             return {error:true, msg: res.data.message}
         }
         else if(resData){
-            await fs.writeFileSync('data2.txt', JSON.stringify(resData), 'utf8');
+            //await fs.writeFileSync('data2.txt', JSON.stringify(resData), 'utf8');
             return {error:true, msg: resData.error.message} 
         }
         else return {error:false, rate: res.data.totalBasePrice}
@@ -222,7 +222,7 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
                 console.log(resData, "resData")
                 return {error:true, msg: `${resData.error.message} - ${resData?.error.errors[0]?.detail} - ${resData?.error.errors[0]?.source.parameter}`}
             }
-            else return {error:false, label: res.data.labelImage, trackingNumber: res.data.trackingNumber, cost: res.data.postage}
+            else return {error:false, label: imageType == "PDF"? res.data.labelImage.replace("data:application/pdf;base64,", "") :res.data.labelImage, trackingNumber: res.data.trackingNumber, cost: res.data.postage}
         }
         else return paymentAutho
     }else {
