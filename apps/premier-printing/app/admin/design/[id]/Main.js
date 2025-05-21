@@ -754,9 +754,11 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
       };
     useEffect(()=>{
         const getUpcs = async()=>{
-            let res = await axios.get(`/api/upc?design=${design?._id}&blank=${blank?._id}`)
-            console.log(res.data)
-            setUpc(res.data.upc)
+            if(blank){
+                let res = await axios.get(`/api/upc?design=${design?._id}&blank=${blank?._id}`)
+                console.log(res.data)
+                if(!res?.data.error) setUpc(res.data.upc)
+            }
         }
         getUpcs()
     }, [open])

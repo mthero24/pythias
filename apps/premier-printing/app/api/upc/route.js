@@ -3,7 +3,7 @@ import UpcToSku from "@/models/skuUpcConversion";
 export async function GET(req){
     let blank = req.nextUrl.searchParams.get("blank")
     let design = req.nextUrl.searchParams.get("design")
-    if(design && blank){
+    if(design && blank && blank != "undefined"){
         let sku = await UpcToSku.find({design: design, blank: blank}).populate("blank", "name code").populate("design", "name sku").populate("color", "name")
         console.log(sku.length)
         return NextResponse.json({error: false, upc: sku})
