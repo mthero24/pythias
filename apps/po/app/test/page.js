@@ -5,35 +5,35 @@ import fs from "fs";
 import {getRates} from "@pythias/shipping";
 import {getRatesFeNew, purchaseFedexNew} from "@pythias/shipping";
 export default async function POST(req= NextApiRequest){
-   let address ={
-    name: "Michael Thero",
-    address1: "1421 hidden view dr",
-    address2: "",
-    city: "lapeer",
-    state: "MI",
-    zip: "48446",
-    country: "US"
-   }
-   let businessAddress =JSON.parse(process.env.businessAddress) 
-   let weight = 1 
-   let service = "PRESORTED_STANDARD"
-   let serviceType = "GROUND_HOME_DELIVERY"
-   let packaging = "YOUR_PACKAGING"
-   let overnight = false
-   let saturdayDelivery=false 
-   console.log({accountNumber: process.env.AccountFedExTest,
-        key: process.env.ApiKeyTestFedEx,
-        secret: process.env.SecretKeyFedExTest,})
-   let credentials = {
-        accountNumber: process.env.AccountFedExTest,
-        key: process.env.ApiKeyTestFedEx,
-        secret: process.env.SecretKeyFedExTest,
-    }
-    console.log(credentials, "page")
-    let res = await getRatesFeNew({address, businessAddress, weight, service, serviceType, packaging, overnight, saturdayDelivery, credentials})
-    console.log(res)
-    let res2 = await purchaseFedexNew({address, businessAddress, weight, service, serviceType, packaging, overnight, saturdayDelivery, credentials})
-    console.log(res2)
+//    let address ={
+//     name: "Michael Thero",
+//     address1: "1421 hidden view dr",
+//     address2: "",
+//     city: "lapeer",
+//     state: "MI",
+//     zip: "48446",
+//     country: "US"
+//    }
+//    let businessAddress =JSON.parse(process.env.businessAddress) 
+//    let weight = 1 
+//    let service = "PRESORTED_STANDARD"
+//    let serviceType = "GROUND_HOME_DELIVERY"
+//    let packaging = "YOUR_PACKAGING"
+//    let overnight = false
+//    let saturdayDelivery=false 
+//    console.log({accountNumber: process.env.AccountFedExTest,
+//         key: process.env.ApiKeyTestFedEx,
+//         secret: process.env.SecretKeyFedExTest,})
+//    let credentials = {
+//         accountNumber: process.env.AccountFedExTest,
+//         key: process.env.ApiKeyTestFedEx,
+//         secret: process.env.SecretKeyFedExTest,
+//     }
+//     console.log(credentials, "page")
+//     let res = await getRatesFeNew({address, businessAddress, weight, service, serviceType, packaging, overnight, saturdayDelivery, credentials})
+//     console.log(res)
+//     let res2 = await purchaseFedexNew({address, businessAddress, weight, service, serviceType, packaging, overnight, saturdayDelivery, credentials})
+//     console.log(res2)
     // let items = await Items.find({date: {$gt: new Date("2024-04-17")}, canceled: false, styleCode: {$ne: null}}).limit(100000)
     // console.log(items.length, " How Many Items")
     // let breakdown = {}
