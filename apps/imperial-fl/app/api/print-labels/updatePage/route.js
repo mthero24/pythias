@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import { LabelsData } from "../../../../../functions/labels";
+import { LabelsData } from "@/functions/labels";
 
 export async function GET(req=NextApiRequest){
     try{
