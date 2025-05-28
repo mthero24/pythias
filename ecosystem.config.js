@@ -55,6 +55,7 @@ module.exports = {
         instances: "2", // Use all available CPU cores
         env: {
           NODE_ENV: "production", // Set production environment
+          NEXTAUTH_SECRET:"THe@huilekjasdf",
         },
         output: null, // Output log file
         error: null, // Error log file
