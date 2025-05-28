@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Premier Printing",
-  description: "Premier Printing",
+  title: "Imperial Custom Apparel",
+  description: "Imperial Custom Apparel",
   icons: {
     icon: "/imperial-favicon.ico",
   },
