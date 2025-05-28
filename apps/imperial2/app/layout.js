@@ -15,7 +15,7 @@ export const metadata = {
   title: "Premier Printing",
   description: "Premier Printing",
   icons: {
-    icon: "/premierprinting-favicon.ico",
+    icon: "/imperial-favicon.ico",
   },
 };
 
