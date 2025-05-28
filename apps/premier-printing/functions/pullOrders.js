@@ -56,6 +56,7 @@ export async function pullOrders(){
                     let sku
                     if(i.upc){
                         sku = await SkuToUpc.findOne({upc: i.upc})
+                        if(sku.sku != i.sku) sku = null
                     }
                     if(!sku) sku = await SkuToUpc.findOne({sku: i.sku})
                     for(let j = 0; j < parseInt(i.quantity); j++){
