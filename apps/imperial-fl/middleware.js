@@ -47,11 +47,7 @@ const protectedRoutes = [
   },
 ];
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests, please try again later.',
-});
+
 export async function middleware(req=NextRequest, res) {
   const protectedRoute = protectedRoutes.find((route) =>
       req.nextUrl.pathname.startsWith(route.path)

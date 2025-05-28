@@ -61,6 +61,7 @@ const ProductImageOverlay = ({
             alt="Product"
             className="img-fluid"
             crossOrigin="anonymous"
+            style={{width: "100%", height: "auto"}}
           />
         </Fade>
       )}
