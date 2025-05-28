@@ -13,6 +13,7 @@ let carrierCodes = {
 };
 
 let getAuth = async (credentials) => {
+    console.log(credentials, "getauth")
   let body = {
     grant_type: "client_credentials",
     client_id: credentials.key,
@@ -35,6 +36,7 @@ let getAuth = async (credentials) => {
 };
 
 export async function getRatesFeNew({address, businessAddress, weight, service, serviceType, packaging, overnight, saturdayDelivery=false, credentials}){
+    console.log(credentials, "getrates")
     let token = await getAuth(credentials)
     token = token.token
     //console.log(token)
@@ -135,4 +137,128 @@ export async function getRatesFeNew({address, businessAddress, weight, service, 
     if(resData) return {error:true, msg: `${resData.errors[0].message} ${resData.errors[0].code}`}
     return {error: false, rate: send.data.output.rateReplyDetails[0].ratedShipmentDetails[0].totalNetFedExCharge}
     
+}
+export async function purchaseFedexNew ({address, businessAddress,weight, service, serviceType, packaging, overnight, saturdayDelivery=false, credentials}){
+    let token = await getAuth(credentials)
+    token = token.token
+    console.log(token)
+    let body = {
+        "requestedShipment": {
+          "shipDatestamp": new Date().toISOString().split('T')[0],
+          "totalDeclaredValue": {
+            "amount": 25,
+            "currency": "USD"
+          },
+          "shipper": {
+            address: {
+                streetLines: [
+                    businessAddress.addressLine1,
+                    businessAddress.addressLine2
+                ],
+                city: businessAddress.city,
+                stateOrProvinceCode: businessAddress.state,
+                postalCode: businessAddress.postalCode,
+                countryCode: businessAddress.country,
+                residential: false
+            },
+            "contact": {
+              "personName": businessAddress.name,
+              "emailAddress": businessAddress.email,
+              "phoneNumber": businessAddress.phoneNumber,
+              "companyName": businessAddress.name,
+            },
+          },
+          "recipients": [
+            {
+               address: {
+                    streetLines: [
+                        address.address1,
+                        address.address2? address.address2: null
+                    ],
+                    city: address.city,
+                    stateOrProvinceCode: address.state,
+                    postalCode: address.zip,
+                    countryCode: address.country,
+                },
+              "contact": {
+                "personName": address.name,
+                "emailAddress": address.email,
+                "phoneNumber": address.phoneNumber? address.phoneNumber: "0000000000",
+              },
+            }
+          ],
+          "pickupType": "USE_SCHEDULED_PICKUP",
+          "serviceType": serviceType,
+          "packagingType": packaging,
+          "totalWeight": weight,
+          "shippingChargesPayment": {
+            "paymentType": "SENDER",
+          },
+          "blockInsightVisibility": true,
+          "preferredCurrency": "USD",
+          "totalPackageCount": 1,
+          "shipmentSpecialServices": {
+            "specialServiceTypes": [
+            "FEDEX_ONE_RATE"
+            ]
+            },
+          "requestedPackageLineItems": [
+            {
+              "weight": {
+                "units": "LB",
+                "value": weight
+              },
+              "dimensions": {
+                "length": 10,
+                "width": 8,
+                "height": 2,
+                "units": "IN"
+            },
+            }
+          ],
+          "labelSpecification": {
+            "labelStockType": "STOCK_4X8",
+            "imageType": "ZPLII",
+          },
+        },
+        "labelResponseOptions": "LABEL",
+        "accountNumber": {
+          "value":  process.env.AccountFedExTest
+        },
+        "shipAction": "CONFIRM",
+        "processingOptionType": "SYNCHRONOUS_ONLY",
+        "oneLabelAtATime": false
+      }
+      // if(serviceType == "SMART_POST"){
+      //     body.smartPostDetail = {
+      //         ancillaryEndorsement: "CARRIER_LEAVE_IF_NO_RESPONSE",
+      //         hubId: 5531,
+      //         "indicia": "MEDIA_MAIL",
+      //         specialServices: "USPS_DELIVERY_CONFIRMATION"
+      //     }
+      // }
+      // if(!body.shipmentSpecialServices) body.shipmentSpecialServices = {}
+      // if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && saturdayDelivery){
+      //     body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE", "SATURDAY_DELIVERY"]
+      // }
+      // else if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && !saturdayDelivery){
+      //     body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE"]
+      // }else if(saturdayDelivery) body.shipmentSpecialServices.specialServiceTypes = ["SATURDAY_DELIVERY"]
+      let options = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "x-locale": "en_US"
+        }
+    }
+    let send = await axios.post("https://apis-sandbox.fedex.com/ship/v1/shipments", body, options).catch(e=>{console.log(e.response.data)})
+    console.log(send? send.data.output: "error")
+    console.log(send? send.data.output.transactionShipments[0]: "error")
+    console.log(send? send.data.output.transactionShipments[0].pieceResponses: "error")
+    console.log(send? send.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel: "error")
+    let result = {trackingNumber: send.data.output.transactionShipments[0].pieceResponses[0].masterTrackingNumber, label: new Buffer.from(send.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, "base64").toString('ascii'), cost: send.data.output.transactionShipments[0].pieceResponses[0].baseRateAmount}
+    console.log(result)
+    return result
+    //console.log(send.data.output.transactionShipments[0].completedShipmentDetail.completedPackageDetails)
+    //console.log(send.data.output.transactionShipments[0].completedShipmentDetail)
 }

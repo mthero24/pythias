@@ -14,7 +14,13 @@ export async function GET(req = NextApiRequest) {
         skip += 1000
     }
     console.log(PicNumbers.length, "picnumbers")
-    let res = await uspsGenerateManifest({PicNumbers, credentials: {clientId: process.env.uspsClientId, clientSecret: process.env.uspsClientSecret,}, businessAddress: JSON.parse(process.env.businessAddress)})
+    let res = await uspsGenerateManifest({PicNumbers, credentials: {clientId: process.env.uspsClientId,
+                clientSecret: process.env.uspsClientSecret,
+                crid: process.env.uspsCRID,
+                mid: process.env.uspsMID,
+                manifestMID: process.env.manifestMID,
+                accountNumber: process.env.accountNumber,
+                api: "apis"}, businessAddress: JSON.parse(process.env.businessAddress)})
     console.log(res)
     if(!res.error){
         await Manifest.deleteMany({});

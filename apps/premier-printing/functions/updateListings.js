@@ -97,10 +97,14 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         "alt_image_1": bImages[1],
         "alt_image_2": bImages[2],
         "alt_image_3": p.blank.blank.sizeGuide?.images? p.blank.blank.sizeGuide?.images[0]: null,
+        price: v.size.retailPrice,
+        quantity: 1000,
         seller_url: `${url}/${p.design.name.replace(/ /g, "-")}-${p.blank.blank.name.replace(/ /g, "-")}`,
         ...constants
     }
-    variant[p.blank.blank.kohlsHeader["nrf_size"]] = sizes[v.size.name.toLowerCase()]
+    if(p.blank.nrf_size){
+         variant[p.blank.nrf_size] = sizes[v.size.name.toLowerCase()]
+    }else variant[p.blank.blank.kohlsHeader["nrf_size"]] = sizes[v.size.name.toLowerCase()]
     if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().substring(0, 250)
     if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().substring(0, 250)
     console.log(variant["feature_1"])

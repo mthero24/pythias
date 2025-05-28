@@ -46,7 +46,8 @@ const schema = new mongoose.Schema({
       id: String,
       color: String,
       side: String
-    }]
+    }],
+    nrf_size: String
   }],
   b2m: [{
     brand: String,
