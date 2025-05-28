@@ -48,7 +48,7 @@ module.exports = {
       },
       {
         name: "nextjs-web",
-        cwd: "apps/imperial-fl", // Point to the web app's directory
+        cwd: "apps/imperial2", // Point to the web app's directory
         script: "node_modules/next/dist/bin/next", // Use Next.js binary
         args: "start -p 3003", // Start on port 3000
         exec_mode: "cluster", // Enable cluster mode to use multiple CPUs
