@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Manifest from "../../../../../models/manifest"
+import Manifest from "@/models/manifest"
 import { uspsGenerateManifest } from "@pythias/shipping";
 export async function GET(req = NextApiRequest) {
     let manifests = await Manifest.find({}).limit(1000);

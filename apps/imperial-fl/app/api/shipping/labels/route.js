@@ -1,10 +1,10 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import {buyLabel} from "@pythias/shipping";
 import {getRefund} from "@pythias/shipping"
-import Order from "../../../../../models/Order";
-import manifest from "../../../../../models/manifest";
+import Order from "@/models/Order";
+import manifest from "@/models/manifest";
 import axios from "axios"
-import Bin from "../../../../../models/Bin";
+import Bin from "@/models/Bin";
 import {updateOrder} from "@pythias/integrations";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
