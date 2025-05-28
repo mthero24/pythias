@@ -72,8 +72,8 @@ export const buildLabelData = async (item, i, opts={}) => {
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `R Bin${hasReturn.number}`}
         ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
             item.colorName
-        }, Size: ${item.sizeName}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDShipping: ${item.shippingType} CNT: ${totalQuantity}^FS
+        }^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDSize: ${item.sizeName} Shipping: ${item.shippingType} CNT: ${totalQuantity}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
             item.designRef && item.designRef.sku? item.designRef.sku: item.sku
         }^FS

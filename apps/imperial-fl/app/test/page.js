@@ -25,7 +25,7 @@ export default async function Test(){
          }
     }
     //removeOutOfStockItemsWalmart()
-    getSpecWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, type: "T-Shirts"})
+    //getSpecWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, type: "T-Shirts"})
     const productStageUrl = "https://stage-api.target.com/sellers/v1/​";
     const taxonomyStageUrl = "https://api-target.com/item_taxonomies/v2/taxonomy"
     const prodTargetPlusAPISpecsUrl = "https://plus.target.com/docs/spec/seller#overview"
