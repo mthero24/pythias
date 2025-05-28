@@ -135,7 +135,7 @@ const SchemaObj = new Schema(
     tags: [{ type: String }],
     kohlsHeader: Object,
     targetHeader: Object,
-    shopSimontHeader: Object
+    shopSimonHeader: Object
   },
   { strict: false }
 );

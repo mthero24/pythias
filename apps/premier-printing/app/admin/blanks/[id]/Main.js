@@ -11,6 +11,7 @@ export function Main({blank}){
     const [heading, setHeading] = useState({})
     const [headingName, setHeadingName] = useState("")
     const [style, setStyle] = useState(blank)
+    console.log(blank.shopSimonHeader, "shopSimonHeader")
     const handleDelete = async () => {
       if (confirm("Delete?")) {
         let result = await axios.delete(`/api/admin/blanks?id=${style._id}`, {id: style._id});
@@ -83,6 +84,7 @@ const modalStyle = {
   overflow: "auto"
 };
 const HeaderModal = ({open, setOpen, header, setHeader, headingName, style, setStyle})=>{
+  console.log(header)
   const [newItem, setNewItem] = useState({})
   const save = async()=>{
     let he = {...header}

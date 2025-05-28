@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export default async function Show(req, res){
     //console.log(await req.params);
     let {id} = await req.params;
-    let blank = await Blank.findById(id).select("_id name code sales vendor kohlsHeader targetHeader").lean()
+    let blank = await Blank.findById(id).select("_id name code sales vendor kohlsHeader targetHeader, shopSimonHeader").lean()
     blank = serialize(blank);
     return <Main blank={blank} />
 }
