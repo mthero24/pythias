@@ -6,10 +6,13 @@
   "author": "michael thero",
   "type": "module",
   "exports": {
-      ".": "./exports"
+    ".": "./exports"
   },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "sharp": "^0.34.2"
   }
 }

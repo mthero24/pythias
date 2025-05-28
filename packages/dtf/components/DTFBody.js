@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
 import React from "react";
 import Image from "next/image";
 import {Scan} from "./scan"
-import {createImage} from "../functions/image"
+//import {createImage} from "../functions/image"
 import { Repull } from "../../repull/exports";
 export function DTFBody({auto, setAuto, printer, type}){
     const [submitted, setSubmitted] = useState([]);
