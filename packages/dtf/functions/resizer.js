@@ -115,13 +115,13 @@ let fitDesignStyleCodes = [
   "SY42",
 ];
 async function getMetaData(base64) {
-  // Remove the base64 prefix if it exists
-  // const base64Data = base64.replace(/^data:image\/\w+;base64,/, "");
-  // const buffer = Buffer.from(base64Data, "base64");
+  //Remove the base64 prefix if it exists
+  const base64Data = base64.replace(/^data:image\/\w+;base64,/, "");
+  const buffer = Buffer.from(base64Data, "base64");
 
-  // // Use sharp to get image metadata
-  // const metadata = await sharp(buffer).metadata();
-  return {}
+  // Use sharp to get image metadata
+  const metadata = await sharp(buffer).metadata();
+  return metaData
 }
 export const createImage = async (
    { url,
