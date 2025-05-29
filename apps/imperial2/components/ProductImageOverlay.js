@@ -1,5 +1,4 @@
 import { Box, CircularProgress, Fade, FormControlLabel, Checkbox } from "@mui/material";
-import { createCanvas } from "canvas";
 import React, { useEffect, useRef, useState } from "react";
 import MyBox from "./UI/Box";
 //import { getFastlyLink } from "functions/getFastlyLink";
