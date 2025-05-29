@@ -266,8 +266,8 @@ export function Main({ colors, blanks, blank, printPricing }) {
 
   const vendors = [
     {
-      value: "Premier Printing",
-      label: "Premier Printing",
+      value: "Imperial",
+      label: "Imperial",
     },
   ];
 

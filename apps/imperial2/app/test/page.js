@@ -10,6 +10,7 @@ import fs from "fs"
 import axios from "axios"
 import btoa from "btoa"
 import {pullOrders} from "@/functions/pullOrders";
+import { getOrders, generatePieceID } from "@pythias/integrations";
 import { Style } from "@mui/icons-material";
 import { createUpc } from "@/functions/createUpcs"
 import {updateListings} from "@/functions/updateListings"
@@ -17,6 +18,9 @@ import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmar
 export default async function Test(){
     //await updateListings()
     //await pullOrders()
+    console.log(`${process.env.ssApiKey}:${process.env.ssApiSecret}`)
+    let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    console.log(orders[1], orders[1].shipTo, orders[1].items, orders[1].items[0], orders[1].items[0].options, orders[1].orderStatus)
     const removeOutOfStockItemsWalmart = async ()=>{
         let items = await getItemsWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, params: [{limit: "300"}]})
         for(let item of items){
