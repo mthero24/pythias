@@ -121,7 +121,7 @@ async function getMetaData(base64) {
 
   // Use sharp to get image metadata
   const metadata = await sharp(buffer).metadata();
-  return metaData
+  return metadata
 }
 export const createImage = async (
    { url,
