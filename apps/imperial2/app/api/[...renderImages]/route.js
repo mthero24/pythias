@@ -176,6 +176,7 @@ export async function GET(req){
         return new NextResponse(buffer, {
             headers:{
                 'Content-Type': 'image/jpeg',
+                "Access-Control-Allow-Origin": "*"
             }
         })
     }

@@ -10,7 +10,8 @@ import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
 import { useRouter } from "next/navigation";
 import { AltImageModal } from "./AltImagesModal";
-export function Main({design, bls, brands, mPs, pI, licenses}){
+import Image from "next/image"
+export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocations}){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -25,7 +26,12 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
     const [upcModal, setUpcModal] = useState(false)
     const [open, setOpen] = useState(false)
     const [blankForAlt, setBlankForAlt] = useState(null)
+    const [location, setLocation] = useState("back")
+    const [reload, setReload] = useState(true)
     const genders = ["Girls", "Boys", "Mens", "Womens"]
+    useEffect(()=>{
+        if(!reload) setReload(!reload)
+    }, [reload])
     useEffect(()=>{
         console.log(blanks[0].colors)
         if(blanks){
@@ -390,6 +396,23 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                 }
             }}>Delete</Button>
             </Box>
+            {console.log(colors)}
+            <CreatableSelect
+                placeholder="Thread Colors"
+                options={colors?.map(m=>{return {value: m._id, label: m.name}})}
+                value={des.threadColors?.map(m=>{return {value: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?._id, label: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name}})}
+                onChange={(vals)=>{
+                    let d= {...des}
+                    let newThread = []
+                    for(let v of vals){
+                        newThread.push(v.value)
+                    }
+                    d.threadColors = newThread
+                    setDesign({...d})
+                    updateDesign({...d})
+                }}
+                isMulti
+            />
             <Accordion >
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -399,14 +422,27 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                     >
                     <Typography component="span">Design Images</Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{padding: "2%", height: "45vh"}}>
+                <AccordionDetails sx={{padding: "3%",}}>
                     <Grid2 container spacing={1}>
-                        
+                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
+                            {reload && <Uploader location={location} afterFunction={updateImage}  />}
+                            <CreatableSelect 
+                                options={[]}
+                                value={{value: location, label:location}}  
+                                onChange={(vals)=>{
+                                    setLocation(vals.value)
+                                    setReload(false)
+                                }}
+                            />
+                        </Grid2>
                         {imageLocations.map((i, j)=>(
-                            <Grid2 size={{xs: 6, sm: 2, md: 2}} key={j}>
-                                <Uploader location={i} afterFunction={updateImage} image={des.images? des.images[i]: null} />
-                                <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
-                            </Grid2>
+                            <>
+                                {des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                    <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                    <p style={{textAlign: "center"}}>{i} Image</p>
+                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
+                                </Grid2>}
+                            </>
                         ))}
                         
                     </Grid2>
@@ -618,24 +654,6 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                                             updateDefaultColor({blank:b, color:vals})
                                         }}
                                     />
-                                </Box>
-                                <Box sx={{margin: ".5% 0%"}}>
-                                    {console.log(b.defaultColor?.name, b.blank.code)}
-                                    <CreatableSelect
-                                        placeholder="NRF Size"
-                                        options={[]}
-                                        value={b.nrf_size? {value: b.nrf_size, label: b.nrf_size}: null}
-                                        onChange={(vals)=>{
-                                            updateNRFSize({blank:b, nrf_size: vals.value})
-                                        }}
-                                    />
-                                </Box>
-                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                                    <Button onClick={()=>{setOpen(true); setBlankForAlt(b); console.log(b)}}>Add Alternative Images</Button>
-                                    <Button onClick={()=>{
-                                        setUpcBlank(b.blank)
-                                        setUpcModal(true)
-                                    }}>See Sku List</Button>
                                 </Box>
                             </AccordionDetails>
                         </Accordion>

@@ -13,22 +13,12 @@ const schema = new mongoose.Schema({
   printType: { type: String,
     enum : ['EMB','VIN', 'SCN', 'DTF'],
     default: 'DTF'},
-  images: {
-    front: { type: String },
-    back: { type: String },
-    upperSleeve: { type: String },
-    lowerSleeve: { type: String },
-    pocket: {type: String},
-    center: {type: String}
-  },
-  embroideryFiles: {
-    front: { type: String },
-    back: { type: String },
-    upperSleeve: { type: String },
-    lowerSleeve: { type: String },
-    pocket: {type: String},
-    center: {type: String}
-  },
+  images: Object,
+  embroideryFiles: Object,
+  threadColors: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: Color,
+  }],
   blanks: [{
     blank:{
       type: mongoose.Schema.Types.ObjectId,
