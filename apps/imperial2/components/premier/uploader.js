@@ -10,7 +10,7 @@ const s3 = new S3Client({ credentials:{
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
 }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
-export function Uploader({afterFunction, location, image, productImage, primary, bl, color, vh}){
+export function Uploader({afterFunction, location, image, productImage, primary, bl, color, vh, threadColor}){
     const onDrop = useCallback(acceptedFiles => {
         // Do something with the files
         console.log(acceptedFiles)
@@ -28,17 +28,17 @@ export function Uploader({afterFunction, location, image, productImage, primary,
         //   if (resize) base64 = await resizeFunc(base64, width);
             let url = productImage? `products/${Date.now()}.${file.name.split(".")[file.name.split(".").length - 1]}`: `designs/${Date.now()}.${file.name.split(".")[file.name.split(".").length - 1]}`
             let params = {
-            Bucket: "images1.pythiastechnologies.com",
-            Key: url,
-            Body: base64,
-            ACL: "public-read",
-            ContentEncoding: "base64",
-            ContentDisposition: "inline",
-            ContentType: file.type,
+                Bucket: "images1.pythiastechnologies.com",
+                Key: url,
+                Body: base64,
+                ACL: "public-read",
+                ContentEncoding: "base64",
+                ContentDisposition: "inline",
+                ContentType: file.type,
             };
             const data = await s3.send(new PutObjectCommand(params));
             console.log("Success, object uploaded", data);
-            afterFunction({url: `https://images1.pythiastechnologies.com/${url}`, location, primary, bl, color})
+            afterFunction({url: `https://images1.pythiastechnologies.com/${url}`, location, primary, bl, color, threadColor})
         };
 
         reader.onerror = function (error) {

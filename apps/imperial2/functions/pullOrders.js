@@ -9,8 +9,9 @@ import Blanks from "@/models/Blanks";
 export async function pullOrders(){
     console.log("pull orders")
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
-    for(let o of orders){
+    for(let o of orders.slice(0,5)){
         console.log(o.orderStatus, o.orderDate)
+        console.log(o)
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
         if(!order){
             let marketplace = o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name
@@ -53,74 +54,86 @@ export async function pullOrders(){
             let items = []
             for(let i of o.items){
                 if(i.sku != ""){
-                    let sku
-                    if(i.upc){
-                        sku = await SkuToUpc.findOne({upc: i.upc})
-                        if(sku.sku != i.sku) sku = null
-                    }
-                    if(!sku) sku = await SkuToUpc.findOne({sku: i.sku})
-                    for(let j = 0; j < parseInt(i.quantity); j++){
-                        let design
-                        let blank
-                        let color
-                        let size
-                        if(sku) {
-                            design = await Design.findOne({_id: sku.design})
-                            blank = await Blank.findOne({_id: sku.blank})
-                            color = await Color.findOne({_id: sku.color})
-                            size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.replace("Y", "").toLowerCase())[0]   
-                        }else{
-                            blank = await Blank.findOne({code: i.sku?.split("_")[0]})
-                            color = await Color.findOne({name: i.sku?.split("_")[1]})
-                            if(!color) await Color.findOne({name: i.sku?.split("_")[2]})
-                            if(blank){
-                                size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase())[0] 
-                                if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase())[0]
-                            }
-                            let dSku = i.sku?.split("_").splice(3)
-                            let designSku =""
-                            if(dSku){
-                                for(let j = 0; j < dSku.length; j++){
-                                    if(j == 0) designSku = dSku[j]
-                                    else designSku = `${designSku}_${dSku[j]}`
-                                }
-                                design = await Design.findOne({sku: designSku})
-                            }
-                        }
-                        if(blank && blank.code.includes("PPSET")){
-                            let sb = await Blanks.findOne({code: blank.code.split("_")[1]})
-                            let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
-                            let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
-                            //console.log(item)
-                            await item.save()
-                            await shirtItem.save()
-                            items.push(item)
-                            items.push(shirtItem)
-                        }else if(blank && blank.code == "LGDSET"){
-                            let sb = await Blanks.findOne({code: "LGDSWT"})
-                            let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
-                            let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
-                            //console.log(item)
-                            await item.save()
-                            await shirtItem.save()
-                            items.push(item)
-                            items.push(shirtItem)
-                        }else if(blank && blank.code == "LGDSET"){
-                            let sb = await Blanks.findOne({code: "GDT"})
-                            let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
-                            let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
-                            //console.log(item)
-                            await item.save()
-                            await shirtItem.save()
-                            items.push(item)
-                            items.push(shirtItem)
-                        }else{
-                            let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
-                            //console.log(item)
-                            await item.save()
-                            items.push(item)
-                        }
-                    }
+                     console.log(i.sku)
+                   let design = await Design.findOne({name: i.sku.split("_")[2]})
+                   console.log(design.name)
+                   console.log(i.options[0].value.split(", "))
+                   let options = i.options[0].value.split(", ")
+                   let color = options[0].split(" ")[0]
+                   let style = options[0].split(" ")[1]
+                   let size = options[1]
+                   let threadColor = options[2] 
+                   console.log(style, color, size, threadColor)
+                   let blank = await Blank.findOne({name: style}).populate("colors")
+                   console.log(blank)
+                    // let sku
+                    // if(i.upc){
+                    //     sku = await SkuToUpc.findOne({upc: i.upc})
+                    //     if(sku.sku != i.sku) sku = null
+                    // }
+                    // if(!sku) sku = await SkuToUpc.findOne({sku: i.sku})
+                    // for(let j = 0; j < parseInt(i.quantity); j++){
+                    //     let design
+                    //     let blank
+                    //     let color
+                    //     let size
+                    //     if(sku) {
+                    //         design = await Design.findOne({_id: sku.design})
+                    //         blank = await Blank.findOne({_id: sku.blank})
+                    //         color = await Color.findOne({_id: sku.color})
+                    //         size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.replace("Y", "").toLowerCase())[0]   
+                    //     }else{
+                    //         blank = await Blank.findOne({code: i.sku?.split("_")[0]})
+                    //         color = await Color.findOne({name: i.sku?.split("_")[1]})
+                    //         if(!color) await Color.findOne({name: i.sku?.split("_")[2]})
+                    //         if(blank){
+                    //             size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase())[0] 
+                    //             if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase())[0]
+                    //         }
+                    //         let dSku = i.sku?.split("_").splice(3)
+                    //         let designSku =""
+                    //         if(dSku){
+                    //             for(let j = 0; j < dSku.length; j++){
+                    //                 if(j == 0) designSku = dSku[j]
+                    //                 else designSku = `${designSku}_${dSku[j]}`
+                    //             }
+                    //             design = await Design.findOne({sku: designSku})
+                    //         }
+                    //     }
+                    //     if(blank && blank.code.includes("PPSET")){
+                    //         let sb = await Blanks.findOne({code: blank.code.split("_")[1]})
+                    //         let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
+                    //         let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
+                    //         //console.log(item)
+                    //         await item.save()
+                    //         await shirtItem.save()
+                    //         items.push(item)
+                    //         items.push(shirtItem)
+                    //     }else if(blank && blank.code == "LGDSET"){
+                    //         let sb = await Blanks.findOne({code: "LGDSWT"})
+                    //         let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
+                    //         let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
+                    //         //console.log(item)
+                    //         await item.save()
+                    //         await shirtItem.save()
+                    //         items.push(item)
+                    //         items.push(shirtItem)
+                    //     }else if(blank && blank.code == "LGDSET"){
+                    //         let sb = await Blanks.findOne({code: "GDT"})
+                    //         let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
+                    //         let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
+                    //         //console.log(item)
+                    //         await item.save()
+                    //         await shirtItem.save()
+                    //         items.push(item)
+                    //         items.push(shirtItem)
+                    //     }else{
+                    //         let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
+                    //         //console.log(item)
+                    //         await item.save()
+                    //         items.push(item)
+                    //     }
+                    // }
                 }
                 //console.log(items)
             }
@@ -143,7 +156,7 @@ export async function pullOrders(){
             }
         }
         //console.log(order)
-        await order.save()
+        //await order.save()
     }
 }
 setInterval(()=>{

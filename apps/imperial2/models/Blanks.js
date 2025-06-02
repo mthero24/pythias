@@ -133,6 +133,7 @@ const SchemaObj = new Schema(
     searchTagKeywords: [{ type: String }],
     searchTagModifiers: [{ type: String }],
     tags: [{ type: String }],
+    fixerCode: String,
     kohlsHeader: Object,
     targetHeader: Object,
     shopSimonHeader: Object

@@ -19,6 +19,7 @@ const schema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: Color,
   }],
+  threadImages: Object,
   blanks: [{
     blank:{
       type: mongoose.Schema.Types.ObjectId,

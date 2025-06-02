@@ -163,12 +163,17 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
         if(res?.data?.error) alert(res.data.msg)
     }
-    const updateImage = async ({url,location})=>{
+    const updateImage = async ({url,location, threadColor})=>{
         let d = {...des}
-        console.log(d.images, url, location)
-        if(!d.images) d.images = {}
-        console.log(d.images, url, location)
-        d.images[location] = url
+        if(threadColor){
+            if(!d.threadImages) d.threadImages = {}
+            d.threadImages[threadColor][location] = url
+        }else{
+            console.log(d.images, url, location)
+            if(!d.images) d.images = {}
+            console.log(d.images, url, location)
+            d.images[location] = url
+        }
         setDesign({...d})
         updateDesign({...d})
     }
@@ -329,15 +334,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
-    const updateNRFSize = ({blank, nrf_size}) =>{
-        let d = {...des}
-        console.log(blank)
-        let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
-        //console.log(color)
-        b.nrf_size = nrf_size
-        setDesign({...d})
-        updateDesign({...d})
-    }
     const setDefaultImages = ({id, side})=>{
         let d = {...des}
         console.log(id, "id")
@@ -408,6 +404,10 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         newThread.push(v.value)
                     }
                     d.threadColors = newThread
+                    d.threadImages = {}
+                    for(let m of d.threadColors){
+                        d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]= {}
+                    }
                     setDesign({...d})
                     updateDesign({...d})
                 }}
@@ -422,8 +422,8 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     >
                     <Typography component="span">Design Images</Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{padding: "3%",}}>
-                    <Grid2 container spacing={1}>
+                <AccordionDetails sx={{padding: "5%",}}>
+                    <Grid2 container spacing={1} sx={{marginBottom: "5%"}}>
                         <Grid2 size={{xs: 6, sm: 3, md: 2}}>
                             {reload && <Uploader location={location} afterFunction={updateImage}  />}
                             <CreatableSelect 
@@ -438,14 +438,52 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         {imageLocations.map((i, j)=>(
                             <>
                                 {des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                    <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                    <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
+                                        <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                                            <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto",}}/>
+                                        </Box>
+                                    </Box>
                                     <p style={{textAlign: "center"}}>{i} Image</p>
                                     <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
                                 </Grid2>}
                             </>
                         ))}
-                        
                     </Grid2>
+                    <Box style={{marginBottom: "5%"}}>
+                        {des.threadColors && des.threadColors.length > 0 && <Box>
+                            {des.threadColors.map(tc=>(
+                                <Box key={tc} style={{marginBottom: "5%"}}>
+                                    <p>{colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name}</p>
+                                    <Grid2 container spacing={1}>
+                                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
+                                            {reload && <Uploader location={location} afterFunction={updateImage} threadColor={colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name} />}
+                                            <CreatableSelect 
+                                                options={[]}
+                                                value={{value: location, label:location}}  
+                                                onChange={(vals)=>{
+                                                    setLocation(vals.value)
+                                                    setReload(false)
+                                                }}
+                                            />
+                                        </Grid2>
+                                        {imageLocations.map((i, j)=>(
+                                            <>
+                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                                     <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
+                                                        <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                                                            <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                                        </Box>
+                                                    </Box>
+                                                    <p style={{textAlign: "center"}}>{i} Image</p>
+                                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
+                                                </Grid2>}
+                                            </>
+                                        ))}
+                                    </Grid2>
+                                </Box>
+                            ))}
+                        </Box>}
+                    </Box>
                 </AccordionDetails>
             </Accordion>
             <Accordion >
@@ -457,14 +495,28 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     >
                     <Typography component="span">Embroidery Files</Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{padding: "2%", height: "35vh"}}>
+                <AccordionDetails sx={{padding: "5%"}}>
                     <Grid2 container spacing={1}>
-                        
+                         <Grid2 size={{xs: 6, sm: 3, md: 2}}>
+                            {reload && <Uploader location={location} afterFunction={updateEmbroidery}  />}
+                            <CreatableSelect 
+                                options={[]}
+                                value={{value: location, label:location}}  
+                                onChange={(vals)=>{
+                                    setLocation(vals.value)
+                                    setReload(false)
+                                }}
+                            />
+                        </Grid2>
                         {imageLocations.map((i, j)=>(
-                            <Grid2 size={{xs: 6, sm: 2, md: 2}} key={j}>
-                                <Uploader location={i} afterFunction={updateEmbroidery}  image={des.embroideryFiles && des.embroideryFiles[i]? "/embplaceholder.jpg": null}/>
-                                <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete File</Button>
-                            </Grid2>
+                             <>
+                                {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                    <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                    <p style={{textAlign: "center"}}>{i} File</p>
+                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
+                                </Grid2>}
+                            </>
+                           
                         ))}
                     </Grid2>
                 </AccordionDetails>

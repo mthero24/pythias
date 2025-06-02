@@ -420,6 +420,13 @@ export function Main({ colors, blanks, blank, printPricing }) {
                 <ErrorText>{errors?.code?.message}</ErrorText>
               )}
             </Grid2>
+              <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
+              <TextField
+                sx={{ width: "100%" }}
+                label="fixer Code"
+                {...register("fixerCode")}
+              />
+            </Grid2>
             <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <TextField
                 label="slug"
