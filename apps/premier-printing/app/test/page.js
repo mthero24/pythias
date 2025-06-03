@@ -16,7 +16,7 @@ import {updateListings} from "@/functions/updateListings"
 import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmart, retireItemWalmart, getSpecWalmart, bulkUploadWalmart, getFeedWalmart, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda} from "@pythias/integrations"
 export default async function Test(){
     //await updateListings()
-    await pullOrders()
+    //await pullOrders()
     const removeOutOfStockItemsWalmart = async ()=>{
         let items = await getItemsWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, params: [{limit: "300"}]})
         for(let item of items){
