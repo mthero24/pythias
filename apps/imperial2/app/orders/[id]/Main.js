@@ -70,7 +70,8 @@ export function Main({ord, blanks}){
                                         <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
                                         <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
                                         <Typography onClick={()=>{handleItemUpdate(i)}}>{i.upc}</Typography>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
+                                        <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}, Thread Color: {i.threadColorName} </Typography>
+                                        <Typography>{i.options}</Typography>
                                         { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
                                         {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
                                     </Box>

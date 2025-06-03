@@ -26,7 +26,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [upcModal, setUpcModal] = useState(false)
     const [open, setOpen] = useState(false)
     const [blankForAlt, setBlankForAlt] = useState(null)
-    const [location, setLocation] = useState("back")
+    const [location, setLocation] = useState("front")
     const [reload, setReload] = useState(true)
     const genders = ["Girls", "Boys", "Mens", "Womens"]
     useEffect(()=>{
@@ -437,7 +437,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         </Grid2>
                         {imageLocations.map((i, j)=>(
                             <>
-                                {des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                {des.images && des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
                                     <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
                                         <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
                                             <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto",}}/>

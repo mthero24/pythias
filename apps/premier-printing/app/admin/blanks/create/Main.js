@@ -293,6 +293,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
         wholesaleCost: 0,
         retailPrice: 0,
         basePrice: 0,
+        weight: 0
       });
     } else {
       let lastSize = sizes[sizes.length - 1];
@@ -301,6 +302,7 @@ export function Main({ colors, blanks, blank, printPricing }) {
         wholesaleCost: lastSize.wholesaleCost,
         retailPrice: lastSize.retailPrice,
         basePrice: lastSize.basePrice,
+        weight: lastSize.weight
       });
     }
   };
@@ -1344,6 +1346,19 @@ const SizeStack = ({
           name={`sizes[${index}].retailPrice`}
           control={control}
           defaultValue={field.retailPrice}
+        />
+         <Controller
+          render={({ field }) => (
+            <TextField
+              sx={{ mt: 1 }}
+              {...field}
+              label="Weight"
+              type="number"
+            />
+          )}
+          name={`sizes[${index}].weight`}
+          control={control}
+          defaultValue={field.weight}
         />
 
         <Button color="error" type="button" onClick={() => removeSize(index)}>
