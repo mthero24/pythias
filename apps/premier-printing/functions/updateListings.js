@@ -60,6 +60,38 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
         ...p.blank.blank.targetHeader
     }
 }
+const createShopSimonVariant = ({p,item, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
+    console.log("make variant", v.sku)
+    const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
+    return {
+        "title": `${p.name} - ${v.size.name} - ${v.color.name}`,
+        variantId: v.gtin,
+        "model-number": v.gtin,
+        "description": `${p.design.description} ${p.blank.blank.description}`,
+        designer: p.brand,
+        "sku": v.sku,
+        "upc": v.upc,
+        "msrp": price.toFixed(2),
+        weight: v.size.weight,
+        "normalized-color": v.color.colorFamily,
+        "color": v.color.name,
+        "unisex-size": v.size.name,
+        "womens-special-size-type": v.size.name,
+        "womens-clothin-top-size": v.size.name,
+        "designer-size": v.size.name,
+        "seo-keywords": p.design.tags,
+        "occasion": p.design.season,
+        "product-url": `${url}/${p.design.name.replace(/ /g, "-")}-${p.blank.blank.name.replace(/ /g, "-")}`,
+        "group_skus.0": `${p.design.sku}_${p.blank.blank.code}`,
+        "image-link-1": bImages[0],
+        "image-link-2": bImages[1],
+        "image-link-3": bImages[2],
+        "image-link-4": p.blank.blank.sizeGuide?.images? p.blank.blank.sizeGuide?.images[0]: null,
+        "image-link-5": p.blank.blank.sizeGuide?.images? p.blank.blank.sizeGuide?.images[1]: null,
+        "image-link-6": bImages[3],
+        ...p.blank.blank.shopSimonHeader
+    }
+}
 const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, feature_4, product_category, url})=>{
     let sizes = {
         xs: "X SMALL",
@@ -249,6 +281,51 @@ let kohlsHeader = [
     {id: "nrf_size-5_6_3_4_42_331", title: "nrf_size-5_6_3_4_42_331"},
     {id: "price", title: "price"},
     {id: "quantity", title: "quantity"}
+]
+let shopSimonHeader = [
+    {id: "category", title: "category"},
+    {id: "sku", title: "sku"},
+    {id: "title", title: "title"},
+    {id: "description", title: "description"},
+    {id: "designer", title: "designer"},
+    {id: "image-link-1", title: "image-link-1"},
+    {id: "image-link-2", title: "image-link-2"},
+    {id: "msrp", title: "msrp"},
+    {id: "weight", title: "weight"},
+    {id: "upc", title: "upc"},
+    {id: "handling-time", title: "handling-time"},
+    {id: "model-number", title: "model-number"},
+    {id: "color", title: "color"},
+    {id: "image-link-3", title: "image-link-3"},
+    {id: "image-link-4", title: "image-link-4"},
+    {id: "image-link-5", title: "image-link-5"},
+    {id: "image-link-6", title: "image-link-6"},
+    {id: "final-sale", title: "final-sale"},
+    {id: "product-condition", title: "product-condition"},
+    {id: "video-link-1", title: "video-link-1"},
+    {id: "video-link-2", title: "video-link-2"},
+    {id: "product-material", title: "product-material"},
+    {id: "country-of-origin", title: "country-of-origin"},
+    {id: "product-url", title: "product-url"},
+    {id: "package-height", title: "package-height"},
+    {id: "package-length", title: "package-length"},
+    {id: "package-width", title: "package-width"},
+    {id: "seo-keywords", title: "seo-keywords"},
+    {id: "best-sellers", title: "best-sellers"},
+    {id: "merchandising-priority", title: "merchandising-priority"},
+    {id: "promotion-id", title: "promotion-id"},
+    {id: "shopify_variant_id", title: "shopify_variant_id"},
+    {id: "designer-size", title: "designer-size"},
+    {id: "normalized-color", title: "normalized-color"},
+    {id: "handbag-size", title: "handbag-size"},
+    {id: "unisex-size", title: "unisex-size"},
+    {id: "womens-special-size-type", title: "womens-special-size-type"},
+    {id: "unisex-clothing-fit", title: "unisex-clothing-fit"},
+    {id: "item-pattern", title: "item-pattern"},
+    {id: "occasion", title: "occasion"},
+    {id: "womens-neckline", title: "womens-neckline"},
+    {id: "sleeve-length", title: "sleeve-length"},
+    {id: "womens-clothing-top-size", title: "womens-clothing-top-size"},
 ]
 const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
@@ -716,6 +793,205 @@ export async function updateListings(csvupdate, sendTo){
                                 }
                             }
                             await addInventoryAcenda({...credentials, inventory})
+                        }
+                    }
+                // console.log(targetHeader)
+                    const csvStringifier = createCsvStringifier({
+                        header: targetHeader,
+                    });
+                    //console.log(products)
+                    //console.log("product", products.length)
+                    let csvString =  await csvStringifier.stringifyRecords([...products])
+                    csvString = `
+                        ${csvStringifier.getHeaderString()}${csvString}
+                    `
+                    let url = `csv/${b}/${m}/${Date.now()}.csv`
+                    let params = {
+                        Bucket: "images1.pythiastechnologies.com",
+                        Key: url,
+                        Body: csvString.toString("base64"),
+                        ACL: "public-read",
+                        ContentEncoding: "base64",
+                        ContentDisposition: "inline",
+                        ContentType: "text/csv",
+                        };
+                    const data = await s3.send(new PutObjectCommand(params));
+                    //console.log(csvStringifier.getHeaderString());
+                    await update(csvupdate, url, b, m)
+                }
+                if(m.toLowerCase() == "Shop Simon" && sendTo.shopSimon == true){
+                    console.log("make a shop simon product csv")
+                    
+                    let products = [] 
+                    let j = 0
+                    for(let p of brands[b][m]){
+                        j++
+                        console.log(brands[b][m].length, j)
+                        let credentials
+                        let material 
+                        let material_1
+                        let material_percentage_1
+                        let material_2
+                        let material_percentage_2
+                        let textile_dry_recommendation 
+                        let textile_wash_recommendation
+                        let garment_fit
+                        let bullet4 = ""
+                        let bullet1 = ""
+                        let bullet2 = ""
+                        //console.log(p.blank.blank.bulletPoints)
+                        for(let bl of p.blank.blank.bulletPoints){
+                            //console.log(bl.title, "title")
+                            if(bl.title.toLowerCase() == "fabric"){
+                                bullet1 += ` ${bl.description}`
+                            }
+                            if(bl.title.toLowerCase() == "fit"){
+                                bullet4 += ` ${bl.description}`
+                            }
+                            if(bl.title.toLowerCase() == "care instructions"){
+                                bullet2 += ` ${bl.description}`
+                            }
+                            if(bl.title == "material" || bl.title.toLowerCase() == "Apparel Material"){
+                                material = bl.description
+                            }
+                            if(bl.title == "material_1"){
+                                material_1 = bl.description
+                            }
+                            if(bl.title == "material_percentage_1"){
+                                material_percentage_1 = bl.description
+                            }
+                            if(bl.title == "material_2" ){
+                                material_2 = bl.description
+                            }
+                            if(bl.title == "material_percentage_2"){
+                                material_percentage_2 = bl.description
+                            }
+                            if(bl.title == "textile_dry_recommendation" || bl.title.toLowerCase() == "Garment Dry Recommendation"){
+                                textile_dry_recommendation = bl.description
+                            }
+                            if(bl.title == "textile_wash_recommendation" || bl.title.toLowerCase() == "Garment Wash Recommendation"){
+                                textile_wash_recommendation = bl.description
+                            }
+                            if(bl.title == "garment_fit" || bl.title.toLowerCase() == "Garment Fit"){
+                                garment_fit = bl.description
+                            }
+                        }
+                        
+                        if(p.variants.length > 0 && p.variants[0].sku){
+                            for(let v of p.variants){
+                                if(v.gtin){
+                                    let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
+                                    //console.log(price, "price")
+                                    if(Object.keys(p.design.images).length > 1) price+= 2
+                                    //console.log(price)
+                                    if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
+                                    if(v.size == "2XL") price = price -2
+                                    // console.log(price)
+                                    let bImages = []
+                                    if(p.design.overrideImages && v.color && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][v.color._id] && p.design.overrideImages[p.blank.blank._id][v.color._id].length > 0) bImages = p.design.overrideImages[p.blank.blank._id][v.color._id]
+                                    else{
+                                        for(let side of Object.keys(p.design.images)){
+                                            //console.log(p.blank.defaultImages, "default images")
+                                            let defaults = p.blank.defaultImages?.filter(im=> im.color == v.color._id.toString() && im.side == side)
+                                            if(defaults?.length > 0){
+                                                let sideImages =p.blank.blank.multiImages[side].filter(i=> i._id.toString() == defaults[0].id.toString()).map(im=>{
+                                                    return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                })
+                                                for(let im of sideImages){
+                                                    if(!bImages.includes(im)) bImages.push(im)
+                                                }
+                                            }
+                                        }
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                            // console.log(side, p.design.images[side], v.color._id.toString(), p.design.imageGroup)
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
+                                                //console.log(sideImages.length, "sideImages imageGroup")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes(p.design.imageGroup))
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        //console.log(images)
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                    })
+                                                    //console.log(images)
+                                                    for(let im of images){
+                                                        if(!bImages.includes(im)) bImages.push(im)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if(bImages.length < 6 && p.design.imageGroup != "default"){
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString() &&  i.imageGroup.includes("default"))
+                                                //console.log(sideImages.length, "sideImages default")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString() && i.imageGroup.includes("default"))
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
+                                                        return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                    })
+                                                    //console.log(images)
+                                                    for(let im of images){
+                                                        if(!bImages.includes(im)) bImages.push(im)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if(bImages.length < 6){
+                                        for(let side of Object.keys(p.design.images)){
+                                            if(p.design.images[side] != undefined){
+                                                let sideImages = p.blank.blank.multiImages[side].filter(i=> i.color.toString() == v.color._id.toString())
+                                                //console.log(sideImages.length, "sideImages color")
+                                                if(side == "front" || side == "back"){
+                                                    let modelImages = p.blank.blank.multiImages[side == "front"? "modelFront":"modelBack" ].filter(i=> i.color.toString() == v.color._id.toString())
+                                                    if(modelImages.length > 0){
+                                                        let images = modelImages.map(im=>{
+                                                            return  `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                        })
+                                                        //console.log(images)
+                                                        for(let im of images){
+                                                            if(!bImages.includes(im)) bImages.push(im)
+                                                        }
+                                                    }
+                                                }
+                                                if(sideImages.length > 0){
+                                                    let images = sideImages.map(im=>{
+                                                        return `https://simplysage.pythiastechnologies.com/api/renderImages?blank=${p.blank.blank.code}&blankImage=${im.image}&colorName=${v.color.name}&design=${p.design.images[side]}&side=${side}&width=2400`
+                                                    })
+                                                    //console.log(images)
+                                                    for(let im of images){
+                                                        if(!bImages.includes(im)) bImages.push(im)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //console.log(bImages, "bImages")
+                                    products.push(createShopSimonVariant({p,item,v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation, bullet1, bullet2, bullet4, garment_fit}) )
+                                }
+                            }
                         }
                     }
                 // console.log(targetHeader)

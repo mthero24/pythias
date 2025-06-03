@@ -59,12 +59,12 @@ export function Main({act, past, brands}){
                                 else send.target = false
                                 setSendTo({...send})
                             }}/>} label="Target" />
-                            <FormControlLabel required control={<Checkbox checked={sendTo.simplySimon} onClick={()=>{
+                            <FormControlLabel required control={<Checkbox checked={sendTo.shopSimon} onClick={()=>{
                                 let send = {...sendTo}
-                                if(event.target.checked) send.simplySimon = true
-                                else send.simplySimon = false
+                                if(event.target.checked) send.shopSimon = true
+                                else send.shopSimon = false
                                 setSendTo({...send})
-                            }}/>} label="Simply Simon" />
+                            }}/>} label="Shop Simon" />
                         </FormGroup>
                     </>
                 )}
