@@ -17,6 +17,7 @@ export async function pullOrders(){
     //console.log(fixers)
     console.log("pull orders")
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    console.log(orders.filter(o=> o.tagIds == null && o.orderStatus != "shipped").length, orders.filter(o=> o.tagIds != null).map(o=>{return o.tagIds}) )
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
@@ -65,8 +66,9 @@ export async function pullOrders(){
                 "Red/Sand": "Red/Natl",
                 "Blue/Sand": "Ryl/Natl",
                 "Ash Grey": "Ash",
-                "Pink": "Light Pink",
+                "Pink": "Light Pink, blossom, Blossom",
                 "Green/Sand": "Dk.Grn/Kha",
+                Blue: "Lt.Blue"
             }
             let sizeFixer = {
                 "One Size Fits All": "OSFA",
@@ -95,13 +97,24 @@ export async function pullOrders(){
                    console.log(style, color, size, threadColor)
                    let blank = await Blank.findOne({fixerCode: style.trim()}).populate("colors")
                    let blankColor = blank.colors.filter(c=> c.name == color)[0]
-                   if(!blankColor) blankColor = blank.colors.filter(c=> c.name == colorFixer[color])[0]
+                   if(!blankColor){
+                        for(let co of (colorFixer[color]? colorFixer[color].split(", "): [])){
+                            let b = blank.colors.filter(c=> c.name == co)[0]
+                            if(b)blankColor = b
+                        }
+                   }
                    let blankSize = blank.sizes.filter(s=> s.name == size)[0]
                    if(!blankSize) blankSize = blank.sizes.filter(s=> s.name == sizeFixer[size])[0]
                    console.log(blank.code, blankColor, blankSize)
                    console.log( blankColor?.name, blankSize?.name)
                     let DesignThreadColor = colors.filter(c=> c.name == threadColor)[0]
                     let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0].value})
+                    if(o.tagIds != null || o.orderStatus == "shipped"){
+                        item.labelPrinted = true
+                    }
+                    if(order.status == "cancelled"){
+                        item.canceled = true
+                    }
                     //console.log(item)
                     await item.save()
                     items.push(item)
@@ -111,7 +124,8 @@ export async function pullOrders(){
             order.items = items
         }else{
             order.status = o.orderStatus
-            if(order.status == "shipped"){
+            if(o.tagIds != null) order.status = "Links"
+            if(order.status == "shipped" || order.status == "Links"){
                 order.items.map(async i=>{
                     i.status = order.status;
                     i.labelPrinted = true;

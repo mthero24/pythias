@@ -3,10 +3,9 @@ import Order from "@/models/Order";
 import {NextApiResponse, NextResponse} from "next/server";
 import {Sort} from "@pythias/labels";
 import { buildLabelData } from "@/functions/labelString";
-import axios from "axios"
 import { LabelsData } from "@/functions/labels";
 import Inventory from "@/models/inventory";
-import btoa from "btoa"
+import {createPdf} from "@pythias/labels"
 export async function POST(req=NextApiResponse) {
     let data = await req.json()
     console.log(data)
@@ -25,36 +24,9 @@ export async function POST(req=NextApiResponse) {
     items = items.filter(s=> s.order != undefined)
     items = items.map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
     items = Sort(items)
-    console.log(items.length)
-    let preLabels = items.map(async (i, j)=>{
-        console.log(j)
-        //if(j >= parseInt(data.lastIndex)){
-            let label = await buildLabelData(i, j)
-            //console.log(label)
-            return label
-        //}
-    })
 
     // full fill promises
-    preLabels = await Promise.all(preLabels);
-    preLabels.slice(parseInt(data.lastIndex), preLabels.length).map(l=> labelsString += l)
-    console.log(preLabels.length, "+++++++", preLabels.slice(parseInt(data.lastIndex), preLabels.length))
-    //create label string
-    //console.log(labelsString)
-    //convert to base64
-    labelsString = btoa(labelsString)
-
-    //print labels
-    console.log(process.env.localIP, process.env.localKey)
-    let headers = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`,
-      },
-    };
-    console.log(headers)
-    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
-    console.log(res?.data)
+     await createPdf({items: items, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)
     return NextResponse.json({error: false, msg: "reprinted", labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})

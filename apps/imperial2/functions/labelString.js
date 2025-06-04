@@ -2,6 +2,7 @@ import Items from "@/models/Items";
 import Inventory from "@/models/inventory";
 import ReturnBins from "@/models/returnBins"
 import Design from "@/models/Design";
+import { dirname } from "path";
 let updateReturnBin = async (re, upc, sku)=>{
   try{
     let hasReturn = await ReturnBins.findOne({_id: re._id})
@@ -16,7 +17,7 @@ let updateReturnBin = async (re, upc, sku)=>{
     console.log(e)
   }
 }
-export const buildLabelData = async (item, i, opts={}) => {
+export const buildLabelData = async (item, i, doc, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
     if(hasReturn){
@@ -28,67 +29,43 @@ export const buildLabelData = async (item, i, opts={}) => {
     //console.log(inventory, "inventory", `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`)
     if (item.design?.back) {
       if (item.design?.front && item.design.back) {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,350^FDFRONT&BACK^FS`;
-      } else {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,350^FDBACK ONLY^FS`;
+        frontBackString = `FRONT&BACK`;
+      } else if (item.design?.pocket && item.design?.back) {
+        frontBackString = `POCKET&BACK`;
+      }else {
+        frontBackString = `BACK ONLY`;
       }
     }else if(item.design?.pocket){
-      if (item.design.pocket && item.design.back) {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,350^FDPOCKET&BACK^FS`;
-      }else{
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,350^FDPOCKET^FS`;
-      }
-    } else frontBackString = "`^LH12,18^CFS,25,12^AXN,40,50^FO100,350^FDFRONT ONLY^FS`;";
+        frontBackString = `POCKET Only`;
+    } else frontBackString = "FRONT ONLY";
     if(!item.design) frontBackString = "Missing Design";
-    let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
+    let printPO = opts.printPO ? `${opts.printPO}`: "";
     let printTypeAbbr;
     if (item.designRef && item.designRef.sku && item.designRef.sku.includes("PU")) printTypeAbbr = "PUF";
     if (item.designRef && item.designRef.sku && item.designRef.sku.includes("EMB")) printTypeAbbr = "EMB";
     else printTypeAbbr = "DTF";
-
-    let labelString = `
-      ${item.order.marketplace == "target" || item.order.marketplace == "Target Plus US Marketplace"? `^XA
-        ^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc? item.upc: "no upc present"}^FS
-        ^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS
-        ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
-            item.colorName
-        }, Size: ${item.sizeName}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-            item.designRef && item.designRef.sku? item.designRef.sku: item.sku
-        }^FS
-    ^XZ` : ""}
-      ^XA
-        ^FO50,50^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS
-        ^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPO#: ${
-            item.order ? item.order.poNumber : "no order"
-        } Piece: ${item.pieceId}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#${i + 1}^FS
-        ^LH12,18^CFS,25,12^AXN,75,90^FO100,175^FD${item.styleCode}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,70^FD${new Date(item.date).toLocaleDateString("En-us")}^FS
-        ${hasReturn == null? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `R Bin${hasReturn.number}`}
-        ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
-            item.colorName
-        }^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDSize: ${item.sizeName} Shipping: ${item.shippingType} CNT: ${totalQuantity}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-            item.designRef && item.designRef.sku? item.designRef.sku: item.sku
-        }^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,320^FD Title: ${
-            item.designRef && item.designRef.name? item.designRef.name: item.sku
-        }^FS
-        ${
-            printTypeAbbr
-            ? `^LH12,18^CFS,25,12^AXN,40,50^FO10,350^FD${printTypeAbbr}^FS`
-            : ""
-        }
-        ${printPO}
-        ${frontBackString}
-    ^XZ`;
-    //console.log(labelString)
-    return labelString;
+    doc.font("./LibreBarcode128-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 20, 8);
+    doc.font("Courier-Bold").fontSize(8)
+    doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
+    doc.text(`#${i + 1}`)
+    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} ${inventory?.bin}`)
+    doc.font("Courier-Bold").fontSize(9)
+    doc.text(`Color: ${item.colorName}`, 10)
+    doc.text(`Thread Color: ${item.threadColorName}`)
+    doc.text(`Size: ${item.sizeName} CNT: ${totalQuantity}`)
+    doc.text(`Sku: ${item.designRef && item.designRef.sku? item.designRef.sku: item.sku}`)
+    doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name: item.sku}`)
+    doc.text(`${item.type}`)
+    if(printPO){
+      doc.text(`printPO`)
+    }
+     if(frontBackString){
+      doc.font("Courier-Bold").fontSize(10)
+      doc.text(frontBackString, 50, 130)
+    }
+        // ${hasReturn == null? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
+        // ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
+        // ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
+        // ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `R Bin${hasReturn.number}`}
     
   }
