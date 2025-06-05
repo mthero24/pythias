@@ -80,14 +80,14 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             Object.keys(useLabels).map(l=>{
                 items.push(...useLabels[l].filter(s=> selected.includes(s.pieceId)));
             })
-            items = Sort(items);
+            items = Sort(items, source);
         }else if(type == "gift"){
             items = gift
         }else {
             items.push(...useLabels[type].map(s=> {
                 if(s.inventory?.quantity > 0) return s}));
             items = items.filter(s=> s != undefined)
-            items = Sort(items);
+            items = Sort(items, source);
         }
         //console.log(items);
         //console.log(items);
@@ -252,7 +252,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         <Grid2 container spacing={1} sx={{ width: "100%" }}>
           {useLabels &&
             Object.keys(useLabels).map((l, i) => (
-              <Grid2 size={{ xs: 12, sm: 6, md: 6, lg: 6 }} key={i}>
+              <Grid2 size={{ xs: 12, sm: source == "IM"? 12: 6, md:  source == "IM"? 12: 6, lg:  source == "IM"? 12: 6 }} key={i}>
                 <Card sx={{ width: "100%", minHeight: "100vh" }}>
                   <Typography
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
@@ -292,12 +292,12 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                         In Stock
                       </Typography>
                     </Grid2>
-                    <Grid2 size={{ xs: 6, sm: 4, md: 3 }}>
+                    <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>
                       <Typography sx={{ textAlign: "center" }}>
                         Piece ID
                       </Typography>
                     </Grid2>
-                    <Grid2 size={{ xs: 5, sm: 4, md: 3 }}>
+                    <Grid2 size={{ xs: 5, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>
                       <Typography sx={{ textAlign: "center" }}>
                         PO Number
                       </Typography>
@@ -318,6 +318,14 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                         Color
                       </Typography>
                     </Grid2>
+                    {source == "IM" && <Grid2
+                      size={{ xs: 1, md: 2 }}
+                      sx={{ display: { xs: "none", sm: "none", md: "block" } }}
+                    >
+                      <Typography sx={{ textAlign: "center" }}>
+                        Thread Color
+                      </Typography>
+                    </Grid2>}
                     <Grid2
                       size={{ xs: 1, md: 1 }}
                       sx={{ display: { xs: "none", sm: "none", md: "block" } }}
@@ -400,12 +408,12 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                                 : "NAN"}
                             </Typography>
                           </Grid2>
-                          <Grid2 size={{ xs: 6, sm: 4, md: 3 }}>
+                          <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>
                             <Typography sx={{ textAlign: "center" }}>
                               {i.pieceId}
                             </Typography>
                           </Grid2>
-                          <Grid2 size={{ xs: 5, sm: 4, md: 3 }}>
+                          <Grid2 size={{ xs: 5, sm: source == "IM"? 2: 4, md: source == "IM"? 2:3 }}>
                             <Typography sx={{ textAlign: "center" }}>
                               {i.order.poNumber}
                             </Typography>
@@ -428,6 +436,16 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                               {i.colorName?.split("/")[0]}
                             </Typography>
                           </Grid2>
+                          {source == "IM" && <Grid2
+                            size={{ xs: 1, md: 2 }}
+                            sx={{
+                              display: { xs: "none", sm: "none", md: "block" },
+                            }}
+                          >
+                            <Typography sx={{ textAlign: "center" }}>
+                              {i.threadColorName?.split("/")[0]} {i.designRef.sku}
+                            </Typography>
+                          </Grid2>}
                           <Grid2
                             size={{ xs: 1, md: 1 }}
                             sx={{

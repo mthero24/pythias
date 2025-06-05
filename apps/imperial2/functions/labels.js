@@ -16,19 +16,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            shippingType: "Standard",
         }).populate("color", "name").populate("designRef", "sku name printType").lean(),
-            Expedited: await Items.find({
-            blank: { $ne: undefined },
-            colorName: {$ne: null},
-            sizeName: {$ne: null},
-            designRef: {$ne: null},
-            design: {$ne: null},
-            labelPrinted: false,
-            canceled: false,
-            paid: true,
-            shippingType: { $ne: "Standard" },
-        }).populate("color", "name").populate("designRef", "sku name printType").lean()
     }
     //console.log(labels)
     let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin").lean();
@@ -66,7 +54,7 @@ export async function LabelsData(){
         //     }
         // })
         rePulls += labels[k].filter(l=> l.rePulled).length
-        labels[k] = await Sort(labels[k])
+        labels[k] = await Sort(labels[k], "IM")
     }
     let giftMessages = await Items.find({
         labelPrinted: false,

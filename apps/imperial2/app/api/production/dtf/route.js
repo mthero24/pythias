@@ -3,6 +3,7 @@ import Items from "../../../../models/Items";
 import Color from "@/models/Color"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
+import { ListBucketInventoryConfigurationsOutputFilterSensitiveLog } from "@aws-sdk/client-s3";
 const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, style, item, source)=>{
     let styleImage = style.multiImages.front?.filter(i=> i.color == item.color.toString())[0]
     if(!styleImage){
@@ -33,6 +34,7 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
     let lowerSleeveCombo
     let centerCombo
     let pocketCombo
+    console.log(`${process.env.url}/api/renderImages`)
     if(front) {
         let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage?.box[0], styleImage: styleImage?.image, designImage: front })
         frontCombo = res.data.base64
@@ -105,7 +107,7 @@ export async function POST(req = NextApiRequest) {
     let config = JSON.parse(process.env.dtf);
     console.log(config);
     setConfig({
-      internalIP: process.env.localIP,
+      internalIP: "10.1.10.106:3005",
       apiKey: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO",
     });
     let data = await req.json()
