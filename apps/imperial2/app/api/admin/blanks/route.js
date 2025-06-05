@@ -26,6 +26,7 @@ const updateFold = (blank)=>{
       })
     }
   }
+  blank.fold = newFold
   return blank
 }
 const updateEnvelopes = (blank)=>{
