@@ -25,7 +25,7 @@ export const createPdf = async ({items, buildLabelData, localIP, key })=>{
             }
         }
         console.log(headers, localIP)
-        let res = await axios.post(`http://10.1.10.106:3005/api/print-labels-pdf`, {label: labelsString, printer: "printer1", barcode: "label"}, headers).catch(e=>{console.log(e, "error")})
+        let res = await axios.post(`http://${localIP}/api/print-labels-pdf`, {label: labelsString, printer: "printer1", barcode: "label"}, headers).catch(e=>{console.log(e, "error")})
         console.log(res?.data, "res")
     }); 
 }

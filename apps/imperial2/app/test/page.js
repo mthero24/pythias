@@ -18,7 +18,7 @@ import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmar
 
 export default async function Test(){
     //await updateListings()
-    //await pullOrders()
+   //await pullOrders()
     // console.log(`${process.env.ssApiKey}:${process.env.ssApiSecret}`)
     // let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     // console.log(orders[2], orders[2].shipTo, orders[2].items, orders[2].items[0], orders[2].items[0].options, orders[2].orderStatus)
