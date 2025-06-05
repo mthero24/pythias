@@ -26,6 +26,7 @@ const updateFold = (blank)=>{
       })
     }
   }
+  return blank
 }
 const updateEnvelopes = (blank)=>{
   let newEnvelopes = [];
@@ -34,7 +35,7 @@ const updateEnvelopes = (blank)=>{
     if(printLocations.includes(e.placement)) newEnvelopes.push(e)
   }
   for(let s of blank.sizes){
-    console.log(s)
+    //console.log(s)
     for(let loc of printLocations){
       if(!newEnvelopes.filter(e=> e.size.toString() == s._id.toString() && e.placement == loc)[0]){
         newEnvelopes.push({
@@ -75,8 +76,10 @@ export async function POST(req = NextApiRequest) {
       await newBlank.save();
       await generateInventory(newBlank);
     }
+    //console.log(newBlank)
     return NextResponse.json({error: false, blank: newBlank});
   } catch (err) {
+    //console.log(err)
     return NextResponse.json(err.toString());
   }
 }

@@ -142,7 +142,7 @@ const EnvelopeSettings = ({ blank, handleUpdateEnvelope}) => {
   return (
     <Box>
       <Typography fontWeight={700}>Set Envelopes</Typography>
-      {blank.printLocations.map(pl=>(
+      {blank.printLocations?.map(pl=>(
         <Box key={pl._id}>
           <Accordion sx={{margin: "1%"}}>
             <AccordionSummary
