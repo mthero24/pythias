@@ -121,6 +121,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Track Labels`} />
           </ListItemButton>
         </Link>
+        <Link href="/embroidery">
+          <ListItemButton>
+            <ListItemText primary={`Embroidery`} />
+          </ListItemButton>
+        </Link>
         <Link href="/sublimation">
           <ListItemButton>
             <ListItemText primary={`Sublimation`} />
