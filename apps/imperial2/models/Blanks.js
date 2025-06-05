@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { PremierPrinting } = require("../lib/connection");
 import { ImageSharp } from "@mui/icons-material";
 import Color from "./Color";
+import printLocations from "./printLocations";
 const Schema = mongoose.Schema;
 let imageSchema = [{
   box: [ {
@@ -136,7 +137,11 @@ const SchemaObj = new Schema(
     fixerCode: String,
     kohlsHeader: Object,
     targetHeader: Object,
-    shopSimonHeader: Object
+    shopSimonHeader: Object,
+    printLocations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: printLocations,
+      }]
   },
   { strict: false }
 );

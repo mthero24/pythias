@@ -11,11 +11,59 @@ export async function GET(){
     return NextResponse.json({error: true, msg: JSON.stringify(e)})
   }
 }
+const updateFold = (blank)=>{
+  let newFold = []
+  for(let s of blank.sizes){
+    let fold = blank.fold.filter(f=> f.size.toString() == s._id)[0]
+    if(fold) newFold.push(fold)
+    else{
+      newFold.push({
+        size: s._id,
+        sizeName: s.name,
+        fold: "TSHIRT SML",
+        sleeves: 0,
+        body: 0
+      })
+    }
+  }
+}
+const updateEnvelopes = (blank)=>{
+  let newEnvelopes = [];
+  let printLocations = blank.printLocations.map(l=> {return l.name})
+  for(let e of blank.envelopes){
+    if(printLocations.includes(e.placement)) newEnvelopes.push(e)
+  }
+  for(let s of blank.sizes){
+    console.log(s)
+    for(let loc of printLocations){
+      if(!newEnvelopes.filter(e=> e.size.toString() == s._id.toString() && e.placement == loc)[0]){
+        newEnvelopes.push({
+          size: s._id,
+          sizeName: s.name,
+          platen: 2,
+          placement: loc,
+          horizoffset: 0,
+          vertoffset: 0,
+          width: 11,
+          height: 14
+        })
+      }
+    }
+  }
+  blank.envelopes = newEnvelopes.sort((a,b)=>{
+    if(a.placement.length > a.placement.length) return -1
+    if(a.placement.length < a.placement.length) return 1
+    return 0
+  })
+  return blank
+}
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   //console.log(data)
   let blank = data.blank
-  console.log(blank)
+  console.log(blank, "blank")
+  if(blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
+  if(blank.sizes.length > 0) blank = updateFold(blank)
   let newBlank
   try {
     if(blank._id){

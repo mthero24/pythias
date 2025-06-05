@@ -82,7 +82,7 @@ export async function POST(req = NextApiRequest) {
                     color: item.colorName,
                     sku: item.sku,
                     printer: data.printer,
-                    key: "$2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW",
+                    key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO",
                     localIP:process.env.localIP
                 })
             }

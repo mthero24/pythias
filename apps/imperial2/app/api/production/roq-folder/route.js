@@ -25,7 +25,7 @@ export async function POST(req = NextApiRequest){
                 weight: item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight?item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight: 8, 
                 selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
                 businessAddress: JSON.parse(process.env.businessAddress),
-                providers: ["usps", "ups"],                
+                providers: ["shipstation", "ups"],                
                 credentials: {
                     clientId: process.env.uspsClientId,
                     clientSecret: process.env.uspsClientSecret,
@@ -95,11 +95,10 @@ export async function POST(req = NextApiRequest){
                   quantity: 1,
                   codeFormat: 128,
                   pause: "P",
-                  QuantityToStack: 8,
+                  QuantityToStack: 1,
                   Recipe: foldSettings.fold,
-                  sleeves: foldSettings.sleeves,
-                  body: foldSettings.body,
                   exit: item.order.preShipped == true ? "Pack" : "Stack",
+                  roqNew: true
                 }, headers
             ).catch(e=>{responseData = e.response?.data});
             item.folded = true

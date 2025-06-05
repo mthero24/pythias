@@ -14,7 +14,7 @@ export async function sendFile({url,pieceID,printer,key, localIP}){
         }
     }
     let resData
-    let res = await axios.post(`${localIP}/api/embroidery`, {files: [{buffer: buffer, type: url.split(".")[url.split(".").length - 1]}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response.data})
+    let res = await axios.post(`http://${localIP}/api/embroidery`, {files: [{buffer: buffer, type: "dst"}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response?.data})
     console.log(resData, res?.data)
     if(res?.data) return res.data
     else return resData

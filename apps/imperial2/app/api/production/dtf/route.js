@@ -107,7 +107,7 @@ export async function POST(req = NextApiRequest) {
     let config = JSON.parse(process.env.dtf);
     console.log(config);
     setConfig({
-      internalIP: "10.1.10.106:3005",
+      internalIP: process.env.localIP,
       apiKey: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO",
     });
     let data = await req.json()
