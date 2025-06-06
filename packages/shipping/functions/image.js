@@ -2,7 +2,7 @@
 export const createImage = (colorName, styleCode, options, source, width=700) => {
     console.log(source)
     let url;
-    if(source != "PP" || source == "IM"){
+    if(source != "PP" && source != "IM"){
         let side = 'garment';
         if(options.side){
             side = options.side;
