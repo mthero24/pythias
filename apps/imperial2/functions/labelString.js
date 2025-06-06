@@ -49,8 +49,8 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     } else frontBackString = "FRONT ONLY";
     if(!item.design) frontBackString = "Missing Design";
     let printPO = opts.printPO ? `${opts.printPO}`: "";
-    let printTypeAbbr = item.type;
-    doc.font("./LibreBarcode128-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 20, 8);
+    let printTypeAbbr = item.sku.split("_")[0];
+    doc.font("./LibreBarcode39-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 3, 8);
     doc.font("Courier-Bold").fontSize(8)
     doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
     doc.text(`#${i + 1}`)

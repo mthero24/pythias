@@ -61,19 +61,9 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
     setBlank({...b})
     console.log(blank)
   }
-  const [activePrintAreas, setActivePrintAreas] = useState(
-    []
-  );
   const [boxSet, setBoxSet] = useState(false)
   useEffect(()=>{
-    if(blank){
-      let active = Object.keys(blank.multiImages).map(s=>{
-        if(blank.multiImages[s].length > 0) return s
-      })
-      active = active.filter(a=> a !== undefined)
-      console.log(active, "active")
-      setActivePrintAreas(active)
-    }
+    
     if(blanks){
       let imGr = []
       blanks.map(b=>{

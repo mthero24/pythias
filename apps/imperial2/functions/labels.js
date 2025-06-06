@@ -26,33 +26,7 @@ export async function LabelsData(){
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        labels[k] = labels[k].map(s=> { if(s.designRef?.printType =="EMB"){
-            s.type = "EMB"
-        }else if(s.designRef?.sku.toUpperCase().includes("PU")){
-            s.type = "PUF"
-        }else{
-            s.type = "DTF"
-        };  return {...s}})
         labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
-        //labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})
-        // let missing = labels[k].filter(l=> l.inventory == undefined)
-        // missing.map(async m=>{
-        //     let i = await Inventory.findOne({color_name: )})
-        //     if(!i){
-        //         i = new Inventory({
-        //             inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`),
-        //             pending_quantity: 0,
-        //             quantity: 0,
-        //             order_at_quantity: 10,
-        //             desired_order_quantity: 10,
-        //             color: m.color,
-        //             color_name: m.colorName,
-        //             size_name: m.sizeName,
-        //             barcode_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)
-        //         })
-        //         await i.save()
-        //     }
-        // })
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k], "IM")
     }
