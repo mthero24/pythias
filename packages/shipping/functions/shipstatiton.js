@@ -1,6 +1,6 @@
 import axios from "axios"
 let carrierCodes ={
-    usps: "se-65258",
+    usps: "se-1652813",
     ups: "se-801899"
 }
 let serviceCodes ={
@@ -8,6 +8,27 @@ let serviceCodes ={
         GroundAdvantage: "usps_ground_advantage",
         Priority: "usps_priority_mail"
     },
+}
+export async function getCarriers({credentials}){
+    let headers = {
+        headers: {
+            "Content-Type": "application/json",
+            "api-key": credentials.apiKey
+        }
+    }
+    let errorRes
+    let res = await axios.get(`https://api.shipstation.com/v2/labels`, headers).catch((err)=>{
+        //console.log(err.response.data)
+        errorRes = err.response.data
+    })
+    console.log(res?.data, errorRes)
+    if(errorRes){
+        console.log("here")
+        return {error: true, msg: errorRes.errors[0].message}
+    }else{
+        
+        return 
+    }
 }
 
 export async function ShipStationShip({address, poNumber, weight, businessAddress, credentials, selectedShipping, dimensions, dpi, ignoreBadAddress}){
@@ -37,8 +58,7 @@ export async function ShipStationShip({address, poNumber, weight, businessAddres
             country_code: address.country,
             address_residential_indicator: 'unknown',
             },
-            
-            warehouse_id: 349794,
+            warehouse_id: 62666,
             return_to: {
                 name: businessAddress.name,
                 phone: businessAddress.phoneNumber? businessAddress.phoneNumber: "0000000000",

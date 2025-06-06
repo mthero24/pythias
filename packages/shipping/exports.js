@@ -10,7 +10,7 @@ export {buyLabel} from "./functions/buyLabel";
 export {print} from "./functions/printLabel";
 export {getRefund} from "./functions/getRefund";
 export {checkAddress} from "./functions/usps/usps"
-export {ShipStationShip} from "./functions/shipstatiton"
+export {ShipStationShip, getCarriers} from "./functions/shipstatiton"
 export {Refund} from "./components/refund/Main"
 export {TrackPackage as uspsTracking} from "./functions/usps/usps"; 
 export {getRatesFeNew, purchaseFedexNew} from "./functions/fedex/new"
