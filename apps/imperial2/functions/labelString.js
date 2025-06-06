@@ -17,6 +17,15 @@ let updateReturnBin = async (re, upc, sku)=>{
     console.log(e)
   }
 }
+let fullSize = {
+  "XS": "XSMALL",
+  "S": "SMALL",
+  "M": "MEDIUM",
+  "L": "LARGE",
+  "XL": "XLARGE",
+  "2XL": "2XLARGE",
+  "3XL": "3XLARGE"
+}
 export const buildLabelData = async (item, i, doc, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
@@ -40,10 +49,7 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     } else frontBackString = "FRONT ONLY";
     if(!item.design) frontBackString = "Missing Design";
     let printPO = opts.printPO ? `${opts.printPO}`: "";
-    let printTypeAbbr;
-    if (item.designRef && item.designRef.sku && item.designRef.sku.includes("PU")) printTypeAbbr = "PUF";
-    if (item.designRef && item.designRef.sku && item.designRef.sku.includes("EMB")) printTypeAbbr = "EMB";
-    else printTypeAbbr = "DTF";
+    let printTypeAbbr = item.type;
     doc.font("./LibreBarcode128-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 20, 8);
     doc.font("Courier-Bold").fontSize(8)
     doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
@@ -51,9 +57,8 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} ${inventory?.bin}`)
     doc.font("Courier-Bold").fontSize(9)
     doc.text(`Color: ${item.colorName}`, 10)
+    doc.text(`Size: ${fullSize[item.sizeName]} CNT: ${totalQuantity}`)
     doc.text(`Thread Color: ${item.threadColorName}`)
-    doc.text(`Size: ${item.sizeName} CNT: ${totalQuantity}`)
-    doc.text(`Sku: ${item.designRef && item.designRef.sku? item.designRef.sku: item.sku}`)
     doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name: item.sku}`)
     doc.text(`${item.type}`)
     if(printPO){

@@ -468,10 +468,10 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         </Grid2>
                                         {imageLocations.map((i, j)=>(
                                             <>
-                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
                                                      <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
                                                         <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                                            <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                                            <Image src={des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
                                                         </Box>
                                                     </Box>
                                                     <p style={{textAlign: "center"}}>{i} Image</p>
