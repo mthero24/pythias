@@ -22,7 +22,7 @@ const nextConfig = {
               },
               {
                 protocol: "https",
-                hostname: "simplysage.pythiastechnologies.com",
+                hostname: "imperial.pythiastechnologies.com",
               },
               {
                 protocol: "http",

@@ -2,7 +2,7 @@
 export const createImage = (colorName, styleCode, options, source, width=700) => {
     console.log(source)
     let url;
-    if(source != "PP"){
+    if(source != "PP" && source != "IM"){
         let side = 'garment';
         if(options.side){
             side = options.side;
@@ -18,8 +18,10 @@ export const createImage = (colorName, styleCode, options, source, width=700) =>
         }
         console.log(url, 'url')
         //console.log(url)
-    }else{
+    }else if(source == "PP"){
         url = `https://simplysage.pythiastechnologies.com/api/renderImages?colorName=${colorName}&blank=${styleCode}&design=${options.url}&side=${options.side? options.side: "front"}`
+    } else if(source == "IM"){
+        url = `https://imperial.pythiastechnologies.com/api/renderImages?colorName=${colorName}&blank=${styleCode}&design=${options.url}&side=${options.side? options.side: "front"}`
     }    
     return url;
 };

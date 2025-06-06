@@ -19,5 +19,5 @@ export default async function Shipping(req,res){
     let params = await req.searchParams
     let pieceId = params.pieceId
     let station = params.station
-    return <Main stations={stations} binCount={binCount} bins={{readyToShip, inUse}} pieceId={pieceId} stat={station} source={"PP"}/>
+    return <Main stations={stations} binCount={binCount} bins={{readyToShip, inUse}} pieceId={pieceId} stat={station} source={"IM"}/>
 }

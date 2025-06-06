@@ -23,7 +23,7 @@ export async function POST(req = NextApiRequest){
                 address: item.order.shippingAddress, 
                 poNumber: item.order.poNumber, 
                 weight: item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight?item.blank.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight: 8, 
-                selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
+                selectedShipping: {provider: "usps", name: "usps_ground_advantage"}, dimensions: {width: 8, length: 11, height: 1}, 
                 businessAddress: JSON.parse(process.env.businessAddress),
                 providers: ["shipstation", "ups"],                
                 credentials: {
