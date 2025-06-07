@@ -31,9 +31,9 @@ export function Items({order, style, source}){
                 >
                     <Grid2 container spacing={1}>
                         <Grid2 size={{xs: 5}}>
-                            {it.design &&
+                            {it.design && Object.keys(it.design)[0] &&
                             <Image
-                                src={it.sku?.includes("gift")? it?.design?.front.replace("https//:", "https://"): createImage(it.colorName, it.styleCode, {url: it?.design?.front}, source)}
+                                src={it.sku?.includes("gift")? it?.design?.front.replace("https//:", "https://"): createImage(it.colorName, it.styleCode, {url: it?.design[Object.keys(it.design)[0]], side: Object.keys(it.design)[0], threadColor: it.threadColorName}, source)}
                                 alt={it.pieceId}
                                 width={100}
                                 height={100}
@@ -44,7 +44,7 @@ export function Items({order, style, source}){
                             <Grid2 container spacing={1}>
                                 <Grid2 size={{xs: 12}}>
                                     <Typography  sx={{fontWeight: 600, fontSize: ".9rem", textTransform: "capitalize"}}>PieceID: {it.pieceId}, blank: {it.styleCode}</Typography>
-                                    <Typography  sx={{fontSize: ".7rem", textTransform: "capitalize"}}> Color: {it.colorName}, Size: {it.sizeName}</Typography>
+                                    <Typography  sx={{fontSize: ".7rem", textTransform: "capitalize"}}> Color: {it.colorName}, Size: {it.sizeName} {it.threadColorName? `Thread: ${it.threadColorName}`: ''}</Typography>
                                 </Grid2>
                                 <Grid2 size={{xs: 6, sm: 3}}>
                                     <Typography sx={headingStyle}>Treated</Typography>

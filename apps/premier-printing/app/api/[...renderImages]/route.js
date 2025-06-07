@@ -29,7 +29,7 @@ const createImage = async (data)=>{
     }
     base64 = await readImage(data.styleImage)
     console.log(data)
-    console.log(data.designImage != "null", "design image")
+    console.log(data.designImage != "null", data.designImage != "undefined", "design image")
     if(data.box && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64){
         base64 = base64.resize({
             width: data.width,
@@ -155,7 +155,7 @@ export async function GET(req){
     let width = parseInt(req.nextUrl.searchParams.get("width"))
     console.log(blankCode, bm, colorName, designImage, side)
     let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
-    let color = blank.colors.filter(c=>c.name == colorName)[0]
+    let color = blank?.colors.filter(c=>c.name == colorName)[0]
     //console.log(color)
     let blankImage
     if(bm){

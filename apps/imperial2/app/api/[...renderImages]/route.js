@@ -29,7 +29,7 @@ const createImage = async (data)=>{
     }
     base64 = await readImage(data.styleImage)
     console.log(data)
-    console.log(data.designImage != "null", "design image")
+    console.log(data.designImage != "null", data.designImage != "undefined", "design image")
     if(data.box && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64){
         base64 = base64.resize({
             width: data.width,

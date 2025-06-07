@@ -21,7 +21,7 @@ export const createImage = (colorName, styleCode, options, source, width=700) =>
     }else if(source == "PP"){
         url = `https://simplysage.pythiastechnologies.com/api/renderImages?colorName=${colorName}&blank=${styleCode}&design=${options.url}&side=${options.side? options.side: "front"}`
     } else if(source == "IM"){
-        url = `https://imperial.pythiastechnologies.com/api/renderImages?colorName=${colorName}&blank=${styleCode}&design=${options.url}&side=${options.side? options.side: "front"}`
+        url = `https://imperial.pythiastechnologies.com/api/renderImages?colorName=${colorName}&blank=${styleCode}&design=${options.url}&side=${options.side? options.side: "front"}&threadColor=${options.threadColor}`
     }    
     return url;
 };
