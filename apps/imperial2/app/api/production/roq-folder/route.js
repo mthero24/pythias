@@ -43,7 +43,11 @@ export async function POST(req = NextApiRequest){
                 credentialsShipStation: {
                     apiKey: process.env.ssV2
                 },
-                imageFormat: "PDF"
+                imageFormat: "PDF",
+                    carrierCodes :{
+                    usps: "se-1652813",
+                },
+                warehouse_id: 62666,
             }
             if(!item.order.preShipped){
                 let label = await buyLabel(send)
