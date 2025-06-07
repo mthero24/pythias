@@ -839,15 +839,15 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design, colors})=>{
                 console.log(tr)
                 return (blank?.colors.map(c=>{
                     return (blank?.blank.sizes.map(s=>{
-                        return <Typography key={`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}_${tr.name}`}>{`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}_${colors.filter(c=> c._id.toString() == tr.toString())[0]?.name}`}</Typography>
+                        return <Typography key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${tr.name}`}>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${colors.filter(c=> c._id.toString() == tr.toString())[0]?.name}`}</Typography>
                     }))
                 }))
             })}
             {design.threadColors.length == 0 && blank?.colors?.map(c=>{
                 return blank.blank?.sizes?.map(s=>{
-                    console.log(`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}`)
-                    return (<Box sx={{padding: "2%"}} key={`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}`}>
-                        <Typography>{`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}`}</Typography> 
+                    console.log(`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`)
+                    return (<Box sx={{padding: "2%"}} key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}>
+                        <Typography>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}</Typography> 
                         <hr/>
                     </Box>)
                 })
