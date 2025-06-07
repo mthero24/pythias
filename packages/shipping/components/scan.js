@@ -119,7 +119,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
             }
             label="Reship"
           />
-          {source == "PP" && <FormControlLabel
+          {source == "PP" || source == "IM" && <FormControlLabel
             control={
               <Checkbox
                 {...label}

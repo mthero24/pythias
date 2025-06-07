@@ -29,8 +29,8 @@ let fullSize = {
 }
 export const buildLabelData = async (item, i, doc, opts={}) => {
     console.log(item.order)
-    item.order = await Order.findOne({_id: item.order}).select("items")
-    let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
+    if(!item.order.poNumber)item.order = await Order.findOne({_id: item.order}).select("items poNumber")
+    let totalQuantity = await Items.find({_id: { $in: item.order.items }, canceled: false,}).countDocuments();
     console.log(item.order.items?.length, "item order")
     console.log(totalQuantity)
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
@@ -58,14 +58,14 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     doc.font("./LibreBarcode39-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 3, 8);
     doc.font("Courier-Bold").fontSize(8)
     doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
-    doc.text(`#${i + 1}`)
-    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} ${inventory?.location}`)
+    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${inventory?.location}`)
     doc.font("Courier-Bold").fontSize(9)
     doc.text(`Color: ${item.colorName}`, 10)
     doc.text(`Size: ${fullSize[item.sizeName]} CNT: ${totalQuantity}`)
-    doc.text(`Thread Color: ${item.threadColorName}`)
+    doc.text(`Thread: ${item.threadColorName}`)
     doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name: item.sku}`)
     doc.text(`${item.type}`)
+    doc.text(`#${i + 1}`)
     if(printPO){
       doc.text(`printPO`)
     }
