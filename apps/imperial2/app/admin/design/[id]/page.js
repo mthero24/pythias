@@ -16,6 +16,11 @@ export default async function DesignPage({params}){
     if(id){
         try{
             let colors = await Colors.find({});
+            for(let color of colors){
+                color.sku = color.name.replace(/ /g, "").substring(0, 5)
+                console.log(color.sku)
+                color = await color. save()
+            }
             let printLocations = await Locations.find({})
             let design = await Design.findOne({_id: id}).lean();
             let blanks = await Blanks.find({}).select("colors code name sizes multiImages").populate("colors").lean();
