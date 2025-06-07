@@ -17,11 +17,11 @@ export default async function DesignPage({params}){
         try{
             let colors = await Colors.find({});
             for(let color of colors){
-                if(!color.sku){
-                    color.sku = color.name.replace(/ /g, "").substring(0, 5)
+                //if(!color.sku){
+                    color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").substring(0, 7)
                     console.log(color.sku)
                     color = await color. save()
-                }
+                //}
             }
             let printLocations = await Locations.find({})
             let design = await Design.findOne({_id: id}).lean();
