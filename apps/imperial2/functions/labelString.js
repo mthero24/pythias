@@ -1,6 +1,7 @@
 import Items from "@/models/Items";
 import Inventory from "@/models/inventory";
 import ReturnBins from "@/models/returnBins"
+import Order from "@/models/Order";
 import Design from "@/models/Design";
 import { dirname } from "path";
 let updateReturnBin = async (re, upc, sku)=>{
@@ -27,14 +28,18 @@ let fullSize = {
   "3XL": "3XLARGE"
 }
 export const buildLabelData = async (item, i, doc, opts={}) => {
+    console.log(item.order)
+    item.order = await Order.findOne({_id: item.order}).select("items")
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
+    console.log(item.order.items?.length, "item order")
+    console.log(totalQuantity)
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
     if(hasReturn){
       updateReturnBin(hasReturn, item.upc, item.sku)
     }
     let frontBackString;
     //console.log(totalQuantity, "TQ");
-    let inventory = await Inventory.findOne({inventory_id: `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`}).select(" bin row shelf unit").lean()
+    let inventory = await Inventory.findOne({inventory_id: `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`}).select(" bin row shelf unit location").lean()
     //console.log(inventory, "inventory", `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`)
     if (item.design?.back) {
       if (item.design?.front && item.design.back) {
@@ -54,7 +59,7 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     doc.font("Courier-Bold").fontSize(8)
     doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
     doc.text(`#${i + 1}`)
-    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} ${inventory?.bin}`)
+    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} ${inventory?.location}`)
     doc.font("Courier-Bold").fontSize(9)
     doc.text(`Color: ${item.colorName}`, 10)
     doc.text(`Size: ${fullSize[item.sizeName]} CNT: ${totalQuantity}`)

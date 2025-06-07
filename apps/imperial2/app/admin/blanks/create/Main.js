@@ -118,7 +118,6 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
       })
       active = active.filter(a=> a !== undefined)
       console.log(active, "active")
-      setActivePrintAreas(active)
     }
   },[])
   //keep images the same as array BECAUSE it will be easier to filter no?
