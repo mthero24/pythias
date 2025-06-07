@@ -26,10 +26,10 @@ export function Main({ords, pages, page, q}){
             <Card sx={{minHeight: "100vh"}}>
             <Card sx={{padding: "3%", margin: "1% 1%", textAlign: "center"}} > 
                     <Grid2 container>
-                            <Grid2 size={3}>
+                            <Grid2 size={4}>
                                 <Typography>PO Number</Typography>
                             </Grid2>
-                            <Grid2 size={3}>
+                            <Grid2 size={4}>
                                 <Typography>Status</Typography>
                             </Grid2>
                             <Grid2 size={2}>
@@ -37,9 +37,6 @@ export function Main({ords, pages, page, q}){
                             </Grid2>
                             <Grid2 size={2}>
                                 <Typography>Date</Typography>
-                            </Grid2>
-                            <Grid2 size={2}>
-                                <Typography>Total</Typography>
                             </Grid2>
                         </Grid2>
                     </Card>
@@ -50,10 +47,10 @@ export function Main({ords, pages, page, q}){
                         }
                     }).filter(j=> j!= undefined).length > 0? "red": ""}} onClick={()=>router.push(`/orders/${o._id}`)}> 
                         <Grid2 container >
-                            <Grid2 size={3}>
+                            <Grid2 size={4}>
                                 <Typography>{o.poNumber}</Typography>
                             </Grid2>
-                            <Grid2 size={3}>
+                            <Grid2 size={4}>
                                 <Typography>{o.status}</Typography>
                             </Grid2>
                             <Grid2 size={2}>
@@ -61,9 +58,6 @@ export function Main({ords, pages, page, q}){
                             </Grid2>
                             <Grid2 size={2}>
                                 <Typography>{new Date(o.date).toLocaleDateString("en-US")}</Typography>
-                            </Grid2>
-                            <Grid2 size={2}>
-                                <Typography>${parseFloat(o.total).toFixed(2)}</Typography>
                             </Grid2>
                         </Grid2>
                     </Card>

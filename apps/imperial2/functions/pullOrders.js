@@ -86,44 +86,83 @@ export async function pullOrders(){
             for(let i of o.items){
                 if(i.sku && i.sku != ""){
                     //console.log(i.sku, i.sku.split("_")[2]?.trim())
-                   let design = await Design.findOne({name: i.sku.split("_")[2]?.replace(/’/g, "'").trim()})
-                   //console.log(design?.name)
-                   //console.log(i.options[0].value.split(", "))
-                   let options = i.options[0].value.split(", ")
-                   let style = fixers.filter(f=> options[0].includes(f))[0]
-                   let color = options[0].split(style)[0]?.replace(/Youth/g, "").trim()
-                   let size = options[1]
-                   let threadColor = options[2] 
-                   console.log(style, color, size, threadColor)
-                   let blank = await Blank.findOne({fixerCode: style.trim()}).populate("colors")
-                   let blankColor = blank.colors.filter(c=> c.name == color)[0]
-                   if(!blankColor){
-                        for(let co of (colorFixer[color]? colorFixer[color].split(", "): [])){
-                            let b = blank.colors.filter(c=> c.name == co)[0]
-                            if(b)blankColor = b
+                    if(i.sku.split("_").length == 3 || i.sku.split("_")[0] == "front"){
+                    let design = await Design.findOne({name: i.sku.split("_")[2]?.replace(/’/g, "'").trim()})
+                    //console.log(design?.name)
+                    //console.log(i.options[0].value.split(", "))
+                    let options = i.options[0].value.split(", ")
+                    let style = fixers.filter(f=> options[0].includes(f))[0]
+                    let color = options[0].split(style)[0]?.replace(/Youth/g, "").trim()
+                    let size = options[1]
+                    let threadColor = options[2] 
+                    console.log(style, color, size, threadColor)
+                    let blank = await Blank.findOne({fixerCode: style.trim()}).populate("colors")
+                    let blankColor = blank.colors.filter(c=> c.name == color)[0]
+                    if(!blankColor){
+                            for(let co of (colorFixer[color]? colorFixer[color].split(", "): [])){
+                                let b = blank.colors.filter(c=> c.name == co)[0]
+                                if(b)blankColor = b
+                            }
+                    }
+                    let blankSize = blank.sizes.filter(s=> s.name == size)[0]
+                    if(!blankSize) blankSize = blank.sizes.filter(s=> s.name == sizeFixer[size])[0]
+                    console.log(blank.code, blankColor, blankSize)
+                    console.log( blankColor?.name, blankSize?.name)
+                        let DesignThreadColor = colors.filter(c=> c.name == threadColor)[0]
+                        let designImages
+                        if(DesignThreadColor){
+                            if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
+                            else if(design) designImages = design.images
+                        }else if(design){
+                            designImages = design.images
                         }
-                   }
-                   let blankSize = blank.sizes.filter(s=> s.name == size)[0]
-                   if(!blankSize) blankSize = blank.sizes.filter(s=> s.name == sizeFixer[size])[0]
-                   console.log(blank.code, blankColor, blankSize)
-                   console.log( blankColor?.name, blankSize?.name)
-                    let DesignThreadColor = colors.filter(c=> c.name == threadColor)[0]
-                    let designImages
-                    if(DesignThreadColor){
-                        if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
-                    }else if(design){
-                        designImages = design.images
+                        let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: designImages, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0].value})
+                        if(o.tagIds != null || o.orderStatus == "shipped"){
+                            item.labelPrinted = true
+                        }
+                        if(order.status == "cancelled"){
+                            item.canceled = true
+                        }
+                        //console.log(item)
+                        await item.save()
+                        items.push(item)
+                    }else{
+                        let sku = i.sku.split("_")
+                        let blank 
+                        let threadColor
+                        let printType = sku[0]
+                        let designSku = sku[1]
+                        let colorName = sku[2]
+                        let sizeName = sku[3]
+                        if(sku.length == 5){
+                            blank = sku[sku.length - 1]
+                        }else{
+                            blank = sku[sku.length - 2]
+                            threadColor = sku[sku.length - 1]
+                        }
+                        blank = await Blank.findOne({code: blank}).populate("colors")
+                        let design = await Design.findOne({sku: designSku})
+                        let blankColor = blank.colors.filter(c=> c.name.toLowerCase() == colorName.toLowerCase())[0]
+                        let blankSize = blank.sizes.filter(c=> c.name.toLowerCase() == sizeName.toLowerCase())[0]
+                        let DesignThreadColor = colors.filter(c=> c.name.toLowerCase() == threadColor?.toLowerCase())[0]
+                        let designImages
+                        if(DesignThreadColor){
+                            if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
+                            else if(design) designImages = design.images
+                        }else if(design){
+                            designImages = design.images
+                        }
+                        let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: designImages, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0].value})
+                        if(o.tagIds != null || o.orderStatus == "shipped"){
+                            item.labelPrinted = true
+                        }
+                        if(order.status == "cancelled"){
+                            item.canceled = true
+                        }
+                        //console.log(item)
+                        await item.save()
+                        items.push(item)
                     }
-                    let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: designImages, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0].value})
-                    if(o.tagIds != null || o.orderStatus == "shipped"){
-                        item.labelPrinted = true
-                    }
-                    if(order.status == "cancelled"){
-                        item.canceled = true
-                    }
-                    //console.log(item)
-                    await item.save()
-                    items.push(item)
                 }
                 //console.log(items)
             }

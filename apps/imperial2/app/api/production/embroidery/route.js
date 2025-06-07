@@ -70,8 +70,8 @@ export async function POST(req = NextApiRequest) {
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("designRef", "embroideryFiles").populate("blank", "code envelopes box sizes multiImages")
-    console.log(item, "item", item.color, "item color")
-    if (item && !item.canceled) {
+    console.log(item, "item", item?.color, "item color")
+    if (item && !item.canceled && item.designRef.embroideryFiles) {
         Object.keys(item.designRef.embroideryFiles).map(async key=>{
             if(key != undefined && item.designRef.embroideryFiles[key]){
                 await sendFile({
@@ -98,7 +98,9 @@ export async function POST(req = NextApiRequest) {
         return NextResponse.json({ error: false, msg: "added to que", ...result, source: "PP"});
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
-    } else {
+    } else if(item && item.designRef.embroideryFiles == undefined){
+        return NextResponse.json({ error: true, msg: "Design Missing DST" });
+    }else {
         return NextResponse.json({ error: true, msg: "item not found" });
     }
 }
