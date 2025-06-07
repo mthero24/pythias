@@ -18,17 +18,11 @@ import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmar
 import {getCarriers} from "@pythias/shipping"
 export default async function Test(){
     //await updateListings()
-   //await pullOrders()
+   await pullOrders()
     // console.log(`${process.env.ssApiKey}:${process.env.ssApiSecret}`)
     // let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     // console.log(orders[2], orders[2].shipTo, orders[2].items, orders[2].items[0], orders[2].items[0].options, orders[2].orderStatus)
     //await getCarriers({credentials: {apiKey: process.env.ssV2}})
-    let headers = {
-        headers: {
-            Authorization: `Basic ${btoa(`${process.env.ssApiKey}:${process.env.ssApiSecret}`)}`
-        }
-    }
-     let res = await axios.get(`https://ssapi.shipstation.com/warehouses`, headers).catch(e=>{console.log(e.response.data)})
-    console.log(res)
+   
     return <h1>test</h1>
 }

@@ -114,7 +114,7 @@ export function Main({bla, it}){
                                                 <Typography sx={{color: (i.quantity > items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length)? "green": ((i.quantity + i.pending_quantity) > items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length)? "yellow": items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length > 0?  "red": "#000"}}>{items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length}</Typography>
                                             </Grid2>
                                             <Grid2 size={2}>
-                                                <TextField fullWidth value={i.location != 0 && i.location != "0"? i.location: null} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"location"})}}/>
+                                                <TextField fullWidth value={i.location} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"location"})}}/>
                                             </Grid2>
                                         </Grid2>
                                     ))}

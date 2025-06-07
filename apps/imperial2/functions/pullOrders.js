@@ -108,7 +108,13 @@ export async function pullOrders(){
                    console.log(blank.code, blankColor, blankSize)
                    console.log( blankColor?.name, blankSize?.name)
                     let DesignThreadColor = colors.filter(c=> c.name == threadColor)[0]
-                    let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0].value})
+                    let designImages
+                    if(DesignThreadColor){
+                        if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
+                    }else if(design){
+                        designImages = design.images
+                    }
+                    let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: designImages, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0].value})
                     if(o.tagIds != null || o.orderStatus == "shipped"){
                         item.labelPrinted = true
                     }
