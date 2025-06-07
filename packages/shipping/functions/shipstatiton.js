@@ -31,7 +31,8 @@ export async function getCarriers({credentials}){
     }
 }
 
-export async function ShipStationShip({address, poNumber, weight, businessAddress, credentials, selectedShipping, dimensions, dpi, ignoreBadAddress}){
+export async function ShipStationShip({address, poNumber, weight, businessAddress, credentials, selectedShipping, dimensions, dpi, ignoreBadAddress, carrierCodes,
+  warehouse_id}){
     let headers = {
         headers: {
             "Content-Type": "application/json",
@@ -58,7 +59,7 @@ export async function ShipStationShip({address, poNumber, weight, businessAddres
             country_code: address.country,
             address_residential_indicator: 'unknown',
             },
-            warehouse_id: 62666,
+            warehouse_id: warehouse_id,
             return_to: {
                 name: businessAddress.name,
                 phone: businessAddress.phoneNumber? businessAddress.phoneNumber: "0000000000",
@@ -126,7 +127,8 @@ export async function ShipStationShip({address, poNumber, weight, businessAddres
     }
 }
 
-export async function GetRateShipStation({address, weight, dimensions, service, businessAddress, credentials}){
+export async function GetRateShipStation({address, weight, dimensions, service, businessAddress, credentials,carrierCodes,
+  warehouse_id}){
     let headers = {
         headers: {
             "Content-Type": "application/json",
@@ -134,7 +136,7 @@ export async function GetRateShipStation({address, weight, dimensions, service, 
         }
     }
     let data = {
-        carrier_id: "se-65258",
+        carrier_id: carrierCodes["usps"],
         from_country_code: businessAddress.country,
         from_postal_code: businessAddress.postalCode,
         from_city_locality: businessAddress.city,

@@ -43,6 +43,11 @@ export async function POST(req= NextApiRequest){
             credentialsShipStation: {
                 apiKey: process.env.ssV2
             },
+            carrierCodes :{
+                usps: "se-1652813",
+                ups: "se-801899"
+            },
+            warehouse_id: 62666,
         });
         return NextResponse.json({error: false, rates: rates? rates: []})
     }catch(e){

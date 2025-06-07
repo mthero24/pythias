@@ -51,7 +51,11 @@ export async function POST(req= NextApiRequest){
             credentialsShipStation: {
                 apiKey: process.env.ssV2
             },
-            imageFormat: "PDF"
+            imageFormat: "PDF",
+            carrierCodes :{
+                usps: "se-1652813",
+            },
+            warehouse_id: 62666,
         });
         if(label.error){
             return NextResponse.json(label)

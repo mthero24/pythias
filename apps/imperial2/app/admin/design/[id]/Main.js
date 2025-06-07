@@ -707,6 +707,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         }}
                                     />
                                 </Box>
+                                <Button onClick={()=>{setUpcBlank(b); setUpcModal(true)}}>See Sku's</Button>
                             </AccordionDetails>
                         </Accordion>
                         ))}
@@ -799,16 +800,14 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     </Grid2>
                 </Grid2>
             </Card>
-            <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} />
+            <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
             <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
         </Box>
     )
 }
 
-const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
-    let [upc, setUpc] = useState([])
-    let [edit, setEdit] = useState(null)
-    let [type, setType] = useState(null)
+const ModalUpc = ({open, setOpen, blank, setBlank, design, colors})=>{
+    
     const style = {
         position: 'absolute',
         top: '50%',
@@ -822,16 +821,6 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
         p: 4,
         overflow: "auto"
       };
-    useEffect(()=>{
-        const getUpcs = async()=>{
-            if(blank){
-                let res = await axios.get(`/api/upc?design=${design?._id}&blank=${blank?._id}`)
-                console.log(res.data)
-                if(!res?.data.error) setUpc(res.data.upc)
-            }
-        }
-        getUpcs()
-    }, [open])
     return (
         <Modal
         open={open}
@@ -840,57 +829,29 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-            <Grid2 container spacing={2} sx={{textAlign: "center", padding: ".5%"}}>
-                <Grid2 size={3}>
-                    <Typography>Sku</Typography>
-                </Grid2>
-                <Grid2 size={1}>
-                    <Typography>GTIN</Typography>
-                </Grid2>
-                <Grid2 size={1}>
-                    <Typography>UPC</Typography>
-                </Grid2>
-                <Grid2 size={2}>
-                    <Typography>Design Name</Typography>
-                </Grid2>
-                <Grid2 size={2}>
-                    <Typography>Blank Name</Typography>
-                </Grid2>
-                <Grid2 size={1}>
-                    <Typography>Size</Typography>
-                </Grid2>
-                <Grid2 size={2}>
-                    <Typography>Color</Typography>
-                </Grid2>
-            </Grid2>
-          {upc.map((u, i)=>(
-            <Card sx={{padding: "2%", background: i % 2 == 0? "#e2e2e2": "#ffffff"}} key={u._id}>
-                <Grid2 container spacing={2} sx={{textAlign: "center"}}>
-                    <Grid2 size={3}>
-                        <Typography>{u.sku}</Typography>
-                    </Grid2>
-                    <Grid2 size={1}>
-                        <Typography>{u.gtin}</Typography>
-                    </Grid2>
-                    <Grid2 size={1}>
-                        <Typography>{u.upc}</Typography>
-                    </Grid2>
-                    <Grid2 size={2}>
-                        <Typography>{u.design?.name}</Typography>
-                    </Grid2>
-                    <Grid2 size={2}>
-                        <Typography>{u.blank?.name}</Typography>
-                    </Grid2>
-                    <Grid2 size={1}>
-                        <Typography>{u.size}</Typography>
-                    </Grid2>
-                    <Grid2 size={2}>
-                        {u.color && <Typography>{u.color?.name}</Typography>}
-                        {!u.color && <Button>Add Color</Button>}
-                    </Grid2>
-                </Grid2>
-            </Card>
-          ))}
+            <Typography>Product Sku</Typography>
+            <Box sx={{padding: "2%"}}>
+                <Typography>{`${design.sku}_${blank?.blank?.code}`}</Typography>
+            </Box>
+            <hr/>
+            <Typography>Variant Sku's</Typography>
+            {design.threadColors.length > 0 && design.threadColors.map(tr=>{
+                console.log(tr)
+                return (blank?.colors.map(c=>{
+                    return (blank?.blank.sizes.map(s=>{
+                        return <Typography key={`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}_${tr.name}`}>{`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}_${colors.filter(c=> c._id.toString() == tr.toString())[0]?.name}`}</Typography>
+                    }))
+                }))
+            })}
+            {design.threadColors.length == 0 && blank?.colors?.map(c=>{
+                return blank.blank?.sizes?.map(s=>{
+                    console.log(`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}`)
+                    return (<Box sx={{padding: "2%"}} key={`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}`}>
+                        <Typography>{`${design.printType}_${design.sku}_${c.name}_${s.name}_${blank.blank.code}`}</Typography> 
+                        <hr/>
+                    </Box>)
+                })
+            })}
         </Box>
       </Modal>
     )

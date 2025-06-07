@@ -24,7 +24,9 @@ export async function getRates({
   credentialsFedExNew,
   credentialsUPS,
   credentialsShipStation,
-  dimensions
+  dimensions,
+  carrierCodes,
+  warehouse_id
 }) {
   let rates =[];
   let uspsGroundRate;
@@ -92,6 +94,8 @@ export async function getRates({
         service: "usps_ground_advantage",
         credentials: credentialsShipStation,
         dimensions,
+        carrierCodes,
+        warehouse_id
       });
       if (!res.error) uspsGroundRate = parseFloat(res.rate);
       else uspsGroundRate = res.msg;
@@ -102,6 +106,8 @@ export async function getRates({
         service: "usps_priority_mail",
         credentials: credentialsShipStation,
         dimensions,
+        carrierCodes,
+        warehouse_id
       });
       if (!res2.error) uspsPriorityRate = parseFloat(res2.rate);
       else uspsPriorityRate = res2.msg;
