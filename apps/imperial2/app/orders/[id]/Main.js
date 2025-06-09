@@ -171,7 +171,7 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
                                 let i = {...item}
                                 i.designRef = d._id
                                 console.log(d, "DESIGN")
-                                if(d.threadColors){
+                                if(d.threadColors.length > 0){
                                     console.log("has")
                                     i.design = d.threadImages[i.threadColorName]
                                 }
@@ -182,7 +182,7 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
                             }}>
                             <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
                                 <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "250px", background: "#e2e2e2"}}>
-                                    <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.leftSleeve? d.images?.leftSleeve: d.images?.rightSleeve? d.images?.rightSleeve: d.images?.pocket? d.images?.pocket: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
+                                    <Image src={d.images && Object.keys(d.images)? d.images[ Object.keys(d.images)[0]]: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
                                 </Box>
                                 <hr/>
                                 <Box sx={{padding: "3%"}}>

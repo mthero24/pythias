@@ -1,29 +1,48 @@
 import {useState, useEffect} from "react"
-import {Box, Grid2, Typography, Button, Modal, TextField, FormControlLabel, Checkbox, Divider} from '@mui/material';
+import {Box, Grid2, Typography, Button, Modal, TextField, FormControlLabel, Checkbox, Divider, Accordion, AccordionActions,AccordionSummary,AccordionDetails  } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setItems}){
     const [needsOrdered, setNeedsOrdered] = useState([])
     const [order, setOrder] = useState({poNumber: "", company: "", dateOrdered: "", dateExpected: ""})
+    const [blankCodes, setBlankCodes] = useState([])
+    const [colors, setColors] = useState([])
     useEffect(()=>{
         let no = []
         if(type == "Out Of Stock"){
+            let bl = []
+            let cl = []
             for(let blank of blanks){
                 for(let inv of blank.inventories){
                     let inStock = inv.quantity + inv.pending_quantity
                     let onOrder = items.filter(it=> it.sizeName == inv.size_name && it.colorName == inv.color_name && it.blank.toString() == inv.blank.toString()).length
                     //console.log(inStock - onOrder)
-                    if(inStock - onOrder < 0) no.push({inv, order: (inStock - onOrder) * -1, included: true, location: "Orlando"})
+                    if(inStock - onOrder < 0) {
+                        if(!bl.includes(inv.style_code))bl.push(inv.style_code)
+                        if(!cl.includes(inv.color_name))cl.push(inv.color_name)
+                        no.push({inv, order: (inStock - onOrder) * -1, included: true, location: "Orlando"})
+                    }
                 }
             }
+            setBlankCodes([...bl])
+            setColors([...cl])
         }
         if(type == "Inventory Order"){
+            let bl = []
+            let cl = []
             for(let blank of blanks){
                 for(let inv of blank.inventories){
                     let inStock = inv.quantity + inv.pending_quantity 
                     //console.log(inStock - onOrder)
-                    if(inStock - inv.order_at_quantity < 0) no.push({inv, order: inv.quantity_to_order, included: true, location: "Orlando"})
+                    if(inStock - inv.order_at_quantity < 0) {
+                        if(!bl.includes(inv.style_code))bl.push(inv.style_code)
+                        if(!cl.includes(inv.color_name))cl.push(inv.color_name)
+                        no.push({inv, order: inv.quantity_to_order, included: true, location: "Orlando"})
+                    }
                 }
             }
+            setBlankCodes([...bl])
+            setColors([...cl])
         }
         setNeedsOrdered([...no])
     }, [open])
@@ -97,27 +116,57 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                     </Grid2>
                     <Divider sx={{marginTop: "3%"}}/>
                 </Box>
-                {needsOrdered.map(no=>(
-                    <Grid2 container spacing={1} key={no.inv._id} sx={{padding: "2%"}}>
-                        <Grid2 size={2}>
-                            <FormControlLabel control={<Checkbox checked={no.included} onClick={()=>{
-                                updateOrderItems(no.inv._id, "included")
-                            }} />} />
-                        </Grid2>
-                        <Grid2 size={5}>
-                            <Typography sx={{marginTop:"5%"}}>{no.inv.style_code}-{no.inv.color_name}-{no.inv.size_name}</Typography>
-                        </Grid2>
-                        <Grid2 size={2}>
-                            <TextField type="number" onChange={()=>{
-                                updateOrderItems(no.inv._id, "order")
-                            }}  value={no.order}/>
-                        </Grid2>
-                        <Grid2 size={3}>
-                            <TextField type="string" onChange={()=>{
-                                updateOrderItems(no.inv._id, "location")
-                            }}  value={no.location}/>
-                        </Grid2>
-                    </Grid2>
+                {blankCodes.map(code=>(
+                    <Accordion key={code}>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1-content"
+                            id="panel1-header"
+                            >
+                            <Typography component="span">{code}</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            {colors.map(cl=>{
+                                if(needsOrdered.filter(f=> f.inv.color_name == cl && f.inv.style_code == code).length > 0){
+                                    return (
+                                        <Accordion>
+                                            <AccordionSummary
+                                            expandIcon={<ExpandMoreIcon />}
+                                            aria-controls="panel1-content"
+                                            id="panel1-header"
+                                            >
+                                            <Typography component="span">{cl}</Typography>
+                                            </AccordionSummary>
+                                            <AccordionDetails>
+                                                {needsOrdered.filter(f=> f.inv.color_name == cl && f.inv.style_code == code).map(no=>(
+                                                    <Grid2 container spacing={1} key={no.inv._id} sx={{padding: "2%"}}>
+                                                        <Grid2 size={2}>
+                                                            <FormControlLabel control={<Checkbox checked={no.included} onClick={()=>{
+                                                                updateOrderItems(no.inv._id, "included")
+                                                            }} />} />
+                                                        </Grid2>
+                                                        <Grid2 size={5}>
+                                                            <Typography sx={{marginTop:"5%"}}>{no.inv.style_code}-{no.inv.color_name}-{no.inv.size_name}</Typography>
+                                                        </Grid2>
+                                                        <Grid2 size={2}>
+                                                            <TextField type="number" onChange={()=>{
+                                                                updateOrderItems(no.inv._id, "order")
+                                                            }}  value={no.order}/>
+                                                        </Grid2>
+                                                        <Grid2 size={3}>
+                                                            <TextField type="string" onChange={()=>{
+                                                                updateOrderItems(no.inv._id, "location")
+                                                            }}  value={no.location}/>
+                                                        </Grid2>
+                                                    </Grid2>
+                                                ))}
+                                            </AccordionDetails>
+                                        </Accordion>
+                                    )
+                                }
+                            })}
+                        </AccordionDetails>
+                    </Accordion>
                 ))}
                 <Divider sx={{marginTop: "3%"}}/>
                 <Button onClick={()=>{sub()}} fullWidth>Submit</Button>
