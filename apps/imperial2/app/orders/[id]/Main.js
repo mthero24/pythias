@@ -67,26 +67,35 @@ export function Main({ord, blanks}){
                             <Accordion key={i._id} sx={{margin: "1% 0%"}}>
                                 <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
                                     <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.upc}</Typography>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}, Thread Color: {i.threadColorName} </Typography>
-                                        <Typography>{i.options}</Typography>
-                                        { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
-                                        {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
+                                        <Grid2 container>
+                                            <Grid2 size={3}>
+                                                <Box sx={{display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", borderRight: "1px solid black"}}>
+                                                    <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design.front? i.design.front: i.design.center? i.design.center: i.design.pocket? i.design.pocket: i.design.back}&side=${i.design.front? "front": i.design.center? "center": i.design.pocket? "pocket": "back"}&threadColor=${i.threadColorName}`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
+                                                </Box>
+                                            </Grid2>
+                                            <Grid2 size={9} sx={{padding: "2%", textAlign: "center", display: "flex", flexDirection: "column", justifyItems: "center",}}>
+                                                <Typography>{i.name}</Typography>
+                                                <Typography fontWeight={"bold"}>{i.sku}</Typography>
+                                                <Typography fontWeight={"bold"}>{i.upc}</Typography>
+                                                <Typography fontWeight={"bold"} onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}, Thread Color: {i.threadColorName} </Typography>
+                                                <Typography>{i.options}</Typography>
+                                                { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
+                                                {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
+                                            </Grid2>
+                                        </Grid2>
                                     </Box>
                                 </AccordionSummary>
                                 <AccordionDetails>
-                                <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >
-                                        <Typography>Piece Id: {i.pieceId}</Typography>
-                                        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center",}}>
+                                    <Box sx={{display: "flex", flexDirection: "column", alignContent: "center"}} >
+                                        <Typography fontWeight={"bold"}>Piece Id: {i.pieceId}</Typography>
+                                        <Grid2 container spacing={1}>
                                             {i.steps.map(s=>(
-                                                <Box key={s._id} sx={{ margin: "1%", width: "100px"}}>
+                                                <Grid2 key={s._id} size={3}>
                                                     <Typography>{s.status}</Typography>
                                                     <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
-                                                </Box>
+                                                </Grid2>
                                             ))}
-                                        </Box>
+                                        </Grid2>
                                     </Box>
                                 </AccordionDetails>
                             </Accordion>
