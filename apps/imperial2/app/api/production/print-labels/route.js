@@ -31,12 +31,12 @@ export async function POST(req=NextApiRequest){
         batchID += letters[Math.floor(Math.random() * letters.length)]
     // build labels
     await createPdf({items: data.items, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
-    subtractInventory(data.items)
-    let pieceIds = data.items.map(i=> i.pieceId)
-    console.log(pieceIds)
+   //subtractInventory(data.items)
+    // let pieceIds = data.items.map(i=> i.pieceId)
+    // console.log(pieceIds)
     let batch = new Batches({batchID, date: new Date(Date.now()), count: data.items.length })
     await batch.save()
-    await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
+   // await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)
     return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})

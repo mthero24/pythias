@@ -70,7 +70,7 @@ export function Main({ord, blanks}){
                                         <Grid2 container>
                                             <Grid2 size={2}>
                                                 <Box sx={{display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", borderRight: "1px solid black"}}>
-                                                    <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design? i.design[Object.keys(i.design)[0]]: ""}&side=${i.design? i.design[Object.keys(i.design)[0]]: "front"}&threadColor=${i.threadColorName}&width=600`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
+                                                    <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design? i.design[Object.keys(i.design)[0]]: ""}&side=${i.design? Object.keys(i.design)[0]: "front"}&threadColor=${i.threadColorName}&width=600`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
                                                 </Box>
                                             </Grid2>
                                             <Grid2 size={10} sx={{padding: "2%", textAlign: "center", display: "flex", flexDirection: "column", justifyItems: "center",}}>
@@ -167,9 +167,15 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
                     <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
                         <Box sx={{opacity: design == d._id? .5: 1,}} onClick={()=>
                             {
+                                console.log("CLICKED")
                                 let i = {...item}
                                 i.designRef = d._id
-                                i.design =d.images
+                                console.log(d, "DESIGN")
+                                if(d.threadColors){
+                                    console.log("has")
+                                    i.design = d.threadImages[i.threadColorName]
+                                }
+                                else i.design =d.images
                                 setItem({...i})
                                 setDesign(d._id) 
 

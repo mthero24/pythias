@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import { Base64Encode } from "base64-stream";
 import fs from "fs"
 import axios from "axios"
-export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex })=>{
+export const createPdf = async ({items, buildLabelData, localIP, key, batchId, lastIndex })=>{
     let labelsString = ``
     let doc = new PDFDocument({ size: [2 * 72, 2 * 72], margin: 0 });
     let stream = doc.pipe(new Base64Encode());
@@ -15,10 +15,10 @@ export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex 
         console.log(lastIndex && j >= lastIndex)
         if(lastIndex && j >= lastIndex){
             if(j!=0) doc.addPage({ size: [2 * 72, 2* 72], margin: 0  })
-            await buildLabelData(i, j, doc)
+            await buildLabelData(i, j, doc, batchId,)
         }else if(!lastIndex){
             if(j!=0) doc.addPage({ size: [2 * 72, 2* 72], margin: 0  })
-             await buildLabelData(i, j, doc)
+             await buildLabelData(i, j, doc, batchId,)
         }
         j++
     }

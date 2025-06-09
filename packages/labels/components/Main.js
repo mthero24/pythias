@@ -570,7 +570,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                             }}
                           >
                             <Typography sx={{ textAlign: "center" }}>
-                              {i.threadColorName?.split("/")[0]} {i.designRef.sku}
+                              {i.threadColorName?.split("/")[0]} {i.designRef?.sku}
                             </Typography>
                           </Grid2>}
                           <Grid2

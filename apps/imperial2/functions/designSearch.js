@@ -18,6 +18,8 @@ export async function DesignSearch ({q, productsPerPage, page}){
     brands: 1,
     cleaned: 1,
     description: 1,
+    threadColors: 1,
+    threadImages: 1,
     score: {
       $meta: "searchScore",
     },

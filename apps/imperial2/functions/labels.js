@@ -19,7 +19,7 @@ export async function LabelsData(){
         }).populate("color", "name").populate("designRef", "sku name printType").lean(),
     }
     //console.log(labels)
-    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin").lean();
+    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin location").lean();
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
