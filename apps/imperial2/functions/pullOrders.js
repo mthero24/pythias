@@ -86,7 +86,7 @@ export async function pullOrders(){
             for(let i of o.items){
                 if(i.sku && i.sku != ""){
                     //console.log(i.sku, i.sku.split("_")[2]?.trim())
-                    if(i.sku.split("_").length == 3 || i.sku.split("_")[0] == "front"){
+                    if(i.sku.split("_").length <= 3 || i.sku.toLowerCase().split("_")[0] == "front" || i.sku.toLowerCase().split("_").includes("leftchest") ||  i.sku.toLowerCase().split("_").includes("front") ||  i.sku.toLowerCase().split("_").includes("back")){
                     let design = await Design.findOne({name: i.sku.split("_")[2]?.replace(/’/g, "'").trim()})
                     //console.log(design?.name)
                     //console.log(i.options[0].value.split(", "))
@@ -127,6 +127,7 @@ export async function pullOrders(){
                         await item.save()
                         items.push(item)
                     }else{
+                        console.log(i.sku, "sku")
                         let sku = i.sku.split("_")
                         let blank 
                         let threadColor
@@ -142,9 +143,9 @@ export async function pullOrders(){
                         }
                         blank = await Blank.findOne({code: blank}).populate("colors")
                         let design = await Design.findOne({sku: designSku})
-                        let blankColor = blank.colors.filter(c=> c.name.toLowerCase() == colorName.toLowerCase())[0]
-                        let blankSize = blank.sizes.filter(c=> c.name.toLowerCase() == sizeName.toLowerCase())[0]
-                        let DesignThreadColor = colors.filter(c=> c.name.toLowerCase() == threadColor?.toLowerCase())[0]
+                        let blankColor = blank?.colors.filter(c=> c.name.toLowerCase() == colorName.toLowerCase() || c.sku.toLowerCase() == colorName.toLowerCase())[0]
+                        let blankSize = blank?.sizes.filter(c=> c.name.toLowerCase() == sizeName.toLowerCase())[0]
+                        let DesignThreadColor = colors.filter(c=> c.name.toLowerCase() == threadColor?.toLowerCase() || c.sku.toLowerCase() == threadColor?.toLowerCase())[0]
                         let designImages
                         if(DesignThreadColor){
                             if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]

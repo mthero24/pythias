@@ -5,7 +5,7 @@ import {serialize} from "@/functions/serialize";
 import {Main} from "@pythias/inventory";
 export const dynamic = 'force-dynamic'; 
 export default async function InventoryPage (){
-    let inventory = await Inventory.find({}).populate("color").select("color size_name blank quantity order_at_quantity quantity_to_order location")
+    let inventory = await Inventory.find({}).populate("color").select("color color_name pending_quantity size_name blank quantity order_at_quantity quantity_to_order location")
     let items = await Items.find({labelPrinted: false, status: "awaiting_shipment"}).select("colorName sizeName blank")
     console.log("inventory", inventory.length)
     let blanks = await Blanks.find({}).populate("colors").select("code name colors sizes department")

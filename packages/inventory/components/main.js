@@ -17,6 +17,7 @@ export function Main({bla, it}){
             setItems(res.data.items)
         }else alert("Error")
     }
+    console.log(items.length)
     const updateInventory = async ({inventory, param})=>{
         let s = [...styles]
         console.log(s)
@@ -111,6 +112,7 @@ export function Main({bla, it}){
                                                 <Typography>{i.pending_quantity}</Typography>
                                             </Grid2>
                                             <Grid2 size={1}>
+                                                {console.log(items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length, i.color_name, i.size_name, i.blank)}
                                                 <Typography sx={{color: (i.quantity > items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length)? "green": ((i.quantity + i.pending_quantity) > items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length)? "yellow": items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length > 0?  "red": "#000"}}>{items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length}</Typography>
                                             </Grid2>
                                             <Grid2 size={2}>
