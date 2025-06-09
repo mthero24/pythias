@@ -119,7 +119,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             );
         });
       }
-      if(styleCode && printTypeSelected && printTypeSelected != "Select"){
+      if(styleCode && styleCode != "Select" && printTypeSelected && printTypeSelected != "Select"){
+        console.log("here")
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
@@ -129,6 +130,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             );
         });
       }else if(styleCode == "Select" && printTypeSelected != "Select"){
+        console.log("here")
          Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
@@ -138,6 +140,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             );
         });
       }else if(styleCode){
+        console.log("here or here")
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
