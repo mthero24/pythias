@@ -6,7 +6,9 @@ import {
   Typography,
   Button,
   Fab,
+  Select,
   TextField,
+  MenuItem,
   ButtonGroup
 } from "@mui/material";
 import PrintIcon from '@mui/icons-material/Print';
@@ -24,7 +26,19 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [showUntracked, setShoeUntracked] = useState(false);
     const [filter, setFilter] = useState();
     const [returnToQue, setReturnToQue] = useState("");
+    const [printTypes, setPrintTypes] = useState([])
+    const [printTypeSelected, setPrintTypeSelected] = useState("Select")
+    const [styleCodeSelected, setStyleCodeSelected] = useState("Select")
+    const [styleCodes, setStyleCodes] = useState([])
     useEffect(()=>{
+      let pt = []
+      let sc = []
+      for(let lab of labels["Standard"]){
+        if(!pt.includes(lab.type.toUpperCase())) pt.push(lab.type.toUpperCase())
+        if(!sc.includes(lab.styleCode)) sc.push(lab.styleCode)
+      }
+      setPrintTypes(pt)
+      setStyleCodes(sc)
       const getUpdate = async()=>{
         console.log("run Get update")
         console.log("getting update")
@@ -73,7 +87,70 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
          setFilter("RT1");
         setSelected([...sel])
     }
-    
+    const selectBasedOnPTSC = ({printType, styleCode})=>{
+      let sel = []
+      console.log(printTypeSelected)
+      if(printType && printType!= "Select" && styleCodeSelected && styleCodeSelected != "Select"){
+        Object.keys(useLabels).map((l, i) => {
+            sel.push(
+              ...useLabels[l].map((k) => {
+                if ((k.type == printType) && k.styleCode == styleCodeSelected && k.inventory?.quantity > 0)
+                  return k.pieceId;
+              })
+            );
+        });
+      }else if(printType == "Select" && styleCodeSelected != "Select"){
+        Object.keys(useLabels).map((l, i) => {
+            sel.push(
+              ...useLabels[l].map((k) => {
+                if ((k.styleCode == styleCodeSelected) && k.inventory?.quantity > 0)
+                  return k.pieceId;
+              })
+            );
+        });
+      }else if(printType){
+        Object.keys(useLabels).map((l, i) => {
+            sel.push(
+              ...useLabels[l].map((k) => {
+                if ((k.type == printType) && k.inventory?.quantity > 0)
+                  return k.pieceId;
+              })
+            );
+        });
+      }
+      if(styleCode && printTypeSelected && printTypeSelected != "Select"){
+        Object.keys(useLabels).map((l, i) => {
+            sel.push(
+              ...useLabels[l].map((k) => {
+                if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.inventory?.quantity > 0)
+                  return k.pieceId;
+              })
+            );
+        });
+      }else if(styleCode == "Select" && printTypeSelected != "Select"){
+         Object.keys(useLabels).map((l, i) => {
+            sel.push(
+              ...useLabels[l].map((k) => {
+                if ((k.type == printTypeSelected) && k.inventory?.quantity > 0)
+                  return k.pieceId;
+              })
+            );
+        });
+      }else if(styleCode){
+        Object.keys(useLabels).map((l, i) => {
+            sel.push(
+              ...useLabels[l].map((k) => {
+                if ((k.styleCode == styleCode) && k.inventory?.quantity > 0)
+                  return k.pieceId;
+              })
+            );
+        });
+      }
+      console.log(sel)
+      sel = sel.filter(s=> s != undefined)
+      console.log(sel)
+      setSelected([...sel])
+    }
     const print = async (type)=>{
         let items = [];
         if(type == "selected"){
@@ -249,6 +326,43 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                 <UntrackedLabels/>
             </Card>
         )}
+        
+        <Card sx={{display: "flex", width: "100%", padding: "2%", flexDirection: "row", margin: ".5%", justifyContent: "space-between"}}>
+          <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          label="Print Type"
+          value={printTypeSelected}
+          onChange={()=>{
+            console.log(event.target.dataset.value)
+            setPrintTypeSelected(event.target.dataset.value)
+            selectBasedOnPTSC({printType: event.target.dataset.value})
+          }}
+          sx={{width: "30%"}}
+        >
+          <MenuItem value={"Select"}>Select</MenuItem>
+          {printTypes.map(pt=>(
+            <MenuItem value={pt}>{pt}</MenuItem>
+          ))}
+        </Select>
+          <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={styleCodeSelected}
+          label="Blank Type"
+          sx={{width: "30%"}}
+           onChange={()=>{
+            console.log(event.target.dataset.value)
+            setStyleCodeSelected(event.target.dataset.value)
+             selectBasedOnPTSC({styleCode: event.target.dataset.value})
+          }}
+        >
+          <MenuItem value={"Select"}>Select</MenuItem>
+          {styleCodes.map(pt=>(
+            <MenuItem value={pt}>{pt}</MenuItem>
+          ))}
+        </Select>
+        </Card>
         <Grid2 container spacing={1} sx={{ width: "100%" }}>
           {useLabels &&
             Object.keys(useLabels).map((l, i) => (

@@ -68,12 +68,12 @@ export function Main({ord, blanks}){
                                 <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
                                     <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
                                         <Grid2 container>
-                                            <Grid2 size={3}>
+                                            <Grid2 size={2}>
                                                 <Box sx={{display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", borderRight: "1px solid black"}}>
-                                                    <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design.front? i.design.front: i.design.center? i.design.center: i.design.pocket? i.design.pocket: i.design.back}&side=${i.design.front? "front": i.design.center? "center": i.design.pocket? "pocket": "back"}&threadColor=${i.threadColorName}`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
+                                                    <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design? i.design[Object.keys(i.design)[0]]: ""}&side=${i.design? i.design[Object.keys(i.design)[0]]: "front"}&threadColor=${i.threadColorName}&width=600`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
                                                 </Box>
                                             </Grid2>
-                                            <Grid2 size={9} sx={{padding: "2%", textAlign: "center", display: "flex", flexDirection: "column", justifyItems: "center",}}>
+                                            <Grid2 size={10} sx={{padding: "2%", textAlign: "center", display: "flex", flexDirection: "column", justifyItems: "center",}}>
                                                 <Typography>{i.name}</Typography>
                                                 <Typography fontWeight={"bold"}>{i.sku}</Typography>
                                                 <Typography fontWeight={"bold"}>{i.upc}</Typography>
