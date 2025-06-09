@@ -9,7 +9,8 @@ import {
   Select,
   TextField,
   MenuItem,
-  ButtonGroup
+  ButtonGroup,
+  InputLabel 
 } from "@mui/material";
 import PrintIcon from '@mui/icons-material/Print';
 import {useEffect, useState} from "react";
@@ -328,40 +329,46 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         )}
         
         <Card sx={{display: "flex", width: "100%", padding: "2%", flexDirection: "row", margin: ".5%", justifyContent: "space-between"}}>
-          <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          label="Print Type"
-          value={printTypeSelected}
-          onChange={()=>{
-            console.log(event.target.dataset.value)
-            setPrintTypeSelected(event.target.dataset.value)
-            selectBasedOnPTSC({printType: event.target.dataset.value})
-          }}
-          sx={{width: "30%"}}
-        >
-          <MenuItem value={"Select"}>Select</MenuItem>
-          {printTypes.map(pt=>(
-            <MenuItem value={pt}>{pt}</MenuItem>
-          ))}
-        </Select>
-          <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          value={styleCodeSelected}
-          label="Blank Type"
-          sx={{width: "30%"}}
-           onChange={()=>{
-            console.log(event.target.dataset.value)
-            setStyleCodeSelected(event.target.dataset.value)
-             selectBasedOnPTSC({styleCode: event.target.dataset.value})
-          }}
-        >
-          <MenuItem value={"Select"}>Select</MenuItem>
-          {styleCodes.map(pt=>(
-            <MenuItem value={pt}>{pt}</MenuItem>
-          ))}
-        </Select>
+          <Box sx={{width: "30%"}}>
+            <InputLabel id="demo-simple-select-label">Print Type</InputLabel>
+            <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              label="Print Type"
+              value={printTypeSelected}
+              onChange={()=>{
+                console.log(event.target.dataset.value)
+                setPrintTypeSelected(event.target.dataset.value)
+                selectBasedOnPTSC({printType: event.target.dataset.value})
+              }}
+              sx={{width: "100%"}}
+            >
+              <MenuItem value={"Select"}>Select</MenuItem>
+              {printTypes.map(pt=>(
+                <MenuItem value={pt}>{pt}</MenuItem>
+              ))}
+            </Select>
+          </Box>
+          <Box sx={{width: "30%"}}>
+            <InputLabel id="demo-simple-select-label">Style Code</InputLabel>
+            <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            value={styleCodeSelected}
+            label="Blank Type"
+            sx={{width: "100%"}}
+            onChange={()=>{
+              console.log(event.target.dataset.value)
+              setStyleCodeSelected(event.target.dataset.value)
+              selectBasedOnPTSC({styleCode: event.target.dataset.value})
+            }}
+          >
+            <MenuItem value={"Select"}>Select</MenuItem>
+            {styleCodes.map(pt=>(
+              <MenuItem value={pt}>{pt}</MenuItem>
+            ))}
+          </Select>
+          </Box>
         </Card>
         <Grid2 container spacing={1} sx={{ width: "100%" }}>
           {useLabels &&
