@@ -37,7 +37,7 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                     if(inStock - inv.order_at_quantity < 0) {
                         if(!bl.includes(inv.style_code))bl.push(inv.style_code)
                         if(!cl.includes(inv.color_name))cl.push(inv.color_name)
-                        no.push({inv, order: inv.quantity_to_order, included: true, location: "Orlando"})
+                        no.push({inv, order: inv.quantity_to_order + (inv.order_at_quantity - inStock) , included: true, location: "Orlando"})
                     }
                 }
             }
