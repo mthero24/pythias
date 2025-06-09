@@ -56,7 +56,7 @@ export function Main({designs, count, query, pa}){
                                 <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
                                     <Link href={`/admin/design/${d._id}`} target="_blank">
                                         <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "250px", background: "#e2e2e2"}}>
-                                            <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.upperSleeve? d.images?.upperSleeve: d.images?.lowerSleeve? d.images?.lowerSleeve: d.images?.pocket? d.images?.pocket:  d.images?.center?  d.images?.center: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
+                                            <Image src={d.images? d.images[Object.keys(d.images)[0]]: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
                                         </Box>
                                         <hr/>
                                         <Box sx={{padding: "3%"}}>
