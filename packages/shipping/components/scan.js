@@ -119,7 +119,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
             }
             label="Reship"
           />
-          {source == "PP" || source == "IM" && <FormControlLabel
+          <FormControlLabel
             control={
               <Checkbox
                 {...label}
@@ -129,7 +129,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
               />
             }
             label="Reprint"
-          />}
+          />
         </Card>
       </Box>
     );

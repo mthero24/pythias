@@ -27,19 +27,20 @@ export function BinModal({open, setOpen, setAuto, bin, setBins, setBin, modalSty
                 </Grid2>
                 {bin?.inventory.map(i=>(
                     <Grid2 container spacing={2} key={i?._id} sx={{padding: "2%", textAlign: "center"}}>
-                        <Grid2 size={2}></Grid2>
+                        
                         <Grid2 size={2}>
                         {Object.keys(i?.design?.images? i?.design?.images: {}).map(d=>(
                             <Box>
-                                {i.design.images[d] != "" && i.design.images[d] != undefined && <Image src={createImage(bin.color.name, bin.blank.code, {side: d, url: i.design.images[d]}, source )} alt={i.upc} width={400} height={400} style={{width: "100%", height: "auto", padding: "2%", background: "#e2e2e2"}}/>}
+                               { console.log(i.threadColor?.name, i.design.threadImages)}
+                                {i.design.images[d] != "" && i.design.images[d] != undefined && <Image src={createImage(bin.color.name, bin.blank.code, {side: d, url: i.threadColor != undefined? i.design.threadImages[i.threadColor.name][d]: i.design.images[d]}, source )} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto", padding: "2%", background: "#e2e2e2"}}/>}
                             </Box>
                            
                         ))}
                         </Grid2>
-                        <Grid2 size={3}>
+                        <Grid2 size={source == "IM"? 0: 3}>
                             <Typography sx={{marginTop: "10%"}}>{i?.upc}</Typography>
                         </Grid2>
-                        <Grid2 size={3}>
+                        <Grid2 size={source == "IM"? 6: 3}>
                             <Typography sx={{marginTop: "10%"}}>{i?.sku}</Typography>
                         </Grid2>
                         <Grid2 size={2}>

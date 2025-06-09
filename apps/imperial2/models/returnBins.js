@@ -6,7 +6,10 @@ import Color from "./Color"
 import { Inventory2Outlined } from "@mui/icons-material";
 let schema = new mongoose.Schema({
     number: {type: Number, unique: true},
-    inventory: [{upc: String, sku: String, quantity: {type: Number, default: 0}, design:  {
+    inventory: [{upc: String, sku: String, threadColor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Color,
+    },  quantity: {type: Number, default: 0}, design:  {
         type: mongoose.Schema.Types.ObjectId,
         ref: Design,
     },}],
