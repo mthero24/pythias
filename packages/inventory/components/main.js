@@ -4,23 +4,25 @@ import {Box, Grid2, TextField, Accordion, Modal, AccordionSummary, AccordionDeta
 import axios from "axios";
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { OrderModal } from "./orderModal";
 export function Main({bla, it}){
     const [fullStyles, setFullStyles] = useState(bla)
     const [styles, setStyles] = useState(bla)
     const [items, setItems] = useState(it)
-
+    const [open, setOpen] = useState(false)
+    const [orderType, setOrderType] = useState()
     const save = async (inventory)=>{
-        console.log(inventory)
+        //console.log(inventory)
         let res = await axios.post("/api/admin/inventory", {inventory})
         if(res && res.data && !res.data.error){
             setFullStyles(res.data.combined)
             setItems(res.data.items)
         }else alert("Error")
     }
-    console.log(items.length)
+    //console.log(items.length)
     const updateInventory = async ({inventory, param})=>{
         let s = [...styles]
-        console.log(s)
+        //console.log(s)
         let blank = s.filter(s=> s.blank._id.toString() == inventory.blank.toString())[0]
         let inv = blank.inventories.filter(iv=> iv._id.toString() == inventory._id.toString())[0]
         
@@ -31,8 +33,8 @@ export function Main({bla, it}){
     return <Box>
         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%"}}>
             <Typography variant="h3" sx={{marginLeft: "3%", marginBottom: "2%"}}>Inventory</Typography>
-            <Button>Create Inventory Order</Button>
-            <Button>Create Out Of Stock Order</Button>
+            <Button onClick={()=>{setOrderType("Inventory Order"); setOpen(true)}}>Create Inventory Order</Button>
+            <Button onClick={()=>{setOrderType("Out Of Stock"); setOpen(true)}}>Create Out Of Stock Order</Button>
         </Box>
         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", padding: "2%"}}>
             <Button>Orders</Button>
@@ -40,7 +42,7 @@ export function Main({bla, it}){
         <Container>
             <Box sx={{marginBottom: "2%"}}>
                 <TextField fullWidth placeholder="Filter.." sx={{background: "white"}} onChange={()=>{
-                    console.log(event.target.value.toLowerCase())
+                    //console.log(event.target.value.toLowerCase())
                     let s = [...fullStyles]
                     let s2 = s.filter(fs=> fs.blank?.name?.toLowerCase().includes(event.target.value?.toLowerCase()) || fs.blank?.code?.toLowerCase().includes(event.target.value?.toLowerCase()))
                     if(s2.length > 0){
@@ -112,7 +114,7 @@ export function Main({bla, it}){
                                                 <Typography>{i.pending_quantity}</Typography>
                                             </Grid2>
                                             <Grid2 size={1}>
-                                                {console.log(items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length, i.color_name, i.size_name, i.blank)}
+                                                
                                                 <Typography sx={{color: (i.quantity > items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length)? "green": ((i.quantity + i.pending_quantity) > items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length)? "yellow": items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length > 0?  "red": "#000"}}>{items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank.toString() == i.blank.toString()).length}</Typography>
                                             </Grid2>
                                             <Grid2 size={2}>
@@ -128,6 +130,7 @@ export function Main({bla, it}){
                 </Accordion>
             ))}
         </Container>
+        <OrderModal open={open} setOpen={setOpen} type={orderType} blanks={fullStyles} items={items} setBlanks={setFullStyles} setItems={setItems} />
     </Box>
 }
 
