@@ -352,6 +352,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
               ))}
             </Select>
           </Box>
+          <Box>
+            <Typography>{selected.length > 0? `Labels Selected: ${selected.length}`: ""}</Typography>
+          </Box>
           <Box sx={{width: "30%"}}>
             <InputLabel id="demo-simple-select-label">Style Code</InputLabel>
             <Select
