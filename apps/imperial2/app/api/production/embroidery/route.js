@@ -95,7 +95,7 @@ export async function POST(req = NextApiRequest) {
         });
         const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
         await item.save()
-        return NextResponse.json({ error: false, msg: "added to que", ...result, source: "PP"});
+        return NextResponse.json({ error: false, msg: "added to que", ...result, item, source: "IM"});
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
     } else if(item && item.designRef.embroideryFiles == undefined){

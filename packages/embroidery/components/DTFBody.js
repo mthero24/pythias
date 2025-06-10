@@ -3,7 +3,8 @@ import {
     Container,
     Grid2,
     Box,
-    Card
+    Card,
+    Typography
   } from "@mui/material";
 import { useState, useEffect } from "react";
 import React from "react";
@@ -21,14 +22,15 @@ export function DTFBody({auto, setAuto, printer, type}){
                 <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} type={type} />
                 <Box sx={{margin: "0% 5%"}}>
                   <Card sx={{width: "100%"}}>
-                    <Container maxWidth={submitted?.type == "new"? "md": "sm"}>
+                    <Container maxWidth={submitted?.type == "new"? "md": "md"}>
+                      {submitted && submitted.item && <Box sx={{padding: "2%"}}><Typography textAlign={"center"} fontWeight="bold" fontSize={"1.3rem"}>PieceID: {submitted.item.pieceId} Blank: {submitted.item.blank.code} <br/> Color: {submitted.item.colorName} size: {submitted.item.sizeName} </Typography></Box>}
                     {submitted && submitted.type == undefined &&
                     <Grid2 container spacing={2}>
                         <Grid2
                             size={{xs: 12, sm: submitted && submitted.backDesign? 4: 6, md: submitted && submitted.backDesign? 4: 6}}
                             sx={{display: submitted && submitted.styleImage? "block": "none"}}
                           >
-                            <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", padding: "10%"}}>
+                            <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%"}}>
                             <Image
                               width={350}
                               alt="style"
@@ -46,7 +48,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                             size={{xs: 12, sm: submitted && submitted.backDesign? 4: 6, md: submitted && submitted.backDesign? 4: 6}}
                               
                             >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%", minHeight: "100%", backgroundColor: "#e1e1e1e1"}}>
+                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", minHeight: "100%", backgroundColor: "#e1e1e1e1"}}>
                                 <Image
                                 width={350}
                                 alt="front design"
@@ -68,7 +70,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                 backgroundColor: "#e1e1e1e1",
                               }}
                             >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
+                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
                                 <Image
                                     width={350}
                                     alt="back design"
@@ -90,7 +92,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                 backgroundColor: "#e1e1e1e1",
                               }}
                             >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
+                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
                                 <Image
                                     width={350}
                                     alt="back design"
@@ -112,7 +114,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                 backgroundColor: "#e1e1e1e1",
                               }}
                             >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
+                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
                                 <Image
                                     width={350}
                                     alt="back design"
@@ -135,7 +137,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                               }}
                             >
                               {console.log(submitted.centerDesign, "center design")}
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
+                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
                                 <Image
                                     width={350}
                                     alt="back design"
@@ -157,7 +159,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                 backgroundColor: "#e1e1e1e1",
                               }}
                             >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
+                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
                                 <Image
                                     width={350}
                                     alt="back design"
@@ -176,7 +178,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                             size={{xs: 12, sm: submitted && !submitted.backDesign? 12: 6, md: submitted && !submitted.backDesign? 12: 6}}
                               
                             >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%", }}>
+                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", }}>
                                 <Image
                                 width={350}
                                 alt="front design"
@@ -185,7 +187,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                   width: "100%",
                                   height: "auto"
                                 }}
-                                src={submitted && submitted.frontDesign && submitted.source != "PP"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.frontDesign}): submitted && submitted.frontCombo? submitted.frontCombo: "/blank.jpg"}
+                                src={submitted && submitted.frontDesign && submitted.source != "PP" && submitted.source != "IM"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.frontDesign}): submitted && submitted.frontCombo? submitted.frontCombo: "/blank.jpg"}
                               />
                                 </Box>
                             </Grid2>
@@ -207,7 +209,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                       width: "100%",
                                       height: "auto"
                                     }}
-                                    src={submitted && submitted.backDesign && submitted.source != "PP"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.backDesign}): submitted && submitted.backCombo? submitted.backCombo: "/blank.jpg"}
+                                    src={submitted && submitted.backDesign && submitted.source != "PP" && submitted.source != "IM"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.backDesign}): submitted && submitted.backCombo? submitted.backCombo: "/blank.jpg"}
                                 />
                               </Box>
                             </Grid2>
@@ -229,7 +231,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                       width: "100%",
                                       height: "auto"
                                     }}
-                                    src={submitted && submitted.centerDesign && submitted.source != "PP"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.centerDesign}): submitted && submitted.centerCombo? submitted.centerCombo: "/blank.jpg"}
+                                    src={submitted && submitted.centerDesign && submitted.source != "PP" && submitted.source != "IM"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.centerDesign}): submitted && submitted.centerCombo? submitted.centerCombo: "/blank.jpg"}
                                 />
                               </Box>
                             </Grid2>
