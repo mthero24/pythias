@@ -7,7 +7,7 @@ export async function POST(req=NextApiRequest){
     let data = await req.json()
     //console.log(data)
     console.log(data)
-    let order = new InventoryOrders({vendor: data.order.company, poNumber: data.order.poNumber, dateOrdered: new Date(data.order.dateOrdered), dateExpected: new Date(data.order.dateExpected), locations: []})
+    let order = new InventoryOrders({vendor: data.order.company, poNumber: data.order.poNumber, dateOrdered: new Date(data.order.dateOrdered), dateExpected: data.order.dateExpected? new Date(data.order.dateExpected): null, locations: []})
     let locations = []
     for(let i of data.needsOrdered){
         if(!locations.includes(i.location)) locations.push(i.location)
@@ -19,7 +19,7 @@ export async function POST(req=NextApiRequest){
                 inventory: i.inv._id,
                 quantity: i.order
             })
-            await Inventory.findByIdAndUpdate(i.inv._id, {pending_quantity: i.order})
+            //await Inventory.findByIdAndUpdate(i.inv._id, {pending_quantity: i.order})
         }
         //console.log(items)
         order.locations.push({
