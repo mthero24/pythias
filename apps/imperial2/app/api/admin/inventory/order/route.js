@@ -21,11 +21,13 @@ export async function POST(req=NextApiRequest){
     for(let loc of locations){
         let items = []
         for(let i of data.needsOrdered){
-            items.push({
-                inventory: i.inv._id,
-                quantity: i.order
-            })
-            await Inventory.findByIdAndUpdate(i.inv._id, {pending_quantity: i.order})
+            if(i.location == loc){
+                items.push({
+                    inventory: i.inv._id,
+                    quantity: i.order
+                })
+                await Inventory.findByIdAndUpdate(i.inv._id, {pending_quantity: i.order})
+            }
         }
         //console.log(items)
         order.locations.push({
