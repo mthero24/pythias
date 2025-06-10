@@ -28,58 +28,49 @@ let fullSize = {
   "2XL": "2XLARGE",
   "3XL": "3XLARGE"
 }
-export const buildLabelData = async (item, i, doc, batchId, opts={}) => {
-    console.log(item.inventory)
+export const buildLabelData = async (item, i, doc, opts={}) => {
+    //console.log(item.inventory)
     if(!item.order.poNumber)item.order = await Order.findOne({_id: item.order}).select("items poNumber")
     let totalQuantity = await Items.find({_id: { $in: item.order.items }, canceled: false,}).countDocuments();
-    console.log(item.order.items?.length, "item order")
-    console.log(totalQuantity)
+   // console.log(item.order.items?.length, "item order")
+    //console.log(totalQuantity)
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
     if(hasReturn){
       updateReturnBin(hasReturn, item.upc, item.sku)
     }
     let frontBackString;
-    //console.log(totalQuantity, "TQ");
-    let inventory = await Inventory.findOne({color_name: item.colorName, size_name: item.sizeName, style_code: item.styleCode})
-    console.log(inventory)
-    //console.log(inventory, "inventory", `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`)
-    if(inventory && inventory.quantity > 0){
-      inventory.quantity = inventory.quantity - 1
-      await inventory.save()
-      await Items.findByIdAndUpdate(item._id, {labelPrinted: true, labelPrintedDates: [...item.labelPrintedDates, new Date(Date.now())], batchId, steps: [...item.steps, {status: "Lable Printed", date: new Date(Date.now())} ]})
-      if (item.design?.back) {
-        if (item.design?.front && item.design.back) {
-          frontBackString = `FRONT&BACK`;
-        } else if (item.design?.pocket && item.design?.back) {
-          frontBackString = `POCKET&BACK`;
-        }else {
-          frontBackString = `BACK ONLY`;
-        }
-      }else if(item.design?.pocket){
-          frontBackString = `POCKET Only`;
-      } else frontBackString = "FRONT ONLY";
-      if(!item.design) frontBackString = "Missing Design";
-      let printPO = opts.printPO ? `${opts.printPO}`: "";
-      let printTypeAbbr = item.sku.split("_")[0];
-      doc.font("./LibreBarcode39-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 3, 8);
-      doc.font("Courier-Bold").fontSize(8)
-      doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
-      doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${item?.inventory?.location}`)
-      doc.font("Courier-Bold").fontSize(9)
-      doc.text(`Color: ${item.colorName}`, 10)
-      doc.text(`Size: ${fullSize[item.sizeName]} CNT: ${totalQuantity}`)
-      doc.text(`Thread: ${item.threadColorName}`)
-      doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name: item.sku}`)
-      doc.text(`${item.type}`)
-      doc.text(`#${i + 1}`)
-      if(printPO){
-        doc.text(`printPO`)
+    if (item.design?.back) {
+      if (item.design?.front && item.design.back) {
+        frontBackString = `FRONT&BACK`;
+      } else if (item.design?.pocket && item.design?.back) {
+        frontBackString = `POCKET&BACK`;
+      }else {
+        frontBackString = `BACK ONLY`;
       }
-      if(frontBackString){
-        doc.font("Courier-Bold").fontSize(10)
-        doc.text(frontBackString, 50, 130)
-      }
+    }else if(item.design?.pocket){
+        frontBackString = `POCKET Only`;
+    } else frontBackString = "FRONT ONLY";
+    if(!item.design) frontBackString = "Missing Design";
+    let printPO = opts.printPO ? `${opts.printPO}`: "";
+    let printTypeAbbr = item.sku.split("_")[0];
+    doc.font("./LibreBarcode39-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 3, 8);
+    doc.font("Courier-Bold").fontSize(8)
+    doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
+    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${item?.inventory?.location}`)
+    doc.font("Courier-Bold").fontSize(9)
+    doc.text(`Color: ${item.colorName}`, 10)
+    doc.text(`Size: ${fullSize[item.sizeName]} CNT: ${totalQuantity}`)
+    doc.text(`Thread: ${item.threadColorName}`)
+    doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name: item.sku}`)
+    doc.text(`${item.type}`)
+    doc.text(`#${i + 1}`)
+    if(printPO){
+      doc.text(`printPO`)
     }
+    if(frontBackString){
+      doc.font("Courier-Bold").fontSize(10)
+      doc.text(frontBackString, 50, 130)
+      }
         // ${hasReturn == null? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
         // ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
         // ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS

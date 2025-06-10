@@ -3,6 +3,12 @@ import InventoryOrders from "@/models/InventoryOrders";
 import Inventory from "@/models/inventory";
 import Blanks from "@/models/Blanks";
 import Items from "@/models/Items";
+
+export async function GET(){
+    let orders = await InventoryOrders.find({received: {$in: [null, false]}}).populate("locations.items.inventory")
+    return NextResponse.json({error: false, orders})
+}
+
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     //console.log(data)

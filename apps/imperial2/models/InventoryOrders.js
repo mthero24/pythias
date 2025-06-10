@@ -7,10 +7,10 @@ var schema = new mongoose.Schema({
     dateExpected: Date,
     poNumber: String,
     vendor: String,
-    received: Boolean,
+    received: {type: Boolean, default: false},
     locations: [{
         name: String,
-        received: Boolean,
+        received: {type: Boolean, default: false},
         items: [{
             inventory: {
                 type: mongoose.Schema.Types.ObjectId,

@@ -27,16 +27,26 @@ export async function POST(req=NextApiRequest){
     let data = await req.json();
     //create batchId
     let batchID = ''
-    for(let i = 0; i< 9; i++)
-        batchID += letters[Math.floor(Math.random() * letters.length)]
+    for(let i = 0; i< 9; i++){
+      batchID += letters[Math.floor(Math.random() * letters.length)]
+    }
+    let itemsToPrint = []
+    for(let i of data.items){
+      let inventory = await Inventory.findOne({color_name: i.colorName, size_name: i.sizeName, style_code: i.styleCode})
+      if(inventory && inventory.quantity > 0){
+        inventory.quantity = inventory.quantity - 1
+        await inventory.save()
+        itemsToPrint.push(i)
+      }
+    }
     // build labels
-    await createPdf({items: data.items, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
+    await createPdf({items: itemsToPrint, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
    //subtractInventory(data.items)
-    // let pieceIds = data.items.map(i=> i.pieceId)
+    let pieceIds = itemsToPrint.map(i=> i.pieceId)
     // console.log(pieceIds)
-    let batch = new Batches({batchID, date: new Date(Date.now()), count: data.items.length })
+    let batch = new Batches({batchID, date: new Date(Date.now()), count:itemsToPrint.length })
     await batch.save()
-   // await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
+   await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)
     return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})

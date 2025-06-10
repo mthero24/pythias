@@ -391,6 +391,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >
                     {l} Labels ({useLabels[l].length})
+                    <br/>
+                    Out Of Stock ({useLabels[l].filter(i=> i.inventory.quantity <=0).length})
                   </Typography>
                   <Box sx={row}>
                     <Button

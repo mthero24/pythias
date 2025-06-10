@@ -5,11 +5,13 @@ import axios from "axios";
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { OrderModal } from "./orderModal";
+import { DisplayModal } from "./display";
 export function Main({bla, it}){
     const [fullStyles, setFullStyles] = useState(bla)
     const [styles, setStyles] = useState(bla)
     const [items, setItems] = useState(it)
     const [open, setOpen] = useState(false)
+    const [openDisplay, setOpenDisplay] = useState(false)
     const [orderType, setOrderType] = useState()
     const save = async (inventory)=>{
         //console.log(inventory)
@@ -37,7 +39,7 @@ export function Main({bla, it}){
             <Button onClick={()=>{setOrderType("Out Of Stock"); setOpen(true)}}>Create Out Of Stock Order</Button>
         </Box>
         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", padding: "2%"}}>
-            <Button>Orders</Button>
+            <Button onClick={()=>{setOpenDisplay(true)}}>Orders</Button>
         </Box>
         <Container>
             <Box sx={{marginBottom: "2%"}}>
@@ -130,6 +132,7 @@ export function Main({bla, it}){
                 </Accordion>
             ))}
         </Container>
+        <DisplayModal open={openDisplay} setOpen={setOpenDisplay} />
         <OrderModal open={open} setOpen={setOpen} type={orderType} blanks={fullStyles} items={items} setBlanks={setFullStyles} setItems={setItems} />
     </Box>
 }
