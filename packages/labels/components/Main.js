@@ -66,7 +66,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
       getUpdate()
     },[])
     const select = (pieceId)=>{
-        if(printTypeSelected != "Select" || styleCodeSelected != "Select"){
+        if(printTypeSelected != "Select" && styleCodeSelected != "Select"){
           setPrintTypeSelected("Select")
           setStyleCodeSelected("Select")
           selectBasedOnPTSC({printType: "Select"})

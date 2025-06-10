@@ -23,7 +23,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                 <Box sx={{margin: "0% 5%"}}>
                   <Card sx={{width: "100%"}}>
                     <Container maxWidth={submitted?.type == "new"? "md": "md"}>
-                      {submitted && submitted.item && <Box sx={{padding: "2%"}}><Typography textAlign={"center"} fontWeight="bold" fontSize={"1.3rem"}>PieceID: {submitted.item.pieceId} Blank: {submitted.item.blank.code} <br/> Color: {submitted.item.colorName} size: {submitted.item.sizeName} </Typography></Box>}
+                      {submitted && submitted.item && <Box sx={{padding: "2%"}}><Typography textAlign={"center"} fontWeight="bold" fontSize={"1.3rem"}>PieceID: {submitted.item.pieceId} Blank: {submitted.item.blank.code} <br/> Color: {submitted.item.colorName} size: {submitted.item.sizeName}, Thread Color: {submitted.item.threadColorName} </Typography></Box>}
                     {submitted && submitted.type == undefined &&
                     <Grid2 container spacing={2}>
                         <Grid2
