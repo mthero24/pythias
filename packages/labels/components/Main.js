@@ -66,6 +66,11 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
       getUpdate()
     },[])
     const select = (pieceId)=>{
+        if(printTypeSelected != "Select" || styleCodeSelected != "Select"){
+          setPrintTypeSelected("Select")
+          setStyleCodeSelected("Select")
+          selectBasedOnPTSC({printType: "Select"})
+        }
         let sel = [...selected];
         if(sel.includes(pieceId)){
             sel = sel.filter(s=> s !== pieceId)
