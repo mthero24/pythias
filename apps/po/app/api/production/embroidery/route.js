@@ -37,7 +37,7 @@ export async function POST(req = NextApiRequest) {
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("styleV2", "code envelopes box sizes multiImages images")
     console.log(item.design, "item",)
-    if (item && !item.canceled) {
+    if (item && !item.canceled && data.printer != "printer2") {
         Object.keys(item.printFiles).map(async key=>{
             if(key != undefined && item.printFiles[key]){
                 await sendFile({
@@ -53,6 +53,16 @@ export async function POST(req = NextApiRequest) {
                 })
             }
         })
+        item.status = "EMB Load";
+        if (!item.steps) item.steps = [];
+        item.steps.push({
+            status: "Embroidery Load",
+            date: new Date(),
+        });
+        await item.save()
+        const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design.front, item.design.back, item.styleV2, item)
+        return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: item.design, type: "new" });
+    }else if(data.printer == "printer2"){
         item.status = "DTF Load";
         if (!item.steps) item.steps = [];
         item.steps.push({

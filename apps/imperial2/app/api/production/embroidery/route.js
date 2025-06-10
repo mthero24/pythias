@@ -71,7 +71,7 @@ export async function POST(req = NextApiRequest) {
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("designRef", "embroideryFiles").populate("blank", "code envelopes box sizes multiImages")
     console.log(item, "item", item?.color, "item color")
-    if (item && !item.canceled && item.designRef.embroideryFiles) {
+    if (item && !item.canceled && item.designRef.embroideryFiles && data.printer != "printer2" ) {
         Object.keys(item.designRef.embroideryFiles).map(async key=>{
             if(key != undefined && item.designRef.embroideryFiles[key]){
                 await sendFile({
@@ -87,10 +87,20 @@ export async function POST(req = NextApiRequest) {
                 })
             }
         })
-        item.status = "DTF Load";
+        item.status = "EMB Load";
         if (!item.steps) item.steps = [];
         item.steps.push({
             status: "Embroidery Load",
+            date: new Date(),
+        });
+        const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
+        await item.save()
+        return NextResponse.json({ error: false, msg: "added to que", ...result, item, source: "IM"});
+    }else if(data.printer == "printer2"){
+         item.status = "EMB Load";
+        if (!item.steps) item.steps = [];
+        item.steps.push({
+            status: "Embroidery Find",
             date: new Date(),
         });
         const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
