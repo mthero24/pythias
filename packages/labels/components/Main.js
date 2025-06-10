@@ -27,6 +27,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [showUntracked, setShoeUntracked] = useState(false);
     const [filter, setFilter] = useState();
     const [returnToQue, setReturnToQue] = useState("");
+    const [returnToInv, setReturnToInv] = useState("");
     const [printTypes, setPrintTypes] = useState([])
     const [printTypeSelected, setPrintTypeSelected] = useState("Select")
     const [styleCodeSelected, setStyleCodeSelected] = useState("Select")
@@ -209,14 +210,14 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
       }
     }
     const returnInventory = async ()=>{
-      let res = await axios.put("/api/production/print-labels/return-to-que", {pieceId: returnToQue})
+      let res = await axios.put("/api/production/print-labels/return-to-que", {pieceId: returnToInv})
       if(res.data.error) alert(res.data.msg)
       else{
         setLabels(res.data.labels);
         setBatches(res.data.batches);
         setGiftLabels(res.data.giftMessages)
         setRePulls(res.data.rePulls)
-        setReturnToQue("")
+        setReturnToInv("")
       }
     }
     let row = {
@@ -270,7 +271,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
               RePulled: {rePull ? rePull : 0}
             </Typography>
             <Box>
-              <TextField label="Return Product To Inventory" value={returnToQue} onChange={()=>{setReturnToQue(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter" || event.key == "ENTER") returnInventory()}}/>
+              <TextField label="Return Product To Inventory" value={returnToInv} onChange={()=>{setReturnToInv(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter" || event.key == "ENTER") returnInventory()}}/>
             </Box>
             <Box>
               <TextField label="Return Label to Que" value={returnToQue} onChange={()=>{setReturnToQue(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter" || event.key == "ENTER") returnToQueFunc()}}/>
