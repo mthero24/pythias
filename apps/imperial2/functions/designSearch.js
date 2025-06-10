@@ -32,14 +32,15 @@ export async function DesignSearch ({q, productsPerPage, page}){
     {
       $search: {
         index: "designs",
-        compound: {
-          must: [
-            {phrase: {
-                query: q.split(" "),
-                path: ["name"],
-                slop: 1,
-              },}
-          ]
+        text: {
+          query: q,
+          path: "name",
+          fuzzy: {
+            maxEdits: 2,
+            prefixLength: 3,
+            maxExpansions: 2
+          },
+          matchCriteria: "any"
         },
         count: {
           type: "total",
@@ -56,7 +57,7 @@ export async function DesignSearch ({q, productsPerPage, page}){
       $limit: productsPerPage,
     },
   ];
-
+  console.log(query[0]["$search"].phrase)
   
   let designs = await Design.aggregate([query]);
   //console.log("something", time);
