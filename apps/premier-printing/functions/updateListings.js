@@ -135,8 +135,8 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         ...constants
     }
     if(p.blank.nrf_size){
-         variant[p.blank.nrf_size] = sizes[v.size.name.toLowerCase()]
-    }else variant[p.blank.blank.kohlsHeader["nrf_size"]] = sizes[v.size.name.toLowerCase()]
+         variant[p.blank.nrf_size] = sizes[v.size?.name?.toLowerCase()]? sizes[v.size?.name?.toLowerCase()]: v.size?.name
+    }else variant[p.blank.blank.kohlsHeader["nrf_size"]] = sizes[v.size?.name?.toLowerCase()]? sizes[v.size?.name?.toLowerCase()]: v.size?.name
     if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().substring(0, 250)
     if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().substring(0, 250)
     console.log(variant["feature_1"])
