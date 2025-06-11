@@ -66,7 +66,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
       getUpdate()
     },[])
     const select = (pieceId)=>{
-        if(printTypeSelected != "Select" && styleCodeSelected != "Select"){
+        if(printTypeSelected != "Select" || styleCodeSelected != "Select"){
           setPrintTypeSelected("Select")
           setStyleCodeSelected("Select")
           selectBasedOnPTSC({printType: "Select"})
@@ -101,7 +101,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type == printType) && k.styleCode == styleCodeSelected && k.inventory?.quantity > 0)
+                if ((k.type.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.inventory?.quantity > 0)
                   return k.pieceId;
               })
             );
@@ -119,7 +119,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type == printType) && k.inventory?.quantity > 0)
+                if ((k.type.toLowerCase() == printType.toLowerCase()) && k.inventory?.quantity > 0)
                   return k.pieceId;
               })
             );
@@ -140,7 +140,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
          Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type == printTypeSelected) && k.inventory?.quantity > 0)
+                if ((k.type.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.quantity > 0)
                   return k.pieceId;
               })
             );
