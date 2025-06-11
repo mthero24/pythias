@@ -392,7 +392,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                   >
                     {l} Labels ({useLabels[l].length})
                     <br/>
-                    Out Of Stock ({useLabels[l].filter(i=> i.inventory.quantity <=0).length})
+                    Out Of Stock ({useLabels[l].filter(i=> i.inventory?.quantity <=0).length})
                   </Typography>
                   <Box sx={row}>
                     <Button
