@@ -87,9 +87,21 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                                     {l.received && <Typography fontSize="1.3rem" fontWeight="bold">Already Received</Typography>}
                                                 </Box>
                                                 <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
-                                                    {l.items?.map(i=>(
-                                                        <Typography>{i.inventory.style_code}-{i.inventory.color_name}-{i.inventory.size_name}</Typography>
-                                                    ))}
+                                                    
+                                                        {l.items?.map(i=>(
+                                                            <Grid2 container spacing={2}>
+                                                                <Grid2 size={4}>
+                                                                    <Typography>{i.inventory.style_code}-{i.inventory.color_name}-{i.inventory.size_name}</Typography>
+                                                                </Grid2>
+                                                                <Grid2 size={4}>
+                                                                    <Typography>{i.quantity}</Typography>
+                                                                </Grid2>
+                                                                <Grid2 size={4}>
+                                                                    <Typography>{l.name}</Typography>
+                                                                </Grid2>
+                                                                </Grid2>
+                                                        ))}
+                                                   
                                                 </Box>
                                             </AccordionDetails>
                                         </Accordion>

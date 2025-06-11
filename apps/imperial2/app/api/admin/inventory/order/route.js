@@ -5,7 +5,7 @@ import Blanks from "@/models/Blanks";
 import Items from "@/models/Items";
 
 export async function GET(){
-    let orders = await InventoryOrders.find({received: {$in: [null, false]}}).populate("locations.items.inventory")
+    let orders = await InventoryOrders.find({}).populate("locations.items.inventory")
     return NextResponse.json({error: false, orders})
 }
 export async function PUT(req=NextApiRequest){

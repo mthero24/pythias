@@ -72,6 +72,7 @@ export async function pullOrders(){
             }
             let sizeFixer = {
                 "One Size Fits All": "OSFA",
+                "One Size Fits Most": "OSFM",
                 "XSmall": "XS",
                 "Large": "L",
                 "Small": "S",
