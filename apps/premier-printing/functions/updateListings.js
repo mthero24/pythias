@@ -996,7 +996,7 @@ export async function updateListings(csvupdate, sendTo){
                     }
                 // console.log(targetHeader)
                     const csvStringifier = createCsvStringifier({
-                        header: targetHeader,
+                        header: shopSimonHeader,
                     });
                     //console.log(products)
                     //console.log("product", products.length)
