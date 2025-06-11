@@ -60,7 +60,7 @@ const createTargetVariant = ({p,item, v, price, bImages, material, material_1, m
         ...p.blank.blank.targetHeader
     }
 }
-const createShopSimonVariant = ({p,item, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4})=>{
+const createShopSimonVariant = ({p, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4, url})=>{
     console.log("make variant", v.sku)
     const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
     return {
@@ -117,10 +117,10 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         if(k != "nrf_size") constants[k] = p.blank.blank.kohlsHeader[k]
     })
     let variant = {
-        "title": (`${p.design.name} ${v.size.name} ${v.color.name}`).substring(0,100),
+        "title": (`${p.design.name}`).substring(0,100),
         "meta_description": `${p.design.description}`,
         brand: p.brand,
-        style_number: `${p.blank.blank.code}_${p.design.sku}`,
+        style_number: v.sku,
         style_description: `${p.brand}`,      
         "upc_number": v.upc,
         "color_family": v.color.colorFamily,
@@ -347,7 +347,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(2000)
+        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(200)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -819,7 +819,7 @@ export async function updateListings(csvupdate, sendTo){
                     //console.log(csvStringifier.getHeaderString());
                     await update(csvupdate, url, b, m)
                 }
-                if(m.toLowerCase() == "Shop Simon" && sendTo.shopSimon == true){
+                if(m.toLowerCase() == "shop simon" && sendTo.shopSimon == true){
                     console.log("make a shop simon product csv")
                     
                     let products = [] 
@@ -989,7 +989,7 @@ export async function updateListings(csvupdate, sendTo){
                                         }
                                     }
                                     //console.log(bImages, "bImages")
-                                    products.push(createShopSimonVariant({p,item,v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation, bullet1, bullet2, bullet4, garment_fit}) )
+                                    products.push(createShopSimonVariant({p, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, textile_dry_recommendation, textile_wash_recommendation, bullet1, bullet2, bullet4, garment_fit, url: `https://www.${b == "Simply Sage Market"? "simplysagemarket.com": "thejunipershop.com"}/products`}) )
                                 }
                             }
                         }
