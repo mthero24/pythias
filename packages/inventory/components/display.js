@@ -14,7 +14,13 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
        }
        getOrders()
     }, [open])
-   
+    const markReceived = async ({order, location})=>{
+        console.log(order, location)
+        let res = await axios.put("/api/admin/inventory/order", {id: order._id, location: location.name})
+        if(res){
+            setOrders(res.data.orders)
+        }
+    }
     const style = {
         position: 'absolute',
         top: '50%',
@@ -77,7 +83,8 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                             </AccordionSummary>
                                             <AccordionDetails>
                                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end"}}>
-                                                    <Button>Receive</Button>
+                                                    {!l.received && <Button onClick={()=>{markReceived({order:o, location:l})}}>Receive</Button>}
+                                                    {l.received && <Typography fontSize="1.3rem" fontWeight="bold">Already Received</Typography>}
                                                 </Box>
                                                 <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center"}}>
                                                     {l.items?.map(i=>(

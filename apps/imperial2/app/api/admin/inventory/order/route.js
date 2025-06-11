@@ -8,7 +8,26 @@ export async function GET(){
     let orders = await InventoryOrders.find({received: {$in: [null, false]}}).populate("locations.items.inventory")
     return NextResponse.json({error: false, orders})
 }
-
+export async function PUT(req=NextApiRequest){
+    let data = await req.json()
+    console.log(data)
+    let order = await InventoryOrders.findById(data.id)
+    if(order){
+        let location = order.locations.filter(l=> l.name == data.location)[0]
+        for(let i of location.items){
+            let inv = await Inventory.findById(i.inventory)
+            inv.quantity = inv.quantity + i.quantity
+            inv.pending_quantity = inv.pending_quantity - i.quantity
+            console.log(inv)
+            await inv.save()
+        }
+        location.received = true
+        if(!order.locations.filter(l=> l.received == false)[0]) order.received = true
+        order.markModified("locations received")
+        await order.save()
+    }
+    return NextResponse.json({error: false, orders: await InventoryOrders.find({received: {$in: [null, false]}}).populate("locations.items.inventory") })
+}
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     //console.log(data)
