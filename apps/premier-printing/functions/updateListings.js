@@ -134,7 +134,7 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
         seller_url: `${url}/${p.design.name.replace(/ /g, "-")}-${p.blank.blank.name.replace(/ /g, "-")}`,
         ...constants
     }
-    if(p.blank.nrf_size){
+    if(p.design.nrf_size){
          variant[p.blank.nrf_size] = sizes[v.size?.name?.toLowerCase()]? sizes[v.size?.name?.toLowerCase()]: v.size?.name
     }else variant[p.blank.blank.kohlsHeader["nrf_size"]] = sizes[v.size?.name?.toLowerCase()]? sizes[v.size?.name?.toLowerCase()]: v.size?.name
     if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().substring(0, 250)
@@ -463,10 +463,10 @@ export async function updateListings(csvupdate, sendTo){
                                 if(v.gtin){
                                     let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
                                     //console.log(price, "price")
-                                    if(Object.keys(p.design.images).length > 1) price+= 2
+                                    //if(Object.keys(p.design.images).length > 1) price+= 2
                                     //console.log(price)
                                     if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
-                                    if(v.size == "2XL") price = price -2
+                                    //if(v.size == "2XL") price = price -2
                                     // console.log(price)
                                     let bImages = []
                                     if(p.design.overrideImages && v.color && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][v.color._id] && p.design.overrideImages[p.blank.blank._id][v.color._id].length > 0) bImages = p.design.overrideImages[p.blank.blank._id][v.color._id]
@@ -682,10 +682,9 @@ export async function updateListings(csvupdate, sendTo){
                                     })
                                     let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
                                     //console.log(price, "price")
-                                    if(Object.keys(p.design.images).length > 1) price+= 2
+                                    //if(Object.keys(p.design.images).length > 1) price+= 2
                                     //console.log(price)
                                     if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
-                                    if(v.size == "2XL") price = price -2
                                     // console.log(price)
                                     let bImages = []
                                     if(p.design.overrideImages && v.color && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][v.color._id] && p.design.overrideImages[p.blank.blank._id][v.color._id].length > 0) bImages = p.design.overrideImages[p.blank.blank._id][v.color._id]
@@ -882,10 +881,10 @@ export async function updateListings(csvupdate, sendTo){
                                 if(v.gtin){
                                     let price = p.design.printType == "EMB"? parseFloat(v.size.retailPrice) + 4: p.design.printType == "VIN"? parseFloat(v.size.retailPrice) + 4: v.size.retailPrice
                                     //console.log(price, "price")
-                                    if(Object.keys(p.design.images).length > 1) price+= 2
+                                    //if(Object.keys(p.design.images).length > 1) price+= 2
                                     //console.log(price)
                                     if(p.design.licenseHolder) price = Math.round(price + price * .1) - .01
-                                    if(v.size == "2XL") price = price -2
+                                    //if(v.size == "2XL") price = price -2
                                     // console.log(price)
                                     let bImages = []
                                     if(p.design.overrideImages && v.color && p.design.overrideImages[p.blank.blank._id] && p.design.overrideImages[p.blank.blank._id][v.color._id] && p.design.overrideImages[p.blank.blank._id][v.color._id].length > 0) bImages = p.design.overrideImages[p.blank.blank._id][v.color._id]
