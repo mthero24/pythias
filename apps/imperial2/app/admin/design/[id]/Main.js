@@ -178,17 +178,28 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         updateDesign({...d})
     }
     const relocateImage = (url,location, oldLocation, threadColor,)=>{
+        let d = {...des}
+        let newImages = {}
         if(threadColor){
             if(!d.threadImages) d.threadImages = {}
-            d.threadImages[threadColor][location] = url
-            d.threadImages[threadColor][oldLocation] = null
+            newImages[location] = url
+            d.threadImages[threadColor] = newImages
         }else{
             console.log(d.images, url, location)
-            if(!d.images) d.images = {}
             console.log(d.images, url, location)
-            d.images[location] = url
-            d.images[oldLocation] = url
+            newImages[location] = url
+            d.images = newImages
         }
+        setDesign({...d})
+        updateDesign({...d})
+    }
+    const relocateDST = (url,location, oldLocation, threadColor,)=>{
+        let d = {...des}
+        let newFiles = {}
+        newFiles[location] = url
+        d.embroideryFiles = newFiles
+        setDesign({...d})
+        updateDesign({...d})
     }
     const updateEmbroidery = async ({url,location})=>{
         let d = {...des}
@@ -457,6 +468,14 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         </Box>
                                     </Box>
                                     <p style={{textAlign: "center"}}>{i} Image</p>
+                                    <CreatableSelect 
+                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                        value={{value: i, label:i}}  
+                                        onChange={(vals)=>{
+                                            relocateImage(des.images[i], vals.value, i)
+                                            setReload(false)
+                                        }}
+                                    />
                                     <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
                                 </Grid2>}
                             </>
@@ -488,6 +507,14 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                                         </Box>
                                                     </Box>
                                                     <p style={{textAlign: "center"}}>{i} Image</p>
+                                                    <CreatableSelect 
+                                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                                        value={{value: i, label:i}}  
+                                                        onChange={(vals)=>{
+                                                            relocateImage(des.images[i], vals.value, i, colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name)
+                                                            setReload(false)
+                                                        }}
+                                                    />
                                                     <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
                                                 </Grid2>}
                                             </>
@@ -526,6 +553,14 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                 {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
                                     <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
                                     <p style={{textAlign: "center"}}>{i} File</p>
+                                     <CreatableSelect 
+                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                        value={{value: i, label:i}}  
+                                        onChange={(vals)=>{
+                                            relocateDST(des.embroideryFiles[i], vals.value, i)
+                                            setReload(false)
+                                        }}
+                                    />
                                     <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete Image</Button>
                                 </Grid2>}
                             </>

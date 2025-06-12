@@ -170,7 +170,6 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
                                 console.log("CLICKED")
                                 let i = {...item}
                                 i.designRef = d._id
-                                console.log(d, "DESIGN", d.threadColors.length > 0, d.threadImages, Object.keys(d.threadImages).length > 0)
                                 if(d.threadColors.length > 0 && d.threadImages && Object.keys(d.threadImages).length > 0){
                                     console.log("has")
                                     i.design = d.threadImages[i.threadColorName]
