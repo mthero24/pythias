@@ -57,6 +57,7 @@ export function Main({blank}){
             <Button onClick={()=>{setHeadingModal(true); setHeading(style.kohlsHeader); setHeadingName("kohlsHeader")}}>
               Kohls CSV Headers
             </Button>
+            {console.log(style.targetHeader)}
             <Button onClick={()=>{setHeadingModal(true); setHeading(style.targetHeader); setHeadingName("targetHeader")}}>
               Target CSV Headers
             </Button>

@@ -157,7 +157,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         }
         //setLoading(false);
     };
-    let imageLocations = ["front", "back", "upperSleeve", "lowerSleeve", "pocket", "center"]
     
     let updateDesign = async (des)=>{
         let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
@@ -513,7 +512,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                 {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
                                     <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
                                     <p style={{textAlign: "center"}}>{i} File</p>
-                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
+                                    <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete Image</Button>
                                 </Grid2>}
                             </>
                            
