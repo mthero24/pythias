@@ -541,7 +541,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                          <Grid2 size={{xs: 6, sm: 3, md: 2}}>
                             {reload && <Uploader location={location} afterFunction={updateEmbroidery}  />}
                             <CreatableSelect 
-                                options={[]}
+                                options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
                                 value={{value: location, label:location}}  
                                 onChange={(vals)=>{
                                     setLocation(vals.value)
@@ -795,7 +795,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         }
                                     })
                                 })
-                                setImageGroupImages([...images])
+                                setImageGroupImages([])
                                 setDesign({...d})
                                 updateDesign({...d})
                             }}
