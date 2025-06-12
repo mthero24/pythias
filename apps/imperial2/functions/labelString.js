@@ -31,7 +31,8 @@ let fullSize = {
 export const buildLabelData = async (item, i, doc, opts={}) => {
     //console.log(item.inventory)
     if(!item.order.poNumber)item.order = await Order.findOne({_id: item.order}).select("items poNumber")
-    let totalQuantity = await Items.find({_id: { $in: item.order.items }, canceled: false,}).countDocuments();
+    let totalQuantity = 1
+    if(item.order) totalQuantity = await Items.find({_id: { $in: item.order.items }, canceled: false,}).countDocuments();
    // console.log(item.order.items?.length, "item order")
     //console.log(totalQuantity)
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
