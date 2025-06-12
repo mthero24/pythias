@@ -3,6 +3,7 @@ import Bins from "../../../../models/Bin";
 import Order from "../../../../models/Order";
 import Item from "../../../../models/Items";
 import {isSingleItem, isShipped, canceled} from "../../../../functions/itemFunctions"
+import axios from "axios"
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
@@ -17,12 +18,11 @@ export async function POST(req= NextApiRequest){
         let headers = {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer $2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO`
+                "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
             }
         }
-        let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
+        let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: order.shippingInfo.label, station: data.station}, headers)
         console.log(res.data)
-        let re2s = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: order.shippingInfo.labels[0].trackingNumber})
         if(res.error){
             return NextResponse.json({error: true, msg: "error printing label"})
         }else{
