@@ -28,7 +28,7 @@ export async function PUT(req=NextApiRequest){
             //console.log(items)
             printItems= printItems.concat(items)
             console.log(inv)
-            //await inv.save()
+            await inv.save()
         }
         console.log(printItems.length)
         location.received = true
