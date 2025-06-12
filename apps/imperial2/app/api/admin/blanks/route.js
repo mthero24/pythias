@@ -59,11 +59,35 @@ const updateEnvelopes = (blank)=>{
   })
   return blank
 }
+let updateInventory = async (blank)=>{
+  console.log("update inventory")
+  for(let color of blank.colors){
+    color = await Color.findById(color)
+    for(let size of blank.sizes){
+      console.log(color, size.name, size._id)
+      let inv = await Inventory.findOne({blank: blank._id, color: color._id, sizeId: size._id})
+      console.log(inv, blank._id)
+      if(inv){
+        inv.color_name = color.name
+        inv.size_name = size.name
+        inv.style_code = blank.code
+        inv.sizeId = size._id
+        inv.color = color._id
+        inv = await inv.save()
+        console.log(inv)
+      }else{
+        console.log("new")
+        inv = new Inventory({blank: blank._id, style_code: blank.code, color: color._id, size: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,})
+        await inv.save()
+      }
+    }
+  }
+}
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   //console.log(data)
   let blank = data.blank
-  console.log(blank, "blank")
+  //console.log(blank, "blank")
   if(blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
   if(blank.sizes.length > 0) blank = updateFold(blank)
   let newBlank
@@ -71,6 +95,7 @@ export async function POST(req = NextApiRequest) {
     if(blank._id){
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank) 
       newBlank = await Blanks.findById(blank._id) 
+      await updateInventory(blank)
     }
     else {
       let newBlank = new Blanks({ ...blank });
@@ -116,9 +141,10 @@ async function generateInventory(style) {
           color,
           color_name: color.name,
           size_name: size.name,
-          size,
+          size: size._id,
           last_counted: new Date(),
           barcode_id,
+          blank: style._id
         });
         //console.log(inventory);
         await inventory.save();

@@ -55,8 +55,8 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                         id="panel1-header"
                         >
                             <Grid2 container spacing={1}>
-                                <Grid2 size={4}>
-                                    {o.poNumber}
+                                <Grid2 size={12}>
+                                    <Typography sx={{width: "100%"}}>{o.poNumber}</Typography>
                                 </Grid2>
                             </Grid2>
                         </AccordionSummary>
@@ -79,7 +79,7 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                             aria-controls="panel1-content"
                                             id="panel1-header"
                                             >
-                                            <Typography component="span">{l.name}</Typography>
+                                            <Typography component="h2" sx={{width: "100%"}}>{l.name.replace(/ /g, "")}</Typography>
                                             </AccordionSummary>
                                             <AccordionDetails>
                                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end"}}>
@@ -111,7 +111,6 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                         </AccordionDetails>
                     </Accordion>
                 ))}  
-                <Button fullWidth>Submit</Button>
             </Box>
         </Box>
       </Modal>

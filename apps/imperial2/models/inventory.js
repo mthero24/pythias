@@ -13,6 +13,7 @@ const SchemaObj = new Schema({
     desired_order_quantity: { type: Number, required: true },
     color: { type: mongoose.Schema.Types.ObjectId, ref: Color, required: false, autopopulate: true },
     blank: { type: mongoose.Schema.Types.ObjectId, ref: Blank,},
+    sizeId: String,
     color_name: { type: String, required: true },
     size_name: { type: String, required: true },
     pending_orders: { type: Number, default: 0 },

@@ -17,14 +17,15 @@ export async function PUT(req=NextApiRequest){
         let location = order.locations.filter(l=> l.name == data.location)[0]
         for(let i of location.items){
             let inv = await Inventory.findById(i.inventory)
-            //inv.quantity = inv.quantity - i.quantity
-            //inv.pending_quantity = inv.pending_quantity + i.quantity
-            let items = await Items.find({styleCode: inv.style_code, colorName: inv.color_name, sizeName: inv.size_name, labelPrinted: false }).populate("color", "name").populate("designRef", "sku name printType").lean().limit(i.quantity)
+            inv.quantity = inv.quantity + i.quantity
+            inv.pending_quantity = inv.pending_quantity - i.quantity
+            let items = await Items.find({styleCode: inv.style_code, colorName: inv.color_name, sizeName: inv.size_name, labelPrinted: false, date: {$lt: new Date(order.dateOrdered)} }).populate("color", "name").populate("designRef", "sku name printType").lean().limit(i.quantity)
             console.log(items.length)
             items.map(i=>{
                 i.inventory = inv
                 return i
             })
+            //console.log(items)
             printItems= printItems.concat(items)
             console.log(inv)
             //await inv.save()
@@ -32,7 +33,7 @@ export async function PUT(req=NextApiRequest){
         console.log(printItems.length)
         location.received = true
         let printLabels = await axios.post("http://localhost:3009/api/production/print-labels", {items: printItems})
-        console.log(printLabels?.data)
+        //console.log(printLabels?.data)
         if(!order.locations.filter(l=> l.received == false)[0]) order.received = true
         order.markModified("locations received")
         await order.save()
