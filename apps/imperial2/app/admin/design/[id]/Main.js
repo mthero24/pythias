@@ -28,6 +28,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [blankForAlt, setBlankForAlt] = useState(null)
     const [location, setLocation] = useState("front")
     const [reload, setReload] = useState(true)
+    const [imageLocations, setImageLocations] = useState(printLocations.map(l=>{return l.name}))
     const genders = ["Girls", "Boys", "Mens", "Womens"]
     useEffect(()=>{
         if(!reload) setReload(!reload)
@@ -175,6 +176,19 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         }
         setDesign({...d})
         updateDesign({...d})
+    }
+    const relocateImage = (url,location, oldLocation, threadColor,)=>{
+        if(threadColor){
+            if(!d.threadImages) d.threadImages = {}
+            d.threadImages[threadColor][location] = url
+            d.threadImages[threadColor][oldLocation] = null
+        }else{
+            console.log(d.images, url, location)
+            if(!d.images) d.images = {}
+            console.log(d.images, url, location)
+            d.images[location] = url
+            d.images[oldLocation] = url
+        }
     }
     const updateEmbroidery = async ({url,location})=>{
         let d = {...des}

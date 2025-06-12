@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 function makeNewConnection(uri) {
     //console.log("connections")
-    //console.log(uri)
+    console.log(uri)
     const db = mongoose.createConnection(uri, {
     })
 
