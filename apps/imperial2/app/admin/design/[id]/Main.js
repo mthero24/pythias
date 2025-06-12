@@ -22,6 +22,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [imageGroupImages, setImageGroupImages] = useState([])
     const [imageBlank, setImageBlank] = useState({label: "Blank", value: null})
     const [imageColor, setImageColor] = useState({label: "Color", value: null})
+    const [threadColor, setThreadColor] = useState(null)
     const [upcBlank, setUpcBlank] = useState(null)
     const [upcModal, setUpcModal] = useState(false)
     const [open, setOpen] = useState(false)
@@ -136,7 +137,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             }
         })
         setImageGroupImages([...images])
-    },[imageBlank, imageColor])
+    },[imageBlank, imageColor, threadColor])
     const getAiDescription = async () => {
         //setLoading(true);
         let d = {...des}
@@ -760,7 +761,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         </Accordion>
                         ))}
                     </Grid2>
-                    <Grid2 size={{xs: 4, sm: 4}} >
+                    <Grid2 size={{xs: 3, sm: 3}} >
                         <CreatableSelect
                             placeholder="Image Group"
                             options={imageGroups.map(ig=>{return {value: ig, label: ig}})}
@@ -800,7 +801,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             }}
                          />
                     </Grid2>
-                    <Grid2 size={{xs: 4, sm: 4}} >
+                    <Grid2 size={{xs: 3, sm: 3}} >
                         <CreatableSelect
                             placeholder="Blank"
                             options={[ ...des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})]}
@@ -811,11 +812,11 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             }}
                          />
                     </Grid2>
-                    <Grid2 size={{xs: 4, sm: 4}} >
+                    <Grid2 size={{xs: 3, sm: 3}} >
                             {console.log(des.blanks, imageBlank.value)}
                             {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
                             {imageBlank  &&  <CreatableSelect
-                            placeholder="Blank"
+                            placeholder="Color"
                             options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
                             value={imageColor? imageColor: {label: "Color", value: null}}
                             onChange={(val)=>{
@@ -824,6 +825,19 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             }}
                          />}
                     </Grid2>
+                   {des.threadColors && des.threadColors.length > 0 &&  <Grid2 size={{xs: 3, sm: 3}} >
+                            {console.log(des.blanks, imageBlank.value)}
+                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
+                            {imageBlank  &&  <CreatableSelect
+                            placeholder="Thread Color"
+                            options={des.threadColors.map(c=> {return colors.filter(cl=> cl._id.toString() == c.toString())[0]})?.map(c=>{ return {label: c.name, value: c.name}})}
+                            value={threadColor? {label: threadColor, value: threadColor}: {label: "Thread Color", value: null}}
+                            onChange={(val)=>{
+                                setImageGroupImages([])
+                                setThreadColor(val.value)
+                            }}
+                         />}
+                    </Grid2>}
                     <Grid2 size={12}>
                         <Grid2 container spacing={2}>
                             {imageGroupImages.map((i,j)=>(
@@ -840,7 +854,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         styleImage={i.image}
                                         side={i.side}
                                         dI={des.blanks.filter(b=> b.blank.code == imageBlank.value)[0].defaultImages?.filter(dI=> dI.color == i.color && dI.side == i.side)[0]?.id}
-                                        designImage={des.images && des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]? des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]: null }
+                                        designImage={threadColor? des.threadImages? des.threadImages[threadColor][i.side]? des.threadImages[threadColor][i.side]: null : null :des.images && des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]? des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]: null }
                                     />
                                 </Grid2>
                             ))}
