@@ -1,6 +1,7 @@
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
 import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+import { getSkuAcenda,addInventoryAcenda  } from "../acenda";
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
@@ -117,7 +118,7 @@ let targetHeader = [
     {id: "images.default.7.alternate.url", title: "images.default.7.alternate.url"},
 ]
 
-export async function createTargetCsv({prods, credentials, client}){
+export async function createTargetCsv({prods, credentials, client, b, m}){
     console.log("make a target product csv")        
     let products = [] 
     for(let p of prods){  

@@ -3,6 +3,13 @@ import Design from "@/models/Design";
 import CSVUpdates from "@/models/CSVUpdates"
 import { createUpc } from "@/functions/createUpcs"
 import {createTargetCsv} from "@pythias/integrations";
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
+import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+const s3 = new S3Client({ credentials:{
+    accessKeyId:'XWHXU4FP7MT2V842ITN9',
+   secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
+}, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 const createShopSimonVariant = ({p, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4, url})=>{
     console.log("make variant", v.sku)
     const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
@@ -231,7 +238,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(200)
+        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(2)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -491,6 +498,7 @@ export async function updateListings(csvupdate, sendTo){
                     }else if(b == "The Juniper Shop") {
                         credentials = {clientId: process.env.acendaClientIdJS, clientSecret: process.env.acendaClientSecretJS, organization: process.env.acendaOrganizationJS}
                     }
+                    let url = await createTargetCsv({prods: brands[b][m], credentials, client: "simplysage", b, m})
                     await update(csvupdate, url, b, m)
                 }
                 if(m.toLowerCase() == "shop simon" && sendTo.shopSimon == true){
@@ -743,10 +751,10 @@ export async function updateListings(csvupdate, sendTo){
                 // }
             })
         })
-        for(let design of designs){
-            design.sendToMarketplaces = false
-            await design.save()
-        }
+        // for(let design of designs){
+        //     design.sendToMarketplaces = false
+        //     await design.save()
+        // }
     }catch(e){
         console.log(csvupdate, "update", e)
         let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
