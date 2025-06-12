@@ -76,7 +76,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                     <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", padding: "1%"}}>
                         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
                             {item.design && Object.keys(item.design? item.design: {})[0] &&
-                            <Image src={item?.sku?.includes("gift")? item?.design.replace("https//:", "https://"): createImage(item?.colorName, item?.styleCode, {url: item?.design[ Object.keys(item.design? item.design: {})[0]], side:  Object.keys(item.design? item.design: {})[0], threadColor: item.threadColorName}, source)}
+                            <Image src={item?.sku?.includes("gift")? item?.design.front.replace("https//:", "https://"): createImage(item?.colorName, item?.styleCode, {url: item?.design[ Object.keys(item.design? item.design: {})[0]], side:  Object.keys(item.design? item.design: {})[0], threadColor: item.threadColorName}, source)}
                             alt={item?.pieceId}
                             width={300}
                             height={300}
