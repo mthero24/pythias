@@ -60,7 +60,7 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${item?.inventory?.location}`)
     doc.font("Courier-Bold").fontSize(9)
     doc.text(`Color: ${item.colorName}`, 10)
-    doc.text(`Size: ${fullSize[item.sizeName]} CNT: ${totalQuantity}`)
+    doc.text(`Size: ${fullSize[item.sizeName]? fullSize[item.sizeName]: item.sizeName} CNT: ${totalQuantity}`)
     doc.text(`Thread: ${item.threadColorName}`)
     doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name: item.sku}`)
     doc.text(`${item.type}`)
