@@ -7,7 +7,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
     const [scan, setScan] = useState(pieceId)
     const [reship, setReship] = useState(false)
     const [reprint, setReprint] = useState(false)
-
+    const [preShip, setPreShip] = useState(false)
     const isReship = ()=>{
        // console.log(event.target.checked)
         if(event.target.checked) setReship(true)
@@ -17,6 +17,10 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
     const isReprint = ()=>{
       // console.log(event.target.checked)
        setReprint(!reprint)
+   }
+    const isPreShip = ()=>{
+      // console.log(event.target.checked)
+       setPreShip(!preShip)
    }
     useEffect(() => {
         const update = async ()=>{
@@ -44,7 +48,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
       
     const GetInfo = async ()=>{
       console.log("getInfo")
-      let res = await axios.post("/api/production/shipping", {scan, reship, reprint, station})
+      let res = await axios.post("/api/production/shipping", {scan, reship, reprint, station, preShip})
       console.log(res.data)
       if(res.data.error) {
         alert(res.data.msg)
@@ -52,7 +56,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
         setReship(false)
       }
       else {
-        if(!reprint){
+        if(!reprint && !preShip){
           if (res.data.item) {
             setItem(res.data.item);
             setOrder(res.data.item.order);
@@ -68,12 +72,15 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
             setShow(true)
             setActivate(res.data.activate)
           }
-        }else{
+        }else if(reprint){
           alert("label reprinted")
+        }else if(preShip){
+          alert(`Tracking Number: ${res.data.label.trackingNumber}`)
         }
         setScan("")
         setReship(false)
         setReprint(false)
+        setPreShip(false)
       }
     }
     const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
@@ -117,7 +124,7 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
                 sx={{ "& .MuiSvgIcon-root": { fontSize: 28 }, marginLeft: "15%" }}
               />
             }
-            label="Reship"
+            label="ReShip"
           />
           <FormControlLabel
             control={
@@ -128,7 +135,18 @@ export function Scan({auto, setAuto, setOrder, setItem, setBin, setShow, setActi
                 sx={{ "& .MuiSvgIcon-root": { fontSize: 28 }, marginLeft: "15%" }}
               />
             }
-            label="Reprint"
+            label="RePrint"
+          />
+           <FormControlLabel
+            control={
+              <Checkbox
+                {...label}
+                checked={preShip}
+                onClick={isPreShip}
+                sx={{ "& .MuiSvgIcon-root": { fontSize: 28 }, marginLeft: "15%" }}
+              />
+            }
+            label="PreShip"
           />
         </Card>
       </Box>

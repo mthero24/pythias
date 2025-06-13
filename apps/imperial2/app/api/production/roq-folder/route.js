@@ -14,6 +14,9 @@ export async function POST(req = NextApiRequest){
     let item = await Items.findOne({pieceId: data.scan,}).populate("blank")
     if(item) item.order = await Order.findOne({_id: item.order}).populate("items")
     console.log(item?.order, "item order",)
+    if(item.order.status == "shipped"){
+        return NextResponse.json({error: true, msg: "Order Already Shipped Check Ship Station for label"})   
+    }
     if(item){
         console.log(isSingleItem(item))
         if(canceled(item, item.order) == true) return NextResponse.json({error: true, msg: "Item Canceled"})

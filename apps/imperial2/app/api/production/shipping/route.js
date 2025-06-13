@@ -1,13 +1,95 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Bins from "@/models/Bin";
+import Blanks from "@/models/Blanks";
 import Order from "@/models/Order";
 import Item from "@/models/Items";
 import {updateOrder} from "@pythias/integrations";
 import axios from "axios";
+import {buyLabel} from "@pythias/shipping";
+import manifest from "@/models/manifest";
 import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
+
+    if(data.preShip){
+        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let order
+        if(item){
+            order = item.order
+        }else{
+            order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
+            item = order.items[0]
+            item.order = order
+        }
+        let weight = 0
+        for(let i of order.items){
+            let blank = await Blanks.findOne({_id: i.blank})
+            let size = blank.sizes.filter(s=> s.name == item.sizeName)[0]
+            weight = size.weight && size.weight > 0? size.weight: 3
+        }
+        let send = {
+            address: item.order.shippingAddress, 
+            poNumber: item.order.poNumber, 
+            weight: weight? weight: 3, 
+            selectedShipping: {provider: "usps", name: "usps_ground_advantage"}, dimensions: {width: 8, length: 11, height: 1}, 
+            businessAddress: JSON.parse(process.env.businessAddress),
+            providers: ["shipstation", "ups"],                
+            credentials: {
+                clientId: process.env.uspsClientId,
+                clientSecret: process.env.uspsClientSecret,
+                crid: process.env.uspsCRID,
+                mid: process.env.uspsMID,
+                manifestMID: process.env.manifestMID,
+                accountNumber: process.env.accountNumber,
+                api: "apis"
+            },
+            enSettings: {
+                requesterID: process.env.endiciaRequesterID,
+                accountNumber: process.env.endiciaAccountNUmber,
+                passPhrase: process.env.endiciaPassPhrase,
+            },
+            credentialsShipStation: {
+                apiKey: process.env.ssV2
+            },
+            imageFormat: "PDF",
+                carrierCodes :{
+                usps: "se-1652813",
+            },
+            warehouse_id: 62666,
+        }
+        if(!item.order.preShipped){
+            let label = await buyLabel(send)
+            if(label.error) return NextResponse.json({...label.data})
+            let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
+            await man.save()
+            item.order.preShipped = true
+            item.order.shippingInfo.label = label.label
+            item.order.shippingInfo.shippingCost += parseFloat(label.cost);
+            item.order.status = "Shipped"
+            item.order.shippingInfo.labels.push({
+                trackingNumber: label.trackingNumber,
+                label: label.label,
+                cost: parseFloat(label.cost),
+                trackingInfo: ["Label Purchased"],
+            });
+            for(let i of item.order.items){
+                i.status = "PreShipped"
+                i.steps.push({
+                    status: `PreShipped`,
+                    date: new Date(),
+                });
+                await i.save()
+            }
+            let re2s = updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:item.order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
+            await item.order.save();
+            if(label.error){
+                return NextResponse.json({error: true, msg: "error printing label"})
+            }else{
+                return NextResponse.json({label})
+            }
+        }
+    }
     if(data.reprint){
         let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order
@@ -35,6 +117,9 @@ export async function POST(req= NextApiRequest){
         let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
         let bin 
+        if(item.order.status == "shipped" || (order && order.status == "shipped")){
+            return NextResponse.json({error: true, msg: "Order Already Shipped Check Ship Station for label"})   
+        }
         try{
             if(!isNaN(data.scan.trim())){
                 bin = await Bins.findOne({ number: data.scan.trim() })
@@ -51,6 +136,7 @@ export async function POST(req= NextApiRequest){
                     await i.save()
                 }
                 item.order.shipped = false
+                item.order.preShipped = false
                 await item.order.save()
                 item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
             }else if(order){
@@ -59,6 +145,7 @@ export async function POST(req= NextApiRequest){
                     await i.save()
                 }
                 order.shipped = false
+                order.preShipped = false
                 await order.save()
                 order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
             }
@@ -70,7 +157,6 @@ export async function POST(req= NextApiRequest){
                 res.error = true
                 res.msg = "Item Canceled"
             }else if(await isShipped(item) == true){
-
                 res.error = true
                 res.msg = "Order already shipped"
                 console.log(res)
@@ -109,7 +195,7 @@ export async function POST(req= NextApiRequest){
         return NextResponse.json({...res})
     }catch(e){
         console.log("error", e)
-        return NextResponse.json({error: true, msg: e})
+        return NextResponse.json({error: true, msg: JSON.stringifye})
     }
 }
 

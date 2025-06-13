@@ -10,6 +10,40 @@ export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
     //return NextResponse.json({error: true})
+    let order = await Order.findOne({_id: data.orderId}).populate("items")
+    if(order.preShipped){
+        let headers = {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer $2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO`
+            }
+        }
+        let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
+        console.log(res.data)
+        for(let i of order.items){
+            i.shipped = true
+            await i.save()
+        }
+        if(res.error){
+            return NextResponse.json({error: true, msg: "error printing label"})
+        }else{
+            console.log("retrun")
+            return NextResponse.json({error: false, label: label.label, 
+                bins: {
+                    readyToShip: await Bin.find({ ready: true })
+                        .sort({ number: 1 })
+                        .populate({ path: "order", populate: "items" })
+                        .lean(),
+                    inUse: await Bin.find({ inUse: true })
+                        .sort({ number: 1 })
+                        .populate({ path: "order", populate: "items" })
+                        .lean(),
+            },})
+        }
+    }
+    if(order.status == "Shipped"){
+        return NextResponse.json({error: true, msg: "Order Already Shipped Check Ship Station for label"})
+    }
     if(!data.address.country) data.address.country = "US"
     try{
         let label = await buyLabel({
