@@ -19,7 +19,7 @@ export async function PUT(req=NextApiRequest){
             let inv = await Inventory.findById(i.inventory)
             inv.quantity = inv.quantity + i.quantity
             inv.pending_quantity = inv.pending_quantity - i.quantity
-            let items = await Items.find({styleCode: inv.style_code, colorName: inv.color_name, sizeName: inv.size_name, labelPrinted: false, date: {$lt: new Date(order.dateOrdered)} }).populate("color", "name").populate("designRef", "sku name printType").lean().limit(i.quantity)
+            let items = await Items.find({_id: {$in: order.items}, styleCode: inv.style_code, colorName: inv.color_name, sizeName: inv.size_name, labelPrinted: false }).populate("color", "name").populate("designRef", "sku name printType").lean().limit(i.quantity)
             console.log(items.length)
             items.map(i=>{
                 i.inventory = inv
@@ -45,7 +45,7 @@ export async function POST(req=NextApiRequest){
     let data = await req.json()
     //console.log(data)
     console.log(data)
-    let order = new InventoryOrders({vendor: data.order.company, poNumber: data.order.poNumber, dateOrdered: new Date(data.order.dateOrdered), dateExpected: data.order.dateExpected? new Date(data.order.dateExpected): null, locations: []})
+    let order = new InventoryOrders({vendor: data.order.company, poNumber: data.order.poNumber, dateOrdered: new Date(data.order.dateOrdered), dateExpected: data.order.dateExpected? new Date(data.order.dateExpected): null, locations: [], items: data.items})
     let locations = []
     for(let i of data.needsOrdered){
         if(!locations.includes(i.location)) locations.push(i.location)
@@ -53,12 +53,14 @@ export async function POST(req=NextApiRequest){
     for(let loc of locations){
         let items = []
         for(let i of data.needsOrdered){
-            if(i.location == loc){
+            if(i.location == loc && i.included){
                 items.push({
                     inventory: i.inv._id,
                     quantity: i.order
                 })
-                await Inventory.findByIdAndUpdate(i.inv._id, {pending_quantity: i.order})
+                let inv = await Inventory.findById(i.inv._id)
+                inv.pending_quantity += i.order
+                await inv.save()
             }
         }
         //console.log(items)

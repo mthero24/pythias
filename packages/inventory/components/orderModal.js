@@ -55,13 +55,13 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
         let no = [...needsOrdered]
         let inv = no.filter(n=> n.inv._id.toString() == id.toString())[0]
         if(param == "order") inv[param] = parseInt(event.target.value)
-        else if(param == "included") inv[param] = event.target.dataset.indeterminate == "true"? true: false
+        else if(param == "included") inv[param] = !inv[param]
         else inv[param] = event.target.value
         setNeedsOrdered([...no])
     }
     const sub = async ()=>{
         if(order.poNumber && order.company){
-            let res = await axios.post("/api/admin/inventory/order", {order, needsOrdered})
+            let res = await axios.post("/api/admin/inventory/order", {order, needsOrdered, items})
             if(res && res.data){
                 setBlanks(res.data.combined);
                 setItems(res.data.items)

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import  {PremierPrinting} from '../lib/connection';
 import inventory from "./inventory";
+import Items from "./Items";
 var schema = new mongoose.Schema({
     orderType: String,
     dateOrdered: Date,
@@ -18,6 +19,10 @@ var schema = new mongoose.Schema({
             },
             quantity: Number,
         }]
+    }],
+    items: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Items,
     }]
 })
 

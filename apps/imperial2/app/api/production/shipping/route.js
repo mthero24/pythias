@@ -167,7 +167,7 @@ export async function POST(req= NextApiRequest){
                     res.bin = addResult.bin
                     res.bin.ready = isReady(res.bin)
                     if(res.bin.ready) {
-                         if(item.order.status == "shipped" || (order && order.status == "shipped")){
+                         if((item.order.status == "shipped" || (order && order.status == "shipped")) && (item.order.shippingInfo.label == undefined || (order && order.shippingInfo.label == undefined))){
                             res.error = true
                             res.msg= "Order Already Shipped Check Ship Station for label"
                         }else{
