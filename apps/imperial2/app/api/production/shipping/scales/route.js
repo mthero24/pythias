@@ -13,6 +13,8 @@ export async function GET(req = NextApiRequest){
     if(res.data && res.data.value){
         res.data.value = res.data.value - (res.data.value * .1)
     }
+    // res.data.error = false
+    // res.data.value = 10
     console.log(res.data)
     return NextResponse.json({...res.data})
 }

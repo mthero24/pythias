@@ -117,9 +117,6 @@ export async function POST(req= NextApiRequest){
         let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
         let bin 
-        if(item.order.status == "shipped" || (order && order.status == "shipped")){
-            return NextResponse.json({error: true, msg: "Order Already Shipped Check Ship Station for label"})   
-        }
         try{
             if(!isNaN(data.scan.trim())){
                 bin = await Bins.findOne({ number: data.scan.trim() })
@@ -169,7 +166,14 @@ export async function POST(req= NextApiRequest){
                     res.item = addResult.item;
                     res.bin = addResult.bin
                     res.bin.ready = isReady(res.bin)
-                    if(res.bin.ready) res.activate = "bin/ship"
+                    if(res.bin.ready) {
+                         if(item.order.status == "shipped" || (order && order.status == "shipped")){
+                            res.error = true
+                            res.msg= "Order Already Shipped Check Ship Station for label"
+                        }else{
+                            res.activate = "bin/ship"
+                        }
+                    }
                     //console.log(res.item)
                     if (!item.steps) item.steps = [];
                     res.item.steps.push({

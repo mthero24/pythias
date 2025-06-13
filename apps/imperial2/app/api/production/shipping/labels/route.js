@@ -24,11 +24,12 @@ export async function POST(req= NextApiRequest){
             i.shipped = true
             await i.save()
         }
+        let bin = await Bin.findOneAndUpdate({order: order._id},  {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
         if(res.error){
             return NextResponse.json({error: true, msg: "error printing label"})
         }else{
             console.log("retrun")
-            return NextResponse.json({error: false, label: label.label, 
+            return NextResponse.json({error: false, label: order.shippingInfo.label, 
                 bins: {
                     readyToShip: await Bin.find({ ready: true })
                         .sort({ number: 1 })
@@ -41,7 +42,7 @@ export async function POST(req= NextApiRequest){
             },})
         }
     }
-    if(order.status == "Shipped"){
+    else if(order.status == "shipped"){
         return NextResponse.json({error: true, msg: "Order Already Shipped Check Ship Station for label"})
     }
     if(!data.address.country) data.address.country = "US"
