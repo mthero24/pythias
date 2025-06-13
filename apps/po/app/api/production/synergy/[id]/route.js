@@ -167,7 +167,7 @@ export async function GET(request, { params }) {
         Choke: 2, // 0-10
         whiteColorPause: false, // true or false
         whiteColorPauseSpan: 0, // 0-60
-        highlight: 5, // 1-9
+        highlight: 6, // 1-9
         mask: 3, // 1-5
         transparent: false, // true or false
         LayerWhite2: false, // true or false
@@ -190,7 +190,7 @@ export async function GET(request, { params }) {
         Profile.saturation = 5;
         Profile.brightness = 0;
         Profile.contrast = 5;
-        Profile.highlight = 4;
+        Profile.highlight = 5;
         Profile.mask = 3;
     } else {
         //console.log(item.styleV2.profiles);
