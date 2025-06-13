@@ -61,7 +61,7 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
     }
     const sub = async ()=>{
         if(order.poNumber && order.company){
-            let res = await axios.post("/api/admin/inventory/order", {order, needsOrdered, items})
+            let res = await axios.post("/api/admin/inventory/order", {order, needsOrdered, items: type == "Inventory Order"? []: items})
             if(res && res.data){
                 setBlanks(res.data.combined);
                 setItems(res.data.items)
