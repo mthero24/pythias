@@ -39,26 +39,7 @@ export async function pullOrders(){
                 total: o.orderTotal,
                 paid: true
             })
-            // if(o.customerNotes){
-            //     console.log(o.customerNotes.split("<br/>"))
-            //     let notesObj = {}
-            //     o.customerNotes.split("<br/>").map(b=>{
-            //         let sp = b.split(":")
-            //         notesObj[sp[0].toLowerCase().replace(/ /g, "_").trim()] = sp[1].trim()
-            //     })
-            //     console.log(notesObj)
-            //     if(notesObj.order_placed_from == "Kohl's"){
-            //         order.marketplace = "kohls"
-            //         order.poNumber= notesObj.order_id
-            //     } 
-            //     if(notesObj.channel == "shein"){
-            //         order.marketplace = "shein"
-            //         order.poNumber= notesObj.source_order_id
-            //     }
-            //     console.log(order.poNumber, order.marketplace)
-            //     //await order.save()
-                
-            // }
+            order = await order.save()
             let items = []
             let colorFixer = {
                 "White/Black": "Blk/Wht",
