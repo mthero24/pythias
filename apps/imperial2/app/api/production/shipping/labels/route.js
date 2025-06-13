@@ -42,7 +42,7 @@ export async function POST(req= NextApiRequest){
             },})
         }
     }
-    else if(order.status == "shipped"){
+    else if(order.status == "shipped" && order.shippingInfo.label == undefined){
         return NextResponse.json({error: true, msg: "Order Already Shipped Check Ship Station for label"})
     }
     if(!data.address.country) data.address.country = "US"
