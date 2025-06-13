@@ -138,7 +138,7 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
       const [hasMore, setHasMore] = useState(true)
       const [design, setDesign] = useState()
       const updateItem = async ()=>{
-
+        console.log(item.design)
         let res = await axios.put("/api/admin/items", {item})
         if(res.data.error) alert(res.data.msg)
         else {
@@ -171,8 +171,9 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
                                 let i = {...item}
                                 i.designRef = d._id
                                 if(d.threadColors.length > 0 && d.threadImages && Object.keys(d.threadImages).length > 0){
-                                    console.log("has")
+                                    console.log("has", d.threadImages, i.threadColorName, d.threadImages[i.threadColorName])
                                     i.design = d.threadImages[i.threadColorName]
+                                    console.log(i.design)
                                 }
                                 else i.design =d.images
                                 setItem({...i})

@@ -79,14 +79,7 @@ const schema = new mongoose.Schema(
     rePulled: { type: Boolean, default: false },
     rePulledTimes: { type: Number, default: 0 },
     rePulledReasons: [String],
-    design: {
-      front: { type: String },
-      back: { type: String },
-      upperSleeve: { type: String },
-      lowerSleeve: { type: String },
-      pocket: {type: String},
-      center: {type: String}
-    },
+    design: Object,
     weight: Number,
     quantity: {
       type: String,

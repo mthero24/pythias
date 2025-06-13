@@ -6,6 +6,14 @@ export async function PUT(req=NextApiRequest){
     let data = await req.json()
     console.log(data.item)
     let item = await Items.findOneAndUpdate({_id: data.item._id}, {...data.item})
+    item = await Items.findOne({_id: data.item._id})
+    console.log("here", item.design, Object.keys(item.design), Object.keys(item.design).length, !item.design && Object.keys(item.design).length == 0)
+    if(!item.design && Object.keys(item.design).length == 0){
+        console.log(data.item.design, "item design")
+        item.design = data.item.design
+        console.log(item.design, "design")
+        item = await item.save()
+    }
     //let relatedItems = await Items.find({sku: item.sku, threadColorName: item.threadColorName})
     console.log(item)
     // for(let it of relatedItems){
