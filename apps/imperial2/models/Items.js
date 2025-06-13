@@ -11,6 +11,7 @@ const schema = new mongoose.Schema(
     orderItemId: {type: String},
     pieceId: { type: String, required: true, unique: true },
     upc: {type: String},
+    poNumber: String,
     shippingType: { type: String, default: "Standard" },
     description: String,
     name: String,
