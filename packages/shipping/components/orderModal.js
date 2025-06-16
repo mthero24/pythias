@@ -85,7 +85,7 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
         setTimer(0)
       }
       let getWeight = async ()=>{
-        let res = await axios.get(`/api/production/shipping/scales?station=${station}`)
+        let res = await axios.get(`/api/production/shipping/scales?station=${station}&id=${order._id}`)
         if(res.data.error) {
           alert(res.data.msg)
           setWeight(0)
