@@ -265,7 +265,7 @@ export async function purchaseLabel({credentials, weight, poNumber, selectedShip
     //console.log(res?.data)
     var parser = new xml2js.Parser(options);
     let data = await parser.parseStringPromise(res?.data);
-    console.log(data['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].ProcessShipmentReply[0].CompletedShipmentDetail[0].ShipmentRating[0].ShipmentRateDetails[0].TotalNetChargeWithDutiesAndTaxes[0].Amount[0])
+    console.log(data['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].ProcessShipmentReply[0].Notifications[0].Message[0])
     //console.log(data["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0].ProcessShipmentReply[0].CompletedShipmentDetail[0].MasterTrackingId[0].TrackingNumber[0])
     //console.log(data["SOAP-ENV:Envelope"]["SOAP-ENV:Body"][0].ProcessShipmentReply[0].CompletedShipmentDetail[0].CompletedPackageDetails[0].Label[0].Parts[0].Image[0])
     if(data['SOAP-ENV:Envelope']['SOAP-ENV:Body'][0].ProcessShipmentReply[0].Notifications[0].Code[0] == "8241"){
