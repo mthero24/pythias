@@ -63,7 +63,7 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     doc.text(`Size: ${fullSize[item.sizeName]? fullSize[item.sizeName]: item.sizeName} CNT: ${totalQuantity}`)
     doc.text(`Thread: ${item.threadColorName}`)
     doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name: item.sku}`)
-    doc.text(`${item.type}`)
+    doc.text(`${item.type} ${new Date(item.date).toLocaleDateString("EN-us")}`)
     doc.text(`#${i + 1}`)
     if(printPO){
       doc.text(`printPO`)

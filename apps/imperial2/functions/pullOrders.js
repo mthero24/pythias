@@ -173,5 +173,5 @@ export async function pullOrders(){
     }
 }
 setInterval(()=>{
-    if(process.env.pm_id == 26 ) pullOrders()
+    if(process.env.pm_id == 7 ) pullOrders()
 }, 1 * 60 *60 *1000)
