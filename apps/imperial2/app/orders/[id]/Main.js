@@ -69,9 +69,12 @@ export function Main({ord, blanks}){
                                     <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
                                         <Grid2 container>
                                             <Grid2 size={2}>
-                                                <Box sx={{display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", borderRight: "1px solid black"}}>
-                                                    <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design? i.design[Object.keys(i.design)[0]]: ""}&side=${i.design? Object.keys(i.design)[0]: "front"}&threadColor=${i.threadColorName}&width=600`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
-                                                </Box>
+                                                {Object.keys(i.design).map(key=>(
+                                                    <Box key={key} sx={{display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", borderRight: "1px solid black"}}>
+                                                        <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design[key]}&side=${key}&threadColor=${i.threadColorName}&width=600`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
+                                                    </Box>
+                                                ))}
+                                                
                                             </Grid2>
                                             <Grid2 size={10} sx={{padding: "2%", textAlign: "center", display: "flex", flexDirection: "column", justifyItems: "center",}}>
                                                 <Typography>{i.name}</Typography>
