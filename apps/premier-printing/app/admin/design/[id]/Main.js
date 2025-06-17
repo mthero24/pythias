@@ -684,7 +684,7 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                     <Grid2 size={{xs: 4, sm: 4}} >
                         <CreatableSelect
                             placeholder="Blank"
-                            options={[ ...des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})]}
+                            options={[ ...des.blanks.map(b=>{ return {label: b.blank?.name, value: b.blank?.code}})]}
                             value={imageBlank? imageBlank: {label: "Blank", value: null}}
                             onChange={(val)=>{
                                 setImageBlank(val)
@@ -694,10 +694,10 @@ export function Main({design, bls, brands, mPs, pI, licenses}){
                     </Grid2>
                     <Grid2 size={{xs: 4, sm: 4}} >
                             {console.log(des.blanks, imageBlank.value)}
-                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
+                            {console.log(des.blanks.filter(b=>b.blank?.code== imageBlank.value))}
                             {imageBlank  &&  <CreatableSelect
                             placeholder="Blank"
-                            options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
+                            options={des.blanks.filter(b=>b.blank?.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
                             value={imageColor? imageColor: {label: "Color", value: null}}
                             onChange={(val)=>{
                                 setImageGroupImages([])
