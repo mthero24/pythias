@@ -18,6 +18,10 @@ export function Main({act, past, brands}){
             setFiles(res.data.past)
         }
     }
+    const generateUPC = async ()=>{
+        let res = await axios.post("/api/admin/upc")
+        console.log(res)
+    }
     useEffect(()=>{
         const checkFiles = async ()=>{
             let res = await axios.get(`/api/admin/create-csv?id=${active._id}`)
@@ -38,6 +42,7 @@ export function Main({act, past, brands}){
     return (
         <Box sx={{padding: "3%", background: "#e2e2e2", minHeight: "94vh"}}>
             <Card sx={{padding: "3%"}}>
+                <Button fullWidth onClick={generateUPC}>Generate UPCs</Button>
                 {!active && (
                     <>
                         <Typography textAlign={"center"} fontSize={"2rem"}>Create New CSVs</Typography>
