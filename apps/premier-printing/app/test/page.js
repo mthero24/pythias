@@ -13,6 +13,7 @@ import {pullOrders} from "@/functions/pullOrders";
 import { Style } from "@mui/icons-material";
 import { createUpc } from "@/functions/createUpcs"
 import {updateListings} from "@/functions/updateListings"
+import { generateUPC } from "@/functions/generateUpcs";
 import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmart, retireItemWalmart, getSpecWalmart, bulkUploadWalmart, getFeedWalmart, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda} from "@pythias/integrations"
 export default async function Test(){
     //await updateListings()
@@ -24,6 +25,7 @@ export default async function Test(){
             await retireItemWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, sku: item.sku})
          }
     }
+    await generateUPC()
     //removeOutOfStockItemsWalmart()
     //getSpecWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, type: "T-Shirts"})
     const productStageUrl = "https://stage-api.target.com/sellers/v1/​";

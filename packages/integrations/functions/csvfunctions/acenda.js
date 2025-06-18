@@ -27,7 +27,24 @@ const createTargetProduct = ({p, product})=>{
 }
 const createTargetVariant = ({p,item, v, price, bImages})=>{
     console.log("make variant", v.sku)
-    const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
+      let sizes = {
+        xs: "X SMALL",
+        s: "SMALL",
+        m: "MEDIUM",
+        l: "LARGE",
+        xl: "X LARGE",
+        "2xl": "XX LARGE",
+        "2t": "2T",
+        "3t": "3T",
+        "4t": "4T",
+        "5/6t": "5T-6T",
+        "5t": "5T-6T",
+        "6m": "6 MONTHS",
+        "12m": "12 MONTHS",
+        "18m": "18 MONTHS",
+        "24m": "24 MONTHS",
+        "nb": "NEWBORN"
+    }
     return {
         id: item && item[0]? item[0].id: null,
         "name": `${p.name} - ${v.size.name} - ${v.color.name}`,
@@ -40,7 +57,7 @@ const createTargetVariant = ({p,item, v, price, bImages})=>{
         "pricing_item.price.amount": price.toFixed(2),
         "variant.color_family": v.color.colorFamily,
         "variant.color": v.color.name,
-        "variant.size": v.size.name,
+        "variant.size": sizes[v.size.name]? sizes[v.size.name]: v.size.name,
         group: "variant",
         "fields.season_or_event_depiction": p.design.season,
         "fields.season": p.design.season,

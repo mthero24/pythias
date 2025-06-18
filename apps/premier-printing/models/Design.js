@@ -73,6 +73,7 @@ const schema = new mongoose.Schema({
   gender: String,
   season: String,
   sendToMarketplaces: {type: Boolean, default: false},
+  onShopify: {type: Boolean, default: false}
 });
 
 export default PremierPrinting.model("Design", schema);

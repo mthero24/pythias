@@ -3,7 +3,7 @@ import UpcToSku from "@/models/skuUpcConversion";
 export async function GET(req){
     let blank = req.nextUrl.searchParams.get("blank")
     let design = req.nextUrl.searchParams.get("design")
-    let upcSku = req.nextUrl.searchParams.get("sku").trim()
+    let upcSku = req.nextUrl.searchParams.get("sku")?.trim()
     let sku
     if(upcSku){
         sku = await UpcToSku.find({$or: [{sku: upcSku}, {upc: upcSku}]}).populate("design", "name").populate("color", "name").populate({path: "blank", select:"code name sizes colors", populate: "colors"})

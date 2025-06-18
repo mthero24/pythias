@@ -12,7 +12,24 @@ const s3 = new S3Client({ credentials:{
 }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 const createShopSimonVariant = ({p, v, price, bImages, material, material_1, material_percentage_1, material_2, material_percentage_2, garment_fit, textile_dry_recommendation,textile_wash_recommendation, bullet1, bullet2, bullet4, url})=>{
     console.log("make variant", v.sku)
-    const sizes = {s: "Small", XS: "X Small", M: "Medium", L: "Large", "XL": "X Large", "2XL": "XX Large"}
+      let sizes = {
+        xs: "X SMALL",
+        s: "SMALL",
+        m: "MEDIUM",
+        l: "LARGE",
+        xl: "X LARGE",
+        "2xl": "XX LARGE",
+        "2t": "2T",
+        "3t": "3T",
+        "4t": "4T",
+        "5/6t": "5T-6T",
+        "5t": "5T-6T",
+        "6m": "6 MONTHS",
+        "12m": "12 MONTHS",
+        "18m": "18 MONTHS",
+        "24m": "24 MONTHS",
+        "nb": "NEWBORN"
+    }
     return {
         "title": `${p.name} - ${v.size.name} - ${v.color.name}`,
         variantId: v.gtin,
@@ -26,9 +43,9 @@ const createShopSimonVariant = ({p, v, price, bImages, material, material_1, mat
         "normalized-color": v.color.colorFamily,
         "color": v.color.name,
         "unisex-size": v.size.name,
-        "womens-special-size-type": v.size.name,
-        "womens-clothin-top-size": v.size.name,
-        "designer-size": v.size.name,
+        "womens-special-size-type": sizes[v.size.name]? sizes[v.size.name]: v.size.name,
+        "womens-clothing-top-size": sizes[v.size.name]? sizes[v.size.name]: v.size.name,
+        "designer-size": sizes[v.size.name]? sizes[v.size.name]: v.size.name,
         "seo-keywords": p.design.tags,
         "occasion": p.design.season,
         "product-url": `${url}/${p.design.name.replace(/ /g, "-")}-${p.blank.blank.name.replace(/ /g, "-")}`,
@@ -238,7 +255,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(2)
+        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(25)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -267,44 +284,45 @@ export async function updateListings(csvupdate, sendTo){
                             if(b.blank){
                                 let variants = []
                                 let skus = await SkuToUpc.find({design: design._id, blank: b.blank._id})
-                                if(skus.length < (b.colors.length * b.blank.sizes.length)) await doUPC({design, blank: b.blank._id})
-                                for(let c of b.colors){
-                                    for(let s of b.blank.sizes){
-                                        let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
-                                        if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
-                                        if(upc){
-                                            let v = {
-                                                upc: upc?.upc,
-                                                sku: upc?.sku,
-                                                gtin: upc?.gtin,
-                                                size: s,
-                                                color: c
+                                if(skus.length < (b.colors.length * b.blank.sizes.length)){
+                                    for(let c of b.colors){
+                                        for(let s of b.blank.sizes){
+                                            let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
+                                            if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
+                                            if(upc){
+                                                let v = {
+                                                    upc: upc?.upc,
+                                                    sku: upc?.sku,
+                                                    gtin: upc?.gtin,
+                                                    size: s,
+                                                    color: c
+                                                }
+                                                variants.push(v)
                                             }
-                                            variants.push(v)
                                         }
                                     }
-                                }
-                                let product = {
-                                    name: `${brand.name} ${design.name} ${b.blank.name}`,
-                                    brand: brand.name,
-                                    design: design,
-                                    blank: b,
-                                    options: ["color", "size"],
-                                    variants: variants
+                                    let product = {
+                                        name: `${brand.name} ${design.name} ${b.blank.name}`,
+                                        brand: brand.name,
+                                        design: design,
+                                        blank: b,
+                                        options: ["color", "size"],
+                                        variants: variants
 
-                                    
-                                }
-                                for(let m of b2m.marketPlaces){
-                                    let marketplace = m
-                                    if(m == "Shien") marketplace = "Shein"
-                                    if(m == "shopify") marketplace = "Shopify"
-                                    if(m == "amazon") marketplace = "Amazon"
-                                    if(brand.name == "The Juniper Shop" && product.blank.blank.department.toLowerCase() == "kids"){
-                                        brands[brand.name][marketplace].push(product)
-                                    }else if(brand.name == "Simply Sage Market" && product.blank.blank.department.toLowerCase() != "kids"){
-                                        brands[brand.name][marketplace].push(product)
-                                    }else if(brand.name != "The Juniper Shop" && brand.name != "Simply Sage Market"){
-                                        brands[brand.name][marketplace].push(product)
+                                        
+                                    }
+                                    for(let m of b2m.marketPlaces){
+                                        let marketplace = m
+                                        if(m == "Shien") marketplace = "Shein"
+                                        if(m == "shopify") marketplace = "Shopify"
+                                        if(m == "amazon") marketplace = "Amazon"
+                                        if(brand.name == "The Juniper Shop" && product.blank.blank.department.toLowerCase() == "kids"){
+                                            brands[brand.name][marketplace].push(product)
+                                        }else if(brand.name == "Simply Sage Market" && product.blank.blank.department.toLowerCase() != "kids"){
+                                            brands[brand.name][marketplace].push(product)
+                                        }else if(brand.name != "The Juniper Shop" && brand.name != "Simply Sage Market"){
+                                            brands[brand.name][marketplace].push(product)
+                                        }
                                     }
                                 }
                             }
