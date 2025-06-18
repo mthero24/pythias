@@ -25,7 +25,7 @@ export default async function Test(){
             await retireItemWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, sku: item.sku})
          }
     }
-    await generateUPC()
+    //await generateUPC()
     //removeOutOfStockItemsWalmart()
     //getSpecWalmart({clientId: process.env.walmartClientIdSS, clientSecret: process.env.walmartClientSecretSS, partnerId: process.env.walmartPartnerId, type: "T-Shirts"})
     const productStageUrl = "https://stage-api.target.com/sellers/v1/​";
