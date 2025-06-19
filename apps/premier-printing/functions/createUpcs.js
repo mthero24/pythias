@@ -8,7 +8,7 @@ export async function createUpc({design, blank}){
         "Simply Sage Market": ["C", "SWT", "GDT", "GDSWT", "GDLS", "LGDSP", "LGDSWT", "LGDSET", "GDLSSET", "GDTSET", "RT", "BCT", "TK", "QZF", "HT", "H", "PPSET", "RB", "FTH", "CTH"]
     }
 
-    for(let blank of (filterBlank? design.blanks.filter(b=> b.blank._id.toString() == filterBlank.toString()): design.blanks)){
+    for(let blank of (filterBlank? design.blanks.filter(b=> b.blank?._id.toString() == filterBlank.toString()): design.blanks)){
         //console.log(blank.blank.code)
         for(let color of blank.colors){
             //console.log(color.name)
