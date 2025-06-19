@@ -255,7 +255,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(25)
+        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(200)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -284,45 +284,44 @@ export async function updateListings(csvupdate, sendTo){
                             if(b.blank){
                                 let variants = []
                                 let skus = await SkuToUpc.find({design: design._id, blank: b.blank._id})
-                                if(skus.length < (b.colors.length * b.blank.sizes.length)){
-                                    for(let c of b.colors){
-                                        for(let s of b.blank.sizes){
-                                            let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
-                                            if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
-                                            if(upc){
-                                                let v = {
-                                                    upc: upc?.upc,
-                                                    sku: upc?.sku,
-                                                    gtin: upc?.gtin,
-                                                    size: s,
-                                                    color: c
-                                                }
-                                                variants.push(v)
+                                if(skus.length < (b.colors.length * b.blank.sizes.length)) await doUPC({design, blank: b.blank._id})
+                                for(let c of b.colors){
+                                    for(let s of b.blank.sizes){
+                                        let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
+                                        if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
+                                        if(upc){
+                                            let v = {
+                                                upc: upc?.upc,
+                                                sku: upc?.sku,
+                                                gtin: upc?.gtin,
+                                                size: s,
+                                                color: c
                                             }
+                                            variants.push(v)
                                         }
                                     }
-                                    let product = {
-                                        name: `${brand.name} ${design.name} ${b.blank.name}`,
-                                        brand: brand.name,
-                                        design: design,
-                                        blank: b,
-                                        options: ["color", "size"],
-                                        variants: variants
+                                }
+                                let product = {
+                                    name: `${brand.name} ${design.name} ${b.blank.name}`,
+                                    brand: brand.name,
+                                    design: design,
+                                    blank: b,
+                                    options: ["color", "size"],
+                                    variants: variants
 
-                                        
-                                    }
-                                    for(let m of b2m.marketPlaces){
-                                        let marketplace = m
-                                        if(m == "Shien") marketplace = "Shein"
-                                        if(m == "shopify") marketplace = "Shopify"
-                                        if(m == "amazon") marketplace = "Amazon"
-                                        if(brand.name == "The Juniper Shop" && product.blank.blank.department.toLowerCase() == "kids"){
-                                            brands[brand.name][marketplace].push(product)
-                                        }else if(brand.name == "Simply Sage Market" && product.blank.blank.department.toLowerCase() != "kids"){
-                                            brands[brand.name][marketplace].push(product)
-                                        }else if(brand.name != "The Juniper Shop" && brand.name != "Simply Sage Market"){
-                                            brands[brand.name][marketplace].push(product)
-                                        }
+                                    
+                                }
+                                for(let m of b2m.marketPlaces){
+                                    let marketplace = m
+                                    if(m == "Shien") marketplace = "Shein"
+                                    if(m == "shopify") marketplace = "Shopify"
+                                    if(m == "amazon") marketplace = "Amazon"
+                                    if(brand.name == "The Juniper Shop" && product.blank.blank.department.toLowerCase() == "kids"){
+                                        brands[brand.name][marketplace].push(product)
+                                    }else if(brand.name == "Simply Sage Market" && product.blank.blank.department.toLowerCase() != "kids"){
+                                        brands[brand.name][marketplace].push(product)
+                                    }else if(brand.name != "The Juniper Shop" && brand.name != "Simply Sage Market"){
+                                        brands[brand.name][marketplace].push(product)
                                     }
                                 }
                             }
