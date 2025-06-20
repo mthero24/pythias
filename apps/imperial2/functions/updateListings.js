@@ -12,12 +12,12 @@ const s3 = new S3Client({ credentials:{
 }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
 
-const update = async(csvupdate, url, brand, marketplace )=>{
+const update = async(csvupdate, url, marketplace )=>{
     console.log(brand, marketplace)
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     if(!csvUpdate.files) csvUpdate.files={}
     console.log(csvUpdate.files)
-    csvUpdate.files[`${brand}_${marketplace}`] = `https://images1.pythiastechnologies.com/${url}`
+    csvUpdate.files[`${marketplace}`] = `https://images1.pythiastechnologies.com/${url}`
     csvUpdate.dataParsed = true
     csvUpdate.csvReady= true
     csvUpdate.active = false
@@ -167,7 +167,8 @@ export async function updateListings(csvupdate, sendTo){
         console.log(products[0], products[1])
         csvUpdate.infoGathered = true
         csvUpdate = await csvUpdate.save()
-        
+        let url = await createTargetCsv({prods: brands[b][m], credentials, client: "simplysage", b, m})
+        await update(csvupdate, url, "tiktok")
         // for(let design of designs){
         //     design.sendToMarketplaces = false
         //     await design.save()

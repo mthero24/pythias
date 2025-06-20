@@ -1,10 +1,17 @@
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
+import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+const s3 = new S3Client({ credentials:{
+    accessKeyId:'XWHXU4FP7MT2V842ITN9',
+   secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
+}, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
 export const tikTokHeader = [
     {id: "category", title: "category"},
     {id: "brand", title: "brand"},
     {id: "productName", title: "Product Name"},
     {id: "productDescription", title: "Product Description"},
-    {id: "MainImage", title: "Main Product Image"},
+    {id: "Image1", title: "Main Product Image"},
     {id: "Image2", title: "Product Image 2"},
     {id: "Image3", title: "Product Image 3"},
     {id: "Image4", title: "Product Image 4"},
@@ -50,9 +57,9 @@ export const tikTokHeader = [
     {id: "Carcinogen", title: "Carcinogen"},
     {id: "CA Prop 65: Repro. Chems", title: "Reprotoxic Chemicals"},
     {id: "Safety Data Sheet (SDS) for other dangerous goods or hazardous materials", title: "Safety Data Sheet (SDS) for other dangerous goods or hazardous materials"},
-    {id: "Product Status", title: "Product Status"},
+    {id: "productStatus", title: "Product Status"},
 ]
-const createTikTokVariant = ({p,item, v, price, bImages})=>{
+const createTikTokVariant = ({p, v})=>{
     console.log("make variant", v.sku)
       let sizes = {
         xs: "X SMALL",
@@ -60,7 +67,7 @@ const createTikTokVariant = ({p,item, v, price, bImages})=>{
         m: "MEDIUM",
         l: "LARGE",
         xl: "X LARGE",
-        "2xl": "XX LARGE",
+        "2xl": "2XL",
         "2t": "2T",
         "3t": "3T",
         "4t": "4T",
@@ -72,13 +79,63 @@ const createTikTokVariant = ({p,item, v, price, bImages})=>{
         "24m": "24 MONTHS",
         "nb": "NEWBORN"
     }
+    let productImages = {}
+    let variantImages = {}
+    let j = 1
+    let k = 1
+    for(let i of p.images){
+        productImages[`Image${j}`] = i
+        j++
+    }
+    for(let i of v.images){
+        variantImages[`primaryVariationImage${k}`] = i
+        k++
+    }
     return {
-        
         "productName": `${p.name}`,
-        "description": `${p.design.description} ${p.blank.blank.description}`,
+        "productDescription": `${p.design.description} ${p.blank.blank.description}`,
         brand: p.brand,
         productSku: p.sku,
         "sku": v.sku,
-        
+        primaryVariationName: "color",
+        primaryVariationValue: v.threadColor? `${v.color.name} with ${v.threadColor.name} Lettering`: v.color.name,
+        secondaryVariationName: "size",
+        secondaryVariationValue: sizes[v.size.name]? sizes[v.size.name]: v.size.name,
+        weight: v.size.weight,
+        price: v.size.retailPrice,
+        ...productImages,
+        ...variantImages,
+        ...p.blank.tikTokHeader,
+        productStatus: "active"
     }
+}
+
+export  const createTikTokCsv = async ({products})=>{
+    let sendProducts = []
+    for(p of products){
+        for(let v of products.variants){
+            sendProducts.push(createTikTokVariant({p,v}))
+        }
+    }
+    const csvStringifier = createCsvStringifier({
+        header: tikTokHeader,
+    });
+    //console.log(products)
+    //console.log("product", products.length)
+    let csvString =  await csvStringifier.stringifyRecords([...products])
+    csvString = `
+        ${csvStringifier.getHeaderString()}${csvString}
+    `
+    let url = `csv/tiktok/${Date.now()}.csv`
+    let params = {
+        Bucket: "images1.pythiastechnologies.com",
+        Key: url,
+        Body: csvString.toString("base64"),
+        ACL: "public-read",
+        ContentEncoding: "base64",
+        ContentDisposition: "inline",
+        ContentType: "text/csv",
+        };
+    const data = await s3.send(new PutObjectCommand(params));
+    return url
 }
