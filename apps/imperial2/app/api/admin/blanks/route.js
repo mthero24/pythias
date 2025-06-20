@@ -31,7 +31,9 @@ const updateFold = (blank)=>{
 }
 const updateEnvelopes = (blank)=>{
   let newEnvelopes = [];
+  console.log(blank.printLocations)
   let printLocations = blank.printLocations.map(l=> {return l.name})
+  console.log(printLocations)
   for(let e of blank.envelopes){
     if(printLocations.includes(e.placement)) newEnvelopes.push(e)
   }
@@ -52,11 +54,14 @@ const updateEnvelopes = (blank)=>{
       }
     }
   }
-  blank.envelopes = newEnvelopes.sort((a,b)=>{
-    if(a.placement.length > a.placement.length) return -1
-    if(a.placement.length < a.placement.length) return 1
-    return 0
-  })
+  if(newEnvelopes.length > 0){
+    blank.envelopes = newEnvelopes.sort((a,b)=>{
+      console.log(a)
+      if(a.placement.length > b.placement.length) return -1
+      if(a.placement.length < b.placement.length) return 1
+      return 0
+    })
+  }
   return blank
 }
 let updateInventory = async (blank)=>{
@@ -93,8 +98,8 @@ export async function POST(req = NextApiRequest) {
   let newBlank
   try {
     if(blank._id){
-      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank) 
-      newBlank = await Blanks.findById(blank._id) 
+      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
+      newBlank = await Blanks.findById(blank._id).populate("printLocations") 
       await updateInventory(blank)
     }
     else {

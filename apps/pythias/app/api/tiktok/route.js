@@ -1,15 +1,23 @@
 import {NextApiRequest, NextResponse} from "next/server";
-
-
+import TikTokAuth from "@/models/tiktok"
+import {getAccessTokenUsingAuthCode, getAccessTokenFromRefreshToken} from "@pythias/integrations"
+const config = {
+    app_key: process.env.tiktok_app_key,
+    app_secret: process.env.tiktok_app_secret
+}
 export async function GET(req=NextApiRequest){
-    console.log("++++++++++++++++++++++++++++++")
-    console.log("")
-    console.log(req.nextUrl.searchParams.get("app_key"))
-    console.log(req.nextUrl.searchParams.get("code"))
-    console.log(req.nextUrl.searchParams.get("locale"))
-    console.log(req.nextUrl.searchParams.get("region"))
-    console.log("")
-    console.log("")
-    console.log("++++++++++++++++++++++++++++++")
+    let data = await getAccessTokenUsingAuthCode(config, req.nextUrl.searchParams.get("code"))
+    let auth = await TikTokAuth.findOne({seller_name: data.seller_name})
+    if(auth){
+        for(let key in Object.keys(data)){
+            auth[key] = data[key]
+            auth.date= new Date(Date.now())
+            await auth.save()
+        }
+    }else {
+        auth = new TikTokAuth({...data, date: new Date(Date.now())})
+        console.log(auth)
+        await auth.save()
+    }
     return NextResponse.json({error: false})
 }

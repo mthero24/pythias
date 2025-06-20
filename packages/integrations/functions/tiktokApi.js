@@ -1,16 +1,7 @@
 // const tiktokShop = require("tiktok-shop");
 import axios from "axios";
 import tiktokShop from "tiktok-shop";
-import { createImage } from "./create/image";
-import { createVariants } from "./create/variants";
 
-import TikTokCredentials from "@/models/TikTokCredentials";
-import User from "@/models/User";
-import { checkIfOrderExists } from "./checkIfOrderExists";
-import { buildMarketplaceFulfillmentItems } from "./buildMarketplaceFulfillmentItems";
-import Order from "@/models/Order";
-import { createOrder } from "./create/ordersV2";
-import { getProductImageUrl } from "./getProductImageUrl";
 
 // const tiktokShop = require('tiktok-shop-client')
 
@@ -62,7 +53,7 @@ const generateAuthorizationUrl = () => {
   return `${baseUrl}?${queryString}`;
 };
 
-const getAccessTokenUsingAuthCode = async (authCode) => {
+export const getAccessTokenUsingAuthCode = async (authCode) => {
   // How to get Auth Code: https://partner.tiktokshop.com/doc/page/63fd743c715d622a338c4e5a
   const accessToken = await tiktokShop.authCodeToken(config, authCode);
   return accessToken.data;
@@ -70,7 +61,7 @@ const getAccessTokenUsingAuthCode = async (authCode) => {
 
 // getAccessTokenUsingAuthCode();
 
-const getAccessTokenFromRefreshToken = async (credential_id) => {
+export const getAccessTokenFromRefreshToken = async (credential_id) => {
   let credentials = await TikTokCredentials.findOne({ _id: credential_id });
   // How to get Auth Code: https://partner.tiktokshop.com/doc/page/63fd743c715d622a338c4e5a
   const refreshToken = credentials.refreshToken;
@@ -85,7 +76,7 @@ const getAccessTokenFromRefreshToken = async (credential_id) => {
   return accessToken.access_token;
 };
 
-const getAuthorizedShops = async (credentials) => {
+export const getAuthorizedShops = async (credentials, config) => {
   let accessToken = credentials.accessToken;
   const url = `https://open-api.tiktokglobalshop.com/authorization/202309/shops?app_key=${config.app_key}`;
   const { signature, timestamp } = tiktokShop.signByUrl(url, config.app_secret);
@@ -107,7 +98,7 @@ const getAuthorizedShops = async (credentials) => {
   }
 };
 
-const buildUrl = (baseUrl, params) => {
+export const buildUrl = (baseUrl, params) => {
   let url = new URL(baseUrl);
   let keys = Object.keys(params).sort((a, b) => a.localeCompare(b));
   for (let key of keys) {

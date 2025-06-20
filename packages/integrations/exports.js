@@ -11,3 +11,7 @@ export {getTokenAcenda, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addI
 export {createTargetCsv} from "./functions/csvfunctions/acenda";
 //walmart
 export {getItemsWalmart, retireItemWalmart, bulkUploadWalmart, getSpecWalmart,getFeedWalmart} from "./functions/walmart"
+
+export {getAccessTokenUsingAuthCode, getAccessTokenFromRefreshToken} from "./functions/tiktokpy"
+
+export {Main} from "./components/Main";

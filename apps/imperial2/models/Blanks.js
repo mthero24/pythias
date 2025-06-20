@@ -138,6 +138,7 @@ const SchemaObj = new Schema(
     kohlsHeader: Object,
     targetHeader: Object,
     shopSimonHeader: Object,
+    tikTokHeader: Object,
     printLocations: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: printLocations,
