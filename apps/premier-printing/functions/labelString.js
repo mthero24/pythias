@@ -1,5 +1,5 @@
 import Items from "@/models/Items";
-import Inventory from "@/models/inventory";
+import Inventory from "@/models/inventory2";
 import ReturnBins from "@/models/returnBins"
 import Design from "@/models/Design";
 let updateReturnBin = async (re, upc, sku)=>{

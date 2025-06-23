@@ -1,6 +1,6 @@
 import Items from "@/models/Items";
 import Order from "@/models/Order";
-import Inventory from "@/models/inventory";
+import Inventory from "@/models/inventory2";
 import Batches from "@/models/batches";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){

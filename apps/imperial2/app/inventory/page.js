@@ -24,5 +24,5 @@ export default async function InventoryPage (){
     console.log(combined)
     combined = serialize(combined)
     items = serialize(items)
-    return <Main bla={combined} it={items}/>
+    return <Main bla={combined} it={items} defaultLocation="Orlando" binType="location"/>
 }

@@ -1,5 +1,5 @@
 import Color from "@/models/Color";
-import Inventory from "@/models/inventory";
+import Inventory from "@/models/inventory2";
 
 export async function generateInventory(style) {
   console.log(
