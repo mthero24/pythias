@@ -768,10 +768,10 @@ export async function updateListings(csvupdate, sendTo){
                 // }
             })
         })
-        // for(let design of designs){
-        //     design.sendToMarketplaces = false
-        //     await design.save()
-        // }
+        for(let design of designs){
+            design.sendToMarketplaces = false
+            await design.save()
+        }
     }catch(e){
         console.log(csvupdate, "update", e)
         let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})

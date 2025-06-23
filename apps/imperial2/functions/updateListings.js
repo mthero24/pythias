@@ -1,4 +1,4 @@
-import SkuToUpc from "@/models/skuUpcConversion";
+import {createTikTokCsv, createShopifyCsv} from "@pythias/integrations"
 import Design from "@/models/Design";
 import CSVUpdates from "@/models/CSVUpdates"
 import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
@@ -13,7 +13,6 @@ const s3 = new S3Client({ credentials:{
 
 
 const update = async(csvupdate, url, marketplace )=>{
-    console.log(brand, marketplace)
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     if(!csvUpdate.files) csvUpdate.files={}
     console.log(csvUpdate.files)
@@ -45,7 +44,7 @@ const createProductImages = (design, blank,)=>{
                     colors = blank.colors
                 }
                 for(let color of colors){
-                    let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.color._id.toString())
+                    let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
                     for(let ci of colorImages){
                         images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=400`)
                     }
@@ -164,15 +163,17 @@ export async function updateListings(csvupdate, sendTo){
                 }
             }
         }
-        console.log(products[0], products[1])
+       // console.log(products[0], products[1])
         csvUpdate.infoGathered = true
         csvUpdate = await csvUpdate.save()
-        let url = await createTargetCsv({prods: brands[b][m], credentials, client: "simplysage", b, m})
+        let url = await createTikTokCsv({products})
         await update(csvupdate, url, "tiktok")
-        // for(let design of designs){
-        //     design.sendToMarketplaces = false
-        //     await design.save()
-        // }
+        url = await createShopifyCsv({products})
+        await update(csvupdate, url, "shopify")
+        for(let design of designs){
+            design.sendToMarketplaces = false
+            await design.save()
+        }
     }catch(e){
         console.log(csvupdate, "update", e)
         let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})

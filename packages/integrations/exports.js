@@ -15,3 +15,5 @@ export {getItemsWalmart, retireItemWalmart, bulkUploadWalmart, getSpecWalmart,ge
 export {getAccessTokenUsingAuthCode, getAccessTokenFromRefreshToken} from "./functions/tiktokpy"
 
 export {Main} from "./components/Main";
+export {createTikTokCsv} from "./functions/csvfunctions/tiktok";
+export {createShopifyCsv} from "./functions/csvfunctions/shopify";

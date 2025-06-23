@@ -7,7 +7,7 @@ const s3 = new S3Client({ credentials:{
 }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
 export const tikTokHeader = [
-    {id: "category", title: "category"},
+    {id: "Category", title: "Category"},
     {id: "brand", title: "brand"},
     {id: "productName", title: "Product Name"},
     {id: "productDescription", title: "Product Description"},
@@ -60,7 +60,7 @@ export const tikTokHeader = [
     {id: "productStatus", title: "Product Status"},
 ]
 const createTikTokVariant = ({p, v})=>{
-    console.log("make variant", v.sku)
+    //console.log("make variant", v.sku)
       let sizes = {
         xs: "X SMALL",
         s: "SMALL",
@@ -91,30 +91,32 @@ const createTikTokVariant = ({p, v})=>{
         variantImages[`primaryVariationImage${k}`] = i
         k++
     }
+    if(p.blank.blank.code == "CC1717") console.log(p.blank.blank.tikTokHeader, "tiktokheader")
     return {
         "productName": `${p.name}`,
         "productDescription": `${p.design.description} ${p.blank.blank.description}`,
-        brand: p.brand,
         productSku: p.sku,
         "sku": v.sku,
         primaryVariationName: "color",
         primaryVariationValue: v.threadColor? `${v.color.name} with ${v.threadColor.name} Lettering`: v.color.name,
         secondaryVariationName: "size",
-        secondaryVariationValue: sizes[v.size.name]? sizes[v.size.name]: v.size.name,
+        secondaryVariationValue: sizes[v.size.name.toLowerCase()]? sizes[v.size.name.toLowerCase()]: v.size.name,
         weight: v.size.weight,
         price: v.size.retailPrice,
         ...productImages,
         ...variantImages,
-        ...p.blank.tikTokHeader,
+        ...p.blank.blank.tikTokHeader,
         productStatus: "active"
     }
 }
 
 export  const createTikTokCsv = async ({products})=>{
     let sendProducts = []
-    for(p of products){
-        for(let v of products.variants){
-            sendProducts.push(createTikTokVariant({p,v}))
+    for(let p of products){
+        for(let v of p.variants){
+            let variant = await createTikTokVariant({p,v})
+            //console.log(variant)
+            sendProducts.push(variant)
         }
     }
     const csvStringifier = createCsvStringifier({
@@ -122,7 +124,7 @@ export  const createTikTokCsv = async ({products})=>{
     });
     //console.log(products)
     //console.log("product", products.length)
-    let csvString =  await csvStringifier.stringifyRecords([...products])
+    let csvString =  await csvStringifier.stringifyRecords([...sendProducts])
     csvString = `
         ${csvStringifier.getHeaderString()}${csvString}
     `
