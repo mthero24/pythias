@@ -1,6 +1,6 @@
 import Items from "@/models/Items";
 import Order from "@/models/Order";
-import Inventory from "@/models/inventory2";
+import Inventory from "@/models/inventory";
 import Batches from "@/models/batches";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
@@ -17,7 +17,7 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: "Standard",
-        }).populate("color", "name").populate("designRef", "sku name printType").lean(),
+        }).populate("color", "name _id").populate("designRef", "sku name printType").lean(),
             Expedited: await Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
@@ -28,10 +28,10 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: { $ne: "Standard" },
-        }).populate("color", "name").populate("designRef", "sku name printType").lean()
+        }).populate("color", "name _id").populate("designRef", "sku name printType").lean()
     }
     //console.log(labels)
-    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin").lean();
+    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name blank  style_code row unit shelf bin color blank").lean();
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
@@ -45,7 +45,7 @@ export async function LabelsData(){
         }else{
             s.type = "DTF"
         };  return {...s}})
-        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
+        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color.toString() == s.color._id.toString() && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
         //labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})
         // let missing = labels[k].filter(l=> l.inventory == undefined)
         // missing.map(async m=>{

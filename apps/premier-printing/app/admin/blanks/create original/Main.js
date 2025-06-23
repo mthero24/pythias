@@ -25,45 +25,28 @@ import LoaderButton from "@/components/LoaderButton";
 import ReactPlayer from 'react-player';
 import { ImageModal } from "./imageModal";
 import "jimp";
-export function Main({ colors, blanks, bla, printPricing, locations }) {
-  console.log(locations, "locations")
+export function Main({ colors, blanks, blank, printPricing }) {
   const [imageGroups, setImageGroups] = useState([])
-  const [blank, setBlank] = useState(bla)
-  const [printLocations, setPrintLocations] = useState(locations)
   const [activeColors, setActiveColors] = useState(
     blank && blank.colors ? blank.colors : []
   );
   const [color, setColor] = useState(null);
   const [openImage, setOpenImage] = useState(false)
   //console.log(printPricing);
-  const handlePrintLocationChange = async (vals)=>{
-    console.log(vals)
-    let b = {...blank}
-    let newLocations = []
-    for(let v of vals){
-      console.log("for", printLocations)
-      let location = printLocations?.filter(p=> p._id.toString() == v.value.toString())[0]
-      if(location) newLocations.push(location)
-      else{
-        console.log("create")
-        let res = await axios.post("/api/admin/print-locations", {name: v.label})
-        if(res && res.data){
-          console.log(res.data)
-          newLocations.push(res.data.location)
-          setPrintLocations(res.data.printLocations)
-        }else{
-          alert("something wrong")
-        }
-      }
-    }
-    b.printLocations = newLocations
-    console.log(b)
-    setBlank({...b})
-    console.log(blank)
-  }
+
+  const [activePrintAreas, setActivePrintAreas] = useState(
+    []
+  );
   const [boxSet, setBoxSet] = useState(false)
   useEffect(()=>{
-    
+    if(blank){
+      let active = Object.keys(blank.multiImages).map(s=>{
+        if(blank.multiImages[s].length > 0) return s
+      })
+      active = active.filter(a=> a !== undefined)
+      console.log(active, "active")
+      setActivePrintAreas(active)
+    }
     if(blanks){
       let imGr = []
       blanks.map(b=>{
@@ -118,6 +101,7 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
       })
       active = active.filter(a=> a !== undefined)
       console.log(active, "active")
+      setActivePrintAreas(active)
     }
   },[])
   //keep images the same as array BECAUSE it will be easier to filter no?
@@ -156,15 +140,12 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
     console.log(images, images)
     data.sizeGuide.images = sizeChartImages
     data.videos = videos
-    console.log(blank.printLocations, "blank locations")
-    data.printLocations = blank.printLocations
-    let bla= { ...data, multiImages: images, box: box.current, colors: activeColors, };
-    console.log(bla)
-    let result = await axios.post("/api/admin/blanks", { blank: bla });
+    let blank = { ...data, multiImages: images, box: box.current, colors: activeColors };
+    let result = await axios.post("/api/admin/blanks", { blank });
     if(result.data.error) alert(result.data.msg)
     else {
       //alert("Saved Data")
-      //location.reload()
+      location.reload()
       console.log(result.data.blank, "returned")
     }
     //console.log(result);
@@ -285,8 +266,8 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
 
   const vendors = [
     {
-      value: "Imperial",
-      label: "Imperial",
+      value: "Premier Printing",
+      label: "Premier Printing",
     },
   ];
 
@@ -440,13 +421,6 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
               {errors?.code?.message && (
                 <ErrorText>{errors?.code?.message}</ErrorText>
               )}
-            </Grid2>
-              <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
-              <TextField
-                sx={{ width: "100%" }}
-                label="fixer Code"
-                {...register("fixerCode")}
-              />
             </Grid2>
             <Grid2 size={{xs: 6, sm: 4, md: 3}} sx={{ mb: 4 }}>
               <TextField
@@ -839,25 +813,33 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
             </Grid2>
 
             <Grid2 size={12} sx={{ mb: 4 }}>
+              <Typography>Print Areas</Typography>
               <Grid2 container spacing={2}>
-                  <Grid2 size={{xs: 12, sm: 12, md:12}}
-                    
+                {printAreas.map((p) => (
+                  <Grid2 size={{xs: 4, sm: 2.1, md: 1.7}}
+                    key={p}
                   >
-                    
-                      <Typography>Print Locations</Typography>
-                      <CreatableSelect
-                        isMulti
-                        value={blank.printLocations?.map((id) => ({
-                          label: id?.name,
-                          value: id._id,
-                        }))}
-                        onChange={handlePrintLocationChange}
-                        options={printLocations?.map((id) => ({
-                          label: id?.name,
-                          value: id._id,
-                        }))}
+                    <Box sx={{ mr: 2, display: "flex", alignItems: "center", alignContent: "center", justifyContent: "flex-end" }}>
+                      <Typography>{p}</Typography>
+                      <Checkbox
+                        checked={activePrintAreas.includes(p)}
+                        onChange={(e) => {
+                          if (activePrintAreas.includes(p)) {
+                            setActivePrintAreas((prev) =>
+                              prev.filter((area) => area != p)
+                            );
+                          } else {
+                            setActivePrintAreas((prev) => {
+                              let areas = [...prev];
+                              areas.push(p);
+                              return areas;
+                            });
+                          }
+                        }}
                       />
+                    </Box>
                   </Grid2>
+                ))}
               </Grid2>
             </Grid2>
 
@@ -879,7 +861,7 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
                   </Grid2>
               ))}
             </Grid2>
-            <ImageModal openImage={openImage} setOpenImage={setOpenImage} color={color} blank={blank} activePrintAreas={blank.printLocations.map(p=>{return p.name})} overridePrintBox={overridePrintBox} images={images} boxSet={boxSet} cropBoxData={cropBoxData} setImages={setImages} colorCropBoxData={colorCropBoxData} imageGroups={imageGroups} setImageGroups={setImageGroups} box={box} printAreas={printAreas} />
+            <ImageModal openImage={openImage} setOpenImage={setOpenImage} color={color} blank={blank} activePrintAreas={activePrintAreas} overridePrintBox={overridePrintBox} images={images} boxSet={boxSet} cropBoxData={cropBoxData} setImages={setImages} colorCropBoxData={colorCropBoxData} imageGroups={imageGroups} setImageGroups={setImageGroups} box={box} printAreas={printAreas} />
           <Grid2 container>
             <Grid2 size={{xs:3, sm: 3, md: 3}} sx={{ my: 4 }}>
               <Typography>Size Chart</Typography>
@@ -1365,7 +1347,7 @@ const SizeStack = ({
           control={control}
           defaultValue={field.retailPrice}
         />
-        <Controller
+         <Controller
           render={({ field }) => (
             <TextField
               sx={{ mt: 1 }}

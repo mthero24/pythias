@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { PremierPrinting } = require("../lib/connection");
 import { ImageSharp } from "@mui/icons-material";
 import Color from "./Color";
+import printLocations from "./printLocations";
 const Schema = mongoose.Schema;
 let imageSchema = [{
   box: [ {
@@ -87,20 +88,7 @@ const SchemaObj = new Schema(
     images[color_id].extra
     images[color_id].sleeve
     */
-    multiImages: {
-      front: imageSchema,
-      back: imageSchema,
-      sleeve:imageSchema,
-      pocket: imageSchema,
-      hood: imageSchema,
-      leg:imageSchema,
-      side: imageSchema,
-      upperSleeve: imageSchema,
-      lowerSleeve: imageSchema,
-      center: imageSchema,
-      modelFront:imageSchema,
-      modelBack: imageSchema,
-    },
+    multiImages: Object,
     //box.default['garment]
     //box[color_id]['garment]
     //always default to default then check if color override
@@ -133,9 +121,14 @@ const SchemaObj = new Schema(
     searchTagKeywords: [{ type: String }],
     searchTagModifiers: [{ type: String }],
     tags: [{ type: String }],
-    kohlsHeader: Object,
+     kohlsHeader: Object,
     targetHeader: Object,
-    shopSimonHeader: Object
+    shopSimonHeader: Object,
+    tikTokHeader: Object,
+    printLocations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: printLocations,
+      }]
   },
   { strict: false }
 );

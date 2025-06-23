@@ -63,13 +63,13 @@ export function Main({ord, blanks}){
                 </Grid2>
                 <Grid2 size={{xs: 12, sm:8}}>
                     <Box sx={{margin: "2% 0%"}}>
-                        {order.items.map(i=>(
+                        {order.items?.map(i=>(
                             <Accordion key={i._id} sx={{margin: "1% 0%"}}>
                                 <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
                                     <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
                                         <Grid2 container>
                                             <Grid2 size={2}>
-                                                {Object.keys(i.design).map(key=>(
+                                                {Object.keys(i.design? i.design: {}).map(key=>(
                                                     <Box key={key} sx={{display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", borderRight: "1px solid black"}}>
                                                         <Image src={`https://imperial.pythiastechnologies.com/api/renderImages?colorName=${i.colorName}&blank=${i.styleCode}&design=${i.design[key]}&side=${key}&threadColor=${i.threadColorName}&width=600`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}} />
                                                     </Box>

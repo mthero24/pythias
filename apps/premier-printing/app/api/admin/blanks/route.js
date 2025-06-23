@@ -1,6 +1,6 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Blanks from "@/models/Blanks";
-import Inventory from "@/models/inventory2";
+import Inventory from "@/models/inventory";
 import Color from "@/models/Color";
 
 export async function GET(){
@@ -11,24 +11,107 @@ export async function GET(){
     return NextResponse.json({error: true, msg: JSON.stringify(e)})
   }
 }
+const updateFold = (blank)=>{
+  let newFold = []
+  for(let s of blank.sizes){
+    let fold = blank.fold.filter(f=> f.size.toString() == s._id)[0]
+    if(fold) newFold.push(fold)
+    else{
+      newFold.push({
+        size: s._id,
+        sizeName: s.name,
+        fold: "TSHIRT SML",
+        sleeves: 0,
+        body: 0
+      })
+    }
+  }
+  blank.fold = newFold
+  return blank
+}
+const updateEnvelopes = (blank)=>{
+  let newEnvelopes = [];
+  console.log(blank.printLocations)
+  let printLocations = blank.printLocations.map(l=> {return l.name})
+  console.log(printLocations)
+  for(let e of blank.envelopes){
+    if(printLocations.includes(e.placement)) newEnvelopes.push(e)
+  }
+  for(let s of blank.sizes){
+    //console.log(s)
+    for(let loc of printLocations){
+      if(!newEnvelopes.filter(e=> e.size.toString() == s._id.toString() && e.placement == loc)[0]){
+        newEnvelopes.push({
+          size: s._id,
+          sizeName: s.name,
+          platen: 2,
+          placement: loc,
+          horizoffset: 0,
+          vertoffset: 0,
+          width: 11,
+          height: 14
+        })
+      }
+    }
+  }
+  if(newEnvelopes.length > 0){
+    blank.envelopes = newEnvelopes.sort((a,b)=>{
+      console.log(a)
+      if(a.placement.length > b.placement.length) return -1
+      if(a.placement.length < b.placement.length) return 1
+      return 0
+    })
+  }
+  return blank
+}
+let updateInventory = async (blank)=>{
+  console.log("update inventory", blank.colors.length)
+  for(let color of blank.colors){
+    color = await Color.findById(color)
+    for(let size of blank.sizes){
+      console.log(color, size.name, size._id)
+      let inv = await Inventory.findOne({blank: blank._id, color: color._id, $or: [{sizeId: size._id}, {size_name: size.name}]})
+      console.log(inv, blank._id)
+      if(inv){
+        inv.color_name = color.name
+        inv.size_name = size.name
+        inv.style_code = blank.code
+        inv.sizeId = size._id
+        inv.color = color._id
+        inv.blank = blank._id
+        inv = await inv.save()
+        console.log(inv)
+      }else{
+        console.log("new")
+        inv = new Inventory({blank: blank._id, style_code: blank.code, color: color._id, size: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,})
+        await inv.save()
+      }
+    }
+  }
+}
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   //console.log(data)
   let blank = data.blank
-  console.log(blank)
+  //console.log(blank, "blank")
+  if(blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
+  if(blank.sizes.length > 0) blank = updateFold(blank)
   let newBlank
   try {
     if(blank._id){
-      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank) 
-      newBlank = await Blanks.findById(blank._id) 
+      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
+      newBlank = await Blanks.findById(blank._id).populate("printLocations") 
+      await updateInventory(blank)
     }
     else {
       let newBlank = new Blanks({ ...blank });
       await newBlank.save();
       await generateInventory(newBlank);
     }
+    //console.log(newBlank)
     return NextResponse.json({error: false, blank: newBlank});
   } catch (err) {
+    //console.log(err)
     return NextResponse.json(err.toString());
   }
 }
@@ -64,9 +147,10 @@ async function generateInventory(style) {
           color,
           color_name: color.name,
           size_name: size.name,
-          size,
+          size: size._id,
           last_counted: new Date(),
           barcode_id,
+          blank: style._id
         });
         //console.log(inventory);
         await inventory.save();
