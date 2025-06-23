@@ -1,6 +1,6 @@
 import Items from "@/models/Items";
 import Order from "@/models/Order";
-import Inventory from "@/models/inventory2";
+import Inventory from "@/models/inventory";
 import {NextApiResponse, NextResponse} from "next/server";
 
 export async function GET(req=NextApiResponse){
