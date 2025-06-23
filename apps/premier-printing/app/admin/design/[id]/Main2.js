@@ -10,8 +10,7 @@ import CreatableSelect from "react-select/creatable";
 import ProductImageOverlay from "@/components/ProductImageOverlay";
 import { useRouter } from "next/navigation";
 import { AltImageModal } from "./AltImagesModal";
-import Image from "next/image"
-export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocations, source}){
+export function Main({design, bls, brands, mPs, pI, licenses}){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -22,30 +21,22 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [imageGroupImages, setImageGroupImages] = useState([])
     const [imageBlank, setImageBlank] = useState({label: "Blank", value: null})
     const [imageColor, setImageColor] = useState({label: "Color", value: null})
-    const [threadColor, setThreadColor] = useState(null)
     const [upcBlank, setUpcBlank] = useState(null)
     const [upcModal, setUpcModal] = useState(false)
-    const [skuModal, setSkuModal] = useState(false)
     const [open, setOpen] = useState(false)
     const [blankForAlt, setBlankForAlt] = useState(null)
-    const [location, setLocation] = useState("front")
-    const [reload, setReload] = useState(true)
-    const [imageLocations, setImageLocations] = useState(printLocations.map(l=>{return l.name}))
     const genders = ["Girls", "Boys", "Mens", "Womens"]
     useEffect(()=>{
-        if(!reload) setReload(!reload)
-    }, [reload])
-    useEffect(()=>{
-        console.log(blanks[0].colors)
+        console.log(blanks[0]?.colors)
         if(blanks){
             let d = {...des}
             if(!d.blanks)d.blanks = [];
             if(!d.brands) d.brands = [];
             if(d.images == undefined) d.images = {};
-            console.log(blanks[0].colors[0])
+            console.log(blanks[0]?.colors[0])
             d.blanks= d.blanks.map(bl=>{
                 let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]                
-                bl.colors = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
+                bl.colors = bl.colors.map(c=> {return blank?.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
                 console.log(bl.colors.filter(c=> (c?._id?c._id.toString(): c?.toString()) == (bl.defaultColor?._id? bl.defaultColor._id.toString(): bl.defaultColor?.toString()))[0])
                 bl.defaultColor = bl.colors.filter(c=> (c?._id?c?._id.toString(): c?.toString()) == (bl.defaultColor?._id? bl.defaultColor._id.toString(): bl.defaultColor?.toString()))[0]
                 console.log(bl.colors, bl.defaultColor, "default")
@@ -138,7 +129,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             }
         })
         setImageGroupImages([...images])
-    },[imageBlank, imageColor, threadColor])
+    },[imageBlank, imageColor])
     const getAiDescription = async () => {
         //setLoading(true);
         let d = {...des}
@@ -160,46 +151,18 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         }
         //setLoading(false);
     };
+    let imageLocations = ["front", "back", "upperSleeve", "lowerSleeve", "pocket", "center"]
     
     let updateDesign = async (des)=>{
         let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
         if(res?.data?.error) alert(res.data.msg)
     }
-    const updateImage = async ({url,location, threadColor})=>{
+    const updateImage = async ({url,location})=>{
         let d = {...des}
-        if(threadColor){
-            if(!d.threadImages) d.threadImages = {}
-            d.threadImages[threadColor][location] = url
-        }else{
-            console.log(d.images, url, location)
-            if(!d.images) d.images = {}
-            console.log(d.images, url, location)
-            d.images[location] = url
-        }
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const relocateImage = (url,location, oldLocation, threadColor,)=>{
-        let d = {...des}
-        let newImages = {}
-        if(threadColor){
-            if(!d.threadImages) d.threadImages = {}
-            newImages[location] = url
-            d.threadImages[threadColor] = newImages
-        }else{
-            console.log(d.images, url, location)
-            console.log(d.images, url, location)
-            newImages[location] = url
-            d.images = newImages
-        }
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const relocateDST = (url,location, oldLocation, threadColor,)=>{
-        let d = {...des}
-        let newFiles = {}
-        newFiles[location] = url
-        d.embroideryFiles = newFiles
+        console.log(d.images, url, location)
+        if(!d.images) d.images = {}
+        console.log(d.images, url, location)
+        d.images[location] = url
         setDesign({...d})
         updateDesign({...d})
     }
@@ -360,6 +323,15 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
+    const updateNRFSize = ({blank, nrf_size}) =>{
+        let d = {...des}
+        console.log(blank)
+        let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
+        //console.log(color)
+        b.nrf_size = nrf_size
+        setDesign({...d})
+        updateDesign({...d})
+    }
     const setDefaultImages = ({id, side})=>{
         let d = {...des}
         console.log(id, "id")
@@ -418,27 +390,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                 }
             }}>Delete</Button>
             </Box>
-            {console.log(colors)}
-            {source == "IM" && <CreatableSelect
-                placeholder="Thread Colors"
-                options={colors?.map(m=>{return {value: m._id, label: m.name}})}
-                value={des.threadColors?.map(m=>{return {value: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?._id, label: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name}})}
-                onChange={(vals)=>{
-                    let d= {...des}
-                    let newThread = []
-                    for(let v of vals){
-                        newThread.push(v.value)
-                    }
-                    d.threadColors = newThread
-                    d.threadImages = {}
-                    for(let m of d.threadColors){
-                        d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]= {}
-                    }
-                    setDesign({...d})
-                    updateDesign({...d})
-                }}
-                isMulti
-            />}
             <Accordion >
                 <AccordionSummary
                     expandIcon={<ExpandMoreIcon />}
@@ -448,84 +399,17 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     >
                     <Typography component="span">Design Images</Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{padding: "5%",}}>
-                    <Grid2 container spacing={1} sx={{marginBottom: "5%"}}>
-                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                            {reload && <Uploader location={location} afterFunction={updateImage}  />}
-                            <CreatableSelect 
-                                options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                value={{value: location, label:location}}  
-                                onChange={(vals)=>{
-                                    setLocation(vals.value)
-                                    setReload(false)
-                                }}
-                            />
-                        </Grid2>
+                <AccordionDetails sx={{padding: "2%", height: "45vh"}}>
+                    <Grid2 container spacing={1}>
+                        
                         {imageLocations.map((i, j)=>(
-                            <>
-                                {des.images && des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                    <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
-                                        <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                            <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto",}}/>
-                                        </Box>
-                                    </Box>
-                                    <p style={{textAlign: "center"}}>{i} Image</p>
-                                    <CreatableSelect 
-                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                        value={{value: i, label:i}}  
-                                        onChange={(vals)=>{
-                                            relocateImage(des.images[i], vals.value, i)
-                                            setReload(false)
-                                        }}
-                                    />
-                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
-                                </Grid2>}
-                            </>
+                            <Grid2 size={{xs: 6, sm: 2, md: 2}} key={j}>
+                                <Uploader location={i} afterFunction={updateImage} image={des.images? des.images[i]: null} />
+                                <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
+                            </Grid2>
                         ))}
+                        
                     </Grid2>
-                    <Box style={{marginBottom: "5%"}}>
-                        {des.threadColors && des.threadColors.length > 0 && <Box>
-                            {des.threadColors.map(tc=>(
-                                <Box key={tc} style={{marginBottom: "5%"}}>
-                                    <p>{colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name}</p>
-                                    <Grid2 container spacing={1}>
-                                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                                            {reload && <Uploader location={location} afterFunction={updateImage} threadColor={colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name} />}
-                                            <CreatableSelect 
-                                                options={[]}
-                                                value={{value: location, label:location}}  
-                                                onChange={(vals)=>{
-                                                    setLocation(vals.value)
-                                                    setReload(false)
-                                                }}
-                                            />
-                                        </Grid2>
-                                        {imageLocations.map((i, j)=>(
-                                            <>
-                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                                     <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
-                                                        <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                                            <Image src={des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
-                                                        </Box>
-                                                    </Box>
-                                                    <p style={{textAlign: "center"}}>{i} Image</p>
-                                                    <CreatableSelect 
-                                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                                        value={{value: i, label:i}}  
-                                                        onChange={(vals)=>{
-                                                            relocateImage(des.images[i], vals.value, i, colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name)
-                                                            setReload(false)
-                                                        }}
-                                                    />
-                                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
-                                                </Grid2>}
-                                            </>
-                                        ))}
-                                    </Grid2>
-                                </Box>
-                            ))}
-                        </Box>}
-                    </Box>
                 </AccordionDetails>
             </Accordion>
             <Accordion >
@@ -537,36 +421,14 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     >
                     <Typography component="span">Embroidery Files</Typography>
                 </AccordionSummary>
-                <AccordionDetails sx={{padding: "5%"}}>
+                <AccordionDetails sx={{padding: "2%", height: "35vh"}}>
                     <Grid2 container spacing={1}>
-                         <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                            {reload && <Uploader location={location} afterFunction={updateEmbroidery}  />}
-                            <CreatableSelect 
-                                options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                value={{value: location, label:location}}  
-                                onChange={(vals)=>{
-                                    setLocation(vals.value)
-                                    setReload(false)
-                                }}
-                            />
-                        </Grid2>
+                        
                         {imageLocations.map((i, j)=>(
-                             <>
-                                {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                    <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
-                                    <p style={{textAlign: "center"}}>{i} File</p>
-                                     <CreatableSelect 
-                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                        value={{value: i, label:i}}  
-                                        onChange={(vals)=>{
-                                            relocateDST(des.embroideryFiles[i], vals.value, i)
-                                            setReload(false)
-                                        }}
-                                    />
-                                    <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete Image</Button>
-                                </Grid2>}
-                            </>
-                           
+                            <Grid2 size={{xs: 6, sm: 2, md: 2}} key={j}>
+                                <Uploader location={i} afterFunction={updateEmbroidery}  image={des.embroideryFiles && des.embroideryFiles[i]? "/embplaceholder.jpg": null}/>
+                                <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete File</Button>
+                            </Grid2>
                         ))}
                     </Grid2>
                 </AccordionDetails>
@@ -757,20 +619,29 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         }}
                                     />
                                 </Box>
-                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                                    
-                                   { source == "IM" && <Button onClick={()=>{setUpcBlank(b); setSkuModal(true)}}>See Sku's</Button>}
-                                  {source == "PP"&&  <><Button onClick={()=>{setOpen(true); setBlankForAlt(b); console.log(b)}}>Add Alternative Images</Button>
+                                <Box sx={{margin: ".5% 0%"}}>
+                                    {console.log(b.defaultColor?.name, b.blank.code)}
+                                    <CreatableSelect
+                                        placeholder="NRF Size"
+                                        options={[]}
+                                        value={b.nrf_size? {value: b.nrf_size, label: b.nrf_size}: null}
+                                        onChange={(vals)=>{
+                                            updateNRFSize({blank:b, nrf_size: vals.value})
+                                        }}
+                                    />
+                                </Box>
+                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                                    <Button onClick={()=>{setOpen(true); setBlankForAlt(b); console.log(b)}}>Add Alternative Images</Button>
                                     <Button onClick={()=>{
                                         setUpcBlank(b.blank)
                                         setUpcModal(true)
-                                    }}>See Sku List</Button></>}
+                                    }}>See Sku List</Button>
                                 </Box>
                             </AccordionDetails>
                         </Accordion>
                         ))}
                     </Grid2>
-                    <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
+                    <Grid2 size={{xs: 4, sm: 4}} >
                         <CreatableSelect
                             placeholder="Image Group"
                             options={imageGroups.map(ig=>{return {value: ig, label: ig}})}
@@ -804,16 +675,16 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         }
                                     })
                                 })
-                                setImageGroupImages([])
+                                setImageGroupImages([...images])
                                 setDesign({...d})
                                 updateDesign({...d})
                             }}
                          />
                     </Grid2>
-                    <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
+                    <Grid2 size={{xs: 4, sm: 4}} >
                         <CreatableSelect
                             placeholder="Blank"
-                            options={[ ...des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})]}
+                            options={[ ...des.blanks.map(b=>{ return {label: b.blank?.name, value: b.blank?.code}})]}
                             value={imageBlank? imageBlank: {label: "Blank", value: null}}
                             onChange={(val)=>{
                                 setImageBlank(val)
@@ -821,12 +692,12 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             }}
                          />
                     </Grid2>
-                    <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
+                    <Grid2 size={{xs: 4, sm: 4}} >
                             {console.log(des.blanks, imageBlank.value)}
-                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
+                            {console.log(des.blanks.filter(b=>b.blank?.code== imageBlank.value))}
                             {imageBlank  &&  <CreatableSelect
-                            placeholder="Color"
-                            options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
+                            placeholder="Blank"
+                            options={des.blanks.filter(b=>b.blank?.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
                             value={imageColor? imageColor: {label: "Color", value: null}}
                             onChange={(val)=>{
                                 setImageGroupImages([])
@@ -834,19 +705,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             }}
                          />}
                     </Grid2>
-                   {des.threadColors && des.threadColors.length > 0 &&  <Grid2 size={{xs: 3, sm: 3}} >
-                            {console.log(des.blanks, imageBlank.value)}
-                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
-                            {imageBlank  &&  <CreatableSelect
-                            placeholder="Thread Color"
-                            options={des.threadColors.map(c=> {return colors.filter(cl=> cl._id.toString() == c.toString())[0]})?.map(c=>{ return {label: c.name, value: c.name}})}
-                            value={threadColor? {label: threadColor, value: threadColor}: {label: "Thread Color", value: null}}
-                            onChange={(val)=>{
-                                setImageGroupImages([])
-                                setThreadColor(val.value)
-                            }}
-                         />}
-                    </Grid2>}
                     <Grid2 size={12}>
                         <Grid2 container spacing={2}>
                             {imageGroupImages.map((i,j)=>(
@@ -863,7 +721,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         styleImage={i.image}
                                         side={i.side}
                                         dI={des.blanks.filter(b=> b.blank.code == imageBlank.value)[0].defaultImages?.filter(dI=> dI.color == i.color && dI.side == i.side)[0]?.id}
-                                        designImage={threadColor? des.threadImages? des.threadImages[threadColor][i.side]? des.threadImages[threadColor][i.side]: null : null :des.images && des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]? des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]: null }
+                                        designImage={des.images && des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]? des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]: null }
                                     />
                                 </Grid2>
                             ))}
@@ -871,12 +729,12 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     </Grid2>
                 </Grid2>
             </Card>
-            <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
-            <ModalSkus open={skuModal} setOpen={setSkuModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
+            <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} />
             <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
         </Box>
     )
 }
+
 const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
     let [upc, setUpc] = useState([])
     let [edit, setEdit] = useState(null)
@@ -917,6 +775,9 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
                     <Typography>Sku</Typography>
                 </Grid2>
                 <Grid2 size={1}>
+                    <Typography>GTIN</Typography>
+                </Grid2>
+                <Grid2 size={1}>
                     <Typography>UPC</Typography>
                 </Grid2>
                 <Grid2 size={2}>
@@ -939,6 +800,9 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
                         <Typography>{u.sku}</Typography>
                     </Grid2>
                     <Grid2 size={1}>
+                        <Typography>{u.gtin}</Typography>
+                    </Grid2>
+                    <Grid2 size={1}>
                         <Typography>{u.upc}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
@@ -957,56 +821,6 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
                 </Grid2>
             </Card>
           ))}
-        </Box>
-      </Modal>
-    )
-}
-const ModalSkus = ({open, setOpen, blank, setBlank, design, colors})=>{
-    
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "90%",
-        height: "80vh",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-        overflow: "auto"
-      };
-    return (
-        <Modal
-        open={open}
-        onClose={()=>{setOpen(false); setBlank(null); setUpc([])}}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Typography>Product Sku</Typography>
-            <Box sx={{padding: "2%"}}>
-                <Typography>{`${design.sku}_${blank?.blank?.code}`}</Typography>
-            </Box>
-            <hr/>
-            <Typography>Variant Sku's</Typography>
-            {design.threadColors?.length > 0 && design.threadColors.map(tr=>{
-                console.log(tr)
-                return (blank?.colors.map(c=>{
-                    return (blank?.blank.sizes.map(s=>{
-                        return <Typography key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${tr.name}`}>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${colors.filter(c=> c._id.toString() == tr.toString())[0]?.name}`}</Typography>
-                    }))
-                }))
-            })}
-            {design.threadColors?.length == 0 && blank?.colors?.map(c=>{
-                return blank.blank?.sizes?.map(s=>{
-                    console.log(`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`)
-                    return (<Box sx={{padding: "2%"}} key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}>
-                        <Typography>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}</Typography> 
-                        <hr/>
-                    </Box>)
-                })
-            })}
         </Box>
       </Modal>
     )

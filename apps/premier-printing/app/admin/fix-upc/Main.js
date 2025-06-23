@@ -188,7 +188,6 @@ const UpdateModal = ({open, setOpen, upc, setUpc, blank, setBlank, setSku, setCo
         open={open}
         onClose={()=>{
             setOpen(false)
-            setItem(null)
             setBlank(null)
             setSize(null)
             setColor(null)

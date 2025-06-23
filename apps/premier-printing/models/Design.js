@@ -13,22 +13,8 @@ const schema = new mongoose.Schema({
   printType: { type: String,
     enum : ['EMB','VIN', 'SCN', 'DTF'],
     default: 'DTF'},
-  images: {
-    front: { type: String },
-    back: { type: String },
-    upperSleeve: { type: String },
-    lowerSleeve: { type: String },
-    pocket: {type: String},
-    center: {type: String}
-  },
-  embroideryFiles: {
-    front: { type: String },
-    back: { type: String },
-    upperSleeve: { type: String },
-    lowerSleeve: { type: String },
-    pocket: {type: String},
-    center: {type: String}
-  },
+  images: Object,
+  embroideryFiles: Object,
   blanks: [{
     blank:{
       type: mongoose.Schema.Types.ObjectId,
@@ -73,7 +59,11 @@ const schema = new mongoose.Schema({
   gender: String,
   season: String,
   sendToMarketplaces: {type: Boolean, default: false},
-  onShopify: {type: Boolean, default: false}
+  onShopify: {type: Boolean, default: false},
+  threadColors: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: Color,
+    }]
 });
 
 export default PremierPrinting.model("Design", schema);
