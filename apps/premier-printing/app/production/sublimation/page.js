@@ -1,7 +1,7 @@
 import {Main} from "@pythias/sublimation";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
-import Inventory from "@/models/inventory2";
+import Inventory from "@/models/inventory";
 import {Sort} from "@pythias/labels";
 export default async function Sublimation(req, res){
     let stations = JSON.parse(process.env.shipping).shipStations

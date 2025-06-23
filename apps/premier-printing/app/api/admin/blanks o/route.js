@@ -1,6 +1,6 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Blanks from "@/models/Blanks";
-import Inventory from "@/models/inventory2";
+import Inventory from "@/models/inventory";
 import Color from "@/models/Color";
 
 export async function GET(){

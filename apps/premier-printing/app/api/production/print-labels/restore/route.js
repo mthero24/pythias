@@ -5,7 +5,7 @@ import {Sort} from "@pythias/labels";
 import { buildLabelData } from "@/functions/labelString";
 import axios from "axios"
 import { LabelsData } from "@/functions/labels";
-import Inventory from "@/models/inventory2";
+import Inventory from "@/models/inventory";
 import btoa from "btoa"
 export async function POST(req=NextApiResponse) {
     let data = await req.json()
