@@ -1,5 +1,16 @@
 import tiktokShop from "tiktok-shop";
-
+import axios from "axios"
+import btoa from "btoa"
+const getConfig = async ()=>{
+    let headers = {
+        headers: {
+            Authorization: `Basic ${btoa("mthero:BadaBing@12")}`
+        }
+    }
+    let res = await axios.get("http://localhost:3007/api/tiktok/config", headers)
+    console.log(res?.data)
+    return res?.data.config
+}
 export const getAccessTokenUsingAuthCode = async (config, authCode) => {
     // How to get Auth Code: https://partner.tiktokshop.com/doc/page/63fd743c715d622a338c4e5a
     const accessToken = await tiktokShop.authCodeToken(config, authCode);
@@ -8,19 +19,11 @@ export const getAccessTokenUsingAuthCode = async (config, authCode) => {
 
 // getAccessTokenUsingAuthCode();
 
-export const getAccessTokenFromRefreshToken = async (credential_id) => {
-    let credentials = await TikTokCredentials.findOne({ _id: credential_id });
-    // How to get Auth Code: https://partner.tiktokshop.com/doc/page/63fd743c715d622a338c4e5a
-    const refreshToken = credentials.refreshToken;
+export const getAccessTokenFromRefreshToken = async (refreshToken) => {
+    let config = await getConfig()
     const accessToken = await tiktokShop.generateToken(config, refreshToken);
-
-    credentials.accessToken = accessToken.access_token;
-    credentials.refreshToken = accessToken.refresh_token;
-
-    console.log(credentials, "updated");
-    await credentials.save();
-
-    return accessToken.access_token;
+    console.log(accessToken)
+    return accessToken;
 };
 export const generateAuthorizationUrl = () => {
     // TikTok Shop OAuth URL
@@ -45,24 +48,37 @@ export const generateAuthorizationUrl = () => {
 
     return `${baseUrl}?${queryString}`;
 };
-export const getAuthorizedShops = async (credentials, config) => {
+export const getAuthorizedShops = async (credentials) => {
+    let config = await getConfig()
+    console.log(config, credentials)
     let accessToken = credentials.accessToken;
-    const url = `https://open-api.tiktokglobalshop.com/authorization/202309/shops?app_key=${config.app_key}`;
+    const url = `https://open-api.tiktokglobalshop.com/api/shop/get_authorized_shop?app_key=${config.app_key}`;
     const { signature, timestamp } = tiktokShop.signByUrl(url, config.app_secret);
+    console.log(signature, timestamp)
     try {
+        let errRes
         const response = await axios.get(url, {
-        params: {
-            sign: signature,
-            timestamp: timestamp,
-        },
-        headers: {
-            "x-tts-access-token": accessToken,
-            "content-type": "application/json",
-        },
-        });
+            params: {
+                timestamp: timestamp,
+                sign: signature,
+                access_token: credentials.accessToken,
+                version:202212
+            },
+            headers: {
+                "content-type": "application/json",
+            },
+        }).catch(e=>{console.log(e.response.data); errRes = e.response.data});
+        if(errRes){
+            if(errRes.code == 36009004){
+                return {error: true, msg: "refresh"}
+            }
+        } 
         return response.data.data.shops;
     } catch (error) {
         console.error("Error fetching shops:", error);
         throw error;
     }
 };
+export async function createProduct({design, blank}){
+    let tikTokUrl = "/api/products"
+}

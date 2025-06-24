@@ -69,9 +69,9 @@ let updateInventory = async (blank)=>{
   for(let color of blank.colors){
     color = await Color.findById(color)
     for(let size of blank.sizes){
-      console.log(color, size.name, size._id)
+      //console.log(color, size.name, size._id)
       let inv = await Inventory.findOne({blank: blank._id, color: color._id, $or: [{sizeId: size._id}, {size_name: size.name}]})
-      console.log(inv, blank._id)
+      //console.log(inv, blank._id)
       if(inv){
         inv.color_name = color.name
         inv.size_name = size.name
@@ -80,7 +80,7 @@ let updateInventory = async (blank)=>{
         inv.color = color._id
         inv.blank = blank._id
         inv = await inv.save()
-        console.log(inv)
+        //console.log(inv)
       }else{
         console.log("new")
         inv = new Inventory({blank: blank._id, style_code: blank.code, color: color._id, size: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,})
@@ -101,7 +101,7 @@ export async function POST(req = NextApiRequest) {
     if(blank._id){
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
       newBlank = await Blanks.findById(blank._id).populate("printLocations") 
-      await updateInventory(blank)
+      updateInventory(blank)
     }
     else {
       let newBlank = new Blanks({ ...blank });

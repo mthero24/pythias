@@ -100,12 +100,12 @@ export async function POST(req = NextApiRequest) {
     if(blank._id){
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
       newBlank = await Blanks.findById(blank._id).populate("printLocations") 
-      await updateInventory(blank)
+      updateInventory(blank)
     }
     else {
       let newBlank = new Blanks({ ...blank });
       await newBlank.save();
-      await generateInventory(newBlank);
+      generateInventory(newBlank);
     }
     //console.log(newBlank)
     return NextResponse.json({error: false, blank: newBlank});

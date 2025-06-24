@@ -393,6 +393,11 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
+    const sendToTikTok = async ({blank})=>{
+        let res = await axios.post("/api/integrations/tiktok/send", {des, blank})
+        if(res && res.data.error) alert("Something Went Wrong")
+        else alert("sent to tik tok")
+    }
     return (
         <Box sx={{display: "flex", flexDirection: "column", padding: "3%"}}>
             <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
@@ -410,6 +415,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             updateDesign({...d})
                             alert(`Design will resend to market places next time files are made`)
             }}>Resend To Market Places</Button>}
+            <Button onClick={sendToTikTok}>Send To TikTok</Button>
             <Button sx={{margin: "1% 2%", background: "#FF2400", color: "#ffffff"}} onClick={async ()=>{
                 let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
                 if(res.data.error) alert(res.data.msg)
@@ -766,6 +772,9 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         setUpcModal(true)
                                     }}>See Sku List</Button></>}
                                 </Box>
+                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                                     <Button onClick={()=>{sendToTikTok({blank: b.blank})}}>Send To TikTok</Button>
+                                </Box>
                             </AccordionDetails>
                         </Accordion>
                         ))}
@@ -916,7 +925,7 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
                 <Grid2 size={3}>
                     <Typography>Sku</Typography>
                 </Grid2>
-                <Grid2 size={1}>
+                <Grid2 size={2}>
                     <Typography>UPC</Typography>
                 </Grid2>
                 <Grid2 size={2}>
@@ -938,7 +947,7 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design})=>{
                     <Grid2 size={3}>
                         <Typography>{u.sku}</Typography>
                     </Grid2>
-                    <Grid2 size={1}>
+                    <Grid2 size={2}>
                         <Typography>{u.upc}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
