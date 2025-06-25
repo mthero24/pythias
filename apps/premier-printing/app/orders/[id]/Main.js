@@ -68,7 +68,7 @@ export function Main({ord, blanks}){
                                 <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
                                     <Grid2 container>
                                         <Grid2 size={3}>
-                                            {Object.keys(i.design).filter(k=> i.design[k] != undefined).map(key=>(
+                                            {Object.keys(i.design? i.design: {}).filter(k=> i.design[k] != undefined).map(key=>(
                                                 <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}}/>
                                             ))}
                                         </Grid2>

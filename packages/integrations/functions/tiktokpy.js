@@ -11,7 +11,7 @@ const getConfig = async ()=>{
             Authorization: `Basic ${btoa("mthero:BadaBing@12")}`
         }
     }
-    let res = await axios.get("http://localhost:3007/api/tiktok/config", headers)
+    let res = await axios.get("http://www.pythiastechnologies.com/api/tiktok/config", headers)
    // console.log(res?.data)
     return res?.data.config
 }
