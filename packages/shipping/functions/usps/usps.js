@@ -146,7 +146,7 @@ const paymentAuth = async ({token, credentials})=>{
         return {error: true, msg: "something went wrong"}
     }
 }
-export async function purchaseLabel({address, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageFormat}){
+export async function purchaseLabel({address, poNumber, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageFormat}){
     //console.log(credentials)
     let customsForm
     if(address.state == "AP" || address.state == "AA" || address.state == "AE"){
@@ -194,6 +194,10 @@ export async function purchaseLabel({address, weight, dimensions, businessAddres
           "height": dimensions.height,
           "width": dimensions.width,
           "processingCategory": "NONSTANDARD",
+          customerReference: {
+            referenceNumber: poNumber,
+            printReferenceNumber: true
+          },
           "mailingDate": `${new Date(Date.now()).getFullYear()}-${(new Date(Date.now()).getMonth() + 1).toString().length > 1? (new Date(Date.now()).getMonth() + 1).toString() : `0${(new Date(Date.now()).getMonth() + 1).toString()}`}-${(new Date(Date.now()).getDate()).toString().length > 1? (new Date(Date.now()).getDate()).toString(): `0${(new Date(Date.now()).getDate()).toString()}`}`,
           "extraServices": [],
           "destinationEntryFacilityType": "NONE"

@@ -5,11 +5,16 @@ import Design from "@/models/Design";
 let updateReturnBin = async (re, upc, sku)=>{
   try{
     let hasReturn = await ReturnBins.findOne({_id: re._id})
+    let newInv = []
     for(let i of hasReturn.inventory){
       if(i.upc == upc || i.sku == sku){
         i.quantity -= 1
       }
+      if(i.quantity > 0){
+        newInv.push(i)
+      }
     }
+    hasReturn.inventory = newInv
     hasReturn.markModified("inventory")
     await hasReturn.save()
   }catch(e){
@@ -24,7 +29,7 @@ export const buildLabelData = async (item, i, opts={}) => {
     }
     let frontBackString;
     //console.log(totalQuantity, "TQ");
-    let inventory = await Inventory.findOne({inventory_id: `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`}).select(" bin row shelf unit").lean()
+    let inventory = await Inventory.findOne({blank: item.blank._id? item.blank._id: item.blank, color_name: item.color.name, size_name: item.sizeName})
     //console.log(inventory, "inventory", `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`)
     if (item.design?.back) {
       if (item.design?.front && item.design.back) {
@@ -69,21 +74,19 @@ export const buildLabelData = async (item, i, opts={}) => {
         ${hasReturn == null? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `R Bin${hasReturn.number}`}
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDR Bin${hasReturn.number}^FS`}
         ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
             item.colorName
         }^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDSize: ${item.sizeName} Shipping: ${item.shippingType} CNT: ${totalQuantity}^FS
+        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDSize: ${item.sizeName} Shipping: ${item.shippingType}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
             item.designRef && item.designRef.sku? item.designRef.sku: item.sku
         }^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,320^FD Title: ${
             item.designRef && item.designRef.name? item.designRef.name: item.sku
-        }^FS
+        } CNT ${totalQuantity}^FS
         ${
-            printTypeAbbr
-            ? `^LH12,18^CFS,25,12^AXN,40,50^FO10,350^FD${printTypeAbbr}^FS`
-            : ""
+          `^LH12,18^CFS,25,12^AXN,40,50^FO10,350^FD CNT:${printTypeAbbr}^FS`
         }
         ${printPO}
         ${frontBackString}

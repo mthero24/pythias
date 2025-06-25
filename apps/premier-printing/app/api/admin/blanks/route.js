@@ -40,7 +40,7 @@ const updateEnvelopes = (blank)=>{
   for(let s of blank.sizes){
     //console.log(s)
     for(let loc of printLocations){
-      if(!newEnvelopes.filter(e=> e.size.toString() == s._id.toString() && e.placement == loc)[0]){
+      if(!newEnvelopes.filter(e=> e.size?.toString() == s._id.toString() && e.placement == loc)[0]){
         newEnvelopes.push({
           size: s._id,
           sizeName: s.name,

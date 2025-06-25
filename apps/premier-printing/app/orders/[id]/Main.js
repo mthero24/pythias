@@ -66,14 +66,23 @@ export function Main({ord, blanks}){
                         {order.items.map(i=>(
                             <Accordion key={i._id} sx={{margin: "1% 0%"}}>
                                 <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
-                                    <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>{i.upc}</Typography>
-                                        <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
-                                        { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
-                                        {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
-                                    </Box>
+                                    <Grid2 container>
+                                        <Grid2 size={3}>
+                                            {Object.keys(i.design).filter(k=> i.design[k] != undefined).map(key=>(
+                                                <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                            ))}
+                                        </Grid2>
+                                        <Grid2 size={9}>
+                                             <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", "&:hover": {opacity: 0.5}}}>
+                                                <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
+                                                <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
+                                                <Typography onClick={()=>{handleItemUpdate(i)}}>{i.upc}</Typography>
+                                                <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
+                                                { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
+                                                {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
+                                            </Box>
+                                        </Grid2>
+                                    </Grid2>
                                 </AccordionSummary>
                                 <AccordionDetails>
                                 <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >

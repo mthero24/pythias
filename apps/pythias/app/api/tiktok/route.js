@@ -19,5 +19,6 @@ export async function GET(req=NextApiRequest){
         console.log(auth)
         await auth.save()
     }
-    return NextResponse.json({error: false})
+    console.log(auth)
+    return NextResponse.redirect(`https://${auth.provider == "premierPrinting"? "simplysage": "imperial"}.pythiastechnologies.com/admin/integrations`)
 }

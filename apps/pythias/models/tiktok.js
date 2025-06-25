@@ -12,5 +12,6 @@ let schema = new mongoose.Schema({
     date: Date,
     provider: String,
     user: String,
+    shop_list: Array
 })
 export default PremierPrinting.model("TikTokAuth", schema);

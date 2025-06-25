@@ -33,7 +33,8 @@ const schema = new mongoose.Schema({
       color: String,
       side: String
     }],
-    nrf_size: String
+    nrf_size: String,
+    marketPlaceIds: Object
   }],
   b2m: [{
     brand: String,

@@ -8,13 +8,7 @@ import {buildLabelData} from "@/functions/labelString"
 import Inventory from "../../../../models/inventory";
 let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G","H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",];
 
-const subtractInventory = async (items)=>{
-    items.map(async i=>{
-        let inv = await Inventory.findOne({_id: i.inventory._id})
-        inv.quantity -= 1
-        await inv.save()
-    })
-}
+
 export const config = {
     api: {
       bodyParser: {
@@ -30,13 +24,20 @@ export async function POST(req=NextApiRequest){
     for(let i = 0; i< 9; i++)
         batchID += letters[Math.floor(Math.random() * letters.length)]
     // build labels
-    let preLabels = data.items.map(async (i, j)=>{
+    let preLabels = [];
+    let j = 0
+    for(let i of data.items){
+        let inv = await Inventory.findOne({blank: i.blank._id? i.blank._id: i.blank, color_name: i.colorName, size_name: i.color_name})
+        if(inv && inv.quantity > 0){
+            inv.quantity -= 1
+            await inv.save()
             let label = await buildLabelData(i, j)
             //console.log(label)
-            return label
-    })
+            preLabels.push(label)
+            j++
+        }
+    }
     // full fill promises
-    preLabels = await Promise.all(preLabels);
     preLabels.map(l=> labelsString += l)
     console.log(preLabels.length, "+++++++" ,preLabels)
     //create label string
@@ -56,7 +57,6 @@ export async function POST(req=NextApiRequest){
     let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
     console.log(res?.data)
     //update data
-    subtractInventory(data.items)
     let pieceIds = data.items.map(i=> i.pieceId)
     console.log(pieceIds)
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })

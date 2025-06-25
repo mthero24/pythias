@@ -178,7 +178,7 @@ const EnvelopeSettings = ({ blank, handleUpdateEnvelope}) => {
                             <TextField
                               label={key}
                               type={key == "placement" ? "string" : "number"}
-                              value={blank.envelopes.filter(e=> e.placement == pl.name && e.sizeName == s.name)[0][key]}
+                              value={blank.envelopes.filter(e=> e.placement == pl.name && e.sizeName == s.name)[0]? blank.envelopes.filter(e=> e.placement == pl.name && e.sizeName == s.name)[0][key]: null}
                               onChange={()=>{handleUpdateEnvelope({pl, size: s.name, key})}}
                             />
                           </Grid2>

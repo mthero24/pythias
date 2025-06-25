@@ -57,7 +57,7 @@ const createTargetVariant = ({p,item, v, price, bImages})=>{
         "pricing_item.price.amount": price.toFixed(2),
         "variant.color_family": v.color.colorFamily,
         "variant.color": v.color.name,
-        "variant.size": sizes[v.size.name]? sizes[v.size.name]: v.size.name,
+        "variant.size": sizes[v.size.name.toLowerCase()]? sizes[v.size.name.toLowerCase()]: v.size.name,
         group: "variant",
         "fields.season_or_event_depiction": p.design.season,
         "fields.season": p.design.season,

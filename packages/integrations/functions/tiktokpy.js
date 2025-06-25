@@ -1,6 +1,10 @@
 import tiktokShop from "tiktok-shop";
 import axios from "axios"
 import btoa from "btoa"
+import FormData from "form-data"
+import fs from "fs"
+import path from "path"
+const baseUrl = "https://open-api.tiktokglobalshop.com"
 const getConfig = async ()=>{
     let headers = {
         headers: {
@@ -8,7 +12,7 @@ const getConfig = async ()=>{
         }
     }
     let res = await axios.get("http://localhost:3007/api/tiktok/config", headers)
-    console.log(res?.data)
+   // console.log(res?.data)
     return res?.data.config
 }
 export const getAccessTokenUsingAuthCode = async (config, authCode) => {
@@ -48,11 +52,22 @@ export const generateAuthorizationUrl = () => {
 
     return `${baseUrl}?${queryString}`;
 };
+
+export const buildUrl = (baseUrl, params) => {
+  let url = new URL(baseUrl);
+  let keys = Object.keys(params).sort((a, b) => a.localeCompare(b));
+  for (let key of keys) {
+    url.searchParams.append(key, params[key]);
+  }
+  return url.toString();
+};
+
 export const getAuthorizedShops = async (credentials) => {
     let config = await getConfig()
     console.log(config, credentials)
     let accessToken = credentials.accessToken;
-    const url = `https://open-api.tiktokglobalshop.com/api/shop/get_authorized_shop?app_key=${config.app_key}`;
+    
+    const url = `https://open-api.tiktokglobalshop.com/api/shop/get_authorized_shop?access_token=${credentials.access_token}&app_key=${config.app_key}&version=${202212}`;
     const { signature, timestamp } = tiktokShop.signByUrl(url, config.app_secret);
     console.log(signature, timestamp)
     try {
@@ -61,10 +76,9 @@ export const getAuthorizedShops = async (credentials) => {
             params: {
                 timestamp: timestamp,
                 sign: signature,
-                access_token: credentials.accessToken,
-                version:202212
             },
             headers: {
+                "x-tts-access-token": credentials.access_token,
                 "content-type": "application/json",
             },
         }).catch(e=>{console.log(e.response.data); errRes = e.response.data});
@@ -73,12 +87,205 @@ export const getAuthorizedShops = async (credentials) => {
                 return {error: true, msg: "refresh"}
             }
         } 
-        return response.data.data.shops;
+        console.log(response.data.data)
+        return {error: false, ...response.data.data};
     } catch (error) {
-        console.error("Error fetching shops:", error);
-        throw error;
+        return {error: true, msg: "refresh"}
     }
 };
-export async function createProduct({design, blank}){
-    let tikTokUrl = "/api/products"
+export async function createProduct({tiktokProduct, credentials}){
+    let config = await getConfig()
+     const baseUrl =
+      "https://open-api.tiktokglobalshop.com/product/202309/products";
+    let accessToken = credentials.access_token;
+    const params = {
+      app_key: config.app_key,
+      shop_cipher: credentials.shop_list[0].shop_cipher,
+      version: "202309",
+      category_version: "v2", // Add this line for US shop
+    };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(
+      signUrl,
+      config.app_secret,
+      {...tiktokProduct}
+    );
+    params["sign"] = signature;
+    params["timestamp"] = timestamp;
+    params["access_token"] = accessToken;
+    let finalUrl = buildUrl(baseUrl, params);
+    let errRes
+    let result = await axios.post(finalUrl, {...tiktokProduct}, {
+      headers: {
+        "Content-Type": "application/json",
+        "x-tts-access-token": accessToken,
+      },
+    }).catch(e=>{console.log(e.response.data)});
+    if(errRes){
+        if(errRes.code == 36009004){
+            return {error: true, msg: "refresh"}
+        }else{
+            return {error: true, msg: errRes.code}
+        }
+    } 
+    console.log(result?.data)
+    return {error: false, product: result?.data.data};;
 }
+export const getRecommendedCategory = async (product_name, credentials) => {
+    const config = await getConfig()
+    const baseUrl =
+        "https://open-api.tiktokglobalshop.com/product/202309/categories/recommend";
+    let accessToken = credentials.access_token;
+    const params = {
+        app_key: config.app_key,
+        shop_cipher: credentials.shop_list[0].shop_cipher,
+        version: "202309",
+        category_version: "v2",
+    };
+
+    const body = {
+        product_title: product_name,
+    };
+
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(
+        signUrl,
+        config.app_secret,
+        body
+    );
+    params["sign"] = signature;
+    params["timestamp"] = timestamp;
+    params["access_token"] = accessToken;
+    let finalUrl = buildUrl(baseUrl, params);
+    let errRes
+    let result = await axios.post(finalUrl, body, {
+        headers: {
+        "Content-Type": "application/json",
+        "x-tts-access-token": accessToken,
+        },
+    }).catch(e=>{console.log(e.response.data)});
+    if(errRes){
+        if(errRes.code == 36009004){
+            return {error: true, msg: "refresh"}
+        }
+    } 
+    return {error: false, categories: result?.data.data.categories};
+};
+export const getAttributes = async (category_id, credentials)=>{
+    const config = await getConfig()
+    const baseUrl = `https://open-api.tiktokglobalshop.com/product/202309/categories/${category_id}/attributes`;
+    let accessToken = credentials.access_token;
+    const params = {
+        app_key: config.app_key,
+        shop_cipher: credentials.shop_list[0].shop_cipher,
+        version: "202309",
+        locale: "en-US",
+        category_version: "v2", // Add this line for US shop
+    };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(
+        signUrl,
+        config.app_secret
+    );
+    params["sign"] = signature;
+    params["timestamp"] = timestamp;
+    params["access_token"] = accessToken;
+    let finalUrl = buildUrl(baseUrl, params);
+    let errRes
+    let result = await axios.get(finalUrl, {
+        headers: {
+        "Content-Type": "application/json",
+        "x-tts-access-token": accessToken,
+        },
+    }).catch(e=>{console.log(e.response.data)});
+    if(errRes){
+        if(errRes.code == 36009004){
+            return {error: true, msg: "refresh"}
+        }
+    } 
+    return {error: false, attributes: result.data.data.attributes};
+}
+export const getWarehouses = async (credentials) => {
+    const config = await getConfig()
+    const baseUrl = `https://open-api.tiktokglobalshop.com/logistics/202309/warehouses`;
+    let accessToken = credentials.access_token;
+    const params = {
+        app_key: config.app_key,
+        shop_cipher: credentials.shop_list[0].shop_cipher,
+        version: "202309",
+        category_version: "v2", // Add this line for US shop
+    };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(
+        signUrl,
+        config.app_secret
+    );
+    params["sign"] = signature;
+    params["timestamp"] = timestamp;
+    params["access_token"] = accessToken;
+    let finalUrl = buildUrl(baseUrl, params);
+    let errRes
+    let result = await axios.get(finalUrl, {
+        headers: {
+        "Content-Type": "application/json",
+        "x-tts-access-token": accessToken,
+        },
+    }).catch(e=>{console.log(e.response.data)});
+    if(errRes){
+        if(errRes.code == 36009004){
+            return {error: true, msg: "refresh"}
+        }
+    } 
+    return {error: false, warehouses: result.data.data.warehouses};
+};
+export const uploadProductImage = async (uri, credentials, type) => {
+    const config = await getConfig()
+    const baseUrl =
+      "https://open-api.tiktokglobalshop.com/product/202309/images/upload";
+    let accessToken = credentials.access_token;
+    const params = {
+      app_key: config.app_key,
+    };
+
+    //download uri with axios and somehow turn into a file to upload view multipart form data below
+
+    const response = await axios.get(uri, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(response.data, "binary");
+
+    // Step 2: Convert the downloaded image into a file
+    fs.writeFileSync(`./temp_images/temp_image.jpg`, buffer);
+    // Step 3: Create a FormData object
+    const formData = new FormData();
+    formData.append("data", fs.createReadStream(`./temp_images/temp_image.jpg`));
+    formData.append("use_case", type);
+
+    // Step 4: Prepare the request body and URL
+
+    let signUrl = buildUrl(baseUrl, params);
+    //console.log(signUrl)
+    const { signature, timestamp } = tiktokShop.signByUrl(
+      signUrl,
+      config.app_secret
+    );
+
+    params["sign"] = signature;
+    params["timestamp"] = timestamp;
+    params["access_token"] = accessToken;
+    let finalUrl = buildUrl(baseUrl, params);
+    let errRes
+    let result = await axios.post(finalUrl, formData, {
+      headers: {
+        ...formData.getHeaders(),
+        "x-tts-access-token": accessToken,
+      },
+    }).catch(e=>{console.log(e.response.data)});
+    if(errRes){
+        if(errRes.code == 36009004){
+            return {error: true, msg: "refresh"}
+        }else{
+             return {error: true, msg: errRes.code}
+        }
+    } 
+    console.log(result?.data.data)
+    return {error: false, uri: result?.data.data.uri}
+};

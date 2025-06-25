@@ -38,7 +38,14 @@ export function Main({tiktokShops, provider}){
                  <Typography textAlign={"center"} fontSize={"1.4rem"}>Connections</Typography>
                  {tiktokShops.map(tt=>(
                     <Box key={tt._id} sx={{background: "#fff", padding: "2%", borderRadius: "10px", margin: "1%", display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                        <Typography>Tik Tok - Seller Name: {tt.seller_name}</Typography>
+                        <Box>
+                            <Typography>Tik Tok - Seller Name: {tt.seller_name}</Typography>
+                            <Typography sx={{fontSize: ".8rem", textAlign: "center"}} >Shops</Typography>
+                            <Divider sx={{margin: "1%"}}/>
+                            {tt.shop_list.map(l=>(
+                                <Typography sx={{fontSize: ".8rem"}} key={l.shp_name}>{`Shop Name: ${l.shop_name} Region: ${l.region}`}</Typography>
+                            ))}
+                        </Box>
                         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start"}}>
                             <Button sx={{background: "#0066CC", color: "#fff"}}> {tt.access_token != undefined? "Reauthorize": "Authorize"}</Button>
                             <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>

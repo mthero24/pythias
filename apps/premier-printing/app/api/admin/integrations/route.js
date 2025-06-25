@@ -1,7 +1,11 @@
 import {NextApiRequest, NextResponse} from "next/server"
 import TikTokAuth from "@/models/tiktok";
 import {generateAuthorizationUrl} from "@pythias/integrations"
-import { useTheme } from "@emotion/react";
+
+export async function GET(req=NextApiRequest){
+    return NextResponse.json({error: false})
+}
+
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     console.log(data)

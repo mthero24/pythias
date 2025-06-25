@@ -40,8 +40,8 @@ export async function LabelsData(){
         labels[k] = labels[k].filter(s=> s.order != undefined)
         labels[k] = labels[k].map(s=> { if(s.designRef?.printType =="EMB"){
             s.type = "EMB"
-        }else if(s.designRef?.sku.toUpperCase().includes("PU")){
-            s.type = "PUF"
+        }else if(s.designRef?.sku.toUpperCase().includes("PU") || s.designRef?.sku.toUpperCase().includes("GL") || s.designRef?.printType =="VIN"){
+            s.type = "VIN"
         }else{
             s.type = "DTF"
         };  return {...s}})
