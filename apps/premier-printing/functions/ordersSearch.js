@@ -1,7 +1,7 @@
-import Design from "@/models/Design";
+import Order from "@/models/Order";
 
 
-export async function DesignSearch ({q, productsPerPage, page}){
+export async function OrdersSearch ({q, productsPerPage, page}){
     //console.log(options);
     console.log(q)
   let project;
@@ -9,17 +9,6 @@ export async function DesignSearch ({q, productsPerPage, page}){
   project = {
     meta: "$$SEARCH_META",
     _id: 1,
-    name: 1,
-    images: 1,
-    sku: 1,
-    sendToMarketplaces: 1,
-    b2m: 1,
-    blanks: 1,
-    brands: 1,
-    cleaned: 1,
-    description: 1,
-    threadColors: 1,
-    threadImages: 1,
     score: {
       $meta: "searchScore",
     },
@@ -31,10 +20,10 @@ export async function DesignSearch ({q, productsPerPage, page}){
   let query = [
     {
       $search: {
-        index: "designs",
+        index: "default",
         text: {
           query: q,
-          path: ["name", "tags", "sku"],
+          path: ["poNumber", "shippingAddress.name", "shippingAddress.address", "shippingAddress.city", "shippingAddress.state", "shippingAddress.postalCode"],
           fuzzy: {
             maxEdits: 2,
             prefixLength: 3,
@@ -59,8 +48,8 @@ export async function DesignSearch ({q, productsPerPage, page}){
   ];
   console.log(query[0]["$search"])
   
-  let designs = await Design.aggregate([query]);
+  let orders = await Order.aggregate([query]);
   //console.log("something", time);
-  console.log("stan search designs ", designs[0]);
-  return designs;
+  console.log("stan search designs ", orders[0]);
+  return orders;
 }

@@ -2,7 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Manifest from "../../../../../models/manifest"
 import { uspsGenerateManifest } from "@pythias/shipping";
 export async function GET(req = NextApiRequest) {
-    let manifests = await Manifest.find({Date: {$gt: new Date(Date.now() - 8 * (60 * 60 * 1000))}}).limit(1000);
+    let manifests = await Manifest.find({Date: {$gt: new Date(Date.now() - 12 * (60 * 60 * 1000))}}).limit(1000);
     console.log(manifests.length)
     let skip = 1000
     let PicNumbers = [];
@@ -10,7 +10,7 @@ export async function GET(req = NextApiRequest) {
         for(let m of manifests){
             PicNumbers.push(m.pic)
         }
-        manifests = await Manifest.find({}).skip(skip).limit(1000);
+        manifests = await Manifest.find({Date: {$gt: new Date(Date.now() - 12 * (60 * 60 * 1000))}}).skip(skip).limit(1000);
         skip += 1000
     }
     console.log(PicNumbers.length, "picnumbers")

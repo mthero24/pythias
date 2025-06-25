@@ -11,6 +11,7 @@ export function Main({ords, pages, page, q}){
         let res = await axios.post("/api/orders", {search})
         if(res.data.error) alert(res.data.msg)
         else{
+            console.log(res.data.orders)
             setOrders(res.data.orders)
         }
     }
