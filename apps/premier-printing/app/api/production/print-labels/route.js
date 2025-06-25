@@ -31,11 +31,11 @@ export async function POST(req=NextApiRequest){
         if(inv && inv.quantity > 0){
             inv.quantity -= 1
             await inv.save()
-            let label = await buildLabelData(i, j)
-            //console.log(label)
-            preLabels.push(label)
-            j++
         }
+        let label = await buildLabelData(i, j)
+        //console.log(label)
+        preLabels.push(label)
+        j++
     }
     // full fill promises
     preLabels.map(l=> labelsString += l)
