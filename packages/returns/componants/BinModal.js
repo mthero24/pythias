@@ -32,7 +32,7 @@ export function BinModal({open, setOpen, setAuto, bin, setBins, setBin, modalSty
                         {Object.keys(i?.design?.images? i?.design?.images: {}).map(d=>(
                             <Box>
                                { console.log(i.threadColor?.name, i.design.threadImages)}
-                                {i.design.images[d] != "" && i.design.images[d] != undefined && <Image src={createImage(bin.color?.name, bin.blank.code, {side: d, url: i.threadColor != undefined? i.design.threadImages[i.threadColor.name][d]: i.design.images[d]}, source )} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto", padding: "2%", background: "#e2e2e2"}}/>}
+                                {i.design?.images[d] != "" && i.design?.images[d] != undefined && <Image src={createImage(bin.color?.name, bin.blank?.code, {side: d, url: i.threadColor != undefined? i.design?.threadImages[i.threadColor.name][d]: i.design?.images[d]}, source )} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto", padding: "2%", background: "#e2e2e2"}}/>}
                             </Box>
                            
                         ))}

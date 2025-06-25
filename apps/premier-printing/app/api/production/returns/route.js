@@ -6,7 +6,7 @@ import Bins from "@/models/returnBins"
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     let skuToUpc = await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]}).populate("design", "images sku").populate("blank color")
-    if(skuToUpc){
+    if(skuToUpc && skuToUpc.blank && skuToUpc.color && skuToUpc.design){
         let bin = await Bins.findOne({blank: skuToUpc.blank, color: skuToUpc.color, size: skuToUpc.size}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
         console.log(bin)
         if(!bin && skuToUpc){
@@ -34,6 +34,9 @@ export async function POST(req=NextApiRequest){
         let bins = await Bins.find({inUse: true}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
         //console.log(bin, "later bin")
         return NextResponse.json({error: false, bin, bins})
+    }
+    if(skuToUpc && !skuToUpc.blank && !skuToUpc.color && !skuToUpc.design){
+        return NextResponse.json({error: true, msg: "missing design color or blank information go to fix upcs tab and search the upc or sku and fix missing information"})
     }
     return NextResponse.json({error: true, msg: "Look up SKU or UPC on the design page!!!"})
 

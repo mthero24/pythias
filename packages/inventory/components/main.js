@@ -61,8 +61,9 @@ export function Main({bla, it, defaultLocation, binType}){
                 }}/>
             </Box>
             {styles.map(s=>(
-                <Accordion expanded={expanded === s.blank.code} key={s.blank._id} sx={{marginBottom: "2%"}} onClick={()=>{setExpanded(s.blank.code)}}>
+                <Accordion expanded={expanded === s.blank.code} key={s.blank._id} sx={{marginBottom: "2%"}} >
                     <AccordionSummary
+                    onClick={()=>{setExpanded(expanded == s.blank.code? "": s.blank.code)}}
                     expandIcon={<ArrowDownwardIcon />}
                     aria-controls="panel1-content"
                     id="panel1-header"
@@ -72,8 +73,11 @@ export function Main({bla, it, defaultLocation, binType}){
                     <AccordionDetails>
                     <Typography>
                        {s.blank.colors.map(si=>(
-                            <Accordion expanded={expanded === s.blank.code && expandedColor == si.name}  key={si._id} onClick={()=>{setExpandedColor(expandedColor == si.name? "": si.name); setInventories(s.inventories?.filter(i=>i.color.name == si.name))}}>
+                            <Accordion expanded={expanded === s.blank.code && expandedColor == si.name}  key={si._id} >
                                 <AccordionSummary
+                                onClick={()=>{
+                                    setExpandedColor(expandedColor == si.name? "": si.name); setInventories(s.inventories?.filter(i=>i.color.name == si.name))
+                                }}
                                 expandIcon={<ArrowDownwardIcon />}
                                 aria-controls="panel1-content"
                                 id="panel1-header"
