@@ -88,8 +88,8 @@ export async function pullOrders(){
                     }
                     let blankSize = blank.sizes.filter(s=> s.name == size)[0]
                     if(!blankSize) blankSize = blank.sizes.filter(s=> s.name == sizeFixer[size])[0]
-                    console.log(blank.code, blankColor, blankSize)
-                    console.log( blankColor?.name, blankSize?.name)
+                        console.log(blank.code, blankColor, blankSize)
+                        console.log( blankColor?.name, blankSize?.name)
                         let DesignThreadColor = colors.filter(c=> c.name == threadColor)[0]
                         let designImages
                         if(DesignThreadColor){

@@ -1,11 +1,12 @@
 "use client"
-import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, Link} from "@mui/material"
+import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, Link, TextField} from "@mui/material"
 import {useState, useEffect} from "react"
 import CreatableSelect from "react-select/creatable";
 import axios from "axios"
 import Search from "@/app/admin/designs/Search";
 import Image from "next/image";
 import {Repull} from "@pythias/repull"
+import { NoteSnackBar } from "./NoteSnackBar";
 const ups = ["TSC", "Zulily"]
 export function Main({ord, blanks}){
     const [order, setOrder] = useState(ord);
@@ -15,6 +16,9 @@ export function Main({ord, blanks}){
     const [color, setColor] = useState(null)
     const [openUpdate, setOpenUpdate] = useState(false)
     const [openDesign, setOpenDesign] =useState(false)
+    const [shipped, setShipped] = useState(false)
+    const [note, setNote] = useState(false)
+    const [showNotes, setShowNotes] = useState(order.notes.length > 0?true: false)
     const handleItemUpdate = (i)=>{
         console.log("handleItemUpdate")
         let b
@@ -32,8 +36,22 @@ export function Main({ord, blanks}){
     }
     return (
         <Box sx={{padding: "2%", background: "#e2e2e2"}}>
+            <NoteSnackBar notes={order.notes} open={showNotes} setOpen={setShowNotes}/>
+            
+            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", padding: '.5%'}}>
+                <Box sx={{margin: ".5%"}}>
+                    <Button sx={{background: "red", color: "#fff"}} onClick={()=>{setNote(true)}}>Create Note</Button>
+                </Box>
+                <Box sx={{margin: ".5%"}}>
+                    <Button sx={{background: "blue", color: "#fff"}} onClick={()=>{setShowNotes(true)}}>Show Notes</Button>
+                </Box>
+            </Box>
             <Card sx={{minHeight: "100vh", padding: "3%"}}>
-                <Typography sx={{textAlign: "center", fontWeight: 900, fontSize: "2rem", padding: "2%"}}>{order.status}</Typography>
+                <Typography sx={{textAlign: "center", fontWeight: 900, fontSize: "2rem", padding: "2%", "&:hover": {cursor: order.status.toLowerCase() != "shipped"? "pointer": "", opacity: order.status.toLowerCase() != "shipped"? 0.6: 1}}} onClick={()=>{
+                    if(order.status.toLowerCase() != "shipped"){
+                        setShipped(true)
+                    }
+                }}>{order.status}</Typography>
                 <Grid2 container spacing={2}>
                     <Grid2 size={{xs: 12, sm:8, md: 8}}>
                         <Card sx={{padding: "2%", minHeight: "100%"}}>
@@ -116,8 +134,119 @@ export function Main({ord, blanks}){
             </Card>
             <UpdateModal open={openUpdate} setOpen={setOpenUpdate} item={item} setItem={setItem} blank={blank} setBlank={setBlank} size={size} setSize={setSize} color={color} setColor={setColor} blanks={blanks} setOrder={setOrder}/>
             <AddDesignModal open={openDesign} setOpen={setOpenDesign} item={item} setItem={setItem} setOrder={setOrder}/>
+            <ShippedModal open={shipped} setOpen={setShipped} order={order} setOrder={setOrder}/>
+            <NoteModal open={note} setOpen={setNote} order={order} setOrder={setOrder} setNotesOpen={setShowNotes}/>
             <Repull />
         </Box>
+    )
+}
+
+const NoteModal = ({open, setOpen, order, setOrder, setNotesOpen})=>{
+    const [note, setNote] = useState("")
+     const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "50%",
+        height: "60%",
+        overflow: "auto",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+    };
+    const addNote = async ()=>{
+        let res = await axios.post("/api/orders/notes", {note, order})
+        if(res && res.data.error) alert(res.data.msg)
+        else{
+            setNote("")
+            setOrder(res.data.order)
+            setOpen(false)
+            setNotesOpen(true)
+        }
+    }
+    return (
+        <Modal
+        open={open}
+        onClose={()=>{
+            setOpen(false)
+            setItem(null)
+        }}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+               Add Note
+            </Typography>
+            <Box sx={{padding: ".5%"}}>
+                <TextField fullWidth multiline label="Note..." value={note} rows={6} onChange={()=>{
+                    setNote(event.target.value)
+                }} />
+            </Box>
+            <Box sx={{padding: ".5%"}}>
+                <Button fullWidth onClick={addNote}>Add Note</Button>
+            </Box>
+        </Box>
+      </Modal>
+    )
+}
+const ShippedModal = ({open, setOpen, order, setOrder})=>{
+    const [trackingNumber, setTrackingNumber] = useState("");
+    const [provider, setProvider] = useState("") 
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "50%",
+        height: "50%",
+        overflow: "auto",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+    };
+    const setShipped = async ()=>{
+        let res = await axios.post("/api/orders/shipped", {order, trackingNumber, provider})
+        if(res && res.data.error) alert(res.data.msg)
+        else{
+            setTrackingNumber(null)
+            setProvider("")
+            setOrder(res.data.order)
+            setOpen(false)
+        }
+    }
+     return (
+        <Modal
+        open={open}
+        onClose={()=>{
+            setOpen(false)
+            setItem(null)
+        }}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+               Mark Shipped
+            </Typography>
+            <Box sx={{padding: ".5%"}}>
+                <TextField fullWidth label="Tracking Number" value={trackingNumber} onChange={()=>{
+                    setTrackingNumber(event.target.value)
+                }} />
+            </Box>
+            <Box sx={{padding: ".5%"}}>
+                <TextField fullWidth label="Shipping Provider" value={provider} onChange={()=>{
+                    setProvider(event.target.value)
+                }} />
+            </Box>
+            <Box sx={{padding: ".5%"}}>
+                <Button fullWidth onClick={setShipped}>Mark Shipped</Button>
+            </Box>
+        </Box>
+      </Modal>
     )
 }
 

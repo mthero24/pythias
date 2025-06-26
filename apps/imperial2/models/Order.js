@@ -117,6 +117,7 @@ const schema = new mongoose.Schema({
     {
       note: String,
       date: Date,
+      userName: String
     },
   ],
   transactionId: String,

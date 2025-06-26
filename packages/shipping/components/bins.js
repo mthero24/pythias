@@ -2,7 +2,7 @@
 import {Card,Typography, Box, Grid2, Button} from "@mui/material";
 
 
-export function Bins({bins, setOrder, setBin, setShow, setAction}){
+export function Bins({bins, setOrder, setShowNotes, setBin, setShow, setAction}){
 
     return (
       <Box
@@ -91,6 +91,7 @@ export function Bins({bins, setOrder, setBin, setShow, setAction}){
                             : "#000000"
                         }}
                         onClick={() => {
+                          if(b.order.notes.length > 0) setShowNotes(true)
                           setOrder(b.order);
                           setBin(b)
                           setShow(true)

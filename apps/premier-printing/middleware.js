@@ -1,5 +1,6 @@
 import {NextRequest, NextResponse, userAgent } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { headers } from "next/headers";
 const protectedRoutes = [
   {
     path: "/admin/blanks",
@@ -11,6 +12,10 @@ const protectedRoutes = [
   },
   {
     path: "/admin/designs",
+    roles: ["admin", "production"],
+  },
+  {
+    path: "/orders",
     roles: ["admin", "production"],
   },
   {
@@ -41,6 +46,10 @@ const protectedRoutes = [
     path: "/api/production",
     roles: ["admin", "production"],
   },
+   {
+    path: "/api/orders",
+    roles: ["admin", "production"],
+  },
   {
     path: "/api/account",
     roles: ["admin", "production"],
@@ -48,7 +57,8 @@ const protectedRoutes = [
 ];
 
 export async function middleware(req=NextRequest, res) {
-  
+  const headersList = await headers();
+  console.log(headersList, "headers")
   const protectedRoute = protectedRoutes.find((route) =>
       req.nextUrl.pathname.startsWith(route.path)
     );

@@ -108,6 +108,7 @@ const schema = new mongoose.Schema(
       date: Date,
       user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     },
+    pulledFromReturn: {type: Boolean, default: false}
   },
   { suppressWarning: true }
 );

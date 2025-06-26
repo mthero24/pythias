@@ -18,6 +18,7 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
     const [size, setSize] = useState({width: 900, height: 900})
     const [show, setShow] = useState(false)
     const [action, setAction] = useState()
+    const [showNotes, setShowNotes] = useState(false)
     //const { width, height } = useWindowSize();
     useEffect(()=>{
       if(typeof window != "undefined"){
@@ -53,7 +54,7 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
           setStation={setStation}
           setAuto={setAuto}
         />
-        <Scan auto={auto} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins} source={source} station={station}/>
+        <Scan auto={auto} order={order} showNotes={showNotes} setShowNotes={setShowNotes} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins} source={source} station={station}/>
         <Bins
           bins={binss}
           setBins={setBins}
@@ -62,8 +63,9 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
           setBin={setBin}
           setShow={setShow}
           setAction={setAction}
+          setShowNotes={setShowNotes}
         />
-        <OrderModal order={order} setOrder={setOrder} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source}/>
+        <OrderModal order={order} setOrder={setOrder} setShowNotes={setShowNotes} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source}/>
         <Repull/>
       </Box>
     );

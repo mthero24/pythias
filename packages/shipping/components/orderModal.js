@@ -9,7 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from "axios"
 import { createImage } from "../functions/image";
 import {useState, useEffect} from "react";
-export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source}){
+export function OrderModal({order, item, bin, setOrder, setShowNotes, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source}){
     console.log(createImage("red", "AT", {url: "https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75"}))
     const [shippingPrices, setShippingPrices] = useState()
     const [weight, setWeight] = useState(0)
@@ -116,6 +116,12 @@ export function OrderModal({order, item, bin, setOrder, setItem,setBin, setAuto,
           </Box>
           <Grid2 container spacing={2}>
             {bin && (<BinInfo bin={bin} close={close} setBins={setBins}/>)}
+            <Grid2 size={{xs:6, sm: 6}} sx={{display: {xs: "none", sm: "block"}}}>
+
+            </Grid2>
+            <Grid2 size={{xs:6, sm: 3}}>
+                {order && order.notes.length > 0 && <Button onClick={()=>{setShowNotes(true)}}>Show Order Notes</Button>}
+            </Grid2>
           </Grid2>
           {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style} shippingPrices={shippingPrices} setShippingPrices={setShippingPrices} timer={timer} weight={weight} setGetWeight={setGetWeight} getWeight={getWeight} setDimensions={setDimensions} dimensions={dimensions} station={station} close={close} label={label} setLabel={setLabel} closeTimer={closeTimer} setCloseTimer={setCloseTimer} stopClose={stopClose} setStopClose={setStopClose} setBins={setBins} source={source}/>}
           {order && (
