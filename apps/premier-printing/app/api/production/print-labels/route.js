@@ -61,7 +61,8 @@ export async function POST(req=NextApiRequest){
             preLabelsReturns.push(label)
             returnPieceIds.push(i.pieceId)
         }else{
-            let inv = await Inventory.findOne({blank: i.blank._id? i.blank._id: i.blank, color_name: i.colorName, size_name: i.color_name})
+            console.log(i.blank, i.colorName, i.sizeName)
+            let inv = await Inventory.findOne({blank: i.blank._id? i.blank._id: i.blank, color_name: i.colorName, size_name: i.sizeName})
             //if(inv && inv.quantity > 0){
                 inv.quantity -= 1
                 await inv.save()
@@ -75,31 +76,32 @@ export async function POST(req=NextApiRequest){
     }
     // full fill promises
     preLabels = preLabelsReturns.concat(preLabels)
+    //console.log(preLabels)
     preLabels.map(l=> labelsString += l)
-    console.log(preLabels.length, "+++++++" ,preLabels)
+    //console.log(preLabels.length, "+++++++" ,preLabels)
     //create label string
-    console.log(labelsString)
+    //console.log(labelsString)
     //convert to base64
     labelsString = btoa(labelsString)
    
     //print labels
-    console.log(process.env.localIP, process.env.localKey)
+    //console.log(process.env.localIP, process.env.localKey)
     let headers = {
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
         }
     }
-    console.log(headers)
+    //console.log(headers)
     let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
-    console.log(res?.data)
+    //console.log(res?.data)
     //update data
-    console.log(pieceIds)
+    //console.log(pieceIds)
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
     await batch.save()
     await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     await Items.updateMany({pieceId: {$in: returnPieceIds}}, {labelPrinted: true, pulledFromReturn: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
-    //console.log(giftMessages)
+    console.log(giftMessages)
     return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
 }
