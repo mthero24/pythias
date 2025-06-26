@@ -56,47 +56,34 @@ export async function POST(req=NextApiRequest){
             rInv = hasReturn.inventory.filter(inv=> inv.upc == i.upc || inv.sku == i.sku)[0]
         }
         if(rInv && rInv.quantity > 0){
-             let label = await buildLabelData(i, j, hasReturn)
+            let label = await buildLabelData(i, j, hasReturn)
             //console.log(label)
             preLabelsReturns.push(label)
             returnPieceIds.push(i.pieceId)
+            j++
         }else{
             console.log(i.blank, i.colorName, i.sizeName)
             let inv = await Inventory.findOne({blank: i.blank._id? i.blank._id: i.blank, color_name: i.colorName, size_name: i.sizeName})
-            //if(inv && inv.quantity > 0){
-                inv.quantity -= 1
-                await inv.save()
-            //}
+            if(inv){
+              inv.quantity -= 1
+              await inv.save()
+            }
             let label = await buildLabelData(i, j)
-            //console.log(label)
             pieceIds.push(i.pieceId)
             preLabels.push(label)
+            j++
         }
-        j++
     }
-    // full fill promises
     preLabels = preLabelsReturns.concat(preLabels)
-    //console.log(preLabels)
     preLabels.map(l=> labelsString += l)
-    //console.log(preLabels.length, "+++++++" ,preLabels)
-    //create label string
-    //console.log(labelsString)
-    //convert to base64
     labelsString = btoa(labelsString)
-   
-    //print labels
-    //console.log(process.env.localIP, process.env.localKey)
     let headers = {
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
         }
     }
-    //console.log(headers)
     let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
-    //console.log(res?.data)
-    //update data
-    //console.log(pieceIds)
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
     await batch.save()
     await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
