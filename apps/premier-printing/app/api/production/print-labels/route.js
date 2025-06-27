@@ -48,6 +48,7 @@ export async function POST(req=NextApiRequest){
     let j = 0
     let returnPieceIds = []
     let pieceIds = []
+    console.log(data.items.length)
     for(let i of data.items){
         let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": i.upc}, {"inventory.sku": i.sku}], "inventory.quantity": {$gt: 0}})
         let rInv
@@ -73,9 +74,12 @@ export async function POST(req=NextApiRequest){
             preLabels.push(label)
             j++
         }
+        console.log(preLabels.length, preLabelsReturns.length)
     }
     preLabels = preLabelsReturns.concat(preLabels)
+    console.log(preLabels.length)
     preLabels.map(l=> labelsString += l)
+    console.log(preLabels)
     labelsString = btoa(labelsString)
     let headers = {
         headers: {
@@ -89,6 +93,6 @@ export async function POST(req=NextApiRequest){
     await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     await Items.updateMany({pieceId: {$in: returnPieceIds}}, {labelPrinted: true, pulledFromReturn: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
-    console.log(giftMessages)
+    //console.log(giftMessages)
     return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
 }

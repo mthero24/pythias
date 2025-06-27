@@ -171,8 +171,12 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         }else if(type == "gift"){
             items = gift
         }else {
+          console.log()
             items.push(...useLabels[type].map(s=> {
-                if(s.inventory?.quantity > 0) return s}));
+                if(source != "PP" && s.inventory?.quantity > 0) return s
+                else if(source == "PP") return s
+              
+              }));
             items = items.filter(s=> s != undefined)
             items = Sort(items, source);
         }

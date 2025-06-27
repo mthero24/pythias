@@ -22,7 +22,7 @@ export async function OrdersSearch ({q, productsPerPage, page}){
       $search: {
         index: "default",
         text: {
-          query: q,
+          query: q.replace(/[^a-zA-Z0-9]/g, ''),
           path: ["poNumber", "shippingAddress.name", "shippingAddress.address", "shippingAddress.city", "shippingAddress.state", "shippingAddress.postalCode"],
           fuzzy: {
             maxEdits: 2,

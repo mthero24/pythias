@@ -47,7 +47,7 @@ export const buildLabelData = async (item, i, returnBin, opts={},) => {
         ${!returnBin?`^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDR Bin${hasReturn.number}^FS`}
+        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDR Bin${returnBin.number}^FS`}
         ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
             item.colorName
         }^FS
