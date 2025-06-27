@@ -16,9 +16,7 @@ let updateReturnBin = async (re, upc, sku)=>{
       if(i.upc == upc || i.sku == sku){
         i.quantity -= 1
       }
-      if(i.quantity > 0){
-        newInv.push(i)
-      }
+      
     }
     hasReturn.inventory = newInv
     hasReturn.markModified("inventory")
