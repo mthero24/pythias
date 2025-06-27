@@ -41,6 +41,7 @@ export const authOptions = {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
+          permissions: user.permissions
         };
       }
       return token;
@@ -51,6 +52,7 @@ export const authOptions = {
         firstName: token.firstName,
         lastName: token.lastName,
         userName: token.userName,
+        permissions: token.permissions,
         _id: token._id,
         role: token.role,
       };

@@ -1,7 +1,7 @@
-import {Main} from "@/app/login/Main"
+import {LoginMain} from "@pythias/backend"
 
 export default async function Login(){
     return(
-        <Main type="register"/>
+        <LoginMain type="register"/>
     )
 }

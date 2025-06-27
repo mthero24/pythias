@@ -93,9 +93,9 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Imperial Custom Apparel`} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/register" style={{color: "#000", textDecoration: "none"}}>
+        <Link href="/admin/users" style={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Register`} />
+            <ListItemText primary={`Users`} />
           </ListItemButton>
         </Link>
         <Link href="/admin/license" style={{color: "#000", textDecoration: "none"}}>

@@ -2,16 +2,14 @@ import Items from "../models/Items";
 
 export const buildLabelData = async (item, i, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
-    let frontBackString;
+    let frontBackString = "";
     //console.log(totalQuantity, "TQ");
-    if (item.design?.back) {
-      if (item.design?.front && item.design.back) {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO200,540^FDFRONT&BACK^FS`;
-      } else {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO200,540^FDBACK ONLY^FS`;
+    for(let loc of Object.keys(item.design)){
+      if(item.design[loc]){
+        frontBackString = `${frontBackString}${frontBackString != ""? "&": ""}${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
       }
-    } else frontBackString = "";
-    if(!item.design) frontBackString = "Missing Design";
+    }
+    frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FD${frontBackString}^FS`;
     let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
     let printTypeAbbr;
     if (item?.type && item?.type?.toLowerCase() == "dtf") printTypeAbbr = "DTF";

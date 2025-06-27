@@ -1,6 +1,5 @@
 import PDFDocument from "pdfkit";
 import { Base64Encode } from "base64-stream";
-import fs from "fs"
 import axios from "axios"
 export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex })=>{
     let labelsString = ``
@@ -11,7 +10,6 @@ export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex 
     });
     let j = 0
     let printed = false
-   //console.log(items.length, lastIndex)
     for(let i of items){
        // console.log(lastIndex && j >= lastIndex)
         if(lastIndex && j >= lastIndex){

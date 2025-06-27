@@ -6,23 +6,16 @@ import Design from "@/models/Design";
 export const buildLabelData = async (item, i, returnBin, opts={},) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     
-    let frontBackString;
+    let frontBackString = "";
     //console.log(totalQuantity, "TQ");
     let inventory = await Inventory.findOne({blank: item.blank._id? item.blank._id: item.blank, color_name: item.color.name, size_name: item.sizeName})
     //console.log(inventory, "inventory", `${item.colorName[0].toUpperCase() + item.colorName.replace(item.colorName[0], "")}-${item.sizeName}-${item.styleCode}`)
-    if (item.design?.back) {
-      if (item.design?.front && item.design.back) {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FDFRONT&BACK^FS`;
-      } else {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FDBACK ONLY^FS`;
+    for(let loc of Object.keys(item.design)){
+      if(item.design[loc]){
+        frontBackString = `${frontBackString}${frontBackString != ""? "&": ""}${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
       }
-    }else if(item.design?.pocket){
-      if (item.design.pocket && item.design.back) {
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FDPOCKET&BACK^FS`;
-      }else{
-        frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FDPOCKET^FS`;
-      }
-    } else frontBackString = "`^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FDFRONT ONLY^FS`;";
+    }
+    frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FD${frontBackString}^FS`;
     if(!item.design) frontBackString = "Missing Design";
     let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
     let printTypeAbbr;

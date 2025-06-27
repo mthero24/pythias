@@ -3,8 +3,8 @@ import {Box, TextField, Button, FormControl, InputLabel, OutlinedInput, Grid2, I
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {useState} from "react"
-import * as login from '@/public/login.png';
-import * as register from '@/public/register.png';
+import * as login from '../../public/login.png';
+import * as register from '../../public/register.png';
 import Image from "next/image";
 import { signIn } from "next-auth/react";
 import axios from "axios";
@@ -24,18 +24,12 @@ export const Main = ({type})=>{
     const handleLogin = async()=>{
         if(type == "register"){
             let result = await axios.post("/api/auth/register", { ...data });
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            const response = await signIn("credentials", {
-                userName: data.userName,
-                first_name: data.firstName,
-                last_name: data.lastName,
-                email: data.email,
-                password: data.password,
-                redirect: false,
-            });
-            console.log(response, "response");
-            if (response.ok) {
-              return location.replace("/account");
+            console.log(result, "response");
+            if (result.data.success) {
+              alert(`The Account For ${data.userName} Was Created`)
+            }else{
+                alert(`Something Went Wrong The Account For ${data.userName} Was Not Created Please Try Again!
+                    ${result.data.error}`)
             }
             console.log(response);
         }else{
@@ -52,9 +46,7 @@ export const Main = ({type})=>{
         }
     }
     const updateData = (label)=>{
-        console.log(label)
         let update = {...data}
-        console.log(update[label])
         update[label] = event.target.value
         setData({...update})
     }
@@ -84,6 +76,11 @@ export const Main = ({type})=>{
                                     type={showPassword ? 'text' : 'password'}
                                     value={data.password}
                                     onChange={()=>{updateData("password")}}
+                                    onKeyDown={()=>{
+                                        if(event.key == "Enter" || event.key == 13 || event.key == "ENTER" || event.key == "enter"){
+                                            handleLogin()
+                                        }
+                                    }}
                                     endAdornment={
                                     <InputAdornment position="end">
                                         <IconButton

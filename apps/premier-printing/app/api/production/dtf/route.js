@@ -34,8 +34,8 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
     let centerCombo
     let pocketCombo
     if(front) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage?.box[0], styleImage: styleImage?.image, designImage: front })
-        frontCombo = res.data.base64
+        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage?.box[0], styleImage: styleImage?.image, designImage: front }).catch(e=>{console.log(e.response)})
+        frontCombo = res?.data?.base64
     }
     if(back) {
         let res = await axios.post(`${process.env.url}/api/renderImages`, {box: backStyleImage?.box[0], styleImage: backStyleImage?.image, designImage: back })
@@ -143,11 +143,6 @@ export async function POST(req = NextApiRequest) {
             status: "DTF Load",
             date: new Date(),
           });
-        //   item.lastScan = {
-        //     station: "DTF Load",
-        //     date: new Date(Date.now()),
-        //     //user: user._id,
-        //   };
         const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
         await item.save()
         return NextResponse.json({ error: false, msg: "added to que", ...result, source: "PP" });

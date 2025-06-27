@@ -9,8 +9,8 @@ export async function POST(request) {
         userName: userName,
         email: email.toLowerCase(),
         password:  password,        
-        first_name: firstName,
-        last_name: lastName,
+        firstName: firstName,
+        lastName: lastName,
         role: "production",
     });
 

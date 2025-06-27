@@ -5,14 +5,20 @@ import Order from "@/models/Order";
 import Design from "@/models/Design";
 import { dirname } from "path";
 import { BatchPredictionRounded } from "@mui/icons-material";
+import returnBins from "@/models/returnBins";
 let updateReturnBin = async (re, upc, sku)=>{
   try{
     let hasReturn = await ReturnBins.findOne({_id: re._id})
+    let newInv = []
     for(let i of hasReturn.inventory){
       if(i.upc == upc || i.sku == sku){
         i.quantity -= 1
       }
+      if(i.quantity > 0){
+        newInv.push(i)
+      }
     }
+    hasReturn.inventory = newInv
     hasReturn.markModified("inventory")
     await hasReturn.save()
   }catch(e){
@@ -36,28 +42,22 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
    // console.log(item.order.items?.length, "item order")
     //console.log(totalQuantity)
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
-    if(hasReturn){
+    let inv = hasReturn.inventory.filter(i=> i.sku == item.sku)[0]
+    if(inv && inv.quantity > 0){
       updateReturnBin(hasReturn, item.upc, item.sku)
     }
-    let frontBackString;
-    if (item.design?.back) {
-      if (item.design?.front && item.design.back) {
-        frontBackString = `FRONT&BACK`;
-      } else if (item.design?.pocket && item.design?.back) {
-        frontBackString = `POCKET&BACK`;
-      }else {
-        frontBackString = `BACK ONLY`;
-      }
-    }else if(item.design?.pocket){
-        frontBackString = `POCKET Only`;
-    } else frontBackString = "FRONT ONLY";
+    let frontBackString = ``
+    for(let loc of Object.keys(item.design)){
+        if(item.design[loc]){
+          frontBackString = `${frontBackString} ${frontBackString != ""? "&": ""} ${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
+        }
+    }
     if(!item.design) frontBackString = "Missing Design";
     let printPO = opts.printPO ? `${opts.printPO}`: "";
-    let printTypeAbbr = item.sku.split("_")[0];
     doc.font("./LibreBarcode39-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 3, 8);
     doc.font("Courier-Bold").fontSize(8)
     doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
-    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${item?.inventory?.location}`)
+    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${inv && inv.quantity > 0? `RB ${returnBins.number}`:item?.inventory?.location}`)
     doc.font("Courier-Bold").fontSize(9)
     doc.text(`Color: ${item.colorName}`, 10)
     doc.text(`Size: ${fullSize[item.sizeName]? fullSize[item.sizeName]: item.sizeName} CNT: ${totalQuantity}`)
@@ -66,15 +66,10 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
     doc.text(`${item.type} ${new Date(item.date).toLocaleDateString("EN-us")}`)
     doc.text(`#${i + 1}`)
     if(printPO){
-      doc.text(`printPO`)
+      doc.text(printPO)
     }
     if(frontBackString){
       doc.font("Courier-Bold").fontSize(10)
       doc.text(frontBackString, 50, 130)
-      }
-        // ${hasReturn == null? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${inventory?.row}^FS
-        // ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${inventory?.unit}^FS
-        // ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${inventory?.shelf}^FS
-        // ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${inventory?.bin}^FS`: `R Bin${hasReturn.number}`}
-    
+    }    
   }

@@ -7,7 +7,7 @@ import { Uploader } from "../premier/uploader";
 import { theme, themeDark } from "@/components/UI/Theme";
 import Theme from "@/components/Theme.json"
 import CreatableSelect from "react-select/creatable";
-import ProductImageOverlay from "@/components/ProductImageOverlay";
+import ProductImageOverlay from "../ProductImageOverlay";
 import { useRouter } from "next/navigation";
 import { AltImageModal } from "./AltImagesModal";
 import Image from "next/image"
