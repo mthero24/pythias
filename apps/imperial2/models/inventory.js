@@ -5,6 +5,8 @@ import Color from "./Color";
 import Blank from "./Blanks"
 const SchemaObj = new Schema({
     quantity: { type: Number, required: true },
+    inventory_id: { type: String, required: true },
+    barcode_id: { type: String, required: true},
     order_at_quantity: { type: Number, required: true },
     pending_quantity: { type: Number, default: 0 },
     quantity_to_order: { type: Number, default: 0 },

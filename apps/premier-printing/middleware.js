@@ -1,6 +1,5 @@
 import {NextRequest, NextResponse, userAgent } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { headers } from "next/headers";
 const protectedRoutes = [
   {
     path: "/admin/blanks",
@@ -129,18 +128,14 @@ const protectedRoutes = [
 ];
 
 export async function middleware(req=NextRequest, res) {
-  const headersList = await headers();
-  console.log(headersList, "headers")
   const protectedRoute = protectedRoutes.find((route) =>
       req.nextUrl.pathname.startsWith(route.path)
     );
   const requestHeaders = new Headers(req.headers)
   const token = await getToken({ req });
   if (protectedRoute) {
-    console.log(token, "__TOKEN__");
     const permissions = token && token.permissions? token.permissions: {}
     if(token) permissions.account = true
-    console.log("premissions", protectedRoute.permission, permissions[protectedRoute.permission])
     if (!permissions[protectedRoute.permission]) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
