@@ -7,6 +7,7 @@ import MarketPlaces from "@/models/MarketPlaces";
 import ProductImages from "@/models/ProductImages";
 import Colors from "@/models/Color";
 import { serialize } from "@/functions/serialize";
+import {Seasons, Genders} from "@/models/oneoffs";
 import {Main} from "./Main";
 import { notFound } from "next/navigation";
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,8 @@ export default async function DesignPage({params}){
             if(!design) return notFound();
             //console.log(blanks)
             if(!design.threadColors) design.threadColors = []
+            let seasons = await Seasons.find({});
+            let genders = await Genders.find({});
             design = serialize(design);
             blanks = serialize(blanks);
             brands = serialize(brands);
@@ -34,8 +37,10 @@ export default async function DesignPage({params}){
             licenses = serialize(licenses);
             printLocations = serialize(printLocations)
             colors = serialize(colors)
+            seasons=serialize(seasons)
+            genders= serialize(genders)
             return (
-                <Main design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} printLocations={printLocations} colors={colors} source={"PP"}/>
+                <Main design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} printLocations={printLocations} colors={colors} seas={seasons} gen={genders} source={"PP"}/>
             )
         }catch(e){
             return notFound()

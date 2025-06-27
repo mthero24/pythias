@@ -11,7 +11,7 @@ import ProductImageOverlay from "@/components/ProductImageOverlay";
 import { useRouter } from "next/navigation";
 import { AltImageModal } from "./AltImagesModal";
 import Image from "next/image"
-export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocations, source}){
+export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, source}){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -31,7 +31,8 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [location, setLocation] = useState("front")
     const [reload, setReload] = useState(true)
     const [imageLocations, setImageLocations] = useState(printLocations.map(l=>{return l.name}))
-    const genders = ["Girls", "Boys", "Mens", "Womens"]
+    const [genders, setGenders] = useState(gen? gen: []);
+    const [seasons, setSeasons] = useState(seas? seas: []);
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -640,12 +641,17 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                 {console.log(des.gender, "gender")}
                                 <CreatableSelect
                                     placeholder="Gender"
-                                    options={[{label: "Gender", value: null}, ...genders.map(l=> {return {label: l, value: l}})]}
+                                    options={[{label: "Gender", value: null}, ...genders.map(l=> {return {label: l.name, value: l.name}})]}
                                     value={des.gender? {label: des.gender, value: des.gender}: null}
-                                    onChange={(vals)=>{
+                                    onChange={async (vals)=>{
                                         console.log(vals)
                                         let d = {...des}
                                         d.gender = vals.value
+                                        if(!genders.filter(s=> s.name == vals.value)[0]){
+                                            let res = await axios.post("/api/admin/oneoffs", {type: "gender", value: vals.value})
+                                            if(res.data && res.data.error) alert(res.data.msg)
+                                            else setGenders(res.data.genders)
+                                        }
                                         setDesign({...d})
                                         updateDesign({...d})
                                     }}
@@ -655,12 +661,17 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                 {console.log(des.gender, "gender")}
                                 <CreatableSelect
                                     placeholder="Season"
-                                    options={[]}
+                                    options={seasons.map(l=> {return {label: l.name, value: l.name}})}
                                     value={des.season? {label: des.season, value: des.season}: null}
-                                    onChange={(vals)=>{
+                                    onChange={async (vals)=>{
                                         console.log(vals)
                                         let d = {...des}
                                         d.season = vals.value
+                                        if(!seasons.filter(s=> s.name == vals.value)[0]){
+                                            let res = await axios.post("/api/admin/oneoffs", {type: "season", value: vals.value})
+                                            if(res.data && res.data.error) alert(res.data.msg)
+                                            else setSeasons(res.data.seasons)
+                                        }
                                         setDesign({...d})
                                         updateDesign({...d})
                                     }}
