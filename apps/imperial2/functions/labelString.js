@@ -71,6 +71,6 @@ export const buildLabelData = async (item, i, doc, type, opts={}) => {
     }
     if(frontBackString){
       doc.font("Courier-Bold").fontSize(10)
-      doc.text(frontBackString, 50, 130)
+      doc.text(frontBackString, 10, 130)
     }    
   }
