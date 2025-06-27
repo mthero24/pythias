@@ -42,7 +42,7 @@ export const buildLabelData = async (item, i, doc, opts={}) => {
    // console.log(item.order.items?.length, "item order")
     //console.log(totalQuantity)
     let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
-    let inv = hasReturn.inventory.filter(i=> i.sku == item.sku)[0]
+    let inv = hasReturn?.inventory.filter(i=> i.sku == item.sku)[0]
     if(inv && inv.quantity > 0){
       updateReturnBin(hasReturn, item.upc, item.sku)
     }
