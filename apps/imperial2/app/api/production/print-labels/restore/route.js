@@ -10,7 +10,7 @@ export async function POST(req=NextApiResponse) {
     let data = await req.json()
     console.log(data)
     let inventoryArray = await Inventory.find({})
-    .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
+    .select("quantity pending_quantity inventory_id color_name size_name location style_code row unit shelf bin")
     .lean();
     let items = await Items.find({batchID: data.batchID}).populate("designRef").lean()
 
@@ -27,7 +27,7 @@ export async function POST(req=NextApiResponse) {
     items = Sort(items)
 
     //full fill promises
-     await createPdf({items: items, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO", lastIndex: data.lastIndex})
+     await createPdf({items: items, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO", lastIndex: data.lastIndex, type: "reprint"})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)
     return NextResponse.json({error: false, msg: "reprinted", labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})

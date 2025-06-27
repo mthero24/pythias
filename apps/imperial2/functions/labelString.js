@@ -34,14 +34,15 @@ let fullSize = {
   "2XL": "2XLARGE",
   "3XL": "3XLARGE"
 }
-export const buildLabelData = async (item, i, doc, opts={}) => {
+export const buildLabelData = async (item, i, doc, type, opts={}) => {
     //console.log(item.inventory)
     if(!item.order.poNumber)item.order = await Order.findOne({_id: item.order}).select("items poNumber")
     let totalQuantity = 1
     if(item.order) totalQuantity = await Items.find({_id: { $in: item.order.items }, canceled: false,}).countDocuments();
    // console.log(item.order.items?.length, "item order")
     //console.log(totalQuantity)
-    let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
+    let hasReturn 
+    if(type != "reprint")hasReturn= await ReturnBins.findOne({$or: [{"inventory.upc": item.upc}, {"inventory.sku": item.sku}], "inventory.quantity": {$gt: 0}})
     let inv = hasReturn?.inventory.filter(i=> i.sku == item.sku)[0]
     if(inv && inv.quantity > 0){
       updateReturnBin(hasReturn, item.upc, item.sku)
