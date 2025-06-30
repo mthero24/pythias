@@ -8,14 +8,26 @@ import {buildLabelData} from "@/functions/labelString"
 import Inventory from "../../../../models/inventory";
 import {createPdf} from "@pythias/labels"
 let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G","H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",];
-
-const subtractInventory = async (items)=>{
-    items.map(async i=>{
-        let inv = await Inventory.findOne({_id: i.inventory._id})
-        inv.quantity -= 1
-        await inv.save()
-    })
+let updateReturnBin = async (re, upc, sku)=>{
+  try{
+    let hasReturn = await ReturnBins.findOne({_id: re._id})
+    let newInv = []
+    for(let i of hasReturn.inventory){
+      if(i.upc == upc || i.sku == sku){
+        i.quantity -= 1
+      }
+      if(i.quantity > 0){
+        newInv.push(i)
+      }
+    }
+    hasReturn.inventory = newInv
+    hasReturn.markModified("inventory")
+    await hasReturn.save()
+  }catch(e){
+    console.log(e)
+  }
 }
+
 export const config = {
     api: {
       bodyParser: {
@@ -31,14 +43,30 @@ export async function POST(req=NextApiRequest){
       batchID += letters[Math.floor(Math.random() * letters.length)]
     }
     let itemsToPrint = []
+    let itemsToPull = []
     for(let i of data.items){
-      let inventory = await Inventory.findOne({color_name: i.colorName, size_name: i.sizeName, style_code: i.styleCode})
-      if(inventory && inventory.quantity > 0){
-        inventory.quantity = inventory.quantity - 1
-        await inventory.save()
-        itemsToPrint.push(i)
+      let hasReturn= await ReturnBins.findOne({$or: [{"inventory.upc": i.upc}, {"inventory.sku": i.sku}], "inventory.quantity": {$gt: 0}})
+      let inv = hasReturn?.inventory.filter(i=> i.sku == i.sku)[0]
+      if(inv && inv.quantity > 0){
+        updateReturnBin(hasReturn, i.upc, i.sku)
+        let item = await Items.findOne({_id: i._id})
+        item.pulledFromReturn =true
+        item.returnBinNumber = hasReturn.returnBinNumber
+        await item.save()
+        i.pulledFromReturn = true
+        i.returnBinNumber = hasReturn.returnBinNumber
+        itemsToPull.push(i)
+      }else{
+        let inventory = await Inventory.findOne({color_name: i.colorName, size_name: i.sizeName, style_code: i.styleCode})
+        if(inventory && inventory.quantity > 0){
+          inventory.quantity =
+          inventory.quantity - 1
+          await inventory.save()
+          itemsToPrint.push(i)
+        }
       }
     }
+    itemsToPrint = itemsToPull.concat(itemsToPrint)
     // build labels
     await createPdf({items: itemsToPrint, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
    //subtractInventory(data.items)

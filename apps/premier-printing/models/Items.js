@@ -108,7 +108,8 @@ const schema = new mongoose.Schema(
       date: Date,
       user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     },
-    pulledFromReturn: {type: Boolean, default: false}
+    pulledFromReturn: {type: Boolean, default: false},
+    returnBinNumber: Number
   },
   { suppressWarning: true }
 );
