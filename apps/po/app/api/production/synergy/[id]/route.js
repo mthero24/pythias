@@ -52,7 +52,7 @@ export async function GET(request, { params }) {
             if(a == "middleChestLarge" || a == "front" || a == "leftPocket" || a == "rightPocket" || a == "middleChestSmall" || a == "right" || a == "left") return -1
             else return 1
          })){
-        if(!item.printedSides[s]){
+        if(item.design[s] && !item.printedSides[s]){
             side = s
             item.printedSides[s] = true
             break
@@ -66,7 +66,7 @@ export async function GET(request, { params }) {
             if(a == "middleChestLarge" || a == "front" || a == "leftPocket" || a == "rightPocket" || a == "middleChestSmall" || a == "right" || a == "left") return -1
             else return 1
          })){
-            if(!item.printedSides[s]){
+            if(item.design[s] && !item.printedSides[s]){
                 item.printedSides[s] = true
                 side = s
                 break
@@ -80,16 +80,10 @@ export async function GET(request, { params }) {
     let pretreatment = pretreatments[0];
     console.log(envelope, "envelope");
     let dimensions = await getimagesize(
-        (item.frontTreated == false && item.design?.front != undefined) ||
-        item.design.back == undefined
-        ? item.design?.front.replace(
-            "https://s3.wasabisys.com/teeshirtpalace-node-dev",
-            "https://images2.teeshirtpalace.com"
-            )
-        : item.design.back.replace(
-            "https://s3.wasabisys.com/teeshirtpalace-node-dev",
-            "https://images2.teeshirtpalace.com"
-            )
+       item.design[side].replace(
+        "https://s3.wasabisys.com/teeshirtpalace-node-dev",
+        "https://images2.tshirtpalace.com"
+        )
     );
     console.log(dimensions, "dimensions", typeof envelope.height);
     console.log(envelope.height)

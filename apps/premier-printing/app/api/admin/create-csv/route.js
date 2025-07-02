@@ -22,3 +22,11 @@ export async function POST(req=NextApiRequest){
     let past = await CSVUpdates.find({active: false})
     return NextResponse.json({error: false, csvupdate, past})
 }
+export async function PUT(req=NextApiRequest){
+    let data = await req.json()
+    let csvupdate = await CSVUpdates.findOne({active: true})
+    csvupdate.active = false
+    csvupdate = await csvupdate.save()
+    let past = await CSVUpdates.find({active: false})
+    return NextResponse.json({error: false, csvupdate: null, past})
+}
