@@ -266,7 +266,10 @@ export function DTFBody({auto, setAuto, printer, type}){
                                     width: "100%",
                                     height: "auto"
                                   }}
-                                  src={submitted.images[im]?.replace("https://s3.wasabisys.com/teeshirtpalace-node-dev/", "https://images2.teeshirtpalace.com/")}
+                                  src={submitted.images[im]?.replace("https://s3.wasabisys.com/teeshirtpalace-node-dev/", "https://images2.teeshirtpalace.com/").replace(
+            "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+            )}
                               />
                             </Box>
                           </Box>
