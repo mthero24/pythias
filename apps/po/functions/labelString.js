@@ -9,7 +9,7 @@ export const buildLabelData = async (item, i, opts={}) => {
         frontBackString = `${frontBackString}${frontBackString != ""? "&": ""}${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
       }
     }
-    frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FD${frontBackString}^FS`;
+    frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,540^FD${frontBackString}^FS`;
     let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
     let printTypeAbbr;
     if (item?.type && item?.type?.toLowerCase() == "dtf") printTypeAbbr = "DTF";
