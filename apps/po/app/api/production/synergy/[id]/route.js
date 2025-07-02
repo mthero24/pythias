@@ -81,8 +81,11 @@ export async function GET(request, { params }) {
     console.log(envelope, "envelope");
     let dimensions = await getimagesize(
        item.design[side].replace(
-        "https://s3.wasabisys.com/teeshirtpalace-node-dev",
-        "https://images2.tshirtpalace.com"
+        "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+        ).replace(
+        "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
         )
     );
     console.log(dimensions, "dimensions", typeof envelope.height);
@@ -252,16 +255,10 @@ export async function GET(request, { params }) {
                                     <RegionName i:nil="true"/>
                                     <ServerType>LOCAL</ServerType>
                                     <Uri>${
-                                    (item.frontTreated == false &&
-                                        item.design?.front != undefined) ||
-                                    item.design.back == undefined
-                                        ? item.design?.front
-                                            .replace(/&/g, "&amp;")
-                                            .replace(
+                                        item.design[side]?.replace(/&/g, "&amp;").replace(
                                             "https://s3.wasabisys.com/teeshirtpalace-node-dev",
                                             "https://images2.teeshirtpalace.com"
-                                            )
-                                        : item.design.back.replace(/&/g, "&amp;")
+                                        )
                                     }</Uri>
                                 </ArtFile>
                                 <CropToImage>false</CropToImage>
@@ -418,19 +415,12 @@ export async function GET(request, { params }) {
                                     <RegionName i:nil="true"/>
                                     <ServerType>LOCAL</ServerType>
                                     <Uri>${
-                                    (item.frontTreated == false &&
-                                        item.design?.front != undefined) ||
-                                    item.design.back == undefined
-                                        ? `${createImage(
+                                        createImage(
                                             item.color.name,
                                             item.styleV2.code,
-                                            { url: item.design?.front }
-                                        ).replace(/&/g, "&amp;")}`
-                                        : `${createImage(
-                                            item.color.name,
-                                            item.styleV2.code,
-                                            { url: item.design.back }
-                                        ).replace(/&/g, "&amp;")}`
+                                            { url: item.design[side], printArea: side, side: side == "back" || side == "namePlate"? "back": "front" }
+                                        ).replace(/&/g, "&amp;")
+                                    }
                                     }</Uri>
                                 </Thumbnail>
                                 <TotalQuantity>1</TotalQuantity>
