@@ -103,6 +103,7 @@ const createTikTokVariant = ({p, v})=>{
         secondaryVariationValue: sizes[v.size.name.toLowerCase()]? sizes[v.size.name.toLowerCase()]: v.size.name,
         weight: v.size.weight,
         price: v.size.retailPrice,
+        quantity: 1000,
         ...productImages,
         ...variantImages,
         ...p.blank.blank.tikTokHeader,

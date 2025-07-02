@@ -847,7 +847,7 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
                       <Typography>Print Locations</Typography>
                       <CreatableSelect
                         isMulti
-                        value={blank.printLocations?.map((id) => ({
+                        value={blank?.printLocations?.map((id) => ({
                           label: id?.name,
                           value: id._id,
                         }))}
@@ -879,7 +879,7 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
                   </Grid2>
               ))}
             </Grid2>
-            <ImageModal openImage={openImage} setOpenImage={setOpenImage} color={color} blank={blank} activePrintAreas={blank.printLocations.map(p=>{return p.name})} overridePrintBox={overridePrintBox} images={images} boxSet={boxSet} cropBoxData={cropBoxData} setImages={setImages} colorCropBoxData={colorCropBoxData} imageGroups={imageGroups} setImageGroups={setImageGroups} box={box} printAreas={printAreas} />
+            <ImageModal openImage={openImage} setOpenImage={setOpenImage} color={color} blank={blank} activePrintAreas={blank?.printLocations.map(p=>{return p.name})} overridePrintBox={overridePrintBox} images={images} boxSet={boxSet} cropBoxData={cropBoxData} setImages={setImages} colorCropBoxData={colorCropBoxData} imageGroups={imageGroups} setImageGroups={setImageGroups} box={box} printAreas={printAreas} />
           <Grid2 container>
             <Grid2 size={{xs:3, sm: 3, md: 3}} sx={{ my: 4 }}>
               <Typography>Size Chart</Typography>
