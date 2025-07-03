@@ -107,24 +107,26 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     })
                 }
                 if(images.length == 0){
-                    Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
-                        //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
-                        console.log(des.imageGroup)
-                        console.log(imageBlank)
-                        console.log(imageColor)
-                        let color = b.colors.filter(c=> c.name == imageColor.value)[0]
-                        console.log(color, "color")
-                        let foundImages = false
-                        if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
-                            let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
-                            image.side = i
-                            image.style=b.blank.code
-                            if(image.side == "modelFront") image.side = "front"
-                            if(image.side == "modelBack") image.side = "back"
-                            images.push(image)
-                            foundImages = true
-                        }
-                    })
+                   for(let side of Object.keys(design.images)){
+                        Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).filter(s=> s == side).map((i,j)=>{
+                            //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                            console.log(des.imageGroup)
+                            console.log(imageBlank)
+                            console.log(imageColor)
+                            let color = b.colors.filter(c=> c.name == imageColor.value)[0]
+                            console.log(color, "color")
+                            let foundImages = false
+                            if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
+                                let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
+                                image.side = i
+                                image.style=b.blank.code
+                                if(image.side == "modelFront") image.side = "front"
+                                if(image.side == "modelBack") image.side = "back"
+                                images.push(image)
+                                foundImages = true
+                            }
+                        })
+                    }
                 }
             }
         })
