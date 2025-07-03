@@ -76,9 +76,9 @@ export function Main({binCount, binsInUse, source}){
                         <Typography>{b?.size}</Typography>
                     </Grid2>
                     <Grid2 size={2}>
-                        <Button onClick={()=>{
+                        {/* <Button onClick={()=>{
                             emptyBin(b)
-                        }}>Empty Bin</Button>
+                        }}>Empty Bin</Button> */}
                     </Grid2>
                 </Grid2>
                 </Card>
