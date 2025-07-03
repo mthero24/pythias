@@ -14,14 +14,21 @@ const getImages = async (front, back, style, item)=>{
     let backDesign
     Object.keys(item.design).map(d=>{
         if(!backDesigns.includes(d)) frontDesign = item.design[d]?.replace(
-            "s3.wasabisys.com/teeshirtpalace-node-dev/",
-            "images2.teeshirtpalace.com/"
-            ) + "?width=400";
+            "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+            ).replace(
+        "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+      ) + "?width=400";
         else backDesign = item.design[d]?.replace(
-            "s3.wasabisys.com/teeshirtpalace-node-dev/",
-            "images2.teeshirtpalace.com/"
-            ) + "?width=400";
+            "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+            ).replace(
+        "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+      ) + "?width=400";
     })
+    console.log(frontDesign, "front design from getImages")
     return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName}
 }
 export async function GET(req = NextApiResponse) {
@@ -129,6 +136,7 @@ export async function POST(req = NextApiRequest) {
           };
           await item.save();
         const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design.front, item.design.back, item.styleV2, item)
+        console.log(frontDesign, backDesign,)
         return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: item.design, type: "new" });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });

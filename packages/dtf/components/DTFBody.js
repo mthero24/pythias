@@ -257,6 +257,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                               />
                             </Box>
                             <Box sx={{ background: "#e2e2e2", padding: "1%"}}>
+                              {console.log(submitted.images[im])}
                               <Image
                                   width={500}
                                   alt="back design"
@@ -265,7 +266,10 @@ export function DTFBody({auto, setAuto, printer, type}){
                                     width: "100%",
                                     height: "auto"
                                   }}
-                                  src={submitted.images[im]}
+                                  src={submitted.images[im]?.replace("https://s3.wasabisys.com/teeshirtpalace-node-dev/", "https://images2.teeshirtpalace.com/").replace(
+            "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+            )}
                               />
                             </Box>
                           </Box>

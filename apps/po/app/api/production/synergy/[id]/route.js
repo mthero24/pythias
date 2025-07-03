@@ -30,13 +30,11 @@ const getimagesize = async (options) => {
 };
 export async function GET(request, { params }) {
     let par = await params
+    //console.log(par)
     let item = await Item.findOne({ pieceId: par.id })
     item.color = await Colors.findOne({_id: item.color}).select("name category color_type hexcode image")
     item.styleV2 = await Style.findOne({ code: item.styleCode });
-    console.log(item.styleV2.envleopes);
-    let envleopes = item.styleV2.envleopes.filter(
-        (envelope) => envelope.sizeName == item.sizeName || envelope.size == item.size.toString()
-    );
+    //console.log(item.styleV2.envelopes);
     //console.log(envleopes, "fff");
     let pretreatments = item.styleV2.pretreatments.filter(
         (pre) => pre.type == item.color.color_type
@@ -44,29 +42,51 @@ export async function GET(request, { params }) {
     //console.log(item.color)
     let firefly;
     for (let fly of item.styleV2.firefly) {
-        console.log(fly.type == item.color.color_type);
+        //console.log(fly.type == item.color.color_type);
         if (fly.type == item.color.color_type) firefly = fly;
     }
-    let frontEnvelope = item.styleV2.envelopes.filter(
-        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && envelope.placement == "front"
+    let side
+    if(!item.printedSides) item.printedSides = {}
+    console.log(side)
+    for(let s of Object.keys(item.design).sort((a,b)=>{
+            if(a == "middleChestLarge" || a == "front" || a == "leftPocket" || a == "rightPocket" || a == "middleChestSmall" || a == "right" || a == "left") return -1
+            else return 1
+         })){
+        if(item.design[s] && !item.printedSides[s]){
+            side = s
+            item.printedSides[s] = true
+            break
+        }
+    }
+    console.log(side, "side", item.printedSides[side])
+    if(!side) {
+        console.log("not side")
+        item.printedSides = {}
+         for(let s of Object.keys(item.design).sort((a,b)=>{
+            if(a == "middleChestLarge" || a == "front" || a == "leftPocket" || a == "rightPocket" || a == "middleChestSmall" || a == "right" || a == "left") return -1
+            else return 1
+         })){
+            if(item.design[s] && !item.printedSides[s]){
+                item.printedSides[s] = true
+                side = s
+                break
+            }
+        }
+    }
+    console.log(item.printedSides)
+    let envelope = item.styleV2.envelopes.filter(
+        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && envelope.placement == side
     )[0];
-    let backEnvelope = item.styleV2.envelopes.filter(
-        (envelope) => (envelope.sizeName == item.sizeName || envelope.size == item.size.toString()) && envelope.placement == "back"
-    )[0];
-    let envelope = (item.frontTreated == false && item.design?.front != undefined) || item.design.back == undefined ? frontEnvelope : backEnvelope
     let pretreatment = pretreatments[0];
     console.log(envelope, "envelope");
     let dimensions = await getimagesize(
-        (item.frontTreated == false && item.design?.front != undefined) ||
-        item.design.back == undefined
-        ? item.design?.front.replace(
-            "https://s3.wasabisys.com/teeshirtpalace-node-dev",
-            "https://images2.teeshirtpalace.com"
-            )
-        : item.design.back.replace(
-            "https://s3.wasabisys.com/teeshirtpalace-node-dev",
-            "https://images2.teeshirtpalace.com"
-            )
+       item.design[side].replace(
+        "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+        ).replace(
+        "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
+        "https://images2.teeshirtpalace.com/"
+        )
     );
     console.log(dimensions, "dimensions", typeof envelope.height);
     console.log(envelope.height)
@@ -235,16 +255,10 @@ export async function GET(request, { params }) {
                                     <RegionName i:nil="true"/>
                                     <ServerType>LOCAL</ServerType>
                                     <Uri>${
-                                    (item.frontTreated == false &&
-                                        item.design?.front != undefined) ||
-                                    item.design.back == undefined
-                                        ? item.design?.front
-                                            .replace(/&/g, "&amp;")
-                                            .replace(
+                                        item.design[side]?.replace(/&/g, "&amp;").replace(
                                             "https://s3.wasabisys.com/teeshirtpalace-node-dev",
                                             "https://images2.teeshirtpalace.com"
-                                            )
-                                        : item.design.back.replace(/&/g, "&amp;")
+                                        )
                                     }</Uri>
                                 </ArtFile>
                                 <CropToImage>false</CropToImage>
@@ -254,13 +268,7 @@ export async function GET(request, { params }) {
                                 <ImageHorizontalAlignment i:nil="true"/>
                                 <ImageScaleMethod>FIT_ART_TO_ENVELOPE</ImageScaleMethod>
                                 <ImageVerticalAlignment>CENTER</ImageVerticalAlignment>
-                                <Location>${
-                                (item.frontTreated == false &&
-                                    item.design?.front != undefined) ||
-                                item.design.back == undefined
-                                    ? "FRONT"
-                                    : "BACK"
-                                }</Location>
+                                <Location>${envelope.placement}</Location>
                                 <LocationDisplayColor i:nil="true"/>
                                 <ManualImageScale i:nil="true"/>
                                 <Pretreat>
@@ -407,19 +415,12 @@ export async function GET(request, { params }) {
                                     <RegionName i:nil="true"/>
                                     <ServerType>LOCAL</ServerType>
                                     <Uri>${
-                                    (item.frontTreated == false &&
-                                        item.design?.front != undefined) ||
-                                    item.design.back == undefined
-                                        ? `${createImage(
+                                        createImage(
                                             item.color.name,
                                             item.styleV2.code,
-                                            { url: item.design?.front }
-                                        ).replace(/&/g, "&amp;")}`
-                                        : `${createImage(
-                                            item.color.name,
-                                            item.styleV2.code,
-                                            { url: item.design.back }
-                                        ).replace(/&/g, "&amp;")}`
+                                            { url: item.design[side], printArea: side, side: side == "back" || side == "namePlate"? "back": "front" }
+                                        ).replace(/&/g, "&amp;")
+                                    }
                                     }</Uri>
                                 </Thumbnail>
                                 <TotalQuantity>1</TotalQuantity>
@@ -476,6 +477,7 @@ export async function GET(request, { params }) {
         status: "Treatment Machine",
         date: new Date(),
     });
+    item.markModified("printedSides")
     await item.save();
     return new NextResponse(xml, {
     status: 200,

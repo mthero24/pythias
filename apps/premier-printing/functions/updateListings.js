@@ -107,7 +107,7 @@ const createKohlsVariant = ({p,v, bImages, material, feature_1, feature_2, featu
     if(variant["feature_1"] && variant["feature_1"].toString().length > 250) variant["feature_1"] = variant["feature_1"].toString().substring(0, 250)
     if(variant["feature_5"] && variant["feature_5"].toString().length > 250) variant["feature_5"] = variant["feature_5"].toString().substring(0, 250)
     console.log(variant["feature_1"])
-    if(variant.product_category.includes("{gender}")) {
+    if(variant.product_category?.includes("{gender}")) {
         if(p.design.gender) variant.product_category = variant.product_category.replace("{gender}", p.design.gender)
         else variant.product_category = variant.product_category.replace("{gender}", "Girl")
     }
@@ -261,6 +261,8 @@ export async function updateListings(csvupdate, sendTo){
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
         for(let design of designs){
             console.log(i, "designs finished")
+            csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
+            if(!csvUpdate.active) break
             i++
             //console.log(design.blanks.length)
             if(design.blanks.length > 0){

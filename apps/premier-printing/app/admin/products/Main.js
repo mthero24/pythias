@@ -18,6 +18,17 @@ export function Main({act, past, brands}){
             setFiles(res.data.past)
         }
     }
+    const stopCSV = async ()=>{
+        let res = await axios.put("/api/admin/create-csv", sendTo)
+        if(res.data.error) setActive(false)
+        else {
+            console.log(res.data.past, "past")
+            let send = {target: true, kohls: true, simplySimon: true}
+            setSendTo({...send})
+            setActive(null)
+            setFiles(res.data.past)
+        }
+    }
     const generateUPC = async ()=>{
         let res = await axios.post("/api/admin/upc")
         console.log(res)
@@ -83,7 +94,7 @@ export function Main({act, past, brands}){
                                     <Typography>{!active.infoGathered? "Gathering Info": !active.dataParsed? "Parsing Data": "CSV's Ready"}</Typography>
                                 </Box>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center"}}>
-
+                                    <Button sx={{background: "red", color: "#fff"}} onClick={stopCSV}>Stop</Button>
                                 </Box>
                             </Box>
                         </Box>
