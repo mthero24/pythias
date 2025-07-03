@@ -102,7 +102,7 @@ export async function POST(req = NextApiRequest){
                   quantity: 1,
                   codeFormat: 128,
                   pause: "P",
-                  QuantityToStack: 1,
+                  QuantityToStack: 8,
                   Recipe: foldSettings.fold,
                   exit: item.order.preShipped == true ? "Pack" : "Stack",
                   roqNew: true
