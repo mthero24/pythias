@@ -12,6 +12,7 @@ import DashCard from "@/components/DashCard";
 import SortableTable from "@/components/SortableTable";
 import axios from "axios";
 import Theme from "@/components/Theme";
+
 export function Main({ blanks }) {
     const [visibleBlanks, setVisibleBlanks] = useState(blanks);
     useEffect(()=>{
