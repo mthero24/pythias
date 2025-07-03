@@ -289,3 +289,67 @@ export const uploadProductImage = async (uri, credentials, type) => {
     console.log(result?.data.data)
     return {error: false, uri: result?.data.data.uri}
 };
+
+export const getOrders = async ({next_page_token, credentials}) => {
+     const config = await getConfig();
+    let accessToken = credentials.access_token;
+    const baseUrl =
+        "https://open-api.tiktokglobalshop.com/order/202309/orders/search";
+    const params = {
+      app_key: config.app_key,
+      page_size: 100,
+      shop_cipher: credentials.shop_cipher,
+      shop_id: "",
+      version: "202309",
+      category_version: "v2", // Add this line for US shop
+    };
+    if (next_page_token) {
+        params["page_token"] = next_page_token;
+    }
+    const body = {
+        order_status: "AWAITING_SHIPMENT",
+    };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(
+        signUrl,
+        config.app_secret,
+        body
+    );
+    params["sign"] = signature;
+    params["timestamp"] = timestamp;
+    params["access_token"] = accessToken;
+    let finalUrl = buildUrl(baseUrl, params);
+
+    try {
+        let errRes;
+        let result = await axios
+          .post(finalUrl, body, {
+            headers: {
+              "Content-Type": "application/json",
+              "x-tts-access-token": accessToken,
+            },
+          })
+          .catch((e) => {
+            console.log(e.response.data);
+          });
+        if (errRes) {
+          if (errRes.code == 36009004) {
+            return { error: true, msg: "refresh" };
+          } else {
+            return { error: true, msg: errRes.code };
+          }
+        } ;
+        console.log(result.data);
+        let orders = result.data.data.orders;
+        if (result.data.data.next_page_token) {
+        let nextPageOrders = await getOrders(
+          {next_page_token: result.data.data.next_page_token,
+          credentials}
+        );
+        orders = [...nextPageOrders, ...orders];
+        }
+        return { error: true, orders: orders };
+    } catch (err) {
+        return { error: true, msg: JSON.stringify(err) };
+    }
+};

@@ -15,4 +15,15 @@ export {getItemsWalmart, retireItemWalmart, bulkUploadWalmart, getSpecWalmart,ge
 export {Main} from "./components/Main";
 export {createTikTokCsv} from "./functions/csvfunctions/tiktok";
 export {createShopifyCsv} from "./functions/csvfunctions/shopify";
-export {getAuthorizedShops, getAccessTokenFromRefreshToken, getAccessTokenUsingAuthCode, uploadProductImage, generateAuthorizationUrl, getRecommendedCategory, getWarehouses, getAttributes, createProduct} from "./functions/tiktokpy";
+export {
+  getAuthorizedShops,
+  getAccessTokenFromRefreshToken,
+  getAccessTokenUsingAuthCode,
+  uploadProductImage,
+  generateAuthorizationUrl,
+  getRecommendedCategory,
+  getWarehouses,
+  getAttributes,
+  createProduct,
+  getOrders as getOrdersTikTok,
+} from "./functions/tiktokpy";
