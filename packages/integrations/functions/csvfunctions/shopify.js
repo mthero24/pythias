@@ -95,7 +95,7 @@ const createTikTokVariant = ({p, v, image})=>{
       sku: v.sku,
       vendor: "Imperial The Label",
       option1: "color",
-      color: v.threadColor ? `${v.color.name}` : null,
+      color: `${v.color.name}`,
       option2: "size",
       tags: p.design.tags,
       Type: p.blank.blank.category,
