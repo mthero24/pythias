@@ -128,9 +128,7 @@ export  const createTikTokCsv = async ({products})=>{
     //console.log(products)
     //console.log("product", products.length)
     let csvString =  await csvStringifier.stringifyRecords([...sendProducts])
-    csvString = `
-        ${csvStringifier.getHeaderString()}${csvString}
-    `
+    csvString = `${csvStringifier.getHeaderString()}${csvString}`
     let url = `csv/tiktok/${Date.now()}.csv`
     let params = {
         Bucket: "images1.pythiastechnologies.com",
