@@ -4,6 +4,7 @@ import axios from "axios";
 import Link from "next/link";
 import LoaderOverlay from "@/components/LoaderOverlay";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import CloseIcon from "@mui/icons-material/Close";
 import {useState} from "react";
 export function Main({blank}){
     const [loading, setLoading] = useState(false);
@@ -54,19 +55,60 @@ export function Main({blank}){
             <Button onClick={generateInventory}>
               Generate Missing Inventory
             </Button>
-            <Button onClick={()=>{setHeadingModal(true); setHeading(style.kohlsHeader); setHeadingName("kohlsHeader")}}>
+            <Button
+              onClick={() => {
+                setHeadingModal(true);
+                setHeading(style.kohlsHeader);
+                setHeadingName("kohlsHeader");
+              }}
+            >
               Kohls CSV Headers
             </Button>
-            <Button onClick={()=>{setHeadingModal(true); setHeading(style.targetHeader); setHeadingName("targetHeader")}}>
+            <Button
+              onClick={() => {
+                setHeadingModal(true);
+                setHeading(style.targetHeader);
+                setHeadingName("targetHeader");
+              }}
+            >
               Target CSV Headers
             </Button>
-             <Button onClick={()=>{setHeadingModal(true); setHeading(style.shopSimonHeader); setHeadingName("shopSimonHeader")}}>
+            <Button
+              onClick={() => {
+                setHeadingModal(true);
+                setHeading(style.shopSimonHeader);
+                setHeadingName("shopSimonHeader");
+              }}
+            >
               Shop-Simon CSV Headers
             </Button>
-            <Button onClick={()=>{setHeadingModal(true); setHeading(style.tikTokHeader); setHeadingName("tikTokHeader")}}>
+            <Button
+              onClick={() => {
+                setHeadingModal(true);
+                setHeading(style.tikTokHeader);
+                setHeadingName("tikTokHeader");
+              }}
+            >
               Tik Tok CSV Headers
             </Button>
-            <HeaderModal open={headingModal} setOpen={setHeadingModal} header={heading} setHeader={setHeading} style={style} setStyle={setStyle} headingName={headingName} />
+            <Button
+              onClick={() => {
+                setHeadingModal(true);
+                setHeading(style.shopifyHeader);
+                setHeadingName("shopifyHeader");
+              }}
+            >
+              Shopify Headers
+            </Button>
+            <HeaderModal
+              open={headingModal}
+              setOpen={setHeadingModal}
+              header={heading}
+              setHeader={setHeading}
+              style={style}
+              setStyle={setStyle}
+              headingName={headingName}
+            />
           </div>
         </div>
         {loading && <LoaderOverlay />}
@@ -135,6 +177,9 @@ const HeaderModal = ({open, setOpen, header, setHeader, headingName, style, setS
       aria-describedby="modal-modal-description"
     >
       <Box sx={modalStyle}>
+        <Box sx={{display: "flex",justifyContent: "flex-end", flexDirection: "row", "&:hover": {cursor: "pointer", color: "red"}}} onClick={()=>{setOpen(false)}}>
+          <CloseIcon />
+        </Box>
         <Typography id="modal-modal-title" variant="h6" component="h2" textAlign="center">
           {headingName}
         </Typography>

@@ -64,10 +64,14 @@ const SchemaObj = new Schema(
         height: { type: Number, default: 15 },
         vertoffset: { type: Number, default: 0.4 },
         horizoffset: { type: Number, default: 0 },
-        placement: {type: String, enum: ["front", "back", "sleeve", "pocket", "hood", "leg", "side"], default: "front" }
+        placement: {
+          type: String,
+          enum: ["front", "back", "sleeve", "pocket", "hood", "leg", "side"],
+          default: "front",
+        },
       },
     ],
-    
+
     fold: [
       {
         size: String,
@@ -91,15 +95,15 @@ const SchemaObj = new Schema(
     multiImages: {
       front: imageSchema,
       back: imageSchema,
-      sleeve:imageSchema,
+      sleeve: imageSchema,
       pocket: imageSchema,
       hood: imageSchema,
-      leg:imageSchema,
+      leg: imageSchema,
       side: imageSchema,
       upperSleeve: imageSchema,
       lowerSleeve: imageSchema,
       center: imageSchema,
-      modelFront:imageSchema,
+      modelFront: imageSchema,
       modelBack: imageSchema,
     },
     //box.default['garment]
@@ -139,10 +143,13 @@ const SchemaObj = new Schema(
     targetHeader: Object,
     shopSimonHeader: Object,
     tikTokHeader: Object,
-    printLocations: [{
+    shopifyHeader: Object,
+    printLocations: [
+      {
         type: mongoose.Schema.Types.ObjectId,
         ref: printLocations,
-      }]
+      },
+    ],
   },
   { strict: false }
 );

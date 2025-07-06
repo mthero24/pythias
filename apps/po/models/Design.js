@@ -10,7 +10,7 @@ const schema = new mongoose.Schema({
     front: { type: String },
     back: { type: String },
     leftSleeve: { type: String },
-    rghtSleeve: { type: String },
+    rightSleeve: { type: String },
   },
   stores: [
     {

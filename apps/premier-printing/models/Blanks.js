@@ -64,10 +64,14 @@ const SchemaObj = new Schema(
         height: { type: Number, default: 15 },
         vertoffset: { type: Number, default: 0.4 },
         horizoffset: { type: Number, default: 0 },
-        placement: {type: String, enum: ["front", "back", "sleeve", "pocket", "hood", "leg", "side"], default: "front" }
+        placement: {
+          type: String,
+          enum: ["front", "back", "sleeve", "pocket", "hood", "leg", "side"],
+          default: "front",
+        },
       },
     ],
-    
+
     fold: [
       {
         size: String,
@@ -121,14 +125,17 @@ const SchemaObj = new Schema(
     searchTagKeywords: [{ type: String }],
     searchTagModifiers: [{ type: String }],
     tags: [{ type: String }],
-     kohlsHeader: Object,
+    kohlsHeader: Object,
     targetHeader: Object,
     shopSimonHeader: Object,
     tikTokHeader: Object,
-    printLocations: [{
+    shopifyHeader: Object,
+    printLocations: [
+      {
         type: mongoose.Schema.Types.ObjectId,
         ref: printLocations,
-      }]
+      },
+    ],
   },
   { strict: false }
 );
