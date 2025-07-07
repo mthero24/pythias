@@ -29,8 +29,8 @@ const createProductImages = (design, blank,)=>{
     if(design.threadColors && design.threadColors.length > 0){
         for(let tc of design.threadColors){
             let designImages = design.threadImages[tc.name]
-            if(designImages[key]){
-                for(let key of Object.keys(designImages)){
+            for(let key of Object.keys(designImages)){
+                if(designImages[key]){
                     let blankImages = blank.blank.multiImages[key]
                     if(blank.defaultColor){
                         let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())
@@ -55,8 +55,8 @@ const createProductImages = (design, blank,)=>{
         }
     }else{
         let designImages = design.images
-        if(designImages[key]){
-            for(let key of Object.keys(designImages)){
+        for(let key of Object.keys(designImages)){
+            if(designImages[key]){
                 let blankImages = blank.blank.multiImages[key]
                 if(blank.defaultColor){
                     let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())

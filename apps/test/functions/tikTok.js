@@ -105,7 +105,7 @@ export async function uploadTikTokImage({image,type}){
     }
     return res
 }
-export async function createTikTokProduct({product}){
+export async function createTikTokProduct({product, update}){
     let credentials = await TikTokAuth.findOne({provider: "test"})
     if(!credentials.shop_list[0]) credentials = await getShops()
     let tiktokProduct = {
@@ -250,10 +250,10 @@ export async function createTikTokProduct({product}){
             tiktokProduct.size_chart.image = {uri: res.uri}
         }
     }
-    let res = await createProduct({tiktokProduct, credentials})
+    let res = await createProduct({tiktokProduct, credentials, update})
     if(res.error && res.msg == "refresh"){
         credentials = await refresh(credentials);
-        res = await createProduct({tiktokProduct, credentials})
+        res = await createProduct({tiktokProduct, credentials, update})
     }
     console.log(res.product?.skus[0].sales_attributes)
     let design = await Design.findById(product.design._id)
@@ -283,7 +283,7 @@ export const getOrders = async (auths)=>{
                 credentials = await refresh(credentials, store.shop_cipher);
                 res = await getOrdersTikTok({ credentials});
             }
-            console.log(!res.error, "res")
+            //console.log(!res.error, "res")
             if(!res.error) {
                 let ords = [];
                 for (let o of res.orders) {
@@ -292,67 +292,70 @@ export const getOrders = async (auths)=>{
                         sellerId: credentials._id,
                         shopId: store.shop_id,
                     };
-                    console.log(o)
+                    //console.log(o)
                     ords.push(o);
                 }
-                console.log(ords, "orders")
+                ///console.log(ords, "orders")
                 orders = orders.concat(ords)
             }
         }
     }
-    console.log(orders)
+    //console.log(orders)
     return orders
 }
 
 export const processOrders = async (orders)=>{
     for(let o of orders){
+        console.log(o.status, "+++++++++++++++++++++++++");
         let order = await Order.findOne({poNumber: o.id})
         if (!order) {
-            //console.log(o);
+            console.log(o.status, "+++++++++++++++++++++++++");
             //console.log(o.recipient_address)
             //console.log(o.recipient_address.district_info);
             order = new Order({
-                orderId: `${o.create_time}_${o.id}`,
-                poNumber: o.id,
-                email: o.buyer_email,
-                date: new Date(Date.now()),
-                status: o.status,
-                uniquePo: `${o.id}-${o.create_time}-tik_tok`,
-                shippingAddress: {
+              orderId: `${o.create_time}_${o.id}`,
+              poNumber: o.id,
+              email: o.buyer_email,
+              date: new Date(Date.now()),
+              status: o.status.toLowerCase(),
+              uniquePo: `${o.id}-${o.create_time}-tik_tok`,
+              shippingAddress: {
                 name: o.recipient_address.name,
                 address1: o.recipient_address.address_line1,
                 address2: o.recipient_address.address_line2,
                 city: o.recipient_address.district_info.filter(
-                    (d) => d.address_level_name == "City"
+                  (d) => d.address_level_name == "City"
                 )[0]
-                    ? o.recipient_address.district_info.filter(
-                        (d) => d.address_level_name == "City"
+                  ? o.recipient_address.district_info.filter(
+                      (d) => d.address_level_name == "City"
                     )[0].address_name
-                    : "not provided",
+                  : "not provided",
                 zip: o.recipient_address.postal_code,
                 state: o.recipient_address.district_info.filter(
-                    (d) => d.address_level_name == "State"
+                  (d) => d.address_level_name == "State"
                 )[0]
-                    ? stateAbbreviations[
-                        o.recipient_address.district_info.filter(
+                  ? stateAbbreviations[
+                      o.recipient_address.district_info.filter(
                         (d) => d.address_level_name == "State"
-                        )[0].address_name
+                      )[0].address_name
                     ]
                     ? stateAbbreviations[
                         o.recipient_address.district_info.filter(
-                            (d) => d.address_level_name == "State"
+                          (d) => d.address_level_name == "State"
                         )[0].address_name
-                        ]
+                      ]
                     : o.recipient_address.district_info.filter(
                         (d) => d.address_level_name == "State"
-                        )[0].address_name
-                    : "not provided",
+                      )[0].address_name
+                  : "not provided",
                 country: o.recipient_address.region_code,
-                },
-                shippingType: o.delivery_option_name.replace("Shipping", "").trim(),
-                marketplace: "tik tok",
-                total: o.payment.total_amount,
-                paid: true,
+              },
+              shippingType: o.delivery_option_name
+                .replace("Shipping", "")
+                .trim(),
+              marketplace: "tik tok",
+              total: o.payment.total_amount,
+              paid: true,
             });
             //console.log(order)
             order = await order.save()
@@ -376,27 +379,33 @@ export const processOrders = async (orders)=>{
                     )[0];
                 } else {
                     blank = await Blanks.findOne({
-                    code: i.sku?.split("_")[0],
+                      code: i.seller_sku?.split("_")[0],
                     });
                     color = await Colors.findOne({
-                    name: i.sku?.split("_")[1],
+                      name: i.seller_sku?.split("_")[1],
                     });
                     if (!color)
                     await Colors.findOne({ name: i.sku?.split("_")[2] });
                     if (blank) {
                     size = blank.sizes?.filter(
-                        (s) =>
+                      (s) =>
                         s.name.toLowerCase() ==
-                        i.sku.split("_")[2]?.replace("Y", "").toLowerCase()
+                        i.seller_sku
+                          .split("_")[2]
+                          ?.replace("Y", "")
+                          .toLowerCase()
                     )[0];
                     if (!size)
                         size = blank.sizes?.filter(
-                        (s) =>
+                          (s) =>
                             s.name.toLowerCase() ==
-                            i.sku.split("_")[1]?.replace("Y", "").toLowerCase()
+                            i.seller_sku
+                              .split("_")[1]
+                              ?.replace("Y", "")
+                              .toLowerCase()
                         )[0];
                     }
-                    let dSku = i.sku?.split("_").splice(3);
+                    let dSku = i.seller_sku?.split("_").splice(3);
                     let designSku = "";
                     if (dSku) {
                     for (let j = 0; j < dSku.length; j++) {
@@ -411,46 +420,46 @@ export const processOrders = async (orders)=>{
                     code: blank.code.split("_")[1],
                     });
                     let shirtItem = new Item({
-                        pieceId: await generatePieceID(),
-                        paid: true,
-                        sku: i.sku,
-                        upc: i.upc,
-                        orderItemId: i.orderItemId,
-                        blank: sb,
-                        styleCode: sb?.code,
-                        sizeName: size?.name,
-                        colorName: color?.name,
-                        color,
-                        size,
-                        design: design?.images,
-                        designRef: design,
-                        order: order._id,
-                        shippingType: order.shippingType,
-                        quantity: 1,
-                        status: order.status,
-                        name: i.name,
-                        date: order.date,
+                      pieceId: await generatePieceID(),
+                      paid: true,
+                      sku: i.seller_sku,
+                      upc: i.upc,
+                      orderItemId: i.orderItemId,
+                      blank: sb,
+                      styleCode: sb?.code,
+                      sizeName: size?.name,
+                      colorName: color?.name,
+                      color,
+                      size,
+                      design: design?.images,
+                      designRef: design,
+                      order: order._id,
+                      shippingType: order.shippingType,
+                      quantity: 1,
+                      status: order.status,
+                      name: i.product_name,
+                      date: order.date,
                     });
                     let item = new Item({
-                        pieceId: await generatePieceID(),
-                        paid: true,
-                        sku: i.sku,
-                        upc: i.upc,
-                        orderItemId: i.orderItemId,
-                        blank,
-                        styleCode: blank?.code,
-                        sizeName: size?.name,
-                        colorName: color?.name,
-                        color,
-                        size,
-                        design: design?.images,
-                        designRef: design,
-                        order: order._id,
-                        shippingType: order.shippingType,
-                        quantity: 1,
-                        status: order.status,
-                        name: i.name,
-                        date: order.date,
+                      pieceId: await generatePieceID(),
+                      paid: true,
+                      sku: i.seller_sku,
+                      upc: i.upc,
+                      orderItemId: i.orderItemId,
+                      blank,
+                      styleCode: blank?.code,
+                      sizeName: size?.name,
+                      colorName: color?.name,
+                      color,
+                      size,
+                      design: design?.images,
+                      designRef: design,
+                      order: order._id,
+                      shippingType: order.shippingType,
+                      quantity: 1,
+                      status: order.status,
+                      name: i.product_name,
+                      date: order.date,
                     });
                     //console.log(item)
                     await item.save();
@@ -460,46 +469,46 @@ export const processOrders = async (orders)=>{
                 } else if (blank && blank.code == "LGDSET") {
                     let sb = await Blanks.findOne({ code: "LGDSWT" });
                     let shirtItem = new Item({
-                        pieceId: await generatePieceID(),
-                        paid: true,
-                        sku: i.sku,
-                        upc: i.upc,
-                        orderItemId: i.orderItemId,
-                        blank: sb,
-                        styleCode: sb?.code,
-                        sizeName: size?.name,
-                        colorName: color?.name,
-                        color,
-                        size,
-                        design: design?.images,
-                        designRef: design,
-                        order: order._id,
-                        shippingType: order.shippingType,
-                        quantity: 1,
-                        status: order.status,
-                        name: i.name,
-                        date: order.date,
+                      pieceId: await generatePieceID(),
+                      paid: true,
+                      sku: i.seller_sku,
+                      upc: i.upc,
+                      orderItemId: i.orderItemId,
+                      blank: sb,
+                      styleCode: sb?.code,
+                      sizeName: size?.name,
+                      colorName: color?.name,
+                      color,
+                      size,
+                      design: design?.images,
+                      designRef: design,
+                      order: order._id,
+                      shippingType: order.shippingType,
+                      quantity: 1,
+                      status: order.status,
+                      name: i.product_name,
+                      date: order.date,
                     });
                     let item = new Item({
-                        pieceId: await generatePieceID(),
-                        paid: true,
-                        sku: i.sku,
-                        upc: i.upc,
-                        orderItemId: i.orderItemId,
-                        blank,
-                        styleCode: blank?.code,
-                        sizeName: size?.name,
-                        colorName: color?.name,
-                        color,
-                        size,
-                        design: design?.images,
-                        designRef: design,
-                        order: order._id,
-                        shippingType: order.shippingType,
-                        quantity: 1,
-                        status: order.status,
-                        name: i.name,
-                        date: order.date,
+                      pieceId: await generatePieceID(),
+                      paid: true,
+                      sku: i.seller_sku,
+                      upc: i.upc,
+                      orderItemId: i.orderItemId,
+                      blank,
+                      styleCode: blank?.code,
+                      sizeName: size?.name,
+                      colorName: color?.name,
+                      color,
+                      size,
+                      design: design?.images,
+                      designRef: design,
+                      order: order._id,
+                      shippingType: order.shippingType,
+                      quantity: 1,
+                      status: order.status,
+                      name: i.product_name,
+                      date: order.date,
                     });
                     //console.log(item)
                     await item.save();
@@ -509,46 +518,46 @@ export const processOrders = async (orders)=>{
                 } else if (blank && blank.code == "LGDSET") {
                     let sb = await Blanks.findOne({ code: "GDT" });
                     let shirtItem = new Item({
-                        pieceId: await generatePieceID(),
-                        paid: true,
-                        sku: i.sku,
-                        upc: i.upc,
-                        orderItemId: i.orderItemId,
-                        blank: sb,
-                        styleCode: sb?.code,
-                        sizeName: size?.name,
-                        colorName: color?.name,
-                        color,
-                        size,
-                        design: design?.images,
-                        designRef: design,
-                        order: order._id,
-                        shippingType: order.shippingType,
-                        quantity: 1,
-                        status: order.status,
-                        name: i.name,
-                        date: order.date,
+                      pieceId: await generatePieceID(),
+                      paid: true,
+                      sku: i.seller_sku,
+                      upc: i.upc,
+                      orderItemId: i.orderItemId,
+                      blank: sb,
+                      styleCode: sb?.code,
+                      sizeName: size?.name,
+                      colorName: color?.name,
+                      color,
+                      size,
+                      design: design?.images,
+                      designRef: design,
+                      order: order._id,
+                      shippingType: order.shippingType,
+                      quantity: 1,
+                      status: order.status,
+                      name: i.product_name,
+                      date: order.date,
                     });
                     let item = new Item({
-                        pieceId: await generatePieceID(),
-                        paid: true,
-                        sku: i.sku,
-                        upc: i.upc,
-                        orderItemId: i.orderItemId,
-                        blank,
-                        styleCode: blank?.code,
-                        sizeName: size?.name,
-                        colorName: color?.name,
-                        color,
-                        size,
-                        design: design?.images,
-                        designRef: design,
-                        order: order._id,
-                        shippingType: order.shippingType,
-                        quantity: 1,
-                        status: order.status,
-                        name: i.name,
-                        date: order.date,
+                      pieceId: await generatePieceID(),
+                      paid: true,
+                      sku: i.seller_sku,
+                      upc: i.upc,
+                      orderItemId: i.orderItemId,
+                      blank,
+                      styleCode: blank?.code,
+                      sizeName: size?.name,
+                      colorName: color?.name,
+                      color,
+                      size,
+                      design: design?.images,
+                      designRef: design,
+                      order: order._id,
+                      shippingType: order.shippingType,
+                      quantity: 1,
+                      status: order.status,
+                      name: i.product_name,
+                      date: order.date,
                     });
                     //console.log(item)
                     await item.save();
@@ -556,44 +565,45 @@ export const processOrders = async (orders)=>{
                     items.push(item);
                     items.push(shirtItem);
                 } else {
+                    console.log(i)
                     let item = new Item({
-                        pieceId: await generatePieceID(),
-                        paid: true,
-                        sku: i.sku,
-                        upc: i.upc,
-                        orderItemId: i.orderItemId,
-                        blank,
-                        styleCode: blank?.code,
-                        sizeName: size?.name,
-                        colorName: color?.name,
-                        color,
-                        size,
-                        design: design?.images,
-                        designRef: design,
-                        order: order._id,
-                        shippingType: order.shippingType,
-                        quantity: 1,
-                        status: order.status,
-                        name: i.name,
-                        date: order.date,
+                      pieceId: await generatePieceID(),
+                      paid: true,
+                      sku: i.seller_sku,
+                      upc: i.upc,
+                      orderItemId: i.orderItemId,
+                      blank,
+                      styleCode: blank?.code,
+                      sizeName: size?.name,
+                      colorName: color?.name,
+                      color,
+                      size,
+                      design: design?.images,
+                      designRef: design,
+                      order: order._id,
+                      shippingType: order.shippingType,
+                      quantity: 1,
+                      status: order.status,
+                      name: i.product_name,
+                      date: order.date,
                     });
                     console.log(item)
-                    //await item.save();
+                    await item.save();
                     items.push(item);
                 }
             }
             console.log(items)
             order.items = items;
         } else {
-            order.status = o.orderStatus;
-            if (order.status == "shipped") {
+            order.status = o.status.toLowerCase();
+            if (order.status.toLowerCase() == "shipped") {
                 order.items.map(async (i) => {
                 i.status = order.status;
                 i.labelPrinted = true;
                 i = await i.save();
                 });
             }
-            if (order.status == "CANCELLED") {
+            if (order.status.toLowerCase() == "CANCELLED") {
               order.items.map(async (i) => {
                 i.status = order.status;
                 i.canceled = true;
@@ -601,7 +611,7 @@ export const processOrders = async (orders)=>{
               });
             }
         }
-        console.log(order)
+        //console.log(order)
         order = await order.save();
     }
     return {error: false}

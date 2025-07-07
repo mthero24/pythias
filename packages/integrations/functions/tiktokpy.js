@@ -93,10 +93,10 @@ export const getAuthorizedShops = async (credentials) => {
         return {error: true, msg: "refresh"}
     }
 };
-export async function createProduct({tiktokProduct, credentials}){
+export async function createProduct({tiktokProduct, credentials, update}){
     let config = await getConfig()
      const baseUrl =
-      "https://open-api.tiktokglobalshop.com/product/202309/products";
+      `https://open-api.tiktokglobalshop.com/product/202309/products${update? `/${update}`: ""}`;
     let accessToken = credentials.access_token;
     const params = {
       app_key: config.app_key,
@@ -115,12 +115,31 @@ export async function createProduct({tiktokProduct, credentials}){
     params["access_token"] = accessToken;
     let finalUrl = buildUrl(baseUrl, params);
     let errRes
-    let result = await axios.post(finalUrl, {...tiktokProduct}, {
-      headers: {
-        "Content-Type": "application/json",
-        "x-tts-access-token": accessToken,
-      },
-    }).catch(e=>{console.log(e.response.data)});
+    let result;
+    if(!update){
+      result = await axios.post(finalUrl, {...tiktokProduct}, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-tts-access-token": accessToken,
+        },
+      }).catch(e=>{console.log(e.response.data); errRes = e.response.data});
+    }else{
+      result = await axios
+        .put(
+          finalUrl,
+          { ...tiktokProduct },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "x-tts-access-token": accessToken,
+            },
+          }
+        )
+        .catch((e) => {
+          console.log(e.response.data);
+          errRes = e.response.data;
+        });
+    }
     if(errRes){
         if (errRes.code == 36009004 || errRes.code == 105002) {
           return { error: true, msg: "refresh" };

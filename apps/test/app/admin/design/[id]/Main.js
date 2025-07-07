@@ -394,8 +394,8 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
-    const sendToTikTok = async ({blank})=>{
-        let res = await axios.post("/api/admin/integrations/tiktok", {design: des._id, blank: blank._id})
+    const sendToTikTok = async ({blank, id})=>{
+        let res = await axios.post("/api/admin/integrations/tiktok", {design: des._id, blank: blank._id, update: id})
         if(res && res.data.error) alert("Something Went Wrong")
         else alert("sent to tik tok")
     }
@@ -787,7 +787,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     {b.marketPlaceIds && b.marketPlaceIds["tiktok"]? <Typography>Tik Tok id: {b.marketPlaceIds["tiktok"]}</Typography>: 
                                     <Button onClick={()=>{sendToTikTok({blank: b})}}>Send To TikTok</Button>}
                                     {b.marketPlaceIds && b.marketPlaceIds["tiktok"]? <Box>
-                                        <Button sx={{background: "blue", color: "#fff"}}>Update</Button>
+                                        <Button sx={{background: "blue", color: "#fff"}} onClick={()=>{sendToTikTok({blank: b, id: b.marketPlaceIds["tiktok"]})}}>Update</Button>
                                         <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>
                                         <Button sx={{background: "yellow", color: "#000"}}>Delete</Button>
                                     </Box>: 

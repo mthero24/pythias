@@ -105,7 +105,7 @@ export async function POST(req=NextApiRequest){
     
     console.log(products[0], products.length)
     for(let product of products){
-        createTikTokProduct({product})
+        createTikTokProduct({product, update: data.update})
     }
     return NextResponse.json({error: false})
 }
