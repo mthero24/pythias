@@ -157,7 +157,7 @@ export async function updateListings(csvupdate, sendTo){
                             }
                         }
                         let product = {
-                            name: `Imperial The Label ${design.name} ${design.printType == "EMB"? "Embroidered": "Printed"} ${b.blank.name}`,
+                            name: `${design.name} ${design.printType == "EMB"? "Embroidered": "Printed"} ${b.blank.name}`,
                             sku: `${design.sku}_${b.blank.code}`,
                             brand: b.blank.brand,
                             design: design,
