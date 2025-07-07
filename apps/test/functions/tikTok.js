@@ -96,7 +96,7 @@ export async function getShops(){
 }
 
 export async function uploadTikTokImage({image,type}){
-    let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
+    let credentials = await TikTokAuth.findOne({provider: "test"})
     let res = await uploadProductImage(image, credentials, type)
     if(res.error && res.error.msg == "refresh"){
         credentials = await refresh(credentials);
@@ -105,7 +105,7 @@ export async function uploadTikTokImage({image,type}){
     return res
 }
 export async function createTikTokProduct({product}){
-    let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
+    let credentials = await TikTokAuth.findOne({provider: "test"})
     let tiktokProduct = {
         save_mode: "LISTING",
         description: product.description,
