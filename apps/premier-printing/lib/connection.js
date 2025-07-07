@@ -2,7 +2,7 @@ import mongoose from "mongoose"
 function makeNewConnection(uri) {
     //console.log("connections")
     //console.log(uri)
-    console.log(process.env.pythiasMongoUrl);
+    console.log(process.env.pythiasMongoURL);
     const db = mongoose.createConnection(uri, {
     })
 
@@ -34,4 +34,4 @@ function makeNewConnection(uri) {
 }
 export const PremierPrinting = makeNewConnection(process.env.mongoURL);
 //console.log(process.env.pythiasMongoUrl);
-export const Pythias = makeNewConnection(process.env.pythiasMongoUrl)
+export const Pythias = makeNewConnection(process.env.pythiasMongoURL)
