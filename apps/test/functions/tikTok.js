@@ -314,7 +314,7 @@ export const processOrders = async (orders)=>{
                 poNumber: o.id,
                 email: o.buyer_email,
                 date: new Date(Date.now()),
-                status: o.orderStatus,
+                status: o.status,
                 uniquePo: `${o.id}-${o.create_time}-tik_tok`,
                 shippingAddress: {
                 name: o.recipient_address.name,
@@ -353,6 +353,7 @@ export const processOrders = async (orders)=>{
                 paid: true,
             });
             //console.log(order)
+            order = await order.save()
             //save order
             let items = [];
             for (let i of o.line_items) {
@@ -450,8 +451,8 @@ export const processOrders = async (orders)=>{
                         date: order.date,
                     });
                     //console.log(item)
-                // await item.save();
-                    //await shirtItem.save();
+                    await item.save();
+                    await shirtItem.save();
                     items.push(item);
                     items.push(shirtItem);
                 } else if (blank && blank.code == "LGDSET") {
@@ -499,8 +500,8 @@ export const processOrders = async (orders)=>{
                         date: order.date,
                     });
                     //console.log(item)
-                    //await item.save();
-                    //await shirtItem.save();
+                    await item.save();
+                    await shirtItem.save();
                     items.push(item);
                     items.push(shirtItem);
                 } else if (blank && blank.code == "LGDSET") {
@@ -548,8 +549,8 @@ export const processOrders = async (orders)=>{
                         date: order.date,
                     });
                     //console.log(item)
-                    //await item.save();
-                    // await shirtItem.save();
+                    await item.save();
+                    await shirtItem.save();
                     items.push(item);
                     items.push(shirtItem);
                 } else {
@@ -599,6 +600,7 @@ export const processOrders = async (orders)=>{
             }
         }
         console.log(order)
+        order = await order.save();
     }
     return {error: false}
 }
