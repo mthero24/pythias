@@ -87,7 +87,7 @@ const createTikTokVariant = ({p, v, image})=>{
         variantImages[`primaryVariationImage${k}`] = i
         k++
     }
-    if(p.blank.blank.code == "CC1717") console.log(p.blank.blank.tikTokHeader, "tiktokheader")
+    if(p.blank.blank.code == "CC1717") console.log(p.blank.blank.shopifyHeader, "tiktokheader")
     return {
       title: `${p.name}`,
       body: `<p>${p.design.description} ${p.blank.blank.description}</p>`,

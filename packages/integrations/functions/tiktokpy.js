@@ -26,7 +26,7 @@ export const getAccessTokenUsingAuthCode = async (config, authCode) => {
 export const getAccessTokenFromRefreshToken = async (refreshToken) => {
     let config = await getConfig()
     const accessToken = await tiktokShop.generateToken(config, refreshToken);
-    console.log(accessToken)
+    //console.log(accessToken)
     return accessToken;
 };
 export const generateAuthorizationUrl = () => {
@@ -83,8 +83,8 @@ export const getAuthorizedShops = async (credentials) => {
             },
         }).catch(e=>{console.log(e.response.data); errRes = e.response.data});
         if(errRes){
-            if(errRes.code == 36009004){
-                return {error: true, msg: "refresh"}
+            if (errRes.code == 36009004 || errRes.code == 105002) {
+              return { error: true, msg: "refresh" };
             }
         } 
         console.log(response.data.data)
@@ -122,10 +122,10 @@ export async function createProduct({tiktokProduct, credentials}){
       },
     }).catch(e=>{console.log(e.response.data)});
     if(errRes){
-        if(errRes.code == 36009004){
-            return {error: true, msg: "refresh"}
-        }else{
-            return {error: true, msg: errRes.code}
+        if (errRes.code == 36009004 || errRes.code == 105002) {
+          return { error: true, msg: "refresh" };
+        } else {
+          return { error: true, msg: errRes.code };
         }
     } 
     console.log(result?.data)
@@ -163,10 +163,10 @@ export const getRecommendedCategory = async (product_name, credentials) => {
         "Content-Type": "application/json",
         "x-tts-access-token": accessToken,
         },
-    }).catch(e=>{console.log(e.response.data)});
+    }).catch(e=>{console.log(e.response.data); errRes = e.response.data;});
     if(errRes){
-        if(errRes.code == 36009004){
-            return {error: true, msg: "refresh"}
+        if (errRes.code == 36009004 || errRes.code == 105002) {
+          return { error: true, msg: "refresh" };
         }
     } 
     return {error: false, categories: result?.data.data.categories};
@@ -199,8 +199,8 @@ export const getAttributes = async (category_id, credentials)=>{
         },
     }).catch(e=>{console.log(e.response.data)});
     if(errRes){
-        if(errRes.code == 36009004){
-            return {error: true, msg: "refresh"}
+        if (errRes.code == 36009004 || errRes.code == 105002) {
+          return { error: true, msg: "refresh" };
         }
     } 
     return {error: false, attributes: result.data.data.attributes};
@@ -232,8 +232,8 @@ export const getWarehouses = async (credentials) => {
         },
     }).catch(e=>{console.log(e.response.data)});
     if(errRes){
-        if(errRes.code == 36009004){
-            return {error: true, msg: "refresh"}
+        if (errRes.code == 36009004 || errRes.code == 105002) {
+          return { error: true, msg: "refresh" };
         }
     } 
     return {error: false, warehouses: result.data.data.warehouses};
@@ -280,10 +280,10 @@ export const uploadProductImage = async (uri, credentials, type) => {
       },
     }).catch(e=>{console.log(e.response.data)});
     if(errRes){
-        if(errRes.code == 36009004){
-            return {error: true, msg: "refresh"}
-        }else{
-             return {error: true, msg: errRes.code}
+        if (errRes.code == 36009004 || errRes.code == 105002) {
+          return { error: true, msg: "refresh" };
+        } else {
+          return { error: true, msg: errRes.code };
         }
     } 
     console.log(result?.data.data)
@@ -291,7 +291,9 @@ export const uploadProductImage = async (uri, credentials, type) => {
 };
 
 export const getOrders = async ({next_page_token, credentials}) => {
-     const config = await getConfig();
+    const config = await getConfig();
+    //console.log(config, "config")
+    //console.log(credentials.shop_cipher)
     let accessToken = credentials.access_token;
     const baseUrl =
         "https://open-api.tiktokglobalshop.com/order/202309/orders/search";
@@ -330,16 +332,18 @@ export const getOrders = async ({next_page_token, credentials}) => {
             },
           })
           .catch((e) => {
-            console.log(e.response.data);
+            //console.log(e.response.data);
+            errRes = e.response.data
           });
         if (errRes) {
-          if (errRes.code == 36009004) {
-            return { error: true, msg: "refresh" };
-          } else {
-            return { error: true, msg: errRes.code };
-          }
+            console.log(errRes)
+            if (errRes.code == 36009004 || errRes.code == 105002) {
+                return { error: true, msg: "refresh" };
+            } else {
+                return { error: true, msg: errRes.code };
+            }
         } ;
-        console.log(result.data);
+        //console.log(result.data);
         let orders = result.data.data.orders;
         if (result.data.data.next_page_token) {
         let nextPageOrders = await getOrders(
@@ -348,7 +352,7 @@ export const getOrders = async ({next_page_token, credentials}) => {
         );
         orders = [...nextPageOrders, ...orders];
         }
-        return { error: true, orders: orders };
+        return { error: false, orders: orders };
     } catch (err) {
         return { error: true, msg: JSON.stringify(err) };
     }
