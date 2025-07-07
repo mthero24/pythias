@@ -1,6 +1,7 @@
 import TikTokAuth from "@/models/tiktok"
 
 export default async function Test(){
+     console.log("test ++++++++++++++++++++++++");
     try{
         console.log("test ++++++++++++++++++++++++")
         let tikToks = await TikTokAuth.find({}).catch(e=>{console.log(e)})
