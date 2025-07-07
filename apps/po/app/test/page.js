@@ -21,39 +21,39 @@ export default async function Test(){
     //     }
 
     // }
-    let designs = await Design.find({updatedLinks: {$in: [false, null]}}).limit(500);
-    let skip = 500
-    while(designs.length > 0){
-        for(let d of designs){
-            for(let i of images){
-                if(d[i]){
-                    d[i] = d[i].replace("teeshirtpalace-node-dev", "images2.tshirtpalace.com");
-                    console.log(d[i])
-                }
-            }
-            for(let gl of Object.keys(d.wasabiGoogleLinks)){
-                d.wasabiGoogleLinks[gl] = d.wasabiGoogleLinks[gl].replace(
-                "teeshirtpalace-node-dev",
-                "images2.tshirtpalace.com"
-                );
-                console.log(d.wasabiGoogleLinks[gl]);
-            }
-            for (let b of Object.keys(d.backups)) {
-                if (d.backups[b]){
-                    d.backups[b] = d.backups[b].replace(
-                        "teeshirtpalace-node-dev",
-                        "images2.tshirtpalace.com"
-                    );
-                    console.log(d.backups[b]);
-                }
-            }
-            d.updatedLinks = true
-            d.markModified(`backups wasabiGoogleLinks`)
-            await d.save()
-        }
-        designs = await Design.find({ updatedLinks: { $in: [false, null] } }).limit(500);
-        console.log(skip)
-        skip += 500
-    }
+    // let designs = await Design.find({updatedLinks: {$in: [false, null]}}).limit(500);
+    // let skip = 500
+    // while(designs.length > 0){
+    //     for(let d of designs){
+    //         for(let i of images){
+    //             if(d[i]){
+    //                 d[i] = d[i].replace("teeshirtpalace-node-dev", "images2.tshirtpalace.com");
+    //                 console.log(d[i])
+    //             }
+    //         }
+    //         for(let gl of Object.keys(d.wasabiGoogleLinks)){
+    //             d.wasabiGoogleLinks[gl] = d.wasabiGoogleLinks[gl].replace(
+    //             "teeshirtpalace-node-dev",
+    //             "images2.tshirtpalace.com"
+    //             );
+    //             console.log(d.wasabiGoogleLinks[gl]);
+    //         }
+    //         for (let b of Object.keys(d.backups)) {
+    //             if (d.backups[b]){
+    //                 d.backups[b] = d.backups[b].replace(
+    //                     "teeshirtpalace-node-dev",
+    //                     "images2.tshirtpalace.com"
+    //                 );
+    //                 console.log(d.backups[b]);
+    //             }
+    //         }
+    //         d.updatedLinks = true
+    //         d.markModified(`backups wasabiGoogleLinks`)
+    //         await d.save()
+    //     }
+    //     designs = await Design.find({ updatedLinks: { $in: [false, null] } }).limit(500);
+    //     console.log(skip)
+    //     skip += 500
+    // }
     return <h1>Test</h1>
 }

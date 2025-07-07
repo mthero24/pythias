@@ -43,7 +43,14 @@ export async function LabelsData(){
         }),
     };
     //console.log(labels)
-    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name blank  style_code row unit shelf bin color blank").lean();
+    let inventoryArray = await Inventory.find({})
+      .select(
+        "quantity pending_quantity inventory_id color_name size_name blank  style_code row unit shelf bin color blank"
+      )
+      .lean()
+      .catch((e) => {
+        console.log(e);
+      });
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
