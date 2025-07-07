@@ -1,5 +1,5 @@
 import TikTokAuth from "@/models/tiktok"
-
+export const dynamic = "force-dynamic"; 
 export default async function Test(){
      console.log("test ++++++++++++++++++++++++");
     try{
