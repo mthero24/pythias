@@ -4,7 +4,7 @@ import Order from "@/models/Order";
 import Inventory from "@/models/inventory";
 import {Sort} from "@pythias/labels";
 export default async function Sublimation(req, res){
-    let stations = JSON.parse(process.env.shipping).shipStations
+    let stations = ["station1"]
     let sublimation = await Items.find({
         type: "sublimation",
         inBin: false,
