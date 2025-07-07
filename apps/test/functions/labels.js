@@ -7,29 +7,41 @@ export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
     let labels = {
-            Standard: await Items.find({
-            blank: { $ne: undefined },
-            colorName: {$ne: null},
-            sizeName: {$ne: null},
-            designRef: {$ne: null},
-            design: {$ne: null},
-            labelPrinted: false,
-            canceled: false,
-            paid: true,
-            shippingType: "Standard",
-        }).populate("color", "name _id").populate("designRef", "sku name printType").lean(),
-            Expedited: await Items.find({
-            blank: { $ne: undefined },
-            colorName: {$ne: null},
-            sizeName: {$ne: null},
-            designRef: {$ne: null},
-            design: {$ne: null},
-            labelPrinted: false,
-            canceled: false,
-            paid: true,
-            shippingType: { $ne: "Standard" },
-        }).populate("color", "name _id").populate("designRef", "sku name printType").lean()
-    }
+      Standard: await Items.find({
+        blank: { $ne: undefined },
+        colorName: { $ne: null },
+        sizeName: { $ne: null },
+        designRef: { $ne: null },
+        design: { $ne: null },
+        labelPrinted: false,
+        canceled: false,
+        paid: true,
+        shippingType: "Standard",
+      })
+        .populate("color", "name _id")
+        .populate("designRef", "sku name printType")
+        .lean()
+        .catch((e) => {
+          console.log(e);
+        }),
+      Expedited: await Items.find({
+        blank: { $ne: undefined },
+        colorName: { $ne: null },
+        sizeName: { $ne: null },
+        designRef: { $ne: null },
+        design: { $ne: null },
+        labelPrinted: false,
+        canceled: false,
+        paid: true,
+        shippingType: { $ne: "Standard" },
+      })
+        .populate("color", "name _id")
+        .populate("designRef", "sku name printType")
+        .lean()
+        .catch((e) => {
+          console.log(e);
+        }),
+    };
     //console.log(labels)
     let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name blank  style_code row unit shelf bin color blank").lean();
     let rePulls = 0
