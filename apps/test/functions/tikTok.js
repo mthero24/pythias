@@ -85,7 +85,7 @@ const stateAbbreviations = {
     Wyoming: "WY",
 };
 export async function getShops(){
-    let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
+    let credentials = await TikTokAuth.findOne({provider: "test"})
     let shop = await getAuthorizedShops(credentials)
     if(shop.error && shop.msg == "refresh"){
         credentials = await refresh(credentials)
@@ -93,6 +93,7 @@ export async function getShops(){
     } 
     credentials.shop_list = shop.shop_list
     await credentials.save()
+    return credentials
 }
 
 export async function uploadTikTokImage({image,type}){
@@ -106,6 +107,7 @@ export async function uploadTikTokImage({image,type}){
 }
 export async function createTikTokProduct({product}){
     let credentials = await TikTokAuth.findOne({provider: "test"})
+    if(!credentials.shop_list[0]) credentials = await getShops()
     let tiktokProduct = {
         save_mode: "LISTING",
         description: product.description,
