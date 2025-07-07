@@ -4,5 +4,5 @@ setConfig(process.env.dtf)
 
 
 export default async function dtfSend(){
-    return <DTFSend printers={JSON.parse(process.env.dtf).printers}/>
+    return <DTFSend printers={["printer1"]}/>
 }
