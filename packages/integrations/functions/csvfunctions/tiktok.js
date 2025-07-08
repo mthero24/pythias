@@ -92,10 +92,9 @@ const createTikTokVariant = ({p, v})=>{
         k++
     }
     if(p.blank.blank.code == "CC1717") console.log(p.blank.blank.tikTokHeader, "tiktokheader")
-    return {
+    let va =  {
         "productName": `${p.name}`,
         "productDescription": `${p.design.description} ${p.blank.blank.description}`,
-        productSku: p.sku,
         "sku": v.sku,
         primaryVariationName: "color",
         primaryVariationValue: v.threadColor? `${v.color.name} with ${v.threadColor.name} Lettering`: v.color.name,
@@ -103,12 +102,15 @@ const createTikTokVariant = ({p, v})=>{
         secondaryVariationValue: sizes[v.size.name.toLowerCase()]? sizes[v.size.name.toLowerCase()]: v.size.name,
         weight: v.size.weight,
         price: v.size.retailPrice,
+        sizeChart: p.blank.blank?.sizeGuide?.images? p.blank.blank?.sizeGuide?.images[0]: "",
         quantity: 1000,
         ...productImages,
         ...variantImages,
         ...p.blank.blank.tikTokHeader,
         productStatus: "active"
     }
+    if(p.design.season) va.Season = p.design.season
+    return va
 }
 
 export  const createTikTokCsv = async ({products})=>{
@@ -126,9 +128,7 @@ export  const createTikTokCsv = async ({products})=>{
     //console.log(products)
     //console.log("product", products.length)
     let csvString =  await csvStringifier.stringifyRecords([...sendProducts])
-    csvString = `
-        ${csvStringifier.getHeaderString()}${csvString}
-    `
+    csvString = `${csvStringifier.getHeaderString()}${csvString}`
     let url = `csv/tiktok/${Date.now()}.csv`
     let params = {
         Bucket: "images1.pythiastechnologies.com",

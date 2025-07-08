@@ -84,38 +84,8 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                 console.log(imageBlank, "useEffect")
                 console.log(b.blank.code.toString(), imageBlank.value.toString(), b.blank.code.toString() == imageBlank.value.toString())
                 console.log(imageColor)
-                Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
-                    //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
-                    console.log(des.imageGroup)
-                    console.log(imageBlank)
-                    console.log(imageColor)
-                    let color = b.colors.filter(c=> c.name == imageColor.value)[0]
-                    console.log(color, "color")
-                    let foundImages = false
-                    let useImages = b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())
-                    useImages.map(im=>{
-                        let image = im
-                        image.side = i
-                        image.style=b.blank.code
-                        if(image.side == "modelFront") image.side = "front"
-                        if(image.side == "modelBack") image.side = "back"
-                        console.log(image)
-                        images.push(image)
-                        foundImages = true
-                    })
-                    // if(!foundImages ){
-                    //     if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
-                    //         let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
-                    //         image.side = i
-                    //         if(image.side == "modelFront") image.side = "front"
-                    //         if(image.side == "modelBack") image.side = "back"
-                    //         images.push(image)
-                    //         foundImages = true
-                    //     }
-                    // }
-                })
-                if(images.length == 0){
-                    Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).map((i,j)=>{
+                for(let side of Object.keys(design.images)){
+                    Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).filter(s=> s == side && design.images[side]).map((i,j)=>{
                         //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
                         console.log(des.imageGroup)
                         console.log(imageBlank)
@@ -123,16 +93,60 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         let color = b.colors.filter(c=> c.name == imageColor.value)[0]
                         console.log(color, "color")
                         let foundImages = false
-                        if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") &&color?._id.toString() == im.color.toString())[0]){
-                            let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && color?._id.toString() == im.color.toString())[0]
+                        let useImages = b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())
+                        useImages.map(im=>{
+                            let image = im
                             image.side = i
                             image.style=b.blank.code
                             if(image.side == "modelFront") image.side = "front"
                             if(image.side == "modelBack") image.side = "back"
+                            console.log(image)
                             images.push(image)
                             foundImages = true
-                        }
+                        })
                     })
+                }
+                if(images.length == 0){
+                   for(let side of Object.keys(design.images)){
+                        Object.keys(
+                          b && b.blank && b.blank.multiImages
+                            ? b.blank.multiImages
+                            : {}
+                        )
+                          .filter((s) => s == side && design.images[side])
+                          .map((i, j) => {
+                            //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                            console.log(des.imageGroup);
+                            console.log(imageBlank);
+                            console.log(imageColor);
+                            let color = b.colors.filter(
+                              (c) => c.name == imageColor.value
+                            )[0];
+                            console.log(color, "color");
+                            let foundImages = false;
+                            if (
+                              b.blank.multiImages[i].filter(
+                                (im) =>
+                                  im.imageGroup.includes("default") &&
+                                  color?._id.toString() == im.color.toString()
+                              )[0]
+                            ) {
+                              let image = b.blank.multiImages[i].filter(
+                                (im) =>
+                                  im.imageGroup.includes("default") &&
+                                  color?._id.toString() == im.color.toString()
+                              )[0];
+                              image.side = i;
+                              image.style = b.blank.code;
+                              if (image.side == "modelFront")
+                                image.side = "front";
+                              if (image.side == "modelBack")
+                                image.side = "back";
+                              images.push(image);
+                              foundImages = true;
+                            }
+                          });
+                    }
                 }
             }
         })
@@ -845,7 +859,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     <ProductImageOverlay
                                         imageGroup={des.imageGroup}
                                         box={
-                                        i.box[0]
+                                        i.box? i.box[0]: {}
                                         }
                                         id={i._id}
                                         style={i.style}

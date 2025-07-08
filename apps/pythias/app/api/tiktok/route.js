@@ -20,5 +20,7 @@ export async function GET(req=NextApiRequest){
         await auth.save()
     }
     console.log(auth)
-    return NextResponse.redirect(`https://${auth.provider == "premierPrinting"? "simplysage": "imperial"}.pythiastechnologies.com/admin/integrations`)
+    return NextResponse.redirect(
+      `https://${auth.provider == "premierPrinting" ? "simplysage" : auth.provider == "test"? "test": "imperial"}.pythiastechnologies.com/admin/integrations`
+    );
 }

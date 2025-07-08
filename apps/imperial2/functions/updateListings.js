@@ -30,11 +30,38 @@ const createProductImages = (design, blank,)=>{
         for(let tc of design.threadColors){
             let designImages = design.threadImages[tc.name]
             for(let key of Object.keys(designImages)){
+                if(designImages[key]){
+                    let blankImages = blank.blank.multiImages[key]
+                    if(blank.defaultColor){
+                        let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())
+                        for(let ci of colorImages){
+                            images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${blank.defaultColor.name}&design=${designImages[key]}&width=400`)
+                        }
+                    }
+                    let colors
+                    if(blank.defaultColor){
+                        colors = blank.colors.filter(bc=> bc._id.toString() != blank.defaultColor._id.toString())
+                    }else{
+                        colors = blank.colors
+                    }
+                    for(let color of colors){
+                        let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
+                        for(let ci of colorImages){
+                            images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=400`)
+                        }
+                    }
+                }
+            }
+        }
+    }else{
+        let designImages = design.images
+        for(let key of Object.keys(designImages)){
+            if(designImages[key]){
                 let blankImages = blank.blank.multiImages[key]
                 if(blank.defaultColor){
                     let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())
                     for(let ci of colorImages){
-                        images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${blank.defaultColor.name}&design=${designImages[key]}&width=400`)
+                        images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${blank.defaultColor.name}&design=${designImages[key]}&width=2400`)
                     }
                 }
                 let colors
@@ -46,31 +73,8 @@ const createProductImages = (design, blank,)=>{
                 for(let color of colors){
                     let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
                     for(let ci of colorImages){
-                        images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=400`)
+                        images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=2400`)
                     }
-                }
-            }
-        }
-    }else{
-        let designImages = design.images
-        for(let key of Object.keys(designImages)){
-            let blankImages = blank.blank.multiImages[key]
-            if(blank.defaultColor){
-                let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())
-                for(let ci of colorImages){
-                    images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${blank.defaultColor.name}&design=${designImages[key]}&width=2400`)
-                }
-            }
-            let colors
-            if(blank.defaultColor){
-                colors = blank.colors.filter(bc=> bc._id.toString() != blank.defaultColor._id.toString())
-            }else{
-                colors = blank.colors
-            }
-            for(let color of colors){
-                let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
-                for(let ci of colorImages){
-                    images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=2400`)
                 }
             }
         }
@@ -83,19 +87,23 @@ const createVariantImages = (design, blank, color, threadColor)=>{
     if(threadColor){
         designImages = design.threadImages[threadColor.name]
         for(let key of Object.keys(designImages)){
-            let blankImages = blank.blank.multiImages[key]
-            let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
-            for(let ci of colorImages){
-                images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=2400`)
+            if(designImages[key]){
+                let blankImages = blank.blank.multiImages[key]
+                let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
+                for(let ci of colorImages){
+                    images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=2400`)
+                }
             }
         }
     }else{
         designImages = design.images
         for(let key of Object.keys(designImages)){
-            let blankImages = blank.blank.multiImages[key]
-            let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
-            for(let ci of colorImages){
-                images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=2400`)
+            if(designImages[key]){
+                let blankImages = blank.blank.multiImages[key]
+                let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
+                for(let ci of colorImages){
+                    images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=2400`)
+                }
             }
         }
     }
@@ -149,7 +157,7 @@ export async function updateListings(csvupdate, sendTo){
                             }
                         }
                         let product = {
-                            name: `Imperial The Label ${design.name} ${design.printType == "EMB"? "Embroidered": "Printed"} ${b.blank.name}`,
+                            name: `${design.name} ${design.printType == "EMB"? "Embroidered": "Printed"} ${b.blank.name}`,
                             sku: `${design.sku}_${b.blank.code}`,
                             brand: b.blank.brand,
                             design: design,

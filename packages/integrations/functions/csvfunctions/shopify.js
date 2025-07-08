@@ -87,40 +87,46 @@ const createTikTokVariant = ({p, v, image})=>{
         variantImages[`primaryVariationImage${k}`] = i
         k++
     }
-    if(p.blank.blank.code == "CC1717") console.log(p.blank.blank.tikTokHeader, "tiktokheader")
+    if(p.blank.blank.code == "CC1717") console.log(p.blank.blank.shopifyHeader, "tiktokheader")
     return {
-        "title": `${p.name}`,
-        "body": `<p>${p.design.description} ${p.blank.blank.description}</p>`,
-        handle: p.sku,
-        "sku": v.sku,
-        vendor: "Imperial The Label",
-        option1: "color",
-        color: v.threadColor? `${v.color.name}`: null,
-        option2: "size",
-        tags: p.design.tags,
-        Type: p.blank.blank.category,
-        size: sizes[v.size.name.toLowerCase()]? sizes[v.size.name.toLowerCase()]: v.size.name,
-        option3: v.threadColor? p.design.printType == "EMB"? "Thread Color": "Print Color": null,
-        threadColor: v.threadColor? v.threadColor.name: null,
-        inventoryTracker: "shopify",
-        inventoryPolicy: "allow",
-        inventoryService: "manual",
-        barcode: v.barcode,
-        published: true,
-        requiresShipping: true,
-        taxable: true,
-        ...image,
-        giftCard: false,
-        quantity: 1000,
-        seoTitle: `${p.design.name} ${p.blank.blank.name}| Imperial The Label`,
-        seoDescription: p.design.description,
-        variantImage: v.images[0],
-        variantWeightUnit: "oz",
-        weight: v.size.weight,
-        price: v.size.retailPrice,
-        ...p.blank.blank.shopifyHeader,
-        status: "active"
-    }
+      title: `${p.name}`,
+      body: `<p>${p.design.description} ${p.blank.blank.description}</p>`,
+      handle: p.sku,
+      sku: v.sku,
+      vendor: "Imperial The Label",
+      option1: "color",
+      color: `${v.color.name}`,
+      option2: "size",
+      tags: p.design.tags,
+      Type: p.blank.blank.category,
+      size: sizes[v.size.name.toLowerCase()]
+        ? sizes[v.size.name.toLowerCase()]
+        : v.size.name,
+      option3: v.threadColor
+        ? p.design.printType == "EMB"
+          ? "Thread Color"
+          : "Print Color"
+        : null,
+      threadColor: v.threadColor ? v.threadColor.name : null,
+      inventoryTracker: "shopify",
+      inventoryPolicy: "continue",
+      inventoryService: "manual",
+      barcode: v.barcode,
+      published: true,
+      requiresShipping: true,
+      taxable: true,
+      ...image,
+      giftCard: false,
+      quantity: 1000,
+      seoTitle: `${p.design.name} ${p.blank.blank.name}| Imperial The Label`,
+      seoDescription: p.design.description,
+      variantImage: v.images[0],
+      variantWeightUnit: "oz",
+      weight: v.size.weight,
+      price: v.size.retailPrice,
+      ...p.blank.blank.shopifyHeader,
+      status: "active",
+    };
 }
 
 export  const createShopifyCsv = async ({products})=>{
@@ -142,9 +148,7 @@ export  const createShopifyCsv = async ({products})=>{
     //console.log(products)
     //console.log("product", products.length)
     let csvString =  await csvStringifier.stringifyRecords([...sendProducts])
-    csvString = `
-        ${csvStringifier.getHeaderString()}${csvString}
-    `
+    csvString = `${csvStringifier.getHeaderString()}${csvString}`
     let url = `csv/shopify/${Date.now()}.csv`
     let params = {
         Bucket: "images1.pythiastechnologies.com",
