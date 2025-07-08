@@ -16,8 +16,11 @@ const readImage = async (url)=>{
     const response = await axios.get(
       url.replace(
         "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
-        "http://images2.teeshirtpalace.com/"
-      ),
+        "http://images2.tshirtpalace.com/"
+      ).replace(
+            "s3.wasabisys.com/images2.tshirtpalace.com/",
+            "images2.tshirtpalace.com/"
+            ),
       { responseType: "arraybuffer" }
     );
     const buffer = Buffer.from(response.data, "binary");

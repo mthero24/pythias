@@ -82,10 +82,10 @@ export async function GET(request, { params }) {
     let dimensions = await getimagesize(
        item.design[side].replace(
         "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.teeshirtpalace.com/"
+        "https://images2.tshirtpalace.com/"
         ).replace(
-        "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.teeshirtpalace.com/"
+        "https://s3.wasabisys.com/images2.tshirtpalace.com/",
+        "https://images2.tshirtpalace.com/"
         )
     );
     console.log(dimensions, "dimensions", typeof envelope.height);
@@ -257,7 +257,10 @@ export async function GET(request, { params }) {
                                     <Uri>${
                                         item.design[side]?.replace(/&/g, "&amp;").replace(
                                             "https://s3.wasabisys.com/teeshirtpalace-node-dev",
-                                            "https://images2.teeshirtpalace.com"
+                                            "https://images2.tshirtpalace.com"
+                                        ).replace(
+                                            "s3.wasabisys.com/images2.tshirtpalace.com/",
+                                            "images2.tshirtpalace.com/"
                                         )
                                     }</Uri>
                                 </ArtFile>

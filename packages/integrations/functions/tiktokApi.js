@@ -3,16 +3,6 @@ import axios from "axios";
 import tiktokShop from "tiktok-shop";
 
 
-// const tiktokShop = require('tiktok-shop-client')
-
-/*
-?app_key=6d5sd2ide03r5&code=TTP_3JfqLwAAAABM53mpkigyPnAYuYZeFQjTToves1gFB6UxQlDiNFJgbpcFnMyPD_oQ3dscp0ZykU7en9AUV_DhuxU2rvvRr4fJ&locale=en&shop_region=US
-
-https://teeshirtpalace.com/apis/tiktok?app_key=6d5sd2ide03r5&code=TTP_39SyiQAAAABM53mpkigyPnAYuYZeFQjTjFFZOAK1hi138At8hC9hwmW0qbqwFXScTIzcJWuc00I4NAjRkOGuOxbMcfZU0WdSRuR-QGMIQ4_uNvge6KYjZA&locale=en&shop_region=US
-
-
-https://teeshirtpalace.com/tiktok?app_key=6d76jmkr5egfp&code=TTP_WYVBcgAAAAATjo-gEsXC_JimWu7YcRKXuz54tIHW-6pkkub8lufD28pTOWE7X7HQVLVFNd2yYYwDqz95YX5-yCOh7_uUNuWiMTbvQFRhdVEGfv8N8MI_u39W6it7Ni5paXIho0rYY0FDpNq4KIWak85MEK6iV1KR1c9NVdoLja0TY4ZQfnQFXg&locale=en&shop_region=US
-*/
 
 // Extract all query param EXCEPT ' sign ', ' access_token ', You do not need to reorder the params based on alphabetical order.
 const config = {

@@ -17,11 +17,17 @@ const getImages = async (front, back, style, item)=>{
     Object.keys(item.design).map(d=>{
         if(!backDesigns.includes(d)) frontDesign = item.design[d]?.replace(
             "s3.wasabisys.com/teeshirtpalace-node-dev/",
-            "images2.teeshirtpalace.com/"
+            "images2.tshirtpalace.com/"
+            ).replace(
+            "s3.wasabisys.com/images2.tshirtpalace.com/",
+            "images2.tshirtpalace.com/"
             ) + "?width=400";
         else backDesign = item.design[d]?.replace(
             "s3.wasabisys.com/teeshirtpalace-node-dev/",
-            "images2.teeshirtpalace.com/"
+            "images2.tshirtpalace.com/"
+            ).replace(
+            "s3.wasabisys.com/images2.tshirtpalace.com/",
+            "images2.tshirtpalace.com/"
             ) + "?width=400";
     })
     return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName}

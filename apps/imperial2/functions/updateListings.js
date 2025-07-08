@@ -33,7 +33,8 @@ const createProductImages = (design, blank,)=>{
                 if(designImages[key]){
                     let blankImages = blank.blank.multiImages[key]
                     if(blank.defaultColor){
-                        let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())
+                        let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString() &&  bi.imageGroup == design.imageGroup)
+                        if(colorImages.length == 0) colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString() &&  bi.imageGroup == "default")
                         for(let ci of colorImages){
                             images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${blank.defaultColor.name}&design=${designImages[key]}&width=400`)
                         }
@@ -45,7 +46,8 @@ const createProductImages = (design, blank,)=>{
                         colors = blank.colors
                     }
                     for(let color of colors){
-                        let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
+                        let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString() &&  bi.imageGroup == design.imageGroup)
+                        if(colorImages.length == 0) colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString() &&  bi.imageGroup == "default")
                         for(let ci of colorImages){
                             images.push(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${key}.jpg?blank=${blank.blank.code}&blankImage=${ci.image}&side=${key}&colorName=${color.name}&design=${designImages[key]}&width=400`)
                         }
@@ -58,6 +60,10 @@ const createProductImages = (design, blank,)=>{
         for(let key of Object.keys(designImages)){
             if(designImages[key]){
                 let blankImages = blank.blank.multiImages[key]
+                let tempImages = blankImages.filter(i=> i.imageGroup == design.imageGroup)
+                if(tempImages.length == 0){
+                    blankImages = blankImages.filter(i=> i.imageGroup == "default")
+                }else blankImages = tempImages
                 if(blank.defaultColor){
                     let colorImages = blankImages.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())
                     for(let ci of colorImages){

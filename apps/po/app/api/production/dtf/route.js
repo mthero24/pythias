@@ -15,18 +15,24 @@ const getImages = async (front, back, style, item)=>{
     Object.keys(item.design).map(d=>{
         if(!backDesigns.includes(d)) frontDesign = item.design[d]?.replace(
             "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.teeshirtpalace.com/"
+        "https://images2.tshirtpalace.com/"
             ).replace(
         "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.teeshirtpalace.com/"
-      ) + "?width=400";
+        "https://images2.tshirtpalace.com/"
+      ).replace(
+            "s3.wasabisys.com/images2.tshirtpalace.com/",
+            "images2.tshirtpalace.com/"
+        ) + "?width=400";
         else backDesign = item.design[d]?.replace(
             "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.teeshirtpalace.com/"
+        "https://images2.tshirtpalace.com/"
             ).replace(
         "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.teeshirtpalace.com/"
-      ) + "?width=400";
+        "https://images2.tshirtpalace.com/"
+      ).replace(
+            "s3.wasabisys.com/images2.tshirtpalace.com/",
+            "images2.tshirtpalace.com/"
+        ) + "?width=400";
     })
     console.log(frontDesign, "front design from getImages")
     return  {frontDesign, backDesign, styleImage, styleCode: style.code, colorName: item.colorName}
