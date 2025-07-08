@@ -90,7 +90,7 @@ export async function GET(request, { params }) {
     );
     console.log(dimensions, "dimensions", typeof envelope.height);
     console.log(envelope.height)
-    let height = (envelope.height / 3500) * dimensions.height;
+    let height = (envelope.height / (item.design[side].includes("ai-design")? dimensions.height: 3500)) * dimensions.height;
     console.log("height", height);
     if (
         height >
