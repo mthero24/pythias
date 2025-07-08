@@ -94,6 +94,7 @@ export async function pullOrders(){
                         let designImages
                         if(DesignThreadColor){
                             if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
+                            else if(design && design.threadImages && design.threadImages[threadColor]) designImages = design.threadImages[threadColor]
                             else if(design) designImages = design.images
                         }else if(design){
                             designImages = design.images
@@ -131,6 +132,7 @@ export async function pullOrders(){
                         let designImages
                         if(DesignThreadColor){
                             if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
+                            else if(design && design.threadImages && design.threadImages[threadColor]) designImages = design.threadImages[threadColor]
                             else if(design) designImages = design.images
                         }else if(design){
                             designImages = design.images
