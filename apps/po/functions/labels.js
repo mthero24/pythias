@@ -67,7 +67,6 @@ export async function LabelsData(){
         canceled: false,
         paid: true,
         type: "gift",
-        sku: { $in: ["gift-bag"] },
         }).lean()
     let giftOrders = giftMessages.map(s=> s.order)
     giftOrders = await Order.find({_id: {$in: giftOrders}}).select("poNumber items")
