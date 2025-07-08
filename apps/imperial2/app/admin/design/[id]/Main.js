@@ -179,9 +179,14 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         if(res?.data?.error) alert(res.data.msg)
     }
     const updateImage = async ({url,location, threadColor})=>{
+        console.log("updateImage")
+        console.log(des.threadColors)
         let d = {...des}
+        console.log(d.threadColors.length)
         if(threadColor){
+            console.log(threadColor)
             if(!d.threadImages) d.threadImages = {}
+            if(!d.threadImages[threadColor]) d.threadImages[threadColor] = {}
             d.threadImages[threadColor][location] = url
         }else{
             console.log(d.images, url, location)
@@ -443,12 +448,16 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         newThread.push(v.value)
                     }
                     d.threadColors = newThread
-                    d.threadImages = {}
                     for(let m of d.threadColors){
-                        d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]= {}
+                        console.log(colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name, "color name")
+                        console.log(d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name])
+                        if(!d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]){
+                            d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]= {}
+                        }
                     }
                     setDesign({...d})
                     updateDesign({...d})
+                    setReload(false)
                 }}
                 isMulti
             />
@@ -515,7 +524,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                         </Grid2>
                                         {imageLocations.map((i, j)=>(
                                             <>
-                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name] && des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
                                                      <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
                                                         <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
                                                             <Image src={des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
