@@ -7,8 +7,8 @@ const readImage = async (url)=>{
     console.log(url)
     const response = await axios.get(
       url,
-      { responseType: "arraybuffer" }
-    ).catch(e=>{});
+        { responseType: "arraybuffer", headers: { "Access-Control-Allow-Origin": "*", Accept: "image/png, image/jpeg" } }
+    ).catch(e=>{console.log("error")});
     //console.log(response.headers)
     if(response){
         const buffer = Buffer.from(response.data, "binary");
@@ -27,34 +27,18 @@ const createImage = async (data)=>{
     }else{
         data.width = 400
     }
-    base64 = await readImage(data.styleImage)
+    base64 = await readImage(`${data.styleImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
     console.log(data)
     console.log(data.designImage != "null", data.designImage != "undefined", "design image")
     if(data.box && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64){
-        base64 = base64.resize({
-            width: data.width,
-            height: data.width,
-            fit: sharp.fit.cover,
-            position: sharp.strategy.entropy,
-            background: {r: 255, g: 255, b: 255, alpha: 1},
-        })
-        
-        let designBase64 = await readImage(data.designImage)
-        designBase64 = designBase64.trim()
+                
+        let designBase64
         let x = data.box.x * multiplier
         let y = data.box.y * multiplier
         let originalSize
         if(data.box.rotation && data.box.rotation != 0){
             console.log(data.box.rotation, "rotation")
-            designBase64 = await designBase64.resize({
-                width: parseInt(data.box.boxWidth * multiplier),
-                height: parseInt(data.box.boxHeight * multiplier) ,
-                background: {r: 255, g: 255, b: 255, alpha: 0},
-                fit: sharp.fit.inside,
-                position: "left top",
-                fastShrinkOnLoad: false 
-            }).toBuffer()
-            designBase64 = await sharp(designBase64)
+            designBase64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.box.boxWidth * multiplier)}&height=${parseInt(data.box.boxHeight * multiplier)}`) 
             originalSize = await designBase64.metadata();
             let originalWidth = originalSize.width;
             let originalHeight = originalSize.height;
@@ -85,15 +69,8 @@ const createImage = async (data)=>{
             x -= (rotatedTopLeftX + offsetW);
             y -= (rotatedTopLeftY + offsetH);
         }else{
-            designBase64 = await designBase64.resize({
-                width: parseInt(data.box.boxWidth * multiplier ),
-                height: parseInt(data.box.boxHeight * multiplier),
-                background: {r: 255, g: 255, b: 255, alpha: 0},
-                fit: sharp.fit.inside,
-                position: sharp.strategy.attention,
-                fastShrinkOnLoad: false 
-            }).toBuffer()
-            designBase64 = await sharp(designBase64)
+            
+            designBase64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.box.boxWidth * multiplier)}&height=${parseInt(data.box.boxHeight * multiplier) }`) 
             originalSize = await designBase64.metadata();
             designBase64 = await designBase64.toBuffer()
         }
@@ -120,28 +97,14 @@ const createImage = async (data)=>{
         .toBuffer();
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }else if(data.styleImage && base64){
-        base64 = base64.resize({
-            width: data.width,
-            height: data.width,
-            fit: sharp.fit.inside,
-            position: sharp.strategy.entropy
-        })
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
         console.log(base64, "base64")
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }else if(data.designImage && data.designImage != "undefined" && data.designImage != "null"){
-        base64 = await readImage(data.designImage)
-        if(base64){
-            base64 = base64.resize({
-                width: data.width,
-                height: data.width,
-                fit: sharp.fit.inside,
-                position: sharp.strategy.entropy
-            })
-            base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
-            //console.log(base64, "base64")
-            base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
-        }
+        base64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.width)}&height=${parseInt(data.width)}`) 
+        base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
+        //console.log(base64, "base64")
+        base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }
     return base64
 }
