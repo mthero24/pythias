@@ -777,6 +777,10 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                  <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
                                     
                                    { source == "IM" && <Button onClick={()=>{setUpcBlank(b); setSkuModal(true)}}>See Sku's</Button>}
+                                    <Button onClick={() => {
+                                        let colors = b.blank.colors.map(c => c.name);
+                                        updateColors({ blank: b, colors: colors })
+                                    }}>Add All Colors</Button>
                                   {source == "PP"&&  <><Button onClick={()=>{setOpen(true); setBlankForAlt(b); console.log(b)}}>Add Alternative Images</Button>
                                     <Button onClick={()=>{
                                         setUpcBlank(b.blank)

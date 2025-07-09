@@ -11,10 +11,10 @@ export default async function Designs(req){
     if(!query.q){
         if(page == undefined || page == 1){
             console.log("page = 1 or undefined")
-            designs = await Design.find({}).sort({date: -1}).limit(200)
+            designs = await Design.find({}).sort({_id: -1}).limit(200)
         }else{
             console.log("page > 1", (page - 1) * 200)
-            designs = await Design.find({}).sort({date: -1}).skip((page - 1) * 200).limit(200)
+            designs = await Design.find({}).sort({_id: -1}).skip((page - 1) * 200).limit(200)
         }
     }else{
         if(page == 1){

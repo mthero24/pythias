@@ -5,7 +5,7 @@ import Blank from "@/models/Blanks";
 import Color from "@/models/Color";
 import Order from "@/models/Order";
 import { getOrders, generatePieceID } from "@pythias/integrations";
-export async function pullOrders(){
+export async function pullOrders(id){
     let blanks = await Blank.find({})
     let colors = await Color.find({})
     let fixers = blanks.map(b=>{return b.fixerCode})
@@ -16,7 +16,7 @@ export async function pullOrders(){
     })
     //console.log(fixers)
     console.log("pull orders")
-    let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: id})
     console.log(orders.filter(o=> o.tagIds == null && o.orderStatus != "shipped").length, orders.filter(o=> o.tagIds != null).map(o=>{return o.tagIds}) )
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
@@ -93,8 +93,8 @@ export async function pullOrders(){
                         let DesignThreadColor = colors.filter(c=> c.name == threadColor)[0]
                         let designImages
                         if(DesignThreadColor){
-                            if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
-                            else if(design && design.threadImages && design.threadImages[threadColor]) designImages = design.threadImages[threadColor]
+                            if (design != undefined && design.threadImages != undefined && design.threadImages[DesignThreadColor.name] != undefined) designImages = design.threadImages[DesignThreadColor.name]
+                            else if (design != undefined && design.threadImages != undefined && design.threadImages[threadColor] != undefined) designImages = design.threadImages[threadColor]
                             else if(design) designImages = design.images
                         }else if(design){
                             designImages = design.images
@@ -110,7 +110,7 @@ export async function pullOrders(){
                         await item.save()
                         items.push(item)
                     }else{
-                        console.log(i.sku, "sku")
+                        console.log(i.sku, "sku new")
                         let sku = i.sku.split("_")
                         let blank 
                         let threadColor
@@ -131,8 +131,9 @@ export async function pullOrders(){
                         let DesignThreadColor = colors.filter(c=> c.name.toLowerCase() == threadColor?.toLowerCase() || c.sku.toLowerCase() == threadColor?.toLowerCase())[0]
                         let designImages
                         if(DesignThreadColor){
-                            if(design && design.threadImages && design.threadImages[DesignThreadColor.name]) designImages = design.threadImages[DesignThreadColor.name]
-                            else if(design && design.threadImages && design.threadImages[threadColor]) designImages = design.threadImages[threadColor]
+                            console.log((design != undefined && design.threadImages != undefined && design.threadImages[DesignThreadColor.name] != undefined), "design images")
+                            if (design != undefined && design.threadImages != undefined && design.threadImages[DesignThreadColor.name] != undefined) designImages = design.threadImages[DesignThreadColor.name]
+                            else if (design != undefined && design.threadImages != undefined && design.threadImages[threadColor] != undefined) designImages = design.threadImages[threadColor]
                             else if(design) designImages = design.images
                         }else if(design){
                             designImages = design.images

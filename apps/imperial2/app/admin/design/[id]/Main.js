@@ -780,6 +780,10 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     />
                                 </Box>
                                 <Button onClick={()=>{setUpcBlank(b); setUpcModal(true)}}>See Sku's</Button>
+                                <Button onClick={() => {
+                                    let colors = b.blank.colors.map(c => c.name);
+                                    updateColors({ blank: b, colors: colors })
+                                 }}>Add All Colors</Button>
                             </AccordionDetails>
                         </Accordion>
                         ))}

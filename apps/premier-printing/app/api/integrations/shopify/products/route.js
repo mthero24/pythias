@@ -42,7 +42,7 @@ export async function GET(req=NextApiRequest){
         console.log(brand)
         let designsTotal = await Design.find({"b2m.brand": brand, onShopify: {$in: [null, false]}, published: true}).countDocuments()
         console.log(designsTotal)
-        let designs = await Design.find({"b2m.brand": brand, onShopify: {$in: [null, false]}, published: true}).limit(100).populate("blanks.blank blanks.colors");
+        let designs = await Design.find({"b2m.brand": brand, onShopify: {$in: [null, false]}, published: true}).limit(5).populate("blanks.blank blanks.colors");
         let products = []
         for(let d of designs){
             products = products.concat(await createProducts(d, brand))
@@ -50,7 +50,7 @@ export async function GET(req=NextApiRequest){
         console.log(products.length)
         return NextResponse.json({error: false, products})
     }
-    return NextResponse.json({error: true})
+    return NextResponse.json({error: true, msg: "User does not exist"});
 }
 // async function products(req, res){
 //     console.log(req.user)
