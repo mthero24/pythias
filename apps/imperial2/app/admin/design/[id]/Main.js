@@ -449,8 +449,9 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     }
                     d.threadColors = newThread
                     for(let m of d.threadColors){
-                        console.log(colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name, "color name")
-                        console.log(d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name])
+                        if(!d.threadImages) d.threadImages = {}
+                        //console.log(colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name, "color name")
+                        //console.log(d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name])
                         if(!d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]){
                             d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]= {}
                         }
