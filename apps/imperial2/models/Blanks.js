@@ -92,20 +92,7 @@ const SchemaObj = new Schema(
     images[color_id].extra
     images[color_id].sleeve
     */
-    multiImages: {
-      front: imageSchema,
-      back: imageSchema,
-      sleeve: imageSchema,
-      pocket: imageSchema,
-      hood: imageSchema,
-      leg: imageSchema,
-      side: imageSchema,
-      upperSleeve: imageSchema,
-      lowerSleeve: imageSchema,
-      center: imageSchema,
-      modelFront: imageSchema,
-      modelBack: imageSchema,
-    },
+    multiImages: Object,
     //box.default['garment]
     //box[color_id]['garment]
     //always default to default then check if color override
