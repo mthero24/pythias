@@ -405,9 +405,25 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const deleteDesignImage = ({location, threadColor})=>{
         let d = {...des}
         if(threadColor){
-            d.threadImages[threadColor][location] = null;
+            newImages = {}
+            for(let i of Object.keys(d.threadImages)){
+                for(let j of Object.keys(d.threadImages[i])){
+                    if(i == threadColor && j == location){
+                        continue;
+                    }
+                    if(!newImages[i]) newImages[i] = {}
+                    newImages[i][j] = d.threadImages[i][j]
+                }
+            }
+            d.threadImages = newImages;
         }else{
-            des.images[location] = null;
+            let newImages = {}
+            for(let i of Object.keys(d.images)){
+                if(i != location){
+                    newImages[i] = d.images[i]
+                }
+            }
+            d.images = newImages;
         }
         setDesign({...d})
         updateDesign({...d})
@@ -954,7 +970,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
         console.log(des.threadColors)
         let d = { ...des }
         console.log(d.threadColors.length)
-        if (threadColor) {
+        if (threadColor && threadColor != "default" && threadColor != null) {
             console.log(threadColor)
             if (!d.threadImages) d.threadImages = {}
             if (!d.threadImages[threadColor]) d.threadImages[threadColor] = {}

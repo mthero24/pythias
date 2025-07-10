@@ -31,6 +31,18 @@ export default async function Designs(req){
         }
     }
     let count = designs[0]?.meta?.count?.total ? designs[0]?.meta?.count?.total : await Design.find({}).countDocuments()
+    // for(let d of designs){
+    //     let images = {}
+    //     for(let i of Object.keys(d.images? d.images: {})){
+    //         if(d.images[i] ){
+    //             images[i] = d.images[i]
+    //         }
+    //     }
+    //     if(Object.keys(images).length != 0){
+    //         d.images = images;
+    //         await d.save();
+    //     }
+    // }
     designs = serialize(designs)
     return <DesignsMain designs={designs} ct={count} pa={page} query={query.q}/>
     
