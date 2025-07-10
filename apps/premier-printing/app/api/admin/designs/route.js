@@ -20,18 +20,18 @@ export async function GET(req){
         if(!query.q && !query == ""){
             if(query.page == undefined || query.page == 1){
                 console.log("page = 1 or undefined")
-                designs = await Design.find({}).sort({date: -1}).limit(200)
+                designs = await Design.find({}).sort({date: -1}).limit(48)
             }else{
-                console.log("page > 1", (query.page - 1) * 200)
-                designs = await Design.find({}).sort({date: -1}).skip((query.page - 1) * 200).limit(200)
+                console.log("page > 1", (query.page - 1) * 48)
+                designs = await Design.find({}).sort({date: -1}).skip((query.page - 1) * 48).limit(48)
             }
         }else{
             if(query.page == 1){
-                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).limit(200)
-                if(designs.length == 0) designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 200})
+                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).limit(48)
+                if(designs.length == 0) designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 48})
             }else{
-                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).skip((query.page - 1) * 200).limit(200)
-                if(designs.length == 0) designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 200})
+                designs = await Design.find({sku: {$regex: query.q, $options: "si"}}).skip((query.page - 1) * 48).limit(48)
+                if(designs.length == 0) designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 48})
             }
         }
         return NextResponse.json({error: false, designs})

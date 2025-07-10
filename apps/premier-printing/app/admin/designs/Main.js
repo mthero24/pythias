@@ -1,5 +1,5 @@
 "use client";
-import {Box, Grid2, Typography, Card, Button, Container} from "@mui/material";
+import { Box, Grid2, Typography, Card, Button, Container, Pagination, Stack } from "@mui/material";
 import {useState, useEffect} from "react";
 import Image from "next/image"
 import axios from "axios";
@@ -7,33 +7,23 @@ import Link from "next/link";
 import { Uploader } from "@/components/premier/uploader";
 import Theme from "@/components/Theme";
 import Search from "./Search";
-export function Main({designs, count, query, pa}){
+export function Main({ designs, ct, query, pa }){
     const [designss, setDesigns] = useState(designs)
     const [search, setSearch] = useState(query)
-    const [page, setPage] = useState(pa? pa: 1)
-    const [hasMore, setHasMore] = useState(true)
+    const [page, setPage] = useState(pa ? parseInt(pa) : 1)
     const [checked, setChecked] = useState([])
+    const [count, setCount] = useState(ct)
     let updateDesign = async (des)=>{
         let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
         if(res?.data?.error) alert(res.data.msg)
     }
-    useEffect(()=>{
-        const getDesigns = async ()=>{
-            let res = await axios.get(`/api/admin/designs?${search != "" && search != undefined? `q=${search}&`: ""}page=${page}`)
-            if(res.data.error) alert(res.data.msg)
-            else {
-                console.log(res.data.designs.length)
-                if(res.data.designs.length < 200) setHasMore(false)
-                let ds = designss.concat(res.data.designs)
-                console.log(ds.length)
-                setDesigns([...ds])
-            }
-            setPerform(false)
-        }
-        if(page != 1 && page != undefined){
-            getDesigns()
-        }
-    },[page])
+    const handlePageChange = (event, value) => {
+        console.log(value)
+        location.href = `/admin/designs?page=${value}${search ? `&q=${search}` : ''}`;
+        // You would typically fetch new data for the selected page here
+        // based on the 'value' (new page number)
+        console.log(`Navigating to page: ${value}`);
+    };
     const createDesign = async()=>{
         let res = await axios.post("/api/admin/designs", {})
         if(res.data.error) alert(res.data.msg)
@@ -48,7 +38,7 @@ export function Main({designs, count, query, pa}){
                     <Typography>There are total of {count} Designs</Typography>
                     <Button onClick={()=>{createDesign()}} sx={{background: Theme.colors.primary, color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": {background: Theme.colors.support}}}>Create</Button>
                 </Box>
-                <Search setSearch={setSearch} setDesigns={setDesigns} setHasMore={setHasMore} setPage={setPage} search={search}/>
+                <Search setSearch={setSearch} setDesigns={setDesigns} setCount={setCount} setPage={setPage} search={search} />
                 <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
                     <Box sx={{ minHeight: "80vh",}}>
                         <Grid2 container spacing={2}>
@@ -79,7 +69,9 @@ export function Main({designs, count, query, pa}){
                                 </Grid2>
                             ))}
                         </Grid2>
-                        {hasMore && <Button onClick={()=>{setPage(page + 1)}} fullWidth>Next Page</Button>}
+                        <Stack spacing={2} sx={{ marginTop: "1%", display: "flex", alignItems: "center" }}>
+                            <Pagination count={Math.ceil(count / 50)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
+                        </Stack>
                     </Box>
                 </Card>
             </Container>

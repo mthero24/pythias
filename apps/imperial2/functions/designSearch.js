@@ -57,10 +57,10 @@ export async function DesignSearch ({q, productsPerPage, page}){
       $limit: productsPerPage,
     },
   ];
-  console.log(query[0]["$search"].phrase)
+  //console.log(query[0]["$search"].phrase)
   
   let designs = await Design.aggregate([query]);
   //console.log("something", time);
-  console.log("stan search designs ", designs[0]);
+  //console.log("stan search designs ", designs[0]);
   return designs;
 }

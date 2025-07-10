@@ -1,7 +1,8 @@
 import {Card, TextField} from "@mui/material";
 import {useState, useEffect} from "react";
 import axios from "axios";
-export default function Search({search, setSearch, setDesigns, setHasMore, setPage}){
+import { set } from "mongoose";
+export default function Search({search, setSearch, setDesigns, setCount, setPage}){
     const [perform, setPerform] = useState(false)
     useEffect(()=>{
         const getDesigns = async ()=>{
@@ -9,14 +10,13 @@ export default function Search({search, setSearch, setDesigns, setHasMore, setPa
             let res = await axios.get(`/api/admin/designs?${search != "" && search != undefined? `q=${search}&`: ""}page=${1}`)
             if(res.data.error) alert(res.data.msg)
             else {
-                if(res.data.designs.length < 200) setHasMore(false)
+                if(res.data.designs[0]) setCount(res.data.designs[0].meta.count.total)
                 setDesigns([...res.data.designs])
             }
             setPerform(!perform); 
         }
         if(perform == true){
             console.log("search")
-            setHasMore(true)
             getDesigns()
         }
     },[perform])
