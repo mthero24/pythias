@@ -41,7 +41,6 @@ export default async function DesignPage({params}){
             licenses = serialize(licenses);
             colors = serialize(colors)
             printLocations = serialize(printLocations)
-            //console.log(design, "design")
             return (
                 <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations}/>
             )
