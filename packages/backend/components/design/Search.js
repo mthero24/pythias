@@ -12,6 +12,7 @@ export function Search({search, setSearch, setDesigns, setCount, setPage}){
             if(res.data.error) alert(res.data.msg)
             else {
                 if (res.data.designs[0].meta) setCount(res.data.designs[0].meta ? res.data.designs[0].meta.count?.total: 1)
+                setCount(res.data.count)
                 setDesigns([...res.data.designs])
             }
             setPerform(!perform); 
