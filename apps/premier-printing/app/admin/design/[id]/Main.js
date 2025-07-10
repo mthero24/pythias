@@ -1,5 +1,5 @@
 "use client";
-import {Box, Grid2, TextField, Accordion, Modal, AccordionSummary, AccordionDetails, Button, Typography, Card} from "@mui/material";
+import {Box, Grid2, TextField, Accordion, Modal, AccordionSummary, AccordionDetails, Button, Typography, Card, Container} from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 import {useState, useEffect} from "react";
@@ -401,510 +401,512 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     }
     return (
         <Box sx={{display: "flex", flexDirection: "column", padding: "3%"}}>
-            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-            <Button sx={{margin: "1% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
-                            let d = {...des};
-                            d.published = !d.published;
-                            setDesign({...d});
-                            updateDesign({...d})
-                            alert(`Design is ${d.published? "published": "unpublished"} and will be ${d.published? "uploaded to all": "removed from all"} market places shortly`)
-            }}>{des.published? "Unpublish": "Publish"}</Button>
-            {!des.sendToMarketplaces && <Button sx={{margin: "1% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
-                            let d = {...des};
-                            d.sendToMarketplaces = true;
-                            setDesign({...d});
-                            updateDesign({...d})
-                            alert(`Design will resend to market places next time files are made`)
-            }}>Resend To Market Places</Button>}
-            <Button onClick={sendToTikTok}>Send To TikTok</Button>
-            <Button sx={{margin: "1% 2%", background: "#FF2400", color: "#ffffff"}} onClick={async ()=>{
-                let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
-                if(res.data.error) alert(res.data.msg)
-                else {
-                    router.push("/admin/designs")
-                }
-            }}>Delete</Button>
-            </Box>
-            {console.log(colors)}
-            {source == "IM" && <CreatableSelect
-                placeholder="Thread Colors"
-                options={colors?.map(m=>{return {value: m._id, label: m.name}})}
-                value={des.threadColors?.map(m=>{return {value: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?._id, label: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name}})}
-                onChange={(vals)=>{
-                    let d= {...des}
-                    let newThread = []
-                    for(let v of vals){
-                        newThread.push(v.value)
-                    }
-                    d.threadColors = newThread
-                    d.threadImages = {}
-                    for(let m of d.threadColors){
-                        d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]= {}
-                    }
-                    setDesign({...d})
-                    updateDesign({...d})
-                }}
-                isMulti
-            />}
-            <Accordion >
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1-content"
-                    id="panel1-header"
-                    sx={{padding: "2%"}}
-                    >
-                    <Typography component="span">Design Images</Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{padding: "5%",}}>
-                    <Grid2 container spacing={1} sx={{marginBottom: "5%"}}>
-                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                            {reload && <Uploader location={location} afterFunction={updateImage}  />}
-                            <CreatableSelect 
-                                options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                value={{value: location, label:location}}  
-                                onChange={(vals)=>{
-                                    setLocation(vals.value)
-                                    setReload(false)
-                                }}
-                            />
-                        </Grid2>
-                        {imageLocations.map((i, j)=>(
-                            <>
-                                {des.images && des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                    <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
-                                        <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                            <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto",}}/>
+            <Container maxWidth="lg">
+                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                    <Button sx={{margin: "1% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
+                                    let d = {...des};
+                                    d.published = !d.published;
+                                    setDesign({...d});
+                                    updateDesign({...d})
+                                    alert(`Design is ${d.published? "published": "unpublished"} and will be ${d.published? "uploaded to all": "removed from all"} market places shortly`)
+                    }}>{des.published? "Unpublish": "Publish"}</Button>
+                    {!des.sendToMarketplaces && <Button sx={{margin: "1% 2%", background: theme.palette.primary.main, color: "#ffffff"}} onClick={()=>{
+                                    let d = {...des};
+                                    d.sendToMarketplaces = true;
+                                    setDesign({...d});
+                                    updateDesign({...d})
+                                    alert(`Design will resend to market places next time files are made`)
+                    }}>Resend To Market Places</Button>}
+                    <Button onClick={sendToTikTok}>Send To TikTok</Button>
+                    <Button sx={{margin: "1% 2%", background: "#FF2400", color: "#ffffff"}} onClick={async ()=>{
+                        let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
+                        if(res.data.error) alert(res.data.msg)
+                        else {
+                            router.push("/admin/designs")
+                        }
+                    }}>Delete</Button>
+                </Box>
+                {console.log(colors)}
+                {source == "IM" && <CreatableSelect
+                    placeholder="Thread Colors"
+                    options={colors?.map(m=>{return {value: m._id, label: m.name}})}
+                    value={des.threadColors?.map(m=>{return {value: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?._id, label: colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name}})}
+                    onChange={(vals)=>{
+                        let d= {...des}
+                        let newThread = []
+                        for(let v of vals){
+                            newThread.push(v.value)
+                        }
+                        d.threadColors = newThread
+                        d.threadImages = {}
+                        for(let m of d.threadColors){
+                            d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name]= {}
+                        }
+                        setDesign({...d})
+                        updateDesign({...d})
+                    }}
+                    isMulti
+                />}
+                <Accordion >
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1-content"
+                        id="panel1-header"
+                        sx={{padding: "2%"}}
+                        >
+                        <Typography component="span">Design Images</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{padding: "5%",}}>
+                        <Grid2 container spacing={1} sx={{marginBottom: "5%"}}>
+                            <Grid2 size={{xs: 6, sm: 3, md: 2}}>
+                                {reload && <Uploader location={location} afterFunction={updateImage}  />}
+                                <CreatableSelect 
+                                    options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                    value={{value: location, label:location}}  
+                                    onChange={(vals)=>{
+                                        setLocation(vals.value)
+                                        setReload(false)
+                                    }}
+                                />
+                            </Grid2>
+                            {imageLocations.map((i, j)=>(
+                                <>
+                                    {des.images && des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                        <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
+                                            <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                                                <Image src={des.images[i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto",}}/>
+                                            </Box>
                                         </Box>
-                                    </Box>
-                                    <p style={{textAlign: "center"}}>{i} Image</p>
-                                    <CreatableSelect 
-                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                        value={{value: i, label:i}}  
-                                        onChange={(vals)=>{
-                                            relocateImage(des.images[i], vals.value, i)
-                                            setReload(false)
-                                        }}
-                                    />
-                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
-                                </Grid2>}
-                            </>
-                        ))}
-                    </Grid2>
-                    <Box style={{marginBottom: "5%"}}>
-                        {des.threadColors && des.threadColors.length > 0 && <Box>
-                            {des.threadColors.map(tc=>(
-                                <Box key={tc} style={{marginBottom: "5%"}}>
-                                    <p>{colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name}</p>
-                                    <Grid2 container spacing={1}>
-                                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                                            {reload && <Uploader location={location} afterFunction={updateImage} threadColor={colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name} />}
-                                            <CreatableSelect 
-                                                options={[]}
-                                                value={{value: location, label:location}}  
-                                                onChange={(vals)=>{
-                                                    setLocation(vals.value)
-                                                    setReload(false)
-                                                }}
-                                            />
-                                        </Grid2>
-                                        {imageLocations.map((i, j)=>(
-                                            <>
-                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                                     <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
-                                                        <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                                            <Image src={des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
-                                                        </Box>
-                                                    </Box>
-                                                    <p style={{textAlign: "center"}}>{i} Image</p>
-                                                    <CreatableSelect 
-                                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                                        value={{value: i, label:i}}  
-                                                        onChange={(vals)=>{
-                                                            relocateImage(des.images[i], vals.value, i, colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name)
-                                                            setReload(false)
-                                                        }}
-                                                    />
-                                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
-                                                </Grid2>}
-                                            </>
-                                        ))}
-                                    </Grid2>
-                                </Box>
+                                        <p style={{textAlign: "center"}}>{i} Image</p>
+                                        <CreatableSelect 
+                                            options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                            value={{value: i, label:i}}  
+                                            onChange={(vals)=>{
+                                                relocateImage(des.images[i], vals.value, i)
+                                                setReload(false)
+                                            }}
+                                        />
+                                        <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
+                                    </Grid2>}
+                                </>
                             ))}
-                        </Box>}
-                    </Box>
-                </AccordionDetails>
-            </Accordion>
-            <Accordion >
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1-content"
-                    id="panel1-header"
-                    sx={{padding: "2%"}}
-                    >
-                    <Typography component="span">Embroidery Files</Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{padding: "5%"}}>
-                    <Grid2 container spacing={1}>
-                         <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                            {reload && <Uploader location={location} afterFunction={updateEmbroidery}  />}
-                            <CreatableSelect 
-                                options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                value={{value: location, label:location}}  
-                                onChange={(vals)=>{
-                                    setLocation(vals.value)
-                                    setReload(false)
+                        </Grid2>
+                        <Box style={{marginBottom: "5%"}}>
+                            {des.threadColors && des.threadColors.length > 0 && <Box>
+                                {des.threadColors.map(tc=>(
+                                    <Box key={tc} style={{marginBottom: "5%"}}>
+                                        <p>{colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name}</p>
+                                        <Grid2 container spacing={1}>
+                                            <Grid2 size={{xs: 6, sm: 3, md: 2}}>
+                                                {reload && <Uploader location={location} afterFunction={updateImage} threadColor={colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name} />}
+                                                <CreatableSelect 
+                                                    options={[]}
+                                                    value={{value: location, label:location}}  
+                                                    onChange={(vals)=>{
+                                                        setLocation(vals.value)
+                                                        setReload(false)
+                                                    }}
+                                                />
+                                            </Grid2>
+                                            {imageLocations.map((i, j)=>(
+                                                <>
+                                                    {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                                        <Box sx={{minHeight: "200px", background: "#e2e2e2", display: "flex", flexDirection: "column", justifyContent: "center", padding: "2%"}}>
+                                                            <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
+                                                                <Image src={des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i]} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                                            </Box>
+                                                        </Box>
+                                                        <p style={{textAlign: "center"}}>{i} Image</p>
+                                                        <CreatableSelect 
+                                                            options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                                            value={{value: i, label:i}}  
+                                                            onChange={(vals)=>{
+                                                                relocateImage(des.images[i], vals.value, i, colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name)
+                                                                setReload(false)
+                                                            }}
+                                                        />
+                                                        <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
+                                                    </Grid2>}
+                                                </>
+                                            ))}
+                                        </Grid2>
+                                    </Box>
+                                ))}
+                            </Box>}
+                        </Box>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion >
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1-content"
+                        id="panel1-header"
+                        sx={{padding: "2%"}}
+                        >
+                        <Typography component="span">Embroidery Files</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{padding: "5%"}}>
+                        <Grid2 container spacing={1}>
+                            <Grid2 size={{xs: 6, sm: 3, md: 2}}>
+                                {reload && <Uploader location={location} afterFunction={updateEmbroidery}  />}
+                                <CreatableSelect 
+                                    options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                    value={{value: location, label:location}}  
+                                    onChange={(vals)=>{
+                                        setLocation(vals.value)
+                                        setReload(false)
+                                    }}
+                                />
+                            </Grid2>
+                            {imageLocations.map((i, j)=>(
+                                <>
+                                    {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
+                                        <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                        <p style={{textAlign: "center"}}>{i} File</p>
+                                        <CreatableSelect 
+                                            options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
+                                            value={{value: i, label:i}}  
+                                            onChange={(vals)=>{
+                                                relocateDST(des.embroideryFiles[i], vals.value, i)
+                                                setReload(false)
+                                            }}
+                                        />
+                                        <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete Image</Button>
+                                    </Grid2>}
+                                </>
+                            
+                            ))}
+                        </Grid2>
+                    </AccordionDetails>
+                </Accordion>
+                <Card sx={{width: "100%", minHeight: "80vh", padding: "50% 2%", paddingTop: "3%" }}>
+                    <Grid2 container spacing={2}>
+                        <Grid2 size={{xs: 7, sm: 8}}>
+                            <TextField label="Title" fullWidth value={des?.name}
+                            onChange={()=>updateTitleSku("name")}/>
+                        </Grid2>
+                        <Grid2 size={{xs: 5, sm: 4}}>
+                            <TextField label="SKU" fullWidth value={des?.sku}
+                            onChange={()=>updateTitleSku("sku")}/>
+                        </Grid2>
+                        <Grid2 size={{xs: 12, sm: 12}}>
+                            <TextField placeholder="Description" fullWidth multiline rows={4} value={des?.description} onChange={()=>updateTitleSku("description")}/>
+                            <Button size="small" sx={{fontSize: ".5rem", margin: "0%"}} onClick={getAiDescription}>Generate Description And Tags</Button>
+                        </Grid2>
+                        <Grid2 size={12}><hr/></Grid2>
+                        <Grid2 size={{xs: 12, sm: 12}}>
+                            <Typography>Tags</Typography>
+                            <CreatableSelect
+                                placeholder="Tags"
+                                onChange={(val)=>{
+                                    tagUpdate(val.map(t=>{return t.value}))
                                 }}
+                                value={des.tags.map(t=>{
+                                    return {value: t, label: t }
+                                })}
+                                isMulti
                             />
                         </Grid2>
-                        {imageLocations.map((i, j)=>(
-                             <>
-                                {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                    <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
-                                    <p style={{textAlign: "center"}}>{i} File</p>
-                                     <CreatableSelect 
-                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                        value={{value: i, label:i}}  
+                        <Grid2 size={12}><hr/></Grid2>
+                        <Grid2 size={12}>
+                            <Grid2 container spacing={2}>
+                                <Grid2 size={6}>
+                                    <CreatableSelect
+                                        placeholder="Print Type"
+                                        options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinyl", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
+                                        value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinyl": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
                                         onChange={(vals)=>{
-                                            relocateDST(des.embroideryFiles[i], vals.value, i)
-                                            setReload(false)
+                                            console.log(vals)
+                                            let d = {...des}
+                                            d.printType = vals.value
+                                            setDesign({...d})
+                                            updateDesign({...d})
                                         }}
                                     />
-                                    <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete Image</Button>
-                                </Grid2>}
-                            </>
-                           
-                        ))}
-                    </Grid2>
-                </AccordionDetails>
-            </Accordion>
-            <Card sx={{width: "100%", minHeight: "80vh", padding: "50% 2%", paddingTop: "3%" }}>
-                <Grid2 container spacing={2}>
-                    <Grid2 size={{xs: 7, sm: 8}}>
-                        <TextField label="Title" fullWidth value={des?.name}
-                        onChange={()=>updateTitleSku("name")}/>
-                    </Grid2>
-                    <Grid2 size={{xs: 5, sm: 4}}>
-                        <TextField label="SKU" fullWidth value={des?.sku}
-                        onChange={()=>updateTitleSku("sku")}/>
-                    </Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}}>
-                        <TextField placeholder="Description" fullWidth multiline rows={4} value={des?.description} onChange={()=>updateTitleSku("description")}/>
-                        <Button size="small" sx={{fontSize: ".5rem", margin: "0%"}} onClick={getAiDescription}>Generate Description And Tags</Button>
-                    </Grid2>
-                    <Grid2 size={12}><hr/></Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}}>
-                        <Typography>Tags</Typography>
-                        <CreatableSelect
-                            placeholder="Tags"
-                            onChange={(val)=>{
-                                tagUpdate(val.map(t=>{return t.value}))
-                            }}
-                            value={des.tags.map(t=>{
-                                return {value: t, label: t }
-                            })}
-                            isMulti
-                         />
-                    </Grid2>
-                    <Grid2 size={12}><hr/></Grid2>
-                    <Grid2 size={12}>
-                        <Grid2 container spacing={2}>
-                            <Grid2 size={6}>
-                                <CreatableSelect
-                                    placeholder="Print Type"
-                                    options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinyl", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
-                                    value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinyl": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
-                                    onChange={(vals)=>{
-                                        console.log(vals)
-                                        let d = {...des}
-                                        d.printType = vals.value
-                                        setDesign({...d})
-                                        updateDesign({...d})
-                                    }}
-                                />
-                            </Grid2>
-                            <Grid2 size={6}>
-                                <CreatableSelect
-                                    placeholder="License Holder"
-                                    options={[{label: "License Holder", value: null}, ...licenses.map(l=> {return {label: l.name, value: l._id}})]}
-                                    value={des.licenseHolder? {label: licenses.filter(l=> l._id.toString() == des.licenseHolder.toString())[0]?.name, value: des.licenseHolder}: null}
-                                    onChange={(vals)=>{
-                                        console.log(vals)
-                                        let d = {...des}
-                                        d.licenseHolder = vals.value
-                                        setDesign({...d})
-                                        updateDesign({...d})
-                                    }}
-                                />
-                            </Grid2>
-                            <Grid2 size={6}>
-                                {console.log(des.gender, "gender")}
-                                <CreatableSelect
-                                    placeholder="Gender"
-                                    options={[{label: "Gender", value: null}, ...genders.map(l=> {return {label: l.name, value: l.name}})]}
-                                    value={des.gender? {label: des.gender, value: des.gender}: null}
-                                    onChange={async (vals)=>{
-                                        console.log(vals)
-                                        let d = {...des}
-                                        d.gender = vals.value
-                                        if(!genders.filter(s=> s.name == vals.value)[0]){
-                                            let res = await axios.post("/api/admin/oneoffs", {type: "gender", value: vals.value})
-                                            if(res.data && res.data.error) alert(res.data.msg)
-                                            else setGenders(res.data.genders)
-                                        }
-                                        setDesign({...d})
-                                        updateDesign({...d})
-                                    }}
-                                />
-                            </Grid2>
-                            <Grid2 size={6}>
-                                {console.log(des.gender, "gender")}
-                                <CreatableSelect
-                                    placeholder="Season"
-                                    options={seasons.map(l=> {return {label: l.name, value: l.name}})}
-                                    value={des.season? {label: des.season, value: des.season}: null}
-                                    onChange={async (vals)=>{
-                                        console.log(vals)
-                                        let d = {...des}
-                                        d.season = vals.value
-                                        if(!seasons.filter(s=> s.name == vals.value)[0]){
-                                            let res = await axios.post("/api/admin/oneoffs", {type: "season", value: vals.value})
-                                            if(res.data && res.data.error) alert(res.data.msg)
-                                            else setSeasons(res.data.seasons)
-                                        }
-                                        setDesign({...d})
-                                        updateDesign({...d})
-                                    }}
-                                />
+                                </Grid2>
+                                <Grid2 size={6}>
+                                    <CreatableSelect
+                                        placeholder="License Holder"
+                                        options={[{label: "License Holder", value: null}, ...licenses.map(l=> {return {label: l.name, value: l._id}})]}
+                                        value={des.licenseHolder? {label: licenses.filter(l=> l._id.toString() == des.licenseHolder.toString())[0]?.name, value: des.licenseHolder}: null}
+                                        onChange={(vals)=>{
+                                            console.log(vals)
+                                            let d = {...des}
+                                            d.licenseHolder = vals.value
+                                            setDesign({...d})
+                                            updateDesign({...d})
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={6}>
+                                    {console.log(des.gender, "gender")}
+                                    <CreatableSelect
+                                        placeholder="Gender"
+                                        options={[{label: "Gender", value: null}, ...genders.map(l=> {return {label: l.name, value: l.name}})]}
+                                        value={des.gender? {label: des.gender, value: des.gender}: null}
+                                        onChange={async (vals)=>{
+                                            console.log(vals)
+                                            let d = {...des}
+                                            d.gender = vals.value
+                                            if(!genders.filter(s=> s.name == vals.value)[0]){
+                                                let res = await axios.post("/api/admin/oneoffs", {type: "gender", value: vals.value})
+                                                if(res.data && res.data.error) alert(res.data.msg)
+                                                else setGenders(res.data.genders)
+                                            }
+                                            setDesign({...d})
+                                            updateDesign({...d})
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={6}>
+                                    {console.log(des.gender, "gender")}
+                                    <CreatableSelect
+                                        placeholder="Season"
+                                        options={seasons.map(l=> {return {label: l.name, value: l.name}})}
+                                        value={des.season? {label: des.season, value: des.season}: null}
+                                        onChange={async (vals)=>{
+                                            console.log(vals)
+                                            let d = {...des}
+                                            d.season = vals.value
+                                            if(!seasons.filter(s=> s.name == vals.value)[0]){
+                                                let res = await axios.post("/api/admin/oneoffs", {type: "season", value: vals.value})
+                                                if(res.data && res.data.error) alert(res.data.msg)
+                                                else setSeasons(res.data.seasons)
+                                            }
+                                            setDesign({...d})
+                                            updateDesign({...d})
+                                        }}
+                                    />
+                                </Grid2>
                             </Grid2>
                         </Grid2>
-                    </Grid2>
-                    <Grid2 size={12}><hr/></Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}} >
-                        <Typography>Brands</Typography>
-                        {!loading &&
-                        <CreatableSelect
-                            placeholder="Brands"
-                            options={bran.map(b=>{if(b.name)return {value: b.name, label: b.name}})}
-                            isMulti
-                            value={des.brands?.map(b=>{
-                                return {value: b.name, label: b.name}
-                            })}
-                            onChange={(vals)=>{
-                                updateBrands(vals.map(v=>{return v.value}))
-                            }}
-                         />
-                         }
-                    </Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}} >
-                        {!loading && des.brands?.map(b=>(
-                            <Accordion key={b._id}>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel1-content"
-                                id="panel1-header"
-                                sx={{padding: "2%"}}
-                                >
-                                <Typography component="span">{b.name}</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <CreatableSelect
-                                    placeholder="Marketplaces"
-                                    options={marketPlaces.map(m=>{return {value: m.name, label: m.name}})}
-                                    value={des.b2m?.filter(b2m=> b2m.brand == b.name)[0]?.marketPlaces.map(m=>{return {value: m, label: m}})}
-                                    onChange={(vals)=>{
-                                        let values = vals.map(v=>{return v.value})
-                                        console.log(values)
-                                      updateMarketPlaces({brand: b, marketplaces:values})
-                                    }}
-                                   isMulti
-                               />
-                            </AccordionDetails>
-                        </Accordion>
-                        ))}
-                    </Grid2>
-                    <Grid2 size={12}><hr/></Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}}>
-                       {!loading && <><Typography>Blanks</Typography>
-                        <CreatableSelect
-                            placeholder="Blanks"
-                            options={blanks.map(m=>{return {value: m.code, label: m.code}})}
-                            value={des.blanks?.map(bl=> {return {value: bl.blank?.code, label: bl.blank?.code}})}
-                            onChange={(vals)=>{
-                                let values = vals.map(v=>{return v.value})
-                                console.log(values)
-                                updateBlanks({values})
-                            }}
-                            isMulti
-                        />
-                        </>
-                       }
-                    </Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}} >
-                        {!loading && des.blanks?.map(b=>(
-                            <Accordion key={b.blank._id}>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel1-content"
-                                id="panel1-header"
-                                sx={{padding: "2%"}}
-                                >
-                                <Typography component="span">{b.blank.name}</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <CreatableSelect
-                                    placeholder="Colors"
-                                    options={b.blank.colors?.map(m=>{return {value: m.name, label: m.name}})}
-                                    value={b.colors?.map(m=>{return {value: m?.name, label: m?.name}})}
-                                    onChange={(vals)=>{
-                                        let values = vals.map(v=>{return v.value})
-                                        console.log(values)
-                                        updateColors({blank: b, colors:values})
-                                    }}
-                                   isMulti
-                               />
-                               <Box sx={{margin: ".5% 0%"}}>
-                                    {console.log(b.defaultColor?.name, b.blank.code)}
+                        <Grid2 size={12}><hr/></Grid2>
+                        <Grid2 size={{xs: 12, sm: 12}} >
+                            <Typography>Brands</Typography>
+                            {!loading &&
+                            <CreatableSelect
+                                placeholder="Brands"
+                                options={bran.map(b=>{if(b.name)return {value: b.name, label: b.name}})}
+                                isMulti
+                                value={des.brands?.map(b=>{
+                                    return {value: b.name, label: b.name}
+                                })}
+                                onChange={(vals)=>{
+                                    updateBrands(vals.map(v=>{return v.value}))
+                                }}
+                            />
+                            }
+                        </Grid2>
+                        <Grid2 size={{xs: 12, sm: 12}} >
+                            {!loading && des.brands?.map(b=>(
+                                <Accordion key={b._id}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel1-content"
+                                    id="panel1-header"
+                                    sx={{padding: "2%"}}
+                                    >
+                                    <Typography component="span">{b.name}</Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
                                     <CreatableSelect
-                                        placeholder="Default Color"
-                                        options={b.colors?.map(m=>{return {value: m.name, label: m.name}})}
-                                        value={b.defaultColor? {value: b.defaultColor?.name, label: b.defaultColor.name}: null}
+                                        placeholder="Marketplaces"
+                                        options={marketPlaces.map(m=>{return {value: m.name, label: m.name}})}
+                                        value={des.b2m?.filter(b2m=> b2m.brand == b.name)[0]?.marketPlaces.map(m=>{return {value: m, label: m}})}
                                         onChange={(vals)=>{
-                                            updateDefaultColor({blank:b, color:vals})
+                                            let values = vals.map(v=>{return v.value})
+                                            console.log(values)
+                                        updateMarketPlaces({brand: b, marketplaces:values})
                                         }}
-                                    />
-                                </Box>
-                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                                    
-                                   { source == "IM" && <Button onClick={()=>{setUpcBlank(b); setSkuModal(true)}}>See Sku's</Button>}
-                                    <Button onClick={() => {
-                                        let colors = b.blank.colors.map(c => c.name);
-                                        updateColors({ blank: b, colors: colors })
-                                    }}>Add All Colors</Button>
-                                  {source == "PP"&&  <><Button onClick={()=>{setOpen(true); setBlankForAlt(b); console.log(b)}}>Add Alternative Images</Button>
-                                    <Button onClick={()=>{
-                                        setUpcBlank(b.blank)
-                                        setUpcModal(true)
-                                    }}>See Sku List</Button></>}
-                                </Box>
-                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", border: "1px solid black", padding: "2%"}}>
-                                    {b.marketPlaceIds && b.marketPlaceIds["tiktok"]? <Typography>Tik Tok id: {b.marketPlaceIds["tiktok"]}</Typography>: 
-                                    <Button onClick={()=>{sendToTikTok({blank: b})}}>Send To TikTok</Button>}
-                                    {b.marketPlaceIds && b.marketPlaceIds["tiktok"]? <Box>
-                                        <Button sx={{background: "blue", color: "#fff"}}>Update</Button>
-                                        <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>
-                                        <Button sx={{background: "yellow", color: "#000"}}>Delete</Button>
-                                    </Box>: 
-                                    null}
-                                </Box>
-                            </AccordionDetails>
-                        </Accordion>
-                        ))}
-                    </Grid2>
-                    <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
-                        <CreatableSelect
-                            placeholder="Image Group"
-                            options={imageGroups.map(ig=>{return {value: ig, label: ig}})}
-                            value={{value: des.imageGroup, label: des.imageGroup}}
-                            onChange={(vals)=>{
-                                console.log(vals)
-                                let d = {...des}
-                                d.imageGroup = vals.value
-                                let images = []
-                                d.imageGroup && d.blanks.map((b, j)=>{
-                                    if(b.blank.multiImages)Object.keys(b.blank.multiImages).map((i,j)=>{
-                                       //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
-                                       let foundImages = false
-                                        if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
-                                            let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
-                                            image.side = i
-                                            if(image.side == "modelFront") image.side = "front"
-                                            if(image.side == "modelBack") image.side = "back"
-                                            images.push(image)
-                                            foundImages = true
-                                        }
-                                        if(!foundImages ){
-                                            if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]){
-                                                let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]
+                                    isMulti
+                                />
+                                </AccordionDetails>
+                            </Accordion>
+                            ))}
+                        </Grid2>
+                        <Grid2 size={12}><hr/></Grid2>
+                        <Grid2 size={{xs: 12, sm: 12}}>
+                        {!loading && <><Typography>Blanks</Typography>
+                            <CreatableSelect
+                                placeholder="Blanks"
+                                options={blanks.map(m=>{return {value: m.code, label: m.code}})}
+                                value={des.blanks?.map(bl=> {return {value: bl.blank?.code, label: bl.blank?.code}})}
+                                onChange={(vals)=>{
+                                    let values = vals.map(v=>{return v.value})
+                                    console.log(values)
+                                    updateBlanks({values})
+                                }}
+                                isMulti
+                            />
+                            </>
+                        }
+                        </Grid2>
+                        <Grid2 size={{xs: 12, sm: 12}} >
+                            {!loading && des.blanks?.map(b=>(
+                                <Accordion key={b.blank._id}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel1-content"
+                                    id="panel1-header"
+                                    sx={{padding: "2%"}}
+                                    >
+                                    <Typography component="span">{b.blank.name}</Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <CreatableSelect
+                                        placeholder="Colors"
+                                        options={b.blank.colors?.map(m=>{return {value: m.name, label: m.name}})}
+                                        value={b.colors?.map(m=>{return {value: m?.name, label: m?.name}})}
+                                        onChange={(vals)=>{
+                                            let values = vals.map(v=>{return v.value})
+                                            console.log(values)
+                                            updateColors({blank: b, colors:values})
+                                        }}
+                                    isMulti
+                                />
+                                <Box sx={{margin: ".5% 0%"}}>
+                                        {console.log(b.defaultColor?.name, b.blank.code)}
+                                        <CreatableSelect
+                                            placeholder="Default Color"
+                                            options={b.colors?.map(m=>{return {value: m.name, label: m.name}})}
+                                            value={b.defaultColor? {value: b.defaultColor?.name, label: b.defaultColor.name}: null}
+                                            onChange={(vals)=>{
+                                                updateDefaultColor({blank:b, color:vals})
+                                            }}
+                                        />
+                                    </Box>
+                                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                                        
+                                    { source == "IM" && <Button onClick={()=>{setUpcBlank(b); setSkuModal(true)}}>See Sku's</Button>}
+                                        <Button onClick={() => {
+                                            let colors = b.blank.colors.map(c => c.name);
+                                            updateColors({ blank: b, colors: colors })
+                                        }}>Add All Colors</Button>
+                                    {source == "PP"&&  <><Button onClick={()=>{setOpen(true); setBlankForAlt(b); console.log(b)}}>Add Alternative Images</Button>
+                                        <Button onClick={()=>{
+                                            setUpcBlank(b.blank)
+                                            setUpcModal(true)
+                                        }}>See Sku List</Button></>}
+                                    </Box>
+                                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", border: "1px solid black", padding: "2%"}}>
+                                        {b.marketPlaceIds && b.marketPlaceIds["tiktok"]? <Typography>Tik Tok id: {b.marketPlaceIds["tiktok"]}</Typography>: 
+                                        <Button onClick={()=>{sendToTikTok({blank: b})}}>Send To TikTok</Button>}
+                                        {b.marketPlaceIds && b.marketPlaceIds["tiktok"]? <Box>
+                                            <Button sx={{background: "blue", color: "#fff"}}>Update</Button>
+                                            <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>
+                                            <Button sx={{background: "yellow", color: "#000"}}>Delete</Button>
+                                        </Box>: 
+                                        null}
+                                    </Box>
+                                </AccordionDetails>
+                            </Accordion>
+                            ))}
+                        </Grid2>
+                        <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
+                            <CreatableSelect
+                                placeholder="Image Group"
+                                options={imageGroups.map(ig=>{return {value: ig, label: ig}})}
+                                value={{value: des.imageGroup, label: des.imageGroup}}
+                                onChange={(vals)=>{
+                                    console.log(vals)
+                                    let d = {...des}
+                                    d.imageGroup = vals.value
+                                    let images = []
+                                    d.imageGroup && d.blanks.map((b, j)=>{
+                                        if(b.blank.multiImages)Object.keys(b.blank.multiImages).map((i,j)=>{
+                                        //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
+                                        let foundImages = false
+                                            if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
+                                                let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
                                                 image.side = i
                                                 if(image.side == "modelFront") image.side = "front"
                                                 if(image.side == "modelBack") image.side = "back"
                                                 images.push(image)
                                                 foundImages = true
                                             }
-                                        }
+                                            if(!foundImages ){
+                                                if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]){
+                                                    let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes("default") && b.colors[0]._id.toString() == im.color.toString())[0]
+                                                    image.side = i
+                                                    if(image.side == "modelFront") image.side = "front"
+                                                    if(image.side == "modelBack") image.side = "back"
+                                                    images.push(image)
+                                                    foundImages = true
+                                                }
+                                            }
+                                        })
                                     })
-                                })
-                                setImageGroupImages([])
-                                setDesign({...d})
-                                updateDesign({...d})
-                            }}
-                         />
-                    </Grid2>
-                    <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
-                        <CreatableSelect
-                            placeholder="Blank"
-                            options={[ ...des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})]}
-                            value={imageBlank? imageBlank: {label: "Blank", value: null}}
-                            onChange={(val)=>{
-                                setImageBlank(val)
-                                setImageColor({})
-                            }}
-                         />
-                    </Grid2>
-                    <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
-                            {console.log(des.blanks, imageBlank.value)}
-                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
-                            {imageBlank  &&  <CreatableSelect
-                            placeholder="Color"
-                            options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
-                            value={imageColor? imageColor: {label: "Color", value: null}}
-                            onChange={(val)=>{
-                                setImageGroupImages([])
-                                setImageColor(val)
-                            }}
-                         />}
-                    </Grid2>
-                   {des.threadColors && des.threadColors.length > 0 &&  <Grid2 size={{xs: 3, sm: 3}} >
-                            {console.log(des.blanks, imageBlank.value)}
-                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
-                            {imageBlank  &&  <CreatableSelect
-                            placeholder="Thread Color"
-                            options={des.threadColors.map(c=> {return colors.filter(cl=> cl._id.toString() == c.toString())[0]})?.map(c=>{ return {label: c.name, value: c.name}})}
-                            value={threadColor? {label: threadColor, value: threadColor}: {label: "Thread Color", value: null}}
-                            onChange={(val)=>{
-                                setImageGroupImages([])
-                                setThreadColor(val.value)
-                            }}
-                         />}
-                    </Grid2>}
-                    <Grid2 size={12}>
-                        <Grid2 container spacing={2}>
-                            {imageGroupImages.map((i,j)=>(
-                                <Grid2 size={{xs: 6, md: 4}} key={j}>
-                                    <ProductImageOverlay
-                                        imageGroup={des.imageGroup}
-                                        box={
-                                        i.box[0]
-                                        }
-                                        id={i._id}
-                                        style={i.style}
-                                        colorName={imageColor}
-                                        setDefaultImages={setDefaultImages}
-                                        styleImage={i.image}
-                                        side={i.side}
-                                        dI={des.blanks.filter(b=> b.blank.code == imageBlank.value)[0].defaultImages?.filter(dI=> dI.color == i.color && dI.side == i.side)[0]?.id}
-                                        designImage={threadColor? des.threadImages? des.threadImages[threadColor][i.side]? des.threadImages[threadColor][i.side]: null : null :des.images && des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]? des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]: null }
-                                    />
-                                </Grid2>
-                            ))}
+                                    setImageGroupImages([])
+                                    setDesign({...d})
+                                    updateDesign({...d})
+                                }}
+                            />
+                        </Grid2>
+                        <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
+                            <CreatableSelect
+                                placeholder="Blank"
+                                options={[ ...des.blanks.map(b=>{ return {label: b.blank.name, value: b.blank.code}})]}
+                                value={imageBlank? imageBlank: {label: "Blank", value: null}}
+                                onChange={(val)=>{
+                                    setImageBlank(val)
+                                    setImageColor({})
+                                }}
+                            />
+                        </Grid2>
+                        <Grid2 size={{xs: des.threadColors && des.threadColors.length > 0? 3: 4, sm: des.threadColors && des.threadColors.length > 0? 3: 4}} >
+                                {console.log(des.blanks, imageBlank.value)}
+                                {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
+                                {imageBlank  &&  <CreatableSelect
+                                placeholder="Color"
+                                options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
+                                value={imageColor? imageColor: {label: "Color", value: null}}
+                                onChange={(val)=>{
+                                    setImageGroupImages([])
+                                    setImageColor(val)
+                                }}
+                            />}
+                        </Grid2>
+                    {des.threadColors && des.threadColors.length > 0 &&  <Grid2 size={{xs: 3, sm: 3}} >
+                                {console.log(des.blanks, imageBlank.value)}
+                                {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
+                                {imageBlank  &&  <CreatableSelect
+                                placeholder="Thread Color"
+                                options={des.threadColors.map(c=> {return colors.filter(cl=> cl._id.toString() == c.toString())[0]})?.map(c=>{ return {label: c.name, value: c.name}})}
+                                value={threadColor? {label: threadColor, value: threadColor}: {label: "Thread Color", value: null}}
+                                onChange={(val)=>{
+                                    setImageGroupImages([])
+                                    setThreadColor(val.value)
+                                }}
+                            />}
+                        </Grid2>}
+                        <Grid2 size={12}>
+                            <Grid2 container spacing={2}>
+                                {imageGroupImages.map((i,j)=>(
+                                    <Grid2 size={{xs: 6, md: 4}} key={j}>
+                                        <ProductImageOverlay
+                                            imageGroup={des.imageGroup}
+                                            box={
+                                            i.box[0]
+                                            }
+                                            id={i._id}
+                                            style={i.style}
+                                            colorName={imageColor}
+                                            setDefaultImages={setDefaultImages}
+                                            styleImage={i.image}
+                                            side={i.side}
+                                            dI={des.blanks.filter(b=> b.blank.code == imageBlank.value)[0].defaultImages?.filter(dI=> dI.color == i.color && dI.side == i.side)[0]?.id}
+                                            designImage={threadColor? des.threadImages? des.threadImages[threadColor][i.side]? des.threadImages[threadColor][i.side]: null : null :des.images && des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]? des.images[i.side == "modalFront"? "front": i.side == "modalBack"? "back": i.side]: null }
+                                        />
+                                    </Grid2>
+                                ))}
+                            </Grid2>
                         </Grid2>
                     </Grid2>
-                </Grid2>
-            </Card>
-            <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
-            <ModalSkus open={skuModal} setOpen={setSkuModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
-            <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
+                </Card>
+                <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
+                <ModalSkus open={skuModal} setOpen={setSkuModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
+                <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
+            </Container>
         </Box>
     )
 }

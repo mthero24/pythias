@@ -14,12 +14,26 @@ export default async function Test(){
     // for(let c of colors){
     //     if(c.image) {
     //         c.image = c.image.replace(
-    //         "teeshirtpalace-node-dev",
-    //         "images2.tshirtpalace.com"
+    //         "images2.tshirtpalace.com",
+    //         "teeshirtpalace-node-dev"
     //         );
     //         await c.save()
     //     }
-
+    // }
+    let styles = await Styles.find({});
+    for(let s of styles){
+        for(let i of s.images){
+            if(i.image){
+                i.image = i.image.replace(
+                    "images2.tshirtpalace.com",
+                    "teeshirtpalace-node-dev"
+                );
+                console.log(i.image)
+            }
+        }
+        s.markModified("images");
+        await s.save()
+    }
     // }
     // let designs = await Design.find({updatedLinks: {$in: [false, null]}}).limit(500);
     // let skip = 500

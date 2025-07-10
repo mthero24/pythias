@@ -1,5 +1,5 @@
 "use client";
-import {Box, Grid2, Typography, Card, Button, TextField} from "@mui/material";
+import {Box, Grid2, Typography, Card, Button, Container} from "@mui/material";
 import {useState, useEffect} from "react";
 import Image from "next/image"
 import axios from "axios";
@@ -43,44 +43,46 @@ export function Main({designs, count, query, pa}){
     }
     return (
         <Box sx={{padding: "1%", color: "black", minHeight: "vh",}}>
-            <Box sx={{display: "flex",justifyContent: "space-between", padding: "1%"}}>
-                <Typography>There are total of {count} Designs</Typography>
-                <Button onClick={()=>{createDesign()}} sx={{background: Theme.colors.primary, color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": {background: Theme.colors.support}}}>Create</Button>
-            </Box>
-            <Search setSearch={setSearch} setDesigns={setDesigns} setHasMore={setHasMore} setPage={setPage} search={search}/>
-            <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
-                <Box sx={{ minHeight: "80vh",}}>
-                    <Grid2 container spacing={2}>
-                        {designss && designss.map(d=>(
-                            <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
-                                <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
-                                    <Link href={`/admin/design/${d._id}`} target="_blank">
-                                        <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "250px", background: "#e2e2e2"}}>
-                                            <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.upperSleeve? d.images?.upperSleeve: d.images?.lowerSleeve? d.images?.lowerSleeve: d.images?.pocket? d.images?.pocket:  d.images?.center?  d.images?.center: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
-                                        </Box>
-                                        <hr/>
-                                        <Box sx={{padding: "3%"}}>
-                                            <Typography sx={{fontSize: '0.8rem', color: "black"}}>SKU: {d.sku}</Typography>
-                                            <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
-                                        </Box>
-                                    </Link>
-                                    {console.log(d)}
-                                    {(d.sendToMarketplaces == false || d.sendToMarketplaces == undefined) && !checked.includes(d._id.toString()) && <Button onClick={()=>{
-                                        console.log(d)
-                                        d.sendToMarketplaces = true
-                                        console.log(d)
-                                        updateDesign({...d})
-                                        let c = [...checked]
-                                        c.push(d._id.toString)
-                                        setChecked(c)
-                                    }}>Resend To Market Places</Button>}
-                                </Card>                                
-                            </Grid2>
-                        ))}
-                    </Grid2>
-                    {hasMore && <Button onClick={()=>{setPage(page + 1)}} fullWidth>Next Page</Button>}
+            <Container mazWidth="lg">
+                <Box sx={{display: "flex",justifyContent: "space-between", padding: "1%"}}>
+                    <Typography>There are total of {count} Designs</Typography>
+                    <Button onClick={()=>{createDesign()}} sx={{background: Theme.colors.primary, color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": {background: Theme.colors.support}}}>Create</Button>
                 </Box>
-            </Card>
+                <Search setSearch={setSearch} setDesigns={setDesigns} setHasMore={setHasMore} setPage={setPage} search={search}/>
+                <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
+                    <Box sx={{ minHeight: "80vh",}}>
+                        <Grid2 container spacing={2}>
+                            {designss && designss.map(d=>(
+                                <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
+                                    <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
+                                        <Link href={`/admin/design/${d._id}`} target="_blank">
+                                            <Box sx={{ padding: {sm: "3%", md:"6%"}, background: "#e2e2e2", height: { sm: "250px", md: "300px", lg: "350px" }, minHeight: "250px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                <Image src={d.images && d.images[Object.keys(d.images)[0]] ? `${d.images[Object.keys(d.images)[0]]?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=300` : "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
+                                            </Box>
+                                            <hr/>
+                                            <Box sx={{padding: "3%"}}>
+                                                <Typography sx={{fontSize: '0.8rem', color: "black"}}>SKU: {d.sku}</Typography>
+                                                <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
+                                            </Box>
+                                        </Link>
+                                        {console.log(d)}
+                                        {(d.sendToMarketplaces == false || d.sendToMarketplaces == undefined) && !checked.includes(d._id.toString()) && <Button onClick={()=>{
+                                            console.log(d)
+                                            d.sendToMarketplaces = true
+                                            console.log(d)
+                                            updateDesign({...d})
+                                            let c = [...checked]
+                                            c.push(d._id.toString)
+                                            setChecked(c)
+                                        }}>Resend To Market Places</Button>}
+                                    </Card>                                
+                                </Grid2>
+                            ))}
+                        </Grid2>
+                        {hasMore && <Button onClick={()=>{setPage(page + 1)}} fullWidth>Next Page</Button>}
+                    </Box>
+                </Card>
+            </Container>
         </Box>
     )
 }
