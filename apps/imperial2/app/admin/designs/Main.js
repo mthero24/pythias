@@ -48,7 +48,7 @@ export function Main({designs, ct, query, pa}){
                                     <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
                                         <Link href={`/admin/design/${d._id}`} target="_blank">
                                             <Box sx={{ padding: "3%", background: "#e2e2e2", height: { sm: "250px", md: "300px", lg: "350px" }, minHeight: "250px", display: "flex", alignItems: "center", justifyContent: "center"}}>
-                                                <Image src={d.images && d.images[Object.keys(d.images)[0]] ? `${d.images[Object.keys(d.images)[0]]?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`: "/missingImage.jpg"} width={400} height={400} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
+                                                <img src={d.images && d.images[Object.keys(d.images)[0]] ? `${d.images[Object.keys(d.images)[0]]?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`: "/missingImage.jpg"} width={400} height={400} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
                                             </Box>
                                             <hr/>
                                             <Box sx={{padding: "3%"}}>
