@@ -45,11 +45,20 @@ app.get("/origin/*", async (req, res) => {
             fit: sharp.fit.inside,
             position: sharp.strategy.attention,
             fastShrinkOnLoad: false
-        }).toBuffer()
+        })
+        if(req.headers['accept'] && req.headers['accept'].includes("webp")){
+            image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
+        }else{
+            image = await image.jpeg({ quality: 90, chromaSubsampling: '4:4:4', mozjpeg: true }).toBuffer()
+        }
     }else{
-        image = await image.toBuffer()
+        if (req.headers['accept'] && req.headers['accept'].includes("webp")) {
+            image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
+        } else {
+            image = await image.jpeg({ quality: 90, chromaSubsampling: '4:4:4', mozjpeg: true }).toBuffer()
+        }
     }
-    res.set('Content-Type', 'image/jpeg');
+    res.set('Content-Type', req.headers['accept'] && req.headers['accept'].includes("webp")? "image/webp": 'image/jpeg');
     res.header('Access-Control-Allow-Origin', '*');
     return res.status(200).send(image)
 })
