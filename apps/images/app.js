@@ -49,13 +49,13 @@ app.get("/origin/*", async (req, res) => {
         if(req.headers['accept'] && req.headers['accept'].includes("webp")){
             image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
         }else{
-            image = await image.jpeg({ quality: 90 }).toBuffer()
+            image = await image.toBuffer()
         }
     }else{
         if (req.headers['accept'] && req.headers['accept'].includes("webp")) {
             image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
         } else {
-            image = await image.jpeg({ quality: 90, chromaSubsampling: '4:4:4', mozjpeg: true }).toBuffer()
+            image = await image.toBuffer()
         }
     }
     res.set('Content-Type', req.headers['accept'] && req.headers['accept'].includes("webp")? "image/webp": 'image/jpeg');
