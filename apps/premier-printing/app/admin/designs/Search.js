@@ -9,7 +9,8 @@ export default function Search({search, setSearch, setCount, setDesigns, setPage
             let res = await axios.get(`/api/admin/designs?${search != "" && search != undefined ? `q=${search}&` : ""}page=${1}`)
             if (res.data.error) alert(res.data.msg)
             else {
-                if (res.data.designs[0]) setCount(res.data.designs[0].meta.count.total)
+                if (setCount && res.data.designs[0].meta) setCount(res.data.designs[0].meta.count.total)
+                else if(setCount) setCount(res.data.count)
                 setDesigns([...res.data.designs])
             }
             setPerform(!perform);
