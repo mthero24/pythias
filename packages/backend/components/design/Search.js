@@ -1,8 +1,9 @@
+"use client";
 import {Card, TextField} from "@mui/material";
 import {useState, useEffect} from "react";
 import axios from "axios";
 import { set } from "mongoose";
-export default function Search({search, setSearch, setDesigns, setCount, setPage}){
+export function Search({search, setSearch, setDesigns, setCount, setPage}){
     const [perform, setPerform] = useState(false)
     useEffect(()=>{
         const getDesigns = async ()=>{

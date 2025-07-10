@@ -1,6 +1,7 @@
 import Design from "@/models/Design";
-import {Main} from "./Main"
+import { DesignsMain } from "@pythias/backend";
 import {DesignSearch} from "@/functions/designSearch";
+import { serialize } from "@/functions/serialize";
 export const dynamic = 'force-dynamic';
 export default async function Designs(req){
     console.log(await req.searchParams)
@@ -30,5 +31,7 @@ export default async function Designs(req){
         }
     }
     let count = designs[0]?.meta?.count?.total ? designs[0]?.meta?.count?.total : await Design.find({}).countDocuments()
-    return <Main designs={JSON.parse(JSON.stringify(designs))} ct={count} pa={page} query={query.q}/>
+    designs = serialize(designs)
+    return <DesignsMain designs={designs} ct={count} pa={page} query={query.q}/>
+    
 }   

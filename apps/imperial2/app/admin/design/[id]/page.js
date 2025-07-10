@@ -7,7 +7,7 @@ import LicenseHolders from "@/models/LicenseHolders";
 import MarketPlaces from "@/models/MarketPlaces";
 import ProductImages from "@/models/ProductImages";
 import { serialize } from "@/functions/serialize";
-import {Main} from "./Main";
+import {DesignMain} from "@pythias/backend";
 import { notFound } from "next/navigation";
 import { Noto_Serif_Makasar } from "next/font/google";
 export const dynamic = 'force-dynamic';
@@ -42,7 +42,7 @@ export default async function DesignPage({params}){
             colors = serialize(colors)
             printLocations = serialize(printLocations)
             return (
-                <Main design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations}/>
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations}/>
             )
         }catch(e){
             return notFound()

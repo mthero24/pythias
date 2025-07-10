@@ -3,7 +3,7 @@ import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDet
 import {useState, useEffect} from "react"
 import CreatableSelect from "react-select/creatable";
 import axios from "axios"
-import Search from "@/app/admin/designs/Search";
+import {Search} from "@pythias/backend";
 import Image from "next/image";
 import {Repull} from "@pythias/repull"
 import { NoteSnackBar } from "./NoteSnackBar";

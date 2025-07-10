@@ -1,6 +1,6 @@
 import {Box, Modal, Typography, Card, Grid2, Button} from "@mui/material"
 import {useState, useEffect} from "react"
-import { Uploader } from "@/components/premier/uploader";
+import { Uploader } from "../reusable/premier/uploader";
 import Image from "next/image"
 const style = {
     position: 'absolute',

@@ -1,12 +1,9 @@
 "use client";
 import {Box, Grid2, Typography, Card, Button, Container, Pagination, Stack} from "@mui/material";
-import {useState, useEffect} from "react";
-import Image from "next/image"
+import {useState} from "react";
 import axios from "axios";
 import Link from "next/link";
-import { Uploader } from "@/components/premier/uploader";
-import Theme from "@/components/Theme";
-import Search from "./Search";
+import {Search} from "./Search";
 export function Main({designs, ct, query, pa}){
     const [designss, setDesigns] = useState(designs)
     const [search, setSearch] = useState(query)
@@ -37,7 +34,7 @@ export function Main({designs, ct, query, pa}){
             <Container mazWidth="lg">
                 <Box sx={{display: "flex",justifyContent: "space-between", padding: "1%"}}>
                     <Typography>There are total of {count} Designs</Typography>
-                    <Button onClick={()=>{createDesign()}} sx={{background: Theme.colors.primary, color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": {background: Theme.colors.support}}}>Create</Button>
+                    <Button onClick={() => { createDesign() }} sx={{ background: "#645D5B", color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": { background: "#000" }}}>Create</Button>
                 </Box>
                 <Search setSearch={setSearch} setDesigns={setDesigns} setCount={setCount} setPage={setPage} search={search}/>
                 <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
