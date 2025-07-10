@@ -243,36 +243,40 @@ export function DTFBody({auto, setAuto, printer, type}){
                       <Box>
                         {Object.keys(submitted.images).map(im=>(
                           <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%", margin: "2%"}}>
-                            <Box>
-                              <Image
+                            <Box sx={{width: "50%", background: "#e2e2e2", padding: "1%"}}>
+                              <img
                                   width={500}
                                   alt={`${im}`}
                                   height={500}
                                   style={{
                                     width: "100%",
-                                    height: "auto",
-                                    background: "#e2e2e2"
+                                    maxHeight: "100%",
+                                    maxWidth: "100%",
+                                    background: "#e2e2e2",
+                                    height: "auto"
                                   }}
-                                  src={createImage(submitted.colorName, submitted.styleCode, {url: submitted.images[im], side: im == "back" || im == "namePlate"? "back": "front", printArea: im})}
+                                  src={createImage(submitted.colorName, submitted.styleCode, {url: submitted.images[im], side: im == "back" || im == "namePlate"? "back": "front", printArea: im}, 400)}
                               />
                             </Box>
-                            <Box sx={{ background: "#e2e2e2", padding: "1%"}}>
-                              {console.log(submitted.images[im])}
-                              <Image
+                            <Box sx={{ width: "50%", background: "#e2e2e2", padding: "1%" }}>
+                              <img
                                   width={500}
                                   alt="back design"
                                   height={500}
                                   style={{
                                     width: "100%",
-                                    height: "auto"
+                                    height: "auto",
+                                    maxHeight: "100%",
+                                    maxWidth: "100%",
+                                    background: "#e2e2e2",
                                   }}
-                                  src={submitted.images[im]?.replace("https://s3.wasabisys.com/teeshirtpalace-node-dev/", "https://images2.teeshirtpalace.com/").replace(
+                                  src={`${submitted.images[im]?.replace("https://s3.wasabisys.com/teeshirtpalace-node-dev/", "https://images2.teeshirtpalace.com/").replace(
             "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
         "https://images2.teeshirtpalace.com/"
             ).replace(
-            "s3.wasabisys.com/images2.teeshirtpalace.com/",
+            "s3.wasabisys.com/images2.tshirtpalace.com/",
             "images2.teeshirtpalace.com/"
-            )}
+            )}?width=400&height=400`}
                               />
                             </Box>
                           </Box>

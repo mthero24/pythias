@@ -9,7 +9,10 @@ export const createImage = (colorName, styleCode, options, width=700) => {
     if(!colorName) return ''
     let url;
     if(options.url){
-        url = `https://images4.teeshirtpalace.com/images/productImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?url=${options.url}&width=${width}${options.printArea? `&printArea=${options.printArea}`: ""}`;
+        url = `https://images4.teeshirtpalace.com/images/productImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?url=${options.url.replace(
+            "https://s3.wasabisys.com/images2.tshirtpalace.com/",
+            "https://images2.teeshirtpalace.com/"
+        ) }&width=${width}${options.printArea? `&printArea=${options.printArea}`: ""}`;
     }
     if(options.sku){
         url = `https://images4.teeshirtpalace.com/images/productImages/${options.sku}--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?width=${width}${options.printArea? `&printArea=${options.printArea}`: ""}`;

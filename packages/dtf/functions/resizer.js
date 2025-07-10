@@ -152,6 +152,9 @@ export const createImage = async (
       ).replace(
         "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
         "https://images2.teeshirtpalace.com/"
+      ).replace(
+        "https://s3.wasabisys.com/images2.tshirtpalace.com/",
+        "https://images2.teeshirtpalace.com/"
       ),
       { responseType: "arraybuffer" }
     );
