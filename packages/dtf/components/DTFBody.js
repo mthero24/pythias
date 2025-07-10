@@ -266,12 +266,12 @@ export function DTFBody({auto, setAuto, printer, type}){
                                     width: "100%",
                                     height: "auto"
                                   }}
-                                  src={submitted.images[im]?.replace("https://s3.wasabisys.com/teeshirtpalace-node-dev/", "https://images2.tshirtpalace.com/").replace(
+                                  src={submitted.images[im]?.replace("https://s3.wasabisys.com/teeshirtpalace-node-dev/", "https://images2.teeshirtpalace.com/").replace(
             "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.tshirtpalace.com/"
+        "https://images2.teeshirtpalace.com/"
             ).replace(
-            "s3.wasabisys.com/images2.tshirtpalace.com/",
-            "images2.tshirtpalace.com/"
+            "s3.wasabisys.com/images2.teeshirtpalace.com/",
+            "images2.teeshirtpalace.com/"
             )}
                               />
                             </Box>

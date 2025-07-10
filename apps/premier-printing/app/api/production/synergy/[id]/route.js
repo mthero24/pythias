@@ -59,14 +59,14 @@ export async function GET(request, { params }) {
             "https://images2.tshirtpalace.com"
             ).replace(
             "s3.wasabisys.com/images2.tshirtpalace.com/",
-            "images2.tshirtpalace.com/"
+            "images2.teeshirtpalace.com/"
             )
         : item.design.back.replace(
             "https://s3.wasabisys.com/teeshirtpalace-node-dev",
             "https://images2.tshirtpalace.com"
             ).replace(
             "s3.wasabisys.com/images2.tshirtpalace.com/",
-            "images2.tshirtpalace.com/"
+            "images2.teeshirtpalace.com/"
             )
     );
     console.log(demenstions, "dementions");

@@ -138,20 +138,20 @@ export const createImage = async (
     console.log(url);
     let useUrl =  url.replace(
         "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.tshirtpalace.com/"
+        "https://images2.teeshirtpalace.com/"
       ).replace(
         "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.tshirtpalace.com/"
+        "https://images2.teeshirtpalace.com/"
       )
     console.log(useUrl)
     // Download the image
     const response = await axios.get(
       url.replace(
         "https://s3.us-east-1.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.tshirtpalace.com/"
+        "https://images2.teeshirtpalace.com/"
       ).replace(
         "https://s3.wasabisys.com/teeshirtpalace-node-dev/",
-        "https://images2.tshirtpalace.com/"
+        "https://images2.teeshirtpalace.com/"
       ),
       { responseType: "arraybuffer" }
     );

@@ -5,6 +5,7 @@ const nextConfig = {
       "images3.teeshirtpalace.com",
       "images4.teeshirtpalace.com",
       "images1.teeshirtpalace.com",
+      "images2.teeshirtpalace.com",
       "teeshirtpalace.com",
       "www.teeshirtpalace.com",
       "images2.tshirtpalace.com",
