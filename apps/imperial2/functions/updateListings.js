@@ -120,7 +120,7 @@ const createVariantImages = (design, blank, color, threadColor)=>{
 export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor threadColors").sort({'_id': -1}).limit(2000)
+        let designs = await Design.find({sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor threadColors").sort({'_id': -1}).limit(2000)
         console.log(designs.length)
         let products = []
         let i = 0
