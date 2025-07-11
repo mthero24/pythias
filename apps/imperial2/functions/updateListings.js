@@ -52,7 +52,7 @@ const createProductImages = (design, blank,)=>{
                         if (!colorImages || colorImages.length == 0) colorImages = blankImages?.filter(bi=> bi.color.toString() == color._id.toString() &&  bi.imageGroup == "default")
                         for(let ci of colorImages? colorImages: []){
                             console.log(ci._id)
-                            images.push(encodeURI(encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${ci.image.split("/")[ci.image.split("/").length - 1].split(".")[0]}-${color.name}-${key}-${tc.name}.jpg?width=1200`)))
+                            images.push(encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${ci.image.split("/")[ci.image.split("/").length - 1].split(".")[0]}-${color.name}-${key}-${tc.name}.jpg?width=1200`))
                         }
                     }
                 }

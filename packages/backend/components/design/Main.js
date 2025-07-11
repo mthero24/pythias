@@ -31,6 +31,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [reload, setReload] = useState(true)
     const [imageLocations, setImageLocations] = useState(printLocations.map(l=>{return l.name}))
     const [addImageModal, setAddImageModal] = useState(false);
+    const [addDSTModal, setAddDSTModal] = useState(false);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteImage, setDeleteImage] = useState({})
     const [type, setType] = useState("image")
@@ -41,19 +42,15 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         if(!reload) setReload(!reload)
     }, [reload])
     useEffect(()=>{
-        console.log(blanks[0].colors)
         if(blanks){
             let d = {...des}
             if(!d.blanks)d.blanks = [];
             if(!d.brands) d.brands = [];
             if(d.images == undefined) d.images = {};
-            console.log(blanks[0].colors[0])
             d.blanks= d.blanks.map(bl=>{
                 let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]                
                 bl.colors = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
-                console.log(bl.colors.filter(c=> (c?._id?c._id.toString(): c?.toString()) == (bl.defaultColor?._id? bl.defaultColor._id.toString(): bl.defaultColor?.toString()))[0])
                 bl.defaultColor = bl.colors.filter(c=> (c?._id?c?._id.toString(): c?.toString()) == (bl.defaultColor?._id? bl.defaultColor._id.toString(): bl.defaultColor?.toString()))[0]
-                console.log(bl.colors, bl.defaultColor, "default")
                 bl.colors = bl.colors.filter(c=> c != undefined)
                 bl.blank = blank
                 return bl
@@ -63,7 +60,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                 let brand = brands.filter(b=> b._id.toString() == (br._id? br._id.toString(): br.toString()))[0]
                 return brand
             })
-            console.log(d.brands, d.blanks, d.marketplaces)
             d.blanks = d.blanks.filter(b=> b.blank != undefined)
             setDesign({...d})
             let imGr = []
@@ -71,7 +67,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
               if(b.multiImages){
                 Object.keys(b.multiImages).map(i=>{
                     b.multiImages[i].map(im=>{
-                      //console.log(im, "im")
                       im.imageGroup?.map(g=>{
                         if(!imGr.includes(g)) imGr.push(g)
                       })
@@ -87,17 +82,9 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         let images = []
         des.imageGroup && des.blanks.map((b, j)=>{
             if(imageBlank && imageBlank.value && b.blank.code.toString() == imageBlank.value.toString()){
-                console.log(imageBlank, "useEffect")
-                console.log(b.blank.code.toString(), imageBlank.value.toString(), b.blank.code.toString() == imageBlank.value.toString())
-                console.log(imageColor)
                 for(let side of Object.keys(design.images)){
                     Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).filter(s=> s == side && design.images[side]).map((i,j)=>{
-                        //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
-                        console.log(des.imageGroup)
-                        console.log(imageBlank)
-                        console.log(imageColor)
                         let color = b.colors.filter(c=> c.name == imageColor.value)[0]
-                        console.log(color, "color")
                         let foundImages = false
                         let useImages = b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())
                         useImages.map(im=>{
@@ -106,7 +93,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             image.style=b.blank.code
                             if(image.side == "modelFront") image.side = "front"
                             if(image.side == "modelBack") image.side = "back"
-                            console.log(image)
                             images.push(image)
                             foundImages = true
                         })
@@ -121,14 +107,9 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         )
                           .filter((s) => s == side && design.images[side])
                           .map((i, j) => {
-                            //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
-                            console.log(des.imageGroup);
-                            console.log(imageBlank);
-                            console.log(imageColor);
                             let color = b.colors.filter(
                               (c) => c.name == imageColor.value
                             )[0];
-                            console.log(color, "color");
                             let foundImages = false;
                             if (
                               b.blank.multiImages[i].filter(
@@ -166,12 +147,9 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             let result = await axios.post("/api/ai", {
                 prompt: `Generate a 100 word description & 10 tags for a print on demand design. The print on demand design is called: "${title}". The products it is printed on are dynamic so do not be specific and mention a product name, do not mention t-shirt. Return the data as a json object {tags:[],description}.`,
             });
-            console.log(result.data, result.data.description);
             let { tags, description } = await JSON.parse(result.data);
-            console.log(d, result.data['"description"'])
             d.tags = tags
             d.description = description
-            console.log(d.tags, "description", description)
             setDesign({...d})
             updateDesign({...d})
         } catch (err) {
@@ -185,19 +163,13 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         if(res?.data?.error) alert(res.data.msg)
     }
     const updateImage = async ({url,location, threadColor})=>{
-        console.log("updateImage")
-        console.log(des.threadColors)
         let d = {...des}
-        console.log(d.threadColors.length)
         if(threadColor){
-            console.log(threadColor)
             if(!d.threadImages) d.threadImages = {}
             if(!d.threadImages[threadColor]) d.threadImages[threadColor] = {}
             d.threadImages[threadColor][location] = url
         }else{
-            console.log(d.images, url, location)
             if(!d.images) d.images = {}
-            console.log(d.images, url, location)
             d.images[location] = url
         }
         setDesign({...d})
@@ -213,8 +185,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             newImages[location] = url
             d.threadImages[threadColor] = newImages
         }else{
-            console.log(d.images, url, location)
-            console.log(d.images, url, location)
             newImages[location] = url
             d.images = newImages
         }
@@ -229,16 +199,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
-    const updateEmbroidery = async ({url,location})=>{
-        let d = {...des}
-        if(!d.embroideryFiles)d.embroideryFiles = {};
-        console.log(d, url, location)
-        d.embroideryFiles[location] = url
-        setDesign({...d})
-        updateDesign({...d})
-    }
     const tagUpdate = (val)=>{
-        console.log(val)
         let d ={...des}
         d.tags = val;
         setDesign({...d})
@@ -267,29 +228,22 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         })
         d.brands = brands
         for(let b of brands){
-            console.log(b.name)
             if(b.name == "Urban Threads Co."){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Shein", "Temu"], d})
-                console.log(d.b2m)
             }else if(b.name == "Simply Sage Market"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's", "Walmart", "Amazon"], d})
-                console.log(d.b2m)
             }else if(b.name == "The Juniper Shop"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's"], d})
-                console.log(d.b2m)
             }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Co Wholesale" || b.name == "Olive And Ivory" || b.name == "Olive and Ivory Wholesale" || b.name == "Olive And Ivory Wholesale"){
                 d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
-                console.log(d.b2m)
             }
         }
         setDesign({...d})
         updateDesign({...d})
     }
     const updateMarketPlacesBrand= async ({brand, marketplaces, d})=>{
-        console.log(brand, marketplaces)
         let mps = await marketplaces.map(async m=>{
             let mp = marketPlaces.filter(lp=> m == lp.name)[0]
-            console.log(mp)
             if(!mp) {
                 let res = await axios.post("/api/admin/marketplaces", {name: m})
                 mp = res.data.marketplace
@@ -299,7 +253,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         })
         mps = await Promise.all(mps)
         d.marketPlaces = mps;
-        console.log(d.marketPlaces)
         let b2ms = d.b2m
         let b2m = b2ms.filter(b=> b.brand== brand.name)[0]
         if(!b2m) {
@@ -310,15 +263,12 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             b2ms.push(b2m)
         }
         else b2m.marketPlaces =  mps.map(m=> {return m.name})
-        console.log(b2m, "b2m", brand.name)
         d.b2m = b2ms
         return {...d}
     }
     const updateMarketPlaces= async ({brand, marketplaces})=>{
-        console.log(brand, marketplaces)
         let mps = await marketplaces.map(async m=>{
             let mp = marketPlaces.filter(lp=> m == lp.name)[0]
-            console.log(mp)
             if(!mp) {
                 let res = await axios.post("/api/admin/marketplaces", {name: m})
                 mp = res.data.marketplace
@@ -329,7 +279,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         mps = await Promise.all(mps)
         let d = {...des}
         d.marketPlaces = mps;
-        console.log(d.marketPlaces)
         let b2ms = d.b2m
         let b2m = b2ms.filter(b=> b.brand== brand.name)[0]
         if(!b2m) {
@@ -340,7 +289,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             b2ms.push(b2m)
         }
         else b2m.marketPlaces =  mps.map(m=> {return m.name})
-        console.log(b2m, "b2m", brand.name)
         d.b2m = b2ms
         setDesign({...d})
         updateDesign({...d})
@@ -348,15 +296,11 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const updateBlanks = async ({values})=>{
         let d = {...des}
         let codes = values.map(b=>{return b})
-        //console.log(values, "values", codes, marketplace, "marketplace")
         values.map(bl=>{
             if(!d.blanks) d.blanks = [];
             let blank = d.blanks?.filter(bla=> bla.blank.code == bl)[0]
-            console.log(blank, "not added")
             if(!blank){
-               // console.log(blanks, bl.value)
                 let blank = blanks.filter(b=> b.code == bl)[0]
-                console.log(blank, "added")
                 if(blank){
                     d.blanks.push({
                         blank
@@ -364,14 +308,12 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                 }
             }
         })
-        //console.log(codes, d.blanks)
         d.blanks = d.blanks.filter(b=> codes.includes(b.blank.code))
         setDesign({...d})
         updateDesign({...d})
     }
     const updateColors = ({blank, colors}) =>{
         let d = {...des}
-        console.log(blank)
         let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
         b.colors = b.blank.colors.filter(c=> colors.includes(c.name))
         setDesign({...d})
@@ -379,22 +321,17 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     }
     const updateDefaultColor = ({blank, color}) =>{
         let d = {...des}
-        console.log(blank)
         let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
-        console.log(color)
         b.defaultColor = b.blank.colors.filter(c=> color.value == c.name)[0]
         setDesign({...d})
         updateDesign({...d})
     }
     const setDefaultImages = ({id, side})=>{
         let d = {...des}
-        console.log(id, "id")
         let b = d.blanks.filter(bl=> bl.blank.code == imageBlank.value)[0]
-        console.log(b)
         if(b.defaultImages == undefined) b.defaultImages = []
         let dI = b.defaultImages.filter(df=> df.color == b.colors.filter(c=> c.name == imageColor.value)[0]?._id)[0]
         let others = b.defaultImages.filter(df=> df.color != b.colors.filter(c=> c.name == imageColor.value)[0]?._id)
-        console.log(b.defaultImages, others, "others")
         if(!dI) dI = {id, side, color: b.colors.filter(c=> c.name == imageColor.value)[0]?._id}
         else {
             dI.id = id
@@ -403,7 +340,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         }
         others.push(dI)
         b.defaultImages = others
-        console.log(b.defaultImages)
         setDesign({...d})
         updateDesign({...d})
     }
@@ -511,7 +447,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                     <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={()=>{setAddImageModal(true)}} >Add Images</Button>
                 </Grid2>
                 <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }}>Add DSTs</Button>
+                        <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setAddDSTModal(true) }}>Add DSTs</Button>
                 </Grid2>
             </Grid2>
             {/*<Accordion >
@@ -684,7 +620,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinyl", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
                                     value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinyl": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
                                     onChange={(vals)=>{
-                                        console.log(vals)
                                         let d = {...des}
                                         d.printType = vals.value
                                         setDesign({...d})
@@ -698,7 +633,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     options={[{label: "License Holder", value: null}, ...licenses.map(l=> {return {label: l.name, value: l._id}})]}
                                     value={des.licenseHolder? {label: licenses.filter(l=> l._id.toString() == des.licenseHolder.toString())[0]?.name, value: des.licenseHolder}: null}
                                     onChange={(vals)=>{
-                                        console.log(vals)
                                         let d = {...des}
                                         d.licenseHolder = vals.value
                                         setDesign({...d})
@@ -707,13 +641,12 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                 />
                             </Grid2>
                             <Grid2 size={6}>
-                                {console.log(des.gender, "gender")}
+                                
                                 <CreatableSelect
                                     placeholder="Gender"
                                     options={[{label: "Gender", value: null}, ...genders.map(l=> {return {label: l, value: l}})]}
                                     value={des.gender? {label: des.gender, value: des.gender}: null}
                                     onChange={(vals)=>{
-                                        console.log(vals)
                                         let d = {...des}
                                         d.gender = vals.value
                                         setDesign({...d})
@@ -722,13 +655,11 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                 />
                             </Grid2>
                             <Grid2 size={6}>
-                                {console.log(des.gender, "gender")}
                                 <CreatableSelect
                                     placeholder="Season"
                                     options={[]}
                                     value={des.season? {label: des.season, value: des.season}: null}
                                     onChange={(vals)=>{
-                                        console.log(vals)
                                         let d = {...des}
                                         d.season = vals.value
                                         setDesign({...d})
@@ -773,7 +704,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     value={des.b2m?.filter(b2m=> b2m.brand == b.name)[0]?.marketPlaces.map(m=>{return {value: m, label: m}})}
                                     onChange={(vals)=>{
                                         let values = vals.map(v=>{return v.value})
-                                        console.log(values)
                                     updateMarketPlaces({brand: b, marketplaces:values})
                                     }}
                                 isMulti
@@ -791,7 +721,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             value={des.blanks?.map(bl=> {return {value: bl.blank?.code, label: bl.blank?.code}})}
                             onChange={(vals)=>{
                                 let values = vals.map(v=>{return v.value})
-                                console.log(values)
                                 updateBlanks({values})
                             }}
                             isMulti
@@ -817,13 +746,11 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     value={b.colors?.map(m=>{return {value: m?.name, label: m?.name}})}
                                     onChange={(vals)=>{
                                         let values = vals.map(v=>{return v.value})
-                                        console.log(values)
                                         updateColors({blank: b, colors:values})
                                     }}
                                 isMulti
                             />
                             <Box sx={{margin: ".5% 0%"}}>
-                                    {console.log(b.defaultColor?.name, b.blank.code)}
                                     <CreatableSelect
                                         placeholder="Default Color"
                                         options={b.colors?.map(m=>{return {value: m.name, label: m.name}})}
@@ -848,13 +775,11 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                             options={imageGroups.map(ig=>{return {value: ig, label: ig}})}
                             value={{value: des.imageGroup, label: des.imageGroup}}
                             onChange={(vals)=>{
-                                console.log(vals)
                                 let d = {...des}
                                 d.imageGroup = vals.value
                                 let images = []
                                 d.imageGroup && d.blanks.map((b, j)=>{
                                     if(b.blank.multiImages)Object.keys(b.blank.multiImages).map((i,j)=>{
-                                    //console.log(i, b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0], "imagegroups")
                                     let foundImages = false
                                         if(b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]){
                                             let image = b.blank.multiImages[i].filter(im=> im.imageGroup.includes(d.imageGroup) && b.colors[0]._id.toString() == im.color.toString())[0]
@@ -894,8 +819,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         />
                     </Grid2>
                     <Grid2 size={{xs: 3, sm: 3}} >
-                            {console.log(des.blanks, imageBlank.value)}
-                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
                             {imageBlank  &&  <CreatableSelect
                             placeholder="Color"
                             options={des.blanks.filter(b=>b.blank.code== imageBlank.value)[0]?.colors.map(c=>{ return {label: c.name, value: c.name}})}
@@ -907,8 +830,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         />}
                     </Grid2>
                 {des.threadColors && des.threadColors.length > 0 &&  <Grid2 size={{xs: 3, sm: 3}} >
-                            {console.log(des.blanks, imageBlank.value)}
-                            {console.log(des.blanks.filter(b=>b.blank.code== imageBlank.value))}
                             {imageBlank  &&  <CreatableSelect
                             placeholder="Thread Color"
                             options={des.threadColors.map(c=> {return colors.filter(cl=> cl._id.toString() == c.toString())[0]})?.map(c=>{ return {label: c.name, value: c.name}})}
@@ -946,9 +867,77 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
             <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
             <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
+                <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} />
             <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
             {loading && <LoaderOverlay/>}
         </Container>
+    )
+}
+
+const AddDSTModal = ({ open, setOpen, reload, setReload, des, setDesign, updateDesign, printLocations, }) => {
+    const [location, setLocation] = useState("front")
+    const [threadColor, setThreadColor] = useState(null)
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "30%",
+        height: "50vh",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        overflow: "auto"
+    };
+    const updateEmbroidery = async ({ url, location }) => {
+        let d = { ...des }
+        if (!d.embroideryFiles) d.embroideryFiles = {};
+        d.embroideryFiles[location] = url
+        setDesign({ ...d })
+        updateDesign({ ...d })
+    }
+    return (
+        <Modal
+            open={open}
+            onClose={() => { setOpen(false); setBlank(null); setUpc([]) }}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+                <Grid2 container spacing={1}>
+                    <Grid2 size={6}>
+                        {reload && <Uploader location={location} afterFunction={updateEmbroidery} />}
+                        <CreatableSelect
+                            options={printLocations.map(p => { return { value: p.name, label: p.name } })}
+                            value={{ value: location, label: location }}
+                            onChange={(vals) => {
+                                setLocation(vals.value)
+                                setReload(false)
+                            }}
+                        />
+                    </Grid2>
+                    {printLocations.map((i, j) => (
+                        <>
+                            {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{ xs: 6, sm: 3, md: 2 }} key={j}>
+                                <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{ width: "100%", height: "auto" }} />
+                                <p style={{ textAlign: "center" }}>{i} File</p>
+                                <CreatableSelect
+                                    options={printLocations.map(p => { return { value: p.name, label: p.name } })}
+                                    value={{ value: i, label: i }}
+                                    onChange={(vals) => {
+                                        relocateDST(des.embroideryFiles[i], vals.value, i)
+                                        setReload(false)
+                                    }}
+                                />
+                                <Button fullWidth onClick={() => { deleteEmbroideryFile({ location: i }) }}>Delete Image</Button>
+                            </Grid2>}
+                        </>
+
+                    ))}
+                </Grid2>
+            </Box>
+        </Modal>
     )
 }
 
@@ -969,20 +958,13 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
         overflow: "auto"
     };
     const updateImage = async ({ url, location, threadColor }) => {
-        console.log(loading, "loading")
-        console.log("updateImage")
-        console.log(des.threadColors)
         let d = { ...des }
-        console.log(d.threadColors.length)
         if (threadColor && threadColor != "default" && threadColor != null) {
-            console.log(threadColor)
             if (!d.threadImages) d.threadImages = {}
             if (!d.threadImages[threadColor]) d.threadImages[threadColor] = {}
             d.threadImages[threadColor][location] = url
         } else {
-            console.log(d.images, url, location)
             if (!d.images) d.images = {}
-            console.log(d.images, url, location)
             d.images[location] = url
         }
         setDesign({ ...d })
@@ -1016,8 +998,6 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                         d.threadColors = newThread
                         for (let m of d.threadColors) {
                             if (!d.threadImages) d.threadImages = {}
-                            //console.log(colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name, "color name")
-                            //console.log(d.threadImages[colors.filter(c=> (c._id? c._id.toString(): c) == m.toString())[0]?.name])
                             if (!d.threadImages[colors.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?.name]) {
                                 d.threadImages[colors.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?.name] = {}
                             }
@@ -1049,7 +1029,6 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                         />
                     </Box>
                 </Box>
-                {loading && <LoaderOverlay />}
             </Box>
         </Modal>
     )
@@ -1085,7 +1064,6 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design, colors})=>{
             <hr/>
             <Typography>Variant Sku's</Typography>
             {design.threadColors.length > 0 && design.threadColors.map(tr=>{
-                console.log(tr)
                 return (blank?.colors.map(c=>{
                     return (blank?.blank.sizes.map(s=>{
                         return <Typography key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${tr.name}`}>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${colors.filter(c=> c._id.toString() == tr.toString())[0]?.name}`}</Typography>
@@ -1094,7 +1072,6 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design, colors})=>{
             })}
             {design.threadColors.length == 0 && blank?.colors?.map(c=>{
                 return blank.blank?.sizes?.map(s=>{
-                    console.log(`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`)
                     return (<Box sx={{padding: "2%"}} key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}>
                         <Typography>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}</Typography> 
                         <hr/>
