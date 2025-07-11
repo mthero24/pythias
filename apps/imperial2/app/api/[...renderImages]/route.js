@@ -28,7 +28,7 @@ const createImage = async (data)=>{
     }else{
         data.width = 400
     }
-    base64 = await readImage(`${data.styleImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
+    base64 = await readImage(`${data.styleImage?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
     console.log(data)
     console.log(data.designImage != "null", data.designImage != "undefined", "design image")
     if(data.box && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64){
@@ -141,7 +141,7 @@ export async function GET(req){
         console.log(blankCode, bm, colorName, designImage, side)
         let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
         let color = blank.colors.filter(c=>c.name == colorName)[0]
-        //console.log(color)
+        console.log(color, side, "color and side")
         if(bm){
             blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
             if(!blankImage && side == "front") blankImage = blank.multiImages["modelFront"]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
