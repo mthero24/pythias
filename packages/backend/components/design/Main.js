@@ -12,6 +12,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import LoaderOverlay from "../reusable/LoaderOverlay";
 import DeleteModal  from "../reusable/DeleteModal";
+import { set } from "mongoose";
 export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocations}){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
@@ -191,14 +192,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
-    const relocateDST = (url,location, oldLocation, threadColor,)=>{
-        let d = {...des}
-        let newFiles = {}
-        newFiles[location] = url
-        d.embroideryFiles = newFiles
-        setDesign({...d})
-        updateDesign({...d})
-    }
     const tagUpdate = (val)=>{
         let d ={...des}
         d.tags = val;
@@ -369,12 +362,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
-    const deleteEmbroideryFile = ({location})=>{
-        let d = {...des}
-        des.embroideryFiles[location] = null;
-        setDesign({...d})
-        updateDesign({...d})
-    }
     const deleteDesign = async () => {
         let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
         if (res.data.error) alert(res.data.msg)
@@ -450,139 +437,6 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                         <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setAddDSTModal(true) }}>Add DSTs</Button>
                 </Grid2>
             </Grid2>
-            {/*<Accordion >
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1-content"
-                    id="panel1-header"
-                    sx={{padding: "2%"}}
-                    >
-                    <Typography component="span">Design Images</Typography>
-                </AccordionSummary>
-                    <AccordionDetails sx={{padding: "5%",}}>
-                    <Grid2 container spacing={1} sx={{marginBottom: "5%"}}>
-                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                            <Box>
-                                {reload && <Uploader location={location} afterFunction={updateImage} />}
-                                <CreatableSelect
-                                    options={printLocations.map(p => { return { value: p.name, label: p.name } })}
-                                    value={{ value: location, label: location }}
-                                    onChange={(vals) => {
-                                        setLocation(vals.value)
-                                        setReload(false)
-                                    }}
-                                />
-                            </Box>
-                        </Grid2>
-                        {imageLocations.map((i, j)=>(
-                            <>
-                                {des.images && des.images[i] && <Grid2 size={{xs: 6, sm: 3, md: 3}} key={j}>
-
-                                    <Box sx={{ padding: "3%", background: "#e2e2e2", height: { sm: "250px" }, minHeight: "250px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                        <img src={des.images && des.images[i] ? `${des.images[i]?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400` : "/missingImage.jpg"} width={400} height={400} alt={`${des.name} ${des.sku} design`} style={{ width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2" }} />
-                                    </Box>
-                                    <p style={{textAlign: "center"}}>{i} Image</p>
-                                    <CreatableSelect
-                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                        value={{value: i, label:i}}
-                                        onChange={(vals)=>{
-                                            relocateImage(des.images[i], vals.value, i)
-                                            setReload(false)
-                                        }}
-                                    />
-                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
-                                </Grid2>}
-                            </>
-                        ))}
-                    </Grid2>
-                    <Box style={{marginBottom: "5%"}}>
-                        {des.threadColors && des.threadColors.length > 0 && <Box>
-                            {des.threadColors.map(tc=>(
-                                <Box key={tc} style={{marginBottom: "5%"}}>
-                                    <p>{colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name}</p>
-                                    <Grid2 container spacing={1}>
-                                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                                            {reload && <Uploader location={location} afterFunction={updateImage} threadColor={colors.filter(c=> (c._id? c._id.toString(): c) == tc.toString())[0].name} />}
-                                            <CreatableSelect
-                                                options={[]}
-                                                value={{value: location, label:location}}
-                                                onChange={(vals)=>{
-                                                    setLocation(vals.value)
-                                                    setReload(false)
-                                                }}
-                                            />
-                                        </Grid2>
-                                        {imageLocations.map((i, j)=>(
-                                            <>
-                                                {des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name] && des.threadImages[colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name][i] && <Grid2 size={{xs: 6, sm: 3, md: 3}} key={j}>
-                                                    <Box sx={{ padding: "3%", background: "#e2e2e2", height: { sm: "100px" }, minHeight: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                        <Box sx={{background: "#e2e2e2", display: "flex", flexDirection: "row", justifyContent: "center" }}>
-                                                            <img src={`${des.threadImages[colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name][i].replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
-                                                        </Box>
-                                                    </Box>
-                                                    <p style={{textAlign: "center"}}>{i} Image</p>
-                                                    <CreatableSelect
-                                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                                        value={{value: i, label:i}}
-                                                        onChange={(vals)=>{
-                                                            relocateImage(des.images[i], vals.value, i, colors.filter(c=> (c._id? c._id.toString(): c.toString()) == tc.toString())[0].name)
-                                                            setReload(false)
-                                                        }}
-                                                    />
-                                                    <Button fullWidth onClick={()=>{deleteDesignImage({location: i})}}>Delete Image</Button>
-                                                </Grid2>}
-                                            </>
-                                        ))}
-                                    </Grid2>
-                                </Box>
-                            ))}
-                        </Box>}
-                    </Box>
-                </AccordionDetails>
-            </Accordion>
-            <Accordion >
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1-content"
-                    id="panel1-header"
-                    sx={{padding: "2%"}}
-                    >
-                    <Typography component="span">Embroidery Files</Typography>
-                </AccordionSummary>
-                <AccordionDetails sx={{padding: "5%"}}>
-                    <Grid2 container spacing={1}>
-                        <Grid2 size={{xs: 6, sm: 3, md: 2}}>
-                            {reload && <Uploader location={location} afterFunction={updateEmbroidery}  />}
-                            <CreatableSelect
-                                options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                value={{value: location, label:location}}
-                                onChange={(vals)=>{
-                                    setLocation(vals.value)
-                                    setReload(false)
-                                }}
-                            />
-                        </Grid2>
-                        {imageLocations.map((i, j)=>(
-                            <>
-                                {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{xs: 6, sm: 3, md: 2}} key={j}>
-                                    <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{width: "100%", height: "auto"}}/>
-                                    <p style={{textAlign: "center"}}>{i} File</p>
-                                    <CreatableSelect
-                                        options={printLocations.map(p=>{return {value: p.name, label: p.name}})}
-                                        value={{value: i, label:i}}
-                                        onChange={(vals)=>{
-                                            relocateDST(des.embroideryFiles[i], vals.value, i)
-                                            setReload(false)
-                                        }}
-                                    />
-                                    <Button fullWidth onClick={()=>{deleteEmbroideryFile({location: i})}}>Delete Image</Button>
-                                </Grid2>}
-                            </>
-
-                        ))}
-                    </Grid2>
-                </AccordionDetails>
-            </Accordion> */}
             <Card sx={{width: "100%", minHeight: "80vh", padding: "50% 2%", paddingTop: "3%" }}>
                 <Grid2 container spacing={2}>
                     <Grid2 size={{xs: 7, sm: 8}}>
@@ -867,14 +721,14 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
             <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
             <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
-                <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} />
+                <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
             <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
             {loading && <LoaderOverlay/>}
         </Container>
     )
 }
 
-const AddDSTModal = ({ open, setOpen, reload, setReload, des, setDesign, updateDesign, printLocations, }) => {
+const AddDSTModal = ({ open, setOpen, reload, setReload, des, loading, setLoading, setDesign, updateDesign, printLocations, setDeleteModal, setDeleteImage, setDeleteTitle, setDeleeFunction }) => {
     const [location, setLocation] = useState("front")
     const [threadColor, setThreadColor] = useState(null)
     const style = {
@@ -882,18 +736,36 @@ const AddDSTModal = ({ open, setOpen, reload, setReload, des, setDesign, updateD
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: "30%",
+        width: "60%",
         height: "50vh",
         bgcolor: 'background.paper',
         border: '2px solid #000',
         boxShadow: 24,
         p: 4,
-        overflow: "auto"
+        overflowX: "auto",
+        overflowY: "none",
     };
     const updateEmbroidery = async ({ url, location }) => {
         let d = { ...des }
         if (!d.embroideryFiles) d.embroideryFiles = {};
         d.embroideryFiles[location] = url
+        setDesign({ ...d })
+        updateDesign({ ...d })
+        setLoading(false)
+        setReload(true)
+        setOpen(true)
+    }
+    const relocateDST = (url, location, oldLocation, threadColor,) => {
+        let d = { ...des }
+        let newFiles = {}
+        newFiles[location] = url
+        d.embroideryFiles = newFiles
+        setDesign({ ...d })
+        updateDesign({ ...d })
+    }
+    const deleteEmbroideryFile = ({ location }) => {
+        let d = { ...des }
+        des.embroideryFiles[location] = null;
         setDesign({ ...d })
         updateDesign({ ...d })
     }
@@ -905,9 +777,12 @@ const AddDSTModal = ({ open, setOpen, reload, setReload, des, setDesign, updateD
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <Grid2 container spacing={1}>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
+                    <CloseIcon sx={{ color: "#780606" }} />
+                </Box>
+                <Grid2 container spacing={2}>
                     <Grid2 size={6}>
-                        {reload && <Uploader location={location} afterFunction={updateEmbroidery} />}
+                        {reload && <Uploader location={location} afterFunction={updateEmbroidery} setLoading={setLoading} setOpen={setOpen} />}
                         <CreatableSelect
                             options={printLocations.map(p => { return { value: p.name, label: p.name } })}
                             value={{ value: location, label: location }}
@@ -919,18 +794,20 @@ const AddDSTModal = ({ open, setOpen, reload, setReload, des, setDesign, updateD
                     </Grid2>
                     {printLocations.map((i, j) => (
                         <>
-                            {des.embroideryFiles && des.embroideryFiles[i] && <Grid2 size={{ xs: 6, sm: 3, md: 2 }} key={j}>
-                                <Image src={"/embplaceholder.jpg"} alt={`${i} image`} width={400} height={400} style={{ width: "100%", height: "auto" }} />
-                                <p style={{ textAlign: "center" }}>{i} File</p>
+                            {des.embroideryFiles && des.embroideryFiles[i.name] && des.embroideryFiles[i.name] != null && <Grid2 size={6} key={j}>
+                                <Box sx={{ position: "relative", zIndex: 999, left: { sm: "80%", md: "90%" }, bottom: -35, padding: "2%", cursor: "pointer", "&:hover": { opacity: .5 } }} onClick={() => { setDeleteImage({ location: i.name, }); setDeleeFunction({ onDelete: deleteEmbroideryFile }); setDeleteTitle("Are You Sure You Want To Delete This DST File?"); setDeleteModal(true) }}>
+                                    <DeleteIcon sx={{ color: "#780606" }} />
+                                </Box>
+                                <img src={"/embplaceholder.jpg"} alt={`${i.name} image`} width={400} height={400} style={{ width: "100%", height: "auto" }} />
+                                <p style={{ textAlign: "center" }}>{i.name} File</p>
                                 <CreatableSelect
                                     options={printLocations.map(p => { return { value: p.name, label: p.name } })}
-                                    value={{ value: i, label: i }}
+                                    value={{ value: i.name, label: i.name }}
                                     onChange={(vals) => {
-                                        relocateDST(des.embroideryFiles[i], vals.value, i)
+                                        relocateDST(des.embroideryFiles[i.name], vals.value, i)
                                         setReload(false)
                                     }}
                                 />
-                                <Button fullWidth onClick={() => { deleteEmbroideryFile({ location: i }) }}>Delete Image</Button>
                             </Grid2>}
                         </>
 
