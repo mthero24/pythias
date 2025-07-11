@@ -8,10 +8,13 @@ export const createImage = (colorName, styleCode, options, width=700, source) =>
     console.log(colorName, styleCode, options, width, source, "createImage params")
     if(!colorName) return ''
     let url;
-    if(source == "IM"){
-        url = `http://localhost:3009/api/renderImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.jpg?blank=${styleCode}&colorName=${colorName}&design=${options.url}${options.printArea ? `&side=${options.printArea}` : ""}&width=${width}`;
+    if(source == "IM") {
+        url = `https://imperial.pythiastechnologies.com/api/renderImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.jpg?blank=${styleCode}&colorName=${colorName}&design=${options.url}${options.printArea ? `&side=${options.printArea}` : ""}&width=${width}`;
         
-    }else{
+    } else if (source == "PP") {
+        url = `https://simplysage.pythiastechnologies.com/api/renderImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.jpg?blank=${styleCode}&colorName=${colorName}&design=${options.url}${options.printArea ? `&side=${options.printArea}` : ""}&width=${width}`;
+
+    } else{
         if (options.url) {
             url = `https://images4.teeshirtpalace.com/images/productImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?url=${options.url.replace(
                 "https://s3.wasabisys.com/images2.tshirtpalace.com/",

@@ -94,6 +94,8 @@ export async function GET(req) {
                     msg: "here is the design",
                     pieceID: item.pieceId,
                     ...result,
+                    item,
+                    images: item.design,
                     source: "PP",
             })
          
@@ -145,7 +147,9 @@ export async function POST(req = NextApiRequest) {
           });
         const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
         await item.save()
-        return NextResponse.json({ error: false, msg: "added to que", ...result, source: "PP" });
+        return NextResponse.json({
+            error: false, msg: "added to que", ...result, item,
+            images: item.design, source: "PP" });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
     }else if (item && item.dtfScan) {

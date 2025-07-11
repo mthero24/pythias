@@ -243,7 +243,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                       <Box>
                         {Object.keys(submitted.images).map(im=>(
                           <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%", margin: "2%"}}>
-                            <Box sx={{width: "50%", background: "#e2e2e2", padding: "1%"}}>
+                            <Box sx={{display: "flex", flexDirection: "column",width: "50%", background: "#e2e2e2", padding: "1%", alignItems: "center", alignContent: "center", justifyContent: "center", borderRight: "1px solid #000"}}>
                               <img
                                   width={500}
                                   alt={`${im}`}
@@ -258,7 +258,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                 src={createImage(submitted.colorName, submitted.styleCode ? submitted.styleCode : submitted.blankCode, {url: submitted.images[im], side: im == "back" || im == "namePlate"? "back": "front", printArea: im}, 400, submitted.source)}
                               />
                             </Box>
-                            <Box sx={{ width: "50%", background: "#e2e2e2", padding: "1%" }}>
+                            <Box sx={{ display: "flex", flexDirection: "column", width: "50%", background: "#e2e2e2", padding: "1%", alignItems: "center", alignContent: "center", justifyContent: "center" }}>
                               <img
                                   width={500}
                                   alt="back design"
