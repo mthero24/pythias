@@ -7,6 +7,6 @@ export default async function Products(){
     let past = await CSVUpdates.find({active: false})
     let act = serialize(active)
     past = serialize(past)
-    console.log(past)
+    //console.log(past)
     return <Main act={act} past={past}/>
 }

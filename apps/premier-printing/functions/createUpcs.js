@@ -28,7 +28,7 @@ export async function createUpc({design, blank}){
                 //console.log(sku)
                 let gtin
                 let sku1 = await SkuToUpc.findOne({sku: sku})
-                //console.log(sku1?.sku, "sku1 sku found")
+                console.log(sku1?.sku, "sku1 sku found")
                 if(!sku1) sku1 = await SkuToUpc.findOne({design: design._id, blank: blank.blank._id, color: color._id, size: size.name})
                 if(sku1 && sku1.gtin){
                     sku1.sku= sku
@@ -55,7 +55,7 @@ export async function createUpc({design, blank}){
                     console.log("new upc")
                     gtin = await NextGTIN({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}})
                 }
-                //console.log(gtin, "gtin")
+                console.log(gtin, "gtin")
                 let data = {
                     sku,
                     ...gtin,

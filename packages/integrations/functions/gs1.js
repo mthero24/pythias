@@ -18,7 +18,7 @@ export async function NextGTIN({auth}){
         })
         resPre = await axios.get("https://api.gs1us.org/api/v1/myprefix", headers).catch(e=>{console.log(e.response.data)})
     }
-    //console.log(resPre?.data)
+    console.log(resPre?.data)
     let prefix = resPre?.data.filter(p=> p.remainingCapacity > 0)[0]
     //console.log(prefix.prefix)
     if(prefix){

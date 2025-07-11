@@ -4,6 +4,7 @@ import {useState} from "react";
 import axios from "axios";
 import Link from "next/link";
 import {Search} from "./Search";
+
 export function Main({designs, ct, query, pa}){
     const [designss, setDesigns] = useState(designs)
     const [search, setSearch] = useState(query)

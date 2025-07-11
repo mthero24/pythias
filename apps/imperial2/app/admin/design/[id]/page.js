@@ -17,11 +17,11 @@ export default async function DesignPage({params}){
         try{
             let colors = await Colors.find({});
             for(let color of colors){
-                //if(!color.sku){
+                if(!color.sku){
                     color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").substring(0, 7)
                    // console.log(color.sku)
                     color = await color. save()
-                //}
+                }
             }
             let printLocations = await Locations.find({})
             let design = await Design.findOne({_id: id}).lean();
@@ -32,7 +32,7 @@ export default async function DesignPage({params}){
             let marketPlaces = await MarketPlaces.find({}).lean();
             let productImages = await ProductImages.find({design: design._id})
             if(!design) return notFound();
-            console.log(printLocations)
+            //console.log(printLocations)
             design = serialize(design);
             blanks = serialize(blanks);
             brands = serialize(brands);

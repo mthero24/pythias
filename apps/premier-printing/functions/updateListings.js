@@ -255,7 +255,7 @@ const update = async(csvupdate, url, brand, marketplace )=>{
 export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
-        let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(200)
+        let designs = await Design.find({ /*published: true, sendToMarketplaces: true*/ sku: "573W_F"}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(200)
         let brands = {}
         let i = 0
         //console.log(designs.length, designs[0].blanks[0].blank.sizeGuide,)
@@ -290,6 +290,7 @@ export async function updateListings(csvupdate, sendTo){
                                 for(let c of b.colors){
                                     for(let s of b.blank.sizes){
                                         let upc = await SkuToUpc.findOne({sku: `${b.blank.code}_${c.name}_${s.name}_${design.sku}`})
+                                        if (!upc) upc = await SkuToUpc.findOne({ sku: `${b.blank.code}_${c.name.replace(/ /g, "")}_${s.name}_${design.sku}` })
                                         if(!upc) upc = await SkuToUpc.findOne({design: design._id, blank: b.blank._id, color: c._id, size: s.name})
                                         if(upc){
                                             let v = {

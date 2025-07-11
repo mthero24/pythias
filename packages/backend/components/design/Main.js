@@ -11,7 +11,7 @@ import { AltImageModal } from "./AltImagesModal";
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import LoaderOverlay from "../reusable/LoaderOverlay";
-import { set } from "mongoose";
+import DeleteModal  from "../reusable/DeleteModal";
 export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocations}){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
@@ -31,6 +31,11 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [reload, setReload] = useState(true)
     const [imageLocations, setImageLocations] = useState(printLocations.map(l=>{return l.name}))
     const [addImageModal, setAddImageModal] = useState(false);
+    const [deleteModal, setDeleteModal] = useState(false);
+    const [deleteImage, setDeleteImage] = useState({})
+    const [type, setType] = useState("image")
+    const [deleteFunction, setDeleeFunction] = useState({})
+    const [deleteTitle, setDeleteTitle] = useState("")
     const genders = ["Girls", "Boys", "Mens", "Womens"]
     useEffect(()=>{
         if(!reload) setReload(!reload)
@@ -405,7 +410,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const deleteDesignImage = ({location, threadColor})=>{
         let d = {...des}
         if(threadColor){
-            newImages = {}
+            let newImages = {}
             for(let i of Object.keys(d.threadImages)){
                 for(let j of Object.keys(d.threadImages[i])){
                     if(i == threadColor && j == location){
@@ -434,16 +439,16 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
         setDesign({...d})
         updateDesign({...d})
     }
-    return (
+    const deleteDesign = async () => {
+        let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
+        if (res.data.error) alert(res.data.msg)
+        else {
+            router.push("/admin/designs")
+        }
+    }
+        return (
         <Container maxWidth="lg">
-            {/* <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                <Button sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff"}} onClick={()=>{
-                                let d = {...des};
-                                d.published = !d.published;
-                                setDesign({...d});
-                                updateDesign({...d})
-                                alert(`Design is ${d.published? "published": "unpublished"} and will be ${d.published? "uploaded to all": "removed from all"} market places shortly`)
-                }}>{des.published? "Unpublish": "Publish"}</Button>
+            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
                 {!des.sendToMarketplaces && <Button sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff"}} onClick={()=>{
                                 let d = {...des};
                                 d.sendToMarketplaces = true;
@@ -451,21 +456,19 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                 updateDesign({...d})
                                 alert(`Design will resend to market places next time files are made`)
                 }}>Resend To Market Places</Button>}
-                <Button sx={{ margin: "1% 2%", background: "#780606", color: "#ffffff"}} onClick={async ()=>{
-                    let res = await axios.delete(`/api/admin/designs?design=${des._id}`)
-                    if(res.data.error) alert(res.data.msg)
-                    else {
-                        router.push("/admin/designs")
-                    }
+                <Button sx={{ margin: "1% 2%", background: "#780606", color: "#ffffff"}} onClick={()=>{
+                    setDeleteTitle("Are you sure you want to delete this design?");
+                    setDeleeFunction({onDelete: deleteDesign});
+                    setDeleteModal(true);
                 }}>Delete</Button>
-            </Box> */}
+            </Box>
             <Card sx={{margin: "1% 0%"}}>
                 <Box sx={{display: "flex", flexDirection:"row", overflowX: "auto"}}>
                     {imageLocations.map((i, j) => (
                         <>
                             {des.images && des.images[i] &&
                                 <Box key={j} sx={{width: "400px", minWidth: "400px", maxWidth: "400px", margin: "0% 2%"}}>
-                                    <Box sx={{ position: "relative", zIndex: 999, left: { sm: "80%", md: "90%" }, bottom: -35, padding: "2%", cursor: "pointer", "&:hover": { opacity: .5 } }} onClick={() => { deleteDesignImage({ location: i }) }}>
+                                    <Box sx={{ position: "relative", zIndex: 999, left: { sm: "80%", md: "90%" }, bottom: -35, padding: "2%", cursor: "pointer", "&:hover": { opacity: .5 } }} onClick={() => { setDeleteImage({ location: i, }); setDeleeFunction({ onDelete: deleteDesignImage }); setDeleteTitle("Are You Sure You Want To Delete This Image?"); setDeleteModal(true) }}>
                                         <DeleteIcon sx={{ color: "#780606"}} />
                                     </Box>
                                     <Box sx={{padding: "3%", background: "#e2e2e2", height: { sm: "150px", md: "350px" }, minHeight: "150px", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -485,7 +488,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                                     <>
                                         {des.threadImages[colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name] && des.threadImages[colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name][i] && 
                                             <Box key={j} sx={{ width: "400px", minWidth: "400px", maxWidth: "400px", margin: "0% 2%" }}>
-                                            <Box sx={{ position: "relative", zIndex: 999, left: { sm: "80%", md: "90%" }, bottom: -35, padding: "2%", cursor: "pointer", "&:hover": { opacity: .5 } }} onClick={() => { deleteDesignImage({ location: i, threadColor: colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name }) }}>
+                                                <Box sx={{ position: "relative", zIndex: 999, left: { sm: "80%", md: "90%" }, bottom: -35, padding: "2%", cursor: "pointer", "&:hover": { opacity: .5 } }} onClick={() => { setDeleeFunction({ onDelete: deleteDesignImage }); setDeleteTitle("Are You Sure You Want To Delete This Image?"); setDeleteImage({ location: i, threadColor: colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name }); setDeleteModal(true)}}>
                                                 <DeleteIcon sx={{ color: "#780606" }} />
                                             </Box>
                                             <Box sx={{ padding: "3%", background: "#e2e2e2", height: { sm: "150px", md: "350px" }, minHeight: "150px", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -943,6 +946,7 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
             <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
             <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
             <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
+            <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
             {loading && <LoaderOverlay/>}
         </Container>
     )
