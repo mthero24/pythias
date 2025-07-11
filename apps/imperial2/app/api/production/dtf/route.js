@@ -21,7 +21,7 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
     // let lowerSleeveStyleImage = style.multiImages.lowerSleeve?.filter(i=> i.color == item.color.toString())[0]
     // let centerStyleImage = style.multiImages.center?.filter(i=> i.color == item.color.toString())[0]
     // let pocketStyleImage = style.multiImages.pocket?.filter(i=> i.color == item.color.toString())[0]
-    console.log(styleImage)
+    //console.log(styleImage)
     let frontDesign = front 
     let backDesign = back
     let upperSleeveDesign = upperSleeve
@@ -34,7 +34,7 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
     let lowerSleeveCombo
     let centerCombo
     let pocketCombo
-    console.log(`${process.env.url}/api/renderImages`)
+    //console.log(`${process.env.url}/api/renderImages`)
     if(front) {
         //let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage?.box[0], styleImage: styleImage?.image, designImage: front })
         //frontCombo = res.data.base64
@@ -64,7 +64,7 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
 }
 export async function GET(req) {
     let config = JSON.parse(process.env.dtf);
-    console.log(config)
+   // console.log(config)
     setConfig({
         internalIP: config.localIP,
         apiKey: config.apiKey
@@ -73,9 +73,9 @@ export async function GET(req) {
     let item
     if( req.nextUrl.searchParams.get("pieceID")) pieceID = req.nextUrl.searchParams.get("pieceID")
     if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("blank", "code sizes multiImages")
-    console.log(item)
+    //console.log(item)
     if(item){
-        console.log(item)
+       // console.log(item)
         if(!item.canceled){
             item.printed = true;
             item.printedDate = new Date();
@@ -89,7 +89,7 @@ export async function GET(req) {
             });
             await item.save();
 
-            console.log(item, "item");
+           // console.log(item, "item");
             // console.log(style)
             const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
             return NextResponse.json( {error: false,
@@ -107,17 +107,17 @@ export async function GET(req) {
 
 export async function POST(req = NextApiRequest) {
     let config = JSON.parse(process.env.dtf);
-    console.log(config);
+    //console.log(config);
     setConfig({
       internalIP: process.env.localIP,
       apiKey: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO",
     });
     let data = await req.json()
-    console.log(data, "data")
+    //console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("blank", "code envelopes box sizes multiImages")
-    console.log(item, "item", item.color, "item color")
+    //console.log(item, "item", item.color, "item color")
     if (item && !item.canceled && !item.dtfScan) {
         item.dtfScan = true
         Object.keys(item.design).map(async key=>{

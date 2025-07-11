@@ -70,7 +70,7 @@ const createProductImages = (design, blank,)=>{
                 if(blank.defaultColor){
                     let colorImages = blankImages?.filter(bi=> bi.color.toString() == blank.defaultColor._id.toString())
                     for(let ci of colorImages? colorImages: []){
-                        console.log(ci._id)
+                      //  console.log(ci._id)
                         images.push(encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${ci.image.split("/")[ci.image.split("/").length - 1].split(".")[0]}-${blank.defaultColor.name}-${key}.jpg?width=1200`))
                     }
                 }
@@ -83,7 +83,7 @@ const createProductImages = (design, blank,)=>{
                 for(let color of colors){
                     let colorImages = blankImages?.filter(bi=> bi.color.toString() == color._id.toString())
                     for(let ci of colorImages? colorImages: []){
-                        console.log(ci._id)
+                       // console.log(ci._id)
                         images.push(encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${ci.image.split("/")[ci.image.split("/").length - 1].split(".")[0]}-${color.name}-${key}.jpg?width=1200`))
                     }
                 }
@@ -103,7 +103,7 @@ const createVariantImages = (design, blank, color, threadColor)=>{
                 let blankImages = blank.blank.multiImages[key]
                 let colorImages = blankImages?.filter(bi=> bi.color.toString() == color._id.toString())
                 for(let ci of colorImages? colorImages: []){
-                    console.log(ci._id)
+                   // console.log(ci._id)
                     images.push(encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${ci.image.split("/")[ci.image.split("/").length - 1].split(".")[0]}-${color.name}-${key}.jpg?width=1200`))
                 }
             }
@@ -115,7 +115,7 @@ const createVariantImages = (design, blank, color, threadColor)=>{
                 let blankImages = blank.blank.multiImages[key]
                 let colorImages = blankImages.filter(bi=> bi.color.toString() == color._id.toString())
                 for(let ci of colorImages){
-                    console.log(ci._id)
+                   // console.log(ci._id)
                     images.push(encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${blank.blank.code}-${ci.image.split("/")[ci.image.split("/").length - 1].split(".")[0]}-${color.name}-${key}.jpg?width=1200`))
                 }
             }
@@ -127,11 +127,11 @@ export async function updateListings(csvupdate, sendTo){
     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
     try{
         let designs = await Design.find({sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor threadColors").sort({'_id': -1}).limit(2000)
-        console.log(designs.length)
+        //console.log(designs.length)
         let products = []
         let i = 0
         for(let design of designs){
-            console.log(i, "designs finished")
+           // console.log(i, "designs finished")
             i++
             //console.log(design.blanks.length)
             if(design.blanks.length > 0){
@@ -197,7 +197,7 @@ export async function updateListings(csvupdate, sendTo){
             await design.save()
         }
     }catch(e){
-        console.log(csvupdate, "update", e)
+        //console.log(csvupdate, "update", e)
         let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
         csvUpdate.active= false
         csvUpdate.error = true
