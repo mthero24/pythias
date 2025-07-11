@@ -91,12 +91,13 @@ export async function GET(req) {
             // console.log(style)
             const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
             return NextResponse.json( {error: false,
-                    msg: "here is the design",
-                    pieceID: item.pieceId,
-                    ...result,
-                    item,
-                    images: item.design,
-                    source: "PP",
+                msg: "here is the design",
+                pieceID: item.pieceId,
+                ...result,
+                item,
+                images: item.design,
+                type: "new",
+                source: "PP",
             })
          
         }else return NextResponse.json({error: true, msg: "Item Canceled"});
@@ -149,7 +150,7 @@ export async function POST(req = NextApiRequest) {
         await item.save()
         return NextResponse.json({
             error: false, msg: "added to que", ...result, item,
-            images: item.design, source: "PP" });
+            images: item.design, type: "new", source: "PP" });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
     }else if (item && item.dtfScan) {
