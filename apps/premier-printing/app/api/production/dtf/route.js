@@ -15,11 +15,11 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
             }
         }
     }
-    let backStyleImage = style.multiImages.back?.filter(i=> i.color == item.color.toString())[0]
-    let upperSleeveStyleImage = style.multiImages.upperSleeve?.filter(i=> i.color == item.color.toString())[0]
-    let lowerSleeveStyleImage = style.multiImages.lowerSleeve?.filter(i=> i.color == item.color.toString())[0]
-    let centerStyleImage = style.multiImages.center?.filter(i=> i.color == item.color.toString())[0]
-    let pocketStyleImage = style.multiImages.pocket?.filter(i=> i.color == item.color.toString())[0]
+    // let backStyleImage = style.multiImages.back?.filter(i=> i.color == item.color.toString())[0]
+    // let upperSleeveStyleImage = style.multiImages.upperSleeve?.filter(i=> i.color == item.color.toString())[0]
+    // let lowerSleeveStyleImage = style.multiImages.lowerSleeve?.filter(i=> i.color == item.color.toString())[0]
+    // let centerStyleImage = style.multiImages.center?.filter(i=> i.color == item.color.toString())[0]
+    // let pocketStyleImage = style.multiImages.pocket?.filter(i=> i.color == item.color.toString())[0]
     console.log(styleImage)
     let frontDesign = front 
     let backDesign = back
@@ -33,30 +33,30 @@ const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, 
     let lowerSleeveCombo
     let centerCombo
     let pocketCombo
-    if(front) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage?.box[0], styleImage: styleImage?.image, designImage: front }).catch(e=>{console.log(e.response)})
-        frontCombo = res?.data?.base64
-    }
-    if(back) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: backStyleImage?.box[0], styleImage: backStyleImage?.image, designImage: back })
-        backCombo = res.data.base64
-    }
-    if(upperSleeve) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: upperSleeveStyleImage?.box[0], styleImage: upperSleeveStyleImage?.image, designImage: upperSleeve })
-        upperSleeveCombo = res.data.base64
-    }
-    if(lowerSleeve) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: lowerSleeveStyleImage?.box[0], styleImage: lowerSleeveStyleImage?.image, designImage: lowerSleeve })
-        lowerSleeveCombo = res.data.base64
-    }
-    if(pocket) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: pocketStyleImage?.box[0], styleImage: pocketStyleImage?.image, designImage: pocket })
-        pocketCombo = res.data.base64
-    }
-    if(center) {
-        let res = await axios.post(`${process.env.url}/api/renderImages`, {box: centerStyleImage?.box[0], styleImage: centerStyleImage?.image, designImage: center })
-        centerCombo = res.data.base64
-    }
+    // if(front) {
+    //     let res = await axios.post(`${process.env.url}/api/renderImages`, {box: styleImage?.box[0], styleImage: styleImage?.image, designImage: front }).catch(e=>{console.log(e.response)})
+    //     frontCombo = res?.data?.base64
+    // }
+    // if(back) {
+    //     let res = await axios.post(`${process.env.url}/api/renderImages`, {box: backStyleImage?.box[0], styleImage: backStyleImage?.image, designImage: back })
+    //     backCombo = res.data.base64
+    // }
+    // if(upperSleeve) {
+    //     let res = await axios.post(`${process.env.url}/api/renderImages`, {box: upperSleeveStyleImage?.box[0], styleImage: upperSleeveStyleImage?.image, designImage: upperSleeve })
+    //     upperSleeveCombo = res.data.base64
+    // }
+    // if(lowerSleeve) {
+    //     let res = await axios.post(`${process.env.url}/api/renderImages`, {box: lowerSleeveStyleImage?.box[0], styleImage: lowerSleeveStyleImage?.image, designImage: lowerSleeve })
+    //     lowerSleeveCombo = res.data.base64
+    // }
+    // if(pocket) {
+    //     let res = await axios.post(`${process.env.url}/api/renderImages`, {box: pocketStyleImage?.box[0], styleImage: pocketStyleImage?.image, designImage: pocket })
+    //     pocketCombo = res.data.base64
+    // }
+    // if(center) {
+    //     let res = await axios.post(`${process.env.url}/api/renderImages`, {box: centerStyleImage?.box[0], styleImage: centerStyleImage?.image, designImage: center })
+    //     centerCombo = res.data.base64
+    // }
     styleImage=styleImage?.image
     return  {frontDesign, backDesign, upperSleeveDesign, lowerSleeveDesign, pocketDesign, centerDesign, styleImage, styleCode: style.code, colorName: item.colorName, frontCombo, backCombo, upperSleeveCombo, lowerSleeveCombo, centerCombo, pocketCombo}
 }
