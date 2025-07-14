@@ -6,6 +6,7 @@ import {createImage} from "../functions/image";
 import { Stations } from "./stations";
 import Link from "next/link";
 import axios from "axios"
+import {Footer} from "@pythias/backend";
 export function Main({labels, stations, stat}){
     const [useLabels, setLabels] = useState(labels)
     console.log(stat)
@@ -101,6 +102,7 @@ export function Main({labels, stations, stat}){
                     </Grid2>
                 ))}
             </Grid2>
+            <Footer fixed={true} />
         </Box>
     )
 }

@@ -4,7 +4,7 @@ import {useState} from "react";
 import axios from "axios";
 import Link from "next/link";
 import {Search} from "./Search";
-
+import {Footer} from "../reusable/Footer";
 export function Main({designs, ct, query, pa}){
     const [designss, setDesigns] = useState(designs)
     const [search, setSearch] = useState(query)
@@ -31,14 +31,14 @@ export function Main({designs, ct, query, pa}){
         console.log(`Navigating to page: ${value}`);
     };
     return (
-        <Box sx={{padding: "1%", color: "black", minHeight: "vh",}}>
+        <Box>
             <Container mazWidth="lg">
                 <Box sx={{display: "flex",justifyContent: "space-between", padding: "1%"}}>
                     <Typography>There are total of {count} Designs</Typography>
                     <Button onClick={() => { createDesign() }} sx={{ background: "#645D5B", color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": { background: "#000" }}}>Create</Button>
                 </Box>
                 <Search setSearch={setSearch} setDesigns={setDesigns} setCount={setCount} setPage={setPage} search={search}/>
-                <Card sx={{width: "100%", height: "auto", padding: "1%", marginTop: "1%"}}>
+                <Card sx={{width: "100%", height: "auto", padding: "1%", margin: "1% 0%"}}>
                     <Box sx={{ minHeight: "80vh",}}>
                         <Grid2 container spacing={2}>
                             {designss && designss.map(d=>(
@@ -50,8 +50,8 @@ export function Main({designs, ct, query, pa}){
                                             </Box>
                                             <hr/>
                                             <Box sx={{padding: "3%"}}>
-                                                <Typography sx={{fontSize: '0.8rem', color: "black"}}>SKU: {d.sku}</Typography>
-                                                <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
+                                                <Typography sx={{fontSize: '0.8rem', color: "black", whiteSpace: "nowrap", overflow: "hidden", display: "block", textOverflow: "ellipsis"}}>SKU: {d.sku}</Typography>
+                                                <Typography sx={{ fontSize: '0.8rem', color: "black", whiteSpace: "nowrap", overflow: "hidden", display: "block", textOverflow: "ellipsis" }}>{d.name}</Typography>
                                             </Box>
                                         </Link>
                                         {console.log(d)}
@@ -74,6 +74,7 @@ export function Main({designs, ct, query, pa}){
                     </Box>
                 </Card>
             </Container>
+            <Footer/>
         </Box>
     )
 }

@@ -7,6 +7,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { OrderModal } from "./orderModal";
 import { DisplayModal } from "./display";
 import LoaderOverlay from "./LoaderOverlay";
+import { Footer } from "@pythias/backend";
 export function Main({bla, it, defaultLocation, binType}){
     const [fullStyles, setFullStyles] = useState(bla)
     const [styles, setStyles] = useState(bla)
@@ -43,12 +44,10 @@ export function Main({bla, it, defaultLocation, binType}){
             <Typography variant="h3" sx={{marginLeft: "3%", marginBottom: "2%"}}>Inventory</Typography>
             <Button onClick={()=>{setLoading(true); setOrderType("Inventory Order"); setOpen(true)}}>Create Inventory Order</Button>
             <Button onClick={()=>{setLoading(true); setOrderType("Out Of Stock"); setOpen(true)}}>Create Out Of Stock Order</Button>
-        </Box>
-        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", padding: "2%"}}>
-            <Button onClick={()=>{setOpenDisplay(true)}}>Orders</Button>
+            <Button onClick={() => { setOpenDisplay(true) }}>Orders</Button>
         </Box>
         <Container>
-            <Box sx={{marginBottom: "2%"}}>
+            <Box sx={{marginBottom: "1%"}}>
                 <TextField fullWidth placeholder="Filter.." sx={{background: "white"}} onChange={()=>{
                     //console.log(event.target.value.toLowerCase())
                     let s = [...fullStyles]
@@ -179,6 +178,7 @@ export function Main({bla, it, defaultLocation, binType}){
         <DisplayModal open={openDisplay} setOpen={setOpenDisplay} />
         <LoaderOverlay loading={loading}/>
         <OrderModal open={open} setOpen={setOpen} type={orderType} blanks={fullStyles} items={items} setBlanks={setFullStyles} setItems={setItems} defaultLocation={defaultLocation} setLoading={setLoading}/>
+        <Footer fixed={true} />
     </Box>
 }
 

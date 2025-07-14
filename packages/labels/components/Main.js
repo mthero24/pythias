@@ -17,6 +17,7 @@ import {useEffect, useState} from "react";
 import axios from "axios";
 import {Sort} from "../functions/sort";
 import { UntrackedLabels } from "./untracked";
+import { Footer } from "@pythias/backend";
 export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [useLabels, setLabels] = useState(labels);
     const [rePull, setRePulls] = useState(rePulls);
@@ -244,6 +245,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         width: "25%"
     }
     return (
+      <>
       <Box
         sx={{
           display: "flex",
@@ -253,7 +255,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           margin: ".1%",
           background: "#d2d2d2",
           padding: ".5%",
-          minHeight: "100vh",
+          minHeight: "70vh",
         }}
       >
         {selected.length > 0 && (
@@ -386,7 +388,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           </Select>
           </Box>
         </Card>
-        <Grid2 container spacing={1} sx={{ width: "100%" }}>
+      <Grid2 container spacing={1} sx={{ width: "100%", marginBottom: "1%" }}>
           {useLabels &&
             Object.keys(useLabels).map((l, i) => (
               <Grid2 size={{ xs: 12, sm: source == "IM"? 12: 6, md:  source == "IM"? 12: 6, lg:  source == "IM"? 12: 6 }} key={i}>
@@ -618,6 +620,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             ))}
         </Grid2>
       </Box>
+        <Footer />
+      </>
     );
 }
 

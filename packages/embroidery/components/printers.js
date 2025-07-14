@@ -1,5 +1,5 @@
 "use client";
-import {Grid2, Box, Typography, Card} from "@mui/material"
+import {Grid2, Box, Typography, Card, Container} from "@mui/material"
 export function Printers({printers, printer, setPrinter, setAuto}){
     return (
       <Box sx={{ display: "flex", flexDirection: "row", paddingTop: ".5%", background: "#d2d2d2" }}>

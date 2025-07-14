@@ -5,6 +5,7 @@ import { BinModal } from "./BinModal";
 import {Box, Card, Typography, Grid2, Button} from "@mui/material"
 import {useState}from "react"
 import axios from "axios"
+import { Footer } from "@pythias/backend";
 export function Main({binCount, binsInUse, source}){
     const [bin, setBin] = useState(null)
     const [auto, setAuto] = useState(true)
@@ -33,7 +34,7 @@ export function Main({binCount, binsInUse, source}){
             setBin(null)
         }
     }
-    return <Box sx={{padding: "3%", background: "#e2e2e2", minHeight: "92vh"}}>
+    return <Box sx={{background: "#e2e2e2", minHeight: "70vh"}}>
         <Card sx={{padding: "2%", margin: "2%", display: "flex", flexBasis: "row", justifyContent: "space-between"}}>
             <BinSettings binCount={binCount} setAuto={setAuto} setBinss={setBins} modalStyle={modalStyle} />
             <Button sx={{background:"#d2d2d2", color: "#000"}}>Print Labels</Button>
@@ -84,5 +85,6 @@ export function Main({binCount, binsInUse, source}){
                 </Card>
             ))}
         </Card>
+        <Footer fixed={true} />
     </Box>
 }

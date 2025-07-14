@@ -3,6 +3,7 @@ import {useState} from "react"
 import { DTFBody } from "./DTFBody";
 import {Printers} from "./printers"
 import {Box} from "@mui/material"
+import {Footer} from "@pythias/backend"
 export function Main({printers}){
     const [auto, setAuto] = useState(true)
     const [printer, setPrinter] = useState("printer1")
@@ -11,6 +12,7 @@ export function Main({printers}){
         <Box>
             <Printers printers={printers} setPrinter={setPrinter} printer={printer} setAuto={setAuto}/>
             <DTFBody auto={auto} setAuto={setAuto} printer={printer}/>
+            <Footer fixed={true} />
         </Box>
     )
 }

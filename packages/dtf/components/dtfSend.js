@@ -14,6 +14,7 @@ import Image from "next/image";
 import {Config} from "../config"
 import { DTFBody } from "./DTFBody";
 import {Printers} from "./printers"
+import {Footer} from "@pythias/backend";
 export function DTFSend({printers}){
     const [printer, setPrinter] = useState(printers? printers[0]: "printer1")
     const [auto, setAuto] = useState(true)
@@ -23,6 +24,7 @@ export function DTFSend({printers}){
                 <Printers printers={printers} printer={printer} setPrinter={setPrinter} setAuto={setAuto}/>
             </Box>
             <DTFBody auto={auto} setAuto={setAuto} printer={printer} type={"send"}/>
+            <Footer fixed={true} />
         </>
     )
 }

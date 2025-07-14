@@ -7,6 +7,7 @@ import { OrderModal } from "./orderModal";
 import {useState, useEffect} from "react";
 import {Box} from "@mui/material"
 import { Repull } from "../../repull/exports";
+import {Footer} from "@pythias/backend";
 //import { useWindowSize } from "../exports";
 export function Main({stations, binCount, bins, pieceId, stat, source}){
     const [station, setStation] = useState(stat? stat: stations? stations[0]: "station1");
@@ -46,27 +47,30 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
       overflow: "auto"
     };
     return (
-      <Box sx={{background: "#d2d2d2", padding: "1%"}}>
-        <Manifest binCount={binCount} setAuto={setAuto} setBins={setBins} modalStyle={modalStyle} style={modalStyle}/>
-        <Stations
-          stations={stations}
-          station={station}
-          setStation={setStation}
-          setAuto={setAuto}
-        />
-        <Scan auto={auto} order={order} showNotes={showNotes} setShowNotes={setShowNotes} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins} source={source} station={station}/>
-        <Bins
-          bins={binss}
-          setBins={setBins}
-          setOrder={setOrder}
-          setAuto={setAuto}
-          setBin={setBin}
-          setShow={setShow}
-          setAction={setAction}
-          setShowNotes={setShowNotes}
-        />
-        <OrderModal order={order} setOrder={setOrder} setShowNotes={setShowNotes} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source}/>
-        <Repull/>
+      <Box>
+        <Box sx={{background: "#d2d2d2", padding: "1%"}}>
+          <Manifest binCount={binCount} setAuto={setAuto} setBins={setBins} modalStyle={modalStyle} style={modalStyle}/>
+          <Stations
+            stations={stations}
+            station={station}
+            setStation={setStation}
+            setAuto={setAuto}
+          />
+          <Scan auto={auto} order={order} showNotes={showNotes} setShowNotes={setShowNotes} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins} source={source} station={station}/>
+          <Bins
+            bins={binss}
+            setBins={setBins}
+            setOrder={setOrder}
+            setAuto={setAuto}
+            setBin={setBin}
+            setShow={setShow}
+            setAction={setAction}
+            setShowNotes={setShowNotes}
+          />
+          <OrderModal order={order} setOrder={setOrder} setShowNotes={setShowNotes} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source}/>
+          <Repull/>
+        </Box>
+        <Footer fixed={true} />
       </Box>
     );
 }
