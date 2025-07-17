@@ -1,4 +1,4 @@
-import Design from "@/models/Design";
+import {Design} from "@pythias/mongo";
 import { DesignsMain } from "@pythias/backend";
 import {DesignSearch} from "@/functions/designSearch";
 import { serialize } from "@/functions/serialize";

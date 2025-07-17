@@ -1,7 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server"
-import Items from "@/models/Items"
-import SkuToUpc from "@/models/skuUpcConversion"
-import Order from "@/models/Order"
+import { Items, SkuToUpc, Order } from "@pythias/mongo";
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
     console.log(data.item)

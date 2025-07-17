@@ -1,4 +1,4 @@
-import CSVUpdates from "@/models/CSVUpdates"
+import {CSVUpdates} from "@pythias/mongo";
 import {Main} from "./Main"
 import {serialize} from "@/functions/serialize"
 export const dynamic = 'force-dynamic';

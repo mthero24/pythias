@@ -1,8 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import InventoryOrders from "@/models/InventoryOrders";
-import Inventory from "@/models/inventory";
-import Blanks from "@/models/Blanks";
-import Items from "@/models/Items";
+import { InventoryOrders, Inventory, Blank, Items }from "@pythias/mongo";
 import axios from "axios";
 export async function GET(){
     let orders = await InventoryOrders.find({}).populate("locations.items.inventory")
@@ -75,7 +72,7 @@ export async function POST(req=NextApiRequest){
     let inventory = await Inventory.find({}).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location")
     let items = await Items.find({labelPrinted: false, status: "awaiting_shipment"}).select("colorName sizeName blank")
     console.log("inventory", inventory.length)
-    let blanks = await Blanks.find({}).populate("colors").select("code name colors sizes department")
+    let blanks = await Blank.find({}).populate("colors").select("code name colors sizes department")
     let combined = []
     for(let blank of blanks){
         blank.inventory = inventory.filter(i=> i.blank.toString() == blank._id.toString())

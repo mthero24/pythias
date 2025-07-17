@@ -1,5 +1,5 @@
 import {Main} from "@pythias/integrations";
-import TikTokAuth from "@/models/tiktok";
+import {TikTokAuth} from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 export default async function Integrations(){
     let tiktokShops =[]

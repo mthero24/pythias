@@ -1,4 +1,4 @@
-import MarketPlaces from "@/models/MarketPlaces";
+import {MarketPlaces} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 
 export async function POST(req= NextApiRequest){

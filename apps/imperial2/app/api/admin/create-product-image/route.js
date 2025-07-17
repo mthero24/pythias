@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import ProductImages from "@/models/ProductImages";
+import {ProductImages} from "@pythias/mongo";
 
 export async function GET(req=NextApiRequest){
     return NextResponse.json({error: false})

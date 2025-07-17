@@ -1,11 +1,9 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Blanks from "@/models/Blanks";
-import Inventory from "@/models/inventory";
-import Color from "@/models/Color";
+import {Blank, Color, Inventory} from "@pythias/mongo";
 
 export async function GET(){
   try{
-    let blanks = await Blanks.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});
+    let blanks = await Blank.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});
     return NextResponse.json({error: false, blanks})
   }catch(e){
     return NextResponse.json({error: true, msg: JSON.stringify(e)})
@@ -102,12 +100,12 @@ export async function POST(req = NextApiRequest) {
   let newBlank
   try {
     if(blank._id){
-      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
-      newBlank = await Blanks.findById(blank._id).populate("printLocations") 
+      newBlank = await Blank.findByIdAndUpdate(blank._id, blank)
+      newBlank = await Blank.findById(blank._id).populate("printLocations") 
       updateInventory(blank)
     }
     else {
-      let newBlank = new Blanks({ ...blank });
+      let newBlank = new Blank({ ...blank });
       await newBlank.save();
       generateInventory(newBlank);
     }
@@ -121,7 +119,7 @@ export async function POST(req = NextApiRequest) {
 export async function DELETE(req = NextApiRequest,) {
   //const body = await req.json();
   //console.log(req.nextUrl.searchParams.get("id"));
-  await Blanks.findOneAndDelete({_id: req.nextUrl.searchParams.get("id")})
+  await Blank.findOneAndDelete({_id: req.nextUrl.searchParams.get("id")})
   return NextResponse.json({ error: false });
 }
 

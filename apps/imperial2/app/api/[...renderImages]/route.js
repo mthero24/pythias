@@ -1,8 +1,7 @@
 import sharp from "sharp"
 import {NextApiRequest, NextResponse} from "next/server"
 import axios from "axios"
-import Blanks from "@/models/Blanks";
-import Design from "@/models/Design";
+import {Blank, Design} from "@pythias/mongo";
 import "jimp"
 const readImage = async (url)=>{
     console.log(url)
@@ -123,7 +122,7 @@ export async function GET(req){
         let design = await Design.findOne({sku: params[0]}).select("images").lean()
         designImage = design?.images?.[params[4]]
         console.log(designImage, "design image", params[1], "params 1")
-        let blank = await Blanks.findOne({code: params[1].replace(/_/g, "-")}).populate("colors").lean()
+        let blank = await Blank.findOne({code: params[1].replace(/_/g, "-")}).populate("colors").lean()
         blankImage = blank?.multiImages[params[4]]?.filter(i=> i.image.includes(params[2]))[0]
     } else if (params.length == 6) {
         let design = await Design.findOne({ sku: params[0] }).lean()
@@ -131,7 +130,7 @@ export async function GET(req){
         console.log(params[5], params[4], "params 5 and 4")
         designImage = design?.threadImages?.[params[5]][params[4]]
         console.log(designImage, "design image")
-        let blank = await Blanks.findOne({ code: params[1] }).populate("colors").lean()
+        let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
         blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
     } else{
         let blankCode = req.nextUrl.searchParams.get("blank")
@@ -140,7 +139,7 @@ export async function GET(req){
         designImage = req.nextUrl.searchParams.get("design")
         let side = req.nextUrl.searchParams.get("side")
         console.log(blankCode, bm, colorName, designImage, side)
-        let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
+        let blank = await Blank.findOne({code: blankCode}).populate("colors").lean()
         let color = blank.colors.filter(c=>c.name == colorName)[0]
         console.log(color, side, "color and side")
         if(bm){

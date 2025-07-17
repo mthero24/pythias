@@ -1,6 +1,6 @@
 import { generateAccessToken, generateRefreshToken } from "../../../functions/accessToken";
 import isLoggedIn from "../../../middleware/isLoggedIn";
-import User from "../../../models/User";
+import {User} from "@pythias.mongo";
 
 async function handler(req, res) {
     console.log(req.user);

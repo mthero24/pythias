@@ -42,6 +42,7 @@
     "@pythias/shipping": "^0.0.0",
     "@pythias/sublimation": "^1.0.0",
     "@pythias/backend": "^1.0.0",
+    "@pythias/mongo": "^0.0.0",
     "@repo/ui": "^0.0.0",
     "atob": "^2.1.2",
     "aws-sdk": "^2.1692.0",

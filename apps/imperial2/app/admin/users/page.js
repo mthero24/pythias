@@ -1,4 +1,4 @@
-import Users from "@/models/User";
+import {Users} from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import {UsersMain} from "@pythias/backend";
 export const dynamic = 'force-dynamic';

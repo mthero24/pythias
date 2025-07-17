@@ -1,8 +1,6 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import Design from "@/models/Design";
+import { Design, Users, Items } from "@pythias/mongo";
 import { headers } from 'next/headers'
-import User from "@/models/User";
-import Items from "@/models/Items";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
 import { createUpc, MarkRecycle, UnMarkRecycle } from "@/functions/createUpcs";

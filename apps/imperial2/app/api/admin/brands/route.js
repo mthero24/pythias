@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import Brands from "@/models/Brands";
+import {Brands} from "@pythias/mongo";
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     let brand = new Brands(data);

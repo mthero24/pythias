@@ -1,6 +1,6 @@
-import {NextApiRequest, NextResponse} from "next/server"
-import {updateListings} from "@/functions/updateListings"
-import CSVUpdates from "@/models/CSVUpdates"
+import {NextApiRequest, NextResponse} from "next/server";
+import {updateListings} from "@/functions/updateListings";
+import {CSVUpdates} from "@pythias/mongo";
  const startUpdate = async (csvUpdate, data)=>{
     await updateListings(csvUpdate, data)
  }

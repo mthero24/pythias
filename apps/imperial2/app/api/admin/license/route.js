@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import LicenseHolders from "@/models/LicenseHolders";
+import {LicenseHolders} from "@pythias/mongo";
 
 export async function POST(req=NextApiRequest){
     let {license} = await req.json()
