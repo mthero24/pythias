@@ -592,7 +592,7 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                                     </Box>
                                     <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                         {styleImages.length > 0 && styleImages.map((si, i) => (
-                                            <img src={`http://localhost:3009/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
+                                            <img src={`http://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
                                 ))}
                                     </Box>
                                     <Divider />
