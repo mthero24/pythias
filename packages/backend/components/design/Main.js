@@ -14,7 +14,9 @@ import LoaderOverlay from "../reusable/LoaderOverlay";
 import DeleteModal  from "../reusable/DeleteModal";
 import {Footer} from "../reusable/Footer";
 import CheckIcon from '@mui/icons-material/Check';
-export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocations}){
+import { set } from "mongoose";
+import { ConstructionOutlined, Create } from "@mui/icons-material";
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen }){
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -40,7 +42,8 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
     const [deleteFunction, setDeleeFunction] = useState({})
     const [deleteTitle, setDeleteTitle] = useState("")
     const [createProduct, setCreateProduct] = useState(false)
-    const genders = ["Girls", "Boys", "Mens", "Womens"]
+    const [genders, setGenders] = useState(gen ? gen : []);
+    const [seasons, setSeasons] = useState(seas ? seas : []);
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -509,17 +512,18 @@ export function Main({design, bls, brands, mPs, pI, licenses, colors, printLocat
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
                 <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
-                <CreateProductModal open={createProduct} setOpen={setCreateProduct} blanks={blanks} design={des} colors={colors}/>
+                    <CreateProductModal open={createProduct} setOpen={setCreateProduct} blanks={blanks} design={des} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} />
                 {loading && <LoaderOverlay/>}
             </Container>
             <Footer/>
         </Box>
     )
 }
-const CreateProductModal = ({ open, setOpen, design, blanks, colors }) => {
-    const [product, setProduct] = useState({blanks: [], design: design, threadColors: [], colors: [], sizes:[], defaultColor: null,})
+const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands }) => {
+    const [product, setProduct] = useState({blanks: [], design: design, threadColors: [], colors: [], sizes:[], defaultColor: null, variants: [], productImages: [], variantImages: {}})
     const [cols, setColors] = useState([])
     const [sizes, setSizes] = useState([])
+    const [images, setImages] = useState([])
     const [stage, setStage] = useState("blanks")
     const style = {
         position: 'absolute',
@@ -582,11 +586,11 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors }) => {
                                 }
                                 setProduct({ ...p })
                             }}>
-                                <Box sx={{ border: "1px solid #000", borderRadius: "5px", padding: "1%", margin: "1%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", "&:hover": { background: "#f0f0f0", opacity: .7 } }}>
-                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", }}>
+                                <Box sx={{ border: "1px solid #000", borderRadius: "5px", padding: "1%", margin: ".5%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", "&:hover": { background: "#f0f0f0", opacity: .7 } }}>
+                                    <Box sx={{ position: "relative", zIndex: 999,display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", }}>
                                         <FormControlLabel control={<Checkbox checked={product.blanks.filter(blank => blank?._id.toString() == b?._id.toString())[0] != undefined} />} />
                                     </Box>
-                                    <Box sx={{ padding: "1%", height: "300px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
+                                    <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                         {styleImages.length > 0 && styleImages.map((si, i) => (
                                             <img src={`http://localhost:3009/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
                                 ))}
@@ -728,23 +732,343 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors }) => {
                                 </Grid2>
                             </Card>
                         </Box>
+                        <Box>
+                            <Typography textAlign={"center"}>Number of Variants: {product.blanks.length * (product.threadColors.length > 0? product.threadColors.length: 1) * product.colors.length * product.sizes.length}</Typography>
+                        </Box>
                         <Grid2 container spacing={2} sx={{padding: "2%"}}>
                             <Grid2 size={6}>
                                 <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={()=>{setStage("blanks")}}>Back</Button>
                             </Grid2>
                             <Grid2 size={6}>
                                 <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={()=>{
-
+                                    let imgs = []
+                                    product.blanks.map(b => {
+                                        if (product.threadColors.length > 0) {
+                                            console.log(product.threadColors.length)
+                                            for (let tc of product.threadColors) {
+                                                console.log(tc.name)
+                                                for (let ti of Object.keys(design.threadImages[tc.name] ? design.threadImages[tc.name] : {})) {
+                                                    console.log(ti, tc.name)
+                                                    for (let col of product.colors) {
+                                                        //console.log(design.threadImages[tc.name][ti], col.name)
+                                                        for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
+                                                            console.log(bm.image)
+                                                            imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }else{
+                                            for (let ti of Object.keys(design.images ? design.images : {})) {
+                                                for (let col of product.colors) {
+                                                    //console.log(design.threadImages[tc.name][ti], col.name)
+                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
+                                                        console.log(bm.image)
+                                                        imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    })
+                                    setImages(imgs)
+                                    setStage("product_images")
                                 }}>Next</Button>   
                             </Grid2>   
                         </Grid2>
                     </Grid2>
                 </Grid2>}
+                {stage == "product_images" && 
+                    <Grid2 size={12} sx={{padding: "0% 4%"}}>
+                        <CreatableSelect
+                            placeholder="Image Group"
+                            options={imageGroups.map(g => { return { value: g, label: g } })}
+                            value={product.imageGroup ? { value: product.imageGroup, label: product.imageGroup } : { value: "default", label: "default" }}
+                            onChange={(val) => {    
+                                setProduct({...product, imageGroup: val ? val.value : null})
+                                let imgs = []
+                                product.blanks.map(b => {
+                                    if (product.threadColors.length > 0) {
+                                        console.log(product.threadColors.length)
+                                        for (let tc of product.threadColors) {
+                                            console.log(tc.name)
+                                            for (let ti of Object.keys(design.threadImages[tc.name] ? design.threadImages[tc.name] : {})) {
+                                                console.log(ti, tc.name)
+                                                for (let col of product.colors) {
+                                                    //console.log(design.threadImages[tc.name][ti], col.name)
+                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
+                                                        console.log(bm.image)
+                                                        imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        for (let ti of Object.keys(design.images ? design.images : {})) {
+                                            for (let col of product.colors) {
+                                                //console.log(design.threadImages[tc.name][ti], col.name)
+                                                for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default") ) {
+                                                    console.log(bm.image)
+                                                    imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                }
+                                            }
+                                        }
+                                    }
+                                })
+                                setImages(imgs)
+                            }}
+                        />
+                        <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Product Images</Typography>
+                        <Grid2 container spacing={1} sx={{ marginBottom: "2%" }}>
+                            {images.map((i, j) => (
+                                <Grid2 key={j} size={{ xs: 6, sm: 3, md: 3 }} sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": {  opacity: .7 } }} onClick={() => {
+                                    console.log(i)
+                                    let p = { ...product }
+                                    if(!p.productImages.filter(img => img.sku == i.sku)[0]) p.productImages.push(i)
+                                    else{
+                                        let imgs = [];
+                                        for (let img of p.productImages) {
+                                            if (img.sku != i.sku) imgs.push(img)
+                                        }
+                                        p.productImages = imgs
+                                    }
+                                    console.log(p.productImages)
+                                    setProduct({ ...p })
+                                }}>
+                                    <img src={i.image} alt={`${i.blank.code} image`} width={300} height={300} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%", }} />
+                                    {product.productImages.filter(img => img.image == i.image)[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-20%", position: "relative" }}>
+                                        <Checkbox checked={true} />
+                                    </Box>}
+                                    {!product.productImages.filter(img => img.image == i.image)[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-20%", position: "relative" }}>
+                                        <Checkbox checked={false} />
+                                    </Box>}
+                                </Grid2>
+                            ))}
+                        </Grid2>
+                        <Grid2 container spacing={2} sx={{ padding: "2%" }}>
+                            <Grid2 size={6}>
+                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("colors") }}>Back</Button>
+                            </Grid2>
+                            <Grid2 size={6}>
+                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
+                                    //console.log(product.colors, product.sizes, product.threadColors, product.defaultColor)
+                                    setStage("variant_images")
+                                }}>Next</Button>
+                            </Grid2>
+                        </Grid2>  
+                    </Grid2>
+                }
+                {stage == "variant_images" && 
+                    <Grid2 size={12} sx={{padding: "0% 4%"}}>
+                        <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Variant Images</Typography>
+                        <Box>
+                            <CreateVariantImages product={product} design={design.threadColors.length > 0 ? design.threadImages : design.images} setProduct={setProduct} threadColors={design.threadColors.length > 0? true: false}/>
+                        </Box>
+                        <Grid2 container spacing={2} sx={{ padding: "2%" }}>
+                            <Grid2 size={6}>
+                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("product_images") }}>Back</Button>
+                            </Grid2>
+                            <Grid2 size={6}>
+                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
+                                    //console.log(product.colors, product.sizes, product.threadColors, product.defaultColor)
+                                    let p = { ...product }
+                                    p.title = p.title ? p.title : `${design.name} - ${p.blanks.map(b => b.name).join(" and ")}`
+                                    p.description = p.description ? p.description : `${design.description} - ${p.blanks.map(b => b.description).join(" ")}`
+                                    setProduct({ ...p })
+                                    setStage("information")
+                                }}>Next</Button>
+                            </Grid2>
+                        </Grid2>  
+                    </Grid2>
+                }
+                {stage == "information" && 
+                    <Grid2 size={12} sx={{padding: "0% 4%"}}>
+                        <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Product Information</Typography>
+                        <Grid2 container spacing={2} sx={{ marginBottom: "2%", padding: "2%" }}>
+                            <Grid2 size={12}>    
+                                <TextField fullWidth label="Title" variant="outlined" value={product.title} onChange={(e) => {
+                                    let p = { ...product }
+                                    p.title = e.target.value
+                                    setProduct({ ...p })
+                                }} />
+                            </Grid2>
+                            <Grid2 size={12}>
+                                <TextField fullWidth label="Description" multiline variant="outlined" value={product.description} onChange={(e) => {
+                                    let p = { ...product }
+                                    p.description = e.target.value
+                                    setProduct({ ...p })
+                                }} />
+                            </Grid2>
+                            <Grid2 size={4}>
+                                <CreatableSelect placeholder="Select Brand" options={brands.map(brand => ({ value: brand.name, label: brand.name }))} value={product.brand? { value: product.brand, label: product.brand } : null} onChange={async(newValue) => {
+                                    let p = { ...product }
+                                    p.brand = newValue.value
+                                    if(!brands.filter(b => b.name == newValue.value)[0]) {
+                                        let res = await axios.post("/api/admin/brands", { name: newValue.value })
+                                        if (res.data.error) alert(res.data.msg)
+                                        else {
+                                            setBrands(res.data.brands)
+                                        }
+                                    }
+                                    console.log(p.brand)
+                                    setProduct({ ...p })
+                                }} />
+                            </Grid2>
+                            <Grid2 size={4}>
+                                <CreatableSelect placeholder="Select Gender" options={genders.map(gender => ({ value: gender.name, label: gender.name }))} value={product.gender ? { value: product.gender.name, label: product.gender.name } : null} onChange={async(newValue) => {
+                                    let p = { ...product }
+                                    p.gender = newValue.value
+                                    if (!genders.filter(s => s.name == newValue.value)[0]) {
+                                        let res = await axios.post("/api/admin/oneoffs", { type: "gender", value: newValue.value })
+                                        if (res.data && res.data.error) alert(res.data.msg)
+                                        else setGenders(res.data.genders)
+                                    }
+                                    setProduct({ ...p })
+                                }} />
+                            </Grid2>
+                            <Grid2 size={4}>
+                                <CreatableSelect placeholder="Select Season" options={seasons.map(season => ({ value: season.name, label: season.name }))} value={product.season ? { value: product.season.name, label: product.season.name } : null} onChange={async (newValue) => {
+                                    let p = { ...product }
+                                    p.season = newValue.value
+                                    if (!seasons.filter(s => s.name == newValue.value)[0]) {
+                                        let res = await axios.post("/api/admin/oneoffs", { type: "season", value: newValue.value })
+                                        if (res.data && res.data.error) alert(res.data.msg)
+                                        else setSeasons(res.data.seasons)
+                                    }
+                                    setProduct({ ...p })
+                                }} />
+                            </Grid2>
+                        </Grid2>
+                        <Grid2 container spacing={2} sx={{ padding: "2%" }}>
+                            <Grid2 size={6}>
+                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("variant_images") }}>Back</Button>
+                            </Grid2>
+                            <Grid2 size={6}>
+                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
+                                   
+                                    setStage("information")
+                                }}>Next</Button>
+                            </Grid2>
+                        </Grid2>  
+                    </Grid2>
+                }
             </Box>
         </Modal>
     )
 }
-
+ const CreateVariantImages = ({product, setProduct, design, threadColors}) => {
+    let imgs = {}
+   // console.log(product, design)
+    if(!threadColors){
+        for(let side of Object.keys(design? design : {})){
+            console.log(side, "side")
+            for(let blank of product.blanks){
+                for (let color of product.colors) {
+                    for(let img of blank.multiImages[side].filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")){
+                    // console.log(img, "img")
+                        //console.log(color, "color")
+                        if (!imgs[blank.code]) imgs[blank.code] = {}
+                    // console.log(imgs[blank.code])
+                        if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
+                        //console.log(imgs[blank.code][color.name])
+                        let image = design[side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}.jpg`)
+                        imgs[blank.code][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), color: color, side: side, blank: blank, sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}`})
+                        
+                    }
+                }
+            }
+        }
+    }else{
+        for(let threadColor of Object.keys(design)){
+            for(let side of Object.keys(design[threadColor])){
+                console.log(side, "side")
+                for(let blank of product.blanks){
+                    for (let color of product.colors) {
+                        for(let img of blank.multiImages[side].filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")){
+                            // console.log(img, "img")
+                            //console.log(color, "color")
+                            if (!imgs[blank.code]) imgs[blank.code] = {}
+                            // console.log(imgs[blank.code])
+                            if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
+                            if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
+                            //console.log(imgs[blank.code][color.name])
+                            let image = design[threadColor][side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}-${threadColor}.jpg`)
+                            imgs[blank.code][threadColor][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), color: color, side: side, blank: blank, sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`})
+                            
+                        }
+                    }
+                }
+            }
+        }
+    }
+    console.log(imgs)
+    return (
+        <>
+            {!threadColors && Object.keys(imgs).length > 0 && Object.keys(imgs).map((b, i) => (
+                <Box key={i} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
+                    <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{b}</Typography>
+                    <Grid2 container spacing={2}>
+                        {imgs[b] && Object.keys(imgs[b]).map((c, j) => (
+                            <Grid2 key={j} size={6}>
+                                <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{c}</Typography>
+                                <Grid2 container spacing={2} sx={{"&:hover": { cursor: "pointer", opacity: .7 } }}>
+                                    {imgs[b][c].map((img, k) => (
+                                        <Grid2 key={k} size={4} onClick={() => {
+                                            let p = { ...product }
+                                            if (!p.variantImages[b]) p.variantImages[b] = {}
+                                            p.variantImages[b][c] = img
+                                            console.log(p.variantImages, "product varoiant images")
+                                            setProduct({ ...p })
+                                        }}>
+                                            <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
+                                            {product.variantImages[b] && product.variantImages[b][c] && product.variantImages[b][c].image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
+                                                <Checkbox checked={true} />
+                                            </Box>}
+                                           
+                                        </Grid2>
+                                    ))}
+                                </Grid2>
+                            </Grid2>
+                        ))}
+                    </Grid2>
+                </Box>
+            ))}
+            {threadColors && Object.keys(imgs).length > 0 && Object.keys(imgs).map((b, i) => (
+                <Box key={i} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
+                    <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{b}</Typography>
+                    {Object.keys(imgs[b]).map((tc, j) => (
+                        <Box key={j} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
+                            <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{tc}</Typography>
+                            <Grid2 container spacing={2}>
+                                {imgs[b][tc] && Object.keys(imgs[b][tc]).map((c, k) => (
+                                    <Grid2 key={k} size={6}>
+                                        <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{c}</Typography>
+                                        <Grid2 container spacing={2} sx={{"&:hover": { cursor: "pointer", opacity: .7 } }}>
+                                            {imgs[b][tc][c].map((img, l) => (
+                                                <Grid2 key={l} size={4} onClick={() => {
+                                                    let p = { ...product }
+                                                    if (!p.variantImages[b]) p.variantImages[b] = {}
+                                                    if (!p.variantImages[b][tc]) p.variantImages[b][tc] = {}
+                                                    p.variantImages[b][tc][c] = img
+                                                    console.log(p.variantImages, "product varoiant images")
+                                                    setProduct({ ...p })
+                                                }}>
+                                                    <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
+                                                    {product.variantImages[b] && product.variantImages[b][tc] && product.variantImages[b][tc][c] && product.variantImages[b][tc][c].image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
+                                                        <Checkbox checked={true} />
+                                                    </Box>}
+                                                </Grid2>
+                                            ))}
+                                        </Grid2>
+                                    </Grid2>
+                                ))}
+                            </Grid2>
+                        </Box>
+                    ))}
+                </Box>
+            ))}
+        </>
+    )
+ }
 const AddDSTModal = ({ open, setOpen, reload, setReload, des, loading, setLoading, setDesign, updateDesign, printLocations, setDeleteModal, setDeleteImage, setDeleteTitle, setDeleeFunction }) => {
     const [location, setLocation] = useState("front")
     const style = {
