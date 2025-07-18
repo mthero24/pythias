@@ -1,4 +1,4 @@
-import Design from "@/models/Design";
+import {Design} from "@pythias/mongo";
 
 
 export async function DesignSearch ({q, productsPerPage, page}){

@@ -1,5 +1,5 @@
 "use client";
-import {Box, Grid2, TextField, Modal, Button, Typography, Card, Container, Divider, FormControlLabel, Checkbox, Grid} from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, Divider, FormControlLabel, Checkbox, ImageList, ImageListItem, CircularProgress, List, ListItemText, ListItem, ListItemAvatar, Avatar } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 import {useState, useEffect} from "react";
@@ -14,9 +14,13 @@ import LoaderOverlay from "../reusable/LoaderOverlay";
 import DeleteModal  from "../reusable/DeleteModal";
 import {Footer} from "../reusable/Footer";
 import CheckIcon from '@mui/icons-material/Check';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { set } from "mongoose";
-import { ConstructionOutlined, Create } from "@mui/icons-material";
-export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen }){
+import { ConstructionOutlined, CoPresent, Create } from "@mui/icons-material";
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku }) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -24,7 +28,6 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [loading, setLoading] = useState(true)
     const [blanks, setBlanks] = useState(bls)
     const [imageGroups, setImageGroups] = useState([])
-    const [imageGroupImages, setImageGroupImages] = useState([])
     const [imageBlank, setImageBlank] = useState({label: "Blank", value: null})
     const [imageColor, setImageColor] = useState({label: "Color", value: null})
     const [threadColor, setThreadColor] = useState(null)
@@ -44,6 +47,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [createProduct, setCreateProduct] = useState(false)
     const [genders, setGenders] = useState(gen ? gen : []);
     const [seasons, setSeasons] = useState(seas ? seas : []);
+    const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} })
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -84,67 +88,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             setLoading(false)
           }
     },[blanks])
-    useEffect(()=>{
-        let images = []
-        des.imageGroup && des.blanks.map((b, j)=>{
-            if(imageBlank && imageBlank.value && b.blank.code.toString() == imageBlank.value.toString()){
-                for(let side of Object.keys(design.images)){
-                    Object.keys(b && b.blank && b.blank.multiImages? b.blank.multiImages: {}).filter(s=> s == side && design.images[side]).map((i,j)=>{
-                        let color = b.colors.filter(c=> c.name == imageColor.value)[0]
-                        let foundImages = false
-                        let useImages = b && b.blank.multiImages[i].filter(im=> im.imageGroup.includes(des.imageGroup) && color?._id.toString() == im.color.toString())
-                        useImages.map(im=>{
-                            let image = im
-                            image.side = i
-                            image.style=b.blank.code
-                            if(image.side == "modelFront") image.side = "front"
-                            if(image.side == "modelBack") image.side = "back"
-                            images.push(image)
-                            foundImages = true
-                        })
-                    })
-                }
-                if(images.length == 0){
-                   for(let side of Object.keys(design.images)){
-                        Object.keys(
-                          b && b.blank && b.blank.multiImages
-                            ? b.blank.multiImages
-                            : {}
-                        )
-                          .filter((s) => s == side && design.images[side])
-                          .map((i, j) => {
-                            let color = b.colors.filter(
-                              (c) => c.name == imageColor.value
-                            )[0];
-                            let foundImages = false;
-                            if (
-                              b.blank.multiImages[i].filter(
-                                (im) =>
-                                  im.imageGroup.includes("default") &&
-                                  color?._id.toString() == im.color.toString()
-                              )[0]
-                            ) {
-                              let image = b.blank.multiImages[i].filter(
-                                (im) =>
-                                  im.imageGroup.includes("default") &&
-                                  color?._id.toString() == im.color.toString()
-                              )[0];
-                              image.side = i;
-                              image.style = b.blank.code;
-                              if (image.side == "modelFront")
-                                image.side = "front";
-                              if (image.side == "modelBack")
-                                image.side = "back";
-                              images.push(image);
-                              foundImages = true;
-                            }
-                          });
-                    }
-                }
-            }
-        })
-        setImageGroupImages([...images])
-    },[imageBlank, imageColor, threadColor])
+    
     const getAiDescription = async () => {
         //setLoading(true);
         let d = {...des}
@@ -291,56 +235,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
         setDesign({...d})
         updateDesign({...d})
     }
-    const updateBlanks = async ({values})=>{
-        let d = {...des}
-        let codes = values.map(b=>{return b})
-        values.map(bl=>{
-            if(!d.blanks) d.blanks = [];
-            let blank = d.blanks?.filter(bla=> bla.blank.code == bl)[0]
-            if(!blank){
-                let blank = blanks.filter(b=> b.code == bl)[0]
-                if(blank){
-                    d.blanks.push({
-                        blank
-                    })
-                }
-            }
-        })
-        d.blanks = d.blanks.filter(b=> codes.includes(b.blank.code))
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const updateColors = ({blank, colors}) =>{
-        let d = {...des}
-        let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
-        b.colors = b.blank.colors.filter(c=> colors.includes(c.name))
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const updateDefaultColor = ({blank, color}) =>{
-        let d = {...des}
-        let b = d.blanks.filter(bl=> bl.blank._id.toString() == blank.blank._id.toString())[0]
-        b.defaultColor = b.blank.colors.filter(c=> color.value == c.name)[0]
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const setDefaultImages = ({id, side})=>{
-        let d = {...des}
-        let b = d.blanks.filter(bl=> bl.blank.code == imageBlank.value)[0]
-        if(b.defaultImages == undefined) b.defaultImages = []
-        let dI = b.defaultImages.filter(df=> df.color == b.colors.filter(c=> c.name == imageColor.value)[0]?._id)[0]
-        let others = b.defaultImages.filter(df=> df.color != b.colors.filter(c=> c.name == imageColor.value)[0]?._id)
-        if(!dI) dI = {id, side, color: b.colors.filter(c=> c.name == imageColor.value)[0]?._id}
-        else {
-            dI.id = id
-            dI.side = side,
-            dI.color = b.colors.filter(c=> c.name == imageColor.value)[0]?._id
-        }
-        others.push(dI)
-        b.defaultImages = others
-        setDesign({...d})
-        updateDesign({...d})
-    }
+
     const deleteDesignImage = ({location, threadColor})=>{
         let d = {...des}
         if(threadColor){
@@ -507,20 +402,63 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                         <Button fullWidth sx={{ margin: "1% 1%", background: "#645D5B", color: "#ffffff" }} onClick={()=>{setCreateProduct(true)}} >Create Product</Button>
                     </Grid2>
                 </Grid2>
+                <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
+                    {des.products && des.products.length > 0 && des.products.map((p, i) => (
+                        <Grid2 size={4} key={i}> 
+                            <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
+                                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+                                    <img src={p.productImages[0].image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
+                                </Box>
+                                <Box sx={{ display: "flex", flexDirection: "column",}}>
+                                    <List>
+                                        <ListItem>
+                                            <ListItemText sx={{textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap"}} primary={p.title} secondary={p.sku} />
+                                        </ListItem>
+                                    </List>
+                                </Box>
+                                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: "1%" }}>
+                                    <Button variant="contained" color="primary" >Add To MarketPlace</Button>
+                                    <Button variant="outlined" color="secondary" onClick={()=>{setProduct(p); setCreateProduct(true);}}>Edit Product</Button> 
+                                </Box>
+                            </Box>
+                        </Grid2>
+                    ))}
+                </Grid2>
                 <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
                 <AltImageModal open={open} setOpen={setOpen} blank={blankForAlt} design={des} setDesign={setDesign} updateDesign={updateDesign}  />
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
                 <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
-                    <CreateProductModal open={createProduct} setOpen={setCreateProduct} blanks={blanks} design={des} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} />
+                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} />
                 {loading && <LoaderOverlay/>}
             </Container>
             <Footer/>
         </Box>
     )
 }
-const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands }) => {
-    const [product, setProduct] = useState({blanks: [], design: design, threadColors: [], colors: [], sizes:[], defaultColor: null, variants: [], productImages: [], variantImages: {}})
+const MarketplaceModal = ({open, setOpen, product, setProduct, marketPlaces}) => {
+    return (
+        <Modal
+            open={open}
+            onClose={() => setOpen(false)}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+        >
+            <Box sx={style}>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
+                    <CloseIcon sx={{ color: "#780606" }} />
+                </Box>
+                <Typography id="modal-modal-title" variant="h6" component="h2">
+                    Add Product to Marketplace
+                </Typography>
+                <Box sx={{ mt: 2 }}>
+                    
+                </Box>
+            </Box>
+        </Modal>
+    )
+}
+const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku }) => {
     const [cols, setColors] = useState([])
     const [sizes, setSizes] = useState([])
     const [images, setImages] = useState([])
@@ -592,7 +530,7 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                                     </Box>
                                     <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                         {styleImages.length > 0 && styleImages.map((si, i) => (
-                                            <img src={`http://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
+                                            <img key={i} src={`http://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
                                 ))}
                                     </Box>
                                     <Divider />
@@ -640,7 +578,7 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                                 <Grid2 container spacing={2} sx={{ marginTop: "2%" }}>
                                     {
                                         design.threadColors.map(tc => { return colors.filter(c => c._id.toString() == tc.toString())[0]}).map(c => (
-                                            <Grid2 size={{ xs: 3, sm: 1.5, md: 1, lg: .75, xl: .5 }} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
+                                            <Grid2 key={c._id.toString()} size={{ xs: 3, sm: 1.5, md: 1, lg: .75, xl: .5 }} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
                                                 let p = { ...product }
                                                 if (!p.threadColors.filter(co => co._id.toString() == c._id.toString())[0]) p.threadColors.push(c)
                                                 else {
@@ -914,7 +852,7 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                                 }} />
                             </Grid2>
                             <Grid2 size={4}>
-                                <CreatableSelect placeholder="Select Gender" options={genders.map(gender => ({ value: gender.name, label: gender.name }))} value={product.gender ? { value: product.gender.name, label: product.gender.name } : null} onChange={async(newValue) => {
+                                <CreatableSelect placeholder="Select Gender" options={genders.map(gender => ({ value: gender.name, label: gender.name }))} value={product.gender ? { value: product.gender, label: product.gender } : null} onChange={async(newValue) => {
                                     let p = { ...product }
                                     p.gender = newValue.value
                                     if (!genders.filter(s => s.name == newValue.value)[0]) {
@@ -926,7 +864,7 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                                 }} />
                             </Grid2>
                             <Grid2 size={4}>
-                                <CreatableSelect placeholder="Select Season" options={seasons.map(season => ({ value: season.name, label: season.name }))} value={product.season ? { value: product.season.name, label: product.season.name } : null} onChange={async (newValue) => {
+                                <CreatableSelect placeholder="Select Season" options={seasons.map(season => ({ value: season.name, label: season.name }))} value={product.season ? { value: product.season, label: product.season } : null} onChange={async (newValue) => {
                                     let p = { ...product }
                                     p.season = newValue.value
                                     if (!seasons.filter(s => s.name == newValue.value)[0]) {
@@ -943,16 +881,195 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                                 <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("variant_images") }}>Back</Button>
                             </Grid2>
                             <Grid2 size={6}>
-                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
-                                   
-                                    setStage("information")
+                                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={async () => {
+                                    //console.log(product.variantImages, "product variant images")
+                                    let variants = {};
+                                    if(design.threadColors.length > 0) {
+                                        for (let d of Object.keys(design.threadImages)){
+                                            //console.log(d, "design thread color")
+                                            for(let blank of product.blanks){
+                                                for(let color of product.colors){
+                                                    if(blank.colors.filter(c => c._id.toString() == color._id.toString())[0]){
+                                                        for(let size of product.sizes){
+                                                            let img = product.variantImages[blank.code] && product.variantImages[blank.code][d] && product.variantImages[blank.code][d][color.name] && product.variantImages[blank.code][d][color.name].image
+                                                            if(!variants[blank.code]) variants[blank.code] = {}
+                                                            if(!variants[blank.code][d]) variants[blank.code][d] = {}
+                                                            if(!variants[blank.code][d][color.name]) variants[blank.code][d][color.name] = []
+                                                            variants[blank.code][d][color.name].push({ image: img, size: size, color: color, sku: await CreateSku({ blank, color, size, design, threadColor: d }), blank: blank })
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }else{
+                                        for (let blank of product.blanks) {
+                                            for (let color of product.colors) {
+                                                if (blank.colors.filter(c => c._id.toString() == color._id.toString())[0]) {
+                                                    for (let size of product.sizes) {
+                                                        let img = product.variantImages[blank.code] && product.variantImages[blank.code][color.name] && product.variantImages[blank.code][color.name].image
+                                                        if (!variants[blank.code]) variants[blank.code] = {}
+                                                        if (!variants[blank.code][color.name]) variants[blank.code][color.name] = []
+                                                        variants[blank.code][color.name].push({ image: img, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank })
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    console.log(variants, "variants")
+                                    let p = { ...product }
+                                    p.variants = variants
+                                    p.sku = `${design.sku}-${product.blanks.map(b => b.code).join("-")}`
+                                    p.hasThreadColors = design.threadColors.length > 0 ? true : false
+                                    console.log(p.images, "product images")
+                                    setProduct({ ...p })
+                                    setStage("preview")
                                 }}>Next</Button>
                             </Grid2>
                         </Grid2>  
                     </Grid2>
                 }
+                {stage == "preview" && <Box>
+                    <Typography variant="h6" textAlign={"center"}>Preview</Typography>
+                    <ProductImageCarosel productImages={product.productImages} />
+                    <Box sx={{ padding: "2%" }}>
+                        <List>
+                            <ListItem>
+                                <ListItemText primary={product.title} secondary={`SKU: ${product.sku} Brand: ${product.brand} ${product.gender ? `Gender: ${product.gender}`: ""} ${product.season ? `Season: ${product.season}`: ""}`} />
+                            </ListItem>
+                        </List>
+                        <List>
+                            <ListItem>
+                                <ListItemText primary={product.description}  />
+                            </ListItem>
+                        </List>
+                    </Box>
+                    <Box sx={{ padding: "2%" }}>
+                        <Typography variant="h6">Variants</Typography>
+                        {Object.keys(product.variants).length > 0 && Object.keys(product.variants).map(blank => (
+                            <Box key={blank} sx={{ marginBottom: "2%" }}>
+                                {!product.hasThreadColors && Object.keys(product.variants[blank]).map(color => (
+                                    <Box key={color} sx={{ marginLeft: "2%" }}>
+                                        {/* {console.log(product.variants[blank][color], "product variants")} */}
+                                        {/* {product.variants[blank][color].map(variant => (
+                                            <Box key={variant.sku} sx={{ marginLeft: "4%" }}>
+                                                <Typography variant="body2">{variant.sku}</Typography>
+                                            </Box>
+                                        ))} */}
+                                    </Box>
+                                ))}
+                                {product.hasThreadColors && Object.keys(product.variants[blank]).map(threadColor => (
+                                    <Box key={threadColor} sx={{ marginLeft: "2%" }}>
+                                        {Object.keys(product.variants[blank][threadColor]).map(color => (
+                                            <Box key={color} sx={{ marginLeft: "4%" }}>
+                                                <VariantDisplay blank={blank} threadColor={threadColor} color={color} variants={product.variants[blank][threadColor][color]} />
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                ))}
+                            </Box>
+                        ))}
+                    </Box>
+                    <Grid2 container spacing={2} sx={{ padding: "2%" }}>
+                        <Grid2 size={6}>
+                            <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("information") }}>Back</Button>
+                        </Grid2>
+                        <Grid2 size={6}>
+                            <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={async () => {
+                               console.log(product, "product to create")
+                                let res = await axios.post("/api/admin/products", { product: product })
+                                if (res.data.error) alert(res.data.msg)
+                                else {
+                                    let products = []
+                                    products.push(res.data.product)
+                                    for(let p of design.products? design.products: []){
+                                        //console.log(p, res.data.product)
+                                        if(p._id.toString() != res.data.product._id.toString()) products.push(p)
+                                    }
+                                    let d = {...design}
+                                    d.products = products
+                                    setDesign({...d})
+                                    updateDesign({...d})
+                                    setProduct({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} })
+                                    setStage("blanks")
+                                    setImages([])
+                                    setSizes([])
+                                    setColors([])
+                                    setOpen(false)
+                                }
+                            }}>Create</Button>
+                        </Grid2>
+                    </Grid2>  
+                </Box>}
             </Box>
         </Modal>
+    )
+}
+const VariantDisplay = ({blank, threadColor, color, variants}) => {
+    console.log(blank, threadColor, color, variants, "variant display")
+    const [open, setOpen] = useState(false);
+    return (
+        <Card sx={{margin: "1% 0%", padding: "1%", background: "#f0f0f0", borderRadius: "10px", boxShadow: "2px 2px 2px #ccc"}}>
+            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "2%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => setOpen(!open)}>
+                <img src={variants[0].image?.replace("400", "75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                <Typography variant="body2">{blank}_{threadColor}_{color}</Typography>
+                {open? <KeyboardArrowUpIcon/> : <KeyboardArrowDownIcon/>}
+            </Box>
+            {open && (
+                <Box sx={{ padding: "2%" }}>
+                    <List>
+                        {variants.map(variant => (
+                            <ListItem key={variant.id}>
+                                <ListItemAvatar>
+                                    <Avatar>
+                                        <img src={variant.image?.replace("400", "75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                    </Avatar>
+                                </ListItemAvatar>
+                                <ListItemText primary={`${variant.sku}`} secondary={`Blank: ${variant.blank.name}, Color: ${variant.color.name}, Size: ${variant.size.name}`} />
+                                {variant.upc && <ListItemText primary={`UPC: ${variant.upc}`} />}
+                            </ListItem>
+                        ))}
+                    </List>
+                </Box>
+            )}
+        </Card>
+    )
+}
+const ProductImageCarosel = ({productImages})=>{
+    const [image, setImage] = useState(0)
+    const [loading, setLoading] = useState(true)
+    return(
+        <Grid2 container spacing={2} sx={{ padding: "2%" }}>
+            <Grid2 size={2}></Grid2>
+            <Grid2 size={1}>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", padding: "2%", minHeight: "100%", "&:hover": { cursor: "pointer", background: "#f0f0f0" } }} onClick={() => {setLoading(true); setImage(image - 1 < 0 ? productImages.length - 1 : image - 1)}}>
+                    <KeyboardArrowLeftIcon sx={{ fontSize: "2rem", color: "#645D5B", marginTop: "50%" }} />
+                </Box>
+            </Grid2>
+            <Grid2 size={6}>
+                <img onLoad={() => setLoading(false)} src={productImages[image].image.replace("400", "700")} alt={productImages[image].sku} style={{ width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%" }} />
+                {loading && <Box sx={{ display: 'flex', position: "relative", top: "-50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 999, background: "rgba(255, 255, 255, 0.8)", padding: "2%", borderRadius: "10px", alignItems: "center", justifyContent: "center", marginBottom : "-15%"}}>
+                    <CircularProgress color="secondary" /> <Typography color={"#000"}>Loading ...</Typography>
+                </Box>}
+            </Grid2>
+            <Grid2 size={1}>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", padding: "2%", minHeight: "100%", "&:hover": { cursor: "pointer", background: "#f0f0f0" } }} onClick={() => { setLoading(true); setImage(image + 1 >= productImages.length ? 0 : image + 1)}}>
+                    <KeyboardArrowRightIcon sx={{ fontSize: "2rem", color: "#645D5B", marginTop: "50%" }} />
+                </Box>
+            </Grid2>
+            <Grid2 size={2}></Grid2>
+            <Grid2 size={1}></Grid2>
+            <Grid2 size={10}>
+                <ImageList cols={12} gap={1}>
+                    {productImages.map((variant, i) => (
+                        <ImageListItem key={variant.sku} sx={{ width: "100%", height: "auto", cursor: "pointer", border: image == i? "2px solid rgb(41, 6, 240)" : "none", opacity: image == i? 0.6: 1 }} onClick={() => { setImage(i) }}>
+                            <img src={variant.image} alt={variant.sku} />
+
+                        </ImageListItem>
+                    ))}
+                </ImageList>
+            </Grid2>
+            <Grid2 size={1}></Grid2>
+        </Grid2>
     )
 }
  const CreateVariantImages = ({product, setProduct, design, threadColors}) => {
@@ -971,7 +1088,7 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                         if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
                         //console.log(imgs[blank.code][color.name])
                         let image = design[side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}.jpg`)
-                        imgs[blank.code][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), color: color, side: side, blank: blank, sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}`})
+                        imgs[blank.code][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}`})
                         
                     }
                 }
@@ -992,7 +1109,7 @@ const CreateProductModal = ({ open, setOpen, design, blanks, colors, imageGroups
                             if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
                             //console.log(imgs[blank.code][color.name])
                             let image = design[threadColor][side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}-${threadColor}.jpg`)
-                            imgs[blank.code][threadColor][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), color: color, side: side, blank: blank, sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`})
+                            imgs[blank.code][threadColor][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`})
                             
                         }
                     }

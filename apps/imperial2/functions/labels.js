@@ -1,7 +1,4 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
-import Inventory from "@/models/inventory";
-import Batches from "@/models/batches";
+import {Items, Order, Inventory, Batches} from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})

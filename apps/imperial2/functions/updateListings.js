@@ -1,6 +1,5 @@
 import {createTikTokCsv, createShopifyCsv} from "@pythias/integrations"
-import Design from "@/models/Design";
-import CSVUpdates from "@/models/CSVUpdates"
+import {Design, CSVUpdates} from "@pythias/mongo";
 import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;

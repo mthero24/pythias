@@ -21,3 +21,4 @@ export {default as InventoryOrders} from "./models/InventoryOrders";
 export {default as Items} from "./models/Items";
 export {default as SkuToUpc} from "./models/skuUpcConversion";
 export {default as ReturnBins} from "./models/returnBins";
+export {default as Products} from "./models/Products";

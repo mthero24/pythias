@@ -1,5 +1,4 @@
-import Color from "@/models/Color";
-import Inventory from "@/models/inventory";
+import {Color, Inventory} from "@pythias/mongo";
 
 export async function generateInventory(style) {
   console.log(

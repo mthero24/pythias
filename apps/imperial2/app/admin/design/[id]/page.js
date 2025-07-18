@@ -1,9 +1,8 @@
-import {Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations} from "@pythias/mongo";
-
+import {Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations, Products} from "@pythias/mongo";
+import { CreateSku } from "@/functions/CreateSku";
 import { serialize } from "@/functions/serialize";
 import {DesignMain} from "@pythias/backend";
 import { notFound } from "next/navigation";
-import { Noto_Serif_Makasar } from "next/font/google";
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({params}){
     let {id} = await params;
@@ -19,6 +18,8 @@ export default async function DesignPage({params}){
             }
             let printLocations = await PrintLocations.find({})
             let design = await Design.findOne({_id: id}).lean();
+            let products = await Products.find({design: design._id}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"})
+            design.products = products;
             //console.log(design, "design")
             let blanks = await Blank.find({}).select("colors code name sizes multiImages").populate("colors").lean();
             //console.log(blanks[0].colors[0], "color")
@@ -36,8 +37,9 @@ export default async function DesignPage({params}){
             licenses = serialize(licenses);
             colors = serialize(colors)
             printLocations = serialize(printLocations)
+            
             return (
-                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations}/>
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku}/>
             )
         }catch(e){
             console.log(e)

@@ -1,5 +1,5 @@
 import {NextGTIN, CreateUpdateUPC} from "@pythias/integrations"
-import SkuToUpc from "@/models/skuUpcConversion"
+import {SkuToUpc} from "@pythias/mongo";
 export async function createUpc({design, blank}){
     let filterBlank = blank
     console.log(design.sku, filterBlank, "filter blank +++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
