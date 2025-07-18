@@ -704,6 +704,11 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                         console.log(bm.image)
                                                         imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                     }
+                                                    if(ti == "front"){
+                                                        for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
