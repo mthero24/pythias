@@ -116,11 +116,13 @@ export async function GET(req){
     let width = parseInt(req.nextUrl.searchParams.get("width"))
     let designImage
     let blankImage
+    console.log(params, "params")
     if (params.length == 5) {
         let design = await Design.findOne({ sku: params[0] }).select("images").lean()
         designImage = design?.images?.[params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]]
         console.log(designImage, "design image", params[1], "params 1")
         let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
+        console.log(blank.multiImages[params[4]], "blank")
         blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
     } else if (params.length == 6) {
         let design = await Design.findOne({ sku: params[0] }).lean()

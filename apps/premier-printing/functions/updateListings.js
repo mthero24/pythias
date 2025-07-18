@@ -514,7 +514,7 @@ export async function updateListings(csvupdate, sendTo){
                 if(m.toLowerCase() == "target" && sendTo.target == true){
                     let credentials
                     if(b == "Simply Sage Market"){
-                        credentials = {clientId: process.env.acendaClientIdSS, clientSecret: process.env.acendaClientSecretSS, organization: process.env.acendaOrganizationSS}
+                        credentials = {"clientId": process.env.acendaClientIdSS, "clientSecret": process.env.acendaClientSecretSS, "organization": process.env.acendaOrganizationSS}
                     }else if(b == "The Juniper Shop") {
                         credentials = {clientId: process.env.acendaClientIdJS, clientSecret: process.env.acendaClientSecretJS, organization: process.env.acendaOrganizationJS}
                     }

@@ -1,5 +1,5 @@
 "use client";
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, Divider, FormControlLabel, Checkbox, ImageList, ImageListItem, CircularProgress, List, ListItemText, ListItem, ListItemAvatar, Avatar } from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, Divider, FormControlLabel, Checkbox, ImageList, ImageListItem, CircularProgress, List, ListItemText, ListItem, ListItemAvatar, Avatar, CardContent } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 import {useState, useEffect} from "react";
@@ -48,6 +48,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [genders, setGenders] = useState(gen ? gen : []);
     const [seasons, setSeasons] = useState(seas ? seas : []);
     const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} })
+    const [marketplaceModal, setMarketplaceModal] = useState(false)
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -399,7 +400,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
                     <Grid2 size={12}>
-                        <Button fullWidth sx={{ margin: "1% 1%", background: "#645D5B", color: "#ffffff" }} onClick={()=>{setCreateProduct(true)}} >Create Product</Button>
+                            <Button fullWidth sx={{ margin: "1% 1%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setProduct({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });setCreateProduct(true)}} >Create Product</Button>
                     </Grid2>
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
@@ -417,7 +418,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                     </List>
                                 </Box>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: "1%" }}>
-                                    <Button variant="contained" color="primary" >Add To MarketPlace</Button>
+                                    <Button variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct(p) }} >Add To MarketPlace</Button>
                                     <Button variant="outlined" color="secondary" onClick={()=>{setProduct(p); setCreateProduct(true);}}>Edit Product</Button> 
                                 </Box>
                             </Box>
@@ -431,12 +432,28 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} />
                 {loading && <LoaderOverlay/>}
+                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} />
+
             </Container>
             <Footer/>
         </Box>
     )
 }
-const MarketplaceModal = ({open, setOpen, product, setProduct, marketPlaces}) => {
+const MarketplaceModal = ({open, setOpen, product, setProduct, marketPlaces, setMarketPlaces}) => {
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "90%",
+        height: "90%",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        overflowX: "auto",
+        overflowY: "none",
+    };
     return (
         <Modal
             open={open}
@@ -448,11 +465,26 @@ const MarketplaceModal = ({open, setOpen, product, setProduct, marketPlaces}) =>
                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
                     <CloseIcon sx={{ color: "#780606" }} />
                 </Box>
-                <Typography id="modal-modal-title" variant="h6" component="h2">
+                <Typography id="modal-modal-title" textAlign={"center"} variant="h6" component="h2">
                     Add Product to Marketplace
                 </Typography>
                 <Box sx={{ mt: 2 }}>
-                    
+                    <Box sx={{ maxHeight: "60vh", overflowY: "auto" }}>
+                        <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Create MarketPlace</Button>
+                    </Box>
+                    <Grid2 container spacing={2}>
+                        {marketPlaces.map(mp => (
+                            <Grid2 item xs={4} sm={4} md={4} key={mp._id}>
+                                <Card sx={{ padding: "2%", margin: "1%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", "&:hover": { background: "#f0f0f0", opacity: .7 } }} >
+                                    <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
+                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: "1%" }}>
+                                        <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Edit</Button>
+                                        <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Select</Button>
+                                    </Box>
+                                </Card>
+                            </Grid2>
+                        ))}
+                    </Grid2>
                 </Box>
             </Box>
         </Modal>
@@ -526,7 +558,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                             }}>
                                 <Box sx={{ border: "1px solid #000", borderRadius: "5px", padding: "1%", margin: ".5%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", "&:hover": { background: "#f0f0f0", opacity: .7 } }}>
                                     <Box sx={{ position: "relative", zIndex: 999,display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", }}>
-                                        <FormControlLabel control={<Checkbox checked={product.blanks.filter(blank => blank?._id.toString() == b?._id.toString())[0] != undefined} />} />
+                                        <FormControlLabel control={<Checkbox checked={product.blanks.filter(blank => blank?._id?.toString() == b?._id?.toString())[0] != undefined} />} />
                                     </Box>
                                     <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                         {styleImages.length > 0 && styleImages.map((si, i) => (
@@ -689,9 +721,19 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                     console.log(ti, tc.name)
                                                     for (let col of product.colors) {
                                                         //console.log(design.threadImages[tc.name][ti], col.name)
-                                                        for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
+                                                        for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && (product.imageGroup && m.imageGroup.includes(product.imageGroup).length > 0 ? m.imageGroup.includes(product.imageGroup) : m.imageGroup.includes("default") ))) {
                                                             console.log(bm.image)
                                                             imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                        }
+                                                        if (ti == "front") {
+                                                            for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && (product.imageGroup && m.imageGroup.includes(product.imageGroup).length > 0 ? m.imageGroup.includes(product.imageGroup) : m.imageGroup.includes("default")))) {
+                                                                imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                            }
+                                                        }
+                                                        if (ti == "back") {
+                                                            for (let bm of b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && (product.imageGroup && m.imageGroup.includes(product.imageGroup).length > 0 ? m.imageGroup.includes(product.imageGroup) : m.imageGroup.includes("default")))) {
+                                                                imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -700,13 +742,18 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                             for (let ti of Object.keys(design.images ? design.images : {})) {
                                                 for (let col of product.colors) {
                                                     //console.log(design.threadImages[tc.name][ti], col.name)
-                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
+                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && (product.imageGroup && m.imageGroup.includes(product.imageGroup).length > 0 ? m.imageGroup.includes(product.imageGroup) : m.imageGroup.includes("default")))) {
                                                         console.log(bm.image)
                                                         imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                     }
                                                     if(ti == "front"){
-                                                        for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
-                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                        for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && (product.imageGroup && m.imageGroup.includes(product.imageGroup).length > 0 ? m.imageGroup.includes(product.imageGroup) : m.imageGroup.includes("default")))) {
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                        }
+                                                    }
+                                                    if (ti == "back") {
+                                                        for (let bm of b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(product.imageGroup ? product.imageGroup : "default"))) {
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                         }
                                                     }
                                                 }
@@ -738,9 +785,19 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                 console.log(ti, tc.name)
                                                 for (let col of product.colors) {
                                                     //console.log(design.threadImages[tc.name][ti], col.name)
-                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
-                                                        console.log(bm.image)
+                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
+                                                        console.log(b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length, "++++++++++++++++++++++++++++++")
                                                         imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                    }
+                                                    if (ti == "front") {
+                                                        for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                        }
+                                                    }
+                                                    if (ti == "back") {
+                                                        for (let bm of b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                        }
                                                     }
                                                 }
                                             }
@@ -749,9 +806,19 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                         for (let ti of Object.keys(design.images ? design.images : {})) {
                                             for (let col of product.colors) {
                                                 //console.log(design.threadImages[tc.name][ti], col.name)
-                                                for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default") ) {
+                                                for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
                                                     console.log(bm.image)
                                                     imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                }
+                                                if (ti == "front") {
+                                                    for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
+                                                        imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                    }
+                                                }
+                                                if (ti == "back") {
+                                                    for (let bm of b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
+                                                        imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                    }
                                                 }
                                             }
                                         }
@@ -1012,7 +1079,7 @@ const VariantDisplay = ({blank, threadColor, color, variants}) => {
     return (
         <Card sx={{margin: "1% 0%", padding: "1%", background: "#f0f0f0", borderRadius: "10px", boxShadow: "2px 2px 2px #ccc"}}>
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "2%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => setOpen(!open)}>
-                <img src={variants[0].image?.replace("400", "75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                <img src={variants[0].image?.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                 <Typography variant="body2">{blank}_{threadColor}_{color}</Typography>
                 {open? <KeyboardArrowUpIcon/> : <KeyboardArrowDownIcon/>}
             </Box>
@@ -1023,7 +1090,7 @@ const VariantDisplay = ({blank, threadColor, color, variants}) => {
                             <ListItem key={variant.id}>
                                 <ListItemAvatar>
                                     <Avatar>
-                                        <img src={variant.image?.replace("400", "75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                        <img src={variant.image?.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                     </Avatar>
                                 </ListItemAvatar>
                                 <ListItemText primary={`${variant.sku}`} secondary={`Blank: ${variant.blank.name}, Color: ${variant.color.name}, Size: ${variant.size.name}`} />
@@ -1048,7 +1115,7 @@ const ProductImageCarosel = ({productImages})=>{
                 </Box>
             </Grid2>
             <Grid2 size={6}>
-                <img onLoad={() => setLoading(false)} src={productImages[image].image.replace("400", "700")} alt={productImages[image].sku} style={{ width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%" }} />
+                <img onLoad={() => setLoading(false)} src={productImages[image].image.replace("=400", "=700")} alt={productImages[image].sku} style={{ width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%" }} />
                 {loading && <Box sx={{ display: 'flex', position: "relative", top: "-50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 999, background: "rgba(255, 255, 255, 0.8)", padding: "2%", borderRadius: "10px", alignItems: "center", justifyContent: "center", marginBottom : "-15%"}}>
                     <CircularProgress color="secondary" /> <Typography color={"#000"}>Loading ...</Typography>
                 </Box>}
@@ -1063,7 +1130,7 @@ const ProductImageCarosel = ({productImages})=>{
             <Grid2 size={10}>
                 <ImageList cols={12} gap={1}>
                     {productImages.map((variant, i) => (
-                        <ImageListItem key={variant.sku} sx={{ width: "100%", height: "auto", cursor: "pointer", border: image == i? "2px solid rgb(41, 6, 240)" : "none", opacity: image == i? 0.6: 1 }} onClick={() => { setImage(i) }}>
+                        <ImageListItem key={variant.sku} sx={{ width: "100%", height: "auto", cursor: "pointer", border: image == i? "2px solid rgb(41, 6, 240)" : "none", opacity: image == i? 0.6: 1 }} onClick={() => {setLoading(true); setImage(i) }}>
                             <img src={variant.image} alt={variant.sku} />
 
                         </ImageListItem>
@@ -1082,7 +1149,7 @@ const ProductImageCarosel = ({productImages})=>{
             console.log(side, "side")
             for(let blank of product.blanks){
                 for (let color of product.colors) {
-                    for(let img of blank.multiImages[side].filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")){
+                    for(let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes("default"))){
                     // console.log(img, "img")
                         //console.log(color, "color")
                         if (!imgs[blank.code]) imgs[blank.code] = {}
@@ -1093,6 +1160,32 @@ const ProductImageCarosel = ({productImages})=>{
                         imgs[blank.code][color.name].push({image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}`})
                         
                     }
+                    if (side == "front") {
+                        for (let img of blank.multiImages["modelFront"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes("default"))) {
+                            // console.log(img, "img")
+                            //console.log(color, "color")
+                            if (!imgs[blank.code]) imgs[blank.code] = {}
+                            // console.log(imgs[blank.code])
+                            if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
+                            //console.log(imgs[blank.code][color.name])
+                            let image = design[side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}.jpg`)
+                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-modelFront.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-modelFront` })
+
+                        }
+                    }
+                    if (side == "back") {
+                        for (let img of blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes("default"))) {
+                            // console.log(img, "img")
+                            //console.log(color, "color")
+                            if (!imgs[blank.code]) imgs[blank.code] = {}
+                            // console.log(imgs[blank.code])
+                            if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
+                            //console.log(imgs[blank.code][color.name])
+                            let image = design[side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}.jpg`)
+                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-modelBack.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-modelBack` })
+
+                        }
+                    }
                 }
             }
         }
@@ -1102,7 +1195,7 @@ const ProductImageCarosel = ({productImages})=>{
                 console.log(side, "side")
                 for(let blank of product.blanks){
                     for (let color of product.colors) {
-                        for(let img of blank.multiImages[side].filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")){
+                        for(let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")){
                             // console.log(img, "img")
                             //console.log(color, "color")
                             if (!imgs[blank.code]) imgs[blank.code] = {}
@@ -1113,6 +1206,34 @@ const ProductImageCarosel = ({productImages})=>{
                             let image = design[threadColor][side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}-${threadColor}.jpg`)
                             imgs[blank.code][threadColor][color.name].push({image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`})
                             
+                        }
+                        if (side == "front") {
+                            for (let img of blank.multiImages["modelFront"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")) {
+                                // console.log(img, "img")
+                                //console.log(color, "color")
+                                if (!imgs[blank.code]) imgs[blank.code] = {}
+                                // console.log(imgs[blank.code])
+                                if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
+                                if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
+                                //console.log(imgs[blank.code][color.name])
+                                let image = design[threadColor][side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}-${threadColor}.jpg`)
+                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${"modelFront"}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
+
+                            }
+                        }
+                        if (side == "back") {
+                            for (let img of blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")) {
+                                // console.log(img, "img")
+                                //console.log(color, "color")
+                                if (!imgs[blank.code]) imgs[blank.code] = {}
+                                // console.log(imgs[blank.code])
+                                if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
+                                if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
+                                //console.log(imgs[blank.code][color.name])
+                                let image = design[threadColor][side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}-${threadColor}.jpg`)
+                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${"modelBack"}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
+
+                            }
                         }
                     }
                 }
@@ -1348,7 +1469,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                     {reload && <Uploader location={location} threadColor={threadColor} afterFunction={updateImage} setLoading={setLoading} setOpen={setOpen} />}
                     <Box sx={{ width: "100%", padding: "2%" }}>
                     <CreatableSelect
-                        options={printLocations.map(p => { return { value: p.name, label: p.name } })}
+                        options={printLocations?.map(p => { return { value: p.name, label: p.name } })}
                         value={{ value: location, label: location }}
                         onChange={(vals) => {
                             setLocation(vals.value)
@@ -1356,7 +1477,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                         }}
                     />
                         <CreatableSelect
-                            options={[...des.threadColors.map(p => { return { value: colors.filter(c => c._id.toString() == p)[0].name, label: colors.filter(c => c._id.toString() == p)[0].name } }), { value: "default", label: "Default" }]}
+                            options={[...des.threadColors?.map(p => { return { value: colors.filter(c => c._id.toString() == p)[0].name, label: colors.filter(c => c._id.toString() == p)[0].name } }), { value: "default", label: "Default" }]}
                             value={{ value: threadColor, label: threadColor? threadColor: "Default" }}
                             onChange={(vals) => {
                                 setThreadColor(vals.value)
@@ -1399,14 +1520,14 @@ const ModalUpc = ({open, setOpen, blank, setBlank, design, colors})=>{
             </Box>
             <hr/>
             <Typography>Variant Sku's</Typography>
-            {design.threadColors.length > 0 && design.threadColors.map(tr=>{
+            {design.threadColors?.length > 0 && design.threadColors.map(tr=>{
                 return (blank?.colors.map(c=>{
                     return (blank?.blank.sizes.map(s=>{
                         return <Typography key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${tr.name}`}>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${colors.filter(c=> c._id.toString() == tr.toString())[0]?.name}`}</Typography>
                     }))
                 }))
             })}
-            {design.threadColors.length == 0 && blank?.colors?.map(c=>{
+            {design.threadColors?.length == 0 && blank?.colors?.map(c=>{
                 return blank.blank?.sizes?.map(s=>{
                     return (<Box sx={{padding: "2%"}} key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}>
                         <Typography>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}</Typography> 

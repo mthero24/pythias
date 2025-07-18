@@ -22,3 +22,5 @@ export {default as Items} from "./models/Items";
 export {default as SkuToUpc} from "./models/skuUpcConversion";
 export {default as ReturnBins} from "./models/returnBins";
 export {default as Products} from "./models/Products";
+export {default as AvailableUPC} from "./models/AvailableUPC";
+export {default as Manifest} from "./models/manifest";
