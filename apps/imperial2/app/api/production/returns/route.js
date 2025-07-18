@@ -1,10 +1,6 @@
-import Items from "@/models/Items";
-import SkuToUpc from "@/models/skuUpcConversion"
 import {NextApiRequest, NextResponse} from "next/server";
 import { ReturnBins as Bins } from "@pythias/mongo"
-import Design from "@/models/Design";
-import Color from "@/models/Color";
-import Blanks from "@/models/Blanks";
+import { Design, Color, Blank as Blanks, Items, SkuToUpc } from "@pythias/mongo";
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     console.log(data.upc, "upc")

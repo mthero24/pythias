@@ -1,5 +1,5 @@
 import {AccountMain} from "@pythias/backend";
-import User from "@/models/User"
+import {User} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { serialize } from "@/functions/serialize";
 import {headers} from "next/headers"
