@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import {Items, Color} from "pythias/mongo";
+import {Items, Color} from "@pythias/mongo";
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
 import { ListBucketInventoryConfigurationsOutputFilterSensitiveLog } from "@aws-sdk/client-s3";

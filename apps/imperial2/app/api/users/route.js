@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import {User} from "@pyhtias/mongo";
+import {User} from "@pythias/mongo";
 import { findOneAndDelete } from "@/models/PrintPricing";
 
 export async function POST(req=NextApiRequest){
