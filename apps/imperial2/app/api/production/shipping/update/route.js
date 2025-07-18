@@ -1,4 +1,4 @@
-import {Bins} from "@pythias/mongo";
+import {Bin as Bins} from "@pythias/mongo";
 import {NextResponse} from "next/server"
 export async function GET(){
     console.log(Bins)

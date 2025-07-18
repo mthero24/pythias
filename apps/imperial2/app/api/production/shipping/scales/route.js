@@ -23,5 +23,5 @@ export async function GET(req = NextApiRequest){
     //     data.value = data.value + (i.blank.sizes.filter(s=> s._id.toString() == i.size.toString() || s.name == i.sizeName)[0]?.weight? i.blank.sizes.filter(s=> s._id.toString() == i.size.toString() || s.name == i.sizeName)[0]?.weight : 3)
     // }
     // console.log(data)
-    return NextResponse.json({...data})
+    return NextResponse.json({...res.data})
 }
