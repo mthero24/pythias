@@ -1,7 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Items from "@/models/Items";
-import Order from "@/models/Order"
-import manifest from "@/models/manifest";
+import {Items, Order, Manifest} from "@pythias/mongo";
 import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
@@ -57,7 +55,7 @@ export async function POST(req = NextApiRequest){
             if(!item.order.preShipped){
                 let label = await buyLabel(send)
                 if(label.error) return NextResponse.json(label)
-                let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
+                let man = new Manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
                 await man.save()
                 item.order.preShipped = true
                 item.order.shippingInfo.label = label.label

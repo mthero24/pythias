@@ -1,6 +1,4 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
-import Inventory from "@/models/inventory";
+import {Items, Order, Inventory} from "@pythias/mongo";
 import {NextApiResponse, NextResponse} from "next/server";
 
 export async function GET(req=NextApiResponse){

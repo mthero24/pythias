@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import Order from "@/models/Order";
+import {Order} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 export async function POST(req=NextApiRequest){
     const token = await getToken({ req });

@@ -1,5 +1,4 @@
-import Order from "@/models/Order";
-import Items from "@/models/Items"
+import {Order, Items} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 
 

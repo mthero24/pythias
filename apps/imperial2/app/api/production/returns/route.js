@@ -1,7 +1,7 @@
 import Items from "@/models/Items";
 import SkuToUpc from "@/models/skuUpcConversion"
 import {NextApiRequest, NextResponse} from "next/server";
-import Bins from "@/models/returnBins"
+import { ReturnBins as Bins } from "@pythias/mongo"
 import Design from "@/models/Design";
 import Color from "@/models/Color";
 import Blanks from "@/models/Blanks";

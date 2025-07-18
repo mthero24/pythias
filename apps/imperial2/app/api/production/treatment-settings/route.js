@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import Temps from "@/models/Temps";
+import {Temps} from "@pythias/mongo";
 
 
 export async function POST(req=NextApiRequest){

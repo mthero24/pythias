@@ -1,6 +1,4 @@
-import Inventory from "@/models/inventory";
-import Blanks from "@/models/Blanks";
-import Items from "@/models/Items";
+import {Inventory, Blank as Blanks, Items }from "@pythias/mongo";
 import {serialize} from "@/functions/serialize";
 import {Main} from "@pythias/inventory";
 export const dynamic = 'force-dynamic'; 

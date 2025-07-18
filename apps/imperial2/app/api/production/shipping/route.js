@@ -1,19 +1,15 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Bins from "@/models/Bin";
-import Blanks from "@/models/Blanks";
-import Order from "@/models/Order";
-import Item from "@/models/Items";
+import {Bins, Blank, Order, Items, Manifest} from "@/models/Bin";
 import {updateOrder} from "@pythias/integrations";
 import axios from "axios";
 import {buyLabel} from "@pythias/shipping";
-import manifest from "@/models/manifest";
 import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
 
     if(data.preShip){
-        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let item = await Items.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order
         if(item){
             order = item.order
@@ -24,7 +20,7 @@ export async function POST(req= NextApiRequest){
         }
         let weight = 0
         for(let i of order.items){
-            let blank = await Blanks.findOne({_id: i.blank})
+            let blank = await Blank.findOne({_id: i.blank})
             let size = blank.sizes.filter(s=> s.name == item.sizeName)[0]
             weight = size.weight && size.weight > 0? size.weight: 3
         }
@@ -61,7 +57,7 @@ export async function POST(req= NextApiRequest){
         if(!item.order.preShipped){
             let label = await buyLabel(send)
             if(label.error) return NextResponse.json({...label.data})
-            let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
+            let man = new Manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
             await man.save()
             item.order.preShipped = true
             item.order.shippingInfo.label = label.label
@@ -91,7 +87,7 @@ export async function POST(req= NextApiRequest){
         }
     }
     if(data.reprint){
-        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let item = await Items.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order
         if(item){
             order = item.order
@@ -114,7 +110,7 @@ export async function POST(req= NextApiRequest){
         }
     }
     try{
-        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let item = await Items.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
         let bin 
         try{
@@ -135,7 +131,7 @@ export async function POST(req= NextApiRequest){
                 item.order.shipped = false
                 item.order.preShipped = false
                 await item.order.save()
-                item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+                item = await Items.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
             }else if(order){
                 for(let i of order.items){
                     i.shipped = false

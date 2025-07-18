@@ -1,5 +1,4 @@
-import Items from "@/models/Items";
-import Bin from "@/models/Bin";
+import {Bins, Items} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 
 export async function POST(req=NextApiRequest){
@@ -16,7 +15,7 @@ export async function POST(req=NextApiRequest){
         item.rePulledTimes++
         if(!item.rePulledReasons) item.rePulledReasons = []
         item.rePulledReasons.push(data.reason)
-        let bin = await Bin.findOne({order: item.order})
+        let bin = await Bins.findOne({order: item.order})
         if(bin){
             bin.items = bin.items.filter(i=> i.toString() != item._id.toString())
             bin.ready = false

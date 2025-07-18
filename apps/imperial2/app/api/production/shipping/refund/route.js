@@ -1,5 +1,5 @@
 import { NextResponse, NextApiRequest } from "next/server";
-import Order from "@/models/Order"
+import {Order }from "@pythias/mongo";
 import {getRefund} from "@pythias/shipping"
 export async function POST(req= NextApiRequest){
     let data = await req.json()

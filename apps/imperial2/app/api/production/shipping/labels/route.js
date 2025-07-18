@@ -1,8 +1,7 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import {buyLabel} from "@pythias/shipping";
 import {getRefund} from "@pythias/shipping"
-import Order from "../../../../../models/Order";
-import manifest from "../../../../../models/manifest";
+import {Order, Manifest} from "@pythias/mongo";
 import axios from "axios"
 import Bin from "../../../../../models/Bin";
 import {updateOrder} from "@pythias/integrations";
@@ -97,7 +96,7 @@ export async function POST(req= NextApiRequest){
         }else{
             console.log(data)
             if(data.selectedShipping.provider == "usps"){
-                let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
+                let man = new Manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
                 await man.save()
             }
             let order = await Order.findOne({_id: data.orderId}).populate("items")

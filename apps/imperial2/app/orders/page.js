@@ -1,4 +1,4 @@
-import Order from "@/models/Order";
+import {Order} from "@pythias/mongo";
 import {Main} from "./Main";
 import { serialize } from "@/functions/serialize";
 export const dynamic = 'force-dynamic'; 

@@ -1,7 +1,4 @@
-import Item from "@/models/Items";
-import Temps from "@/models/Temps";
-import Colors from "@/models/Color";
-import Style from "@/models/Blanks";
+import {Items, Temps, Color, Blank as Style} from "@pythias/mongo";
 import { createImage } from "@/functions/image";
 import { NextApiRequest, NextResponse, useParams } from "next/server";
 
@@ -30,8 +27,8 @@ const getimagesize = async (options) => {
 };
 export async function GET(request, { params }) {
     let par = await params
-    let item = await Item.findOne({ pieceId: par.id })
-    item.color = await Colors.findOne({_id: item.color}).select("name category color_type hexcode image")
+    let item = await Items.findOne({ pieceId: par.id })
+    item.color = await Color.findOne({_id: item.color}).select("name category color_type hexcode image")
     item.styleV2 = await Style.findOne({ code: item.styleCode });
     console.log(item.styleV2.envleopes);
     let envleopes = item.styleV2.envleopes.filter(

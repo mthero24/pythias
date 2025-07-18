@@ -1,7 +1,6 @@
-import Bins from "@/models/Bin";
+import {Bins} from "pythias/mongo";
 import {NextResponse} from "next/server"
 export async function GET(){
-    await Bins
     console.log(Bins)
     let readyToShip = await Bins.find({ ready: true, inUse: true })
         .sort({ number: 1 })

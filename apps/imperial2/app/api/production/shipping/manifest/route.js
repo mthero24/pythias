@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Manifest from "../../../../../models/manifest"
+import {Manifest} from "@pythias/mongo"
 import { uspsGenerateManifest } from "@pythias/shipping";
 export async function GET(req = NextApiRequest) {
     let manifests = await Manifest.find({Date: {$gt: new Date(Date.now() -v12 * (60 * 60 * 1000))}}).limit(1000);

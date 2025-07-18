@@ -1,5 +1,4 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
+import {Items, Order} from "@pythias/mongo";
 import {NextApiResponse, NextResponse} from "next/server";
 import {Sort} from "@pythias/labels";
 import { buildLabelData } from "@/functions/labelString";
