@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import {Bins, Blank, Order, Items, Manifest} from "@/models/Bin";
+import {Bins, Blank, Order, Items, Manifest} from "@pythias/mongo";
 import {updateOrder} from "@pythias/integrations";
 import axios from "axios";
 import {buyLabel} from "@pythias/shipping";
