@@ -945,16 +945,13 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                     </Box>
                     <Box sx={{ padding: "2%" }}>
                         <Typography variant="h6">Variants</Typography>
+                        {console.log(Object.keys(product.variants), "product variants")}
                         {Object.keys(product.variants).length > 0 && Object.keys(product.variants).map(blank => (
                             <Box key={blank} sx={{ marginBottom: "2%" }}>
+                                {console.log(product.hasThreadColors, "has thread colors")}
                                 {!product.hasThreadColors && Object.keys(product.variants[blank]).map(color => (
                                     <Box key={color} sx={{ marginLeft: "2%" }}>
-                                        {/* {console.log(product.variants[blank][color], "product variants")} */}
-                                        {/* {product.variants[blank][color].map(variant => (
-                                            <Box key={variant.sku} sx={{ marginLeft: "4%" }}>
-                                                <Typography variant="body2">{variant.sku}</Typography>
-                                            </Box>
-                                        ))} */}
+                                        <VariantDisplay blank={blank} color={color} variants={product.variants[blank][color]} />
                                     </Box>
                                 ))}
                                 {product.hasThreadColors && Object.keys(product.variants[blank]).map(threadColor => (
