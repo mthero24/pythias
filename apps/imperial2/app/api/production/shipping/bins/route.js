@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import {Bins} from "@pythias/mongo";
+import {Bin as Bins} from "@pythias/mongo";
 import {add, subtract} from "@pythias/shipping"
 export async function PUT(req = NextApiRequest) {
     //const defaultBin = {"number":10,"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null}

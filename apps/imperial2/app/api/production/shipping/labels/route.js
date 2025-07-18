@@ -3,7 +3,7 @@ import {buyLabel} from "@pythias/shipping";
 import {getRefund} from "@pythias/shipping"
 import {Order, Manifest} from "@pythias/mongo";
 import axios from "axios"
-import {Bins as Bin} from "@pythias/mongo";
+import {Bin} from "@pythias/mongo";
 import {updateOrder} from "@pythias/integrations";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
