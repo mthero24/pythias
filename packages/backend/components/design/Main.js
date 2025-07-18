@@ -20,7 +20,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { set } from "mongoose";
 import { ConstructionOutlined, CoPresent, Create } from "@mui/icons-material";
-export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku }) {
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source }) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -429,7 +429,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
                 <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
-                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} />
+                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} />
                 {loading && <LoaderOverlay/>}
             </Container>
             <Footer/>
@@ -458,7 +458,7 @@ const MarketplaceModal = ({open, setOpen, product, setProduct, marketPlaces}) =>
         </Modal>
     )
 }
-const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku }) => {
+const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source }) => {
     const [cols, setColors] = useState([])
     const [sizes, setSizes] = useState([])
     const [images, setImages] = useState([])
@@ -502,7 +502,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                             if(b.multiImages && b.multiImages[di] && b.multiImages[di].length > 0){
                                 if (!color) {
                                     color = b.multiImages[di][0].color
-                                    styleImages.push({ blankImage: b.multiImages[di][0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0].name })
+                                    styleImages.push({ blankImage: b.multiImages[di][0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
                                 }else{
                                     styleImages.push({ blankImage: b.multiImages[di].filter(i => i.color.toString() == color.toString())[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0].name })
                                 }
@@ -530,7 +530,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                     </Box>
                                     <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                         {styleImages.length > 0 && styleImages.map((si, i) => (
-                                            <img key={i} src={`http://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
+                                            <img key={i} src={`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
                                 ))}
                                     </Box>
                                     <Divider />
@@ -691,7 +691,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                         //console.log(design.threadImages[tc.name][ti], col.name)
                                                         for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
                                                             console.log(bm.image)
-                                                            imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                         }
                                                     }
                                                 }
@@ -702,7 +702,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                     //console.log(design.threadImages[tc.name][ti], col.name)
                                                     for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
                                                         console.log(bm.image)
-                                                        imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                        imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                     }
                                                 }
                                             }
@@ -735,7 +735,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                     //console.log(design.threadImages[tc.name][ti], col.name)
                                                     for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default")) {
                                                         console.log(bm.image)
-                                                        imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                        imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                     }
                                                 }
                                             }
@@ -746,7 +746,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                 //console.log(design.threadImages[tc.name][ti], col.name)
                                                 for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == val.value) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup == "default") ) {
                                                     console.log(bm.image)
-                                                    imgs.push({ image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                    imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                 }
                                             }
                                         }
@@ -799,7 +799,7 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                     <Grid2 size={12} sx={{padding: "0% 4%"}}>
                         <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Variant Images</Typography>
                         <Box>
-                            <CreateVariantImages product={product} design={design.threadColors.length > 0 ? design.threadImages : design.images} setProduct={setProduct} threadColors={design.threadColors.length > 0? true: false}/>
+                            <CreateVariantImages product={product} design={design.threadColors.length > 0 ? design.threadImages : design.images} setProduct={setProduct} threadColors={design.threadColors.length > 0? true: false} source={source}/>
                         </Box>
                         <Grid2 container spacing={2} sx={{ padding: "2%" }}>
                             <Grid2 size={6}>
@@ -1069,7 +1069,7 @@ const ProductImageCarosel = ({productImages})=>{
         </Grid2>
     )
 }
- const CreateVariantImages = ({product, setProduct, design, threadColors}) => {
+ const CreateVariantImages = ({product, setProduct, design, threadColors, source}) => {
     let imgs = {}
    // console.log(product, design)
     if(!threadColors){
@@ -1085,7 +1085,7 @@ const ProductImageCarosel = ({productImages})=>{
                         if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
                         //console.log(imgs[blank.code][color.name])
                         let image = design[side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}.jpg`)
-                        imgs[blank.code][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}`})
+                        imgs[blank.code][color.name].push({image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}`})
                         
                     }
                 }
@@ -1106,7 +1106,7 @@ const ProductImageCarosel = ({productImages})=>{
                             if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
                             //console.log(imgs[blank.code][color.name])
                             let image = design[threadColor][side].replace(/\.jpg$/, `-${color.name.replace(/\//g, "_")}-${threadColor}.jpg`)
-                            imgs[blank.code][threadColor][color.name].push({image: encodeURI(`https://imperial.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`})
+                            imgs[blank.code][threadColor][color.name].push({image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`})
                             
                         }
                     }

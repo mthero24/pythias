@@ -39,7 +39,7 @@ export default async function DesignPage({params}){
             printLocations = serialize(printLocations)
             
             return (
-                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku}/>
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} source={"imperial"}/>
             )
         }catch(e){
             console.log(e)

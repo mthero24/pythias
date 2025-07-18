@@ -1,7 +1,7 @@
 import sharp from "sharp"
 import {NextApiRequest, NextResponse} from "next/server"
 import axios from "axios"
-import Blanks from "@/models/Blanks"
+import { Blank, Design } from "@pythias/mongo";
 import "jimp"
 const readImage = async (url)=>{
     console.log(url)
@@ -110,27 +110,46 @@ const createImage = async (data) => {
 }
 export async function GET(req){
     //console.log(req.nextUrl.searchParams.get("blank"))
-    let blankCode = req.nextUrl.searchParams.get("blank")
-    let bm = req.nextUrl.searchParams.get("blankImage")
-    let colorName = req.nextUrl.searchParams.get("colorName")
-    let designImage = req.nextUrl.searchParams.get("design")
-    let side = req.nextUrl.searchParams.get("side")
+    console.log(req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " "), "params")
+    let base = req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " ")
+    let params = base.split("-")
     let width = parseInt(req.nextUrl.searchParams.get("width"))
-    console.log(blankCode, bm, colorName, designImage, side)
-    let blank = await Blanks.findOne({code: blankCode}).populate("colors").lean()
-    let color = blank?.colors.filter(c=>c.name == colorName)[0]
-    //console.log(color)
+    let designImage
     let blankImage
-    if(bm){
-        blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
-        if(!blankImage && side == "front") blankImage = blank.multiImages["modelFront"]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
-        if(!blankImage && side == "back") blankImage = blank.multiImages["modelBack"]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
+    if (params.length == 5) {
+        let design = await Design.findOne({ sku: params[0] }).select("images").lean()
+        designImage = design?.images?.[params[4]]
+        console.log(designImage, "design image", params[1], "params 1")
+        let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
+        blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+    } else if (params.length == 6) {
+        let design = await Design.findOne({ sku: params[0] }).lean()
+        console.log(design.threadImages[params[5]][params[4]], "design")
+        console.log(params[5], params[4], "params 5 and 4")
+        designImage = design?.threadImages?.[params[5]][params[4]]
+        console.log(designImage, "design image")
+        let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
+        blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+    } else {
+        let blankCode = req.nextUrl.searchParams.get("blank")
+        let bm = req.nextUrl.searchParams.get("blankImage")
+        let colorName = req.nextUrl.searchParams.get("colorName")
+        designImage = req.nextUrl.searchParams.get("design")
+        let side = req.nextUrl.searchParams.get("side")
+        console.log(blankCode, bm, colorName, designImage, side)
+        let blank = await Blank.findOne({ code: blankCode }).populate("colors").lean()
+        let color = blank.colors.filter(c => c.name == colorName)[0]
+        console.log(color, side, "color and side")
+        if (bm) {
+            blankImage = blank.multiImages[side]?.filter(i => i.color.toString() == color?._id.toString() && i.image == bm)[0]
+            if (!blankImage && side == "front") blankImage = blank.multiImages["modelFront"]?.filter(i => i.color.toString() == color?._id.toString() && i.image == bm)[0]
+            if (!blankImage && side == "back") blankImage = blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color?._id.toString() && i.image == bm)[0]
+        }
+        else blankImage = blank.multiImages[side]?.filter(i => i.color.toString() == color?._id.toString())[0]
+        if (side == "back" && blankImage == undefined) {
+            blankImage = blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color?._id.toString())[0]
+        }
     }
-    else blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString())[0]
-    if(side == "back" && blankImage == undefined){
-        blankImage = blank.multiImages["modelBack"]?.filter(i=> i.color.toString() == color?._id.toString())[0]
-    }
-    //console.log(blankImage?.box[0], "box")
     let data = {box: blankImage?.box[0]? blankImage?.box[0]: null, styleImage: blankImage?.image, designImage, width}
     let base64 = await createImage(data)
     if(base64){
