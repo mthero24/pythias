@@ -220,9 +220,12 @@ const addItemToBin = (item, bin)=>{
 }
 const findBin = async (orderId)=>{
     let bin = await Bins.findOne({order: orderId}).populate("order")
+    console.log(bin, "findBin")
     if(!bin) bin = findEmptyBin()
     return bin
 }
 const findEmptyBin = async ()=>{
-    return await Bins.findOne({inUse: false})
+    let bin = await Bins.findOne({inUse: false})
+    console.log(bin, "find Empty Bin")
+    return bin
 }
