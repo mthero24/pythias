@@ -113,8 +113,6 @@ export async function GET(req){
     console.log(req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " "), "params")
     let base = req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " ")
     let params = base.split("-")
-    console.log(params, "params")
-    console.log(params[1].replace(/_/g, "-"), "params 1")
     let width = parseInt(req.nextUrl.searchParams.get("width"))
     let designImage
     let blankImage
