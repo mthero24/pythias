@@ -1,6 +1,7 @@
 import {NextApiRequest, NextResponse} from "next/server";
 import { ReturnBins as Bins } from "@pythias/mongo"
 import { Design, Color, Blank as Blanks, Items, SkuToUpc } from "@pythias/mongo";
+//something to do with the return bins, not sure what yet
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     console.log(data.upc, "upc")
