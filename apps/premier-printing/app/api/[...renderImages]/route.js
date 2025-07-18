@@ -124,9 +124,9 @@ export async function GET(req){
         blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
     } else if (params.length == 6) {
         let design = await Design.findOne({ sku: params[0] }).lean()
-        console.log(design.threadImages[params[5]][params[4]], "design")
+        console.log(design.threadImages[params[5]][params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]], "design")
         console.log(params[5], params[4], "params 5 and 4")
-        designImage = design?.threadImages?.[params[5]][params[4]]
+        designImage = design?.threadImages?.[params[5]][params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]]
         console.log(designImage, "design image")
         let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
         blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
