@@ -311,7 +311,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                 <>
                                     {imageLocations.map((i, j) => (
                                         <>
-                                            {des.threadImages[colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name] && des.threadImages[colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name][i] && 
+                                            {des.threadImages && des.threadImages[colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0]?.name] && des.threadImages[colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0]?.name][i] && 
                                                 <Box key={j} sx={{ width: "400px", minWidth: "400px", maxWidth: "400px", margin: "0% 2%" }}>
                                                     <Box sx={{ position: "relative", zIndex: 999, left: { sm: "80%", md: "90%" }, bottom: -35, padding: "2%", cursor: "pointer", "&:hover": { opacity: .5 } }} onClick={() => { setDeleeFunction({ onDelete: deleteDesignImage }); setDeleteTitle("Are You Sure You Want To Delete This Image?"); setDeleteImage({ location: i, threadColor: colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0].name }); setDeleteModal(true)}}>
                                                     <DeleteIcon sx={{ color: "#780606" }} />
@@ -727,12 +727,12 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                         }
                                                         if (ti == "front") {
                                                             for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && (product.imageGroup && m.imageGroup.includes(product.imageGroup).length > 0 ? m.imageGroup.includes(product.imageGroup) : m.imageGroup.includes("default")))) {
-                                                                imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                                imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                             }
                                                         }
                                                         if (ti == "back") {
                                                             for (let bm of b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && (product.imageGroup && m.imageGroup.includes(product.imageGroup).length > 0 ? m.imageGroup.includes(product.imageGroup) : m.imageGroup.includes("default")))) {
-                                                                imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                                imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                             }
                                                         }
                                                     }
@@ -791,12 +791,12 @@ const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDes
                                                     }
                                                     if (ti == "front") {
                                                         for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
-                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                         }
                                                     }
                                                     if (ti == "back") {
                                                         for (let bm of b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
-                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                         }
                                                     }
                                                 }
@@ -1195,7 +1195,7 @@ const ProductImageCarosel = ({productImages})=>{
                 console.log(side, "side")
                 for(let blank of product.blanks){
                     for (let color of product.colors) {
-                        for(let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")){
+                        for(let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes("default"))){
                             // console.log(img, "img")
                             //console.log(color, "color")
                             if (!imgs[blank.code]) imgs[blank.code] = {}
@@ -1208,7 +1208,7 @@ const ProductImageCarosel = ({productImages})=>{
                             
                         }
                         if (side == "front") {
-                            for (let img of blank.multiImages["modelFront"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")) {
+                            for (let img of blank.multiImages["modelFront"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes("default"))) {
                                 // console.log(img, "img")
                                 //console.log(color, "color")
                                 if (!imgs[blank.code]) imgs[blank.code] = {}
@@ -1222,7 +1222,7 @@ const ProductImageCarosel = ({productImages})=>{
                             }
                         }
                         if (side == "back") {
-                            for (let img of blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup == "default")) {
+                            for (let img of blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes("default"))) {
                                 // console.log(img, "img")
                                 //console.log(color, "color")
                                 if (!imgs[blank.code]) imgs[blank.code] = {}
@@ -1445,7 +1445,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                 <CreatableSelect
                     placeholder="Thread Colors"
                     options={colors?.map(m => { return { value: m._id, label: m.name } })}
-                    value={des.threadColors?.map(m => { return { value: colors.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?._id, label: colors.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?.name } })}
+                    value={des.threadColors?.map(m => { return { value: colors?.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?._id, label: colors.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?.name } })}
                     onChange={(vals) => {
                         let d = { ...des }
                         let newThread = []

@@ -1,11 +1,8 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import Design from "@/models/Design";
+import {Design} from "@pythias/mongo";
 import { headers } from 'next/headers'
-import User from "@/models/User";
-import Items from "@/models/Items";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
-import { createUpc, MarkRecycle, UnMarkRecycle } from "@/functions/createUpcs";
 const createSku = ()=>{
     let sku = ""
     for(let i = 0; i < 10; i++){
@@ -67,23 +64,9 @@ export async function POST(req=NextApiRequest){
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
     console.log(data.design.sendToMarketplaces, "send to market places ++++++++++++++++++++++++")
-    try{
+    try{  
         let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
         design = await Design.findOne({_id: design._id}).populate("blanks.blank blanks.colors blanks.defaultColor")
-        //console.log(design.published)
-        if(design.published){
-            //await createUpc({design})
-            UnMarkRecycle(design)
-        }else{
-            MarkRecycle(design)
-        }
-        await Items.updateMany({designRef: design._id}, {design: design.images})
-        if(design.published && design.sendToMarketplaces == false) {
-            design.sendToMarketplaces = true
-            await design.save()
-        }
-        //console.log(design.gender, "design")
-        //console.log(design.blanks[0])
         return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)
