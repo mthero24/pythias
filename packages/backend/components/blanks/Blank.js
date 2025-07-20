@@ -13,9 +13,10 @@ export function Blank({bla, mPs, blanks}){
     const [headingModal, setHeadingModal] = useState(false)
     const [heading, setHeading] = useState({})
     const [headingName, setHeadingName] = useState("")
-    const [style, setStyle] = useState(blank)
+    const [style, setStyle] = useState(bla)
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [marketplaceModal, setMarketplaceModal] = useState(false)
+    console.log(style, "style", bla)
     const handleDelete = async () => {
       if (confirm("Delete?")) {
         let result = await axios.delete(`/api/admin/blanks?id=${style._id}`, {id: style._id});
