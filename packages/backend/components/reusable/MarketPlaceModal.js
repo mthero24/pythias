@@ -147,8 +147,8 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     {product && product.marketPlaces && Object.keys(product.marketPlaces).length > 0 && Object.keys(product.marketPlaces).map((mpId) => (
                         <Box>
                             {product.marketPlaces[mpId].headers.map((header, index) => (
-                                <Box sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee",position: "relative", top: "-50px" }}>
-                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", top: "70px", zIndex: 1 }}>
+                                <Box sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee",position: "relative", top: "-5%" }}>
+                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", marginTop: "-5%", zIndex:99 }}>
                                         <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${product.marketPlaces[mpId]._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                     </Box>
                                     <MarketPlaceList key={mpId} marketPlace={product.marketPlaces[mpId]} header={header} addMarketPlace={addMarketPlace} product={product} />
@@ -208,7 +208,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "0% 1%" }}>
                 <Typography variant="h6" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{marketPlace.name}</Typography>
             </Box>
-            <Box sx={{ overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row", position: "relative", top: "-50px", zIndex: 1 }}>   
+            <Box sx={{ overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row", position: "relative", marginTop: "-2%", zIndex: 1 }}>   
                 <Box sx={{ maxHeight: "60vh", overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row" }}>
                     {!addMarketPlace &&Object.keys(headers).map((header, hIndex) => (
                         <Box key={hIndex} sx={{ minWidth: "30%", textAlign: "center" }}>
