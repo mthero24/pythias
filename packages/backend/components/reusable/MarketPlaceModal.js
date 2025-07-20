@@ -28,8 +28,8 @@ const csvFunctions = {
     productVendor: (product) => {
         return product.brand ? product.brand : "No Value";
     },
-    variantColor: (variant) => {
-        return variant.color ? variant.color.name : "";
+    variantColor: (variant, sizeConverer, numBlanks, blankName) => {
+        return variant.color ? numBlanks > 1 ? `${variant.color.name} (${blankName})` : variant.color.name : "";
     },
     variantSize: (variant, sizeConverter) => {
         return variant.size ? sizeConverter[variant.size.name] ? sizeConverter[variant.size.name] : "" : "";
@@ -176,7 +176,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
                     if (product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
                         for (let v of product.variants[b.code][tc.name][c.name]) {
                             for (let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name })
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name })
                                 headers[h].push(val);
                             }
                             index++;
@@ -192,7 +192,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
                 if (product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0){
                     for(let v of product.variants[b.code][c.name]) {
                         for(let h of Object.keys(headers)) {
-                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category })
+                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category, numBlanks: product.blanks.length, blankName: b.name })
                             headers[h].push(val);
                         }
                         index++;
@@ -228,8 +228,8 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
     ); 
 }
 
-const HeaderList =({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, category }) => {
-
+const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName }) => {
+    console.log(numBlanks, blankName, "numBlanks, blankName")
 
     let value = "N/A";
     if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
@@ -239,7 +239,7 @@ const HeaderList =({ product, mp, variant, blankOverRides, headerLabel, index, c
         else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
     }
     else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel]]) {
-        value = csvFunctions[mp.defaultValues[headerLabel]](variant, mp.sizeConverter);
+        value = csvFunctions[mp.defaultValues[headerLabel]](variant, mp.sizeConverter, numBlanks, blankName);
     }else if(mp.defaultValues[headerLabel]== "index") {
         if(index < product.productImages.length) {
             value = index + 1;
@@ -251,6 +251,9 @@ const HeaderList =({ product, mp, variant, blankOverRides, headerLabel, index, c
         value = category;
     }else if (mp.defaultValues && mp.defaultValues[headerLabel]) {
         value = mp.defaultValues[headerLabel];
+        if (mp.defaultValues[headerLabel] == "Thread Color" && !threadColor) {
+            value = "N/A";
+        }
     }
     //console.log(mp.defaultValues[headerLabel], "defaultValues", value)
     return value

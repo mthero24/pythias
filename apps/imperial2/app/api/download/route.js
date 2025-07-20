@@ -20,8 +20,8 @@ const csvFunctions = {
     productVendor: (product) => {
         return product.brand ? product.brand : "No Value";
     },
-    variantColor: (variant) => {
-        return variant.color ? variant.color.name : "";
+    variantColor: (variant, sizeConverer, numBlanks, blankName) => {
+        return variant.color ? numBlanks > 1 ? `${variant.color.name} (${blankName})` : variant.color.name : "";
     },
     variantSize: (variant,  sizeCoverter) => {
         return variant.size ? sizeCoverter && sizeCoverter[variant.size.name] ? sizeCoverter[variant.size.name] : variant.size.name : "";
@@ -60,7 +60,7 @@ const csvFunctions = {
         return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "";
     }
 };
-const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, category }) => {
+const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName }) => {
 
 
     let value = "N/A";
@@ -71,8 +71,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
         else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
     }
     else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel]]) {
-        
-        value = csvFunctions[mp.defaultValues[headerLabel]](variant, mp.sizeCoverter);
+        value = csvFunctions[mp.defaultValues[headerLabel]](variant, mp.sizeConverter, numBlanks, blankName);
     } else if (mp.defaultValues[headerLabel] == "index") {
         if (index < product.productImages.length) {
             value = index + 1;
@@ -84,6 +83,9 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
         value = category;
     } else if (mp.defaultValues && mp.defaultValues[headerLabel]) {
         value = mp.defaultValues[headerLabel];
+        if (mp.defaultValues[headerLabel] == "Thread Color" && !threadColor) {
+            value = "N/A";
+        }
     }
     return value
 }
@@ -112,7 +114,7 @@ export async function GET(req = NextApiResponse, ) {
                             let vari = [];
                             let thisHead = { ...headers };
                             for (let h of Object.keys(headers)) {
-                                let val = HeaderList({product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides[marketPlace.name], headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name});;
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides[marketPlace.name], headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name });
                                 thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string
                             }
                             sendVarianrts.push(thisHead);
@@ -124,11 +126,11 @@ export async function GET(req = NextApiResponse, ) {
     }else{
         for (let b of product.blanks) {
             for (let c of product.colors) {
-                if (product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
-                    for (let v of product.variants[b.code][tc.name][c.name]) {
+                if (product.variants[b.code]  && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0) {
+                    for (let v of product.variants[b.code][c.name]) {
                         let thisHead = {...headers};
                         for (let h of Object.keys(headers)) {
-                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides[marketPlace.name], headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name });;
+                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides[marketPlace.name], headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name });;
                             thisHead[h]= val!= "N/A"? val : ""; // If the value is "N/A", it will be replaced with an empty string
                         }
                         sendVarianrts.push(thisHead);
@@ -150,7 +152,8 @@ export async function GET(req = NextApiResponse, ) {
     return new NextResponse(buffer, {
         headers: {
             'Content-Type': 'text/csv',
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "*",
+            'Content-Disposition': `attachment; filename="${marketPlace.name}-${new Date(Date.now()).toLocaleDateString("en-US")}-${new Date(Date.now()).getHours() % 12}:${new Date(Date.now()).getMinutes().length > 2 ? new Date(Date.now()).getMinutes(): `0${new Date(Date.now()).getMinutes()}`}${new Date(Date.now()).getHours() < 12 ? "AM" : "PM"}.csv"`
         }
     })
 }
