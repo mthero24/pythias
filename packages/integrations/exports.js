@@ -27,4 +27,3 @@ export {
   createProduct,
   getOrders as getOrdersTikTok,
 } from "./functions/tiktokpy";
-export {csvFunctions} from "./functions/csvfunctions/dynamic";
