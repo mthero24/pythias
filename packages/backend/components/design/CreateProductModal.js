@@ -1,4 +1,4 @@
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Divider, FormControlLabel, Checkbox, List, CircularProgress, ListItemText, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, Divider, FormControlLabel, Checkbox, List, CircularProgress, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 import axios from "axios";
 import { useState, useEffect } from "react";
