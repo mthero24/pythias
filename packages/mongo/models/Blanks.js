@@ -136,6 +136,7 @@ const SchemaObj = new Schema(
         ref: printLocations,
       },
     ],
+    marketPlaceOverrides: {}
   },
   { strict: false }
 );

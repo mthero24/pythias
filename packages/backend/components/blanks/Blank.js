@@ -2,17 +2,20 @@
 import { Typography, Container, Button, Modal, Box, TextField } from "@mui/material";
 import axios from "axios";
 import Link from "next/link";
-import LoaderOverlay from "@/components/LoaderOverlay";
+import LoaderOverlay from "../reusable/LoaderOverlay";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CloseIcon from "@mui/icons-material/Close";
+import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import {useState} from "react";
-export function Main({blank}){
+export function Blank({bla, mPs, blanks}){
+    const [blank, setBlank] = useState(bla);
     const [loading, setLoading] = useState(false);
     const [headingModal, setHeadingModal] = useState(false)
     const [heading, setHeading] = useState({})
     const [headingName, setHeadingName] = useState("")
     const [style, setStyle] = useState(blank)
-    console.log(blank.shopSimonHeader, "shopSimonHeader")
+    const [marketPlaces, setMarketPlaces] = useState(mPs)
+    const [marketplaceModal, setMarketplaceModal] = useState(false)
     const handleDelete = async () => {
       if (confirm("Delete?")) {
         let result = await axios.delete(`/api/admin/blanks?id=${style._id}`, {id: style._id});
@@ -34,13 +37,24 @@ export function Main({blank}){
           <Typography variant="h4" component="h1" mb={3}>
             {style.code} - {style.name}
           </Typography>
-          <div>
-            <Typography variant="p">Sales: {style.sales}</Typography>
-          </div>
-          <div>
-            <Typography variant="p">Vendor: {style.vendor}</Typography>
-          </div>
-
+          <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Box>
+              <div>
+                <Typography variant="p">Sales: {style.sales}</Typography>
+              </div>
+              <div>
+                <Typography variant="p">Vendor: {style.vendor}</Typography>
+              </div>
+            </Box>
+            <Box>
+              <Button
+                variant="contained"
+                onClick={() => setMarketplaceModal(true)}
+              >
+                MarketPlaces
+              </Button>
+            </Box>
+          </Box>
           <div>
             <Link href={`/admin/blanks/create?id=${style._id}`}>
               <Button>Edit</Button>
@@ -51,10 +65,6 @@ export function Main({blank}){
             <a href={`/admin/blanks/production/${style._id}`}>
               <Button>Change Production Settings</Button>
             </a>
-
-            <Button onClick={generateInventory}>
-              Generate Missing Inventory
-            </Button>
             <Button
               onClick={() => {
                 setHeadingModal(true);
@@ -112,6 +122,7 @@ export function Main({blank}){
           </div>
         </div>
         {loading && <LoaderOverlay />}
+        <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => { return b.sizes?.map(s => { return s.name }) })} blank={blank} setBlank={setBlank} />
       </Container>
     );
 }
@@ -129,7 +140,6 @@ const modalStyle = {
   overflow: "auto"
 };
 const HeaderModal = ({open, setOpen, header, setHeader, headingName, style, setStyle})=>{
-  console.log(header)
   const [newItem, setNewItem] = useState({})
   const save = async()=>{
     let he = {...header}

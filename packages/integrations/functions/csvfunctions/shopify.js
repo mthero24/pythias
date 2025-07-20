@@ -9,7 +9,7 @@ const s3 = new S3Client({ credentials:{
 export const tikTokHeader = [
     {id: "handle", title: "Handle"},
     {id: "title", title: "Title"},
-    {id: "body", title: "Body (HTML)"},
+    { id: "body", title: "Body (HTML)"},
     {id: "vendor", title: "Vendor"},
     {id: "Product Category", title: "Product Category"},
     {id: "Type", title: "Type"},

@@ -7,6 +7,7 @@ const schema = new mongoose.Schema({
     headers: [Object],
     brand: String,
     credentials: Object,
+    defaultValues: Object,
 });
 
 export default PremierPrinting.model("Marketplaces", schema);
