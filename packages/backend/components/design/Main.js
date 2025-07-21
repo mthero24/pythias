@@ -562,7 +562,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                 <CreatableSelect
                     placeholder="Thread Colors"
                     options={colors?.map(m => { return { value: m._id, label: m.name } })}
-                    value={des.threadColors?.map(m => { return { value: colors?.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?._id, label: colors.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?.name } })}
+                    value={des?.threadColors?.map(m => { return { value: colors?.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?._id, label: colors.filter(c => (c._id ? c._id.toString() : c) == m.toString())[0]?.name } })}
                     onChange={(vals) => {
                         let d = { ...des }
                         let newThread = []
@@ -594,7 +594,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                         }}
                     />
                         <CreatableSelect
-                            options={[...des.threadColors?.map(p => { return { value: colors.filter(c => c._id.toString() == p)[0].name, label: colors.filter(c => c._id.toString() == p)[0].name } }), { value: "default", label: "Default" }]}
+                            options={[des && des.threadColors? [...des?.threadColors?.map(p => { return { value: colors?.filter(c => c._id.toString() == p)[0].name, label: colors?.filter(c => c._id.toString() == p)[0].name } }) , { value: "default", label: "Default" }]: [{ value: "default", label: "Default" }]]}
                             value={{ value: threadColor, label: threadColor? threadColor: "Default" }}
                             onChange={(vals) => {
                                 setThreadColor(vals.value)
