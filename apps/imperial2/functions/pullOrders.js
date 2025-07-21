@@ -151,7 +151,7 @@ export async function pullOrders(id){
         }else{
             order.status = o.orderStatus
             if(o.tagIds != null) order.status = "Links"
-            if(order.status == "shipped" || order.status == "Links"){
+            if((order.status == "shipped" && order.preshipped == false) || order.status == "Links"){
                 order.items.map(async i=>{
                     i.status = order.status;
                     i.labelPrinted = true;

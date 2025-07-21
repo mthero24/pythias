@@ -46,8 +46,8 @@ export async function POST(req= NextApiRequest){
                 clientSecret: process.env.UPSClientSecret,
             },
         });
-        if(label.error){
-            return NextResponse.json(label)
+        if(!label ||label.error){
+            return NextResponse.json(label? label: {error: true, msg: "No label returned"})
         }else{
             if(data.selectedShipping.provider == "usps"){
                 let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})

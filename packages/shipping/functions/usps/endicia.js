@@ -154,6 +154,11 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
         <MailpieceShape>Parcel</MailpieceShape>
         <MailClass>${selectedShipping.name}</MailClass>
         <WeightOz>${parseFloat(weight).toFixed(1)}</WeightOz>
+        <MailpieceDimensions>
+          <Length>${dimensions.length}</Length>
+          <Width>${dimensions.width}</Width>
+          <Height>${dimensions.height}</Height>
+        </MailpieceDimensions>
         <RequesterID>${enSettings.requesterID}</RequesterID>
         <AccountID>${enSettings.accountNumber}</AccountID>
         <PassPhrase>${enSettings.passPhrase}</PassPhrase>
@@ -192,17 +197,18 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
         headers: {
             "Content-Type": "text/xml; charset=utf-8",
             "Content-Length": xml.length,
-            "SaopAction": "www.envmgr.com/LabelService/GetPostageLabel"
+            "SOAPAction": "www.envmgr.com/LabelService/GetPostageLabel"
         }
     }
     console.log(xml)
-    let res = await axios.post(`https://labelserver.endicia.com/LabelService/EwsLabelService.asmx?wsdl`, xml, headers).catch(e=>{console.log(e.response)})
+    let errorData
+    let res = await axios.post(`https://labelserver.endicia.com/LabelService/EwsLabelService.asmx?wsdl`, xml, headers).catch(e=>{errorData = e.response.data; console.log(e.response,"response error")})
     var parser = new xml2js.Parser(options);
     //console.log(res.data)
     if(res){
         let data = await parser.parseStringPromise(res?.data);
-        console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0])
-        console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label)
+        console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0], "label response")
+        console.log(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Label, "label")
         if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage){
             return {error: true, msg: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].ErrorMessage[0]}
         }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Base64LabelImage){
@@ -213,6 +219,9 @@ export async function buyShippingLabelEn({address, poNumber, weight, businessAdd
         }else if(data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Image){
             return {error: false, label: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].Image._t[0] + "=", trackingNumber: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].TrackingNumber[0], cost: data['soap:Envelope']['soap:Body'][0].GetPostageLabelResponse[0].LabelRequestResponse[0].FinalPostage[0] }
         }
+    }
+    if(errorData){
+        return {error: true, msg: errorData}
     }
 }
 
