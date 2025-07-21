@@ -8,11 +8,14 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import CloseIcon from '@mui/icons-material/Close';
+import LoaderOverlay from "../reusable/LoaderOverlay";
+import { set } from "mongoose";
 export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source }) => {
     const [cols, setColors] = useState([])
     const [sizes, setSizes] = useState([])
     const [images, setImages] = useState([])
     const [stage, setStage] = useState("blanks")
+    const [loading, setLoading] = useState(false)
     const style = {
         position: 'absolute',
         top: '50%',
@@ -298,12 +301,12 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                                     }
                                                     if (ti == "front") {
                                                         for (let bm of b.multiImages["modelFront"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
-                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelFront-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                         }
                                                     }
                                                     if (ti == "back") {
                                                         for (let bm of b.multiImages["modelBack"].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
-                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                            imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-modelBack-${tc.name}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                         }
                                                     }
                                                 }
@@ -338,11 +341,11 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                             {images.map((i, j) => (
                                 <Grid2 key={j} size={{ xs: 6, sm: 3, md: 3 }} sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": {  opacity: .7 } }} onClick={() => {
                                     let p = { ...product }
-                                    if(!p.productImages.filter(img => img.sku == i.sku)[0]) p.productImages.push(i)
+                                    if(!p.productImages.filter(img => img.image == i.image)[0]) p.productImages.push(i)
                                     else{
                                         let imgs = [];
                                         for (let img of p.productImages) {
-                                            if (img.sku != i.sku) imgs.push(img)
+                                            if (img.image != i.image) imgs.push(img)
                                         }
                                         p.productImages = imgs
                                     }
@@ -545,6 +548,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                         <Grid2 size={6}>
                             <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={async () => {
                                console.log(product, "product to create")
+                               setLoading(true)
                                 let res = await axios.post("/api/admin/products", { product: product })
                                 if (res.data.error) alert(res.data.msg)
                                 else {
@@ -564,11 +568,13 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                     setSizes([])
                                     setColors([])
                                     setOpen(false)
+                                    setLoading(false)
                                 }
                             }}>{product._id != undefined? "Save": "Create"}</Button>
                         </Grid2>
                     </Grid2>  
                 </Box>}
+                {loading && <LoaderOverlay/>}
             </Box>
         </Modal>
     )

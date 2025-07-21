@@ -16,6 +16,9 @@ const csvFunctions = {
     productTitle: (product) => {
         return product.title ? product.title : product.sku;
     },
+    productCategory: (product) => {
+        return product.category ? product.category : "N/A";
+    },
     productDescription: (product) => {
         return product.description ? product.description : "";
     },
@@ -123,9 +126,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     <Box sx={{ maxHeight: "60vh", overflowY: "auto" }}>
                         <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} }); setAddMarketPlace(true);}}>Create MarketPlace</Button>
                     </Box>
-                    <Box sx={{width: "100%", overflowY: "auto", display: "flex", flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", padding: "1%" }}>
+                    <Box sx={{width: "100%", overflow: "auto", display: "flex", flexDirection: "row", justifyContent: "flex-start", gap: "2%", alignItems: "center", padding: "1%" }}>
                         {marketPlaces && marketPlaces.map(mp => (
-                            <Card key={mp._id} sx={{ padding: "1%", display: "flex", flexDirection: "column", alignItems: "center", width: "20%" }} >
+                            <Card key={mp._id} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
                                 <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
                                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
                                     <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
@@ -148,7 +151,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                         <Box>
                             {product.marketPlaces[mpId].headers.map((header, index) => (
                                 <Box sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee",position: "relative", top: "-5%" }}>
-                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", marginTop: "-5%", zIndex:99 }}>
+                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
                                         <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${product.marketPlaces[mpId]._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                     </Box>
                                     <MarketPlaceList key={mpId} marketPlace={product.marketPlaces[mpId]} header={header} addMarketPlace={addMarketPlace} product={product} />
@@ -192,7 +195,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
                 if (product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0){
                     for(let v of product.variants[b.code][c.name]) {
                         for(let h of Object.keys(headers)) {
-                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category, numBlanks: product.blanks.length, blankName: b.name })
+                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name })
                             headers[h].push(val);
                         }
                         index++;
@@ -208,7 +211,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "0% 1%" }}>
                 <Typography variant="h6" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{marketPlace.name}</Typography>
             </Box>
-            <Box sx={{ overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row", position: "relative", marginTop: "-2%", zIndex: 1 }}>   
+            <Box sx={{ overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row" }}>
                 <Box sx={{ maxHeight: "60vh", overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row" }}>
                     {!addMarketPlace &&Object.keys(headers).map((header, hIndex) => (
                         <Box key={hIndex} sx={{ minWidth: "30%", textAlign: "center" }}>
@@ -232,15 +235,15 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
     console.log(numBlanks, blankName, "numBlanks, blankName")
 
     let value = "N/A";
-    if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
+    if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
         if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
             value = "N/A";
         }
         else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
     }
-    else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel]]) {
+    else if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel]]) {
         value = csvFunctions[mp.defaultValues[headerLabel]](variant, mp.sizeConverter, numBlanks, blankName);
-    }else if(mp.defaultValues[headerLabel]== "index") {
+    } else if (mp.defaultValues && mp.defaultValues[headerLabel]== "index") {
         if(index < product.productImages.length) {
             value = index + 1;
         }

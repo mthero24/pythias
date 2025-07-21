@@ -50,7 +50,7 @@ export async function POST(req= NextApiRequest){
             ...data,
             imageType: "PDF",
             businessAddress: JSON.parse(process.env.businessAddress),
-            providers: ["shipstation"],
+            providers: ["usps"],
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
             accountNumber: process.env.endiciaAccountNUmber,

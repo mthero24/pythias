@@ -10,7 +10,7 @@ export async function POST(req= NextApiRequest){
             address: data.address,
             businessAddress: JSON.parse(process.env.businessAddress),
             type: data.shippingType,
-            providers: ["usps", "fedex"],
+            providers: ["endicia", "fedex"],
             weight: data.weight,
             dimensions: data.dimensions,
             enSettings: {
