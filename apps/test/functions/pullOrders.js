@@ -6,6 +6,7 @@ import Color from "@/models/Color";
 import Order from "@/models/Order";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import Blanks from "@/models/Blanks";
+import {createTempUpcs } from "@pythias/integrations";
 export async function pullOrders(){
     console.log("pull orders")
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
@@ -147,5 +148,8 @@ export async function pullOrders(){
     }
 }
 setInterval(()=>{
-    if(process.env.pm_id == 0 || process.env.pm_id == "0") pullOrders()
+    if(process.env.pm_id == 0 || process.env.pm_id == "0") {
+        pullOrders()
+        createTempUpcs()
+    }
 }, 1 * 60 *60 *1000)

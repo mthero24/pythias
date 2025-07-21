@@ -28,9 +28,9 @@ export async function POST(req= NextApiRequest){
             address: item.order.shippingAddress, 
             poNumber: item.order.poNumber, 
             weight: weight? weight: 3, 
-            selectedShipping: {provider: "usps", name: "usps_ground_advantage"}, dimensions: {width: 8, length: 11, height: 1}, 
+            selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
             businessAddress: JSON.parse(process.env.businessAddress),
-            providers: ["shipstation", "ups"],                
+            providers: ["USPS",],                
             credentials: {
                 clientId: process.env.uspsClientId,
                 clientSecret: process.env.uspsClientSecret,

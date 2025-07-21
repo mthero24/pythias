@@ -4,7 +4,7 @@ export {getOrders as getOrderKohls} from "./functions/kohls"
 
 //gs1
 
-export {NextGTIN, CreateUpdateUPC} from "./functions/gs1";
+export { NextGTIN, CreateUpdateUPC, createTempUpcs, updateTempUpc } from "./functions/gs1";
 
 //acenda
 export {getTokenAcenda, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda} from "./functions/acenda"
