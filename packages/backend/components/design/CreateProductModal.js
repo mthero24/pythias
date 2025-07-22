@@ -170,8 +170,15 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                         if(!sizs.filter(si=> s.name == si.name)[0]) sizs.push(s)
                                     }
                                 }
+                                let newProductColors = [];
+                                for(let c of product.colors){
+                                    if(colors.filter(co => co._id.toString() == c._id.toString())[0]) {
+                                        newProductColors.push(c)
+                                    }
+                                }
                                 let p = {...product}
                                 p.sizes = sizs
+                                p.colors = newProductColors
                                 console.log(source, "source")
                                 if(source == "simplysage") getUpcs({blanks: p.blanks, design})
                                 document.getElementById('create-product-modal').scrollTop = 0;

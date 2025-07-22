@@ -4,15 +4,6 @@ import { updateTempUpc, createTempUpcs } from "@pythias/integrations"
 import {SkuToUpc, Color} from "@pythias/mongo";
 
 const update = async({product})=>{
-    console.log("Updating product", product._id);
-    let upcs = await SkuToUpc.find({ createdAt: { $ne: null }, temp: false })
-    for (let upc of upcs) {
-        upc.markModified("sku")
-        console.log(upc.sku.includes("__"))
-        upc.sku = upc.sku.replace("__", "_")
-        console.log(upc.sku)
-        await upc.save()
-    }
     if (product.threadColors && product.threadColors.length > 0) {
         for (let b of product.blanks) {
             for (let tc of product.threadColors) {
