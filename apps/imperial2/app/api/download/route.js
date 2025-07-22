@@ -114,7 +114,7 @@ export async function GET(req = NextApiResponse, ) {
                             let vari = [];
                             let thisHead = { ...headers };
                             for (let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides[marketPlace.name], headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name });
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name });
                                 thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string
                             }
                             sendVarianrts.push(thisHead);
@@ -130,7 +130,7 @@ export async function GET(req = NextApiResponse, ) {
                     for (let v of product.variants[b.code][c.name]) {
                         let thisHead = {...headers};
                         for (let h of Object.keys(headers)) {
-                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides[marketPlace.name], headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name });;
+                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name });
                             thisHead[h]= val!= "N/A"? val : ""; // If the value is "N/A", it will be replaced with an empty string
                         }
                         sendVarianrts.push(thisHead);
