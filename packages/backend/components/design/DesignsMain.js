@@ -57,10 +57,10 @@ export function Main({designs, ct, query, pa}){
                                     <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
                                         <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
                                             <Link href={`/admin/design/${d._id}`} target="_blank">
-                                                <Box sx={{ padding: "3%", background: "#e2e2e2", height: { sm: "250px", md: "300px", lg: "350px" }, minHeight: "250px", display: "flex", alignItems: "center", justifyContent: "center"}}>
-                                                    <img src={ imageUrl? `${imageUrl}?width=400`: "/missingImage.jpg"} width={400} height={400} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
+                                                <Box sx={{ padding: "3%", background: "#e2e2e2", height: { sm: "250px", md: "232px", lg: "350px" }, minHeight: "250px", display: "flex", alignItems: "center", justifyContent: "center"}}>
+                                                    <img src={imageUrl ? `${imageUrl}?width=400` : "/missingImage.jpg"} width={400} height={400} alt={`${d.name} ${d.sku} design`} style={{ width: "auto", height: "auto", maxWidth: others.length > 0 ? "60%" : "100%", maxHeight: others.length > 0 ? "45%" : "100%", background: "#e2e2e2"}}/>
                                                 </Box>
-                                                {others.length > 0 && <Box sx={{ position: "relative", bottom: "50px", right: "0px", background: "#fff", padding: "5px",  marginBottom: "-50px", maxHeight: "80px", background: "#e2e2e2", borderTop: "1px solid #fff"}}>
+                                                {others.length > 0 && <Box sx={{ position: "relative", bottom: "68px", right: "0px", background: "#fff", padding: "5px",  marginBottom: "-50px", maxHeight: "80px", background: "#e2e2e2", borderTop: "1px solid #fff"}}>
 
                                                     <Box sx={{ display: "flex", flexWrap: "wrap", overflow: "auto", }}>
                                                         {others.map((img, index) => (
