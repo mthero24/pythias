@@ -4,11 +4,8 @@ import {DesignSearch} from "@/functions/designSearch";
 import { serialize } from "@/functions/serialize";
 export const dynamic = 'force-dynamic';
 export default async function Designs(req){
-    console.log(await req.searchParams)
     let query = await req.searchParams
-    console.log(query)
     let page = parseInt(query.page? query.page: 1)
-    console.log(page)
     let designs
     if(!query.q){
         if(page == undefined || page == 1){
