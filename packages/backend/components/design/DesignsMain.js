@@ -76,16 +76,6 @@ export function Main({designs, ct, query, pa}){
                                                     <Typography sx={{ fontSize: '0.8rem', color: "black", whiteSpace: "nowrap", overflow: "hidden", display: "block", textOverflow: "ellipsis" }}>{d.name}</Typography>
                                                 </Box>
                                             </Link>
-                                            {console.log(d)}
-                                            {(d.sendToMarketplaces == false || d.sendToMarketplaces == undefined) && !checked.includes(d._id.toString()) && <Button onClick={()=>{
-                                                console.log(d)
-                                                d.sendToMarketplaces = true
-                                                console.log(d)
-                                                updateDesign({...d})
-                                                let c = [...checked]
-                                                c.push(d._id.toString)
-                                                setChecked(c)
-                                            }}>Resend To Market Places</Button>}
                                         </Card>                                
                                     </Grid2>
                                 )
