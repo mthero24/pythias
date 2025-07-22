@@ -76,7 +76,6 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             setLoading(false)
           }
     },[blanks])
-    
     const getAiDescription = async () => {
         //setLoading(true);
         let d = {...des}
@@ -416,7 +415,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
                 <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
-                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} />
+                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading}/>
                 {loading && <LoaderOverlay/>}
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} />
 
@@ -594,7 +593,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                         }}
                     />
                         <CreatableSelect
-                            options={[des && des.threadColors? [...des?.threadColors?.map(p => { return { value: colors?.filter(c => c._id.toString() == p)[0].name, label: colors?.filter(c => c._id.toString() == p)[0].name } }) , { value: "default", label: "Default" }]: [{ value: "default", label: "Default" }]]}
+                            options={des.threadColors && des.threadColors.length > 0? [...des?.threadColors?.map(p => { return { value: colors?.filter(c => c._id.toString() == p)[0].name, label: colors?.filter(c => c._id.toString() == p)[0].name } }) , { value: "default", label: "Default" }]: [{ value: "default", label: "Default" }]}
                             value={{ value: threadColor, label: threadColor? threadColor: "Default" }}
                             onChange={(vals) => {
                                 setThreadColor(vals.value)

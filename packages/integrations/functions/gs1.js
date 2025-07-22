@@ -113,13 +113,13 @@ const createGTINData = ({sku, newUpc, brand, image, productDescription }) => {
     }
     return data
 }
-export const updateTempUpc = async (skuToUpc) => {
+export const updateTempUpc = async (skuToUpc, brand, productDescription) => {
     let data = createGTINData({
         sku: skuToUpc.sku,
         newUpc: { prefix: skuToUpc.gtin.substring(1, 8), gtin: skuToUpc.gtin },
-        brand: skuToUpc.brand || "temporary",
+        brand: brand || "temporary",
         image: skuToUpc.image || "",
-        productDescription: skuToUpc.productDescription || "temporary hold"
+        productDescription: productDescription || "temporary hold"
     })
     let res = await CreateUpdateUPC({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}, body: data})
     return res

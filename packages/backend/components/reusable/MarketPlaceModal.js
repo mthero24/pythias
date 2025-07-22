@@ -38,7 +38,6 @@ const csvFunctions = {
         return variant.size ? sizeConverter[variant.size.name] ? sizeConverter[variant.size.name] : "" : "";
     },
     variantThreadColor: (variant) => {
-        console.log(variant, "variantThreadColor")
         return variant.threadColor ? variant.threadColor.name : "N/A";
     },
     variantSku: (variant) => {
@@ -66,7 +65,6 @@ const csvFunctions = {
         return product.gender ? product.gender : "N/A";
     },
     variantImage: (variant, color, blankCode) => {
-        //console.log(variant, color, blankCode, "variantImage")
         return variant.image ? variant.image : "N/A";
     },
     variantColorFamily: (variant) => {
@@ -81,7 +79,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const [deleteFunction, setDeleteFunction] = useState({});
     const [deleteImage, setDeleteImage] = useState();
     const [marketplace, setMarketplace] = useState({ name: "", headers: [[]], defaultValues: {}, sizes: {} });
-    console.log(product, "product in marketplace modal")
     useEffect(() => {
         let sizeArray = [];
         for(let sizeArr of sizes? sizes : []) {
@@ -205,7 +202,6 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
             }
         }
     }
-    console.log(headers, "headers")
     return (
         <Card sx={{ padding: "2%" }} >
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "0% 1%" }}>
@@ -232,7 +228,6 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
 }
 
 const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName }) => {
-    console.log(numBlanks, blankName, "numBlanks, blankName")
 
     let value = "N/A";
     if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
@@ -258,7 +253,6 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
             value = "N/A";
         }
     }
-    //console.log(mp.defaultValues[headerLabel], "defaultValues", value)
     return value
 }
 const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace, setDeleteModal, setDeleteImage, setOnDelete, setDeleteTitle, setMarketPlaces, blank, setBlank }) => {
@@ -273,7 +267,6 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
             }
             let m = { ...marketPlace };
             m.sizeConverter = sizeObj;
-            console.log(m, "marketPlace")
             setMarketPlace({...m});
         }
     }, [open]);
@@ -439,7 +432,6 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                     <Box sx={{ display: "flex", flexDirection: "column", gap: "1%", justifyContent: "center", alignItems: "center", padding: "1%" }}>
                                         {Object.keys(marketPlace.sizeConverter ? marketPlace.sizeConverter : {}).map((sizeItem, index) => (
                                             <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                                                {console.log(sizeItem, "sizeItem")}
                                                 <TextField
                                                     variant="outlined"
                                                     size="small"

@@ -253,10 +253,11 @@ export function DTFBody({auto, setAuto, printer, type}){
                                     height: "auto",
                                     background: "#e2e2e2"
                                   }}
-                                  src={createImage(submitted.colorName, submitted.styleCode, {url: submitted.images[im], side: im == "back" || im == "namePlate"? "back": "front", printArea: im})}
+                                src={createImage(submitted.colorName, submitted.styleCode, { url: submitted.images[im], side: im == "back" || im == "namePlate" ? "back" : "front", printArea: im }, 400, submitted.source)}
                               />
                             </Box>
-                            <Box sx={{ background: "#e2e2e2", padding: "1%"}}>
+                            <Box sx={{ background: "#e2e2e2", padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center"}}>
+                                {console.log(submitted.images[im], "image")}
                               <Image
                                   width={500}
                                   alt="back design"

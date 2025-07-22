@@ -50,5 +50,8 @@ const schema = new mongoose.Schema({
     sku: { type: String},
     title: String,
     marketPlaces: Object,
+    gender: String,
+    season: String,
+    tags: [String],
 });
 export default PremierPrinting.model("Products", schema);
