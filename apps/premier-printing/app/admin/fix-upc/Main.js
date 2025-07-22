@@ -3,7 +3,7 @@ import {Box, Card, Grid2, Typography, Button, Modal, TextField, ButtonGroup} fro
 import {useState} from "react";
 import CreatableSelect from "react-select/creatable";
 import axios from "axios"
-import Search from "@/app/admin/designs/Search";
+import {Search} from "@pythias/backend";
 import Image from "next/image";
 export function Main({s, count}){
     const [cunt, setCount] = useState(count)
