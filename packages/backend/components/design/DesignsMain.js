@@ -44,7 +44,7 @@ export function Main({designs, ct, query, pa}){
                             {designss && designss.map(d=>{
                                 let imageUrl
                                 let others = []
-                                for(let image of Object.keys(d.images)){
+                                for(let image of Object.keys(d.images? d.images: {})){
                                     console.log(image, d.images[image])
                                     if(d.images[image]){
                                         d.images[image] = d.images[image].replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")
