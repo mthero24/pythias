@@ -23,6 +23,13 @@ export async function POST(req= NextApiRequest){
                 clientSecret: process.env.uspsClientSecret,
                 accountNumber: process.env.accountNumber
             },
+            credentialsShipStation: {
+                apiKey: process.env.ssV2
+            },
+            carrierCodes: {
+                usps: "se-186007",
+            },
+            warehouse_id: 13111,
             credentialsFedEx: {
             accountNumber: process.env.tpalfedexaccountnumber,
             meterNumber: process.env.tpalfedexmeternumber,

@@ -17,7 +17,7 @@ export async function getCarriers({credentials}){
         }
     }
     let errorRes
-    let res = await axios.get(`https://api.shipstation.com/v2/labels`, headers).catch((err)=>{
+    let res = await axios.get(`https://api.shipstation.com/v2/carriers`, headers).catch((err)=>{
         //console.log(err.response.data)
         errorRes = err.response.data
     })
@@ -161,12 +161,14 @@ export async function GetRateShipStation({address, weight, dimensions, service, 
         console.log(e.response.data)
         errorRes = e.response.data
     })
-    console.log(res?.data.filter(d=> d.service_code == service && d.package_type == "package"), errorRes)
+    console.log(service, "service +++++++")
+   console.log(res?.data.filter(d=> d.service_code), errorRes)
     if(errorRes){
         console.log("here")
         return {error: true, msg: errorRes.errors[0].message}
     }else{
-        let serve = res?.data.filter(d=> d.service_code == service && d.package_type == "package")[0]
+        let serve = res?.data.filter(d=> d.service_code == service)[0]
+        console.log("serve", serve)
         let result = {error: false, rate: serve.shipping_amount.amount}
         return result 
     }

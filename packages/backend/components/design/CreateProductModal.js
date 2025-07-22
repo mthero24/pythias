@@ -563,7 +563,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                                 if (blank.colors.filter(c => c._id.toString() == color._id.toString())[0]) {
                                                     for (let size of product.sizes) {
                                                         let upc
-                                                        if (upcs?.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]) {
+                                                        if (upcs?.filter(u => u.upc.length >  u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]) {
                                                             upc = upcs.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]
                                                         }else{
                                                             upc = tempUpcs.filter(u => u.used != true)[0]

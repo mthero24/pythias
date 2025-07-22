@@ -123,6 +123,14 @@ export async function PUT(req= NextApiRequest){
             manifestMID: process.env.manifestMID,
             accountNumber: process.env.accountNumber
         },
+        credentialsShipStation: {
+            apiKey: process.env.ssV2
+        },
+        dpi: 203,
+        carrierCodes: {
+            usps: "se-186007",
+        },
+        warehouse_id: 13111,
         credentialsFedEx: {
         accountNumber: process.env.tpalfedexaccountnumber,
         meterNumber: process.env.tpalfedexmeternumber,
