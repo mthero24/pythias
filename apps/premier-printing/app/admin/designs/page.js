@@ -1,5 +1,5 @@
-import Design from "@/models/Design";
-import { Main } from "./Main"
+import {Design} from "@pythias/mongo";
+import { DesignsMain as Main } from "@pythias/backend";
 import { DesignSearch } from "@/functions/designSearch";
 export const dynamic = 'force-dynamic';
 export default async function Designs(req) {

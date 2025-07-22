@@ -48,21 +48,23 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                         <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select the blanks you want to use for this product. You can select multiple blanks.</Typography>
                     </Grid2>
                     {blanks.map(b => {
-                        let designImages = Object.keys(design.images ? design.images : {})
+                        let designImages = Object.keys(design.images ? design.images : [])
                         let styleImages = []
                         let color;
                         for(let di of designImages){
-                            if(b.multiImages && b.multiImages[di] && b.multiImages[di].length > 0){
-                                if (!color) {
-                                    color = b.multiImages[di][0].color
-                                    styleImages.push({ blankImage: b.multiImages[di][0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
-                                }else{
-                                    styleImages.push({ blankImage: b.multiImages[di].filter(i => i.color.toString() == color.toString())[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0].name })
+                            if (design.images[di] != null){
+                                if(b.multiImages && b.multiImages[di] && b.multiImages[di].length > 0){
+                                    if (!color) {
+                                        color = b.multiImages[di][0].color
+                                        styleImages.push({ blankImage: b.multiImages[di][0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
+                                    }else{
+                                        styleImages.push({ blankImage: b.multiImages[di].filter(i => i.color.toString() == color.toString())[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
+                                    }
                                 }
                             }
                         }
-                        //console.log(styleImages)
-                        if (styleImages.length == 0 || designImages.length != styleImages.length) return null;
+                        console.log(styleImages)
+                        if(styleImages.length == 0) return null
                         return (
                             <Grid2 size={{ sm: 6 * styleImages.length, md: 3 * styleImages.length }} key={b._id} onClick={() => {
                                 let p = { ...product }
@@ -79,11 +81,11 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                     <Box sx={{ position: "relative", zIndex: 999,display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", }}>
                                         <FormControlLabel control={<Checkbox checked={product.blanks.filter(blank => blank?._id?.toString() == b?._id?.toString())[0] != undefined} />} />
                                     </Box>
-                                    <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
-                                        {styleImages.length > 0 && styleImages.map((si, i) => (
-                                            <img key={i} src={`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage.image.split("/")[si.blankImage.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
-                                ))}
-                                    </Box>
+                                    {styleImages.length > 0 && styleImages.map((si, i) => (
+                                        <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
+                                        <img key={i} src={`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={200} height={200} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} /> 
+                                        </Box>
+                                    ))}
                                     <Divider />
                                     <Box sx={{ width: "100%", textAlign: "center" }}>
                                         <Typography sx={{ fontSize: '1rem', color: "black", whiteSpace: "nowrap", overflow: "hidden", display: "block", textOverflow: "ellipsis" }}>{b.name} - {b.code}</Typography>
