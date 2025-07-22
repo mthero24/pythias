@@ -16,6 +16,7 @@ export async function GET(req){
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     if(data.count){
+        console.log("Getting temp upcs", data.count)
         let upcs = await UpcToSku.find({ temp: true, hold: {$in: [false, null]} }).limit(data.count).populate("design", "name").populate({ path: "blank", select: "code name sizes colors", populate: "colors" }).populate("color", "name")
         await UpcToSku.updateMany({ _id: { $in: upcs.map(u => u._id) } }, { $set: { hold: true } })
         //console.log("upcs", upcs)

@@ -29,6 +29,24 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         overflowX: "auto",
         overflowY: "none",
     };
+    useEffect(() => {
+        const handleBeforeUnload = async (event) => {
+            // Perform actions before the page unloads
+            // e.g., save unsaved data, send analytics, clean up resources
+            console.log(window.dataLayer[0], "window data layer")
+            event.preventDefault(); // This line is crucial for displaying the prompt
+            let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
+        // Optional: Display a confirmation message to the user
+        // event.preventDefault(); // This line is crucial for displaying the prompt
+        // event.returnValue = 'Are you sure you want to leave?';
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // Cleanup function: Remove the event listener when the component unmounts
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);    
     for(let b of blanks){
         if (b.multiImages["modelFront"] && b.multiImages["modelFront"].length > 0) {
             for (let i of b.multiImages["modelFront"]){
@@ -56,7 +74,9 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         let tempUpcs = await axios.post("/api/upc", { count }).catch(e => {
             console.error(e);
         });
+        if(!window.dataLayer) window.dataLayer = [];
         setTempUpcs([...tempUpcs.data.upcs]);
+        window.dataLayer.push(tempUpcs.data.upcs)
         console.log(tempUpcs.data.upcs, "temp upcs")
     }
     const releaseHold = async () => {
@@ -152,7 +172,8 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                 }
                                 let p = {...product}
                                 p.sizes = sizs
-                                if(source == "simplysage")getUpcs({blanks: p.blanks, design})
+                                console.log(source, "source")
+                                if(source == "simplysage") getUpcs({blanks: p.blanks, design})
                                 document.getElementById('create-product-modal').scrollTop = 0;
                                 setProduct({...p})
                                 setSizes(sizs)
@@ -316,8 +337,10 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                     console.log(product.imageGroup, "image group",)
                                     if(source == "simplysage") {
                                         let variantsLength = product.blanks.length * (product.threadColors.length > 0 ? product.threadColors.length : 1) * product.colors.length * product.sizes.length
+                                        console.log(variantsLength, "variants length", upcs.length, "upcs length")
                                         if(variantsLength > upcs.length){
                                             getTempUpcs(variantsLength - upcs.length)
+                                            
                                         }
                                     }
                                     document.getElementById('create-product-modal').scrollTop = 0;
@@ -541,7 +564,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                                                 tempUpcs.filter(u => u.used != true)[0].used = true
                                                             }
                                                         }
-                                                        let img = product.variantImages[blank.code] && product.variantImages[blank.code][color.name] && product.variantImages[blank.code][color.name].image
+                                                        let img = product.variantImages && product.variantImages[blank.code] && product.variantImages[blank.code][color.name] && product.variantImages[blank.code][color.name].image
                                                         if (!variants[blank.code]) variants[blank.code] = {}
                                                         if (!variants[blank.code][color.name]) variants[blank.code][color.name] = []
                                                         variants[blank.code][color.name].push({ image: img, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank, upc: upc?.upc, gtin: upc?.gtin })
@@ -751,12 +774,13 @@ const CreateVariantImages = ({ product, setProduct, design, threadColors, source
                                     {imgs[b][c].map((img, k) => (
                                         <Grid2 key={k} size={4} onClick={() => {
                                             let p = { ...product }
-                                            if (!p.variantImages[b]) p.variantImages[b] = {}
+                                            if(!p.variantImages) p.variantImages = {}
+                                            if (p.variantImages && !p.variantImages[b]) p.variantImages[b] = {}
                                             p.variantImages[b][c] = img
                                             setProduct({ ...p })
                                         }}>
                                             <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
-                                            {product.variantImages[b] && product.variantImages[b][c] && product.variantImages[b][c].image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
+                                            {product.variantImages &&product.variantImages[b] && product.variantImages[b][c] && product.variantImages[b][c]?.image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
                                                 <Checkbox checked={true} />
                                             </Box>}
 
