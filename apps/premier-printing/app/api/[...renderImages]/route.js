@@ -4,12 +4,10 @@ import axios from "axios"
 import { Blank, Design } from "@pythias/mongo";
 import "jimp"
 const readImage = async (url)=>{
-    console.log(url)
     const response = await axios.get(
       url,
       { responseType: "arraybuffer" }
     ).catch(e=>{});
-    //console.log(response.headers)
     if(response){
         const buffer = Buffer.from(response.data, "binary");
 
@@ -28,8 +26,6 @@ const createImage = async (data) => {
         data.width = 400
     }
     base64 = await readImage(`${data.styleImage?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
-    console.log(data)
-    console.log(data.designImage != "null", data.designImage != "undefined", "design image")
     if (data.box && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64) {
 
         let designBase64
@@ -37,12 +33,10 @@ const createImage = async (data) => {
         let y = data.box.y * multiplier
         let originalSize
         if (data.box.rotation && data.box.rotation != 0) {
-            console.log(data.box.rotation, "rotation")
             designBase64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.box.boxWidth * multiplier)}&height=${parseInt(data.box.boxHeight * multiplier)}`)
             originalSize = await designBase64.metadata();
             let originalWidth = originalSize.width;
             let originalHeight = originalSize.height;
-            console.log(originalSize)
             designBase64 = await designBase64
                 .rotate(parseInt(data.box.rotation), { background: { r: 255, g: 255, b: 255, alpha: 0 } })
                 .toBuffer();
@@ -56,14 +50,12 @@ const createImage = async (data) => {
             // Calculate the center points
             const centerX = originalWidth / 2;
             const centerY = originalHeight / 2;
-            console.log(centerX, centerY)
             // Calculate how much the top-left corner moved during rotation around center
             const rotatedTopLeftX =
                 centerX + ((0 - centerX) * cosTheta) - ((0 - centerY) * sinTheta);
             const rotatedTopLeftY =
                 centerY + ((0 - centerX) * sinTheta) + ((0 - centerY) * cosTheta);
             // Adjust the position to compensate for the rotation
-            console.log(rotatedTopLeftX, rotatedTopLeftY, "rotated")
             let offsetH = (newSize.height - originalHeight) / 2
             let offsetW = (newSize.width - originalWidth) / 2
             x -= (rotatedTopLeftX + offsetW);
@@ -97,14 +89,11 @@ const createImage = async (data) => {
     return base64
 }
 export async function GET(req){
-    //console.log(req.nextUrl.searchParams.get("blank"))
-    console.log(req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " "), "params")
     let base = req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " ")
     let params = base.split("-")
     let width = parseInt(req.nextUrl.searchParams.get("width"))
     let designImage
     let blankImage
-    console.log(params, "params")
     if (params.length == 5) {
         let design = await Design.findOne({ sku: params[0] }).select("images").lean()
         designImage = design?.images?.[params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]]
@@ -115,7 +104,6 @@ export async function GET(req){
         }
     } else if (params.length == 6) {
         let design = await Design.findOne({ sku: params[0] }).lean()
-        console.log(design.threadImages[params[5]][params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]], "design")
         designImage = design?.threadImages?.[params[5]][params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]]
         let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
         blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
@@ -155,8 +143,6 @@ export async function GET(req){
 }
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    //console.log(data)
     let base64 = await createImage(data)
-    //console.log(base64)
     return NextResponse.json({error: false, base64})
 }
