@@ -9,7 +9,6 @@ export default async function Create(req,res) {
     let colors = await Color.find().sort({ _id: -1 }).lean();
     let printPricing = await PrintPricing.findOne().lean();
     let printLocations = await PrintLocations.find({}).lean()
-    //console.log(printLocations)
     let blanks = await Blanks.find()
       .lean()
       .select("department category brand multiImages")
