@@ -27,7 +27,7 @@ const createImage = async (data) => {
     } else {
         data.width = 400
     }
-    base64 = await readImage(`${data.styleImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
+    base64 = await readImage(`${data.styleImage?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
     console.log(data)
     console.log(data.designImage != "null", data.designImage != "undefined", "design image")
     if (data.box && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64) {
@@ -74,16 +74,6 @@ const createImage = async (data) => {
             originalSize = await designBase64.metadata();
             designBase64 = await designBase64.toBuffer()
         }
-        // if(data.box.rotation && data.box.rotation != 0){
-        //     let radians = data.box.rotation * (Math.PI / 180)
-        //     let newX =  (x * Math.cos(radians)) - (y * Math.sin(radians))
-        //     let newY =  (x * Math.sin(radians)) + (y * Math.cos(radians))
-        //     x= newX;
-        //     y= newY
-        //     console.log(x, "x", y, "y")
-        //     //offset = parseInt(((data.box.x) - x))
-        //    // offsetHeight = parseInt(((data.box.y) - y))
-        // }
         let offset = (originalSize.width - (data.box.boxWidth * multiplier)) / 2
         base64 = await base64.composite([
             {
@@ -98,12 +88,10 @@ const createImage = async (data) => {
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     } else if (data.styleImage && base64) {
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
-        console.log(base64, "base64")
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     } else if (data.designImage && data.designImage != "undefined" && data.designImage != "null") {
         base64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.width)}&height=${parseInt(data.width)}`)
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
-        //console.log(base64, "base64")
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }
     return base64
@@ -120,28 +108,28 @@ export async function GET(req){
     if (params.length == 5) {
         let design = await Design.findOne({ sku: params[0] }).select("images").lean()
         designImage = design?.images?.[params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]]
-        console.log(designImage, "design image", params[1], "params 1")
         let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
-        console.log(blank.multiImages[params[4]], "blank")
         blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+        if(blankImage == undefined) {
+            blankImage = blank?.multiImages[params[4] == "front"? "modelFront" : "modelBack"]?.filter(i => i.image.includes(params[2]))[0]
+        }
     } else if (params.length == 6) {
         let design = await Design.findOne({ sku: params[0] }).lean()
         console.log(design.threadImages[params[5]][params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]], "design")
-        console.log(params[5], params[4], "params 5 and 4")
         designImage = design?.threadImages?.[params[5]][params[4] == "modelFront" ? "front" : params[4] == "modelBack" ? "back" : params[4]]
-        console.log(designImage, "design image")
         let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
         blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+        if (blankImage == undefined) {
+            blankImage = blank?.multiImages[params[4] == "front" ? "modelFront" : "modelBack"]?.filter(i => i.image.includes(params[2]))[0]
+        }
     } else {
         let blankCode = req.nextUrl.searchParams.get("blank")
         let bm = req.nextUrl.searchParams.get("blankImage")
         let colorName = req.nextUrl.searchParams.get("colorName")
         designImage = req.nextUrl.searchParams.get("design")
         let side = req.nextUrl.searchParams.get("side")
-        console.log(blankCode, bm, colorName, designImage, side)
         let blank = await Blank.findOne({ code: blankCode }).populate("colors").lean()
         let color = blank.colors.filter(c => c.name == colorName)[0]
-        console.log(color, side, "color and side")
         if (bm) {
             blankImage = blank.multiImages[side]?.filter(i => i.color.toString() == color?._id.toString() && i.image == bm)[0]
             if (!blankImage && side == "front") blankImage = blank.multiImages["modelFront"]?.filter(i => i.color.toString() == color?._id.toString() && i.image == bm)[0]
