@@ -22,7 +22,18 @@ export async function POST(req=NextApiRequest){
         //console.log("upcs", upcs)
         return NextResponse.json({ error: false, upcs })
     }
-    let upcs = await UpcToSku.find({ design: data.design._id, blank: { $in: data.blanks.map(b => b._id) } }).populate("design", "name").populate({ path: "blank", select: "code name sizes colors", populate: "colors", gtin: {$ne: null} }).populate("color", "name")
+    let upcs = await UpcToSku.find({ design: data.design._id, blank: { $in: data.blanks.map(b => b._id) } }).populate("design", "name").populate({ path: "blank", select: "code name sizes colors", populate: "colors", }).populate("color", "name")
+    for(let upc of upcs){
+        if(upc.gtin == undefined || upc.gtin == null || upc.gtin == ""){
+            console.log("Found UPC without GTIN:", upc)
+            let sku = await UpcToSku.findOne({temp: true, hold: {$in: [false, null]}})
+            upc.gtin = sku.gtin
+            upc.upc = sku.upc
+            await UpcToSku.findOneAndDelete({_id: sku._id})
+            await upc.save()
+            console.log("Updated UPC with GTIN:", upc)
+        }
+    }
     return NextResponse.json({error: false, upcs})
 }
 
