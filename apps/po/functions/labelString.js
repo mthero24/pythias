@@ -53,7 +53,9 @@ export const buildLabelData = async (item, i, opts={}) => {
               ? `^LH12,18^CFS,25,12^AXN,40,50^FO20,230^FD${printTypeAbbr}^FS`
               : ""
           }
-          ${printPO}
+          ^LH12,18^CFS,25,12^AXN,22,30^FO20,480^FD PrintO Design: ${
+            item.sku.split("-")[0]
+        }^FS
           ${frontBackString}
       ^XZ`;
     }
