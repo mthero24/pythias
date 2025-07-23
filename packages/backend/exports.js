@@ -8,3 +8,4 @@ export { Main as DesignsMain } from "./components/design/DesignsMain";
 export {Blank as BlankMain} from "./components/blanks/Blank";
 export {Search} from "./components/design/Search";
 export {Footer} from "./components/reusable/Footer";
+export {serialize} from "./functions/serialize"

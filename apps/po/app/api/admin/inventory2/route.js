@@ -1,5 +1,7 @@
-import {Inventory, Items, Blank as Blanks} from "@pythias/mongo";
+import {Inventory} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
+import {default as Blanks} from "@/models/StyleV2";
+import Items from "@/models/Items";
 import {getInv} from "@pythias/inventory"
 export async function GET(req=NextApiRequest){
     let term = req.nextUrl.searchParams.get("q");

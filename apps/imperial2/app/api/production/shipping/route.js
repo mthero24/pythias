@@ -195,7 +195,7 @@ export async function POST(req= NextApiRequest){
         return NextResponse.json({...res})
     }catch(e){
         console.log("error", e)
-        return NextResponse.json({error: true, msg: JSON.stringifye})
+        return NextResponse.json({error: true, msg: JSON.stringify(e)})
     }
 }
 

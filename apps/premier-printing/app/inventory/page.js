@@ -3,19 +3,18 @@ import Blanks from "@/models/Blanks";
 import Items from "@/models/Items";
 import {serialize} from "@/functions/serialize";
 import {Main} from "@pythias/inventory";
+import {getInv} from "@pythias/inventory"
 export const dynamic = 'force-dynamic'; 
-export default async function InventoryPage (){
-    let inventory = await Inventory.find({}).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row shelf unit bin").sort("style_code")
-    let items = await Items.find({labelPrinted: false, status: "awaiting_shipment"}).select("colorName sizeName blank")
-    console.log("inventory", inventory.length)
-    let blanks = await Blanks.find({}).populate("colors").select("code name colors sizes department")
-    let combined = []
-    for(let blank of blanks){
-        blank.inventory = inventory.filter(i=> i.blank?.toString() == blank?._id.toString())
-        combined.push({blank, inventories: blank.inventory})
-    }
-    //console.log(combined)
-    combined = serialize(combined)
+export default async function InventoryPage (searchParams){
+     let search = await searchParams;
+    let page = search.page;
+    let term = search.q
+    if(page){
+        page = parseInt(page)
+    }else page= 1
+    let items = await Items.find({labelPrinted: false, paid: true, canceled: false}).select("colorName sizeName style")
+    let res = await getInv({Blanks, Inventory, term, page})
+    let combined = serialize(res.blanks)
     items = serialize(items)
-    return <Main bla={combined} it={items} binType={"row"} defaultLocation={"utah"}/>
+    return <Main bla={combined} it={items} defaultLocation={"utah"} binType="row" pagination={true} cou={res.count} pa={page} q={term}/>
 }

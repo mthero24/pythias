@@ -83,7 +83,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                             />}
                         </Box>
                         <Typography fontSize="2rem" textAlign={"center"}>Place Item In Bin: </Typography>
-                        <Typography fontSize="2.5rem" textAlign={"center"}>{bin.number}</Typography>
+                        <Typography fontSize="2.5rem" textAlign={"center"}>{bin? bin.number: "All Bins Are Full"}</Typography>
                         {action == "bin/ship" && (
                             <Button onClick={()=>{setAction("ship")}} sx={{background: "#0079DC", color: "#ffffff"}}>Order is ready to Ship. Do you want to ship it now?</Button>
                         )}

@@ -1,10 +1,10 @@
-import Inventory from "@/models/inventory";
-import Items from "@/models/Items"
+import {Inventory, Blank as Blanks, Items }from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
-
+import {getInv} from "@pythias/inventory"
 export async function GET(req=NextApiRequest){
-    let inventories = await Inventory.find({blank: req.nextUrl.searchParams.get("blank")}).select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row shelf unit bin")
-    return NextResponse.json({error: false, inventories})
+    let term = req.nextUrl.searchParams.get("q");
+    let res = await getInv({ Blanks, Inventory, term, page: 1})
+    return NextResponse.json({...res})
 }
 
 export async function POST(req=NextApiRequest){
