@@ -394,11 +394,10 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                         <Grid2 size={4} key={i}> 
                             <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-                                    {console.log(p.productImages, p.defaultColor)}
+                                    
                                     <img src={p.productImages?.filter(i => i.color._id?.toString() == p.defaultColor?.toString() && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
                                 </Box>
                                 {p.productImages.filter(i => i.color?._id?.toString() == p.defaultColor?.toString() && (i.side == "back" || i.side == "modelBack"))[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", position: "relative", zIndex: 1, top: -130, left: 0, padding: "2%", marginBottom: "-130px", }}>
-                                    {console.log("back")}
                                     <img src={p.productImages.filter(i => i.color._id.toString() == p.defaultColor.toString() && (i.side == "back" || i.side == "modelBack"))[0]?.image} width={120} height={120} style={{ objectFit: "cover", borderRadius: "100px" }} />
                                 </Box>}
                                 <Divider sx={{ margin: "2% 0" }} />
