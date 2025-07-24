@@ -33,7 +33,6 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         const handleBeforeUnload = async (event) => {
             // Perform actions before the page unloads
             // e.g., save unsaved data, send analytics, clean up resources
-            console.log(window.dataLayer[0], "window data layer")
             event.preventDefault(); // This line is crucial for displaying the prompt
             let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
         // Optional: Display a confirmation message to the user
@@ -68,7 +67,6 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
             console.error(e);
         });
         setUpcs(upcs.data.upcs);
-        console.log(upcs.data.upcs, "upcs")
     }
     const getTempUpcs = async (count) => {
         let tempUpcs = await axios.post("/api/upc", { count }).catch(e => {
@@ -77,12 +75,9 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         if(!window.dataLayer) window.dataLayer = [];
         setTempUpcs([...tempUpcs.data.upcs]);
         window.dataLayer.push(tempUpcs.data.upcs)
-        console.log(tempUpcs.data.upcs, "temp upcs")
     }
     const releaseHold = async () => {
-        console.log("releasing hold on temp upcs", tempUpcs)
         let res = await axios.post("/api/upc/releasehold", { upcs: tempUpcs });
-        console.log("release hold response", res)
     }
     product.tags = design.tags ? design.tags : []
     if (product.defaultColor && !product.defaultColor._id){
@@ -179,7 +174,6 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                 let p = {...product}
                                 p.sizes = sizs
                                 p.colors = newProductColors
-                                console.log(source, "source")
                                 if(source == "simplysage") getUpcs({blanks: p.blanks, design})
                                 document.getElementById('create-product-modal').scrollTop = 0;
                                 setProduct({...p})
@@ -334,17 +328,14 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                                 for (let col of product.colors) {
                                                     for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(product.imageGroup)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(product.imageGroup)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
                                                         imgs.push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
-                                                        console.log(imgs, "image added");
+                                                        
                                                     }
                                                 }
                                             }
                                         }
                                     })
-                                    console.log(imgs, "images")
-                                    console.log(product.imageGroup, "image group",)
                                     if(source == "simplysage") {
                                         let variantsLength = product.blanks.length * (product.threadColors.length > 0 ? product.threadColors.length : 1) * product.colors.length * product.sizes.length
-                                        console.log(variantsLength, "variants length", upcs.length, "upcs length")
                                         if(variantsLength > upcs.length){
                                             getTempUpcs(variantsLength - upcs.length)
                                             

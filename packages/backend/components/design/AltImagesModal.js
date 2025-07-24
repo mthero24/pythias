@@ -16,14 +16,13 @@ const style = {
   };
   
 export function AltImageModal({open, setOpen, blank, design, setDesign, updateDesign}){
-    console.log(blank)
+   
     const uploaded = async ({url,color, bl})=>{
         let des = {...design}
         if(!des.overrideImages) des.overrideImages = {}
         if(!des.overrideImages[bl]) des.overrideImages[bl] = {}
         if(!des.overrideImages[bl][color]) des.overrideImages[bl][color] = []
         des.overrideImages[bl][color].push(url)
-        console.log(des.overrideImages[bl][color])
         setDesign({...des})
         await updateDesign({...des})
     }

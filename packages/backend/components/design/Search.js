@@ -18,7 +18,6 @@ export function Search({search, setSearch, setDesigns, setCount, setPage}){
             setPerform(!perform); 
         }
         if(perform == true){
-            console.log("search")
             getDesigns()
         }
     },[perform])
@@ -26,7 +25,6 @@ export function Search({search, setSearch, setDesigns, setCount, setPage}){
          <Card sx={{width: "100%", padding: "1%"}}>
             <TextField label="Search..." fullWidth onChange={()=>{setSearch(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter") {
                 setPerform(!perform); 
-                console.log("enter")
 
             }}}/>
         </Card>

@@ -30,7 +30,7 @@ export async function POST(req= NextApiRequest){
             weight: weight? weight: 3, 
             selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
             businessAddress: JSON.parse(process.env.businessAddress),
-            providers: ["USPS",],                
+            providers: ["usps",],                
             credentials: {
                 clientId: process.env.uspsClientId,
                 clientSecret: process.env.uspsClientSecret,
@@ -55,7 +55,9 @@ export async function POST(req= NextApiRequest){
             warehouse_id: 62666,
         }
         if(!item.order.preShipped){
+            console.log("pre shipping", item.order.poNumber)
             let label = await buyLabel(send)
+            console.log(label)
             if(label.error) return NextResponse.json({...label.data})
             let man = new Manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
             await man.save()
