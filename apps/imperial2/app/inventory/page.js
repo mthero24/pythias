@@ -10,7 +10,7 @@ export default async function InventoryPage (searchParams){
     if(page){
         page = parseInt(page)
     }else page= 1
-    let items = await Items.find({labelPrinted: false, paid: true, canceled: false}).select("colorName sizeName style")
+    let items = await Items.find({labelPrinted: false, paid: true, canceled: false}).select("colorName sizeName style blank")
     let res = await getInv({Blanks, Inventory, term, page})
     let combined = serialize(res.blanks)
     items = serialize(items)

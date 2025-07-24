@@ -55,10 +55,9 @@ export async function pullOrders(){
                 if(i.sku != ""){
                     let sku
                     if(i.upc){
-                        sku = await SkuToUpc.findOne({upc: i.upc})
+                        sku = await SkuToUpc.findOne({$or: [{upc: i.upc}, {sku: i.sku}, {previousUpcs: {$elemMatch: {upc: i.upc}}}, {previousSkus: {$in: [i.sku]}}]})
                         if(sku && sku.sku != i.sku) sku = null
                     }
-                    if(!sku) sku = await SkuToUpc.findOne({sku: i.sku})
                     for(let j = 0; j < parseInt(i.quantity); j++){
                         let design
                         let blank

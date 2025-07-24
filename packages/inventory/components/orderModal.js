@@ -19,7 +19,8 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                 for(let blank of blanks){
                     for(let inv of blank.inventories){
                         let inStock = inv.quantity + inv.pending_quantity
-                        let onOrder = items.filter(it=> it.sizeName == inv.size_name && it.colorName == inv.color_name && it.blank.toString() == inv.blank.toString()).length
+                        console.log(inv.blank, "inv.blank")
+                        let onOrder = items.filter(it=> it.sizeName == inv.size_name && it.colorName == inv.color_name && it.blank?.toString() == inv.blank?.toString()).length
                         //console.log(inStock - onOrder)
                         if(inStock - onOrder < 0) {
                             if(!bl.includes(inv.style_code))bl.push(inv.style_code)

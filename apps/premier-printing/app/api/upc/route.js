@@ -1,5 +1,15 @@
 import {NextApiRequest, NextResponse} from "next/server";
 import {SkuToUpc as UpcToSku} from "@pythias/mongo";
+let sizeConverter = {
+    XSmall: "XS",
+    XXSmall: "XXS",
+    Small: "S",
+    Medium: "M",
+    Large: "L",
+    XLarge: "XL",
+    XXLarge: "2XL",
+    XXXLarge: "3XL",
+}
 export async function GET(req){
     let blank = req.nextUrl.searchParams.get("blank")
     let design = req.nextUrl.searchParams.get("design")
@@ -23,17 +33,21 @@ export async function POST(req=NextApiRequest){
         return NextResponse.json({ error: false, upcs })
     }
     let upcs = await UpcToSku.find({ design: data.design._id, blank: { $in: data.blanks.map(b => b._id) } }).populate("design", "name").populate({ path: "blank", select: "code name sizes colors", populate: "colors", }).populate("color", "name")
-    // for(let upc of upcs){
-    //     if(upc.gtin == undefined || upc.gtin == null || upc.gtin == ""){
-    //         console.log("Found UPC without GTIN:", upc)
-    //         let sku = await UpcToSku.findOne({temp: true, hold: {$in: [false, null]}})
-    //         upc.gtin = sku.gtin
-    //         upc.upc = sku.upc
-    //         await UpcToSku.findOneAndDelete({_id: sku._id})
-    //         await upc.save()
-    //         console.log("Updated UPC with GTIN:", upc)
-    //     }
-    // }
+    for(let upc of upcs){
+        if (sizeConverter[upc.size]) {
+            upc.size = sizeConverter[upc.size]
+            upc = await upc.save()
+        }
+        if(upc.gtin == undefined || upc.gtin == null || upc.gtin == ""){
+            console.log("Found UPC without GTIN:", upc)
+            let sku = await UpcToSku.findOne({temp: true, hold: {$in: [false, null]}})
+            upc.gtin = sku.gtin
+            upc.upc = sku.upc
+            await UpcToSku.findOneAndDelete({_id: sku._id})
+            upc = await upc.save()
+            console.log("Updated UPC with GTIN:", upc)
+        }
+    }
     return NextResponse.json({error: false, upcs})
 }
 

@@ -19,7 +19,7 @@ export {default as Users} from "./models/User";
 export {default as Inventory} from "./models/inventory";
 export {default as InventoryOrders} from "./models/InventoryOrders";
 export {default as Items} from "./models/Items";
-export {default as SkuToUpc} from "./models/skuUpcConversion";
+export {SkuToUpc, SkuToUpcOld} from "./models/skuUpcConversion";
 export {default as ReturnBins} from "./models/returnBins";
 export {default as Products} from "./models/Products";
 export {default as AvailableUPC} from "./models/AvailableUPC";
