@@ -55,9 +55,9 @@ export async function POST(req= NextApiRequest){
             warehouse_id: 62666,
         }
         if(!item.order.preShipped){
-            console.log("pre shipping", item.order.poNumber)
+            //console.log("pre shipping", item.order.poNumber)
             let label = await buyLabel(send)
-            console.log(label)
+           // console.log(label)
             if(label.error) return NextResponse.json({...label.data})
             let man = new Manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
             await man.save()
