@@ -177,7 +177,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
                     if (product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
                         for (let v of product.variants[b.code][tc.name][c.name]) {
                             for (let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name })
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index: index })
                                 headers[h].push(val);
                             }
                             index++;
@@ -191,7 +191,6 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
         {console.log("no thread colors", )}
         for(let b of product.blanks) {
             for(let c of product.colors) {
-                console.log(product.variants[b.code], product.variants[b.code][c.name], b.code, c.name);
                 if (product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0){
                     for(let v of product.variants[b.code][c.name]) {
                         for(let h of Object.keys(headers)) {
