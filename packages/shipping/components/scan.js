@@ -79,7 +79,12 @@ export function Scan({auto, setAuto, order, setOrder, showNotes, setShowNotes, s
         }else if(reprint){
           alert("label reprinted")
         }else if(preShip){
-          alert(`Tracking Number: ${res.data.label.trackingNumber}`)
+          console.log("preShip", res.data.label)
+          if(res.data.label.error){
+            alert(`Error: ${res.data.label.msg}`)
+          }else{
+            alert(`Order Pre-Printed: ${res.data.label.trackingNumber}`)
+          }
         }
         setScan("")
         setReship(false)

@@ -147,7 +147,7 @@ const paymentAuth = async ({token, credentials})=>{
     }
 }
 export async function purchaseLabel({address, poNumber, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageFormat}){
-    //console.log(credentials)
+    console.log(address, ignoreBadAddress)
     let customsForm
     if(address.state == "AP" || address.state == "AA" || address.state == "AE"){
         
