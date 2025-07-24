@@ -202,7 +202,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                         <Grid2 container spacing={2} sx={{ marginTop: "2%" }}>
                                             {
                                                 design.threadColors.map(tc => { return colors.filter(c => c._id.toString() == tc.toString())[0] }).map(c => (
-                                                    <Grid2 key={c._id.toString()} size={1} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
+                                                    <Grid2 key={c._id.toString()} size={3} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
                                                         let p = { ...product }
                                                         if (!p.threadColors.filter(co => co._id.toString() == c._id.toString())[0]) p.threadColors.push(c)
                                                         else {
@@ -214,7 +214,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                                                         }
                                                         setProduct({ ...p })
                                                     }}>
-                                                        <Box sx={{ background: c.hexcode, padding: "3%", width: "100%", height: "45px", borderRadius: "10px", boxShadow: `2px 2px 2px ${c.hexcode}` }}>
+                                                        <Box sx={{ background: c.hexcode, padding: "10%", width: "100%", height: "45px", borderRadius: "10px", boxShadow: `2px 2px 2px ${c.hexcode}` }}>
                                                             {product.threadColors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}
                                                         </Box>
                                                         <Typography sx={{ fontSize: ".6rem", textAlign: "center" }}>{c.name}</Typography>
