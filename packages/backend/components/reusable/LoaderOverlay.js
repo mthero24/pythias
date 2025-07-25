@@ -1,3 +1,4 @@
+"use client";
 import { Backdrop, CircularProgress, Typography } from '@mui/material'
 import React from 'react'
 import {useState, useEffect} from 'react'
