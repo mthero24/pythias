@@ -136,6 +136,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Inventory`} />
           </ListItemButton>
         </Link>
+        <Link href="/clockwise">
+          <ListItemButton>
+            <ListItemText primary={`Clockwise`} />
+          </ListItemButton>
+        </Link>
       </List>
     </Box>
   </Drawer>

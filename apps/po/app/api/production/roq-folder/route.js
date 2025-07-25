@@ -43,7 +43,7 @@ export async function POST(req = NextApiRequest){
                 },
                 dpi: 300
             }
-            if(!item.order.preShipped){
+            if(!item.order.preShipped && !item.clockWise){
                 let label = await buyLabel(send)
                 if(label.error) return NextResponse.json(label)
                 let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})

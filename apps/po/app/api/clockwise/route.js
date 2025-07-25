@@ -58,7 +58,7 @@ export async function POST(req= NextApiRequest){
                     let blank = await Blank.findOne({ code: json.blanks[i]?.style }).populate("colors").lean()
                     if (!blank) {
                         console.log("Blank not found for style", json.blanks[i]?.style);
-                        if (json.blanks[i]?.brand == "Bella + Canvas" || json.blanks[i]?.brand == "next Level") {
+                        if (json.blanks[i]?.brand == "Bella + Canvas" || json.blanks[i]?.brand == "Next Level") {
                             blank = await Blank.findOne({ code: "PT" }).populate("colors").lean()
                         } else {
                             blank = await Blank.findOne({ code: "AFTH" }).populate("colors").lean()
@@ -106,7 +106,7 @@ export async function POST(req= NextApiRequest){
                     let blank = await Blank.findOne({code: json.blanks[i]?.style}).populate("colors").lean()
                     if(!blank){
                         console.log("Blank not found for style", json.blanks[i]?.style);
-                        if (json.blanks[i]?.brand == "Bella + Canvas" || json.blanks[i]?.brand == "next Level") {
+                        if (json.blanks[i]?.brand == "Bella + Canvas" || json.blanks[i]?.brand == "Next Level") {
                             blank = await Blank.findOne({ code: "PT" }).populate("colors").lean()
                         }else{
                             blank = await Blank.findOne({ code: "AFTH" }).populate("colors").lean()

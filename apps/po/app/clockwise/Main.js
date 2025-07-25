@@ -1,10 +1,15 @@
 "use client";
 import {Box, Container, Typography} from "@mui/material";
 import {Uploader} from "@pythias/backend"
+import {useState} from "react";
 import axios from "axios";
 import btoa from "btoa";
+import { set } from "mongoose";
+import {LoaderOverlay} from "@pythias/backend";
 export const Main = ()=>{
+    const [uploading, setUploading] = useState(false);
     const handleUpload = async (files) => {
+        setUploading(true);
         var binary = '';
         var bytes = new Uint8Array(files);
         var len = bytes.byteLength;
@@ -17,7 +22,14 @@ export const Main = ()=>{
             console.error("Error uploading files:", err);
             alert("Failed to upload files. Please try again.");
         });
+        if(res.data && !res.data.error) {
+            alert("Files uploaded successfully!");
+            console.log("Files uploaded successfully:", res.data);  
+        }else if(res.data.error) {
+            alert("Error uploading files: " + res.data.msg);
+        }
         console.log(res);
+        setUploading(false);
     }
     return (
         <Container>
@@ -27,6 +39,7 @@ export const Main = ()=>{
                     <Uploader afterFunction={handleUpload} type="order" vh={"200px"}/>
                 </Box>
             </Box>
+            {uploading && <LoaderOverlay />}
         </Container>
     )
 }
