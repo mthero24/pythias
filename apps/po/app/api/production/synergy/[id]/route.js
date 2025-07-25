@@ -305,12 +305,7 @@ export async function GET(request, { params }) {
                                     ((pressTemp - 32) * 5) /
                                     9
                                     ).toFixed(2)}</Temperature>
-                                    <Time>${
-                                    item.styleV2.code == "AS" ||
-                                    item.styleV2.code == "AFTH"
-                                        ? 15
-                                        : pressTime
-                                    }</Time>
+                                    <Time>10</Time>
                                     <TrackingID i:nil="true"/>
                                 </PretreatPress>
                                 <Print>

@@ -23,7 +23,9 @@ export const Main = ()=>{
         <Container>
             <Box>
                 <Typography variant="h4">Upload</Typography>
-                <Uploader afterFunction={handleUpload} type="order"/>
+                <Box sx={{height: "200px", width: "20%" }}>
+                    <Uploader afterFunction={handleUpload} type="order" vh={"200px"}/>
+                </Box>
             </Box>
         </Container>
     )
