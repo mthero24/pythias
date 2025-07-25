@@ -139,6 +139,10 @@ const schema = new mongoose.Schema(
       date: Date,
       user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     },
+    clockWise: {
+      type: Boolean,
+      default: false,
+    },
   },
   { suppressWarning: true }
 );

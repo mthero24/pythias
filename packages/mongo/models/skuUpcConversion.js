@@ -20,6 +20,7 @@ let schema = new mongoose.Schema({
     fakeSku: {type: Boolean, default: false},
     previousSkus: [{ type: String }],
     previousUpcs: [{ upc: {type: String}, gtin: {type: String} }],
+    standerdized: { type: Boolean, default: false },
 })
 export const SkuToUpc = PremierPrinting.model("SkuToUpc", schema);
 export const SkuToUpcOld = PremierPrinting.model("SkuToUpcOld", schema);

@@ -193,6 +193,10 @@ const schema = new mongoose.Schema({
   archived: { type: Boolean, default: false },
   finalized: { type: Boolean, default: false },
   pricingChanges: { type: Number, default: 0 },
+  clockWise: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // schema.pre("save", async function (next) {

@@ -11,7 +11,10 @@ export default async function DesignPage({ params }) {
             let colors = await Color.find({});
             for (let color of colors) {
                 if (!color.sku) {
-                    color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").substring(0, 7)
+                    if (color.name.includes("Plaid")) {
+                        color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").replace("top", "").replace(/black/g, "bl").replace("plaid", "pl").replace(/white/g, "wh").replace("red", "re").substring(0, 7)
+                    }
+                    else color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").substring(0, 7)
                     color = await color.save()
                 }
             }

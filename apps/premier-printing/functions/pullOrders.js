@@ -71,7 +71,7 @@ export async function pullOrders(){
                         }else{
                             blank = await Blank.findOne({code: i.sku?.split("_")[0]})
                             color = await Color.findOne({name: i.sku?.split("_")[1]})
-                            if(!color) await Color.findOne({name: i.sku?.split("_")[2]})
+                            if(!color) await Color.findOne({$or: [{name: i.sku?.split("_")[2]}, {sku: i.sku?.split("_")[2]}]})
                             if(blank){
                                 size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase())[0] 
                                 if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase())[0]
