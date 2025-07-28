@@ -3,11 +3,15 @@ import {NextApiRequest, NextResponse } from "next/server";
 
 export async function POST(req = NextApiRequest) {
     const data = await req.json();
-    let product
-    if(data.product._id) {
-        product = await Products.findByIdAndUpdate(data.product._id, data.product, { new: true, returnNewDocument: true}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});
-    }else{
-        product = await Products.create(data.product);
+    let products = [];
+    for (let product of data.products) {
+        if (product._id) {
+            product = await Products.findByIdAndUpdate(product._id, product, { new: true, returnNewDocument: true }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
+        } else {
+            product = await Products.create(product)
+            product = await Products.findById(product._id).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
+        }
+        products.push(product);
     }
-    return NextResponse.json({product, error: false});
+    return NextResponse.json({ error: false, products });
 }

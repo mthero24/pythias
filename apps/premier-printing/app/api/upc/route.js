@@ -26,7 +26,7 @@ export async function GET(req){
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     if(data.count){
-        console.log("Getting temp upcs", data.count)
+        //console.log("Getting temp upcs", data.count)
         let upcs = await UpcToSku.find({ temp: true, hold: {$in: [false, null]} }).limit(data.count).populate("design", "name").populate({ path: "blank", select: "code name sizes colors", populate: "colors" }).populate("color", "name")
         await UpcToSku.updateMany({ _id: { $in: upcs.map(u => u._id) } }, { $set: { hold: true } })
         //console.log("upcs", upcs)
@@ -39,16 +39,16 @@ export async function POST(req=NextApiRequest){
             upc = await upc.save()
         }
         if(upc.gtin == undefined || upc.gtin == null || upc.gtin == ""){
-            console.log("Found UPC without GTIN:", upc)
+            //console.log("Found UPC without GTIN:", upc)
             let sku = await UpcToSku.findOne({temp: true, hold: {$in: [false, null]}})
             upc.gtin = sku.gtin
             upc.upc = sku.upc
             await UpcToSku.findOneAndDelete({_id: sku._id})
             upc = await upc.save()
-            console.log("Updated UPC with GTIN:", upc)
+            //console.log("Updated UPC with GTIN:", upc)
         }
     }
-    console.log(upcs)
+    //console.log(upcs)
     return NextResponse.json({error: false, upcs})
 }
 
