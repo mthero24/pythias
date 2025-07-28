@@ -1,4 +1,4 @@
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider } from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider, Checkbox, FormControlLabel } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModel from "../reusable/DeleteModal";
 import axios from "axios";
@@ -29,7 +29,10 @@ const csvFunctions = {
         return product.tags ? product.tags.join(", ") : "N/A";
     },
     productVendor: (product) => {
-        return product.brand ? product.brand : "No Value";
+        return product.brand ? product.brand : "N/A";
+    },
+    productBrand: (product) => {
+        return product.brand ? product.brand : "N/A";
     },
     variantColor: (variant, sizeConverer, numBlanks, blankName) => {
         return variant.color ? numBlanks > 1 ? `${variant.color.name} (${blankName})` : variant.color.name : "";
@@ -52,6 +55,9 @@ const csvFunctions = {
     variantUpc: (variant) => {
         return variant.upc ? variant.upc : "N/A";
     },
+    variantGtin: (variant) => {
+        return variant.upc ? variant.upc : "N/A";
+    },
     productImage: (product, index) => {
         if (product.productImages && product.productImages.length > index && product.productImages[index] && product.productImages[index].image) {
             return product.productImages[index].image;
@@ -64,11 +70,18 @@ const csvFunctions = {
     productGender: (product) => {
         return product.gender ? product.gender : "N/A";
     },
+    productSeason: (product) => {
+        return product.season ? product.season : "N/A";
+    },
     variantImage: (variant, color, blankCode) => {
         return variant.image ? variant.image : "N/A";
     },
+    variantImages: (variant, sizeConverter, numBlanks, blankName, index) => {
+        //console.log("variant", variant, "index", index);
+        return variant.images && variant.images.length > index ? variant.images[index].image : "N/A";
+    },
     variantColorFamily: (variant) => {
-        return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "";
+        return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "N/A";
     }
 };
 
@@ -135,7 +148,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                             p.marketPlaces = {};
                                         }
                                         p.marketPlaces[mp._id] = mp;
-                                        let res = axios.post("/api/admin/products", { product: p });
+                                        let res = axios.post("/api/admin/products", { products: [p] });
                                         setProduct(p);
                                     }}>Select</Button>}
                                 </Box>
@@ -146,12 +159,13 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
                     {product && product.marketPlaces && Object.keys(product.marketPlaces).length > 0 && Object.keys(product.marketPlaces).map((mpId) => (
                         <Box>
+                            {console.log(product.marketPlaces[mpId].hasProductLine)}
                             {product.marketPlaces[mpId].headers.map((header, index) => (
                                 <Box sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee",position: "relative", top: "-5%" }}>
                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
                                         <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${product.marketPlaces[mpId]._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                     </Box>
-                                    <MarketPlaceList key={mpId} marketPlace={product.marketPlaces[mpId]} header={header} addMarketPlace={addMarketPlace} product={product} />
+                                    <MarketPlaceList key={mpId} marketPlace={product.marketPlaces[mpId]} header={header} addMarketPlace={addMarketPlace} product={product} productLine={product.marketPlaces[mpId].hasProductLine && product.marketPlaces[mpId].hasProductLine[index] ? product.marketPlaces[mpId].hasProductLine[index] : false} />
                                 </Box>
                             ))}
                         </Box>
@@ -163,10 +177,18 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         </Modal>
     )
 }
-const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
+const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, productLine }) => {
     let headers = {}
     for(let h of header) {
         headers[h.Label] = []
+    }
+    if(productLine) {
+        for (let b of product.blanks) {
+            for (let h of Object.keys(headers)) {
+                let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
+                headers[h].push(val);
+            }
+        }
     }
     let index = 0;
     if(product.threadColors && product.threadColors.length > 0) {
@@ -176,7 +198,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
                     if (product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
                         for (let v of product.variants[b.code][tc.name][c.name]) {
                             for (let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index: index })
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, })
                                 headers[h].push(val);
                             }
                             index++;
@@ -227,30 +249,57 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product }) => {
     ); 
 }
 
-const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName }) => {
+const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type }) => {
 
     let value = "N/A";
-    if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
-        if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
-            value = "N/A";
+    if(type && type == "product") {
+        if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+            if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
+                value = "N/A";
+            }
+            else value = csvFunctions[mp.productDefaultValues[headerLabel]](product, index);
         }
-        else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
-    }
-    else if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel]]) {
-        value = csvFunctions[mp.defaultValues[headerLabel]](variant, mp.sizeConverter, numBlanks, blankName);
-    } else if (mp.defaultValues && mp.defaultValues[headerLabel]== "index") {
-        if(index < product.productImages.length) {
-            value = index + 1;
+        else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("variant") && csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]]) {
+            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1]);
+        } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] == "index") {
+            if (index < product.productImages.length) {
+                value = index + 1;
+            }
+        }
+        else if (blankOverRides && blankOverRides[headerLabel]) {
+            value = blankOverRides[headerLabel];
+        } else if (headerLabel == "Category" || headerLabel == "Type") {
+            value = category;
+        } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel]) {
+            value = mp.productDefaultValues[headerLabel];
+            if (mp.productDefaultValues[headerLabel] == "Thread Color" && !threadColor) {
+                value = "N/A";
+            }
         }
     }
-    else if( blankOverRides && blankOverRides[headerLabel]) {
-        value = blankOverRides[headerLabel];
-    }else if(headerLabel == "Category" || headerLabel == "Type") {
-        value = category;
-    }else if (mp.defaultValues && mp.defaultValues[headerLabel]) {
-        value = mp.defaultValues[headerLabel];
-        if (mp.defaultValues[headerLabel] == "Thread Color" && !threadColor) {
-            value = "N/A";
+    else {
+        if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
+            if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
+                value = "N/A";
+            }
+            else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
+        }
+        else if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
+            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1]);
+        } else if (mp.defaultValues && mp.defaultValues[headerLabel]== "index") {
+            if(index < product.productImages.length) {
+                value = index + 1;
+            }
+        }
+        else if( blankOverRides && blankOverRides[headerLabel]) {
+            value = blankOverRides[headerLabel];
+        }else if(headerLabel == "Category" || headerLabel == "Type") {
+            value = category;
+        }else if (mp.defaultValues && mp.defaultValues[headerLabel]) {
+            value = mp.defaultValues[headerLabel];
+            if (mp.defaultValues[headerLabel] == "Thread Color" && !threadColor) {
+                value = "N/A";
+            }
         }
     }
     return value
@@ -352,6 +401,13 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                                 setMarketPlace({ ...m });
                                                 document.getElementById("newHeader").value = "";
                                             }}>Add Header</Button>
+                                            <FormControlLabel control={<Checkbox checked={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} onChange={(event)=>{
+                                                console.log(event.target.checked);
+                                                let m = { ...marketPlace };
+                                                if(!m.hasProductLine) m.hasProductLine = [];
+                                                m.hasProductLine[index] = event.target.checked;
+                                                setMarketPlace({ ...m });
+                                            }} />} label="Add Product Line" />
                                         </Box>
                                          <IconButton onClick={() => {
                                             setDeleteImage(index);
@@ -383,6 +439,35 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                                         <DeleteIcon sx={{ color: "#780606" }} />
                                                     </IconButton>
                                                 </Box>
+                                                {marketPlace.hasProductLine && marketPlace.hasProductLine[index] && (
+                                                    <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", alignItems: "center", padding: "1%", border: "1px solid #eee" }}>
+                                                        <TextField
+                                                            label="Default Value"
+                                                            variant="outlined"
+                                                            fullWidth
+                                                            value={blank && blank.marketPlaceOverrides && blank.marketPlaceOverrides[marketPlace.name] && blank.marketPlaceOverrides[marketPlace.name][header.id] ? blank.marketPlaceOverrides[marketPlace.name][header.id] : marketPlace.productDefaultValues ? marketPlace.productDefaultValues[header.id] : ""}
+                                                            onChange={(e) => {
+                                                                let m = { ...marketPlace };
+                                                                if (blank) {
+                                                                    let b = { ...blank };
+                                                                    if (!b.marketPlaceOverrides) {
+                                                                        b.marketPlaceOverrides = {};
+                                                                    }
+                                                                    if (!b.marketPlaceOverrides[marketPlace.name]) {
+                                                                        b.marketPlaceOverrides[marketPlace.name] = {};
+                                                                    }
+                                                                    b.marketPlaceOverrides[marketPlace.name][header.id] = e.target.value;
+                                                                    setBlank(b);
+                                                                } else {
+                                                                    if (!m.productDefaultValues) {
+                                                                        m.productDefaultValues = {};
+                                                                    }
+                                                                    m.productDefaultValues[header.id] = e.target.value;
+                                                                    setMarketPlace({ ...m });
+                                                                }
+                                                            }} />
+                                                    </Box>
+                                                )}
                                                 <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", alignItems: "center", padding: "1%", border: "1px solid #eee" }}>
                                                     <TextField
                                                         label="Default Value"

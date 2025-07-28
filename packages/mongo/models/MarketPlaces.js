@@ -8,6 +8,8 @@ const schema = new mongoose.Schema({
     brand: String,
     credentials: Object,
     defaultValues: Object,
+    productDefaultValues: Object,
+    hasProductLine: [{ type: Boolean, default: false }],
 });
 
 export default PremierPrinting.model("Marketplaces", schema);
