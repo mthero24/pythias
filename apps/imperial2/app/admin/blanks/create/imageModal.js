@@ -28,7 +28,7 @@ export function ImageModal({openImage, setOpenImage, color, blank, activePrintAr
         </Box>
         <ColorImage
             style={blank}
-            activePrintAreas={activePrintAreas.sort(
+            activePrintAreas={activePrintAreas?.sort(
             (a, b) => printAreas.indexOf(a) - printAreas.indexOf(b)
             )}
             overridePrintBox={({box, side, image}) =>

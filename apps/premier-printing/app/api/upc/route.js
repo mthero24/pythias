@@ -48,6 +48,7 @@ export async function POST(req=NextApiRequest){
             console.log("Updated UPC with GTIN:", upc)
         }
     }
+    console.log(upcs)
     return NextResponse.json({error: false, upcs})
 }
 

@@ -390,15 +390,16 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                     </Grid2>
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
+                        {console.log(des.products, des.products.length > 0,  "products")}
                     {des.products && des.products.length > 0 && des.products.map((p, i) => (
                         <Grid2 size={4} key={i}> 
+                            {console.log(p, "product inside map")}
                             <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-                                    
-                                    <img src={p.productImages?.filter(i => i.color._id?.toString() == p.defaultColor?.toString() && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
+                                    <img src={p?.productImages?.filter(i => i.color._id?.toString() == (p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString()) && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
                                 </Box>
-                                {p.productImages.filter(i => i.color?._id?.toString() == p.defaultColor?.toString() && (i.side == "back" || i.side == "modelBack"))[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", position: "relative", zIndex: 1, top: -130, left: 0, padding: "2%", marginBottom: "-130px", }}>
-                                    <img src={p.productImages.filter(i => i.color._id.toString() == p.defaultColor.toString() && (i.side == "back" || i.side == "modelBack"))[0]?.image} width={120} height={120} style={{ objectFit: "cover", borderRadius: "100px" }} />
+                                {p.productImages?.filter(i => i.color?._id?.toString() == (p.defaultColor_id ? p.defaultColor_id.toString() : p.defaultColor.toString()) && (i.side == "back" || i.side == "modelBack"))[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", position: "relative", zIndex: 1, top: -130, left: 0, padding: "2%", marginBottom: "-130px", }}>
+                                    <img src={p.productImages.filter(i => i.color._id.toString() == (p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString()) && (i.side == "back" || i.side == "modelBack"))[0]?.image} width={120} height={120} style={{ objectFit: "cover", borderRadius: "100px" }} />
                                 </Box>}
                                 <Divider sx={{ margin: "2% 0" }} />
                                 <Box sx={{ display: "flex", flexDirection: "column",}}>

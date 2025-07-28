@@ -39,6 +39,7 @@ const schema = new mongoose.Schema({
     }],
     variants: Object,
     variantImages: Object,
+    variantSecondaryImages: Object,
     defaultColor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: Color,

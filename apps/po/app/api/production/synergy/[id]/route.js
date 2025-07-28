@@ -32,7 +32,8 @@ export async function GET(request, { params }) {
     let par = await params
     //console.log(par)
     let item = await Item.findOne({ pieceId: par.id })
-    item.color = await Colors.findOne({_id: item.color}).select("name category color_type hexcode image")
+    console.log(item, "item");
+    item.color = await Colors.findOne({ _id: item.color }).select("name category color_type hexcode image")
     item.styleV2 = await Style.findOne({ code: item.styleCode });
     //console.log(item.styleV2.envelopes);
     //console.log(envleopes, "fff");
