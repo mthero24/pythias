@@ -114,6 +114,10 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             ))}
             {threadColors && Object.keys(imgs).length > 0 && Object.keys(imgs).map((b, i) => (
                 <Box key={i} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
+                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: 3, alignItems: "center", marginBottom: "1%" }}>
+                        <Button variant="outlined" sx={{ width: "50%", background: mainImage ? "#e2e2e2" : "#fff" }} onClick={() => setMainImage(true)}>Main Variant Image</Button>
+                        <Button variant="outlined" sx={{ width: "50%", background: !mainImage ? "#e2e2e2" : "#fff" }} onClick={() => setMainImage(false)}>Secondary Variant Images</Button>
+                    </Box>
                     <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{b}</Typography>
                     {Object.keys(imgs[b]).map((tc, j) => (
                         <Box key={j} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
@@ -127,8 +131,10 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                                                 <Grid2 key={l} size={4} onClick={() => {
                                                     let prods = [...products]
                                                     let p = prods.filter(p => p.id == product.id)[0]
+                                                    if (!p.variantImages) p.variantImages = {}
                                                     if (!p.variantImages[b]) p.variantImages[b] = {}
                                                     if (!p.variantImages[b][tc]) p.variantImages[b][tc] = {}
+                                                    if (!p.variantSecondaryImages) p.variantSecondaryImages = {}
                                                     if (!p.variantSecondaryImages[b]) p.variantSecondaryImages[b] = {}
                                                     if (!p.variantSecondaryImages[b][tc]) p.variantSecondaryImages[b][tc] = {}
                                                     if (!p.variantSecondaryImages[b][tc][c]) p.variantSecondaryImages[b][tc][c] = []
@@ -145,10 +151,10 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                                                     setProducts([...prods])
                                                 }}>
                                                     <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
-                                                    {product.variantImages[b] && product.variantImages[b][tc] && product.variantImages[b][tc][c] && product.variantImages[b][tc][c].image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
+                                                    {product.variantImages && product.variantImages[b] && product.variantImages[b][tc] && product.variantImages[b][tc][c] && product.variantImages[b][tc][c].image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
                                                         <Checkbox checked={true} />
                                                     </Box>}
-                                                    {product.variantSecondaryImages[b] && product.variantSecondaryImages[b][tc] && product.variantSecondaryImages[b][tc][c] && product.variantSecondaryImages[b][tc][c].find(i => i.image == img.image) && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
+                                                    {product.variantSecondaryImages && product.variantSecondaryImages[b] && product.variantSecondaryImages[b][tc] && product.variantSecondaryImages[b][tc][c] && product.variantSecondaryImages[b][tc][c].find(i => i.image == img.image) && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
                                                         <Checkbox checked={true} color="error" />
                                                     </Box>}
                                                 </Grid2>

@@ -29,7 +29,11 @@ export async function PUT(req=NextApiRequest){
         }
         console.log(printItems.length)
         location.received = true
-        let printLabels = await axios.post("https://imperial.pythiastechnologies.com/api/production/print-labels", {items: printItems})
+        try {
+            await axios.post("https://imperial.pythiastechnologies.com/api/production/print-labels", {items: printItems})
+        } catch (error) { 
+            console.log("Error printing labels:", error);
+        }  
         //console.log(printLabels?.data)
         if(!order.locations.filter(l=> l.received == false)[0]) order.received = true
         order.markModified("locations received")

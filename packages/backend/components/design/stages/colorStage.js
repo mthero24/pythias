@@ -21,7 +21,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                             design.threadColors.map(tc => { return colors.filter(c => c._id.toString() == tc.toString())[0] }).map(c => (
                                                 <Grid2 key={c._id.toString()} size={3} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
                                                     let produs = [...products]
-                                                    let p = { ...produs.filter(p => p.id == product.id)[0] }
+                                                    let p = produs.filter(p => p.id == product.id)[0] 
                                                     if (!p.threadColors.filter(co => co._id.toString() == c._id.toString())[0]) p.threadColors.push(c)
                                                     else {
                                                         let colors = [];
@@ -30,7 +30,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                                         }
                                                         p.threadColors = colors
                                                     }
-                                                    products([...produs])
+                                                    setProducts([...produs])
                                                 }}>
                                                     <Box sx={{ background: c.hexcode, padding: "10%", width: "100%", height: "45px", borderRadius: "10px", boxShadow: `2px 2px 2px ${c.hexcode}` }}>
                                                         {product.threadColors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}

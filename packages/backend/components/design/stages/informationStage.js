@@ -3,7 +3,7 @@ import CreatableSelect from "react-select/creatable";
 import axios from "axios";
 import { set } from "mongoose";
 
-export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs }) => {
+export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors }) => {
     return (
         <Grid2 size={12} sx={{ padding: "0% 4%" }}>
             <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Product Information</Typography>
