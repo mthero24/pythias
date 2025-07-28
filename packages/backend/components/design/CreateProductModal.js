@@ -14,6 +14,7 @@ import { ProductImageStage } from "./stages/productImageStage";
 import { VariantImageStage } from "./stages/variantImageStage";
 import { InformationStage } from "./stages/informationStage";
 import { PreviewStage } from "./stages/previewStage";
+import { set } from "mongoose";
 
 export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading }) => {
     const [cols, setColors] = useState({})
@@ -41,6 +42,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
     };
     useEffect(() => {
         if(product) {
+            let prods = []
             let prod = {...product}
             for (let b of prod.blanks) {
                 if (b.multiImages["modelFront"] && b.multiImages["modelFront"].length > 0) {
@@ -58,7 +60,8 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                     }
                 }
             }
-            if(prod && prod._id)products.push(prod);
+            if(prod && prod._id)prods.push(prod);
+            setProducts(prods);
         }
     }, [product])
     useEffect(() => {
