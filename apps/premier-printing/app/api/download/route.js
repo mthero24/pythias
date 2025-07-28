@@ -46,7 +46,7 @@ const csvFunctions = {
     },
     productImage: (product, index) => {
         if (product.productImages && product.productImages.length > index && product.productImages[index] && product.productImages[index].image) {
-            return product.productImages[index].image;
+            return product.productImages[index].image.replace("=400", "=2400");
         }
         return "N/A";
     },
@@ -63,38 +63,64 @@ const csvFunctions = {
         return variant.image ? variant.image.replace("=400", "=2400") : "N/A";
     },
     variantImages: (variant, sizeConverter, numBlanks, blankName, index) => {
-        console.log("variant", variant, "index", index);
+       // console.log("variant", variant, "index", index);
         return variant.images && variant.images.length > index ? variant.images[index].image.replace("=400", "=2400") : "N/A";
     },
     variantColorFamily: (variant) => {
         return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "";
     }
 };
-const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName}) => {
+const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type}) => {
 
 
     let value = "N/A";
-    if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
-        if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
-            value = "N/A";
+    if(type && type == "product") {
+        if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+            if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
+                value = "N/A";
+            }
+            else value = csvFunctions[mp.productDefaultValues[headerLabel]](product, index);
         }
-        else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
-    }
-    else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
-        value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1]);
-    } else if (mp.defaultValues[headerLabel] == "index") {
-        if (index < product.productImages.length) {
-            value = index + 1;
+        else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("variant") && csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]]) {
+            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1]);
+        } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] == "index") {
+            if (index < product.productImages.length) {
+                value = index + 1;
+            }
         }
-    }
-    else if (blankOverRides && blankOverRides[headerLabel]) {
-        value = blankOverRides[headerLabel];
-    } else if (headerLabel == "Category" || headerLabel == "Type") {
-        value = category;
-    } else if (mp.defaultValues && mp.defaultValues[headerLabel]) {
-        value = mp.defaultValues[headerLabel];
-        if (mp.defaultValues[headerLabel] == "Thread Color" && !threadColor) {
-            value = "N/A";
+        else if (blankOverRides && blankOverRides[headerLabel]) {
+            value = blankOverRides[headerLabel];
+        } else if (headerLabel == "Category" || headerLabel == "Type") {
+            value = category;
+        } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel]) {
+            value = mp.productDefaultValues[headerLabel];
+            if (mp.productDefaultValues[headerLabel] == "Thread Color" && !threadColor) {
+                value = "N/A";
+            }
+        }
+    }else{
+        if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("product") && csvFunctions[mp.defaultValues[headerLabel]]) {
+            if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
+                value = "N/A";
+            }
+            else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
+        }
+        else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
+            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1]);
+        } else if (mp.defaultValues[headerLabel] == "index") {
+            if (index < product.productImages.length) {
+                value = index + 1;
+            }
+        }
+        else if (blankOverRides && blankOverRides[headerLabel]) {
+            value = blankOverRides[headerLabel];
+        } else if (headerLabel == "Category" || headerLabel == "Type") {
+            value = category;
+        } else if (mp.defaultValues && mp.defaultValues[headerLabel]) {
+            value = mp.defaultValues[headerLabel];
+            if (mp.defaultValues[headerLabel] == "Thread Color" && !threadColor) {
+                value = "N/A";
+            }
         }
     }
     return value
@@ -112,9 +138,21 @@ export async function GET(req = NextApiResponse, ) {
         for (let h of header) {
             headers[h.Label] = []
         }
+    } 
+    console.log(marketPlace.hasProductLine[data.header], "hasProductLine for header", data.header);
+    let sendVarianrts = [];
+    if (marketPlace.hasProductLine && (marketPlace.hasProductLine[data.header])) {
+        for (let b of product.blanks) {
+            let thisHead = { ...headers };
+            for (let h of Object.keys(headers)) {
+                let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
+                console.log("Header value for", h, ":", val);
+                thisHead[h] = val != "N/A" ? val : "";
+            }
+            sendVarianrts.push(thisHead);
+        }
     }
     let index = 0; 
-    let sendVarianrts = [];
     if(product.threadColors && product.threadColors.length > 0) {
         for (let b of product.blanks) {
             for(let tc of product.threadColors) {
