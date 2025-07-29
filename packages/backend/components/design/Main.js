@@ -409,6 +409,21 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                         </ListItem>
                                     </List>
                                 </Box>
+                                <Typography variant="body2" >Marketplaces:</Typography>
+                                <Grid2 container spacing={2}>
+                                    {p.marketPlaces && Object.keys(p.marketPlaces).length > 0 && Object.keys(p.marketPlaces).map(m=>(
+                                        <Grid2 key={m} size={3}>
+                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#87AE73" }}>
+                                                <Typography variant="body2">{p.marketPlaces[m].name}</Typography>
+                                            </Box>
+                                        </Grid2>
+                                    ))}
+                                    {!p.marketPlaces && <Grid2 size={12}>
+                                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                                            <Typography variant="body2">No Marketplaces Found</Typography>
+                                        </Box>
+                                    </Grid2>}
+                                </Grid2>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: "1%" }}>
                                     <Button variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct(p) }} >Add To MarketPlace</Button>
                                     <Button variant="outlined" color="secondary" onClick={()=>{setProduct(p); setCreateProduct(true);}}>Edit Product</Button> 
