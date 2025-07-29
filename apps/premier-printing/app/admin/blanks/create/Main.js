@@ -156,8 +156,7 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
     console.log(images, images)
     data.sizeGuide.images = sizeChartImages
     data.videos = videos
-    console.log(blank.printLocations, "blank locations")
-    data.printLocations = blank.printLocations
+    data.printLocations = blank?.printLocations
     let bla= { ...data, multiImages: images, box: box.current, colors: activeColors, };
     console.log(bla)
     let result = await axios.post("/api/admin/blanks", { blank: bla });
