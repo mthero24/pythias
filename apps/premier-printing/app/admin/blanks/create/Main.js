@@ -285,8 +285,8 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
 
   const vendors = [
     {
-      value: "Imperial",
-      label: "Imperial",
+      value: "Simply Sage",
+      label: "Simply Sage",
     },
   ];
 

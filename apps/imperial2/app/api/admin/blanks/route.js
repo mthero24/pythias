@@ -11,6 +11,7 @@ export async function GET(){
 }
 const updateFold = (blank)=>{
   let newFold = []
+  if (!blank.fold) blank.fold = [];
   for(let s of blank.sizes){
     let fold = blank.fold.filter(f=> f.size.toString() == s._id)[0]
     if(fold) newFold.push(fold)
@@ -38,7 +39,7 @@ const updateEnvelopes = (blank)=>{
   for(let s of blank.sizes){
     //console.log(s)
     for(let loc of printLocations){
-      if(!newEnvelopes.filter(e=> e.size.toString() == s._id.toString() && e.placement == loc)[0]){
+      if (!newEnvelopes.filter(e => e.size.toString() == s?._id?.toString() && e.placement == loc)[0]){
         newEnvelopes.push({
           size: s._id,
           sizeName: s.name,
@@ -95,19 +96,22 @@ export async function POST(req = NextApiRequest) {
   //console.log(data)
   let blank = data.blank
   //console.log(blank, "blank")
-  if(blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
-  if(blank.sizes.length > 0) blank = updateFold(blank)
   let newBlank
   try {
     if(blank._id){
+      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
+      if (blank.sizes.length > 0) blank = updateFold(blank)
       newBlank = await Blank.findByIdAndUpdate(blank._id, blank)
       newBlank = await Blank.findById(blank._id).populate("printLocations") 
       updateInventory(blank)
     }
     else {
       let newBlank = new Blank({ ...blank });
-      await newBlank.save();
-      generateInventory(newBlank);
+      blank = await newBlank.save();
+      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
+      if (blank.sizes.length > 0) blank = updateFold(blank)
+      await blank.save()
+      generateInventory(blank);
     }
     //console.log(newBlank)
     return NextResponse.json({error: false, blank: newBlank});

@@ -7,8 +7,10 @@ import  amazon from "./amazon.png"
 import acenda from "./Acenda.png"
 import {TikTokModal} from "./TikTokModal";
 import {useState} from "react";
+import {AcendaModal} from "./AcendaModal";
 export function Main({tiktokShops, provider}){
     let [tikTokOpen, setTikTokOpen] = useState(false)
+    let [acendaOpen, setAcendaOpen] = useState(false)
     return (
         <Container maxWidth={"lg"}>
             <Box sx={{padding: "3%"}}>
@@ -38,7 +40,7 @@ export function Main({tiktokShops, provider}){
                         </Card>
                     </Grid2>
                     <Grid2 size={3}>
-                        <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }}>
+                        <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} onClick={()=>{setAcendaOpen(true)}}>
                              <Box>
                                 <Image src={acenda} alt={"acenda"} width={600} height={600} style={{width: "100%", height: "auto", objectFit: "cover"}}/>
                             </Box>
@@ -47,6 +49,7 @@ export function Main({tiktokShops, provider}){
                 </Grid2>
             </Box>
             <TikTokModal open={tikTokOpen} setOpen={setTikTokOpen} provider={provider}/>
+            <AcendaModal open={acendaOpen} setOpen={setAcendaOpen} provider={provider}/>
             <Divider/>
             <Box sx={{padding: "3%"}}>
                  <Typography textAlign={"center"} fontSize={"1.4rem"}>Connections</Typography>
