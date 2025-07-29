@@ -287,6 +287,10 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
       value: "Simply Sage",
       label: "Simply Sage",
     },
+    {
+      value: "Premier Printing",
+      label: "Premier Printing",
+    },
   ];
 
   const bulletPointDefaults = ["Fit", "Fabric", "Care Instructions"].map(

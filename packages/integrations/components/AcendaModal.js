@@ -40,9 +40,9 @@ export function AcendaModal({ open, setOpen, provider }) {
             >
                 <Box sx={style}>
                     <Typography textAlign={"center"} fontSize={"1.4rem"} margin="2%">New Acenda Connection</Typography>
-                    <TextField fullWidth label="Display Name" value={displayName} onChange={() => { setDisplayName(event.target.value) }} />
-                    <TextField fullWidth label="API Key" value={apiKey} onChange={() => { setApiKey(event.target.value) }} />
-                    <TextField fullWidth label="API Secret" value={apiSecret} onChange={() => { setApiSecret(event.target.value) }} />
+                    <TextField fullWidth label="Display Name" value={displayName} onChange={() => { setDisplayName(event.target.value) }} sx={{ margin: "1% 0%"}} />
+                    <TextField fullWidth label="API Key" value={apiKey} onChange={() => { setApiKey(event.target.value) }} sx={{ margin: "1% 0%"}} />
+                    <TextField fullWidth label="API Secret" value={apiSecret} onChange={() => { setApiSecret(event.target.value) }} sx={{margin: "1% 0%"}} />
                     <Button fullWidth sx={{ background: "#0066CC", color: "#fff", marginTop: "2%" }} onClick={sub}>Connect</Button>
                 </Box>
             </Modal>
