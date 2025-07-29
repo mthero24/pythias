@@ -2,7 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Blanks from "@/models/Blanks";
 import Inventory from "@/models/inventory";
 import Color from "@/models/Color";
-
+//#some note
 export async function GET(){
   try{
     let blanks = await Blanks.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});
