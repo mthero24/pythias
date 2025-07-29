@@ -1,4 +1,4 @@
-import {Bins, Items} from "@pythias/mongo";
+import {Bin as Bins, Items} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 
 export async function POST(req=NextApiRequest){
