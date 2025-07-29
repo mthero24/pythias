@@ -69,7 +69,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                                         {product.colors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}
                                                     </Box>
                                                     <Typography sx={{ fontSize: ".6rem", textAlign: "center" }}>{c.name}</Typography>
-                                                    {design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0]) && design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0])[0].colors.filter(cl => cl._id.toString() == c._id.toString())[0] && <Box sx={{display: "flex", alignItems: "center", justifyContent: "center"}}><WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} /></Box>}
+                                                    {design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0]) && design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0])[0] && product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString()[0])[0].colors.filter(cl => cl._id.toString() == c._id.toString())[0] && <Box sx={{display: "flex", alignItems: "center", justifyContent: "center"}}><WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} /></Box>}
                                                 </Grid2>
                                             ))
                                         }
