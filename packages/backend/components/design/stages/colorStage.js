@@ -1,6 +1,7 @@
 import { Box, Grid2, Button, Typography, Card, Divider, } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 import CheckIcon from '@mui/icons-material/Check';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
 
 export const ColorStage = ({ products, setProducts, setStage, design, source, combined, colors, cols, sizes, setImages, upcs, getTempUpcs }) => {
@@ -68,6 +69,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                                         {product.colors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}
                                                     </Box>
                                                     <Typography sx={{ fontSize: ".6rem", textAlign: "center" }}>{c.name}</Typography>
+                                                    {design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0]) && design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0])[0].colors.filter(cl => cl._id.toString() == c._id.toString())[0] && <Box sx={{display: "flex", alignItems: "center", justifyContent: "center"}}><WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} /></Box>}
                                                 </Grid2>
                                             ))
                                         }
@@ -80,7 +82,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                         <Grid2 size={{ xs: 12, sm: 9, md: 8 }}>
                             <CreatableSelect
                                 placeholder="Default Color"
-                                options={product.colors.map(c => { return { value: c, label: <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "1% 15%" }}><Box sx={{ background: c.hexcode, padding: "1% 3%", width: { xs: "2%", md: "1%" }, height: "35px", borderRadius: "10px" }}></Box><Box sx={{ padding: "2%" }}><Typography>{c.name}</Typography></Box></Box> } })}
+                                options={product.colors.map(c => { return { value: c, label: <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "1% 15%" }}><Box sx={{ background: c.hexcode, padding: "1% 3%", width: { xs: "2%", md: "1%" }, height: "35px", borderRadius: "10px" }}></Box>{design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0]) && design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0])[0] && design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0])[0].defaultColor && design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0])[0].defaultColor.toString() == c._id.toString() && <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} />}<Box sx={{ padding: "2%" }}><Typography>{c.name}</Typography></Box></Box> } })}
                                 value={product.defaultColor && {
                                     value: product.defaultColor, label: <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "1% 15%" }}><Box sx={{ background: product.defaultColor.hexcode, padding: { xs: "10%", md: "5%" }, width: "1%", height: "35px", borderRadius: "10px" }}></Box><Box sx={{ padding: "2%" }}><Typography>{product.defaultColor.name}</Typography></Box></Box>
                                 }}

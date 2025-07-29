@@ -1,7 +1,8 @@
 import { Box, Grid2, Button, Typography, Divider, FormControlLabel, Checkbox } from "@mui/material";
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { set } from "mongoose";
 
-export const BlankStage = ({products, setProducts, setStage, blanks, design, source, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs, scrollToTarget})=>{
+export const BlankStage = ({products, setProducts, setStage, blanks, design, source, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs})=>{
     return (
         <Grid2 container spacing={2} sx={{ marginBottom: "2%" }}>
             <Grid2 size={12}>
@@ -67,6 +68,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                     }}>
                         <Box sx={{ border: "1px solid #000", borderRadius: "5px", padding: "1%", margin: ".5%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", "&:hover": { background: "#f0f0f0", opacity: .7 } }}>
                             <Box sx={{ position: "relative", zIndex: 999, display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", }}>
+                                {design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0] && design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0].colors && design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0].colors.length > 0 && <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem"}} />}
                                 <FormControlLabel control={<Checkbox checked={products.filter(p => p.blanks.filter(blank => blank?._id?.toString() == b?._id?.toString())[0] != undefined).length > 0} />} />
                             </Box>
                             <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
@@ -136,6 +138,17 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                             }
                             getUpcs({ blanks, design })
                         }
+                        let previousColors = []
+                        for(let prod of prods){
+                            for(let b of prod.blanks){
+                                console.log(design.blanks.map(b=> b.blank._id) )
+                                if (design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0]){
+                                    previousColors = design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0].colors
+                                    console.log("Found design for blank", b._id.toString(), "in design", design._id.toString());
+                                }
+                            }
+                        }
+                        console.log(previousColors)
                         setProducts([...prods])
                         setStage("colors")
                     }
