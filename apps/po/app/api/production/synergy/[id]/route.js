@@ -34,17 +34,22 @@ export async function GET(request, { params }) {
     let item = await Item.findOne({ pieceId: par.id })
     console.log(item, "item");
     item.color = await Colors.findOne({ _id: item.color }).select("name category color_type hexcode image")
+    if(!item.color) {
+        console.log("No color found for item", item.colorName);
+        if(item.colorName == "premium heather") item.color = await Colors.findOne({ name: "Ash" }).select("name category color_type hexcode image");
+        else item.color = await Colors.findOne({ name: "black" }).select("name category color_type hexcode image");
+    }
     item.styleV2 = await Style.findOne({ code: item.styleCode });
     //console.log(item.styleV2.envelopes);
     //console.log(envleopes, "fff");
     let pretreatments = item.styleV2.pretreatments.filter(
-        (pre) => pre.type == item.color.color_type
+        (pre) => pre.type == (item.color ? item.color.color_type : "dark")
     );
     //console.log(item.color)
     let firefly;
     for (let fly of item.styleV2.firefly) {
         //console.log(fly.type == item.color.color_type);
-        if (fly.type == item.color.color_type) firefly = fly;
+        if (fly.type == (item.color ? item.color.color_type : "dark")) firefly = fly;
     }
     let side
     if(!item.printedSides) item.printedSides = {}
@@ -147,14 +152,14 @@ export async function GET(request, { params }) {
     let pressTemp;
     let printedTemp;
     let printedTime;
-    if (item.color.name.toLowerCase() == "ash") {
+    if (item.color?.name.toLowerCase() == "ash") {
         firefly.cureTemp = temps.ash.temp;
         firefly.cureTime = temps.ash.time;
         pressTime = temps.pressAsh.time;
         pressTemp = temps.pressAsh.temp;
         printedTime = temps.printedAsh.time;
         printedTemp = temps.printedAsh.temp;
-    } else if (item.color.color_type.toLowerCase() == "light") {
+    } else if ((item.color ? item.color.color_type : "dark").toLowerCase() == "light") {
         firefly.cureTemp = temps.light.temp;
         firefly.cureTime = temps.light.time;
         pressTime = temps.pressLight.time;
@@ -203,11 +208,11 @@ export async function GET(request, { params }) {
     if (item.styleV2.code == "WRT") item.color.category == "Standard";
     //console.log(item.color);
     if (
-        item.color.name.toLowerCase() == "white" ||
-        (item.color.category == "2 tone" && item.styleV2.code != "EZ145")
+        item.color?.name.toLowerCase() == "white" ||
+        (item.color?.category == "2 tone" && item.styleV2.code != "EZ145")
     )
         Profile.inkCombination = 0;
-    else if (item.color.name == "ash") {
+    else if (item.color?.name == "ash") {
         Profile.saturation = 5;
         Profile.brightness = 0;
         Profile.contrast = 5;
@@ -215,7 +220,7 @@ export async function GET(request, { params }) {
         Profile.mask = 3;
     } else {
         //console.log(item.styleV2.profiles);
-        if (item.color.color_type == "dark") {
+        if ((item.color ? item.color.color_type : "dark") == "dark") {
         for (let pro of item.styleV2.profiles) {
             if (pro.type == "dark") {
             //Profile.highlight = pro.highlight + 1;
@@ -230,7 +235,7 @@ export async function GET(request, { params }) {
             }
         }
         }
-        if (item.color.name == "red" || item.color.name == "orange"){
+        if (item.color?.name == "red" || item.color?.name == "orange"){
 
         }
     }
@@ -415,7 +420,7 @@ export async function GET(request, { params }) {
                                     <ServerType>LOCAL</ServerType>
                                     <Uri>${
                                         createImage(
-                                            item.color.name,
+                                            item.color? item.color.name : item.colorName,
                                             item.styleV2.code,
                                             { url: item.design[side], printArea: side, side: side == "back" || side == "namePlate"? "back": "front" }
                                         ).replace(/&/g, "&amp;")
@@ -429,7 +434,7 @@ export async function GET(request, { params }) {
                                 <Width>${width}</Width>     
                             </ArtInfo>
                         </Art>
-                        <Color>${item.color.name}</Color>
+                        <Color>${item.color? item.color.name : item.colorName}</Color>
                         <DateOrdered i:nil="true"/>
                         <Description>${item.sku}</Description>
                         <FinishedQuantity>0</FinishedQuantity>
