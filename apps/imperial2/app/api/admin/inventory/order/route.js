@@ -17,17 +17,17 @@ export async function PUT(req=NextApiRequest){
             inv.quantity = inv.quantity + i.quantity
             inv.pending_quantity = inv.pending_quantity - i.quantity
             let items = await Items.find({_id: {$in: order.items}, styleCode: inv.style_code, colorName: inv.color_name, sizeName: inv.size_name, labelPrinted: false }).populate("color", "name").populate("designRef", "sku name printType").lean().limit(i.quantity)
-            console.log(items.length)
+            //console.log(items.length)
             items.map(i=>{
                 i.inventory = inv
                 return i
             })
-            console.log(items)
+           // console.log(items)
             printItems= printItems.concat(items)
-            console.log(inv)
+            //console.log(inv)
            await inv.save()
         }
-        console.log(printItems.length)
+       // console.log(printItems.length)
         location.received = true
         try {
             await axios.post("https://imperial.pythiastechnologies.com/api/production/print-labels", {items: printItems})

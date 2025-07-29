@@ -139,7 +139,7 @@ export async function GET(req = NextApiResponse, ) {
             headers[h.Label] = []
         }
     } 
-    console.log(marketPlace.hasProductLine[data.header], "hasProductLine for header", data.header);
+    //console.log(marketPlace.hasProductLine[data.header], "hasProductLine for header", data.header);
     let sendVarianrts = [];
     if (marketPlace.hasProductLine && (marketPlace.hasProductLine[data.header])) {
         for (let b of product.blanks) {
