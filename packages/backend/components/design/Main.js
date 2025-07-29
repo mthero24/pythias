@@ -259,14 +259,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
         return (
         <Box>
             <Container maxWidth="lg">
-                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                    {!des.sendToMarketplaces && <Button sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff"}} onClick={()=>{
-                                    let d = {...des};
-                                    d.sendToMarketplaces = true;
-                                    setDesign({...d});
-                                    updateDesign({...d})
-                                    alert(`Design will resend to market places next time files are made`)
-                    }}>Resend To Market Places</Button>}
+                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center",  cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => { setCreateProduct(true) }}>
                     <Button sx={{ margin: "1% 2%", background: "#780606", color: "#ffffff"}} onClick={()=>{
                         setDeleteTitle("Are you sure you want to delete this design?");
                         setDeleeFunction({onDelete: deleteDesign});
