@@ -1,6 +1,7 @@
 import {NextApiResponse, NextResponse} from "next/server";
 import {MarketPlaces, Products} from "@pythias/mongo";
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
+//note: This code is used to generate a CSV file for product data based on the selected market place and product.
 const csvFunctions = {
     productSku: (product) => {
         return product.sku ? product.sku : product.name.replace(/ /g, "-").toLowerCase();
