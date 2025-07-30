@@ -3,6 +3,8 @@ import { PremierPrinting } from "../lib/connection";
 import Design from "./Design";
 import Blank from "./Blanks";
 import Color from "./Color";
+import MarketPlaces from "./MarketPlaces";
+import { Upcoming } from "@mui/icons-material";
 const schema = new mongoose.Schema({
     design: {
         type: mongoose.Schema.Types.ObjectId,
@@ -38,6 +40,26 @@ const schema = new mongoose.Schema({
         side: String
     }],
     variants: Object,
+    variantsArray: [{
+        image: String,
+        images: [String],
+        color: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: Color,
+        },
+        size: String,
+        sku: String,
+        threadColor: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: Color,
+        },
+        upc: String,
+        blank: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: Blank,
+        },
+        gtin: String,
+    }],
     variantImages: Object,
     variantSecondaryImages: Object,
     defaultColor: {
@@ -51,6 +73,12 @@ const schema = new mongoose.Schema({
     sku: { type: String},
     title: String,
     marketPlaces: Object,
+    marketPlacesArray: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: MarketPlaces
+        }
+    ],
     gender: String,
     season: String,
     tags: [String],

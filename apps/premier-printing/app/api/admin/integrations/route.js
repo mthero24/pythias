@@ -1,8 +1,10 @@
 import {NextApiRequest, NextResponse} from "next/server"
 import {generateAuthorizationUrl} from "@pythias/integrations"
 import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
+import next from "next";
 export async function GET(req=NextApiRequest){
-    return NextResponse.json({error: false})
+    let integration = await ApiKeyIntegrations.find({ provider: req.nextUrl.searchParams.get("provider") });
+    return NextResponse.json({error: false, integration})
 }
 
 export async function POST(req=NextApiRequest){

@@ -8,6 +8,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import Link from "next/link";
+import { connect } from "mongoose";
 
 const csvFunctions = {
     productSku: (product) => {
@@ -77,7 +78,7 @@ const csvFunctions = {
         return variant.image ? variant.image : "N/A";
     },
     variantImages: (variant, sizeConverter, numBlanks, blankName, index) => {
-        //console.log("variant", variant, "index", index);
+        console.log("variant", variant, "index", index);
         return variant.images && variant.images.length > index ? variant.images[index].image : "N/A";
     },
     variantColorFamily: (variant) => {
@@ -92,6 +93,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const [deleteFunction, setDeleteFunction] = useState({});
     const [deleteImage, setDeleteImage] = useState();
     const [marketplace, setMarketplace] = useState({ name: "", headers: [[]], defaultValues: {}, sizes: {} });
+    const [connections, setConnections] = useState([]);
     useEffect(() => {
         let sizeArray = [];
         for(let sizeArr of sizes? sizes : []) {
@@ -102,6 +104,15 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             }
         }
         setSize(sizeArray);
+        const getConnections = async () => {
+            console.log("getConnections called");
+            let res = await axios.get("/api/admin/integrations", { params: { provider: "premierPrinting" } });
+            console.log(res.data);
+            setConnections(res.data.integration);
+        }
+        if(open) {
+            getConnections();
+        }
     }, [open]);
     const [addMarketPlace, setAddMarketPlace] = useState(false);
     const style = {
@@ -159,25 +170,25 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
                     {product && product.marketPlaces && Object.keys(product.marketPlaces).length > 0 && Object.keys(product.marketPlaces).map((mpId) => (
                         <Box>
-                            {console.log(product.marketPlaces[mpId].hasProductLine)}
-                            {product.marketPlaces[mpId].headers.map((header, index) => (
+                            {console.log(marketPlaces, product.marketPlaces[mpId] )}
+                            {marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0] && marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0].headers.map((header, index) => (
                                 <Box sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee",position: "relative", top: "-5%" }}>
                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
                                         <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${product.marketPlaces[mpId]._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                     </Box>
-                                    <MarketPlaceList key={mpId} marketPlace={product.marketPlaces[mpId]} header={header} addMarketPlace={addMarketPlace} product={product} productLine={product.marketPlaces[mpId].hasProductLine && product.marketPlaces[mpId].hasProductLine[index] ? product.marketPlaces[mpId].hasProductLine[index] : false} />
+                                    <MarketPlaceList key={mpId} marketPlace={marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0]} header={header} addMarketPlace={addMarketPlace} product={product} productLine={product.marketPlaces[mpId].hasProductLine && product.marketPlaces[mpId].hasProductLine[index] ? marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0].hasProductLine[index] : false} />
                                 </Box>
                             ))}
                         </Box>
                     ))}
                 </Box>
-                <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} />
+                <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} />
                 <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
             </Box>
         </Modal>
     )
 }
-const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, productLine }) => {
+const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, productLine, connections }) => {
     let headers = {}
     for(let h of header) {
         headers[h.Label] = []
@@ -304,7 +315,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
     }
     return value
 }
-const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace, setDeleteModal, setDeleteImage, setOnDelete, setDeleteTitle, setMarketPlaces, blank, setBlank }) => {
+const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace, setDeleteModal, setDeleteImage, setOnDelete, setDeleteTitle, setMarketPlaces, blank, setBlank, connections }) => {
     const [showSizeConverter, setShowSizeConverter] = useState(false);
     const [update, setUpdate] = useState(false);
     const [header, setHeader] = useState("");
@@ -351,7 +362,8 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
         if (res.data.error) {
             return alert("Error creating marketplace");
         }else {
-            setMarketPlaces(res.data.marketPlaces);
+            console.log("res", res.data.marketPlaces);
+            setMarketPlaces([...res.data.marketPlaces]);
             setOpen(false);
         }
     }
@@ -389,6 +401,24 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                             value={marketPlace.name}
                             onChange={(e) => setMarketPlace({ ...marketPlace, name: e.target.value })}
                         />
+                        <Typography variant="body1" sx={{ marginTop: "1%" }}>Select Connection:</Typography>
+                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", overflowX: "auto", width: "100%" }}>
+                            {connections && connections.length > 0 && connections.map((connection) => (
+                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", border: "1px solid #ccc", background: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#1976d2" : "#fff", color: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={connection._id} onClick={() => {
+                                    let m = { ...marketPlace };
+                                    if(!m.connections) m.connections = [];
+                                    if(!m.connections.includes(connection._id.toString())) {
+                                        m.connections.push(connection._id.toString());
+                                    }else{
+                                        m.connections = m.connections.filter(conn => conn !== connection._id.toString());
+                                    }
+                                    console.log("marketPlace", m);
+                                    setMarketPlace({ ...m });
+                                }}>
+                                    <Typography variant="body1" sx={{ marginRight: "1%" }}>{connection.displayName}</Typography>
+                                </Box>
+                            ))}
+                        </Box>
                         {marketPlace.headers.map((header, index) => {
                             return(
                                 <Card key={index} sx={{padding: "2%", margin: "1% 0%",}}>

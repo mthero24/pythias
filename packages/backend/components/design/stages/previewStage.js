@@ -68,16 +68,12 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, setSizes,
                             let prods = []
                             for (let p of res.data.products) {
                                 if(design.products && design.products.length > 0) {
-                                    let existingProduct = design.products.find(prod => prod._id && prod._id.toString() === p._id.toString());
-                                    if (existingProduct) {
-
-                                    } else {
-                                        prods.push(p);
-                                    }
+                                    design.products = design.products.filter(prod=> prod._id != p._id)
                                 }
+                                prods.push(p);
                             }
                             let d = { ...design }
-                            d.products = [...d.products, ...prods]
+                            d.products = [...design.products, ...prods]
                             console.log(d.products, "updated products")
                             setDesign({ ...d })
                             updateDesign({ ...d })

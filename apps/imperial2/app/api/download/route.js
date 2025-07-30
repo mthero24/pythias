@@ -55,7 +55,7 @@ const csvFunctions = {
         return product.gender ? product.gender : "N/A";
     },
     variantImage: (variant, color, blankCode) => {
-        return variant.image ? variant.image : "N/A";
+        return variant.image ? variant.image.replace("=400", "=2400") : "N/A";
     },
     variantColorFamily: (variant) => {
         return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "";

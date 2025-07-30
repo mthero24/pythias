@@ -10,6 +10,7 @@ const schema = new mongoose.Schema({
     defaultValues: Object,
     productDefaultValues: Object,
     hasProductLine: [{ type: Boolean, default: false }],
+    connections: [String], // Array of connection IDs
 });
 
 export default PremierPrinting.model("Marketplaces", schema);
