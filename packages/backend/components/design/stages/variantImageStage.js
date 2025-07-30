@@ -6,7 +6,7 @@ export const VariantImageStage = ({products, setProducts, design, source, setSta
         <Grid2 size={12} sx={{padding: "0% 4%"}}>
             <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Variant Images</Typography>
             <Box>
-                {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors.length > 0 ? design.threadImages : design.images} setProducts={setProducts} threadColors={design.threadColors.length > 0? true: false} source={source}/>)}
+                {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors?.length > 0 ? design.threadImages : design.images} setProducts={setProducts} threadColors={design.threadColors?.length > 0? true: false} source={source}/>)}
             </Box>
             <Grid2 container spacing={2} sx={{ padding: "2%" }}>
                 <Grid2 size={6}>

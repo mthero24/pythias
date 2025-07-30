@@ -24,3 +24,4 @@ export {default as ReturnBins} from "./models/returnBins";
 export {default as Products} from "./models/Products";
 export {default as AvailableUPC} from "./models/AvailableUPC";
 export {default as Manifest} from "./models/manifest";
+export {default as ApiKeyIntegrations} from "./models/ApiKeyIntegrations";

@@ -98,7 +98,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                         let prods = [...products]
                         for(let product of prods){
                             let variants = {};
-                            if (design.threadColors.length > 0) {
+                            if (design.threadColors?.length > 0) {
                                 for (let d of Object.keys(design.threadImages)) {
                                     for (let blank of product.blanks) {
                                         for (let color of product.colors) {
@@ -151,7 +151,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                             }
                             product.variants = variants
                             product.sku = `${design.sku}-${product.blanks.map(b => b.code).join("-")}`
-                            product.hasThreadColors = design.threadColors.length > 0 ? true : false
+                            product.hasThreadColors = design.threadColors?.length > 0 ? true : false
                         }
                         setProducts([...prods])
                         setStage("preview")

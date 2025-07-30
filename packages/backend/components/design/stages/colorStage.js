@@ -19,7 +19,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                     <hr />
                                     <Grid2 container spacing={2} sx={{ marginTop: "2%" }}>
                                         {
-                                            design.threadColors.map(tc => { return colors.filter(c => c._id.toString() == tc.toString())[0] }).map(c => (
+                                            design.threadColors?.map(tc => { return colors.filter(c => c._id.toString() == tc.toString())[0] }).map(c => (
                                                 <Grid2 key={c._id.toString()} size={3} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
                                                     let produs = [...products]
                                                     let p = produs.filter(p => p.id == product.id)[0] 
@@ -69,7 +69,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                                         {product.colors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}
                                                     </Box>
                                                     <Typography sx={{ fontSize: ".6rem", textAlign: "center" }}>{c.name}</Typography>
-                                                    {design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0]) && design.blanks.filter(b => product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString())[0])[0] && product.blanks.filter(pb => pb._id.toString() == b.blank._id.toString()[0])[0].colors.filter(cl => cl._id.toString() == c._id.toString())[0] && <Box sx={{display: "flex", alignItems: "center", justifyContent: "center"}}><WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} /></Box>}
+                                                    {design.blanks?.filter(b => product.blanks.filter(pb => pb._id.toString() == b?.blank._id.toString())[0]) && design.blanks?.filter(b => product.blanks.filter(pb => pb._id.toString() == b?.blank._id.toString())[0])[0] && design.blanks?.filter(b => product.blanks.filter(pb => pb._id.toString() == b?.blank._id.toString())[0])[0].colors?.filter(cl => cl._id.toString() == c._id.toString())[0] && <Box sx={{display: "flex", alignItems: "center", justifyContent: "center"}}><WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} /></Box>}
                                                 </Grid2>
                                             ))
                                         }

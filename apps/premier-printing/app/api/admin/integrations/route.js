@@ -1,7 +1,6 @@
 import {NextApiRequest, NextResponse} from "next/server"
-import TikTokAuth from "@/models/tiktok";
 import {generateAuthorizationUrl} from "@pythias/integrations"
-
+import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 export async function GET(req=NextApiRequest){
     return NextResponse.json({error: false})
 }
@@ -22,5 +21,20 @@ export async function POST(req=NextApiRequest){
         let url = await generateAuthorizationUrl()
         console.log(url)
         return NextResponse.json({error: false, url})
+    }else if(data.type == "acenda"){
+        console.log("apiKey")
+        let integration = await ApiKeyIntegrations.findOne({displayName: data.displayName, provider: data.provider});
+        if(!integration){
+            integration = new ApiKeyIntegrations({displayName: data.displayName, apiKey: data.apiKey, apiSecret: data.apiSecret, organization: data.organization, provider: data.provider})
+            await integration.save()
+        }else if(!integration.provider){
+            integration.provider = data.provider
+            integration.apiKey = data.apiKey;
+            integration.apiSecret = data.apiSecret;
+            integration.organization = data.organization;
+            await integration.save()
+        }
+        let integrations = await ApiKeyIntegrations.find({provider: data.provider})
+        return NextResponse.json({ error: false, integrations })
     }
 }

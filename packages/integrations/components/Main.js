@@ -8,9 +8,10 @@ import acenda from "./Acenda.png"
 import {TikTokModal} from "./TikTokModal";
 import {useState} from "react";
 import {AcendaModal} from "./AcendaModal";
-export function Main({tiktokShops, provider}){
-    let [tikTokOpen, setTikTokOpen] = useState(false)
-    let [acendaOpen, setAcendaOpen] = useState(false)
+export function Main({tiktokShops, apiKeyIntegrations, provider}){
+    const [tikTokOpen, setTikTokOpen] = useState(false)
+    const [acendaOpen, setAcendaOpen] = useState(false)
+    const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || [])
     return (
         <Container maxWidth={"lg"}>
             <Box sx={{padding: "3%"}}>
@@ -49,7 +50,7 @@ export function Main({tiktokShops, provider}){
                 </Grid2>
             </Box>
             <TikTokModal open={tikTokOpen} setOpen={setTikTokOpen} provider={provider}/>
-            <AcendaModal open={acendaOpen} setOpen={setAcendaOpen} provider={provider}/>
+            <AcendaModal open={acendaOpen} setOpen={setAcendaOpen} provider={provider} apiConnections={apiConnections} setConnections={setApiConnections}/>
             <Divider/>
             <Box sx={{padding: "3%"}}>
                  <Typography textAlign={"center"} fontSize={"1.4rem"}>Connections</Typography>
@@ -68,7 +69,22 @@ export function Main({tiktokShops, provider}){
                             <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>
                         </Box>
                     </Box>
-                 ))}   
+                 ))}  
+                 {apiConnections.map(api=>(
+                    <Box key={api._id} sx={{background: "#fff", padding: "2%", borderRadius: "10px", margin: "1%", display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                        <Box>
+                            <Typography>{api.displayName}</Typography>
+                             <Typography sx={{ fontSize: ".8rem", textAlign: "left" }} title="API Key">API Key: {"*".repeat(api.apiKey.substring(0, api.apiKey.length - 6).length)}{api.apiKey.substring(api.apiKey.length - 6, api.apiKey.length)}</Typography>
+                            <Divider sx={{margin: "1%"}}/>
+                             <Typography sx={{ fontSize: ".8rem", textAlign: "left" }} title="API Secret">API Secret: {"*".repeat(api.apiSecret.substring(0, api.apiSecret.length - 6).length)}{api.apiSecret.substring(api.apiSecret.length - 6, api.apiSecret.length)}</Typography>
+                             <Typography sx={{ fontSize: ".8rem", textAlign: "left" }} title="Organization">Organization: {api.organization}</Typography>
+                        </Box>
+                        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start"}}>
+                            <Button sx={{background: "#0066CC", color: "#fff"}}> {api.access_token != undefined? "Reauthorize": "Authorize"}</Button>
+                            <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>
+                        </Box>
+                    </Box>
+                 ))}  
             </Box>
         </Container>
     )
