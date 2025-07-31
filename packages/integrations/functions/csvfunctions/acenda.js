@@ -137,7 +137,7 @@
 //     {"id": "images.default.7.alternate.url", "title": "images.default.7.alternate.url"},
 // ]
 
-// export async function createTargetCsv({prods, credentials, client, b, m}){
+ export async function createTargetCsv({prods, credentials, client, b, m}){
 //     console.log("make a target product csv")        
 //     let products = [] 
 //     for(let p of prods){  
@@ -288,4 +288,5 @@
 //         };
 //     const data = await s3.send(new PutObjectCommand(params));
 //     return url
-// }
+return null; // Placeholder for the actual implementation
+ }

@@ -1,8 +1,6 @@
 import {createTikTokCsv, createShopifyCsv} from "@pythias/integrations"
 import {Design, CSVUpdates} from "@pythias/mongo";
 import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
-const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
 import {getOrderKohls, NextGTIN, CreateUpdateUPC, getTokenAcenda, getItemsWalmart, retireItemWalmart, getSpecWalmart, bulkUploadWalmart, getFeedWalmart, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda} from "@pythias/integrations"
 import { createUpc } from "@/functions/createUpcs"
 const s3 = new S3Client({ credentials:{
