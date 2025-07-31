@@ -1,5 +1,5 @@
 
-import { createObjectCsvStringifier } from 'csv-writer';
+//import { createObjectCsvStringifier } from 'csv-writer';
 // //note: This code is used to generate a CSV file for product data based on the selected market place and product.
 const csvFunctions = {
     productSku: (product) => {
@@ -190,11 +190,11 @@ export const downloadProduct = async ({ product, marketPlace, header }) => {
     for (let h of marketPlace.headers[header]) {
         newHeaders.push({ id: h.id, title: h.Label });
     }
-    const csvStringifier = createObjectCsvStringifier({
-        header: newHeaders,
-    });
-    let csvString = await csvStringifier.stringifyRecords([...sendVarianrts])
-    csvString = `${csvStringifier.getHeaderString()}${csvString}`
-    let buffer = new Buffer.from(csvString, "utf8")
+    // const csvStringifier = createObjectCsvStringifier({
+    //     header: newHeaders,
+    // });
+    // let csvString = await csvStringifier.stringifyRecords([...sendVarianrts])
+    // csvString = `${csvStringifier.getHeaderString()}${csvString}`
+    // let buffer = new Buffer.from(csvString, "utf8")
     return buffer; // Placeholder for the actual implementation
 }
