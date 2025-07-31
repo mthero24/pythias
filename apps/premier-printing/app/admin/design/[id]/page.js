@@ -3,7 +3,6 @@ import { CreateSku } from "@/functions/CreateSku";
 import { DesignMain, serialize } from "@pythias/backend";
 import { notFound } from "next/navigation";
 import {designPage} from "@pythias/backend";
-// This page is used to display the design details based on the provided ID.
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({ params }) {
     let { id } = await params;
