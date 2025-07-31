@@ -141,14 +141,14 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                         let previousColors = []
                         for(let prod of prods){
                             for(let b of prod.blanks){
-                                console.log(design.blanks.map(b=> b.blank._id) )
+                               // console.log(design.blanks.map(b=> b.blank._id) )
                                 if (design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0]){
                                     previousColors = design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0].colors
                                     console.log("Found design for blank", b._id.toString(), "in design", design._id.toString());
                                 }
                             }
                         }
-                        console.log(previousColors)
+                        //console.log(previousColors)
                         setProducts([...prods])
                         setStage("colors")
                     }

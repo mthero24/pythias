@@ -74,7 +74,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, setSizes,
                             }
                             let d = { ...design }
                             d.products = [...design.products, ...prods]
-                            console.log(d.products, "updated products")
+                            //console.log(d.products, "updated products")
                             setDesign({ ...d })
                             updateDesign({ ...d })
                             setStage("blanks")

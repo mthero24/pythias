@@ -2,7 +2,7 @@ import {Products, Design} from "@pythias/mongo";
 import {NextApiRequest, NextResponse } from "next/server";
 import { updateTempUpc, createTempUpcs } from "@pythias/integrations"
 import {SkuToUpc, Color} from "@pythias/mongo";
-
+import {savedProducts} from "@pythias/backend";
 const update = async({product})=>{
     if (product.threadColors && product.threadColors.length > 0) {
         for (let b of product.blanks) {
@@ -59,38 +59,8 @@ export async function POST(req = NextApiRequest) {
     const data = await req.json();
     console.log("Received data", data);
     for (let product of data.products) {
-        //update({ product: product });
+        update({ product: product });
     }
-    let products = [];
-    for(let product of data.products) {
-        // let variantsArray = []
-        // if(product.threadColor && product.threadColors.length > 0){
-        //     for (let b of product.blanks) {
-        //         for (let tc of product.threadColors) {
-        //             for (let c of product.colors) {
-        //                 if (product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
-        //                    console.log("Found variants", product.variants[b.code][tc.name][c.name]);
-        //                 }
-        //             }
-        //         }
-        //     }       
-        // }else{
-        //     for (let b of product.blanks) {
-        //         for (let c of product.colors) {
-        //             if (product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0) {
-        //                 console.log("Found variants", product.variants[b.code][c.name]);
-        //             }
-        //         }
-        //     }    
-        // }
-        // console.log(product.variants)
-        if(product._id) {
-            product = await Products.findByIdAndUpdate(product._id, {...product}, { new: true, returnNewDocument: true}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});
-        }else{
-            product = await Products.create(product)
-            product = await Products.findById(product._id).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});
-        }
-        products.push(product);
-    }
+    let products = await savedProducts({ products: data.products, Products });
     return NextResponse.json({ error: false, products });
 }

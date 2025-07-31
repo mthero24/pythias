@@ -78,8 +78,8 @@ const csvFunctions = {
         return variant.image ? variant.image : "N/A";
     },
     variantImages: (variant, sizeConverter, numBlanks, blankName, index) => {
-        console.log("variant", variant, "index", index);
-        return variant.images && variant.images.length > index ? variant.images[index].image : "N/A";
+       //console.log("variant", variant.images, "index", index);
+        return variant.images && variant.images.length > index ? variant.images[index] : "N/A";
     },
     variantColorFamily: (variant) => {
         return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "N/A";
@@ -105,15 +105,16 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         }
         setSize(sizeArray);
         const getConnections = async () => {
-            console.log("getConnections called");
+            //console.log("getConnections called");
             let res = await axios.get("/api/admin/integrations", { params: { provider: "premierPrinting" } });
-            console.log(res.data);
+            //console.log(res.data);
             setConnections(res.data.integration);
         }
         if(open) {
             getConnections();
         }
     }, [open]);
+    console.log(product.variantsArray, "product variants in MarketPlaceModal");
     const [addMarketPlace, setAddMarketPlace] = useState(false);
     const style = {
         position: 'absolute',
@@ -170,7 +171,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
                     {product && product.marketPlaces && Object.keys(product.marketPlaces).length > 0 && Object.keys(product.marketPlaces).map((mpId) => (
                         <Box>
-                            {console.log(marketPlaces, product.marketPlaces[mpId] )}
+                            
                             {marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0] && marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0].headers.map((header, index) => (
                                 <Box sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee",position: "relative", top: "-5%" }}>
                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
@@ -206,8 +207,8 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
         for (let b of product.blanks) {
             for (let tc of product.threadColors) {
                 for (let c of product.colors) {
-                    if (product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
-                        for (let v of product.variants[b.code][tc.name][c.name]) {
+                    if (product.variantsArray.filter(v=> v.blank.toString() == b._id.toString() && v.threadColor.toString() == tc._id.toString() && v.color.toString() == c._id.toString()).length > 0) {
+                        for (let v of product.variantsArray.filter(v => v.blank._id.toString() == b._id.toString() && v.threadColor.toString() == tc._id.toString() && v.color.toString() == c._id.toString())) {
                             for (let h of Object.keys(headers)) {
                                 let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, })
                                 headers[h].push(val);
@@ -220,10 +221,15 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
             }
         }
     }else{
+       // console.log(product, "product")
         for(let b of product.blanks) {
             for(let c of product.colors) {
-                if (product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0){
-                    for(let v of product.variants[b.code][c.name]) {
+                //console.log(product.variantsArray)
+                if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
+                    for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) == c._id.toString())) {
+                        if(!v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
+                        if(!v.color._id) v.color = c;
+                        console.log(marketPlace, "marketPlace in MarketPlaceList");
                         for(let h of Object.keys(headers)) {
                             let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name })
                             headers[h].push(val);
@@ -362,7 +368,7 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
         if (res.data.error) {
             return alert("Error creating marketplace");
         }else {
-            console.log("res", res.data.marketPlaces);
+           // console.log("res", res.data.marketPlaces);
             setMarketPlaces([...res.data.marketPlaces]);
             setOpen(false);
         }
@@ -412,7 +418,7 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                     }else{
                                         m.connections = m.connections.filter(conn => conn !== connection._id.toString());
                                     }
-                                    console.log("marketPlace", m);
+                                   // console.log("marketPlace", m);
                                     setMarketPlace({ ...m });
                                 }}>
                                     <Typography variant="body1" sx={{ marginRight: "1%" }}>{connection.displayName}</Typography>
@@ -432,7 +438,7 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                                 document.getElementById("newHeader").value = "";
                                             }}>Add Header</Button>
                                             <FormControlLabel control={<Checkbox checked={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} onChange={(event)=>{
-                                                console.log(event.target.checked);
+                                                //console.log(event.target.checked);
                                                 let m = { ...marketPlace };
                                                 if(!m.hasProductLine) m.hasProductLine = [];
                                                 m.hasProductLine[index] = event.target.checked;

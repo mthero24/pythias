@@ -20,6 +20,7 @@ export default async function DesignPage({ params }) {
             let printLocations = await PrintLocations.find({})
             let design = await Design.findOne({ _id: id }).lean();
             let products = await Products.find({ design: design._id }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" })
+            //console.log(products[0].variantsArray)
             design.products = products;
             let blanks = await Blank.find({}).select("colors code name sizes multiImages").populate("colors").lean();
             let licenses = await LicenseHolders.find({}).lean();
@@ -39,8 +40,10 @@ export default async function DesignPage({ params }) {
             printLocations = serialize(printLocations)
             genders = serialize(genders)
             seasons = serialize(seasons)
+            products = serialize(products);
+            console.log(products[0].variantsArray, "products in DesignPage");
             return (
-                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"simplysage"} />
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"simplysage"} products={products} />
             )
         } catch (e) {
             console.log(e)

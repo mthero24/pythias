@@ -12,7 +12,7 @@ import DeleteModal  from "../reusable/DeleteModal";
 import {Footer} from "../reusable/Footer";
 import { CreateProductModal } from "./CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
-export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source }) {
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, products }) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -34,8 +34,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [createProduct, setCreateProduct] = useState(false)
     const [genders, setGenders] = useState(gen ? gen : []);
     const [seasons, setSeasons] = useState(seas ? seas : []);
-    const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} })
+    const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
     const [marketplaceModal, setMarketplaceModal] = useState(false)
+    console.log(des.products[0].variantsArray, "products in Main");
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -383,10 +384,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                     </Grid2>
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
-                        {console.log(des.products, des.products.length > 0,  "products")}
                     {des.products && des.products.length > 0 && des.products.map((p, i) => (
                         <Grid2 size={4} key={i}> 
-                            {console.log(p, "product inside map")}
                             <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
                                     <img src={p?.productImages?.filter(i => i.color._id?.toString() == (p.defaultColor ? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString() : p.colors[0]._id.toString()) && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
@@ -418,8 +417,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                     </Grid2>}
                                 </Grid2>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: "1%" }}>
-                                    <Button variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct(p) }} >Add To MarketPlace</Button>
-                                    <Button variant="outlined" color="secondary" onClick={()=>{setProduct(p); setCreateProduct(true);}}>Edit Product</Button> 
+                                    <Button variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct({...p}) }} >Add To MarketPlace</Button>
+                                    <Button variant="outlined" color="secondary" onClick={()=>{setProduct({...p}); setCreateProduct(true);}}>Edit Product</Button> 
                                 </Box>
                             </Box>
                         </Grid2>

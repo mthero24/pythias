@@ -11,3 +11,5 @@ export {Footer} from "./components/reusable/Footer";
 export {serialize} from "./functions/serialize";
 export {Uploader} from "./components/reusable/uploader";
 export {default as LoaderOverlay} from "./components/reusable/LoaderOverlay";
+export {downloadProduct} from "./functions/download";
+export {saveProducts} from "./functions/saveProduct";

@@ -8,7 +8,7 @@ let converter = {
     YXXL: "2XL",
 }
 export default async function Test(){
-    // let prods = await Products.find({}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.color variantsArray.blank").populate({ path: "blanks", populate: "colors" })
+    // let prods = await Products.find({ sku: { $ne: "21577M_F"}}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.color variantsArray.blank").populate({ path: "blanks", populate: "colors" })
     // let products = [];
     // for (let product of prods) {
     //     let variantsArray = []
@@ -35,9 +35,9 @@ export default async function Test(){
     //                 if (product.variants && product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0) {
     //                     let variants = product.variants[b.code][c.name].map(v => {
     //                         console.log(v)
-    //                         v.color = v.color._id
-    //                         v.blank = v.blank._id
-    //                         v.size = v.size._id
+    //                         v.color = v.color._id? v.color._id : v.color;
+    //                         v.blank = v.blank._id ? v.blank._id : v.blank;
+    //                         v.size = v.size._id? v.size._id : v.size;
     //                         console.log(v.images)
     //                         v.images = v.images?.map(i => i.image? i.image: i)
     //                         return v;
@@ -59,7 +59,7 @@ export default async function Test(){
     //         product = await Products.findById(product._id).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
     //     }
     //     products.push(product);
-    //}
+    // }
 
     return <h1>test</h1>
 }
