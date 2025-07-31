@@ -23,7 +23,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                         </List>
                         <List>
                             <ListItem>
-                                <ListItemText primary={`Default Color: ${product.defaultColor.name}`} />
+                                <ListItemText primary={`Default Color: ${product.defaultColor?.name}`} />
                             </ListItem>
                         </List>
                         <List>
@@ -57,7 +57,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                 ))}
                             </Box>
                         ))}
-                        {preview && product.variantsArray && product.variantsArray.length > 0 && product.blanks.map(blank => {
+                        {preview && product.variantsArray && product.variantsArray && product.variantsArray.length > 0 && product.blanks.map(blank => {
                             return product.threadColors && product.threadColors.length > 0 ? (
                                 <Box key={blank.code} sx={{ marginBottom: "2%" }}>
                                     {product.threadColors && product.threadColors.length > 0 &&product.threadColors.map(threadColor => (
@@ -172,8 +172,8 @@ const VariantDisplay = ({ blank, threadColor, color, variants }) => {
 const ProductImageCarosel = ({ productImages, defaultColor }) => {
     const [image, setImage] = useState(0)
     const [loading, setLoading] = useState(true)
-    let order = productImages.filter(img => img.color.name === defaultColor.name)
-    order = [...order, ...productImages.filter(img => img.color.name !== defaultColor.name)]
+    let order = productImages.filter(img => img.color.name === defaultColor?.name)
+    order = [...order, ...productImages.filter(img => img.color.name !== defaultColor?.name)]
     productImages = order;
     return (
         <Grid2 container spacing={2} sx={{ padding: "2%" }}>

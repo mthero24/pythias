@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import {UpcToSku} from "@pythias/mongo";
+import {SkuToUpc as UpcToSku} from "@pythias/mongo";
 export async function GET(req){
     let blank = req.nextUrl.searchParams.get("blank")
     let design = req.nextUrl.searchParams.get("design")
