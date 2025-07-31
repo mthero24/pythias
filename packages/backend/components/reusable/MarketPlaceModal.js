@@ -48,10 +48,10 @@ const csvFunctions = {
         return variant.sku ? variant.sku : ""
     },
     variantPrice: (variant) => {
-        return variant.size ? `$${variant.size.retailPrice.toFixed(2)}` : 0;
+        return variant.size ? `$${variant.size.retailPrice?.toFixed(2)}` : 0;
     },
     variantWeight: (variant) => {
-        return variant.size ? `${variant.size.weight.toFixed(2)}` : 0;
+        return variant.size ? `${variant.size.weight?.toFixed(2)}` : 0;
     },
     variantUpc: (variant) => {
         return variant.upc ? variant.upc : "N/A";
@@ -212,8 +212,12 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
         for (let b of product.blanks) {
             for (let tc of product.threadColors) {
                 for (let c of product.colors) {
-                    if (product.variantsArray.filter(v=> v.blank.toString() == b._id.toString() && v.threadColor.toString() == tc._id.toString() && v.color.toString() == c._id.toString()).length > 0) {
-                        for (let v of product.variantsArray.filter(v => v.blank._id.toString() == b._id.toString() && v.threadColor.toString() == tc._id.toString() && v.color.toString() == c._id.toString())) {
+                    if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id ? v.threadColor._id.toString() == tc._id.toString() : v.threadColor.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString()).length > 0) {
+                        for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id?.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString())) {
+                            if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
+                            if (!v.color._id) v.color = c;
+                            if (!v.threadColor._id) v.threadColor = tc;
+                            console.log(v, "variant in MarketPlaceList");
                             for (let h of Object.keys(headers)) {
                                 let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, })
                                 headers[h].push(val);

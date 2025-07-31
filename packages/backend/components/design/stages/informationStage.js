@@ -146,7 +146,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                         }
                                                     }
                                                     let img = product.variantImages[blank.code] && product.variantImages[blank.code][d] && product.variantImages[blank.code][d][color.name] && product.variantImages[blank.code][d][color.name].image
-                                                    let images = product.variantSecondaryImages[blank.code] && product.variantSecondaryImages[blank.code][d] && product.variantSecondaryImages[blank.code][d][color.name] && product.variantSecondaryImages[blank.code][d][color.name]
+                                                    let images = product.variantSecondaryImages && product.variantSecondaryImages[blank.code] && product.variantSecondaryImages[blank.code][d] && product.variantSecondaryImages[blank.code][d][color.name] && product.variantSecondaryImages[blank.code][d][color.name]
                                                     if (!variants[blank.code]) variants[blank.code] = {}
                                                     if (!variants[blank.code][d]) variants[blank.code][d] = {}
                                                     if (!variants[blank.code][d][color.name]) variants[blank.code][d][color.name] = []
