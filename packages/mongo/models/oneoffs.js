@@ -9,4 +9,6 @@ const SchemaObj = new Schema(
 );
 export const Seasons = PremierPrinting.model("Seasons", SchemaObj, "Seasons");
 export const Genders = PremierPrinting.model("Genders", SchemaObj, "Genders");
+export const Themes = PremierPrinting.model("Themes", SchemaObj, "Themes");
+export const SportUsedFor = PremierPrinting.model("SportUsedFor", SchemaObj, "SportUsedFor");
 

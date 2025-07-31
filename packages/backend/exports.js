@@ -13,3 +13,5 @@ export {Uploader} from "./components/reusable/uploader";
 export {default as LoaderOverlay} from "./components/reusable/LoaderOverlay";
 export {downloadProduct} from "./functions/download";
 export {saveProducts} from "./functions/saveProduct";
+export {designPage} from "./functions/designPage";
+export {saveOneOffs} from "./functions/saveOneOffs";

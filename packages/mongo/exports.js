@@ -5,7 +5,7 @@ export { default as Brands } from "./models/Brands";
 export { default as PrintPricing } from "./models/PrintPricing";    
 export { default as Order } from "./models/Order";
 export { default as Item } from "./models/Items";   
-export { Seasons, Genders } from "./models/oneoffs";
+export { Seasons, Genders, Themes, SportUsedFor } from "./models/oneoffs";
 export { default as Bin } from "./models/Bin";  
 export { default as Color } from "./models/Color";
 export { default as User } from "./models/User";

@@ -3,7 +3,8 @@ import CreatableSelect from "react-select/creatable";
 import axios from "axios";
 import { set } from "mongoose";
 
-export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors }) => {
+export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor }) => {
+    console.log(sportUsedFor, "Themes in InformationStage");
     return (
         <Grid2 size={12} sx={{ padding: "0% 4%" }}>
             <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Product Information</Typography>
@@ -80,6 +81,32 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                 let res = await axios.post("/api/admin/oneoffs", { type: "season", value: newValue.value })
                                 if (res.data && res.data.error) alert(res.data.msg)
                                 else setSeasons(res.data.seasons)
+                            }
+                            setProducts([...prods])
+                        }} />
+                    </Grid2>
+                    <Grid2 size={4}>
+                        <CreatableSelect placeholder="Select Theme" options={themes.map(theme => ({ value: theme.name, label: theme.name }))} value={product.theme ? { value: product.theme, label: product.theme } : null} onChange={async (newValue) => {
+                            let prods = [...products]
+                            let p = prods.filter(p => p.id == product.id)[0]
+                            p.theme = newValue.value
+                            if (!themes.filter(s => s.name == newValue.value)[0]) {
+                                let res = await axios.post("/api/admin/oneoffs", { type: "theme", value: newValue.value })
+                                if (res.data && res.data.error) alert(res.data.msg)
+                                else setThemes(res.data.themes)
+                            }
+                            setProducts([...prods])
+                        }} />
+                    </Grid2>
+                    <Grid2 size={4}>
+                        <CreatableSelect placeholder="Select Sport Used For" options={sportUsedFor.map(sport => ({ value: sport.name, label: sport.name }))} value={product.sportUsedFor ? { value: product.sportUsedFor, label: product.sportUsedFor } : null} onChange={async (newValue) => {
+                            let prods = [...products]
+                            let p = prods.filter(p => p.id == product.id)[0]
+                            p.sportUsedFor = newValue.value
+                            if (!sportUsedFor.filter(s => s.name == newValue.value)[0]) {
+                                let res = await axios.post("/api/admin/oneoffs", { type: "sportUsedFor", value: newValue.value })
+                                if (res.data && res.data.error) alert(res.data.msg)
+                                else setSportUsedFor(res.data.sportUsedFor)
                             }
                             setProducts([...prods])
                         }} />

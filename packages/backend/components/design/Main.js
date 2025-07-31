@@ -12,7 +12,7 @@ import DeleteModal  from "../reusable/DeleteModal";
 import {Footer} from "../reusable/Footer";
 import { CreateProductModal } from "./CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
-export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, }) {
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport }) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -34,6 +34,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [createProduct, setCreateProduct] = useState(false)
     const [genders, setGenders] = useState(gen ? gen : []);
     const [seasons, setSeasons] = useState(seas ? seas : []);
+    const [themes, setThemes] = useState(them ? them : []);
+    console.log(themes, "Themes in Main");
+    const [sportUsedFor, setSportUsedFor] = useState(sport ? sport : []);
     const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
     const [marketplaceModal, setMarketplaceModal] = useState(false)
     const [preview, setPreview] = useState(false)
@@ -257,8 +260,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             router.push("/admin/designs")
         }
     }
-    const deleteProduct = async () => {
-        console.log("Deleting product", product);
+    const deleteProduct = async (product) => {
+       // console.log("Deleting product", product);
         let res = await axios.delete(`/api/admin/products?product=${product._id}`)
         if (res.data.error) alert(res.data.msg)
         else {
@@ -398,7 +401,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                     {des.products && des.products.length > 0 && des.products.map((p, i) => (
                         <Grid2 size={{xs: 6, sm: 4}} key={i}>
                             <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
-                                <Box sx={{ position: "relative", zIndex: 999, left: { xs: "80%", sm: "85%", md: "90%" }, bottom: { xs: -20, sm: -30, md: -50 }, padding: "2%", cursor: "pointer", marginTop: "-12%", "&:hover": { opacity: .5 } }} onClick={() => { setDeleeFunction({ onDelete: deleteProduct }); setDeleteTitle("Are You Sure You Want To Delete This Product?"); setType("product"); setDeleteModal(true) }}>
+                                <Box sx={{ position: "relative", zIndex: 999, left: { xs: "80%", sm: "85%", md: "90%" }, bottom: { xs: -20, sm: -30, md: -50 }, padding: "2%", cursor: "pointer", marginTop: "-12%", "&:hover": { opacity: .5 } }} onClick={() => { setDeleeFunction({ onDelete: deleteProduct }); setDeleteTitle("Are You Sure You Want To Delete This Product?"); setDeleteImage({...p}); setDeleteModal(true) }}>
                                     <DeleteIcon sx={{ color: "#780606" }} />
                                 </Box>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
@@ -442,8 +445,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
                 <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
-                <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
-                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} />
+                <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} product={product}/>
+                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={themes} sportUsedFor={sportUsedFor} setThemes={setThemes} setSportUsedFor={setSportUsedFor} />
                 {loading && <LoaderOverlay/>}
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} />
 

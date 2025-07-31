@@ -1,52 +1,41 @@
-import {Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations, Products} from "@pythias/mongo";
+import { Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations, Products, Seasons, Genders, Themes, SportUsedFor } from "@pythias/mongo";
 import { CreateSku } from "@/functions/CreateSku";
-import { serialize } from "@/functions/serialize";
-import {DesignMain} from "@pythias/backend";
+import { DesignMain, serialize } from "@pythias/backend";
 import { notFound } from "next/navigation";
+import { designPage } from "@pythias/backend";
 export const dynamic = 'force-dynamic';
-export default async function DesignPage({params}){
-    let {id} = await params;
-    if(id){
-        try{
-            let colors = await Color.find({});
-            for(let color of colors){
-                if(!color.sku){
-                    color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").substring(0, 7)
-                   // console.log(color.sku)
-                    color = await color. save()
-                }
-            }
-            let printLocations = await PrintLocations.find({})
-            let design = await Design.findOne({_id: id}).lean();
-            let products = await Products.find({design: design._id}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"})
-            design.products = products;
-            //console.log(design, "design")
-            let blanks = await Blank.find({}).select("colors code name sizes multiImages").populate("colors").lean();
-            //console.log(blanks[0].colors[0], "color")
-            let licenses = await LicenseHolders.find({}).lean();
-            let brands = await Brands.find({}).populate("marketPlaces.marketplace").lean();
-            let marketPlaces = await MarketPlaces.find({}).lean();
-            let productImages = await ProductImages.find({design: design._id})
-            if(!design) return notFound();
-            //console.log(printLocations)
-            design = serialize(design);
-            blanks = serialize(blanks);
-            brands = serialize(brands);
-            marketPlaces = serialize(marketPlaces);
-            productImages = serialize(productImages);
-            licenses = serialize(licenses);
-            colors = serialize(colors)
-            printLocations = serialize(printLocations)
-            
+export default async function DesignPage({ params }) {
+    let { id } = await params;
+    if (id) {
+        try {
+            let { design, blanks, brands, marketPlaces, productImages, licenses, colors, printLocations, genders, seasons, sportUsedFor, themes } = await designPage({
+                id,
+                Brands,
+                LicenseHolders,
+                Color,
+                PrintLocations,
+                Design,
+                Products,
+                Blank,
+                LicenseHolders,
+                Brands,
+                MarketPlaces,
+                Genders,
+                Seasons,
+                SportUsedFor,
+                Themes,
+                ProductImages,
+            });
+            console.log(blanks, "Blanks in DesignPage");
+            console.log(themes, "Themes in DesignPage");
             return (
-                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} source={"imperial"}/>
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"imperial"} them={themes} sport={sportUsedFor} />
             )
-        }catch(e){
+        } catch (e) {
             console.log(e)
             return notFound()
         }
-    }else{
+    } else {
         return notFound()
     }
-}   
-
+}

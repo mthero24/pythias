@@ -82,5 +82,7 @@ const schema = new mongoose.Schema({
     gender: String,
     season: String,
     tags: [String],
+    theme: String,
+    sportUsedFor: String,
 });
 export default PremierPrinting.model("Products", schema);
