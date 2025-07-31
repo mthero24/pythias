@@ -252,7 +252,7 @@
 //     console.log(csvUpdate.files)
 //     csvUpdate = await csvUpdate.save()
 // }
-// export async function updateListings(csvupdate, sendTo){
+export async function updateListings(csvupdate, sendTo){
 //     let csvUpdate = await CSVUpdates.findOne({_id: csvupdate._id})
 //     try{
 //         let designs = await Design.find({published: true, sendToMarketplaces: true}).populate("brands b2m blanks.blank blanks.colors blanks.defaultColor").sort({'_id': -1}).limit(200)
@@ -781,4 +781,5 @@
 //         csvUpdate.error = true
 //         csvUpdate = await csvUpdate.save()
 //     }
-// }
+return null
+}

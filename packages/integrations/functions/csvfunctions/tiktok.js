@@ -113,7 +113,7 @@
 //     return va
 // }
 
-// export  const createTikTokCsv = async ({products})=>{
+export  const createTikTokCsv = async ({products})=>{
 //     let sendProducts = []
 //     for(let p of products){
 //         for(let v of p.variants){
@@ -141,4 +141,5 @@
 //         };
 //     const data = await s3.send(new PutObjectCommand(params));
 //     return url
-// }
+return null; // Placeholder for the actual implementation
+}
