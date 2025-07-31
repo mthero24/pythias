@@ -8,7 +8,7 @@ import {
   createProduct,
   getOrdersTikTok,
 } from "@pythias/integrations";
-import { Design, Order, SkuToUpc, Colors, Blanks, , TikTokAuth } from "@pythias/mongo";
+import { Design, Order, SkuToUpc, Colors, Blanks, TikTokAuth } from "@pythias/mongo";
 import {generatePieceID } from "@pythias/integrations";
 const refresh = async (creds, cipher) =>{
     let credentials = await TikTokAuth.findOne({ _id: creds._id });
