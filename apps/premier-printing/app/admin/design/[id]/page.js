@@ -3,6 +3,8 @@ import { CreateSku } from "@/functions/CreateSku";
 import { DesignMain, serialize } from "@pythias/backend";
 import { notFound } from "next/navigation";
 import {designPage} from "@pythias/backend";
+
+// some note
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({ params }) {
     let { id } = await params;
