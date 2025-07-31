@@ -1,6 +1,6 @@
 import CSVUpdates from "@/models/CSVUpdates"
 import {Main} from "./Main"
-import {serialize} from "@/functions/serialize"
+import {serialize} from "@pythias/backend";
 export const dynamic = 'force-dynamic';
 export default async function Products(){
     let active = await CSVUpdates.findOne({active: true})

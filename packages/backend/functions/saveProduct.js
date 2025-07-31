@@ -14,7 +14,7 @@ export const saveProducts = async ({products, Products}) => {
                                 v.color = v.color._id
                                 v.blank = v.blank._id
                                 v.size = v.size._id
-                                v.images = v.images.map(i=> i.image)
+                                v.images = v.images?.map(i=> i.image)
                                 return v;
                             })
                             variantsArray = [...variantsArray, ...variants];
@@ -30,7 +30,7 @@ export const saveProducts = async ({products, Products}) => {
                             v.color = c._id
                             v.blank = b._id
                             v.size = v.size._id
-                            v.images = v.images.map(i => i.image)
+                            v.images = v.images?.map(i => i.image)
                             return v;
                         })
                         variantsArray = [...variantsArray, ...variants];

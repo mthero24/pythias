@@ -63,9 +63,9 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     {product.threadColors && product.threadColors.length > 0 &&product.threadColors.map(threadColor => (
                                         <Box key={threadColor.name} sx={{ marginLeft: "2%" }}>
                                             {product.colors.map(color => {
-                                                const variants = product.variantsArray.filter(v => v.blank.code === blank.code && v.threadColor.name === threadColor.name && v.color.name === color.name);
+                                                const variants = product.variantsArray.filter(v => v.blank?.toString() === blank._id.toString() && v.threadColor?.toString() === threadColor?._id.toString() && v.color?.toString() === color?._id.toString());
                                                 return variants.length > 0 ? (
-                                                    <VariantDisplay key={`${blank.code}-${threadColor.name}-${color.name}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.threadColor.toString() === threadColor._id.toString() && v.color.toString() === color._id.toString())} />
+                                                    <VariantDisplay key={`${blank.code}-${threadColor.name}-${color.name}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} />
                                                 ) : null;
                                             })}
                                         </Box>
