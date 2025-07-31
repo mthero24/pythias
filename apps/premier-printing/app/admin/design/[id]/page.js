@@ -40,10 +40,8 @@ export default async function DesignPage({ params }) {
             printLocations = serialize(printLocations)
             genders = serialize(genders)
             seasons = serialize(seasons)
-            products = serialize(products);
-            console.log(products[0].variantsArray, "products in DesignPage");
             return (
-                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"simplysage"} products={products} />
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"simplysage"} />
             )
         } catch (e) {
             console.log(e)

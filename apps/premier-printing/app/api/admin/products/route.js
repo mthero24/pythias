@@ -1,7 +1,6 @@
-import {Products, Design} from "@pythias/mongo";
+import { Products, Design, SkuToUpc } from "@pythias/mongo";
 import {NextApiRequest, NextResponse } from "next/server";
 import { updateTempUpc, createTempUpcs } from "@pythias/integrations"
-import {SkuToUpc, Color} from "@pythias/mongo";
 import {saveProducts} from "@pythias/backend";
 const update = async({product})=>{
     if (product.threadColors && product.threadColors.length > 0) {
@@ -59,8 +58,14 @@ export async function POST(req = NextApiRequest) {
     const data = await req.json();
     console.log("Received data", data);
     for (let product of data.products) {
-        await update({ product: product });
+        if (product.variants) await update({ product: product });
     }
     let products = await saveProducts({ products: data.products, Products });
     return NextResponse.json({ error: false, products });
+}
+export async function DELETE(req = NextApiRequest) {
+    const product = await req.nextUrl.searchParams.get("product");
+    console.log("Deleting product", product);
+    await Products.deleteOne({ _id: product });
+    return NextResponse.json({ error: false });
 }

@@ -7,3 +7,9 @@ export async function POST(req = NextApiRequest) {
     let products = await saveProducts({ products: data.products, Products });
     return NextResponse.json({ error: false, products });
 }
+export async function DELETE(req = NextApiRequest) {
+    const { product } = await req.nextUrl.searchParams;
+    console.log("Deleting product", product);
+    await Products.deleteOne({ _id: product });
+    return NextResponse.json({ error: false });
+}

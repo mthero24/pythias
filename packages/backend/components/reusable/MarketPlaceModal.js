@@ -8,7 +8,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import Link from "next/link";
-import { connect } from "mongoose";
+import { connect, set } from "mongoose";
 
 const csvFunctions = {
     productSku: (product) => {
@@ -86,7 +86,7 @@ const csvFunctions = {
     }
 };
 
-export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct }) => {
+export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign }) => {
     const [size, setSize] = useState([]);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteTitle, setDeleteTitle] = useState();
@@ -158,7 +158,13 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                         if (!p.marketPlaces) {
                                             p.marketPlaces = {};
                                         }
-                                        p.marketPlaces[mp._id] = mp;
+                                        p.marketPlaces[mp._id] = {_id: mp._id, name: mp.name};
+                                        if(design){
+                                            let d ={ ...design };
+                                            d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
+                                            d.products.push(p);
+                                            setDesign({...d});
+                                        }
                                         let res = axios.post("/api/admin/products", { products: [p] });
                                         setProduct(p);
                                     }}>Select</Button>}

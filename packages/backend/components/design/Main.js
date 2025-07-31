@@ -12,7 +12,7 @@ import DeleteModal  from "../reusable/DeleteModal";
 import {Footer} from "../reusable/Footer";
 import { CreateProductModal } from "./CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
-export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, products }) {
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, }) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -37,7 +37,6 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
     const [marketplaceModal, setMarketplaceModal] = useState(false)
     const [preview, setPreview] = useState(false)
-    console.log(des.products[0].variantsArray, "products in Main");
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -258,9 +257,20 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             router.push("/admin/designs")
         }
     }
-        return (
+    const deleteProduct = async () => {
+        console.log("Deleting product", product);
+        let res = await axios.delete(`/api/admin/products?product=${product._id}`)
+        if (res.data.error) alert(res.data.msg)
+        else {
+            let d = {...des}
+            d.products = d.products.filter(p => p._id !== product._id)
+            setDesign({...d})
+            updateDesign({...d})
+        }
+    }
+    return (
         <Box>
-            <Container maxWidth="lg">
+            <Container maxWidth="lg" sx={{overflowX: "hidden", padding: "2%"}}>
                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center",  cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => { setCreateProduct(true) }}>
                     <Button sx={{ margin: "1% 2%", background: "#780606", color: "#ffffff"}} onClick={()=>{
                         setDeleteTitle("Are you sure you want to delete this design?");
@@ -386,8 +396,11 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
                     {des.products && des.products.length > 0 && des.products.map((p, i) => (
-                        <Grid2 size={4} key={i}> 
+                        <Grid2 size={{xs: 6, sm: 4}} key={i}>
                             <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
+                                <Box sx={{ position: "relative", zIndex: 999, left: { xs: "80%", sm: "85%", md: "90%" }, bottom: { xs: -20, sm: -30, md: -50 }, padding: "2%", cursor: "pointer", marginTop: "-12%", "&:hover": { opacity: .5 } }} onClick={() => { setDeleeFunction({ onDelete: deleteProduct }); setDeleteTitle("Are You Sure You Want To Delete This Product?"); setType("product"); setDeleteModal(true) }}>
+                                    <DeleteIcon sx={{ color: "#780606" }} />
+                                </Box>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
                                     <img src={p?.productImages?.filter(i => i.color._id?.toString() == (p.defaultColor ? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString() : p.colors[0]._id.toString()) && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
                                 </Box>
@@ -405,9 +418,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                 <Typography variant="body2" >Marketplaces:</Typography>
                                 <Grid2 container spacing={2}>
                                     {p.marketPlaces && Object.keys(p.marketPlaces).length > 0 && Object.keys(p.marketPlaces).map(m=>(
-                                        <Grid2 key={m} size={3}>
+                                        <Grid2 key={m} size={{xs: 6, sm: 4}}>
                                             <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#87AE73" }}>
-                                                <Typography variant="body2">{p.marketPlaces[m].name}</Typography>
+                                                <Typography variant="body2" sx={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{p.marketPlaces[m].name}</Typography>
                                             </Box>
                                         </Grid2>
                                     ))}
@@ -418,8 +431,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                     </Grid2>}
                                 </Grid2>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: "1%" }}>
-                                    <Button variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct({...p}) }} >Add To MarketPlace</Button>
-                                    <Button variant="outlined" color="secondary" onClick={()=>{setProduct({...p}); setCreateProduct(true);}}>Edit Product</Button> 
+                                    <Button sx={{ }} variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct({...p}) } } >Add To MarketPlace</Button>
+                                    <Button  variant="outlined" color="secondary" onClick={()=>{setProduct({...p}); setCreateProduct(true);}}>Edit Product</Button>
                                 </Box>
                                 <Button variant="outlined" fullWidth color="primary" sx={{marginTop: "1%"}} onClick={() => { setProduct({ ...p }); setCreateProduct(true); setPreview(true); }}>Preview Product</Button> 
                             </Box>
@@ -432,7 +445,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} />
                 {loading && <LoaderOverlay/>}
-                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} />
+                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} />
 
             </Container>
             <Footer/>
