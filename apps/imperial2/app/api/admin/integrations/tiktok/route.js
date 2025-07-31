@@ -1,8 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server"
-import TikTokAuth from "@/models/tiktok";
-import SkuToUpc from "@/models/skuUpcConversion";
-import Design from "@/models/Design";
-import Blanks from "@/models/Blanks"
+import { TikTokAuth, SkuToUpc, Design, Blanks } from "@pythias/mongo";
 import { createTikTokProduct } from "@/functions/tikTok";
 const createVariants = async ({design, b, blank})=>{
     let vs = await SkuToUpc.find({design: design._id, blank: blank._id})
