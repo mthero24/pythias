@@ -125,7 +125,7 @@
 //     return value
 // }
 
-// export const downloadProduct = async ({ product, marketPlace, header }) => {
+export const downloadProduct = async ({ product, marketPlace, header }) => {
 //     let headers = {}
 //     for (let header of marketPlace.headers) {
 //         for (let h of header) {
@@ -196,4 +196,5 @@
 //     csvString = `${csvStringifier.getHeaderString()}${csvString}`
 //     let buffer = new Buffer.from(csvString, "utf8")
 //     return buffer
-// }
+    return null; // Placeholder for the actual implementation
+}
