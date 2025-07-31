@@ -1,5 +1,5 @@
 "use client";
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, Divider, FormControlLabel, Checkbox, ImageList, ImageListItem, CircularProgress, List, ListItemText, ListItem, ListItemAvatar, Avatar, CardContent } from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, Snackbar } from "@mui/material";
 import axios from "axios";
 import {useState, useEffect} from "react";
 import { Uploader } from "../reusable/premier/uploader";
@@ -12,6 +12,9 @@ import DeleteModal  from "../reusable/DeleteModal";
 import {Footer} from "../reusable/Footer";
 import { CreateProductModal } from "./CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
+import { ProductCard } from "../reusable/ProductCard";
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { set } from "mongoose";
 export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport }) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
@@ -35,11 +38,11 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [genders, setGenders] = useState(gen ? gen : []);
     const [seasons, setSeasons] = useState(seas ? seas : []);
     const [themes, setThemes] = useState(them ? them : []);
-    console.log(themes, "Themes in Main");
     const [sportUsedFor, setSportUsedFor] = useState(sport ? sport : []);
     const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
     const [marketplaceModal, setMarketplaceModal] = useState(false)
     const [preview, setPreview] = useState(false)
+    const [copied, setCopied] = useState(false);
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -103,35 +106,6 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
         let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
         if(res?.data?.error) alert(res.data.msg)
     }
-    const updateImage = async ({url,location, threadColor})=>{
-        let d = {...des}
-        if(threadColor){
-            if(!d.threadImages) d.threadImages = {}
-            if(!d.threadImages[threadColor]) d.threadImages[threadColor] = {}
-            d.threadImages[threadColor][location] = url
-        }else{
-            if(!d.images) d.images = {}
-            d.images[location] = url
-        }
-        setDesign({...d})
-        updateDesign({...d})
-        setLoading(false)
-        setAddImageModal(true)
-    }
-    const relocateImage = (url,location, oldLocation, threadColor,)=>{
-        let d = {...des}
-        let newImages = {}
-        if(threadColor){
-            if(!d.threadImages) d.threadImages = {}
-            newImages[location] = url
-            d.threadImages[threadColor] = newImages
-        }else{
-            newImages[location] = url
-            d.images = newImages
-        }
-        setDesign({...d})
-        updateDesign({...d})
-    }
     const tagUpdate = (val)=>{
         let d ={...des}
         d.tags = val;
@@ -141,88 +115,6 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     let updateTitleSku =(key)=>{
         let d = {...des};
         d[key] = event.target.value;
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    let updateBrands = async (vals)=>{
-        let d = {...des};
-        let brands = [];
-        await vals.map(async v=>{
-            let brand = bran.filter(b=> b.name == v)[0];
-            if(brand) brands.push(brand)
-            else{
-                let res = await axios.post("/api/admin/brands", {name: v})
-                if(res.data.error) alert(res.data.msg)
-                else{
-                   setBrands(res.data.brands)
-                   brands.push(res.data.brand)
-                }
-            }
-        })
-        d.brands = brands
-        for(let b of brands){
-            if(b.name == "Urban Threads Co."){
-                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Shein", "Temu"], d})
-            }else if(b.name == "Simply Sage Market"){
-                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's", "Walmart", "Amazon"], d})
-            }else if(b.name == "The Juniper Shop"){
-                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "target", "Kohl's"], d})
-            }else if(b.name == "Juniper Shop Wholesale" || b.name == "Uplifting Threads Co Wholesale" || b.name == "Olive And Ivory" || b.name == "Olive and Ivory Wholesale" || b.name == "Olive And Ivory Wholesale"){
-                d = await updateMarketPlacesBrand({brand: b, marketplaces: ["Shopify", "Faire"], d})
-            }
-        }
-        setDesign({...d})
-        updateDesign({...d})
-    }
-    const updateMarketPlacesBrand= async ({brand, marketplaces, d})=>{
-        let mps = await marketplaces.map(async m=>{
-            let mp = marketPlaces.filter(lp=> m == lp.name)[0]
-            if(!mp) {
-                let res = await axios.post("/api/admin/marketplaces", {name: m})
-                mp = res.data.marketplace
-                setMarketPlaces(res.data.marketPlaces)
-            }
-            return mp
-        })
-        mps = await Promise.all(mps)
-        d.marketPlaces = mps;
-        let b2ms = d.b2m
-        let b2m = b2ms.filter(b=> b.brand== brand.name)[0]
-        if(!b2m) {
-            b2m = {
-                brand: brand.name,
-                marketPlaces: mps.map(m=> {return m.name})
-            }
-            b2ms.push(b2m)
-        }
-        else b2m.marketPlaces =  mps.map(m=> {return m.name})
-        d.b2m = b2ms
-        return {...d}
-    }
-    const updateMarketPlaces= async ({brand, marketplaces})=>{
-        let mps = await marketplaces.map(async m=>{
-            let mp = marketPlaces.filter(lp=> m == lp.name)[0]
-            if(!mp) {
-                let res = await axios.post("/api/admin/marketplaces", {name: m})
-                mp = res.data.marketplace
-                setMarketPlaces(res.data.marketPlaces)
-            }
-            return mp
-        })
-        mps = await Promise.all(mps)
-        let d = {...des}
-        d.marketPlaces = mps;
-        let b2ms = d.b2m
-        let b2m = b2ms.filter(b=> b.brand== brand.name)[0]
-        if(!b2m) {
-            b2m = {
-                brand: brand.name,
-                marketPlaces: mps.map(m=> {return m.name})
-            }
-            b2ms.push(b2m)
-        }
-        else b2m.marketPlaces =  mps.map(m=> {return m.name})
-        d.b2m = b2ms
         setDesign({...d})
         updateDesign({...d})
     }
@@ -260,17 +152,15 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             router.push("/admin/designs")
         }
     }
-    const deleteProduct = async (product) => {
-       // console.log("Deleting product", product);
-        let res = await axios.delete(`/api/admin/products?product=${product._id}`)
-        if (res.data.error) alert(res.data.msg)
-        else {
-            let d = {...des}
-            d.products = d.products.filter(p => p._id !== product._id)
-            setDesign({...d})
-            updateDesign({...d})
+    async function copyTextToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            console.log('Text copied to clipboard successfully!');
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
         }
     }
+   
     return (
         <Box>
             <Container maxWidth="lg" sx={{overflowX: "hidden", padding: "2%"}}>
@@ -347,7 +237,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                         <Button size="small" sx={{fontSize: ".5rem", margin: "0%"}} onClick={getAiDescription}>Generate Description And Tags</Button>
                     </Grid2>
                     <Grid2 size={12}><hr/></Grid2>
-                    <Grid2 size={{xs: 12, sm: 12}}>
+                    <Grid2 size={{xs: 11, sm: 11}}>
                         <Typography>Tags</Typography>
                         <CreatableSelect
                             placeholder="Tags"
@@ -358,6 +248,19 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                 return {value: t, label: t }
                             })}
                             isMulti
+                        />
+                    </Grid2>
+                    <Grid2 size={1} sx={{display: "flex", alignItems: "center", justifyContent: "center"}}>
+                        <ContentCopyIcon sx={{cursor: "pointer", marginTop: "25%"}} onClick={()=>{
+                            copyTextToClipboard(des?.tags.join(", ")); setCopied(true)
+                        }} />
+                        <Snackbar
+                            open={copied}
+                            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                            autoHideDuration={1200}
+                            slots={{ transition: "fade" }}
+                            onClose={() => setCopied(false)}
+                            message="Tags copied to clipboard"
                         />
                     </Grid2>
                     <Grid2 size={12}><hr/></Grid2>
@@ -399,50 +302,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
                     {des.products && des.products.length > 0 && des.products.map((p, i) => (
-                        <Grid2 size={{xs: 6, sm: 4}} key={i}>
-                            <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
-                                <Box sx={{ position: "relative", zIndex: 999, left: { xs: "80%", sm: "85%", md: "90%" }, bottom: { xs: -20, sm: -30, md: -50 }, padding: "2%", cursor: "pointer", marginTop: "-12%", "&:hover": { opacity: .5 } }} onClick={() => { setDeleeFunction({ onDelete: deleteProduct }); setDeleteTitle("Are You Sure You Want To Delete This Product?"); setDeleteImage({...p}); setDeleteModal(true) }}>
-                                    <DeleteIcon sx={{ color: "#780606" }} />
-                                </Box>
-                                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-                                    <img src={p?.productImages?.filter(i => i.color._id?.toString() == (p.defaultColor ? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString() : p.colors[0]._id.toString()) && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
-                                </Box>
-                                {p.productImages?.filter(i => i.color?._id?.toString() == (p.defaultColor ? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString() : p.colors[0]._id.toString()) && (i.side == "back" || i.side == "modelBack"))[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", position: "relative", zIndex: 1, top: -130, left: 0, padding: "2%", marginBottom: "-130px", }}>
-                                    <img src={p.productImages.filter(i => i.color._id.toString() == (p.defaultColor? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString(): p.colors[0]._id.toString()) && (i.side == "back" || i.side == "modelBack"))[0]?.image} width={120} height={120} style={{ objectFit: "cover", borderRadius: "100px" }} />
-                                </Box>}
-                                <Divider sx={{ margin: "2% 0" }} />
-                                <Box sx={{ display: "flex", flexDirection: "column",}}>
-                                    <List>
-                                        <ListItem>
-                                            <ListItemText sx={{textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap"}} primary={p.title} secondary={p.sku} />
-                                        </ListItem>
-                                    </List>
-                                </Box>
-                                <Typography variant="body2" >Marketplaces:</Typography>
-                                <Grid2 container spacing={2}>
-                                    {p.marketPlaces && Object.keys(p.marketPlaces).length > 0 && Object.keys(p.marketPlaces).map(m=>(
-                                        <Grid2 key={m} size={{xs: 6, sm: 4}}>
-                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#87AE73" }}>
-                                                <Typography variant="body2" sx={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{p.marketPlaces[m].name}</Typography>
-                                            </Box>
-                                        </Grid2>
-                                    ))}
-                                    {!p.marketPlaces && <Grid2 size={12}>
-                                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                                            <Typography variant="body2">No Marketplaces Found</Typography>
-                                        </Box>
-                                    </Grid2>}
-                                </Grid2>
-                                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: "1%" }}>
-                                    <Button sx={{ }} variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct({...p}) } } >Add To MarketPlace</Button>
-                                    <Button  variant="outlined" color="secondary" onClick={()=>{setProduct({...p}); setCreateProduct(true);}}>Edit Product</Button>
-                                </Box>
-                                <Button variant="outlined" fullWidth color="primary" sx={{marginTop: "1%"}} onClick={() => { setProduct({ ...p }); setCreateProduct(true); setPreview(true); }}>Preview Product</Button> 
-                            </Box>
-                        </Grid2>
+                        <ProductCard key={i} p={p} setProduct={setProduct} des={des} setDesign={setDesign} setCreateProduct={setCreateProduct} setMarketplaceModal={setMarketplaceModal} setPreview={setPreview} />
                     ))}
                 </Grid2>
-                <ModalUpc open={upcModal} setOpen={setUpcModal} blank={upcBlank} setBlank={setUpcBlank} design={des} colors={colors} />
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
                 <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} product={product}/>
@@ -638,51 +500,3 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
     )
 }
 
-const ModalUpc = ({open, setOpen, blank, setBlank, design, colors})=>{
-    
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "90%",
-        height: "80vh",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-        overflow: "auto"
-      };
-    return (
-        <Modal
-        open={open}
-        onClose={()=>{setOpen(false); setBlank(null); setUpc([])}}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Typography>Product Sku</Typography>
-            <Box sx={{padding: "2%"}}>
-                <Typography>{`${design.sku}_${blank?.blank?.code}`}</Typography>
-            </Box>
-            <hr/>
-            <Typography>Variant Sku's</Typography>
-            {design.threadColors?.length > 0 && design.threadColors.map(tr=>{
-                return (blank?.colors.map(c=>{
-                    return (blank?.blank.sizes.map(s=>{
-                        return <Typography key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${tr.name}`}>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}_${colors.filter(c=> c._id.toString() == tr.toString())[0]?.name}`}</Typography>
-                    }))
-                }))
-            })}
-            {design.threadColors?.length == 0 && blank?.colors?.map(c=>{
-                return blank.blank?.sizes?.map(s=>{
-                    return (<Box sx={{padding: "2%"}} key={`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}>
-                        <Typography>{`${design.printType}_${design.sku}_${c.sku}_${s.name}_${blank.blank.code}`}</Typography> 
-                        <hr/>
-                    </Box>)
-                })
-            })}
-        </Box>
-      </Modal>
-    )
-}

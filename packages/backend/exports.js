@@ -15,3 +15,4 @@ export {downloadProduct} from "./functions/download";
 export {saveProducts} from "./functions/saveProduct";
 export {designPage} from "./functions/designPage";
 export {saveOneOffs} from "./functions/saveOneOffs";
+export { ProductsMain } from "./components/product/Main";
