@@ -3,7 +3,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModal from "./DeleteModal";
 import {useState} from "react";
 import axios from "axios";
-export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModal, des, setDesign, setPreview }) => {
+export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModal, des, setDesign, updateDesign, setPreview }) => {
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteImage, setDeleteImage] = useState({});
     const [deleteTitle, setDeleteTitle] = useState("");
