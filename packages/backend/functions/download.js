@@ -176,7 +176,7 @@ export const downloadProduct = async ({ product, marketPlace, header }) => {
                 if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
                     for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString())) {
                         if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
-                        if (!v.color._id) v.color = c;
+                        v.color = c;
                         let thisHead = { ...headers };
                         for (let h of Object.keys(headers)) {
                             let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name, index, });

@@ -2,6 +2,7 @@ import {Box, Grid2, Typography, Button, Divider, List, ListItem, ListItemText} f
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModal from "./DeleteModal";
 import {useState} from "react";
+import axios from "axios";
 export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModal, des, setDesign, setPreview }) => {
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteImage, setDeleteImage] = useState({});

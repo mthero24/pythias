@@ -18,6 +18,7 @@ export const ProductsMain = ({prods}) => {
                             des={{products}} 
                             setDesign={(design) => setProducts(products.map(prod => ({...prod, design})))} 
                             setPreview={(preview) => setProducts(products.map(prod => ({...prod, preview})))} 
+                            updateDesign={(design) => setProducts(products.map(prod => ({...prod, design})))}
                         />
                     ))}
                 </Grid2>
