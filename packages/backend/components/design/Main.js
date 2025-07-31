@@ -36,6 +36,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [seasons, setSeasons] = useState(seas ? seas : []);
     const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
     const [marketplaceModal, setMarketplaceModal] = useState(false)
+    const [preview, setPreview] = useState(false)
     console.log(des.products[0].variantsArray, "products in Main");
     useEffect(()=>{
         if(!reload) setReload(!reload)
@@ -420,6 +421,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                     <Button variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct({...p}) }} >Add To MarketPlace</Button>
                                     <Button variant="outlined" color="secondary" onClick={()=>{setProduct({...p}); setCreateProduct(true);}}>Edit Product</Button> 
                                 </Box>
+                                <Button variant="outlined" fullWidth color="primary" sx={{marginTop: "1%"}} onClick={() => { setProduct({ ...p }); setCreateProduct(true); setPreview(true); }}>Preview Product</Button> 
                             </Box>
                         </Grid2>
                     ))}
@@ -428,7 +430,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>
                 <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} />
-                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading}/>
+                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} />
                 {loading && <LoaderOverlay/>}
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} />
 

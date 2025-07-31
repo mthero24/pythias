@@ -16,7 +16,7 @@ import { InformationStage } from "./stages/informationStage";
 import { PreviewStage } from "./stages/previewStage";
 import { set } from "mongoose";
 
-export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading }) => {
+export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading, preview, setPreview }) => {
     const [cols, setColors] = useState({})
     const [sizes, setSizes] = useState({})
     const [images, setImages] = useState([])
@@ -64,6 +64,11 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
             setProducts(prods);
         }
     }, [product])
+    useEffect(() => {
+        if(open && preview) {
+            setStage("preview");
+        }
+    }, [open]);
     useEffect(() => {
         const handleBeforeUnload = async (event) => {
             // Perform actions before the page unloads
@@ -129,13 +134,13 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
     return (
         <Modal
             open={open}
-            onClose={() => { setOpen(false); setUpcs([]); releaseHold(); setTempUpcs([]); setStage("blanks"); setProduct({  blanks: [], colors: [], threadColors: [], sizes: [], productImages: { blank: [], color: [], threadColor: [] } }) }}
+            onClose={() => { setOpen(false); setUpcs([]); releaseHold(); setTempUpcs([]); setStage("blanks"); setProduct({ blanks: [], colors: [], threadColors: [], sizes: [], productImages: { blank: [], color: [], threadColor: [] } }); setPreview(false); setProducts([]); }}
             aria-labelledby="modal-modal-title"
             aria-describedby="modal-modal-description"
             id="create-product-modal"
         >
             <Box sx={style} ref={targetRef}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => { setOpen(false); setUpcs([]); releaseHold(); setTempUpcs([]); setStage("blanks"); setProduct({ blanks: [], colors: [], threadColors: [], sizes: [], productImages: { blank: [], color: [], threadColor: [] } }); setProducts([]); }}>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => { setOpen(false); setUpcs([]); releaseHold(); setTempUpcs([]); setStage("blanks"); setProduct({ blanks: [], colors: [], threadColors: [], sizes: [], productImages: { blank: [], color: [], threadColor: [] } }); setProducts([]); setPreview(false); }}>
                     <CloseIcon sx={{ color: "#780606" }} />
                 </Box>
                 <Typography variant="h4" sx={{ marginBottom: "2%", color: "#000", textAlign: "center" }} >Create Product</Typography>
@@ -158,7 +163,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                 }
                 {stage == "preview" && 
                     <PreviewStage
-                        products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} upcs={upcs} setUpcs={setUpcs} releaseHold={releaseHold} setLoading={setLoading} loading={loading} images={images} setImages={setImages} imageGroups={imageGroups} setDesign={setDesign} updateDesign={updateDesign} setOpen={setOpen} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes}
+                        products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} upcs={upcs} setUpcs={setUpcs} releaseHold={releaseHold} setLoading={setLoading} loading={loading} images={images} setImages={setImages} imageGroups={imageGroups} setDesign={setDesign} updateDesign={updateDesign} setOpen={setOpen} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} preview={preview} setPreview={setPreview} tempUpcs={tempUpcs} setTempUpcs={setTempUpcs} setCombined={setCombined} combined={combined} colors={colors}
                     />
                 }
             </Box>

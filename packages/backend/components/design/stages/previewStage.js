@@ -8,17 +8,22 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
-export const PreviewStage = ({ design, setDesign, setStage, setImages, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen }) => {
+export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen, preview, setPreview }) => {
     return (
         <Box sx={{ padding: "2%" }}>
             {products.map((product, index) => (
                 <Box key={index}>
                     <Typography variant="h6" textAlign={"center"}>Preview</Typography>
-                    <ProductImageCarosel productImages={product.productImages} />
+                    <ProductImageCarosel productImages={product.productImages} defaultColor={product.defaultColor} />
                     <Box sx={{ padding: "2%" }}>
                         <List>
                             <ListItem>
                                 <ListItemText primary={product.title} secondary={`SKU: ${product.sku} Brand: ${product.brand} ${product.gender ? `Gender: ${product.gender}` : ""} ${product.season ? `Season: ${product.season}` : ""}`} />
+                            </ListItem>
+                        </List>
+                        <List>
+                            <ListItem>
+                                <ListItemText primary={`Default Color: ${product.defaultColor.name}`} />
                             </ListItem>
                         </List>
                         <List>
@@ -34,7 +39,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, setSizes,
                     </Box>
                     <Box sx={{ padding: "2%" }}>
                         <Typography variant="h6">Variants</Typography>
-                        {Object.keys(product.variants).length > 0 && Object.keys(product.variants).map(blank => (
+                        {!preview && Object.keys(product.variants).length > 0 && Object.keys(product.variants).map(blank => (
                             <Box key={blank} sx={{ marginBottom: "2%" }}>
                                 {!product.hasThreadColors && Object.keys(product.variants[blank]).map(color => (
                                     <Box key={color} sx={{ marginLeft: "2%" }}>
@@ -52,10 +57,42 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, setSizes,
                                 ))}
                             </Box>
                         ))}
+                        {preview && product.variantsArray && product.variantsArray.length > 0 && product.blanks.map(blank => {
+                            return product.threadColors && product.threadColors.length > 0 ? (
+                                <Box key={blank.code} sx={{ marginBottom: "2%" }}>
+                                    {product.threadColors && product.threadColors.length > 0 &&product.threadColors.map(threadColor => (
+                                        <Box key={threadColor.name} sx={{ marginLeft: "2%" }}>
+                                            {product.colors.map(color => {
+                                                const variants = product.variantsArray.filter(v => v.blank.code === blank.code && v.threadColor.name === threadColor.name && v.color.name === color.name);
+                                                return variants.length > 0 ? (
+                                                    <VariantDisplay key={`${blank.code}-${threadColor.name}-${color.name}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.threadColor.toString() === threadColor._id.toString() && v.color.toString() === color._id.toString())} />
+                                                ) : null;
+                                            })}
+                                        </Box>
+                                    ))}
+                                    {!product.threadColors || product.threadColors.length === 0 && product.colors.map(color => {
+                                        const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
+                                        return variants.length > 0 ? (
+                                            <VariantDisplay key={`${blank.code}-${color.name}`} blank={blank.code} color={color.name} variants={variants} />
+                                        ) : null;
+                                    })}
+                                </Box>
+                            ) : (
+                                <Box key={blank.code} sx={{ marginBottom: "2%" }}>
+                                    {console.log(product.variantsArray, "variantsArray in PreviewStage")}
+                                    {product.colors.map(color => {
+                                        const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
+                                        return variants.length > 0 ? (
+                                            <VariantDisplay key={`${blank.code}-${color.name}`} blank={blank.code} color={color.name} variants={variants} />
+                                        ) : null;
+                                    })}
+                                </Box>
+                            );
+                        })}
                     </Box>
                 </Box>
             ))}
-            <Grid2 container spacing={2} sx={{ padding: "2%" }}>
+            {!preview && <Grid2 container spacing={2} sx={{ padding: "2%" }}>
                 <Grid2 size={6}>
                     <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("information") }}>Back</Button>
                 </Grid2>
@@ -89,7 +126,8 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, setSizes,
                         }
                     }}>{loading ? <Box sx={{ display: "flex", alignItems: "center", gap: "2" }}><CircularProgress color="inherit" size={24} /> <Typography variant="body2">Saving ...  </Typography></Box> : "Create"}</Button>
                 </Grid2>
-            </Grid2>
+            </Grid2>}
+            {preview && <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setPreview(false); setStage("blanks"); setProducts([]); setUpcs([]); setImages([]); setSizes([]); setColors([]); setOpen(false) }}>Back</Button>}
         </Box>
     )
 }
@@ -116,7 +154,7 @@ const VariantDisplay = ({ blank, threadColor, color, variants }) => {
                                 {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
                                     <ListItemAvatar>
                                         <Avatar key={i}>
-                                            <img src={img.image?.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                            <img src={img.image ? img.image.replace("=400", "=75") : img.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                         </Avatar>
                                     </ListItemAvatar>
                                 ))}
@@ -131,9 +169,12 @@ const VariantDisplay = ({ blank, threadColor, color, variants }) => {
     )
 }
 
-const ProductImageCarosel = ({ productImages }) => {
+const ProductImageCarosel = ({ productImages, defaultColor }) => {
     const [image, setImage] = useState(0)
     const [loading, setLoading] = useState(true)
+    let order = productImages.filter(img => img.color.name === defaultColor.name)
+    order = [...order, ...productImages.filter(img => img.color.name !== defaultColor.name)]
+    productImages = order;
     return (
         <Grid2 container spacing={2} sx={{ padding: "2%" }}>
             <Grid2 size={{ xs: 2, lg: 3 }}></Grid2>
@@ -158,7 +199,7 @@ const ProductImageCarosel = ({ productImages }) => {
             <Grid2 size={10}>
                 <ImageList cols={12} gap={1}>
                     {productImages.map((variant, i) => (
-                        <ImageListItem key={variant.sku} sx={{ width: "100%", height: "auto", cursor: "pointer", border: image == i ? "2px solid rgb(41, 6, 240)" : "none", opacity: image == i ? 0.6 : 1 }} onClick={() => { setLoading(true); setImage(i) }}>
+                        <ImageListItem key={i} sx={{ width: "100%", height: "auto", cursor: "pointer", border: image == i ? "2px solid rgb(41, 6, 240)" : "none", opacity: image == i ? 0.6 : 1 }} onClick={() => { setLoading(true); setImage(i) }}>
                             <img src={variant.image} alt={variant.sku} />
 
                         </ImageListItem>

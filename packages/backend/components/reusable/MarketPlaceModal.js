@@ -114,7 +114,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             getConnections();
         }
     }, [open]);
-    console.log(product.variantsArray, "product variants in MarketPlaceModal");
     const [addMarketPlace, setAddMarketPlace] = useState(false);
     const style = {
         position: 'absolute',
