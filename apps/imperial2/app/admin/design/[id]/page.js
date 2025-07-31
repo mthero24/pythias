@@ -4,6 +4,7 @@ import { DesignMain, serialize } from "@pythias/backend";
 import { notFound } from "next/navigation";
 import { designPage } from "@pythias/backend";
 export const dynamic = 'force-dynamic';
+// Note: This code is used to render the design page for a specific design ID.
 export default async function DesignPage({ params }) {
     let { id } = await params;
     if (id) {
