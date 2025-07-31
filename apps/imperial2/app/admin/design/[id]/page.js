@@ -26,8 +26,6 @@ export default async function DesignPage({ params }) {
                 Themes,
                 ProductImages,
             });
-            console.log(blanks, "Blanks in DesignPage");
-            console.log(themes, "Themes in DesignPage");
             return (
                 <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"imperial"} them={themes} sport={sportUsedFor} />
             )
