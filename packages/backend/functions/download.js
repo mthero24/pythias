@@ -151,10 +151,13 @@ export const downloadProduct = async ({ product, marketPlace, header }) => {
         for (let b of product.blanks) {
             for (let tc of product.threadColors) {
                 for (let c of product.colors) {
-                    if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor.toString() == tc._id.toString() && v.color.toString() == c._id.toString()).length > 0) {
-                        for (let v of product.variantsArray.filter(v => v.blank._id.toString() == b._id.toString() && v.threadColor.toString() == tc._id.toString() && v.color._id.toString() == c._id.toString())) {
+                    if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.threadColor._id ? v.threadColor._id.toString() : v.threadColor.toString()) == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
+                        for (let v of product.variantsArray.filter(v => v.blank._id.toString() == b._id.toString() && (v.threadColor._id ? v.threadColor._id.toString() : v.threadColor.toString()) == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString())) {
                             if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
-                            if (!v.color._id) v.color = c;
+                            v.color = c;
+                            console.log(v.color, "color in MarketPlaceList");
+                             v.threadColor = tc;
+                            console.log(v.threadColor, "threadColor in MarketPlaceList");
                             let thisHead = { ...headers };
                             for (let h of Object.keys(headers)) {
                                 let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index });
