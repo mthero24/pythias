@@ -131,8 +131,13 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                         if (blank.colors.filter(c => c._id.toString() == color._id.toString())[0]) {
                                             for (let size of product.sizes) {
                                                 let upc
-                                                if (upcs?.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]) {
-                                                    upc = upcs.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]
+                                                let sku = await CreateSku({ blank, color, size, design });
+                                                console.log(sku,upcs.filter(u => u.sku == sku)[0], "filtering upcs")
+                                                if (upcs.filter(u => u.sku == sku)[0]) {
+                                                    upc = upcs.filter(u => u.sku == sku)[0]
+                                                }else if(upcs.filter(u=> u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]) {
+                                                    upc = upcs.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]  
+
                                                 } else {
                                                     upc = tempUpcs.filter(u => u.used != true)[0]
                                                     if (upc) {

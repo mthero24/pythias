@@ -2,7 +2,7 @@ import {Products, Design} from "@pythias/mongo";
 import {NextApiRequest, NextResponse } from "next/server";
 import { updateTempUpc, createTempUpcs } from "@pythias/integrations"
 import {SkuToUpc, Color} from "@pythias/mongo";
-import {savedProducts} from "@pythias/backend";
+import {saveProducts} from "@pythias/backend";
 const update = async({product})=>{
     if (product.threadColors && product.threadColors.length > 0) {
         for (let b of product.blanks) {
@@ -34,7 +34,7 @@ const update = async({product})=>{
                 if (product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0) {
                     for (let v of product.variants[b.code][c.name]) {
                         console.log("Updating variant", v.gtin, v.sku);
-                        let upc = await SkuToUpc.findOne({ upc:v.upc });
+                        let upc = await SkuToUpc.findOne({ upc: v.upc });
                         console.log("Found UPC", upc);
                         upc.design = product.design._id;
                         upc.blank = b._id;
@@ -59,8 +59,8 @@ export async function POST(req = NextApiRequest) {
     const data = await req.json();
     console.log("Received data", data);
     for (let product of data.products) {
-        update({ product: product });
+        await update({ product: product });
     }
-    let products = await savedProducts({ products: data.products, Products });
+    let products = await saveProducts({ products: data.products, Products });
     return NextResponse.json({ error: false, products });
 }

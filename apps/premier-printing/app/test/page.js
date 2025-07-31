@@ -12,16 +12,17 @@ export default async function Test(){
     // let products = [];
     // for (let product of prods) {
     //     let variantsArray = []
-    //     if (product.threadColor && product.threadColors.length > 0) {
+    //     if (product.threadColors && product.threadColors.length > 0) {
     //         for (let b of product.blanks) {
     //             for (let tc of product.threadColors) {
     //                 for (let c of product.colors) {
-    //                     if (product.variant && product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
+    //                     if (product.variants && product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
     //                         let variants = product.variants[b.code][tc.name][c.name].map(v => {
-    //                             v.color = v.color._id
-    //                             v.blank = v.blank._id
-    //                             v.size = v.size._id
-    //                             v.images = v.images.map(i => i.image ? i.image : i)
+    //                             v.color = v.color._id ? v.color._id : v.color;
+    //                             v.blank = v.blank._id ? v.blank._id : v.blank;
+    //                             v.size = v.size._id ? v.size._id : v.size;
+    //                             console.log(v.images)
+    //                             v.images = v.images?.map(i => i.image ? i.image : i)
     //                             return v;
     //                         })
     //                         variantsArray = [...variantsArray, ...variants];
@@ -49,7 +50,8 @@ export default async function Test(){
     //     }
     //     if(variantsArray.length > 0) product.variantsArray = variantsArray
     //     if(variantsArray.length > 0){
-    //         //product.variants = null
+    //         product.variants = null
+    //         product.sizes = null
     //     }
     //     console.log(product.variantsArray)
     //     if (product._id) {
