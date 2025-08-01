@@ -16,3 +16,4 @@ export {saveProducts} from "./functions/saveProduct";
 export {designPage} from "./functions/designPage";
 export {saveOneOffs} from "./functions/saveOneOffs";
 export { ProductsMain } from "./components/product/Main";
+export { getProducts } from "./functions/getProducts";

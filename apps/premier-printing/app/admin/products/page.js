@@ -1,10 +1,13 @@
 import {Products} from "@pythias/mongo";
-import {ProductsMain as Main} from "@pythias/backend";
-import {serialize} from "@pythias/backend";
+import { ProductsMain as Main, serialize, getProducts} from "@pythias/backend";
+
 export const dynamic = 'force-dynamic';
 //server components
-export default async function ProductsPage(){
-    let products = await Products.find().populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});
-    let prods = serialize(products);
-    return <Main prods={prods} />
+export default async function ProductsPage(req){
+    let query = await req.searchParams
+    let page = parseInt(query.page ? query.page : 1)
+    let q = query.q ? query.q : null;
+    let {products, count} = await getProducts({ Products, page, query: q });
+    products = serialize(products);
+    return <Main prods={products} co={count} pa={page} q={q} />;
 }

@@ -40,6 +40,7 @@ export const saveProducts = async ({products, Products}) => {
         }
         if(variantsArray.length > 0) product.variantsArray = variantsArray
         product.variants = null; // Clear variants to avoid duplication
+        product.lastUpdated = new Date(Date.now()); // Update lastUpdated field
         if(product._id) {
             product = await Products.findByIdAndUpdate(product._id, product, { new: true, returnNewDocument: true}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});
         }else{
