@@ -1,12 +1,7 @@
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Divider, FormControlLabel, Checkbox, List, CircularProgress, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
-import CreatableSelect from "react-select/creatable";
+import { Box, Modal, Typography,  } from "@mui/material";
+
 import axios from "axios";
 import { useState, useEffect, useRef } from "react";
-import CheckIcon from '@mui/icons-material/Check';
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import CloseIcon from '@mui/icons-material/Close';
 import { BlankStage } from "./stages/blankStage";
 import { ColorStage } from "./stages/colorStage";
@@ -14,9 +9,8 @@ import { ProductImageStage } from "./stages/productImageStage";
 import { VariantImageStage } from "./stages/variantImageStage";
 import { InformationStage } from "./stages/informationStage";
 import { PreviewStage } from "./stages/previewStage";
-import { set } from "mongoose";
 
-export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading, preview, setPreview, themes, sportUsedFor , setThemes, setSportUsedFor }) => {
+export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading, preview, setPreview, themes, sportUsedFor , setThemes, setSportUsedFor, pageProducts, setPageProducts }) => {
     const [cols, setColors] = useState({})
     const [sizes, setSizes] = useState({})
     const [images, setImages] = useState([])
@@ -60,11 +54,18 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                     }
                 }
             }
+            console.log("product in modal", prod);
             if(prod?.blanks.length > 0) setCombined(true);
             if(prod && prod._id)prods.push(prod);
             setProducts(prods);
         }
-    }, [product])
+    }, [product]);
+    useEffect(() => {
+        if(product && product._id) {
+            let prod= {...product,}
+            if (!design._id) setDesign({...prod.design, products: [{...prod}]});
+        }
+    }, [product]);
     useEffect(() => {
         if(open && preview) {
             setStage("preview");
@@ -77,8 +78,8 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
             //event.preventDefault(); // This line is crucial for displaying the prompt
             let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
         // Optional: Display a confirmation message to the user
-        // event.preventDefault(); // This line is crucial for displaying the prompt
-        // event.returnValue = 'Are you sure you want to leave?';
+            //event.preventDefault(); // This line is crucial for displaying the prompt
+            //event.returnValue = 'Are you sure you want to leave?';
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
 
@@ -154,17 +155,18 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                 {stage == "product_images" && 
                     <ProductImageStage products={products} setProducts={setProducts} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setImages={setImages} images={images} imageGroups={imageGroups} />
                 }
-                {stage == "variant_images" && 
+                {console.log(design, "design in CreateProductModal")}
+                {stage == "variant_images" &&
                     <VariantImageStage products={products} setProducts={setProducts} design={design} source={source} setStage={setStage} />
                 }
                 {stage == "information" && 
                    <InformationStage
-                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} CreateSku={CreateSku} setLoading={setLoading} loading={loading} upcs={upcs} tempUpcs={tempUpcs} colors={colors} themes={themes} sportUsedFor={sportUsedFor} setPreview={setPreview} preview={preview} setOpen={setOpen} updateDesign={updateDesign} setDesign={setDesign} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} releaseHold={releaseHold} setTempUpcs={setTempUpcs} combined={combined} setCombined={setCombined} setThemes={setThemes} setSportUsedFor={setSportUsedFor} 
+                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} CreateSku={CreateSku} setLoading={setLoading} loading={loading} upcs={upcs} tempUpcs={tempUpcs} colors={colors} themes={themes} sportUsedFor={sportUsedFor} setPreview={setPreview} preview={preview} setOpen={setOpen} updateDesign={updateDesign} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} releaseHold={releaseHold} setTempUpcs={setTempUpcs} combined={combined} setCombined={setCombined} setThemes={setThemes} setSportUsedFor={setSportUsedFor}
                    />
                 }
                 {stage == "preview" && 
                     <PreviewStage
-                        products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} upcs={upcs} setUpcs={setUpcs} releaseHold={releaseHold} setLoading={setLoading} loading={loading} images={images} setImages={setImages} imageGroups={imageGroups} setDesign={setDesign} updateDesign={updateDesign} setOpen={setOpen} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} preview={preview} setPreview={setPreview} tempUpcs={tempUpcs} setTempUpcs={setTempUpcs} setCombined={setCombined} combined={combined} colors={colors}
+                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} upcs={upcs} setUpcs={setUpcs} releaseHold={releaseHold} setLoading={setLoading} loading={loading} images={images} setImages={setImages} imageGroups={imageGroups} updateDesign={updateDesign} setOpen={setOpen} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} preview={preview} setPreview={setPreview} tempUpcs={tempUpcs} setTempUpcs={setTempUpcs} setCombined={setCombined} combined={combined} colors={colors} setDesign={setDesign} pageProducts={pageProducts} setPageProducts={setPageProducts}
                     />
                 }
             </Box>

@@ -41,6 +41,14 @@ export const saveProducts = async ({products, Products}) => {
         if(variantsArray.length > 0) product.variantsArray = variantsArray
         product.variants = null; // Clear variants to avoid duplication
         product.lastUpdated = new Date(Date.now()); // Update lastUpdated field
+        if(!product.department) product.department = [];
+        if(!product.category) product.category = [];
+        for(let b of product.blanks){
+            if(b.department && !product.department.includes(b.department)) product.department.push(b.department);
+            for(let c of b.category){
+                if(!product.category.includes(c)) product.category.push(c);
+            }
+        }
         if(product._id) {
             product = await Products.findByIdAndUpdate(product._id, product, { new: true, returnNewDocument: true}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});
         }else{

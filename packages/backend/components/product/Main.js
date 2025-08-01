@@ -1,13 +1,67 @@
 "use client";
-import {Box, Grid2, Typography, Button, Divider, List, ListItem, ListItemText, Container, Stack, Pagination} from "@mui/material";
-import {useState} from "react";
+import {Box, Grid2, Typography, Button, Divider, List, ListItem, ListItemText, InputAdornment, TextField, Card, Container, Stack, Pagination, Grid} from "@mui/material";
+import {useState, useEffect} from "react";
 import { ProductCard } from "../reusable/ProductCard";
 import {Footer} from "../reusable/Footer";
-export const ProductsMain = ({prods, co, pa}) => {
+import SearchIcon from '@mui/icons-material/Search';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import CreatableSelect from "react-select/creatable";
+import { CreateProductModal } from "../design/CreateProductModal";
+import { MarketplaceModal } from "../reusable/MarketPlaceModal";
+import LoaderOverlay from "../reusable/LoaderOverlay";
+export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source}) => {
     const [products, setProducts] = useState(prods);
     const [count, setCount] = useState(co);
     const [page, setPage] = useState(pa);
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState(query || "");
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [filters, setFilters] = useState(filter || {});
+    const [createProduct, setCreateProduct] = useState(false);
+    const [marketplaceModal, setMarketplaceModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState({blanks: [], colors: [], productImages: [], variants: []});
+    const [des, setDesign] = useState({});
+    const [departments, setDepartments] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [bran, setBrands] = useState(brands || []);
+    const [gen, setGenders] = useState(genders || []);
+    const [seas, setSeasons] = useState(seasons || []);
+    const [sport, setSportUsedFor] = useState(sportsUsedFor || []);
+    const [them, setThemes] = useState(themes || []);
+    const [preview, setPreview] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [market, setMarketPlaces] = useState(marketplaces || []);
+    const [imageGroups, setImageGroups] = useState();
+    useEffect(() => {
+        let dept = [];
+        let cat = [];
+        for(let blank of blanks) {
+            if(blank.department && !dept.includes(blank.department)) dept.push(blank.department);
+            for(let c of blank.category) {
+                if(!cat.includes(c)) cat.push(c);
+            }
+        }
+        let imGr = []
+        blanks.map(b => {
+            if (b.multiImages) {
+                Object.keys(b.multiImages).map(i => {
+                    b.multiImages[i].map(im => {
+                        im.imageGroup?.map(g => {
+                            if (!imGr.includes(g)) imGr.push(g)
+                        })
+                    })
+                })
+            }
+        })
+        setImageGroups(imGr)
+        setDepartments(dept);
+        setCategories(cat);
+    }, []);
+    useEffect(() => {
+        if (selectedProduct) {
+            setDesign({...selectedProduct.design, products: [{...selectedProduct}]});
+        }
+    }, [selectedProduct]);
     const handlePageChange = (event, value) => {
         console.log(value)
         location.href = `/admin/products?page=${value}${search ? `&q=${search}` : ''}`;
@@ -15,28 +69,168 @@ export const ProductsMain = ({prods, co, pa}) => {
         // based on the 'value' (new page number)
         console.log(`Navigating to page: ${value}`);
     };
+    let updateDesign = async (des) => {
+        return null;
+        // This function is a placeholder for updating the design.
+    }
     return (
-        <Box>
+        <Box sx={{width: "100%", maxWidth: "100%", overflowX: "hidden", overflowY: "auto"}}>
             <Container maxWidth="lg">
                     <Typography variant="h4" sx={{ marginBottom: "2%" }}>Products</Typography>
+                    <Card sx={{ padding: "2%", marginBottom: "2%" }}>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            placeholder="Search products..."
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end" sx={{ cursor: "pointer" }} onClick={() => handlePageChange(null, 1)}>
+                                        <SearchIcon />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            value={search}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handlePageChange(null, 1);
+                                }
+                            }}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: "1%" }}>
+                            <Typography variant="body2" sx={{ marginRight: "1%", cursor: "pointer", color: filtersOpen ? "primary.main" : "text.secondary" }} onClick={() => setFiltersOpen(!filtersOpen)}> Filters {filtersOpen ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />} </Typography>
+                        </Box>
+                    </Card>
+                    {filtersOpen && (
+                        <Box sx={{ marginBottom: "2%", padding: "2%", backgroundColor: "#f5f5f5", borderRadius: "5px", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
+                            <Grid2 container spacing={2} sx={{ marginTop: "1%" }}>
+                                <Grid2 size={{ xs: 12, sm: 3 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By Blank ..."
+                                        isClearable
+                                        isMulti
+                                        options={blanks.map(b => ({ value: b._id, label: b.code }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter BY Blank:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={{ xs: 12, sm: 3 }} sx={{ zIndex: 999 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By Department ..."
+                                        isClearable
+                                        isMulti
+                                        options={departments.map(d => ({ value: d, label: d }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter BY Department:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={{ xs: 12, sm: 3 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By Category ..."
+                                        isClearable
+                                        isMulti
+                                        options={categories.map(c => ({ value: c, label: c }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter BY Category:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={{ xs: 12, sm: 3 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By Brand ..."
+                                        isClearable
+                                        isMulti
+                                        options={bran.map(b => ({ value: b.name, label: b.name }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter by brand:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={{ xs: 12, sm: 3 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By Season ..."
+                                        isClearable
+                                        isMulti
+                                        options={seas.map(s => ({ value: s._id, label: s.name }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter by season:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={{ xs: 12, sm: 3 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By Gender ..."
+                                        isClearable
+                                        isMulti
+                                        options={gen.map(g => ({ value: g._id, label: g.name }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter by gender:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={{ xs: 12, sm: 3 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By Sport ..."
+                                        isClearable
+                                        isMulti
+                                        options={sport.map(s => ({ value: s._id, label: s.name }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter by sport:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                                <Grid2 size={{ xs: 12, sm: 3 }}>
+                                    <CreatableSelect
+                                        placeholder="Filter By marketplace ..."
+                                        isClearable
+                                        isMulti
+                                        options={marketplaces?.map(m => ({ value: m._id, label: m.name }))}
+                                        onChange={(selected) => {
+                                            console.log("Filter by marketplace:", selected);
+                                        }}
+                                    />
+                                </Grid2>
+                            </Grid2>
+                        </Box>
+                    )}
                     <Grid2 container spacing={2}>
-                        {products.map((p, i) => (
-                            <ProductCard 
+                        {products.map((p, i) => {
+                            return <ProductCard 
                                 key={i} 
                                 p={p} 
-                                setProduct={(product) => setProducts(products.map(prod => prod._id === product._id ? product : prod))} 
-                                setCreateProduct={(create) => setProducts(products.map(prod => ({...prod, create})))}
-                                setMarketplaceModal={(modal) => setProducts(products.map(prod => ({...prod, marketplaceModal: modal})))} 
-                                des={{products}} 
-                                setDesign={(design) => setProducts(products.map(prod => ({...prod, design})))} 
-                                setPreview={(preview) => setProducts(products.map(prod => ({...prod, preview})))} 
-                                updateDesign={(design) => setProducts(products.map(prod => ({...prod, design})))}
+                                setProduct={setSelectedProduct} 
+                                setCreateProduct={setCreateProduct}
+                                setMarketplaceModal={setMarketplaceModal} 
+                                design={{...p.design}} 
+                                setDesign={setDesign} 
+                                setPreview={setPreview} 
+                                updateDesign={updateDesign}
+                                blanks={blanks}
+                                colors={colors}
+                                imageGroups={imageGroups}
+                                brands={bran}
+                                genders={gen}
+                                seasons={seas} 
+                                setBrands={setBrands}
+                                setGenders={setGenders}
+                                setSeasons={setSeasons}
+                                CreateSku={CreateSku} 
+                                themes={them}
+                                sportUsedFor={sport}
+                                setThemes={setThemes}
+                                setSportUsedFor={setSportUsedFor}
+                                setProducts={setProducts}
                             />
-                        ))}
+                        })}
                     </Grid2>
                     <Stack spacing={2} sx={{ margin: "1% 0%", display: "flex", alignItems: "center" }}>
                         <Pagination count={Math.ceil(count / 25)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
                     </Stack>
+                <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={selectedProduct} setProduct={setSelectedProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={gen} seasons={seas} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={them} sportUsedFor={sport} setThemes={setThemes} setSportUsedFor={setSportUsedFor} pageProducts={products} setPageProducts={setProducts} />
+                    {loading && <LoaderOverlay/>}
+                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} />
             </Container>
             <Footer />
         </Box>

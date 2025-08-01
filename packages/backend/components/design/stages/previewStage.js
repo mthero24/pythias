@@ -7,8 +7,9 @@ import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { set } from "mongoose";
 
-export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen, preview, setPreview }) => {
+export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen, preview, setPreview, pageProducts, setPageProducts }) => {
     return (
         <Box sx={{ padding: "2%" }}>
             {products.map((product, index) => (
@@ -59,13 +60,13 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                         ))}
                         {preview && product.variantsArray && product.variantsArray && product.variantsArray.length > 0 && product.blanks.map(blank => {
                             return product.threadColors && product.threadColors.length > 0 ? (
-                                <Box key={blank.code} sx={{ marginBottom: "2%" }}>
+                                <Box key={blank} sx={{ marginBottom: "2%" }}>
                                     {product.threadColors && product.threadColors.length > 0 &&product.threadColors.map(threadColor => (
                                         <Box key={threadColor.name} sx={{ marginLeft: "2%" }}>
                                             {product.colors.map(color => {
                                                 const variants = product.variantsArray.filter(v => v.blank?.toString() === blank._id.toString() && v.threadColor?.toString() === threadColor?._id.toString() && v.color?.toString() === color?._id.toString());
                                                 return variants.length > 0 ? (
-                                                    <VariantDisplay key={`${blank.code}-${threadColor.name}-${color.name}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} />
+                                                    <VariantDisplay key={`${blank}-${threadColor}-${color}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} fullBlank={blank} />
                                                 ) : null;
                                             })}
                                         </Box>
@@ -73,7 +74,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     {!product.threadColors || product.threadColors.length === 0 && product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank.code}-${color.name}`} blank={blank.code} color={color.name} variants={variants} />
+                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} />
                                         ) : null;
                                     })}
                                 </Box>
@@ -83,7 +84,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     {product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank.code}-${color.name}`} blank={blank.code} color={color.name} variants={variants} />
+                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} />
                                         ) : null;
                                     })}
                                 </Box>
@@ -111,6 +112,18 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                             }
                             let d = { ...design }
                             d.products = [...design.products, ...prods]
+                            if(pageProducts){
+                                let prods = [...pageProducts]
+                                let newProds = []
+                                for(let po of prods){
+                                    if(res.data.products.filter(p => p._id.toString() === po._id.toString()).length > 0) {
+                                        newProds.push(res.data.products.filter(p => p._id.toString() === po._id.toString())[0])
+                                    }else{
+                                        newProds.push(po)
+                                    }
+                                }
+                                setPageProducts([...newProds])
+                            }
                             //console.log(d.products, "updated products")
                             setDesign({ ...d })
                             updateDesign({ ...d })
@@ -132,7 +145,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
     )
 }
 
-const VariantDisplay = ({ blank, threadColor, color, variants }) => {
+const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank }) => {
     const [open, setOpen] = useState(false);
     return (
         <Card sx={{ margin: "1% 0%", padding: "1%", background: "#f0f0f0", borderRadius: "10px", boxShadow: "2px 2px 2px #ccc" }}>
@@ -158,7 +171,7 @@ const VariantDisplay = ({ blank, threadColor, color, variants }) => {
                                         </Avatar>
                                     </ListItemAvatar>
                                 ))}
-                                <ListItemText primary={`${variant.sku}`} secondary={`Blank: ${variant.blank.name}, Color: ${variant.color.name}, Size: ${variant.size.name}`} />
+                                <ListItemText primary={`${variant.sku}`} secondary={`Blank: ${variant.blank.name ? variant.blank.name : fullBlank ? fullBlank.name : "N/A"}, Color: ${variant.color.name ? variant.color.name : fullBlank ? fullBlank.colors.filter(c => c._id.toString() === variant.color.toString())[0]?.name : "N/A"}, Size: ${variant.size.name ? variant.size.name : fullBlank ? fullBlank.sizes.filter(s => s._id.toString() === variant.size.toString())[0]?.name : "N/A"}`} />
                                 {variant.upc && <ListItemText primary={`UPC: ${variant.upc}`} secondary={`GTIN: ${variant.gtin}`} />}
                             </ListItem>
                         ))}

@@ -5,10 +5,11 @@ import {serialize} from "@/functions/serialize";
 import {Main} from "@pythias/inventory";
 import {getInv} from "@pythias/inventory"
 export const dynamic = 'force-dynamic'; 
-export default async function InventoryPage (searchParams){
-     let search = await searchParams;
+export default async function InventoryPage (req){
+    let search = await req.searchParams;
     let page = search.page;
-    let term = search.q
+    let term = search.q;
+    console.log(page, term, "search params in inventory page");
     if(page){
         page = parseInt(page)
     }else page= 1

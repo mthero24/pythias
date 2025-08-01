@@ -201,7 +201,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                     /> 
                 )} 
                 onChange={(event, value)=>{
-                    window.location.href= `/inventory2?page=${value}${query? `&q=${query}`: ""}`
+                    window.location.href= `/inventory?page=${value}${query? `&q=${query}`: ""}`
                 }}
                 />
         </Box>

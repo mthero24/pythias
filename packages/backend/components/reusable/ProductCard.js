@@ -23,7 +23,7 @@ export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModa
     return (
         <Grid2 size={{ xs: 6, sm: 4 }}>
             <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
-                <Box sx={{ position: "relative", zIndex: 999, left: { xs: "80%", sm: "85%", md: "90%" }, bottom: { xs: -20, sm: -30, md: -50 }, padding: "2%", cursor: "pointer", marginTop: "-12%", "&:hover": { opacity: .5 } }} onClick={() => { setDeleteFunction({ onDelete: deleteProduct }); setDeleteTitle("Are You Sure You Want To Delete This Product?"); setDeleteImage({ ...p }); setDeleteModal(true) }}>
+                <Box sx={{ position: "relative", left: { xs: "80%", sm: "85%", md: "90%" }, bottom: { xs: -20, sm: -30, md: -50 }, padding: "2%", cursor: "pointer", marginTop: "-12%", "&:hover": { opacity: .5 } }} onClick={() => { setDeleteFunction({ onDelete: deleteProduct }); setDeleteTitle("Are You Sure You Want To Delete This Product?"); setDeleteImage({ ...p }); setDeleteModal(true) }}>
                     <DeleteIcon sx={{ color: "#780606" }} />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
@@ -40,6 +40,11 @@ export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModa
                         </ListItem>
                     </List>
                 </Box>
+                {p.blanks && p.blanks.length > 1 && 
+                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#000", color: "#fff", width: "50%" }}>
+                        <Typography variant="body2" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Combined Product</Typography>
+                    </Box>
+                }
                 <Typography variant="body2" >Marketplaces:</Typography>
                 <Grid2 container spacing={2}>
                     {p.marketPlaces && Object.keys(p.marketPlaces).length > 0 && Object.keys(p.marketPlaces).map(m => (

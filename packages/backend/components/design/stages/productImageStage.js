@@ -2,6 +2,7 @@ import { Box, Grid2, Button, Typography, Checkbox } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 
 export const ProductImageStage = ({ products, setProducts, setStage, design, source, images,  setImages, imageGroups }) => {
+    console.log(design, "design in ProductImageStage");
     return (
         <Grid2 size={12} sx={{ padding: "0% 4%" }}>
             {products.map((product, i) => (

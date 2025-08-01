@@ -4,7 +4,7 @@ import Design from "./Design";
 import Blank from "./Blanks";
 import Color from "./Color";
 import MarketPlaces from "./MarketPlaces";
-import { Upcoming } from "@mui/icons-material";
+import { CategoryRounded, Upcoming } from "@mui/icons-material";
 const schema = new mongoose.Schema({
     design: {
         type: mongoose.Schema.Types.ObjectId,
@@ -84,6 +84,8 @@ const schema = new mongoose.Schema({
     tags: [String],
     theme: String,
     sportUsedFor: String,
+    department: [String],
+    category: [String],
     lastUpdated: {type: Date, default: Date.now}, 
 });
 export default PremierPrinting.model("Products", schema);

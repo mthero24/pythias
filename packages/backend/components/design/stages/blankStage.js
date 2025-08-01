@@ -68,8 +68,8 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                     }}>
                         <Box sx={{ border: "1px solid #000", borderRadius: "5px", padding: "1%", margin: ".5%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", "&:hover": { background: "#f0f0f0", opacity: .7 } }}>
                             <Box sx={{ position: "relative", zIndex: 999, display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", }}>
-                                {design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0] && design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0].colors && design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0].colors.length > 0 && <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem"}} />}
-                                <FormControlLabel control={<Checkbox checked={products.filter(p => p.blanks.filter(blank => blank?._id?.toString() == b?._id?.toString())[0] != undefined).length > 0} />} />
+                                {design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0] && design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0].colors && design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0].colors.length > 0 && <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem"}} />}
+                                <FormControlLabel control={<Checkbox checked={products.filter(p => p.blanks.filter(blank => blank._id.toString() == b?._id?.toString())[0] != undefined).length > 0} />} />
                             </Box>
                             <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                 {styleImages.length > 0 && styleImages.map((si, i) => (
@@ -142,8 +142,8 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                         for(let prod of prods){
                             for(let b of prod.blanks){
                                // console.log(design.blanks.map(b=> b.blank._id) )
-                                if (design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0]){
-                                    previousColors = design.blanks.filter(d => d.blank._id.toString() == b._id.toString())[0].colors
+                                if (design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0]){
+                                    previousColors = design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0].colors
                                     console.log("Found design for blank", b._id.toString(), "in design", design._id.toString());
                                 }
                             }

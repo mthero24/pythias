@@ -31,6 +31,7 @@ export const VariantImageStage = ({products, setProducts, design, source, setSta
 
 const CreateVariantImages = ({ product, products, setProducts, design, threadColors, source }) => {
     const [mainImage, setMainImage] = useState(true);
+    console.log(design, "design in CreateVariantImages");
     let imgs = {}
     if (!threadColors) {
         for (let side of Object.keys(design ? design : {})) {
@@ -46,7 +47,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             }
         }
     } else {
-        for (let threadColor of Object.keys(design)) {
+        for (let threadColor of Object.keys(design? design : {})) {
             for (let side of Object.keys(design[threadColor])) {
                 for (let blank of product.blanks) {
                     for (let color of product.colors) {
