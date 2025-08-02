@@ -51,6 +51,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         });
     }
     if(filters.blanks){
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             in: {
                 path: "blanks",
@@ -59,6 +60,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         })
     }
     if(filters.marketPlacesArray){
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             in: {
                 path: "marketPlacesArray",
@@ -67,6 +69,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         })
     }
     if (filters.department) {
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             text: {
                 path: "department",
@@ -75,6 +78,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         })
     }
     if (filters.category) {
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             text: {
                 path: "category",
@@ -83,6 +87,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         })
     }
     if (filters.brand) {
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             text: {
                 path: "brand",
@@ -91,6 +96,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         })
     }
     if (filters.season) {
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             text: {
                 path: "season",
@@ -99,6 +105,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         })
     }
     if (filters.gender) {
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             text: {
                 path: "gender",
@@ -107,6 +114,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         })
     }
     if (filters.sportsUsedFor) {
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             text: {
                 path: "sportsUsedFor",
