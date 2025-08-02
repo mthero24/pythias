@@ -86,6 +86,6 @@ const schema = new mongoose.Schema({
     sportUsedFor: String,
     department: [String],
     category: [String],
-    lastUpdated: {type: Date, default: Date.now}, 
+    lastUpdated: {type: Date, default: Date.now()}, 
 });
 export default PremierPrinting.model("Products", schema);

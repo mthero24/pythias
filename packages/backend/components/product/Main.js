@@ -14,7 +14,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
     const [products, setProducts] = useState(prods);
     const [count, setCount] = useState(co);
     const [page, setPage] = useState(pa);
-    const [search, setSearch] = useState(query || "");
+    const [search, setSearch] = useState(query);
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState(filter || {});
     const [createProduct, setCreateProduct] = useState(false);
@@ -64,18 +64,22 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
     }, [selectedProduct]);
     const handlePageChange = (event, value) => {
         console.log(value)
-        location.href = `/admin/products?page=${value}${search ? `&q=${search}` : ''}`;
+        location.href = `/admin/products?page=${value}${search ? `&q=${search}` : ''}${filters ? `&filters=${JSON.stringify(filters)}` : ''}`;
         // You would typically fetch new data for the selected page here
         // based on the 'value' (new page number)
         console.log(`Navigating to page: ${value}`);
     };
+    const applyFilters = () => {
+        console.log(search, filters, "Applying filters");
+        location.href = `/admin/products?page=1${search ? `&q=${search}` : ''}${filters ? `&filters=${JSON.stringify(filters)}` : ''}`;
+    }
     let updateDesign = async (des) => {
         return null;
         // This function is a placeholder for updating the design.
     }
     return (
         <Box sx={{width: "100%", maxWidth: "100%", overflowX: "hidden", overflowY: "auto"}}>
-            <Container maxWidth="lg">
+            <Container maxWidth="lg" sx={{minHeight: "90vh"}}>
                     <Typography variant="h4" sx={{ marginBottom: "2%" }}>Products</Typography>
                     <Card sx={{ padding: "2%", marginBottom: "2%" }}>
                         <TextField
@@ -110,8 +114,22 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         isClearable
                                         isMulti
                                         options={blanks.map(b => ({ value: b._id, label: b.code }))}
+                                        value={filters.blanks && filters.blanks.$in ? filters.blanks.$in.map(b => ({ value: b, label: blanks.filter(bl=> bl._id.toString() === b.toString())[0]?.code })) : []}
                                         onChange={(selected) => {
                                             console.log("Filter BY Blank:", selected);
+                                            let fil = {...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.blanks = {$in: selected.map(s => s.value)};
+                                            }else{
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'blanks') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({...fil});
                                         }}
                                     />
                                 </Grid2>
@@ -121,8 +139,22 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         isClearable
                                         isMulti
                                         options={departments.map(d => ({ value: d, label: d }))}
+                                        value={filters.department && filters.department.$in ? filters.department.$in.map(d => ({ value: d, label: departments.filter(dep => dep === d)[0] })) : []}
                                         onChange={(selected) => {
                                             console.log("Filter BY Department:", selected);
+                                            let fil = { ...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.department = { $in: selected.map(s => s.value) };
+                                            } else {
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'department') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({ ...fil });
                                         }}
                                     />
                                 </Grid2>
@@ -131,9 +163,23 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         placeholder="Filter By Category ..."
                                         isClearable
                                         isMulti
+                                        value={filters.category && filters.category.$in ? filters.category.$in.map(c => ({ value: c, label: categories.filter(cat => cat === c)[0] })) : []}
                                         options={categories.map(c => ({ value: c, label: c }))}
                                         onChange={(selected) => {
                                             console.log("Filter BY Category:", selected);
+                                            let fil = { ...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.category = { $in: selected.map(s => s.value) };
+                                            } else {
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'category') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({ ...fil });
                                         }}
                                     />
                                 </Grid2>
@@ -143,8 +189,22 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         isClearable
                                         isMulti
                                         options={bran.map(b => ({ value: b.name, label: b.name }))}
+                                        value={filters.brand && filters.brand.$in ? filters.brand.$in.map(b => ({ value: b, label: bran.filter(brand => brand.name === b)[0].name })) : []}
                                         onChange={(selected) => {
                                             console.log("Filter by brand:", selected);
+                                            let fil = { ...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.brand = { $in: selected.map(s => s.value) };
+                                            } else {
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'brand') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({ ...fil });
                                         }}
                                     />
                                 </Grid2>
@@ -153,9 +213,23 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         placeholder="Filter By Season ..."
                                         isClearable
                                         isMulti
-                                        options={seas.map(s => ({ value: s._id, label: s.name }))}
+                                        options={seas.map(s => ({ value: s.name, label: s.name }))}
+                                        value={filters.season && filters.season.$in ? filters.season.$in.map(s => ({ value: s, label: s })) : []}
                                         onChange={(selected) => {
                                             console.log("Filter by season:", selected);
+                                            let fil = { ...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.season = { $in: selected.map(s => s.value) };
+                                            } else {
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'season') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({ ...fil });
                                         }}
                                     />
                                 </Grid2>
@@ -164,9 +238,23 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         placeholder="Filter By Gender ..."
                                         isClearable
                                         isMulti
-                                        options={gen.map(g => ({ value: g._id, label: g.name }))}
+                                        options={gen.map(g => ({ value: g.name, label: g.name }))}
+                                        value={filters.gender && filters.gender.$in ? filters.gender.$in.map(g => ({ value: g, label: g })) : []}
                                         onChange={(selected) => {
                                             console.log("Filter by gender:", selected);
+                                            let fil = { ...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.gender = { $in: selected.map(s => s.value) };
+                                            } else {
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'gender') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({ ...fil });
                                         }}
                                     />
                                 </Grid2>
@@ -175,9 +263,23 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         placeholder="Filter By Sport ..."
                                         isClearable
                                         isMulti
-                                        options={sport.map(s => ({ value: s._id, label: s.name }))}
+                                        options={sport.map(s => ({ value: s.name, label: s.name }))}
+                                        value={filters.sportUsedFor && filters.sportUsedFor.$in ? filters.sportUsedFor.$in.map(s => ({ value: s, label: s })) : []}
                                         onChange={(selected) => {
                                             console.log("Filter by sport:", selected);
+                                            let fil = { ...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.sportUsedFor = { $in: selected.map(s => s.value) };
+                                            } else {
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'sportUsedFor') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({ ...fil });
                                         }}
                                     />
                                 </Grid2>
@@ -187,15 +289,33 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         isClearable
                                         isMulti
                                         options={marketplaces?.map(m => ({ value: m._id, label: m.name }))}
+                                        value={filters.marketPlacesArray && filters.marketPlacesArray.$in ? filters.marketPlacesArray.$in.map(m => ({ value: m, label: marketplaces.find(mkt => mkt._id.toString() === m.toString())?.name })) : []}
                                         onChange={(selected) => {
                                             console.log("Filter by marketplace:", selected);
+                                            let fil = { ...filters };
+                                            if (selected && selected.length > 0) {
+                                                fil.marketPlacesArray = { $in: selected.map(s => s.value) };
+                                            } else {
+                                                let newFil = {}
+                                                for (let key in filters) {
+                                                    if (key !== 'marketPlacesArray') {
+                                                        newFil[key] = filters[key];
+                                                    }
+                                                }
+                                                fil = newFil;
+                                            }
+                                            setFilters({ ...fil });
                                         }}
                                     />
+                                </Grid2>
+                                <Grid2 size={12}>
+                                    <Button fullWidth onClick={() => {applyFilters()}}>Apply Filters</Button>
                                 </Grid2>
                             </Grid2>
                         </Box>
                     )}
                     <Grid2 container spacing={2}>
+                        {products.length === 0 && <Typography sx={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem" }}>No products found</Typography>}
                         {products.map((p, i) => {
                             return <ProductCard 
                                 key={i} 

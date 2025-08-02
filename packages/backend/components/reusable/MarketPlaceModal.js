@@ -148,17 +148,15 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                         <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} }); setAddMarketPlace(true);}}>Create MarketPlace</Button>
                     </Box>
                     <Box sx={{width: "100%", overflow: "auto", display: "flex", flexDirection: "row", justifyContent: "flex-start", gap: "2%", alignItems: "center", padding: "1%" }}>
-                        {marketPlaces && marketPlaces.map(mp => (
-                            <Card key={mp._id} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
+                        {marketPlaces && marketPlaces.map((mp, i) => (
+                            <Card key={`${mp._id}-i`} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
                                 <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
                                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
                                     <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
                                     {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
                                         let p = { ...product };
-                                        if (!p.marketPlaces) {
-                                            p.marketPlaces = {};
-                                        }
-                                        p.marketPlaces[mp._id] = {_id: mp._id, name: mp.name};
+                                        if (!p.marketPlacesArray) p.marketPlacesArray = [];
+                                        p.marketPlacesArray.push(mp);
                                         if(design){
                                             let d ={ ...design };
                                             d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
@@ -174,15 +172,14 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     </Box>
                     <Divider sx={{ margin: ".5% 0" }} />
                     <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
-                    {product && product.marketPlaces && Object.keys(product.marketPlaces).length > 0 && Object.keys(product.marketPlaces).map((mpId) => (
-                        <Box>
-                            
-                            {marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0] && marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0].headers.map((header, index) => (
-                                <Box sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee",position: "relative", top: "-5%" }}>
-                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
-                                        <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${product.marketPlaces[mpId]._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
+                    { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => (
+                        <Box key={marketPlace._id}>
+                            {marketPlace.headers.map((header, index) => (
+                                <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
+                                   <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
+                                        <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                     </Box>
-                                    <MarketPlaceList key={mpId} marketPlace={marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0]} header={header} addMarketPlace={addMarketPlace} product={product} productLine={product.marketPlaces[mpId].hasProductLine && product.marketPlaces[mpId].hasProductLine[index] ? marketPlaces.filter(m => m._id === product.marketPlaces[mpId]._id)[0].hasProductLine[index] : false} />
+                                    <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} product={product} productLine={marketPlace.hasProductLine[index] ? marketPlace.hasProductLine[index] : false} />
                                 </Box>
                             ))}
                         </Box>
@@ -238,7 +235,6 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
                     for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) == c._id.toString())) {
                         if(!v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
                         if(!v.color._id) v.color = c;
-                        console.log(marketPlace, "marketPlace in MarketPlaceList");
                         for(let h of Object.keys(headers)) {
                             let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name })
                             headers[h].push(val);

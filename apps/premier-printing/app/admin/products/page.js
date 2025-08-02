@@ -18,5 +18,5 @@ export default async function ProductsPage(req) {
     marketplaces = serialize(marketplaces);
     themes = serialize(themes);
     colors = serialize(colors);
-    return <Main prods={products} co={count} pa={page} q={q} blanks={blanks} seasons={seasons} genders={genders} sportsUsedFor={sportsUsedFor} brands={brands} marketplaces={marketplaces} themes={themes} colors={colors} filter={filters} CreateSku={CreateSku} source={"simplysage"}/>;
+    return <Main prods={products} co={count} pa={page} query={q} blanks={blanks} seasons={seasons} genders={genders} sportsUsedFor={sportsUsedFor} brands={brands} marketplaces={marketplaces} themes={themes} colors={colors} filter={filters} CreateSku={CreateSku} source={"simplysage"}/>;
 }
