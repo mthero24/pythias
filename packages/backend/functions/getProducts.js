@@ -134,7 +134,9 @@ export const getProducts = async ({ Products, Blanks, page, query, Seasons, Gend
     products = await search({ Products, q: query, page, filters, productsPerPage: 24, skip: (page - 1) * 24 });
     if(products && products.length > 0){
         count = products[0].meta.count.total
-        products = await Products.find({_id: {$in: products.map(p => p._id)}}).skip((page - 1) * 24).limit(24).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
+        console.log(products.map(p => p._id));
+        products = await Products.find({_id: {$in: products.map(p => p._id)}}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
+        console.log("Products found:", products.length);
     }
     const blanks = await Blanks.find().populate("colors");
     const seasons = await Seasons.find();
