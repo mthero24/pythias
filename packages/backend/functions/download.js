@@ -1,5 +1,6 @@
 "use server";
 import { createObjectCsvStringifier } from 'csv-writer';
+import axios from 'axios';
 // //note: This code is used to generate a CSV file for product data based on the selected market place and product.
 const csvFunctions = {
     productSku: (product) => {
@@ -70,8 +71,32 @@ const csvFunctions = {
         return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "";
     }
 };
+const preCacheImages = async (product) => {
+    for(let image of product.productImages) {
+        if (image.image) {
+            try {
+                console.log(image.image.replace("=400", "=2400"))
+                await axios.get(image.image.replace("=400", "=2400"), { responseType: 'arraybuffer' }).catch(e=>{e.status});
+            } catch (error) {
+                console.error(`Failed to pre-cache image ${image.image}:`, error);
+            }
+        }
+    }
+    for(let variant of product.variantsArray) {
+        if (variant.image) await axios.get(variant.image.replace("=400", "=2400"), { responseType: 'arraybuffer' }).catch(e => { e.status });
+        if (variant.images && variant.images.length > 0) {
+            for(let img of variant.images) {
+                console.log(img.replace("=400", "=2400"))
+                try {
+                    await axios.get(img.replace("=400", "=2400"), { responseType: 'arraybuffer' }).catch(e => { e.status });
+                } catch (error) {
+                    console.error(`Failed to pre-cache variant image ${img.image}:`, error);
+                }
+            }
+        }
+    }
+};
 const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type }) => {
-
 
     let value = "N/A";
     if (type && type == "product") {
@@ -127,6 +152,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
 }
 
 export const downloadProduct = async ({ product, marketPlace, header }) => {
+    preCacheImages(product)
     let headers = {}
     for (let header of marketPlace.headers) {
         for (let h of header) {

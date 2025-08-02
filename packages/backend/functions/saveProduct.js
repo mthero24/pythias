@@ -45,7 +45,7 @@ export const saveProducts = async ({products, Products}) => {
         if(!product.category) product.category = [];
         for(let b of product.blanks){
             if(b.department && !product.department.includes(b.department)) product.department.push(b.department);
-            for(let c of b.category){
+            for(let c of b.category? b.category : []){
                 if(!product.category.includes(c)) product.category.push(c);
             }
         }

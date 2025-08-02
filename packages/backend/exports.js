@@ -17,3 +17,4 @@ export {designPage} from "./functions/designPage";
 export {saveOneOffs} from "./functions/saveOneOffs";
 export { ProductsMain } from "./components/product/Main";
 export { getProducts } from "./functions/getProducts";
+export { CSVProvider } from "./components/reusable/CSVProvider";

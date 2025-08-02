@@ -233,7 +233,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
                 //console.log(product.variantsArray)
                 if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
                     for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) == c._id.toString())) {
-                        if(!v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
+                        if (v.size && !v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
                         if(!v.color._id) v.color = c;
                         for(let h of Object.keys(headers)) {
                             let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name })
