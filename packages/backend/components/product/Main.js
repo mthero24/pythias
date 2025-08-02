@@ -12,7 +12,7 @@ import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import LoaderOverlay from "../reusable/LoaderOverlay";
 import {useCSV} from "../reusable/CSVProvider";
 import { set } from "mongoose";
-export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source}) => {
+export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts}) => {
     const [products, setProducts] = useState(prods);
     const [count, setCount] = useState(co);
     const [page, setPage] = useState(pa);
@@ -84,7 +84,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
     return (
         <Box sx={{width: "100%", maxWidth: "100%", overflowX: "hidden", overflowY: "auto"}}>
             <Container maxWidth="lg" sx={{minHeight: "90vh"}}>
-                    <Typography variant="h4" sx={{ marginBottom: "2%" }}>Products</Typography>
+                    <Typography variant="h4" sx={{ marginBottom: "2%" }}>Products {totalProducts}</Typography>
                     <Card sx={{ padding: "2%", marginBottom: "2%" }}>
                         <TextField
                             fullWidth

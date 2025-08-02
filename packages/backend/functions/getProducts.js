@@ -142,5 +142,6 @@ export const getProducts = async ({ Products, Blanks, page, query, Seasons, Gend
     const marketplaces = await MarketPlaces.find();
     const themes = await Themes.find();
     const colors = await Color.find();
-    return { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors };
+    const totalProducts = await Products.countDocuments();
+    return { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts };
 }

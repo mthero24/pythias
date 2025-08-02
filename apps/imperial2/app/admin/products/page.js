@@ -8,7 +8,7 @@ export default async function ProductsPage(req) {
     let page = parseInt(query.page ? query.page : 1)
     let q = query.q ? query.q : null;
     let filters = query.filters ? JSON.parse(query.filters) : {};
-    let { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors } = await getProducts({ Products, Blanks, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, page, query: q, filters });
+    let { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts } = await getProducts({ Products, Blanks, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, page, query: q, filters });
     products = serialize(products);
     blanks = serialize(blanks);
     seasons = serialize(seasons);
@@ -18,5 +18,5 @@ export default async function ProductsPage(req) {
     marketplaces = serialize(marketplaces);
     themes = serialize(themes);
     colors = serialize(colors);
-    return <Main prods={products} co={count} pa={page} q={q} blanks={blanks} seasons={seasons} genders={genders} sportsUsedFor={sportsUsedFor} brands={brands} marketplaces={marketplaces} themes={themes} colors={colors} filter={filters} CreateSku={CreateSku} source={"imperial"} />;
+    return <Main prods={products} co={count} pa={page} q={q} blanks={blanks} seasons={seasons} genders={genders} sportsUsedFor={sportsUsedFor} brands={brands} marketplaces={marketplaces} themes={themes} colors={colors} filter={filters} CreateSku={CreateSku} source={"imperial"} totalProducts={totalProducts}/>;
 }
