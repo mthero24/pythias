@@ -3,6 +3,7 @@ import { MarketPlaces, Products } from "@pythias/mongo";
 import { downloadProduct } from "@pythias/backend";
 
 export async function GET(req = NextApiResponse,) {
+    console.log("download route called");
     let data = { marketPlace: req.nextUrl.searchParams.get("marketPlace"), product: req.nextUrl.searchParams.get("product"), header: req.nextUrl.searchParams.get("header") };
     let marketPlace = await MarketPlaces.findOne({ _id: data.marketPlace }).lean();
     let products = await Products.find({ _id: { $in: data.product.split(",") } }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" }).lean();
