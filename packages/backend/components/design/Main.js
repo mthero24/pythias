@@ -1,7 +1,7 @@
 "use client";
 import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, Snackbar } from "@mui/material";
 import axios from "axios";
-import {useState, useEffect} from "react";
+import {useState, useEffect, useContext} from "react";
 import { Uploader } from "../reusable/premier/uploader";
 import CreatableSelect from "react-select/creatable";
 import { useRouter } from "next/navigation";
@@ -15,7 +15,6 @@ import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import { ProductCard } from "../reusable/ProductCard";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useCSV } from "../reusable/CSVProvider";
-import { set } from "mongoose";
 export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport }) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})

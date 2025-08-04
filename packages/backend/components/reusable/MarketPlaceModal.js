@@ -1,4 +1,4 @@
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider, Checkbox, FormControlLabel } from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider, Checkbox, FormControlLabel, CircularProgress } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModel from "../reusable/DeleteModal";
 import axios from "axios";
@@ -65,6 +65,20 @@ export const csvFunctions = {
     variantGtin: (variant) => {
         return variant.upc ? variant.upc : "N/A";
     },
+    variantMarketPlaceId: (variant, sizeConverter, numBlanks, blankName, connection) => {
+        //console.log("variant", variant, "connection", connection);
+        if (variant.ids && variant.ids[connection]) {
+            return variant.ids[connection];
+        }
+        return "N/A";
+    },
+    productMarketPlaceId: (product, index, connection) => {
+        console.log("product", product, "connection", connection);
+        if (product.ids && product.ids[connection]) {
+            return product.ids[connection];
+        }
+        return "N/A";
+    },
     productImage: (product, index) => {
         if (product.productImages && product.productImages.length > index && product.productImages[index] && product.productImages[index].image) {
             return product.productImages[index].image;
@@ -100,6 +114,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const [deleteImage, setDeleteImage] = useState();
     const [marketplace, setMarketplace] = useState({ name: "", headers: [[]], defaultValues: {}, sizes: {} });
     const [connections, setConnections] = useState([]);
+    const [loading, setLoading] = useState(false);
     useEffect(() => {
         let sizeArray = [];
         for(let sizeArr of sizes? sizes : []) {
@@ -114,6 +129,33 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             //console.log("getConnections called");
             let res = await axios.get("/api/admin/integrations", { params: { provider: "premierPrinting" } });
             //console.log(res.data);
+            if(res.data && res.data.integration) {
+                setLoading(true);
+                console.log("Connections found:", res.data.integration);
+                let connections = res.data.integration ? res.data.integration : [];
+                if (product && product.marketPlacesArray && product.marketPlacesArray.length > 0) {
+                    let mp = marketPlaces.filter(m => product.marketPlacesArray.map(mp => mp._id ? mp._id.toString() : mp.toString()).includes(m._id.toString()));
+                    if (mp) {
+                        console.log("Marketplace found in product:", mp);
+                        console.log("connections", connections);
+                        let prod = {...product}
+                        for (let m of mp) {
+                            console.log(m, "Marketplace in connections");
+                            for( let c of connections) {
+                                //console.log(c, "Connection in connections");
+                                if (m.connections && m.connections.includes(c._id.toString())) {
+                                    console.log("Marketplace connection found:", c);
+                                    let res = await axios.post("/api/integrations/acenda", { connection: c, product });
+                                    console.log(res, "Response from Acenda integration");
+                                    prod = res.data.product;
+                                }
+                            }
+                        }
+                        setProduct({...prod});
+                        setLoading(false);
+                    }
+                }
+            }
             setConnections(res.data.integration);
         }
         if(open) {
@@ -184,56 +226,61 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             aria-describedby="modal-modal-description"
         >
             <Box sx={style}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
-                    <CloseIcon sx={{ color: "#780606" }} />
-                </Box>
-                <Typography id="modal-modal-title" textAlign={"center"} variant="h6" component="h2">
-                    Add Product to Marketplace
-                </Typography>
-                <Box>
-                    <Box sx={{ maxHeight: "60vh", overflowY: "auto" }}>
-                        <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} }); setAddMarketPlace(true);}}>Create MarketPlace</Button>
-                    </Box>
-                    <Box sx={{width: "100%", overflow: "auto", display: "flex", flexDirection: "row", justifyContent: "flex-start", gap: "2%", alignItems: "center", padding: "1%" }}>
-                        {marketPlaces && marketPlaces.map((mp, i) => (
-                            <Card key={`${mp._id}-i`} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
-                                <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
-                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
-                                    <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
-                                    {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
-                                        let p = { ...product };
-                                        if (!p.marketPlacesArray) p.marketPlacesArray = [];
-                                        if (!p.marketPlacesArray.map(m => m._id ? m._id.toString() : m.toString()).includes(mp._id.toString())) p.marketPlacesArray.push(mp);
-                                        if(design){
-                                            let d ={ ...design };
-                                            d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
-                                            d.products.push(p);
-                                            setDesign({...d});
-                                        }
-                                        let res = axios.post("/api/admin/products", { products: [p] });
-                                        setProduct(p);
-                                    }}>Select</Button>}
-                                </Box>
-                            </Card>
-                        ))}
-                    </Box>
-                    <Divider sx={{ margin: ".5% 0" }} />
-                    <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
-                    { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => (
-                        <Box key={marketPlace._id}>
-                            {marketPlace.headers.map((header, index) => (
-                                <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
-                                   <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
-                                        <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
-                                    </Box>
-                                    <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine[index] ? marketPlace.hasProductLine[index] : false} />
+                { loading && <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}><CircularProgress /></Box>}
+                {!loading && (
+                    <Box>
+                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
+                            <CloseIcon sx={{ color: "#780606" }} />
+                        </Box>
+                        <Typography id="modal-modal-title" textAlign={"center"} variant="h6" component="h2">
+                            Add Product to Marketplace
+                        </Typography>
+                        <Box>
+                            <Box sx={{ maxHeight: "60vh", overflowY: "auto" }}>
+                                <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} }); setAddMarketPlace(true);}}>Create MarketPlace</Button>
+                            </Box>
+                            <Box sx={{width: "100%", overflow: "auto", display: "flex", flexDirection: "row", justifyContent: "flex-start", gap: "2%", alignItems: "center", padding: "1%" }}>
+                                {marketPlaces && marketPlaces.map((mp, i) => (
+                                    <Card key={`${mp._id}-i`} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
+                                        <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
+                                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
+                                            <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
+                                            {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
+                                                let p = { ...product };
+                                                if (!p.marketPlacesArray) p.marketPlacesArray = [];
+                                                if (!p.marketPlacesArray.map(m => m._id ? m._id.toString() : m.toString()).includes(mp._id.toString())) p.marketPlacesArray.push(mp);
+                                                if(design){
+                                                    let d ={ ...design };
+                                                    d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
+                                                    d.products.push(p);
+                                                    setDesign({...d});
+                                                }
+                                                let res = axios.post("/api/admin/products", { products: [p] });
+                                                setProduct(p);
+                                            }}>Select</Button>}
+                                        </Box>
+                                    </Card>
+                                ))}
+                            </Box>
+                            <Divider sx={{ margin: ".5% 0" }} />
+                            <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
+                            { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => (
+                                <Box key={marketPlace._id}>
+                                    {marketPlace.headers.map((header, index) => (
+                                        <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
+                                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
+                                                <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
+                                            </Box>
+                                            <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} />
+                                        </Box>
+                                    ))}
                                 </Box>
                             ))}
                         </Box>
-                    ))}
-                </Box>
-                <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} />
-                <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
+                        <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} />
+                        <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
+                    </Box>
+                )}
             </Box>
         </Modal>
     )
@@ -326,11 +373,17 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
 
     let value = "N/A";
     if(type && type == "product") {
-        if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+        if (mp.productDefaultValues[headerLabel] && headerLabel == "id") {
+            console.log(mp.productDefaultValues[headerLabel].split(",")[0], "mp.productDefaultValues[headerLabel].split(',')[0]");
+            console.log(csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]));
+            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]);
+            console.log(value, "value in HeaderList");
+        }
+        else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
             if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
                 value = "N/A";
             }
-            else value = csvFunctions[mp.productDefaultValues[headerLabel]](product, index);
+            else value = csvFunctions[mp.productDefaultValues[headerLabel]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("variant") && csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]]) {
             value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1]);
