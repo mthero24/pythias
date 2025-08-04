@@ -51,6 +51,12 @@ const csvFunctions = {
         }
         return "N/A";
     },
+    productTheme: (product) => {
+        return product.theme ? product.theme : "N/A";
+    },
+    productSportUsedFor: (product) => {
+        return product.sportUsedFor ? product.sportUsedFor : "N/A";
+    },
     productImageAlt: (product) => {
         return product.name;
     },
@@ -71,7 +77,7 @@ const csvFunctions = {
         return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "";
     }
 };
-const preCacheImages = async (product) => {
+export const preCacheImages = async (product) => {
     for(let image of product.productImages) {
         if (image.image) {
             try {
@@ -151,8 +157,8 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
     return value
 }
 
-export const downloadProduct = async ({ product, marketPlace, header }) => {
-    preCacheImages(product)
+export const downloadProduct = async ({ products, marketPlace, header }) => {
+    
     let headers = {}
     for (let header of marketPlace.headers) {
         for (let h of header) {
@@ -162,54 +168,58 @@ export const downloadProduct = async ({ product, marketPlace, header }) => {
     //console.log(marketPlace.hasProductLine[header], "hasProductLine for header", header);
     let sendVarianrts = [];
     if (marketPlace.hasProductLine && (marketPlace.hasProductLine[header])) {
-        for (let b of product.blanks) {
-            let thisHead = { ...headers };
-            for (let h of Object.keys(headers)) {
-                let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
-                console.log("Header value for", h, ":", val);
-                thisHead[h] = val != "N/A" ? val : "";
+        for (let product of products) {
+            for (let b of product.blanks) {
+                let thisHead = { ...headers };
+                for (let h of Object.keys(headers)) {
+                    let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
+                    console.log("Header value for", h, ":", val);
+                    thisHead[h] = val != "N/A" ? val : "";
+                }
+                sendVarianrts.push(thisHead);
             }
-            sendVarianrts.push(thisHead);
         }
     }
-    let index = 0;
-    if (product.threadColors && product.threadColors.length > 0) {
-        for (let b of product.blanks) {
-            for (let tc of product.threadColors) {
-                for (let c of product.colors) {
-                    if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.threadColor._id ? v.threadColor._id.toString() : v.threadColor.toString()) == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
-                        for (let v of product.variantsArray.filter(v => v.blank._id.toString() == b._id.toString() && (v.threadColor._id ? v.threadColor._id.toString() : v.threadColor.toString()) == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString())) {
-                            if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
-                            v.color = c;
-                            console.log(v.color, "color in MarketPlaceList");
-                             v.threadColor = tc;
-                            console.log(v.threadColor, "threadColor in MarketPlaceList");
-                            let thisHead = { ...headers };
-                            for (let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index });
-                                thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string
+    for (let product of products) {
+        let index = 0;
+        if (product.threadColors && product.threadColors.length > 0) {
+            for (let b of product.blanks) {
+                for (let tc of product.threadColors) {
+                    for (let c of product.colors) {
+                        if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.threadColor._id ? v.threadColor._id.toString() : v.threadColor.toString()) == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
+                            for (let v of product.variantsArray.filter(v => v.blank._id.toString() == b._id.toString() && (v.threadColor._id ? v.threadColor._id.toString() : v.threadColor.toString()) == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString())) {
+                                if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
+                                v.color = c;
+                                console.log(v.color, "color in MarketPlaceList");
+                                v.threadColor = tc;
+                                console.log(v.threadColor, "threadColor in MarketPlaceList");
+                                let thisHead = { ...headers };
+                                for (let h of Object.keys(headers)) {
+                                    let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index });
+                                    thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string
+                                }
+                                index++
+                                sendVarianrts.push(thisHead);
                             }
-                            index++
-                            sendVarianrts.push(thisHead);
                         }
                     }
                 }
             }
-        }
-    } else {
-        for (let b of product.blanks) {
-            for (let c of product.colors) {
-                if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
-                    for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString())) {
-                        if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
-                        v.color = c;
-                        let thisHead = { ...headers };
-                        for (let h of Object.keys(headers)) {
-                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name, index, });
-                            thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string                       
+        } else {
+            for (let b of product.blanks) {
+                for (let c of product.colors) {
+                    if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
+                        for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString())) {
+                            if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
+                            v.color = c;
+                            let thisHead = { ...headers };
+                            for (let h of Object.keys(headers)) {
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name, index, });
+                                thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string                       
+                            }
+                            index++
+                            sendVarianrts.push(thisHead);
                         }
-                        index++
-                        sendVarianrts.push(thisHead);
                     }
                 }
             }

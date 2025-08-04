@@ -59,6 +59,7 @@ const schema = new mongoose.Schema({
             ref: Blank,
         },
         gtin: String,
+        ids: Object,
     }],
     variantImages: Object,
     variantSecondaryImages: Object,
@@ -86,6 +87,7 @@ const schema = new mongoose.Schema({
     sportUsedFor: String,
     department: [String],
     category: [String],
+    ids: Object,
     lastUpdated: {type: Date, default: Date.now()}, 
 });
 export default PremierPrinting.model("Products", schema);

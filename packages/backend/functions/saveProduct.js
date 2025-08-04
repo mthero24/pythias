@@ -2,7 +2,7 @@
 
 export const saveProducts = async ({products, Products}) => {
     let savedProducts = [];
-    console.log(products[0].variants, "products in saveProducts");
+    console.log(products, "products in saveProducts");
     for(let product of products) {
         let variantsArray = []
         if(product.threadColors && product.threadColors.length > 0){

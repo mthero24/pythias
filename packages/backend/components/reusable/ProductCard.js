@@ -2,8 +2,9 @@ import {Box, Grid2, Typography, Button, Divider, List, ListItem, ListItemText} f
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModal from "./DeleteModal";
 import {useState} from "react";
+import { useCSV } from "../reusable/CSVProvider";
 import axios from "axios";
-export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModal, des, setDesign, updateDesign, setPreview }) => {
+export const ProductCard = ({p, setProduct, setCreateProduct, marketPlaces, setMarketplaceModal, des, setDesign, updateDesign, setPreview }) => {
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteImage, setDeleteImage] = useState({});
     const [deleteTitle, setDeleteTitle] = useState("");
@@ -20,6 +21,64 @@ export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModa
                 updateDesign({...d})
             }
         }
+    const { csvData, setCsvData, setAdded, setNotAdded, setShow } = useCSV();
+    let preCacheImages = async (product) => {
+        if (product && product.productImages && product.productImages.length > 0) {
+            for (let image of product.productImages) {
+                if (image.image) {
+                    try {
+                        await axios.get(image.image.replace("=400", "=2400"));
+                        //console.log("Pre-caching product image:", image.image);
+                    } catch (error) {
+                        console.error("Error pre-caching image:", error);
+                    }
+                }
+            }
+        }
+        if (product.variantsArray && product.variantsArray.length > 0) {
+            for (let variant of product.variantsArray) {
+                if (variant.images && variant.images.length > 0) {
+                    for (let image of variant.images) {
+                        if (image) {
+                            try {
+                                await axios.get(image.replace("=400", "=2400"));
+                                //console.log("Pre-caching variant image:", image);
+                            } catch (error) {
+                                console.error("Error pre-caching variant image:", error);
+                            }
+                        }
+                    }
+                }
+                if (variant.image) {
+                    try {
+                        await axios.get(variant.image.replace("=400", "=2400"));
+                        //console.log("Pre-caching variant image:", variant.image);
+                    } catch (error) {
+                        console.error("Error pre-caching variant image:", error);
+                    }
+                }
+            }
+        }
+    }
+    const addProductToCsv = async (marketPlace, product) => {
+        console.log("add Product to csv",)
+        setShow(true);
+        const updatedCsvData = { ...csvData };
+        if(!updatedCsvData.products) updatedCsvData.products = {}
+        if (!updatedCsvData.products[marketPlace]) {
+            updatedCsvData.products[marketPlace] = [];
+        }
+        if(!updatedCsvData.products[marketPlace].find(p => p._id === product._id)) {
+            //console.log("Adding product to csv", product);
+            updatedCsvData.products[marketPlace].push({_id: product._id});
+            //console.log(updatedCsvData)
+            preCacheImages(product);
+            setCsvData(updatedCsvData);
+            setAdded(true);
+        }else{
+            setNotAdded(true);
+        }
+    }
     return (
         <Grid2 size={{ xs: 6, sm: 4 }}>
             <Box sx={{ padding: "2%", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", marginBottom: "2%" }}>
@@ -45,16 +104,23 @@ export const ProductCard = ({p, setProduct, setCreateProduct, setMarketplaceModa
                         <Typography variant="body2" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Combined Product</Typography>
                     </Box>
                 }
+                {p.blanks && p.blanks.length <= 1 &&
+                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#6a95bf", color: "#fff", width: "50%" }}>
+                        <Typography variant="body2" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Single Product</Typography>
+                    </Box>
+                }
                 <Typography variant="body2" >Marketplaces:</Typography>
                 <Grid2 container spacing={2}>
-                    {p.marketPlaces && Object.keys(p.marketPlaces).length > 0 && Object.keys(p.marketPlaces).map(m => (
-                        <Grid2 key={m} size={{ xs: 6, sm: 4 }}>
-                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#87AE73" }}>
-                                <Typography variant="body2" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.marketPlaces[m].name}</Typography>
+                    {p.marketPlacesArray && p.marketPlacesArray.length > 0 && p.marketPlacesArray.map(m => (
+                        <Grid2 key={m._id} size={{ xs: 6, sm: 4 }}>
+                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#87AE73", cursor: "pointer" }} onClick={()=>{
+                                addProductToCsv(marketPlaces.filter(mp => mp._id.toString() === (m._id ? m._id.toString() : m.toString()))[0]?.name, p)
+                            }}>
+                                <Typography variant="body2" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{marketPlaces.filter(mp => mp._id.toString() === (m._id ? m._id.toString() : m.toString()))[0]?.name}</Typography>
                             </Box>
                         </Grid2>
                     ))}
-                    {!p.marketPlaces && <Grid2 size={12}>
+                    {!p.marketPlacesArray || p.marketPlacesArray.length <= 0 && <Grid2 size={12}>
                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
                             <Typography variant="body2">No Marketplaces Found</Typography>
                         </Box>

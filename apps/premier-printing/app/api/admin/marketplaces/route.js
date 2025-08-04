@@ -1,6 +1,11 @@
 import {MarketPlaces, Blank} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 
+export async function GET(req= NextApiRequest){
+    let market = req.nextUrl.searchParams.get("marketPlace");
+    let marketPlaces = await MarketPlaces.find(market?{_id: market}:{}).lean()
+    return NextResponse.json({error: false, marketPlaces})
+}
 export async function POST(req= NextApiRequest){
     let data = await req.json()
     if(data.marketPlace._id){

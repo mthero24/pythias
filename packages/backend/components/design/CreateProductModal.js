@@ -54,7 +54,6 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                     }
                 }
             }
-            console.log("product in modal", prod);
             if(prod?.blanks.length > 0) setCombined(true);
             if(prod && prod._id)prods.push(prod);
             setProducts(prods);
@@ -155,7 +154,6 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                 {stage == "product_images" && 
                     <ProductImageStage products={products} setProducts={setProducts} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setImages={setImages} images={images} imageGroups={imageGroups} />
                 }
-                {console.log(design, "design in CreateProductModal")}
                 {stage == "variant_images" &&
                     <VariantImageStage products={products} setProducts={setProducts} design={design} source={source} setStage={setStage} />
                 }

@@ -14,6 +14,7 @@ import { CreateProductModal } from "./CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import { ProductCard } from "../reusable/ProductCard";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { useCSV } from "../reusable/CSVProvider";
 import { set } from "mongoose";
 export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport }) {
     const router = useRouter()
@@ -43,6 +44,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [marketplaceModal, setMarketplaceModal] = useState(false)
     const [preview, setPreview] = useState(false)
     const [copied, setCopied] = useState(false);
+    const { setShow } = useCSV();
+    setShow(true);
     useEffect(()=>{
         if(!reload) setReload(!reload)
     }, [reload])
@@ -227,6 +230,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                     <Grid2 size={{xs: 7, sm: 8}}>
                         <TextField label="Title" fullWidth value={des?.name}
                         onChange={()=>updateTitleSku("name")}/>
+                        <Typography variant="caption" sx={{color: "#780606"}}>Charicter Count: {des?.name.length}</Typography>
                     </Grid2>
                     <Grid2 size={{xs: 5, sm: 4}}>
                         <TextField label="SKU" fullWidth value={des?.sku}
@@ -302,7 +306,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
                     {des.products && des.products.length > 0 && des.products.map((p, i) => (
-                        <ProductCard key={i} p={p} setProduct={setProduct} des={des} setDesign={setDesign} setCreateProduct={setCreateProduct} setMarketplaceModal={setMarketplaceModal} setPreview={setPreview} />
+                        <ProductCard key={i} p={p} setProduct={setProduct} des={des} setDesign={setDesign} setCreateProduct={setCreateProduct} setMarketplaceModal={setMarketplaceModal} setPreview={setPreview} marketPlaces={marketPlaces} />
                     ))}
                 </Grid2>
                 <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading}/>

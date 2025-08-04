@@ -10,7 +10,7 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import Link from "next/link";
 import { connect, set } from "mongoose";
 
-const csvFunctions = {
+export const csvFunctions = {
     productSku: (product) => {
         return product.sku ? product.sku : product.name.replace(/ /g, "-").toLowerCase();
     },
@@ -34,6 +34,12 @@ const csvFunctions = {
     },
     productBrand: (product) => {
         return product.brand ? product.brand : "N/A";
+    },
+    productTheme: (product) => {
+        return product.theme ? product.theme : "N/A";
+    },
+    productSportUsedFor: (product) => {
+        return product.sportUsedFor ? product.sportUsedFor : "N/A";
     },
     variantColor: (variant, sizeConverer, numBlanks, blankName) => {
         return variant.color ? numBlanks > 1 ? `${variant.color.name} (${blankName})` : variant.color.name : "";
@@ -114,6 +120,47 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             getConnections();
         }
     }, [open]);
+    useEffect(() => {
+        let preCacheImages = async () => {
+            if (product && product.productImages && product.productImages.length > 0) {
+                for (let image of product.productImages) {
+                    if (image.image) {
+                        try {
+                            await axios.get(image.image.replace("=400", "=2400"));
+                            //console.log("Pre-caching product image:", image.image);
+                        } catch (error) {
+                            console.error("Error pre-caching image:", error);
+                        }
+                    }
+                }
+            }
+            if(product.variantsArray && product.variantsArray.length > 0) {
+                for (let variant of product.variantsArray) {
+                    if (variant.images && variant.images.length > 0) {
+                        for (let image of variant.images) {
+                            if (image) {
+                                try {
+                                    await axios.get(image.replace("=400", "=2400"));
+                                    //console.log("Pre-caching variant image:", image);
+                                } catch (error) {
+                                    console.error("Error pre-caching variant image:", error);
+                                }
+                            }
+                        }
+                    }
+                    if(variant.image) {
+                        try {
+                            await axios.get(variant.image.replace("=400", "=2400"));
+                            //console.log("Pre-caching variant image:", variant.image);
+                        } catch (error) {
+                            console.error("Error pre-caching variant image:", error);
+                        }
+                    }
+                }
+            }
+        }
+        preCacheImages();
+    },[product]);
     const [addMarketPlace, setAddMarketPlace] = useState(false);
     const style = {
         position: 'absolute',
@@ -156,7 +203,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                     {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
                                         let p = { ...product };
                                         if (!p.marketPlacesArray) p.marketPlacesArray = [];
-                                        p.marketPlacesArray.push(mp);
+                                        if (!p.marketPlacesArray.map(m => m._id ? m._id.toString() : m.toString()).includes(mp._id.toString())) p.marketPlacesArray.push(mp);
                                         if(design){
                                             let d ={ ...design };
                                             d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
@@ -179,7 +226,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
                                         <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                     </Box>
-                                    <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} product={product} productLine={marketPlace.hasProductLine[index] ? marketPlace.hasProductLine[index] : false} />
+                                    <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine[index] ? marketPlace.hasProductLine[index] : false} />
                                 </Box>
                             ))}
                         </Box>
@@ -191,32 +238,55 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         </Modal>
     )
 }
-const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, productLine, connections }) => {
+export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products, productLine, connections }) => {
     let headers = {}
     for(let h of header) {
         headers[h.Label] = []
     }
     if(productLine) {
-        for (let b of product.blanks) {
-            for (let h of Object.keys(headers)) {
-                let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
-                headers[h].push(val);
+        for(let product of products){
+            for (let b of product.blanks) {
+                for (let h of Object.keys(headers)) {
+                    let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
+                    headers[h].push(val);
+                }
             }
         }
     }
-    let index = 0;
-    if(product.threadColors && product.threadColors.length > 0) {
-        for (let b of product.blanks) {
-            for (let tc of product.threadColors) {
-                for (let c of product.colors) {
-                    if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id ? v.threadColor._id.toString() == tc._id.toString() : v.threadColor.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString()).length > 0) {
-                        for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id ? v.threadColor._id.toString() == tc._id.toString() : v.threadColor.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString())) {
-                            if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
-                            if (!v.color._id) v.color = c;
-                            if (!v.threadColor._id) v.threadColor = tc;
-                            //console.log(v, "variant in MarketPlaceList");
-                            for (let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, })
+    for(let product of products) {
+        let index = 0;
+        if(product.threadColors && product.threadColors.length > 0) {
+            for (let b of product.blanks) {
+                for (let tc of product.threadColors) {
+                    for (let c of product.colors) {
+                        if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id ? v.threadColor._id.toString() == tc._id.toString() : v.threadColor.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString()).length > 0) {
+                            for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id ? v.threadColor._id.toString() == tc._id.toString() : v.threadColor.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString())) {
+                                if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
+                                if (!v.color._id) v.color = c;
+                                if (!v.threadColor._id) v.threadColor = tc;
+                                //console.log(v, "variant in MarketPlaceList");
+                                for (let h of Object.keys(headers)) {
+                                    let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, })
+                                    headers[h].push(val);
+                                }
+                                index++;
+                            }
+                        }
+
+                    }
+                }
+            }
+        }else{
+        // console.log(product, "product")
+            for(let b of product.blanks) {
+                for(let c of product.colors) {
+                    //console.log(product.variantsArray)
+                    if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
+                        for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) == c._id.toString())) {
+                            if (v.size && !v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
+                            if(!v.color._id) v.color = c;
+                            for(let h of Object.keys(headers)) {
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name })
                                 headers[h].push(val);
                             }
                             index++;
@@ -224,25 +294,6 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
                     }
 
                 }
-            }
-        }
-    }else{
-       // console.log(product, "product")
-        for(let b of product.blanks) {
-            for(let c of product.colors) {
-                //console.log(product.variantsArray)
-                if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
-                    for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) == c._id.toString())) {
-                        if (v.size && !v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
-                        if(!v.color._id) v.color = c;
-                        for(let h of Object.keys(headers)) {
-                            let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name })
-                            headers[h].push(val);
-                        }
-                        index++;
-                    }
-                }
-
             }
         }
     }
@@ -256,11 +307,11 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
                     {!addMarketPlace &&Object.keys(headers).map((header, hIndex) => (
                         <Box key={hIndex} sx={{ minWidth: "30%", textAlign: "center" }}>
                             <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", padding: "3%", border: "1px solid #eee" }}>
-                                <Typography variant="body1" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={header}>{header}</Typography>
+                                <Typography variant="body1" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "2%" }} title={header}>{header}</Typography>
                             </Box>
                             {headers[header].map((value, index) => (
                                 <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", padding: "3%", border: "1px solid #eee" }}>
-                                    <Typography variant="body1" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={value}>{value}</Typography>
+                                    <Typography variant="body1" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minHeight: "22px" }} title={value}>{value}</Typography>
                                 </Box>
                             ))}
                         </Box>
@@ -271,7 +322,7 @@ const MarketPlaceList = ({ marketPlace, header, addMarketPlace, product, product
     ); 
 }
 
-const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type }) => {
+export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type }) => {
 
     let value = "N/A";
     if(type && type == "product") {
