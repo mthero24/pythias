@@ -8,7 +8,7 @@ let converter = {
     YXXL: "2XL",
 }
 export default async function Test(){
-    let connections = await ApiKeyIntegrations.find({ provider: "premierPrinting"});
+    let connections = await ApiKeyIntegrations.find({ provider: "premierPrinting"}).catch(err => console.error("Error finding connections:", err));
     console.log("Connections found:", connections);
     // let prods = await Products.find({ sku: { $ne: "21577M_F"}}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.color variantsArray.blank").populate({ path: "blanks", populate: "colors" })
     
