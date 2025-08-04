@@ -152,9 +152,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                             }
                         }
                         setProduct({...prod});
-                        setLoading(false);
                     }
                 }
+                setLoading(false);
             }
             setConnections(res.data.integration);
         }

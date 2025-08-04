@@ -4,12 +4,13 @@ import { getSkuAcenda } from "@pythias/integrations";
 
 export async function POST(req = NextApiRequest) {
     const body = await req.json();
-   // console.log("Received body:", body);
+    console.log("Received body:", body);
     let product = await Products.findOne({ _id: body.product._id }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
     let acendaProductSku 
     for(let variant of product.variantsArray) {
         if(!variant.ids) variant.ids = {};
         if(!variant.ids["acenda"]) {
+            console.log("Checking SKU for variant:", variant.sku);
             let res = await getSkuAcenda({sku: variant.sku, clientId: body.connection.apiKey, clientSecret: body.connection.apiSecret, organization: body.connection.organization});
             if(res && res[0] && res[0].id){
                 //console.log("Received SKU from Acenda:", res[0].id);
@@ -21,8 +22,8 @@ export async function POST(req = NextApiRequest) {
     if (!product.ids) product.ids = {};
     if(!product.ids["acenda"]) {
         let acendaProduct = await getSkuAcenda({ sku: product.sku, clientId: body.connection.apiKey, clientSecret: body.connection.apiSecret, organization: body.connection.organization });
-        //console.log("Received SKU from Acenda for product:", acendaProduct[0].id);
         if (acendaProductSku && (!acendaProduct || !acendaProduct[0] || !acendaProduct[0].id)){
+            console.log("Received SKU from Acenda for product:", acendaProduct[0].id);
             acendaProduct = await getSkuAcenda({ sku: acendaProductSku, clientId: body.connection.apiKey, clientSecret: body.connection.apiSecret, organization: body.connection.organization });
         }
         if (acendaProduct && acendaProduct[0] && acendaProduct[0].id){

@@ -6,8 +6,7 @@ import { designPage } from "@pythias/backend";
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({ params }) {
     let { id } = await params;
-    //some other chage
-    console.log("Design Page called with ID:", id);
+    console.log("Design ID:", id);
     if (id) {
         try {
             let { design, blanks, brands, marketPlaces, productImages, licenses, colors, printLocations, genders, seasons, sportUsedFor, themes } = await designPage({

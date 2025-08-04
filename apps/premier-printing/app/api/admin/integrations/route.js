@@ -6,7 +6,7 @@ export async function GET(req=NextApiRequest){
     console.log(process.env.pythiasMongoURL)
     try{
         let integration = await ApiKeyIntegrations.find({ provider: req.nextUrl.searchParams.get("provider") });
-        console.log("Integration found:", integration);
+        //console.log("Integration found:", integration);
         return NextResponse.json({error: false, integration})
     }catch(err){
         console.error("Error fetching integration:", err);
