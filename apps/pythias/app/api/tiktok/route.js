@@ -7,20 +7,19 @@ const config = {
 }
 export async function GET(req=NextApiRequest){
     let data = await getAccessTokenUsingAuthCode(config, req.nextUrl.searchParams.get("code"))
-    let auth = await TikTokAuth.findOne({provider: req.nextUrl.searchParams.get("provider")});
-    console.log("Auth found:", auth);
-    // if(auth){
-    //     for(let key in Object.keys(data)){
-    //         auth[key] = data[key]
-    //         auth.date= new Date(Date.now())
-    //         await auth.save()
-    //     }
-    // }else {
-    //     auth = new TikTokAuth({...data, date: new Date(Date.now())})
-    //     console.log(auth)
-    //     await auth.save()
-    // }
-    // console.log(auth)
+    let auth = await TikTokAuth.findOne({seller_name: data.seller_name})
+    if(auth){
+        for(let key in Object.keys(data)){
+            auth[key] = data[key]
+            auth.date= new Date(Date.now())
+            await auth.save()
+        }
+    }else {
+        auth = new TikTokAuth({...data, date: new Date(Date.now())})
+        console.log(auth)
+        await auth.save()
+    }
+    console.log(auth)
     return NextResponse.redirect(
       `https://${auth.provider == "premierPrinting" ? "simplysage" : auth.provider == "test"? "test": "imperial"}.pythiastechnologies.com/admin/integrations`
     );
