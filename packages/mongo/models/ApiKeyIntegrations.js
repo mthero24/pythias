@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import { Pythias } from "../lib/connection";
+import { PremierPrinting } from "../lib/connection";
 let schema = new mongoose.Schema({
     displayName: String,
     apiKey: String,
@@ -7,4 +7,4 @@ let schema = new mongoose.Schema({
     organization: String,
     provider: String,
 })
-export default Pythias.model("ApiKeyIntegrations", schema);
+export default PremierPrinting.model("ApiKeyIntegrations", schema);
