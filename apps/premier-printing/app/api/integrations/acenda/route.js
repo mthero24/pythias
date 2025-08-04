@@ -23,7 +23,6 @@ export async function POST(req = NextApiRequest) {
     if(!product.ids["acenda"]) {
         let acendaProduct = await getSkuAcenda({ sku: product.sku, clientId: body.connection.apiKey, clientSecret: body.connection.apiSecret, organization: body.connection.organization });
         if (acendaProductSku && (!acendaProduct || !acendaProduct[0] || !acendaProduct[0].id)){
-            console.log("Received SKU from Acenda for product:", acendaProduct[0].id);
             acendaProduct = await getSkuAcenda({ sku: acendaProductSku, clientId: body.connection.apiKey, clientSecret: body.connection.apiSecret, organization: body.connection.organization });
         }
         if (acendaProduct && acendaProduct[0] && acendaProduct[0].id){
