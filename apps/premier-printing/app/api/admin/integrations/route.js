@@ -3,6 +3,7 @@ import {generateAuthorizationUrl} from "@pythias/integrations"
 import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 import next from "next";
 export async function GET(req=NextApiRequest){
+    console.log(process.env.pythiasMongoURL)
     try{
         let tiktok = await TikTokAuth.find({provider: req.nextUrl.searchParams.get("provider")});
         console.log("TikTok Auth found:", tiktok);
