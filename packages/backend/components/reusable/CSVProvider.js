@@ -150,6 +150,7 @@ export const useCSV = () => {
 
 export const CsvModal = ({open, setOpen, marketplace, products})=>{
     const [market, setMarket] = useState()
+    const [connections, setConnections] = useState([])
     const [prods, setProds] = useState([])
     const [loading, setLoading] = useState(false);
     useEffect(() => {
@@ -157,9 +158,11 @@ export const CsvModal = ({open, setOpen, marketplace, products})=>{
             if (marketplace && products && products.length > 0) {
                 let mark = await axios.get(`/api/admin/marketplaces?marketPlace=${marketplace}`);
                 let pods = await axios.get(`/api/admin/products?products=${products.map(p => p._id).toString()}`);
-                //console.log(mark.data, pods.data)
+                let conns = await axios.get("/api/admin/integrations", { params: { provider: "premierPrinting" } });
+                //console.log(mark.data, pods.data, conns.data);
                 setMarket(mark.data.marketPlaces[0]);
                 setProds(pods.data.products);
+                setConnections(conns.data.integration);
             } else {
                 setMarket(null);
                 setProds([]);
@@ -202,6 +205,9 @@ export const CsvModal = ({open, setOpen, marketplace, products})=>{
                         {market && market.headers.map((header, index) => (
                             <Box key={market._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
                                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
+                                    {market.connections && market.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0]).length > 0 && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
+                                        let res = await axios.get("/api/integrations/acenda", { params: { connectionId: market.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]._id, prods: prods.map(p => p._id).join(",") } });
+                                    }}>Add Inventory</Button>}
                                     <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${market._id}&product=${products.map(p => p._id).toString()}&header=${index}`} target="_blank">Download</Button>
                                 </Box>
                                 <MarketPlaceList marketPlace={market} header={header} addMarketPlace={false} products={prods} productLine={market.hasProductLine ? market.hasProductLine[index] : false} />

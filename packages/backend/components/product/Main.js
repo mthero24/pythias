@@ -16,7 +16,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
     const [products, setProducts] = useState(prods);
     const [count, setCount] = useState(co);
     const [page, setPage] = useState(pa);
-    const [search, setSearch] = useState(query);
+    const [search, setSearch] = useState(query? query: "");
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState(filter || {});
     const [createProduct, setCreateProduct] = useState(false);
@@ -320,7 +320,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                         {products.length === 0 && <Typography sx={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem" }}>No products found</Typography>}
                         {products.map((p, i) => {
                             return <ProductCard 
-                                key={i} 
+                                key={p._id} 
                                 p={p} 
                                 setProduct={setSelectedProduct} 
                                 setCreateProduct={setCreateProduct}

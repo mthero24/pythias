@@ -1,6 +1,6 @@
 
 
-export const saveProducts = async ({products, Products}) => {
+export const saveProducts = async ({products, Products, Inventory}) => {
     let savedProducts = [];
     console.log(products, "products in saveProducts");
     for(let product of products) {
@@ -10,7 +10,7 @@ export const saveProducts = async ({products, Products}) => {
                 for (let tc of product.threadColors) {
                     for (let c of product.colors) {
                         if (product.variants &&product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
-                            let variants = product.variants[b.code][tc.name][c.name].map(v => {
+                            let variants = product.variants[b.code][tc.name][c.name].map( v => {
                                 v.color = v.color._id
                                 v.blank = v.blank._id
                                 v.size = v.size._id
@@ -26,7 +26,7 @@ export const saveProducts = async ({products, Products}) => {
             for (let b of product.blanks) {
                 for (let c of product.colors) {
                     if (product.variants && product.variants[b.code] && product.variants[b.code][c.name] && product.variants[b.code][c.name].length > 0) {
-                        let variants = product.variants[b.code][c.name].map(v=> {
+                        let variants = product.variants[b.code][c.name].map( v=> {
                             v.color = c._id
                             v.blank = b._id
                             v.size = v.size._id
@@ -38,7 +38,12 @@ export const saveProducts = async ({products, Products}) => {
                 }
             }    
         }
-        if(variantsArray.length > 0) product.variantsArray = variantsArray
+        if(variantsArray.length > 0) {
+            product.variantsArray = variantsArray
+            for(let v of product.variantsArray) {
+                v.inventory = await Inventory.findOne({ blank: v.blank, color: v.color, sizeId: v.size });
+            }
+        }
         product.variants = null; // Clear variants to avoid duplication
         product.lastUpdated = new Date(Date.now()); // Update lastUpdated field
         if(!product.department) product.department = [];

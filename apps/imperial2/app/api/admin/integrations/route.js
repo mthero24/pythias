@@ -2,9 +2,16 @@ import {NextApiRequest, NextResponse} from "next/server"
 import {generateAuthorizationUrl} from "@pythias/integrations"
 import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 import next from "next";
-export async function GET(req=NextApiRequest){
-    let integration = await ApiKeyIntegrations.find({ provider: req.nextUrl.searchParams.get("provider") });
-    return NextResponse.json({error: false, integration})
+export async function GET(req = NextApiRequest) {
+    console.log(process.env.pythiasMongoURL)
+    try {
+        let integration = await ApiKeyIntegrations.find({ provider: req.nextUrl.searchParams.get("provider") });
+        console.log("Integration found:", integration);
+        return NextResponse.json({ error: false, integration })
+    } catch (err) {
+        console.error("Error fetching integration:", err);
+        return NextResponse.json({ error: true, message: "Error fetching integration" });
+    }
 }
 
 export async function POST(req=NextApiRequest){

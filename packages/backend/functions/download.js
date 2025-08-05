@@ -57,6 +57,20 @@ const csvFunctions = {
     productSportUsedFor: (product) => {
         return product.sportUsedFor ? product.sportUsedFor : "N/A";
     },
+    variantMarketPlaceId: (variant, sizeConverter, numBlanks, blankName, connection) => {
+        //console.log("variant", variant, "connection", connection);
+        if (variant.ids && variant.ids[connection]) {
+            return variant.ids[connection];
+        }
+        return "N/A";
+    },
+    productMarketPlaceId: (product, index, connection) => {
+        console.log("product", product, "connection", connection);
+        if (product.ids && product.ids[connection]) {
+            return product.ids[connection];
+        }
+        return "N/A";
+    },
     productImageAlt: (product) => {
         return product.name;
     },
@@ -106,7 +120,13 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
 
     let value = "N/A";
     if (type && type == "product") {
-        if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+         if (mp.productDefaultValues[headerLabel] && headerLabel == "id") {
+            console.log(mp.productDefaultValues[headerLabel].split(",")[0], "mp.productDefaultValues[headerLabel].split(',')[0]");
+            console.log(csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]));
+            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]);
+            console.log(value, "value in HeaderList");
+        }
+        else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
             if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
                 value = "N/A";
             }

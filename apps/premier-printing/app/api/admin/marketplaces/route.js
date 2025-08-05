@@ -3,6 +3,7 @@ import {NextApiRequest, NextResponse} from "next/server";
 
 export async function GET(req= NextApiRequest){
     let market = req.nextUrl.searchParams.get("marketPlace");
+    console.log(market)
     let marketPlaces = await MarketPlaces.find(market?{_id: market}:{}).lean()
     return NextResponse.json({error: false, marketPlaces})
 }

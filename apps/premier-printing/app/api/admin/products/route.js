@@ -1,4 +1,4 @@
-import { Products, Design, SkuToUpc } from "@pythias/mongo";
+import { Products, Design, SkuToUpc, Inventory } from "@pythias/mongo";
 import {NextApiRequest, NextResponse } from "next/server";
 import { updateTempUpc, createTempUpcs } from "@pythias/integrations"
 import {saveProducts} from "@pythias/backend";
@@ -75,7 +75,7 @@ export async function POST(req = NextApiRequest) {
     for (let product of data.products) {
         if (product.variants) await update({ product: product });
     }
-    let products = await saveProducts({ products: data.products, Products });
+    let products = await saveProducts({ products: data.products, Products, Inventory });
     return NextResponse.json({ error: false, products });
 }
 export async function DELETE(req = NextApiRequest) {

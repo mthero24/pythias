@@ -41,7 +41,7 @@ export const getWarehouseAcenda = async ({clientId, clientSecret, organization})
 export const addInventoryAcenda = async ({clientId, clientSecret, organization, inventory}) =>{
     //console.log(inventory, "inventory")
     let token = await getTokenAcenda({clientId, clientSecret})
-    console.log(token , "token")
+    //console.log(token , "token")
     let headers = {
         headers: {
             "X-Astur-Organization": organization,
@@ -50,7 +50,7 @@ export const addInventoryAcenda = async ({clientId, clientSecret, organization, 
     }
     let errorRes
     let res = await axios.post("https://api.acenda.io/v1/inventory_detail/bulk", inventory, headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
-    console.log(errorRes, res?.data.result)
+   // console.log(errorRes, res?.data.result)
     if(errorRes) console.log("error +++++++++++++++")
     if(errorRes){
         return null
@@ -60,7 +60,7 @@ export const addInventoryAcenda = async ({clientId, clientSecret, organization, 
 }
 export const getCatalogAcenda = async ({clientId, clientSecret, organization}) =>{
     let token = await getTokenAcenda({clientId, clientSecret})
-    console.log(token , "token")
+    //console.log(token , "token")
     let headers = {
         headers: {
             "X-Astur-Organization": organization,
@@ -69,7 +69,7 @@ export const getCatalogAcenda = async ({clientId, clientSecret, organization}) =
     }
     let errorRes
     let res = await axios.get("https://api.acenda.io/v1/catalog", headers).catch(e=> {errorRes = e.response?.data; console.log(e.response)})
-    console.log(errorRes, res?.data)
+    //console.log(errorRes, res?.data)
     if(errorRes){
         return null
     }else{

@@ -60,9 +60,38 @@ export const ProductCard = ({p, setProduct, setCreateProduct, marketPlaces, setM
             }
         }
     }
+    const checkForIds = async ({product, marketPlace}) => {
+        if(product && marketPlace) {
+            marketPlace = marketPlaces.filter(mp => mp.name.toLowerCase() === marketPlace.toLowerCase())[0];
+            if(marketPlace && marketPlace.connections && marketPlace.connections.length > 0) {
+                for(let connection of marketPlace.connections) {
+                    let res = await axios.get("/api/admin/integrations", { params: { provider: "premierPrinting" } });
+                    let connections = res.data.integration ? res.data.integration : [];
+                    let mp = marketPlace
+                    if (mp) {
+                        console.log("Marketplace found in product:", mp);
+                        console.log("connections", connections);
+                        let prod = { ...product }
+                        for (let c of connections) {
+                            //console.log(c, "Connection in connections");
+                            if (c.displayName.toLowerCase().includes("acenda") && mp.connections && mp.connections.includes(c._id.toString())) {
+                                //console.log("Marketplace connection found:", c);
+                                let res = await axios.post("/api/integrations/acenda", { connection: c, product });
+                                //console.log(res, "Response from Acenda integration");
+                                prod = res.data.product;
+                            }
+                        }
+                        
+                    }
+                    
+                }
+            }
+        }
+    }
     const addProductToCsv = async (marketPlace, product) => {
         console.log("add Product to csv",)
         setShow(true);
+        checkForIds({ product, marketPlace });
         const updatedCsvData = { ...csvData };
         if(!updatedCsvData.products) updatedCsvData.products = {}
         if (!updatedCsvData.products[marketPlace]) {
@@ -112,7 +141,7 @@ export const ProductCard = ({p, setProduct, setCreateProduct, marketPlaces, setM
                 <Typography variant="body2" >Marketplaces:</Typography>
                 <Grid2 container spacing={2}>
                     {p.marketPlacesArray && p.marketPlacesArray.length > 0 && p.marketPlacesArray.map(m => (
-                        <Grid2 key={m._id} size={{ xs: 6, sm: 4 }}>
+                        <Grid2 key={m._id? m._id: m} size={{ xs: 6, sm: 4 }}>
                             <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", background: "#87AE73", cursor: "pointer" }} onClick={()=>{
                                 addProductToCsv(marketPlaces.filter(mp => mp._id.toString() === (m._id ? m._id.toString() : m.toString()))[0]?.name, p)
                             }}>

@@ -73,7 +73,7 @@ export const csvFunctions = {
         return "N/A";
     },
     productMarketPlaceId: (product, index, connection) => {
-        console.log("product", product, "connection", connection);
+       // console.log("product", product, "connection", connection);
         if (product.ids && product.ids[connection]) {
             return product.ids[connection];
         }
@@ -131,22 +131,22 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             //console.log(res.data);
             if(res.data && res.data.integration) {
                 setLoading(true);
-                console.log("Connections found:", res.data.integration);
+                //console.log("Connections found:", res.data.integration);
                 let connections = res.data.integration ? res.data.integration : [];
                 if (product && product.marketPlacesArray && product.marketPlacesArray.length > 0) {
                     let mp = marketPlaces.filter(m => product.marketPlacesArray.map(mp => mp._id ? mp._id.toString() : mp.toString()).includes(m._id.toString()));
                     if (mp) {
-                        console.log("Marketplace found in product:", mp);
-                        console.log("connections", connections);
+                        //console.log("Marketplace found in product:", mp);
+                        //console.log("connections", connections);
                         let prod = {...product}
                         for (let m of mp) {
-                            console.log(m, "Marketplace in connections");
+                            //console.log(m, "Marketplace in connections");
                             for( let c of connections) {
                                 //console.log(c, "Connection in connections");
-                                if (m.connections && m.connections.includes(c._id.toString())) {
-                                    console.log("Marketplace connection found:", c);
+                                if (c.displayName.toLowerCase().includes("acenda") && m.connections && m.connections.includes(c._id.toString())) {
+                                    //console.log("Marketplace connection found:", c);
                                     let res = await axios.post("/api/integrations/acenda", { connection: c, product });
-                                    console.log(res, "Response from Acenda integration");
+                                    //console.log(res, "Response from Acenda integration");
                                     prod = res.data.product;
                                 }
                             }
@@ -218,6 +218,35 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         overflowX: "auto",
         overflowY: "none",
     };
+    const checkForIds = async ({ product }) => {
+        console.log("checkForIds product:", product);
+        setLoading(true);
+        if (product) {
+            if (product && product.marketPlacesArray && product.marketPlacesArray.length > 0) {
+                let mp = marketPlaces.filter(m => product.marketPlacesArray.map(mp => mp._id ? mp._id.toString() : mp.toString()).includes(m._id.toString()));
+                //console.log("checkForIds mp:", mp);
+                if (mp) {
+                    //console.log("Marketplace found in product:", mp);
+                   // console.log("connections", connections);
+                    let prod = { ...product }
+                    for (let m of mp) {
+                       // console.log(m, "Marketplace in connections");
+                        for (let c of connections) {
+                            //console.log(c, "Connection in connections");
+                            if (c.displayName.toLowerCase().includes("acenda") && m.connections && m.connections.includes(c._id.toString())) {
+                               // console.log("Marketplace connection found:", c);
+                                let res = await axios.post("/api/integrations/acenda", { connection: c, product });
+                               // console.log(res, "Response from Acenda integration");
+                                prod = res.data.product;
+                            }
+                        }
+                    }
+                    setProduct({ ...prod });
+                }
+            }
+            setLoading(false);
+        }
+    }
     return (
         <Modal
             open={open}
@@ -255,6 +284,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                     d.products.push(p);
                                                     setDesign({...d});
                                                 }
+                                                checkForIds({ product: p });
                                                 let res = axios.post("/api/admin/products", { products: [p] });
                                                 setProduct(p);
                                             }}>Select</Button>}
@@ -268,7 +298,10 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                 <Box key={marketPlace._id}>
                                     {marketPlace.headers.map((header, index) => (
                                         <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
-                                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
+                                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
+                                                {marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0]).length > 0 && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
+                                                    let res = await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]._id, productId: product._id } });
+                                                }}>Add Inventory</Button>}
                                                 <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                             </Box>
                                             <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} />
@@ -351,13 +384,13 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
             </Box>
             <Box sx={{ overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row" }}>
                 <Box sx={{ maxHeight: "60vh", overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row" }}>
-                    {!addMarketPlace &&Object.keys(headers).map((header, hIndex) => (
-                        <Box key={hIndex} sx={{ minWidth: "30%", textAlign: "center" }}>
+                    {!addMarketPlace && Object.keys(headers).map((header, hIndex) => (
+                        <Box key={`${header}-${hIndex}`} sx={{ minWidth: "30%", textAlign: "center" }}>
                             <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", padding: "3%", border: "1px solid #eee" }}>
                                 <Typography variant="body1" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "2%" }} title={header}>{header}</Typography>
                             </Box>
                             {headers[header].map((value, index) => (
-                                <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", padding: "3%", border: "1px solid #eee" }}>
+                                <Box key={index} sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", padding: "3%", border: "1px solid #eee" }}>
                                     <Typography variant="body1" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minHeight: "22px" }} title={value}>{value}</Typography>
                                 </Box>
                             ))}
@@ -374,10 +407,10 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
     let value = "N/A";
     if(type && type == "product") {
         if (mp.productDefaultValues[headerLabel] && headerLabel == "id") {
-            console.log(mp.productDefaultValues[headerLabel].split(",")[0], "mp.productDefaultValues[headerLabel].split(',')[0]");
-            console.log(csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]));
+            //console.log(mp.productDefaultValues[headerLabel].split(",")[0], "mp.productDefaultValues[headerLabel].split(',')[0]");
+           // console.log(csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]));
             value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]);
-            console.log(value, "value in HeaderList");
+            //console.log(value, "value in HeaderList");
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
             if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {

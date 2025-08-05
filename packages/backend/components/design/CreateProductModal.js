@@ -54,7 +54,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                     }
                 }
             }
-            if(prod?.blanks.length > 0) setCombined(true);
+            if(prod?.blanks.length > 1) setCombined(true);
             if(prod && prod._id)prods.push(prod);
             setProducts(prods);
         }

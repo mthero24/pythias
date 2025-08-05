@@ -4,7 +4,7 @@ import Design from "./Design";
 import Blank from "./Blanks";
 import Color from "./Color";
 import MarketPlaces from "./MarketPlaces";
-import { CategoryRounded, Upcoming } from "@mui/icons-material";
+import Inventory from "./inventory"
 const schema = new mongoose.Schema({
     design: {
         type: mongoose.Schema.Types.ObjectId,
@@ -60,6 +60,14 @@ const schema = new mongoose.Schema({
         },
         gtin: String,
         ids: Object,
+        inventory: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: Inventory,
+        },
+        productInventory: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: Inventory,
+        }
     }],
     variantImages: Object,
     variantSecondaryImages: Object,
