@@ -1,8 +1,7 @@
 import { Box, Grid2, TextField, Modal, Button, Typography, Card, Divider, FormControlLabel, Checkbox, List, CircularProgress, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
-import CreatableSelect from "react-select/creatable";
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from "axios";
 import { useState, useEffect, useRef } from "react";
-import CheckIcon from '@mui/icons-material/Check';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -44,14 +43,14 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                             <Box key={blank} sx={{ marginBottom: "2%" }}>
                                 {!product.hasThreadColors && Object.keys(product.variants[blank]).map(color => (
                                     <Box key={color} sx={{ marginLeft: "2%" }}>
-                                        <VariantDisplay blank={blank} color={color} variants={product.variants[blank][color]} />
+                                        <VariantDisplay blank={blank} color={color} variants={product.variants[blank][color]} product={product} setProducts={setProducts} products={products} />
                                     </Box>
                                 ))}
                                 {product.hasThreadColors && Object.keys(product.variants[blank]).map(threadColor => (
                                     <Box key={threadColor} sx={{ marginLeft: "2%" }}>
                                         {Object.keys(product.variants[blank][threadColor]).map(color => (
                                             <Box key={color} sx={{ marginLeft: "4%" }}>
-                                                <VariantDisplay blank={blank} threadColor={threadColor} color={color} variants={product.variants[blank][threadColor][color]} />
+                                                <VariantDisplay blank={blank} threadColor={threadColor} color={color} variants={product.variants[blank][threadColor][color]} product={product} setProducts={setProducts} products={products} />
                                             </Box>
                                         ))}
                                     </Box>
@@ -61,12 +60,19 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                         {preview && product.variantsArray && product.variantsArray && product.variantsArray.length > 0 && product.blanks.map(blank => {
                             return product.threadColors && product.threadColors.length > 0 ? (
                                 <Box key={blank} sx={{ marginBottom: "2%" }}>
+                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
+                                        <Button onClick={async ()=>{
+                                            console.log("Add Product Inventory Clicked");
+                                            let res = await axios.post("/api/admin/inventory/product", { productId: product._id });
+                                            setProducts([res.data.product]);
+                                        }}>Add Product Inventory</Button>
+                                    </Box>
                                     {product.threadColors && product.threadColors.length > 0 &&product.threadColors.map(threadColor => (
                                         <Box key={threadColor.name} sx={{ marginLeft: "2%" }}>
                                             {product.colors.map(color => {
                                                 const variants = product.variantsArray.filter(v => v.blank?.toString() === blank._id.toString() && v.threadColor?.toString() === threadColor?._id.toString() && v.color?.toString() === color?._id.toString());
                                                 return variants.length > 0 ? (
-                                                    <VariantDisplay key={`${blank}-${threadColor}-${color}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} fullBlank={blank} />
+                                                    <VariantDisplay key={`${blank}-${threadColor}-${color}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} />
                                                 ) : null;
                                             })}
                                         </Box>
@@ -74,17 +80,22 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     {!product.threadColors || product.threadColors.length === 0 && product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} />
+                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} />
                                         ) : null;
                                     })}
                                 </Box>
                             ) : (
                                 <Box key={blank.code} sx={{ marginBottom: "2%" }}>
-                                    {console.log(product.variantsArray, "variantsArray in PreviewStage")}
+                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
+                                        <Button onClick={async () => {
+                                            let res = await axios.post("/api/admin/inventory/product", { productId: product._id });
+                                            setProducts([res.data.product]);
+                                        }}>Add Product Inventory</Button>
+                                    </Box>
                                     {product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} />
+                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} />
                                         ) : null;
                                     })}
                                 </Box>
@@ -145,10 +156,63 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
     )
 }
 
-const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank }) => {
+const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products }) => {
     const [open, setOpen] = useState(false);
+    const [removeOpen, setRemoveOpen] = useState(false);
+    const [variant, setVariant] = useState({});
+    const [inventoryOpen, setInventoryOpen] = useState(false);
+    let removeVariants = async () => {
+        let prod = { ...product };
+        //console.log(prod, "product to update");
+        if (prod.variants) {
+            let newVariants = {};
+            for (let b of Object.keys(prod.variants)) {
+                newVariants[b] = {};
+                if (threadColor) {
+                    for (let tc of Object.keys(prod.variants[b])) {
+                        newVariants[b][tc] = {};
+                        for (let c of Object.keys(prod.variants[b][threadColor])) {
+                            if (tc == threadColor && c == color) {
+
+                            }
+                            else newVariants[b][tc][c] = prod.variants[b][tc][c]
+                        }
+                    }
+                } else {
+                    for (let c of Object.keys(prod.variants[b])) {
+                        if (c !== color)
+                            newVariants[b][c] = prod.variants[b][c];
+                    }
+                }
+            }
+            prod.variants = newVariants
+            let prods = []
+            for (let p of products) {
+                if (p._id.toString() === prod._id.toString()) {
+                    prods.push(prod);
+                } else {
+                    prods.push(p);
+                }
+            }
+            setProducts([...prods]);
+        }
+        else if (prod.variantsArray && prod.variantsArray.length > 0) {
+            let vArray = prod.variantsArray.filter(v => !variants.map(va => va._id.toString()).includes(v._id.toString()));
+            prod.variantsArray = vArray;
+            let res = await axios.put("/api/admin/products", { product: prod });
+            console.log(res.data.product)
+            setProducts([res.data.product]);
+        }
+        setRemoveOpen(false);
+    }
     return (
         <Card sx={{ margin: "1% 0%", padding: "1%", background: "#f0f0f0", borderRadius: "10px", boxShadow: "2px 2px 2px #ccc" }}>
+            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", cursor: "pointer" }} onClick={() => {
+                console.log("Remove Variants Clicked", removeOpen)
+                setRemoveOpen(true)
+            }}>
+                <DeleteIcon sx={{ color: "#780606" }} onClick={() => { /* handle delete */ }} />
+            </Box>
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "2%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => setOpen(!open)}>
                 <img src={variants[0].image?.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                 <Typography variant="body2">{blank}_{threadColor}_{color}</Typography>
@@ -173,15 +237,107 @@ const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank }) => {
                                 ))}
                                 <ListItemText primary={`${variant.sku}`} secondary={`Blank: ${variant.blank.name ? variant.blank.name : fullBlank ? fullBlank.name : "N/A"}, Color: ${variant.color.name ? variant.color.name : fullBlank ? fullBlank.colors.filter(c => c._id.toString() === variant.color.toString())[0]?.name : "N/A"}, Size: ${variant.size.name ? variant.size.name : fullBlank ? fullBlank.sizes.filter(s => s._id.toString() === variant.size.toString())[0]?.name : "N/A"}`} />
                                 {variant.upc && <ListItemText primary={`UPC: ${variant.upc}`} secondary={`GTIN: ${variant.gtin}`} />}
+                                {variant.productInventory && (
+                                    <ListItemText sx={{ cursor: "pointer" }} onClick={() => {setInventoryOpen(true); setVariant(variant);}} primary={`Inventory: ${variant.productInventory ? variant.productInventory.quantity : "N/A"}`} secondary={`On Hold: ${variant.productInventory.onHold ? variant.productInventory.onHold : "0"} location: ${variant.productInventory.location ? variant.productInventory.location : "N/A"}`} />
+                                )}
                             </ListItem>
                         ))}
                     </List>
+                    <InventoryModal open={inventoryOpen} setOpen={setInventoryOpen} variant={variant} setVariant={setVariant} product={product} setProducts={setProducts} />
                 </Box>
             )}
+            <RemoveVariants open={removeOpen} setOpen={setRemoveOpen} removeVariants={removeVariants} />
         </Card>
     )
 }
 
+const RemoveVariants = ({open, setOpen, removeVariants}) => {
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "50%",
+        height: "23%",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        overflowX: "auto",
+        overflowY: "none",
+    };
+    return (
+        <Modal open={open} onClose={() => setOpen(false)}>
+            <Box sx={style}>
+                <Typography variant="h6">Remove Variants</Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", padding: "2%" }}>
+                    <Typography>Are you sure you want to remove these variants?</Typography>
+                    <Box sx={{ display: "flex", flexDirection: "row", padding: "2%" }}>
+                        <Button onClick={removeVariants}>Yes</Button>
+                        <Button onClick={() => setOpen(false)}>No</Button>
+                    </Box>
+                </Box>
+            </Box>
+        </Modal>
+    )
+}
+
+const InventoryModal = ({ open, setOpen, variant, setVariant, product, setProducts }) => {
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "50%",
+        height: "23%",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        overflowX: "auto",
+        overflowY: "none",
+    };
+    return(
+        <Modal open={open} onClose={() => setOpen(false)}>
+            <Box sx={style}>
+                <Typography variant="h6">Inventory for {variant.sku}</Typography>
+                <Box sx={{ display: "flex", flexDirection: "row", padding: "2%" }}>
+                    <TextField
+                        sx={{ margin: "2%" }}
+                        label="Quantity"
+                        type="number"
+                        value={variant.productInventory ? variant.productInventory.quantity : 0}
+                        onChange={(e) => {
+                            const newQuantity = parseInt(e.target.value);
+                            let varnt = { ...variant };
+                            varnt.productInventory = { ...varnt.productInventory, quantity: isNaN(newQuantity) ? 0 : newQuantity };
+                            setVariant({ ...varnt });
+                        }}
+                    />
+                    <TextField
+                        sx={{margin: "2%"}}
+                        label="Location"
+                        value={variant.productInventory ? variant.productInventory.location : ""}
+                        onChange={(e) => {
+                            const newLocation = e.target.value;
+                            let varnt = { ...variant };
+                            varnt.productInventory = { ...varnt.productInventory, location: newLocation };
+                            setVariant({ ...varnt });
+                        }}
+                    />
+                    <Button onClick={async ()=>{
+                        // Handle update logic here
+                        console.log("Updating inventory for variant:", variant, product);
+                        let res = await axios.put("/api/admin/inventory/product", { productId: product._id, variant: variant });
+                        setProducts([res.data.product]);
+                        setOpen(false);
+                        setVariant({});
+                    }}>Update</Button>
+                </Box>
+            </Box>
+        </Modal>
+    )
+}
 const ProductImageCarosel = ({ productImages, defaultColor }) => {
     const [image, setImage] = useState(0)
     const [loading, setLoading] = useState(true)

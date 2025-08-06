@@ -5,6 +5,7 @@ import Blank from "./Blanks";
 import Color from "./Color";
 import MarketPlaces from "./MarketPlaces";
 import Inventory from "./inventory"
+import ProductInventory from "./ProductInventory"
 const schema = new mongoose.Schema({
     design: {
         type: mongoose.Schema.Types.ObjectId,
@@ -66,8 +67,10 @@ const schema = new mongoose.Schema({
         },
         productInventory: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: Inventory,
-        }
+            ref: ProductInventory,
+        },
+        price: Number,
+        previousSkus: [String]
     }],
     variantImages: Object,
     variantSecondaryImages: Object,

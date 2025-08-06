@@ -4,10 +4,10 @@ const Schema = mongoose.Schema;
 import Color from "./Color";
 import Blank from "./Blanks"
 const SchemaObj = new Schema({
-    quantity: { type: Number, required: true },
+    quantity: { type: Number, required: true, default: 0 },
     inventory_id: { type: String, required: true, unique: true },
     barcode_id: { type: String, required: true, unique: true },
-    order_at_quantity: { type: Number, required: true },
+    order_at_quantity: { type: Number, required: true, default: 0 },
     pending_quantity: { type: Number, default: 0 },
     quantity_to_order: { type: Number, default: 0 },
     desired_order_quantity: { type: Number, required: true },
@@ -28,6 +28,8 @@ const SchemaObj = new Schema({
     row: {type: String, default: "0"},
     unit: {type: String, default: "0"},
     shelf: {type: String, default: "0"},
-    bin: {type: String, default: "0"}
+    bin: {type: String, default: "0"},
+    type: {type: String, default: "blank"},
+    sku: {type: String}
 });
 export default PremierPrinting.model("InventoryV2", SchemaObj, "inventoryv2");

@@ -1,4 +1,4 @@
-import { Products, Blank as Blanks, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color } from "@pythias/mongo";
+import { Products, Blank as Blanks, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, Inventory } from "@pythias/mongo";
 import { ProductsMain as Main, serialize, getProducts, } from "@pythias/backend";
 import { CreateSku } from "@/functions/CreateSku";
 export const dynamic = 'force-dynamic';
@@ -8,7 +8,7 @@ export default async function ProductsPage(req) {
     let page = parseInt(query.page ? query.page : 1)
     let q = query.q ? query.q : null;
     let filters = query.filters ? JSON.parse(query.filters) : {};
-    let { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts } = await getProducts({ Products, Blanks, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, page, query: q, filters });
+    let { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts } = await getProducts({ Products, Blanks, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, page, query: q, filters, Inventory });
     products = serialize(products);
     blanks = serialize(blanks);
     seasons = serialize(seasons);

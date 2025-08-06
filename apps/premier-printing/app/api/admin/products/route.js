@@ -78,6 +78,13 @@ export async function POST(req = NextApiRequest) {
     let products = await saveProducts({ products: data.products, Products, Inventory });
     return NextResponse.json({ error: false, products });
 }
+export async function PUT(req = NextApiRequest) {
+    const data = await req.json();
+    console.log("Received data", data);
+    let product = await Products.findByIdAndUpdate(data.product._id, data.product, { new: true, returnNewDocument: true }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
+    console.log("Updated product", product);
+    return NextResponse.json({ error: false, product });
+}
 export async function DELETE(req = NextApiRequest) {
     const product = await req.nextUrl.searchParams.get("product");
     console.log("Deleting product", product);
