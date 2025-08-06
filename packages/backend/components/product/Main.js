@@ -11,7 +11,7 @@ import { CreateProductModal } from "../design/CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import LoaderOverlay from "../reusable/LoaderOverlay";
 import {useCSV} from "../reusable/CSVProvider";
-import { set } from "mongoose";
+import {CreateNFProduct} from "./CreateNFProduct";
 export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts}) => {
     const [products, setProducts] = useState(prods);
     const [count, setCount] = useState(co);
@@ -34,6 +34,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
     const [loading, setLoading] = useState(false);
     const [market, setMarketPlaces] = useState(marketplaces || []);
     const [imageGroups, setImageGroups] = useState();
+    const [NFProduct, setNFProduct] = useState(false);
     const {setShow} = useCSV();
     useEffect(() => {
         let dept = [];
@@ -56,6 +57,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                 })
             }
         })
+        setShow(true);
         setImageGroups(imGr)
         setDepartments(dept);
         setCategories(cat);
@@ -84,8 +86,8 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
         <Box sx={{width: "100%", maxWidth: "100%", overflowX: "hidden"}}>
             <Container maxWidth="lg" sx={{minHeight: "90vh"}}>
                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: "2%"}}>
-                    <Typography variant="h4" sx={{ marginBottom: "2%" }}>Products {totalProducts}</Typography>
-                    <Button variant="contained" color="primary" onClick={() => setCreateProduct(true)}>Create Product</Button>
+                    <Typography variant="h6" sx={{ marginBottom: "2%", padding: "1%" }}>Products {totalProducts}</Typography>
+                    <Button variant="contained" color="primary" onClick={() => setNFProduct(true)}>Create Product</Button>
                 </Box>
                 <Box sx={{ marginBottom: "2%", padding: "2%", backgroundColor: "#f5f5f5", borderRadius: "5px", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
                     <TextField
@@ -357,6 +359,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={selectedProduct} setProduct={setSelectedProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={gen} seasons={seas} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={them} sportUsedFor={sport} setThemes={setThemes} setSportUsedFor={setSportUsedFor} pageProducts={products} setPageProducts={setProducts} />
                     {loading && <LoaderOverlay/>}
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} />
+                <CreateNFProduct open={NFProduct} setOpen={setNFProduct} setProducts={setProducts} />
             </Container>
             <Footer />
         </Box>

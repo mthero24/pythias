@@ -1,5 +1,6 @@
 import { Nightlife } from "@mui/icons-material";
 import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, marketPlaces, ApiKeyIntegrations, Inventory} from "@pythias/mongo"
+import axios from "axios";
 let converter = {
     YL: "L",
     YS: "S",
@@ -8,16 +9,13 @@ let converter = {
     YXXL: "2XL",
 }
 export default async function Test(){
-
-    // let prods = await Products.find({})
-
-    // for(let p of prods){
-    //     for(let v of p.variantsArray){
-    //         v.inventory = await Inventory.findOne({ blank: v.blank, color: v.color, sizeId: v.size });
-    //     }
-    //     p.markModified("variantsArray");
-    //     await p.save();
-    // }
+    let headers = {
+        headers: {
+            "Authorization": `Basic ${btoa(`${process.env.ssApiKey}:${process.env.ssApiSecret}`)}`
+        }
+    }
+    let res = await axios.get(`https://ssapi.shipstation.com/orders?orderNumber=cs_6650176890_1-A`, headers).catch(e => { console.log(e.response.data) })
+    console.log(res.data, "res data")
 
     return <h1>test</h1>
 }

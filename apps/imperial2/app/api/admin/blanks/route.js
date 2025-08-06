@@ -3,7 +3,7 @@ import {Blank, Color, Inventory} from "@pythias/mongo";
 
 export async function GET(){
   try{
-    let blanks = await Blank.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});
+    let blanks = await Blank.find({}).select("code name vendor department sales _id colors multiImages").populate("colors").lean().catch(e=>{console.log(e)});
     return NextResponse.json({error: false, blanks})
   }catch(e){
     return NextResponse.json({error: true, msg: JSON.stringify(e)})
