@@ -37,12 +37,10 @@ const createImage = async (data)=>{
         let y = data.box.y * multiplier
         let originalSize
         if(data.box.rotation && data.box.rotation != 0){
-            console.log(data.box.rotation, "rotation")
             designBase64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.box.boxWidth * multiplier)}&height=${parseInt(data.box.boxHeight * multiplier)}`) 
             originalSize = await designBase64.metadata();
             let originalWidth = originalSize.width;
             let originalHeight = originalSize.height;
-            console.log(originalSize)
             designBase64 = await designBase64
           .rotate(parseInt(data.box.rotation), { background: { r: 255, g: 255, b: 255, alpha: 0 } })
           .toBuffer();
@@ -74,16 +72,6 @@ const createImage = async (data)=>{
             originalSize = await designBase64.metadata();
             designBase64 = await designBase64.toBuffer()
         }
-        // if(data.box.rotation && data.box.rotation != 0){
-        //     let radians = data.box.rotation * (Math.PI / 180)
-        //     let newX =  (x * Math.cos(radians)) - (y * Math.sin(radians))
-        //     let newY =  (x * Math.sin(radians)) + (y * Math.cos(radians))
-        //     x= newX;
-        //     y= newY
-        //     console.log(x, "x", y, "y")
-        //     //offset = parseInt(((data.box.x) - x))
-        //    // offsetHeight = parseInt(((data.box.y) - y))
-        // }
         let offset = (originalSize.width - (data.box.boxWidth * multiplier)) / 2
         base64 = await base64.composite([
             {
@@ -98,19 +86,15 @@ const createImage = async (data)=>{
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }else if(data.styleImage && base64){
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
-        console.log(base64, "base64")
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }else if(data.designImage && data.designImage != "undefined" && data.designImage != "null"){
         base64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.width)}&height=${parseInt(data.width)}`) 
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
-        //console.log(base64, "base64")
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }
     return base64
 }
 export async function GET(req){
-    //console.log(req.nextUrl.searchParams.get("blank"))
-    console.log(req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " "), "params")
     let base = req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " ")
     let params = base.split("-")
     let width = parseInt(req.nextUrl.searchParams.get("width"))
@@ -136,10 +120,8 @@ export async function GET(req){
         let colorName = req.nextUrl.searchParams.get("colorName")
         designImage = req.nextUrl.searchParams.get("design")
         let side = req.nextUrl.searchParams.get("side")
-        console.log(blankCode, bm, colorName, designImage, side)
         let blank = await Blank.findOne({code: blankCode}).populate("colors").lean()
         let color = blank.colors.filter(c=>c.name == colorName)[0]
-        console.log(color, side, "color and side")
         if(bm){
             blankImage = blank.multiImages[side]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
             if(!blankImage && side == "front") blankImage = blank.multiImages["modelFront"]?.filter(i=> i.color.toString() == color?._id.toString() && i.image == bm)[0]
@@ -166,8 +148,6 @@ export async function GET(req){
 }
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    //console.log(data)
     let base64 = await createImage(data)
-    //console.log(base64)
     return NextResponse.json({error: false, base64})
 }

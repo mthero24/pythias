@@ -15,7 +15,6 @@ export async function GET(req = NextApiRequest) {
 }
 export async function PUT(req = NextApiRequest) {
     const data = await req.json();
-    console.log("Received data", data);
     let product = await Products.findByIdAndUpdate(data.product._id, data.product, { new: true, returnNewDocument: true });
     product = await Products.findById(product._id).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
     console.log("Updated product", product);
@@ -23,13 +22,11 @@ export async function PUT(req = NextApiRequest) {
 }
 export async function POST(req = NextApiRequest) {
     const data = await req.json();
-    console.log("Received data", data);
     let products = await saveProducts({ products: data.products, Products, Inventory });
     return NextResponse.json({ error: false, products });
 }
 export async function DELETE(req = NextApiRequest) {
     const { product } = await req.nextUrl.searchParams;
-    console.log("Deleting product", product);
     await Products.deleteOne({ _id: product });
     return NextResponse.json({ error: false });
 }

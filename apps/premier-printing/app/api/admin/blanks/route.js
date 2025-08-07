@@ -97,9 +97,7 @@ let updateInventory = async (blank)=>{
 }
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
-  //console.log(data)
   let blank = data.blank
-  //console.log(blank, "blank")
   let newBlank
   try {
     if (blank._id) {
@@ -119,16 +117,12 @@ export async function POST(req = NextApiRequest) {
       await blank.save()
       await generateInventory(newBlank);
     }
-    //console.log(newBlank)
     return NextResponse.json({error: false, blank: newBlank});
   } catch (err) {
-    //console.log(err)
     return NextResponse.json(err.toString());
   }
 }
 export async function DELETE(req = NextApiRequest,) {
-  //const body = await req.json();
-  //console.log(req.nextUrl.searchParams.get("id"));
   await Blanks.findOneAndDelete({_id: req.nextUrl.searchParams.get("id")})
   return NextResponse.json({ error: false });
 }
@@ -163,7 +157,6 @@ async function generateInventory(style) {
           barcode_id,
           blank: style._id
         });
-        //console.log(inventory);
         await inventory.save();
         barcode_id++;
         while (lastBC.map((i) => Number(i.barcode_id)).includes(barcode_id)) {
