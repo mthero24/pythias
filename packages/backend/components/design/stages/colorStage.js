@@ -139,12 +139,12 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                         <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Combined Product</Typography>
                                         {product.blanks.map((b, j) => (
                                             <Typography key={j} textAlign={"center"}>
-                                                {b.code}: {product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())).length} Variants
+                                                {b.code}: {product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())[0]).length} Variants
                                             </Typography>
                                             
                                         ))}
                                         <Typography textAlign={"center"}>Total Variants: {product.blanks.map((b, j) => {
-                                            return product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())).length
+                                            return product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())[0]).length
                                         }).reduce((a, b) => a + b, 0)}</Typography>
                                     </>
                                 )}
@@ -191,8 +191,15 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                             if (source == "simplysage") {
                                 let variantsLength = 0
                                 for(let product of products){
-                                    variantsLength += product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1)
+                                    if(combined){
+                                        for(let b of product.blanks){
+                                            variantsLength += product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())[0]).length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
+                                        }
+                                    }else{
+                                        variantsLength += product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
+                                    }
                                 }
+                                console.log(variantsLength, upcs.length, "variantsLength, upcs.length")
                                 if (variantsLength > upcs.length) {
                                     getTempUpcs(variantsLength - upcs.length)
 

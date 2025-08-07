@@ -74,7 +74,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         const handleBeforeUnload = async (event) => {
             // Perform actions before the page unloads
             // e.g., save unsaved data, send analytics, clean up resources
-            //event.preventDefault(); // This line is crucial for displaying the prompt
+            event.preventDefault(); // This line is crucial for displaying the prompt
             let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
         // Optional: Display a confirmation message to the user
             //event.preventDefault(); // This line is crucial for displaying the prompt
@@ -110,10 +110,12 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         setUpcs(upcs.data.upcs);
     }
     const getTempUpcs = async (count) => {
+        console.log("Getting temp UPCs", count)
         let tempUpcs = await axios.post("/api/upc", { count }).catch(e => {
             console.error(e);
         });
         if(!window.dataLayer) window.dataLayer = [];
+        console.log(tempUpcs.data.upcs, "tempUpcs")
         setTempUpcs([...tempUpcs.data.upcs]);
         window.dataLayer.push(tempUpcs.data.upcs)
     }

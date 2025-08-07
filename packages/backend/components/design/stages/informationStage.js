@@ -171,9 +171,12 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                     if (upcs.filter(u => u.sku == sku)[0]) {
                                                         upc = upcs.filter(u => u.sku == sku)[0]
                                                     }else if(upcs.filter(u=> u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]) {
+                                                        console.log("else if")
                                                         upc = upcs.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]  
 
                                                     } else {
+                                                        console.log("else")
+                                                        console.log(tempUpcs, "tempUpcs")
                                                         upc = tempUpcs.filter(u => u.used != true)[0]
                                                         if (upc) {
                                                             tempUpcs.filter(u => u.used != true)[0].used = true
