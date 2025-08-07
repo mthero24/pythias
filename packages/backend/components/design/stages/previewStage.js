@@ -156,7 +156,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
     )
 }
 
-const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products }) => {
+export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products }) => {
     const [open, setOpen] = useState(false);
     const [removeOpen, setRemoveOpen] = useState(false);
     const [variant, setVariant] = useState({});
@@ -338,11 +338,13 @@ const InventoryModal = ({ open, setOpen, variant, setVariant, product, setProduc
         </Modal>
     )
 }
-const ProductImageCarosel = ({ productImages, defaultColor }) => {
+export const ProductImageCarosel = ({ productImages, defaultColor }) => {
     const [image, setImage] = useState(0)
     const [loading, setLoading] = useState(true)
-    let order = productImages.filter(img => img.color.name === defaultColor?.name)
-    order = [...order, ...productImages.filter(img => img.color.name !== defaultColor?.name)]
+    console.log(productImages, "productImages")
+    let order = productImages.sort((a, b) => a.color?.name?.localeCompare(b.color?.name)) 
+    order = order.filter(img => img.color?.name === defaultColor?.name)
+    order = [...order, ...productImages.filter(img => img.color?.name !== defaultColor?.name)]
     productImages = order;
     return (
         <Grid2 container spacing={2} sx={{ padding: "2%" }}>

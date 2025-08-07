@@ -10,9 +10,9 @@ const update = async({product})=>{
                 for (let c of product.colors) {
                     if (product.variants[b.code] && product.variants[b.code][tc.name] && product.variants[b.code][tc.name][c.name] && product.variants[b.code][tc.name][c.name].length > 0) {
                         for (let v of product.variants[b.code][tc.name][c.name]) {
-                            //console.log("Updating variant", v.upc);
+                            console.log("Updating variant", v.upc);
                             let upc = await SkuToUpc.findOne({ upc: v.upc });
-                            //console.log("Found UPC", upc);
+                            console.log("Found UPC", upc);
                             upc.design = product.design._id;
                             upc.blank = b._id;
                             upc.color = c._id;

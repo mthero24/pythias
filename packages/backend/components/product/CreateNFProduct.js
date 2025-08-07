@@ -1,10 +1,11 @@
-import { Modal, Box, Typography, Button, Card, TextField, Divider, Grid2, Checkbox} from '@mui/material';
+import { Modal, Box, Typography, Button, Card, TextField, Divider, Grid2, Checkbox, List, ListItem, ListItemText} from '@mui/material';
 import CreatableSelect from 'react-select/creatable';
 import {useState, useEffect, useRef} from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { set } from 'mongoose';
+import { ProductImageCarosel, VariantDisplay } from '../design/stages/previewStage';
 
 export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor }) => {
     const [type, setType] = useState("From Blank");
@@ -68,7 +69,7 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                     <Box>
                         {/* Render blank selection UI here */}
                         <Grid2 container spacing={2}>
-                            {blanks.map((blank) => {
+                            {blanks && blanks.map((blank) => {
                                 let color = blank.colors && blank.colors.length > 0 ? blank.colors[0] : null;
                                 console.log(color, "color", blank.colors.length)
                                 let fontImages = []
@@ -102,8 +103,10 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                                 vendor: blank.vendor,
                                                 department: blank.department,
                                                 category: blank.category,
-                                                color: blank.colors,
-                                                images: fontImages.length > 0 ? [fontImages[0].image] : [],
+                                                colors: blank.colors,
+                                                tags: [],
+                                                defaultColor: blank.colors[0],
+                                                productImages: [],
                                                 priceTiers: [],
                                                 sizes: blank.sizes.map(s => ({ sizeId: s._id, name: s.name, price: 0, compareAtPrice: 0, costPerItem: 0, weight: 0 })),
                                                 description: blank.description || "",
@@ -146,24 +149,24 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                             <Grid2 item xs={6} sm={4} md={3} key={image._id} sx={{cursor: "pointer"}} onClick={() => {
                                                 let prod = {...product};
                                                 console.log(prod.images, "prod.images")
-                                                if(!prod.images) prod.images = [];
-                                                console.log(image.image, "image.image")
-                                                if(!prod.images.filter(img => img.image === image.image)[0]){
-                                                    console.log("adding image")
-                                                    prod.images.push({image: image.image, color: image.color, blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}-${key}`, side: key});
+                                                if(!prod.productImages) prod.productImages = [];
+                                                console.log(image, "image.image")
+                                                if(!prod.productImages.filter(img => img.image === image.image)[0]){
+                                                    console.log("adding image", image.color, "color", product.colors.filter(color => color._id.toString() === image.color.toString())[0])
+                                                    prod.productImages.push({image: image.image, color: product.colors.filter(color => color._id.toString() === image.color.toString())[0], blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}-${key}`, side: key});
 
                                                 }
                                                 else{
-                                                    prod.images = prod.images.filter(img => img.image !== image.image);
+                                                    prod.productImages = prod.productImages.filter(img => img.image !== image.image);
                                                 }
                                                 setProduct({...prod});
                                             }}>
                                                 <Card sx={{margin: "1% 0"}}>
-                                                    {product.images.filter(img => img.image === image.image)[0] &&
+                                                    {product.productImages.filter(img => img.image === image.image)[0] &&
                                                     <Box sx={{position: "relative", top: 40, backgroundColor: "rgba(255, 255, 255, 0.7)", background: "transparent", padding: "2px", marginTop: "-40px"}}>
                                                             <Checkbox checked={true} />
                                                     </Box> }
-                                                    {!product.images.filter(img => img.image === image.image)[0] &&
+                                                    {!product.productImages.filter(img => img.image === image.image)[0] &&
                                                         <Box sx={{ position: "relative", top: 40, backgroundColor: "rgba(255, 255, 255, 0.7)", background: "transparent", padding: "2px", marginTop: "-40px" }}>
                                                             <Checkbox checked={false} />
                                                         </Box>}
@@ -188,8 +191,9 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                                 if(!prod.variantsArray.filter(v => v.sku === sku)[0]){
                                                     prod.variantsArray.push({
                                                         sku,
-                                                        color,
+                                                        color: color._id,
                                                         size: size,
+                                                        blank: prod.blanks[0]._id,
                                                         price: size.retailPrice,
                                                         compareAtPrice: size.compareAtPrice,
                                                         costPerItem: size.costPerItem,
@@ -368,14 +372,65 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                         <Grid2 size={12}>
                             <Divider sx={{ margin: "1% 0" }} />
                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", gap: 2, marginTop: "2%", width: "100%" }}>
-                                <Button fullWidth variant="outlined" onClick={() => setStage("Variant Images")}>Back</Button>
+                                <Button fullWidth variant="outlined" onClick={() => setStage("Information")}>Back</Button>
                                 <Button fullWidth variant="contained" onClick={() => {
                                     // Handle the next stage
-                                    setStage("Information");
+                                    setStage("Preview");
                                 }}>Next</Button>
                             </Box>
                         </Grid2>
                     </Grid2>
+                )}
+                {type === "From Blank" && stage == "Preview" && (
+                    <Box sx={{ display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", justifyContent: "center", width: "100%" }}>
+                        <Typography variant="h6" textAlign={"center"}>Preview</Typography>
+                        <ProductImageCarosel productImages={product.productImages} defaultColor={product.defaultColor} />
+                        <Box sx={{ padding: "2%" }}>
+                            <List>
+                                <ListItem>
+                                    <ListItemText primary={product.title} secondary={`SKU: ${product.sku} Brand: ${product.brand} ${product.gender ? `Gender: ${product.gender}` : ""} ${product.season ? `Season: ${product.season}` : ""}`} />
+                                </ListItem>
+                            </List>
+                            <List>
+                                <ListItem>
+                                    <ListItemText primary={`Default Color: ${product.defaultColor?.name}`} />
+                                </ListItem>
+                            </List>
+                            <List>
+                                <ListItem>
+                                    <ListItemText primary={"Description"} secondary={product.description} />
+                                </ListItem>
+                            </List>
+                            <List>
+                                <ListItem>
+                                    <ListItemText primary={"Tags"} secondary={product.tags && product.tags.join(", ")} />
+                                </ListItem>
+                            </List>
+                        </Box>
+                        <Box key={product.blanks[0].code} sx={{ marginBottom: "2%" }}>
+                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
+                                <Button onClick={async () => {
+                                    let res = await axios.post("/api/admin/inventory/product", { productId: product._id });
+                                    setProducts([res.data.product]);
+                                }}>Add Product Inventory</Button>
+                            </Box>
+                            {product.colors.map(color => {
+                                console.log(product)
+                                const variants = product.variantsArray.filter(v => v.blank.toString() === product.blanks[0]._id.toString() && v.color.toString() === color._id.toString());
+                                return variants.length > 0 ? (
+                                    <VariantDisplay key={`${product.blanks[0].code}-${color}`} blank={product.blanks[0].code} color={color.name} variants={variants} fullBlank={product.blanks[0]} product={product} setProducts={setProducts} />
+                                ) : null;
+                            })}
+                        </Box>
+                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", gap: 2, marginTop: "2%", width: "100%" }}>
+                            <Button fullWidth variant="outlined" onClick={() => setStage("Information")}>Back</Button>
+                            <Button fullWidth variant="contained" onClick={() => {
+                                // Handle the next stage
+                                CreateSku(product);
+                                setOpen(false);
+                            }}>Create Product</Button>
+                        </Box>
+                    </Box>
                 )}
                 {type === "Other" && (
                     <Box>
