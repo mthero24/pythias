@@ -5,7 +5,7 @@ import Color from "@/models/Color";
 //#some note
 export async function GET(){
   try{
-    let blanks = await Blanks.find({}).select("code name vendor department sales _id").lean().catch(e=>{console.log(e)});
+    let blanks = await Blanks.find({}).populate("colors").lean();
     return NextResponse.json({error: false, blanks})
   }catch(e){
     return NextResponse.json({error: true, msg: JSON.stringify(e)})
