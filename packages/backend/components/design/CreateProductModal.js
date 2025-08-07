@@ -74,9 +74,11 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         const handleBeforeUnload = async (event) => {
             // Perform actions before the page unloads
             // e.g., save unsaved data, send analytics, clean up resources
-            event.preventDefault(); // This line is crucial for displaying the prompt
-            let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
-        // Optional: Display a confirmation message to the user
+            if (window.dataLayer[0]) {
+                event.preventDefault(); // This line is crucial for displaying the prompt
+                let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
+            }
+            // Optional: Display a confirmation message to the user
             //event.preventDefault(); // This line is crucial for displaying the prompt
             //event.returnValue = 'Are you sure you want to leave?';
         };
@@ -121,6 +123,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
     }
     const releaseHold = async () => {
         let res = await axios.post("/api/upc/releasehold", { upcs: tempUpcs });
+        window.dataLayer = [];
     }
     product.tags = design.tags ? design.tags : []
     if (product.defaultColor && !product.defaultColor._id){
