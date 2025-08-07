@@ -3,6 +3,7 @@ import {ProductInventory, Products as Product} from "@pythias/mongo";
 
 
 export async function POST(req = NextApiRequest,) {
+    console.log("POST /api/admin/inventory/product")
     try {
         let body = await req.json();
         let product = await Product.findById(body.productId).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" });
