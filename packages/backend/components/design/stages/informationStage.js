@@ -134,6 +134,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                     if (product.sizes.filter(s => s.name == size.name)[0]) {
                                                         let upc
                                                         let sku = await CreateSku({ blank, color, size, design });
+                                                        console.log("Creating SKU:", sku, "for", blank.code, color.name, size.name, "with design", design._id, upcs);
                                                         console.log(sku, upcs.filter(u => u.sku == sku)[0], "filtering upcs")
                                                         if (upcs.filter(u => u.sku == sku)[0]) {
                                                             upc = upcs.filter(u => u.sku == sku)[0]
@@ -167,7 +168,8 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                 if(product.sizes.filter(s => s.name == size.name)[0]) {
                                                     let upc
                                                     let sku = await CreateSku({ blank, color, size, design });
-                                                    console.log(sku,upcs.filter(u => u.sku == sku)[0], "filtering upcs")
+                                                    console.log("Creating SKU:", sku, "for", blank.code, color.name, size.name, "with design", design._id, upcs);
+                                                    console.log(sku, upcs, "filtering upcs")
                                                     if (upcs.filter(u => u.sku == sku)[0]) {
                                                         upc = upcs.filter(u => u.sku == sku)[0]
                                                     }else if(upcs.filter(u=> u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]) {
