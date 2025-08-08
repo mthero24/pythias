@@ -27,8 +27,6 @@ export async function POST(req = NextApiRequest) {
 }
 export async function DELETE(req = NextApiRequest) {
     const product = await req.nextUrl.searchParams.get("product");
-    console.log("Deleting product", product);
     let prod = await Products.findOneAndDelete({ _id: product });
-    console.log("Deleted product", prod);
     return NextResponse.json({ error: false });
 }

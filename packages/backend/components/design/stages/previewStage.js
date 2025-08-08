@@ -157,7 +157,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
     )
 }
 
-export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products }) => {
+export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products, setProduct }) => {
     const [open, setOpen] = useState(false);
     const [removeOpen, setRemoveOpen] = useState(false);
     const [variant, setVariant] = useState({});
@@ -198,10 +198,21 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
             setProducts([...prods]);
         }
         else if (prod.variantsArray && prod.variantsArray.length > 0) {
-            let vArray = prod.variantsArray.filter(v => !variants.map(va => va._id.toString()).includes(v._id.toString()));
-            prod.variantsArray = vArray;
-            let res = await axios.put("/api/admin/products", { product: prod });
-            setProducts([res.data.product]);
+            console.log("Removing variants from variantsArray",variants[0]._id);
+            if(variants[0]._id != undefined && variants[0]._id != null){
+                let vArray = prod.variantsArray.filter(v => !variants.map(va => va._id.toString()).includes(v._id.toString()));
+                prod.variantsArray = vArray;
+                let res = await axios.put("/api/admin/products", { product: prod });
+                if (setProducts) setProducts([res.data.product]);
+                else setProduct({...res.data.product});
+            }else{
+                console.log("Removing variants from variantsArray", blank, threadColor, color);
+                let vArray = prod.variantsArray.filter(v => !(v.blank.code === blank && v.threadColor === threadColor?.name && v.color.name === color));
+                console.log(vArray, "new variants array");
+                prod.variantsArray = vArray;
+                if(setProducts)setProducts([prod]);
+                else setProduct({...prod});
+            }
         }
         setRemoveOpen(false);
     }
@@ -214,7 +225,7 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                 }} />
             </Box>
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "2%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => setOpen(!open)}>
-                <img src={`${variants[0].image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                <img src={`${variants[0].image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                 <Typography variant="body2">{blank}_{threadColor}_{color}</Typography>
                 {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
             </Box>
@@ -225,7 +236,7 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                             <ListItem key={variant.id}>
                                 <ListItemAvatar>
                                     <Avatar>
-                                        <img src={variant.image?.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                        <img src={`${variant.image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")} width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                     </Avatar>
                                 </ListItemAvatar>
                                 {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
