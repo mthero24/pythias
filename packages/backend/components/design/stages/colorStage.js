@@ -190,20 +190,29 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                 imgs[product.id] = im
                             }
                             if (source == "simplysage") {
-                                let variantsLength = 0
+                                let variantsLength = {}
                                 for(let product of products){
                                     if(combined){
                                         for(let b of product.blanks){
                                             console.log("Calculating variants for blank:", product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length, product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())[0]).length);
-                                            variantsLength += product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si.name.toString() == s.name.toString())[0]).length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
+                                            variantsLength[b.code] = 0
+                                            variantsLength[b.code] += product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si.name.toString() == s.name.toString())[0]).length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
                                         }
                                     }else{
-                                        variantsLength += product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
+                                        variantsLength[b.code] += product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
                                     }
                                 }
                                 console.log(variantsLength, upcs.length, "variantsLength, upcs.length")
-                                if (variantsLength > upcs.length) {
-                                    getTempUpcs(variantsLength - upcs.length)
+                                let vLength = 0
+                                for(let v of Object.keys(variantsLength)) vLength += variantsLength[v]
+                                let used = 0
+                                for(let p of products){
+                                    for(let b of p.blanks){
+                                        used += upcs.filter(u => u.blank._id.toString() == b._id.toString() && p.colors.map(c => c._id.toString()).includes(u.color._id.toString())).length
+                                    }
+                                }
+                                if (vLength > used) {
+                                    getTempUpcs(vLength - used)
 
                                 }
                             }
