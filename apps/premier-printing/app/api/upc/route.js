@@ -33,7 +33,7 @@ export async function POST(req=NextApiRequest){
         console.log("upcs", upcs)
         return NextResponse.json({ error: false, upcs })
     }
-    let upcs = await UpcToSku.find({ design: data.design._id, blank: { $in: data.blanks.map(b => b._id) } }).populate("design", "name").populate({ path: "blank", select: "code name sizes colors", populate: "colors", }).populate("color", "name")
+    let upcs = await UpcToSku.find({ design: data.design?._id, blank: { $in: data.blanks.map(b => b._id) } }).populate("design", "name").populate({ path: "blank", select: "code name sizes colors", populate: "colors", }).populate("color", "name")
     for(let upc of upcs){
         if (sizeConverter[upc.size]) {
             upc.size = sizeConverter[upc.size]

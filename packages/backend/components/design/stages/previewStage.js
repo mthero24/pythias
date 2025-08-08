@@ -93,14 +93,15 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                         }}>Add Product Inventory</Button>
                                     </Box>
                                     {product.colors.map(color => {
-                                        const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
+                                        console.log(product.variantsArray, "variantsArray", blank._id.toString(), color._id.toString())
+                                        const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank._id.toString() : v.blank.toString()) === blank._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) === color._id.toString());
                                         return variants.length > 0 ? (
                                             <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} />
                                         ) : null;
                                     })}
                                 </Box>
                             );
-                        })}
+                        })}``
                     </Box>
                 </Box>
             ))}
@@ -200,21 +201,20 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
             let vArray = prod.variantsArray.filter(v => !variants.map(va => va._id.toString()).includes(v._id.toString()));
             prod.variantsArray = vArray;
             let res = await axios.put("/api/admin/products", { product: prod });
-            console.log(res.data.product)
             setProducts([res.data.product]);
         }
         setRemoveOpen(false);
     }
     return (
         <Card sx={{ margin: "1% 0%", padding: "1%", background: "#f0f0f0", borderRadius: "10px", boxShadow: "2px 2px 2px #ccc" }}>
-            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", cursor: "pointer" }} onClick={() => {
-                console.log("Remove Variants Clicked", removeOpen)
-                setRemoveOpen(true)
-            }}>
-                <DeleteIcon sx={{ color: "#780606" }} onClick={() => { /* handle delete */ }} />
+            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", cursor: "pointer" }} >
+                <DeleteIcon sx={{ color: "#780606" }} onClick={() => {
+                    console.log("Remove Variants Clicked", removeOpen)
+                    setRemoveOpen(true)
+                }} />
             </Box>
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "2%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => setOpen(!open)}>
-                <img src={variants[0].image?.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                <img src={`${variants[0].image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                 <Typography variant="body2">{blank}_{threadColor}_{color}</Typography>
                 {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
             </Box>
@@ -231,7 +231,7 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                                 {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
                                     <ListItemAvatar>
                                         <Avatar key={i}>
-                                            <img src={img.image ? img.image.replace("=400", "=75") : img.replace("=400", "=75")} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                            <img src={img.image ? `${img.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}width=75&height=75` : `${img.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                         </Avatar>
                                     </ListItemAvatar>
                                 ))}

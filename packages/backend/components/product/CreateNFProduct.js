@@ -1,19 +1,19 @@
-import { Modal, Box, Typography, Button, Card, TextField, Divider, Grid2, Checkbox, List, ListItem, ListItemText} from '@mui/material';
+import { Modal, Box, Typography, Button, Card, TextField, Divider, Grid2, Checkbox, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
 import CreatableSelect from 'react-select/creatable';
 import {useState, useEffect, useRef} from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
-import { set } from 'mongoose';
+import { get, set } from 'mongoose';
 import { ProductImageCarosel, VariantDisplay } from '../design/stages/previewStage';
 
-export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor }) => {
+export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor }) => {
     const [type, setType] = useState("From Blank");
-    const [blanks, setBlanks] = useState([]);
-    const [product, setProduct] = useState({});
+    const [blanks, setBlanks] = useState([]);;
     const [loading, setLoading] = useState(false);
-    const [stage, setStage] = useState("Select Blank");
     const [primaryImage, setPrimaryImage] = useState(true);
+    const [upcs, setUpcs] = useState([])
+    const [tempUpcs, setTempUpcs] = useState([])
     const targetRef = useRef(null)
     useEffect(() => {
         scrollToTarget();
@@ -48,17 +48,53 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
         p: 4,
         overflow: "auto"
     }
+    useEffect(() => {
+        const handleBeforeUnload = async (event) => {
+            // Perform actions before the page unloads
+            // e.g., save unsaved data, send analytics, clean up resources
+            if (window.dataLayer[0]) {
+                event.preventDefault(); // This line is crucial for displaying the prompt
+                let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
+            }
+            // Optional: Display a confirmation message to the user
+            //event.preventDefault(); // This line is crucial for displaying the prompt
+            //event.returnValue = 'Are you sure you want to leave?';
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
+        // Cleanup function: Remove the event listener when the component unmounts
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);    
+    const getUpcs = async ({ blanks, design }) => {
+        let upcs = await axios.post("/api/upc", { blanks, design }).catch(e => {
+            console.error(e);
+        });
+        setUpcs(upcs.data.upcs);
+    }
+    const getTempUpcs = async (count) => {
+        let tempUpcs = await axios.post("/api/upc", { count }).catch(e => {
+            console.error(e);
+        });
+        if (!window.dataLayer) window.dataLayer = [];
+        setTempUpcs([...tempUpcs.data.upcs]);
+        window.dataLayer.push(tempUpcs.data.upcs)
+    }
+    const releaseHold = async () => {
+        let res = await axios.post("/api/upc/releasehold", { upcs: tempUpcs });
+        window.dataLayer = [];
+    }
     return (
         <Modal
             open={open}
-            onClose={() => { setProduct({}); setStage("Select Blank"); setOpen(false)}}
+            onClose={() => { setProduct({blanks: [], colors: [], productImages: [], variants: []}); releaseHold(); setLoading(false); setStage("Select Blank"); setOpen(false)}}
             aria-labelledby="modal-modal-title"
             aria-describedby="modal-modal-description"
         >
             <Box sx={style} ref={targetRef}>
                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%"}}>
-                    <CloseIcon onClick={() => { setProduct({}); setStage("Select Blank"); setOpen(false) }} sx={{ cursor: "pointer", color: "#780606"}} />
+                    <CloseIcon onClick={() => { setProduct({blanks: [], colors: [], productImages: [], variants: []}); releaseHold(); setStage("Select Blank"); setLoading(false); setOpen(false) }} sx={{ cursor: "pointer", color: "#780606"}} />
                 </Box>
                 <Typography variant="h5" textAlign="center">Create New Product</Typography>
                 <Box sx={{padding: "2%", marginBottom: "2%", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center"}}>
@@ -71,10 +107,8 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                         <Grid2 container spacing={2}>
                             {blanks && blanks.map((blank) => {
                                 let color = blank.colors && blank.colors.length > 0 ? blank.colors[0] : null;
-                                console.log(color, "color", blank.colors.length)
                                 let fontImages = []
                                 let backImages = []
-                                console.log(blank.multiImages, "multiImages")
                                 for(let b of Object.keys(blank.multiImages)){
                                     for(let i of blank.multiImages[b]){
                                         if(!b.includes("back")){
@@ -91,8 +125,6 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                     }
                                     continue
                                 }
-                                console.log(fontImages, "fontImages")
-                                console.log(backImages, "backImages")
                                 return (
                                     <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={blank._id}>
                                         <Card sx={{marginBottom: "1%", padding: "1%", width: "100%", cursor: "pointer", "&:hover": { boxShadow: 4, opacity: 0.9}}} onClick={() => {
@@ -108,11 +140,10 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                                 defaultColor: blank.colors[0],
                                                 productImages: [],
                                                 priceTiers: [],
-                                                sizes: blank.sizes.map(s => ({ sizeId: s._id, name: s.name, price: 0, compareAtPrice: 0, costPerItem: 0, weight: 0 })),
+                                                sizes: blank.sizes,
                                                 description: blank.description || "",
                                                 isNFProduct: true
                                             }
-                                            console.log(prod, "prod")
                                             setProduct(prod);
                                             setStage("Select Images");
                                         }}>
@@ -148,11 +179,8 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                         {product.blanks[0].multiImages[key].map((image) => (
                                             <Grid2 item xs={6} sm={4} md={3} key={image._id} sx={{cursor: "pointer"}} onClick={() => {
                                                 let prod = {...product};
-                                                console.log(prod.images, "prod.images")
                                                 if(!prod.productImages) prod.productImages = [];
-                                                console.log(image, "image.image")
                                                 if(!prod.productImages.filter(img => img.image === image.image)[0]){
-                                                    console.log("adding image", image.color, "color", product.colors.filter(color => color._id.toString() === image.color.toString())[0])
                                                     prod.productImages.push({image: image.image, color: product.colors.filter(color => color._id.toString() === image.color.toString())[0], blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}-${key}`, side: key});
 
                                                 }
@@ -187,23 +215,33 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                         if(!prod.variantsArray) prod.variantsArray = [];
                                         for(let color of prod.blanks[0].colors){
                                             for(let size of prod.sizes){
-                                                let sku = `${prod.sku}_${color.name}_${size.name}`;
+                                                let sku = `${prod.sku}_${color.sku}_${size.name}`;
                                                 if(!prod.variantsArray.filter(v => v.sku === sku)[0]){
                                                     prod.variantsArray.push({
                                                         sku,
-                                                        color: color._id,
+                                                        color: color,
                                                         size: size,
-                                                        blank: prod.blanks[0]._id,
+                                                        blank: prod.blanks[0],
                                                         price: size.retailPrice,
                                                         compareAtPrice: size.compareAtPrice,
                                                         costPerItem: size.costPerItem,
                                                         weight: size.weight,
                                                         image: "",
-                                                        images: []
+                                                        images: [],
                                                     });
+                                                }else{
+                                                    let variant = prod.variantsArray.filter(v => v.sku === sku)[0];
+                                                    variant.color = color;
+                                                    variant.size = size;
+                                                    variant.blank = prod.blanks[0];
+                                                    variant.price = size.retailPrice;
+                                                    variant.compareAtPrice = size.compareAtPrice;
+                                                    variant.costPerItem = size.costPerItem;
+                                                    variant.weight = size.weight;
                                                 }
                                             }
                                         }
+                                        getUpcs({ blanks: [product.blanks[0]], design: null });
                                         setProduct({...prod});
                                         setStage("Variant Images");
                                     }}>Next</Button>
@@ -216,7 +254,6 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                     <Box sx={{ display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", justifyContent: "center", width: "100%" }}>
                         {/* Render variant image selection UI here */}
                         <Typography variant="h6" textAlign="center" sx={{marginBottom: "1%",textAlign: "center"}}>Select Variant Images for {product.name}</Typography>
-                        {console.log(product.colors)}
                         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%", marginBottom: "2%"}}>
                             <Button fullWidth variant="outlined" sx={{background: primaryImage ? "#e2e2e2" : "transparent"}} onClick={() => setPrimaryImage(true)}>Primary Image</Button>
                             <Button fullWidth variant="outlined" sx={{background: !primaryImage ? "#e2e2e2" : "transparent"}} onClick={() => {
@@ -276,6 +313,10 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                             <Button fullWidth variant="outlined" onClick={() => setStage("Select Images")}>Back</Button>
                             <Button fullWidth variant="contained" onClick={() => {
                                 // Handle the next stage
+                                let numVariants = product.sizes.length * product.colors.length;
+                                if (numVariants > upcs.length) {
+                                    getTempUpcs(numVariants - upcs.length);
+                                }
                                 setStage("Information");
                             }}>Next</Button>
                         </Box>
@@ -303,7 +344,8 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                         <Grid2 size={12}>
                             <CreatableSelect isMulti placeholder="Tags" onChange={async (newValue) => {
                                 let prod = { ...product }
-                                prod.tags = [...prod.tags, newValue.value]
+                                if (!prod.tags) prod.tags = [];
+                                prod.tags = newValue.map(tag => tag.value)
                                 setProduct({ ...prod })
                             }} />
                         </Grid2>
@@ -372,9 +414,26 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                         <Grid2 size={12}>
                             <Divider sx={{ margin: "1% 0" }} />
                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", gap: 2, marginTop: "2%", width: "100%" }}>
-                                <Button fullWidth variant="outlined" onClick={() => setStage("Information")}>Back</Button>
+                                <Button fullWidth variant="outlined" onClick={() => setStage("Variant Images")}>Back</Button>
                                 <Button fullWidth variant="contained" onClick={() => {
                                     // Handle the next stage
+                                    let prod = { ...product };
+                                    for(let v of prod.variantsArray){
+                                        let upc = upcs.filter(u => u.sku === v.sku)[0];
+                                        if(!upc) upc = upcs.filter(u => u.sku === `${product.sku}_${v.color.name}_${v.size.name}`)[0];
+                                        if(!upc) upc = upcs.filter(u => u.blank._id.toString() === v.blank._id.toString() && u.color._id.toString() === v.color._id.toString() && u.size.toString() === v.size.name.toString())[0];
+                                        if(upc){
+                                            v.upc = upc.upc;
+                                            v.gtin = upc.gtin;
+                                        }else{
+                                            upc = tempUpcs.filter(u => u.used != true)[0]
+                                            if (upc) {
+                                                v.upc = upc.upc;
+                                                v.gtin = upc.gtin;
+                                                tempUpcs.filter(u => u.used != true)[0].used = true
+                                            }
+                                        }
+                                    }
                                     setStage("Preview");
                                 }}>Next</Button>
                             </Box>
@@ -407,34 +466,42 @@ export const CreateNFProduct = ({ open, setOpen, brands, setBrands, seasons, set
                                 </ListItem>
                             </List>
                         </Box>
-                        <Box key={product.blanks[0].code} sx={{ marginBottom: "2%" }}>
+                        <Box key={product.blanks[0].code} sx={{ marginBottom: "2%", width: "100%" }}>
                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
                                 <Button onClick={async () => {
                                     let res = await axios.post("/api/admin/inventory/product", { productId: product._id });
-                                    setProducts([res.data.product]);
+                                    setProduct([res.data.product]);
                                 }}>Add Product Inventory</Button>
                             </Box>
                             {product.colors.map(color => {
-                                console.log(product)
-                                const variants = product.variantsArray.filter(v => v.blank.toString() === product.blanks[0]._id.toString() && v.color.toString() === color._id.toString());
+                                const variants = product.variantsArray.filter(v => v.blank._id.toString() === product.blanks[0]._id.toString() && v.color._id.toString() === color._id.toString());
                                 return variants.length > 0 ? (
-                                    <VariantDisplay key={`${product.blanks[0].code}-${color}`} blank={product.blanks[0].code} color={color.name} variants={variants} fullBlank={product.blanks[0]} product={product} setProducts={setProducts} />
+                                    <VariantDisplay key={`${product.blanks[0].code}-${color}`} blank={product.blanks[0].code} color={color.name} variants={variants} fullBlank={product.blanks[0]} product={product} setProduct={setProduct} />
                                 ) : null;
                             })}
                         </Box>
                         <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", gap: 2, marginTop: "2%", width: "100%" }}>
                             <Button fullWidth variant="outlined" onClick={() => setStage("Information")}>Back</Button>
-                            <Button fullWidth variant="contained" onClick={() => {
+                            <Button fullWidth variant="contained" onClick={async() => {
                                 // Handle the next stage
-                                CreateSku(product);
-                                setOpen(false);
-                            }}>Create Product</Button>
+                                setLoading(true)
+                                let res = await axios.post("/api/admin/products", { products: [product] });
+                                if (res.data.error) alert(res.data.msg)
+                                else {
+                                    setOpen(false);
+                                    setProduct({ blanks: [], colors: [], productImages: [], variants: [] });
+                                    setStage("Select Blank");
+                                    setLoading(false);
+                                }
+                            }}>{loading ? <Box sx={{ display: "flex", alignItems: "center", gap: "2" }}><CircularProgress color="inherit" size={24} /> <Typography variant="body2">Saving ...  </Typography></Box> : "Create"}</Button>
                         </Box>
                     </Box>
                 )}
                 {type === "Other" && (
                     <Box>
-                        {/* Render design selection UI here */}
+                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", height: "300px" }}>
+                            <Typography variant="h6">Other product creation methods coming soon!</Typography>
+                        </Box>
                     </Box>
                 )}
             </Box>

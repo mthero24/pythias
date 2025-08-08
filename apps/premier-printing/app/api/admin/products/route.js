@@ -55,6 +55,22 @@ const update = async({product})=>{
         createTempUpcs();
     }
 }
+let updateArray = async({product})=>{
+    for(let v of product.variantsArray){
+        let upc = await SkuToUpc.findOne({ upc: v.upc });
+        console.log("Found UPC", upc);
+        if(upc){
+            upc.blank= v.blank._id,
+            upc.color= v.color._id,
+            upc.size= v.size.name,
+            upc.temp= false,
+            upc.hold= false,
+            upc.sku= v.sku,
+            updateTempUpc(upc, product.brand, product.productDescription)
+            await upc.save();
+        }
+    }
+}
 export async function GET(req = NextApiRequest) {
     const product = req.nextUrl.searchParams.get("products");
     if (!product) {
@@ -73,6 +89,13 @@ export async function POST(req = NextApiRequest) {
     const data = await req.json();
     for (let product of data.products) {
         if (product.variants) await update({ product: product });
+        if(product.isNFProduct && product.variantsArray) {
+            await updateArray({ product: product });
+            product.variantsArray.map(v=> {
+                v.size = v.size._id? v.size._id: v.size
+                return v
+            })
+        }
     }
     let products = await saveProducts({ products: data.products, Products, Inventory });
     return NextResponse.json({ error: false, products });
@@ -85,6 +108,6 @@ export async function PUT(req = NextApiRequest) {
 }
 export async function DELETE(req = NextApiRequest) {
     const product = await req.nextUrl.searchParams.get("product");
-    await Products.deleteOne({ _id: product });
+    let prod = await Products.findOneAndDelete({ _id: product });
     return NextResponse.json({ error: false });
 }

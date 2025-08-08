@@ -2,7 +2,6 @@
 
 export const saveProducts = async ({products, Products, Inventory}) => {
     let savedProducts = [];
-    console.log(products, "products in saveProducts");
     for(let product of products) {
         let variantsArray = []
         if(product.threadColors && product.threadColors.length > 0){
@@ -40,9 +39,9 @@ export const saveProducts = async ({products, Products, Inventory}) => {
         }
         if(variantsArray.length > 0) {
             product.variantsArray = variantsArray
-            for(let v of product.variantsArray) {
-                v.inventory = await Inventory.findOne({ blank: v.blank, color: v.color, sizeId: v.size });
-            }
+        }
+        for (let v of product.variantsArray) {
+            v.inventory = await Inventory.findOne({ blank: v.blank._id ? v.blank._id : v.blank, color: v.color._id ? v.color._id : v.color, sizeId: v.size._id ? v.size._id : v.size });
         }
         product.variants = null; // Clear variants to avoid duplication
         product.lastUpdated = new Date(Date.now()); // Update lastUpdated field

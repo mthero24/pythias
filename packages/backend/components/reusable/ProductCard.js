@@ -3,8 +3,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModal from "./DeleteModal";
 import {useState} from "react";
 import { useCSV } from "../reusable/CSVProvider";
+import { CreateNFProduct } from "../product/CreateNFProduct";
 import axios from "axios";
-export const ProductCard = ({p, setProduct, setCreateProduct, marketPlaces, setMarketplaceModal, des, setDesign, updateDesign, setPreview }) => {
+export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, marketPlaces, setMarketplaceModal, setStart, des, setDesign, updateDesign, setPreview }) => {
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteImage, setDeleteImage] = useState({});
     const [deleteTitle, setDeleteTitle] = useState("");
@@ -16,7 +17,7 @@ export const ProductCard = ({p, setProduct, setCreateProduct, marketPlaces, setM
             if (res.data.error) alert(res.data.msg)
             else {
                 let d = {...des}
-                d.products = d.products.filter(p => p._id !== product._id)
+                d.products = d.products?.filter(p => p._id !== product._id)
                 setDesign({...d})
                 updateDesign({...d})
             }
@@ -157,7 +158,14 @@ export const ProductCard = ({p, setProduct, setCreateProduct, marketPlaces, setM
                 </Grid2>
                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: "1%" }}>
                     <Button sx={{}} variant="contained" color="primary" onClick={() => { setMarketplaceModal(true); setProduct({ ...p }) }} >Add To MarketPlace</Button>
-                    <Button variant="outlined" color="secondary" onClick={() => { setProduct({ ...p }); setCreateProduct(true); }}>Edit Product</Button>
+                    <Button variant="outlined" color="secondary" onClick={() => { 
+                        setProduct({ ...p }); 
+
+                        if(p.isNFProduct) {
+                            setStart("Select Images")
+                            setNFProduct(true);
+                        } else setCreateProduct(true);
+                    }}>Edit Product</Button>
                 </Box>
                 <Button variant="outlined" fullWidth color="primary" sx={{ marginTop: "1%" }} onClick={() => { setProduct({ ...p }); setCreateProduct(true); setPreview(true); }}>Preview Product</Button>
                 <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle } onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} /> 

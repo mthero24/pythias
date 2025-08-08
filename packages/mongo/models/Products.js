@@ -99,6 +99,8 @@ const schema = new mongoose.Schema({
     department: [String],
     category: [String],
     ids: Object,
-    lastUpdated: {type: Date, default: Date.now()}, 
+    isNFProduct: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now },
+    lastUpdated: { type: Date, default: Date.now },
 });
 export default PremierPrinting.model("Products", schema);
