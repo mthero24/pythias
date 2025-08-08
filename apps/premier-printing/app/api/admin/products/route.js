@@ -102,6 +102,7 @@ export async function POST(req = NextApiRequest) {
 }
 export async function PUT(req = NextApiRequest) {
     const data = await req.json();
+    console.log("Updating product", data.product._id);
     let product = await Products.findByIdAndUpdate(data.product._id, data.product, { new: true, returnNewDocument: true }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
     console.log("Updated product", product);
     return NextResponse.json({ error: false, product });

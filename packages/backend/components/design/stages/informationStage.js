@@ -133,9 +133,8 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                 for (let size of blank.sizes) {
                                                     if (product.sizes.filter(s => s.name == size.name)[0]) {
                                                         let upc
+                                                        console.log(upcs, "upcs in InformationStage")
                                                         let sku = await CreateSku({ blank, color, size, design });
-                                                        console.log("Creating SKU:", sku, "for", blank.code, color.name, size.name, "with design", design._id, upcs);
-                                                        console.log(sku, upcs.filter(u => u.sku == sku)[0], "filtering upcs")
                                                         if (upcs.filter(u => u.sku == sku)[0]) {
                                                             upc = upcs.filter(u => u.sku == sku)[0]
                                                         } else if (upcs.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.threadColor._id.toString() == d._id.toString() && u.size == size.name)[0]) {
@@ -152,7 +151,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                         if (!variants[blank.code]) variants[blank.code] = {}
                                                         if (!variants[blank.code][d]) variants[blank.code][d] = {}
                                                         if (!variants[blank.code][d][color.name]) variants[blank.code][d][color.name] = []
-                                                        variants[blank.code][d][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, threadColor: d }), threadColor: colors.filter(tc => tc.name == d)[0], blank: blank, upc: upc?.upc, gtin: upc?.gtin })
+                                                        variants[blank.code][d][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, threadColor: d }), threadColor: colors.filter(tc => tc.name == d)[0], blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice })
                                                     }
                                                 }
                                             }
@@ -167,18 +166,19 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                             for (let size of blank.sizes) {
                                                 if(product.sizes.filter(s => s.name == size.name)[0]) {
                                                     let upc
+                                                    console.log(upcs, "upcs in InformationStage")
+                                                    upcs = upcs.map(u => {
+                                                        if(u.size == "5/6") u.size = "5/6T"
+                                                        return u;
+                                                    })
                                                     let sku = await CreateSku({ blank, color, size, design });
-                                                    console.log("Creating SKU:", sku, "for", blank.code, color.name, size.name, "with design", design._id, upcs);
-                                                    console.log(sku, upcs, "filtering upcs")
                                                     if (upcs.filter(u => u.sku == sku)[0]) {
                                                         upc = upcs.filter(u => u.sku == sku)[0]
                                                     }else if(upcs.filter(u=> u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]) {
-                                                        console.log("else if")
                                                         upc = upcs.filter(u => u.design._id.toString() == design._id.toString() && u.blank._id.toString() == blank._id.toString() && u.color._id.toString() == color._id.toString() && u.size == size.name)[0]  
 
                                                     } else {
-                                                        console.log("else")
-                                                        console.log(tempUpcs, "tempUpcs")
+                                                        console.log(tempUpcs, "tempUpcs in InformationStage")
                                                         upc = tempUpcs.filter(u => u.used != true)[0]
                                                         if (upc) {
                                                             tempUpcs.filter(u => u.used != true)[0].used = true
@@ -188,7 +188,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                     let images = product.variantSecondaryImages && product.variantSecondaryImages[blank.code] && product.variantSecondaryImages[blank.code][color.name] && product.variantSecondaryImages[blank.code][color.name]
                                                     if (!variants[blank.code]) variants[blank.code] = {}
                                                     if (!variants[blank.code][color.name]) variants[blank.code][color.name] = []
-                                                    variants[blank.code][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank, upc: upc?.upc, gtin: upc?.gtin })
+                                                    variants[blank.code][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice })
                                                 }
                                             }
                                         }

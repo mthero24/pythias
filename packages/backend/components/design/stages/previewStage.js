@@ -61,18 +61,18 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                             return product.threadColors && product.threadColors.length > 0 ? (
                                 <Box key={blank} sx={{ marginBottom: "2%" }}>
                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
-                                        <Button onClick={async ()=>{
+                                        {!product.isNFProduct && <Button onClick={async ()=>{
                                             console.log("Add Product Inventory Clicked");
                                             let res = await axios.post("/api/admin/inventory/product", { productId: product._id });
                                             setProducts([res.data.product]);
-                                        }}>Add Product Inventory</Button>
+                                        }}>Add Product Inventory</Button>}
                                     </Box>
                                     {product.threadColors && product.threadColors.length > 0 &&product.threadColors.map(threadColor => (
                                         <Box key={threadColor.name} sx={{ marginLeft: "2%" }}>
                                             {product.colors.map(color => {
                                                 const variants = product.variantsArray.filter(v => v.blank?.toString() === blank._id.toString() && v.threadColor?.toString() === threadColor?._id.toString() && v.color?.toString() === color?._id.toString());
                                                 return variants.length > 0 ? (
-                                                    <VariantDisplay key={`${blank}-${threadColor}-${color}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} />
+                                                    <VariantDisplay key={`${blank}-${threadColor}-${color}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} />
                                                 ) : null;
                                             })}
                                         </Box>
@@ -80,28 +80,28 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     {!product.threadColors || product.threadColors.length === 0 && product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} />
+                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} />
                                         ) : null;
                                     })}
                                 </Box>
                             ) : (
                                 <Box key={blank.code} sx={{ marginBottom: "2%" }}>
                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
-                                        <Button onClick={async () => {
+                                       {!product.isNFProduct && <Button onClick={async () => {
                                             let res = await axios.post("/api/admin/inventory/product", { productId: product._id });
                                             setProducts([res.data.product]);
-                                        }}>Add Product Inventory</Button>
+                                        }}>Add Product Inventory</Button>}
                                     </Box>
                                     {product.colors.map(color => {
                                         console.log(product.variantsArray, "variantsArray", blank._id.toString(), color._id.toString())
                                         const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank._id.toString() : v.blank.toString()) === blank._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} />
+                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} />
                                         ) : null;
                                     })}
                                 </Box>
                             );
-                        })}``
+                        })}
                     </Box>
                 </Box>
             ))}
@@ -157,9 +157,10 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
     )
 }
 
-export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products, setProduct }) => {
+export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products, setProduct, preview }) => {
     const [open, setOpen] = useState(false);
     const [removeOpen, setRemoveOpen] = useState(false);
+    const [priceUpdate, setPriceUpdate] = useState(false);
     const [variant, setVariant] = useState({});
     const [inventoryOpen, setInventoryOpen] = useState(false);
     let removeVariants = async () => {
@@ -236,7 +237,7 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                             <ListItem key={variant.id}>
                                 <ListItemAvatar>
                                     <Avatar>
-                                        <img src={`${variant.image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")} width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                        <img src={`${variant.image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                     </Avatar>
                                 </ListItemAvatar>
                                 {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
@@ -251,9 +252,14 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                                 {variant.productInventory && (
                                     <ListItemText sx={{ cursor: "pointer" }} onClick={() => {setInventoryOpen(true); setVariant(variant);}} primary={`Inventory: ${variant.productInventory ? variant.productInventory.quantity : "N/A"}`} secondary={`On Hold: ${variant.productInventory.onHold ? variant.productInventory.onHold : "0"} location: ${variant.productInventory.location ? variant.productInventory.location : "N/A"}`} />
                                 )}
+                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                                    <Typography variant="body2" sx={{ marginRight: "10px" }}>Price: ${variant.price ? variant.price.toFixed(2) : "N/A"}</Typography>
+                                    {preview &&<Button variant="outlined" color="primary" size="small" onClick={() => { setVariant({ ...variant }); setPriceUpdate(true); }}>Update</Button>}
+                                </Box>
                             </ListItem>
                         ))}
                     </List>
+                    <UpdatePriceModal open={priceUpdate} setOpen={setPriceUpdate} variant={variant} setVariant={setVariant} product={product} setProducts={setProducts} />
                     <InventoryModal open={inventoryOpen} setOpen={setInventoryOpen} variant={variant} setVariant={setVariant} product={product} setProducts={setProducts} />
                 </Box>
             )}
@@ -262,6 +268,54 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
     )
 }
 
+const UpdatePriceModal = ({ open, setOpen, variant, setVariant, product, setProducts }) => {
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "50%",
+        height: "23%",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        overflowX: "auto",
+        overflowY: "none",
+    };
+    return (
+        <Modal open={open} onClose={() => setOpen(false)}>
+            <Box sx={style}>
+                <Typography variant="h6">Update Price for {variant.sku}</Typography>
+                <Box sx={{ display: "flex", flexDirection: "row", padding: "2%" }}>
+                    <TextField
+                        sx={{ margin: "2%" }}
+                        label="Price"
+                        type="number"
+                        defaultValue={variant.price ? variant.price : 0}
+                        onChange={(e) => {
+                            const newPrice = parseFloat(e.target.value);
+                            let varnt = { ...variant };
+                            varnt.price = isNaN(newPrice) ? 0 : newPrice;
+                            setVariant({ ...varnt });
+                        }}
+                    />
+                    <Button onClick={async () => {
+                        // Handle update logic here
+                        console.log("Updating price for variant:", variant, product);
+                        console.log(product, "product in price modal")
+                        let vIndex = product.variantsArray.findIndex(v => v._id.toString() === variant._id.toString());
+                        product.variantsArray[vIndex] = variant;
+                        let res = await axios.put("/api/admin/products", { product });
+                        setProducts([res.data.product]);
+                        setOpen(false);
+                        setVariant({});
+                    }}>Update</Button>
+                </Box>
+            </Box>
+        </Modal>
+    );
+}
 const RemoveVariants = ({open, setOpen, removeVariants}) => {
     const style = {
         position: 'absolute',

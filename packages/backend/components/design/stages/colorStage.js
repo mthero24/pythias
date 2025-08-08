@@ -69,7 +69,6 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                                         {product.colors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}
                                                     </Box>
                                                     <Typography sx={{ fontSize: ".6rem", textAlign: "center" }}>{c.name}</Typography>
-                                                    {console.log(design, "design in ColorStage")}
                                                     {design.blanks?.filter(d => product.blanks.filter(pb => pb?._id?.toString() == (d.blank._id ? d.blank._id.toString() : d.blank.toString()))[0]) && design.blanks?.filter(d => product.blanks.filter(pb => pb?._id?.toString() == (d.blank._id ? d.blank._id.toString() : d.blank.toString()))[0])[0] && design.blanks?.filter(d => product.blanks.filter(pb => pb._id?.toString() == (d.blank._id ? d.blank._id.toString() : d.blank.toString()) )[0])[0].colors?.filter(cl => cl._id?.toString() == c._id?.toString())[0] && <Box sx={{display: "flex", alignItems: "center", justifyContent: "center"}}><WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} /></Box>}
                                                 </Grid2>
                                             ))
@@ -139,7 +138,6 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                         <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Combined Product</Typography>
                                         {product.blanks.map((b, j) => (
                                             <Typography key={j} textAlign={"center"}>
-                                                {console.log("Calculating variants for blank:", product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length, product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si.name.toString() == s.name.toString())[0]).length)}
                                                 {b.code}: {product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si.name.toString() == s.name.toString())[0]).length} Variants
                                             </Typography>
                                             
@@ -194,17 +192,16 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                 for(let product of products){
                                     if(combined){
                                         for(let b of product.blanks){
-                                            console.log("Calculating variants for blank:", product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length, product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())[0]).length);
                                             variantsLength[b.code] = 0
                                             variantsLength[b.code] += product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si.name.toString() == s.name.toString())[0]).length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
                                         }
                                     }else{
-                                        variantsLength[product.sku]
-                                        variantsLength += product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
+                                        variantsLength[product.id] = 0
+                                        variantsLength[product.id] += product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
                                     }
                                 }
-                                console.log(variantsLength, upcs.length, "variantsLength, upcs.length")
                                 let vLength = 0
+                                console.log(variantsLength, "variantsLength")
                                 for(let v of Object.keys(variantsLength)) vLength += variantsLength[v]
                                 let used = 0
                                 for(let p of products){
@@ -212,9 +209,10 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                         used += upcs.filter(u => u.blank._id.toString() == b._id.toString() && p.colors.map(c => c._id.toString()).includes(u.color._id.toString())).length
                                     }
                                 }
+                                console.log("Used upcs:", used, "vLength:", vLength)
                                 if (vLength > used) {
                                     getTempUpcs(vLength - used)
-
+                                    console.log("Getting temp upcs", vLength - used)
                                 }
                             }
                             setImages(imgs)
