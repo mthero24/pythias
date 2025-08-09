@@ -1,4 +1,4 @@
-import { Design, Items as Item, Blank, Color, Order} from "@pythias/mongo";
+import { Design, Items as Item, Blank, Color, Order, Products} from "@pythias/mongo";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 export async function pullOrders(id){
     let blanks = await Blank.find({})
@@ -63,81 +63,51 @@ export async function pullOrders(id){
             for(let i of o.items){
                 if(i.sku && i.sku != ""){
                     //console.log(i.sku, i.sku.split("_")[2]?.trim())
-                    if(i.sku.split("_").length <= 3 || i.sku.toLowerCase().split("_")[0] == "front" || i.sku.toLowerCase().split("_").includes("leftchest") ||  i.sku.toLowerCase().split("_").includes("front") ||  i.sku.toLowerCase().split("_").includes("back")){
-                    let design = await Design.findOne({name: i.sku.split("_")[2]?.replace(/’/g, "'").trim()})
-                    //console.log(design?.name)
-                    //console.log(i.options[0].value.split(", "))
-                    let options = i.options[0].value.split(", ")
-                    let style = fixers.filter(f=> options[0].includes(f))[0]
-                    let color = options[0].split(style)[0]?.replace(/Youth/g, "").trim()
-                    let size = options[1]
-                    let threadColor = options[2] 
-                    console.log(style, color, size, threadColor)
-                    let blank = await Blank.findOne({fixerCode: style.trim()}).populate("colors")
-                    let blankColor = blank.colors.filter(c=> c.name == color)[0]
-                    if(!blankColor){
-                            for(let co of (colorFixer[color]? colorFixer[color].split(", "): [])){
-                                let b = blank.colors.filter(c=> c.name == co)[0]
-                                if(b)blankColor = b
-                            }
-                    }
-                    let blankSize = blank.sizes.filter(s=> s.name == size)[0]
-                    if(!blankSize) blankSize = blank.sizes.filter(s=> s.name == sizeFixer[size])[0]
-                        console.log(blank.code, blankColor, blankSize)
-                        console.log( blankColor?.name, blankSize?.name)
-                        let DesignThreadColor = colors.filter(c=> c.name == threadColor)[0]
-                        let designImages
-                        if(DesignThreadColor){
-                            if (design != undefined && design.threadImages != undefined && design.threadImages[DesignThreadColor.name] != undefined) designImages = design.threadImages[DesignThreadColor.name]
-                            else if (design != undefined && design.threadImages != undefined && design.threadImages[threadColor] != undefined) designImages = design.threadImages[threadColor]
-                            else if(design) designImages = design.images
-                        }else if(design){
-                            designImages = design.images
-                        }
-                        let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: designImages, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0]?.value})
-                        if(o.tagIds != null || o.orderStatus == "shipped"){
-                            item.labelPrinted = true
-                        }
-                        if(order.status == "cancelled"){
-                            item.canceled = true
-                        }
-                        //console.log(item)
-                        await item.save()
-                        items.push(item)
+                    let product = await Products.findOne({ variantsArray: { $elemMatch: { sku: i.sku } } }).populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
+                    if (!product) await Products.findOne({ variantsArray: { $elemMatch: { previousSkus: i.sku } } }).populate("design variantsArray.blank variantsArray.color")
+                    if(product) {
+                        // Do something with the product
+                        let variant = product.variantsArray.find(v => v.sku == i.sku)
+                        if(!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
+                        //console.log(variant, "variant")
+                        let item = new Item({ pieceId: await generatePieceID(), paid: true, sku: variant.sku, orderItemId: i.orderItemId, blank: variant.blank, styleCode: variant.blank.code, sizeName: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0]?.name, threadColorName: variant.threadColor?.name, threadColor: variant.threadColor, colorName: variant.color?.name, color: variant.color, size: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0], design: variant.threadColor? product.design.threadImages[variant.threadColor?.name]: product.design.images, designRef: product.design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: product.design.printType, options: i.options[0]?.value })
+                        console.log(i, "item to save")
+                        await item.save();
+                        order.items.push(item._id)
                     }else{
                         console.log(i.sku, "sku new")
                         let sku = i.sku.split("_")
-                        let blank 
+                        let blank
                         let threadColor
                         let printType = sku[0]
                         let designSku = sku[1]
                         let colorName = sku[2]
                         let sizeName = sku[3]
-                        if(sku.length == 5){
+                        if (sku.length == 5) {
                             blank = sku[sku.length - 1]
-                        }else{
+                        } else {
                             blank = sku[sku.length - 2]
                             threadColor = sku[sku.length - 1]
                         }
-                        blank = await Blank.findOne({code: blank}).populate("colors")
-                        let design = await Design.findOne({sku: designSku})
-                        let blankColor = blank?.colors.filter(c=> c.name.toLowerCase() == colorName.toLowerCase() || c.sku.toLowerCase() == colorName.toLowerCase())[0]
-                        let blankSize = blank?.sizes.filter(c=> c.name.toLowerCase() == sizeName.toLowerCase())[0]
-                        let DesignThreadColor = colors.filter(c=> c.name.toLowerCase() == threadColor?.toLowerCase() || c.sku.toLowerCase() == threadColor?.toLowerCase())[0]
+                        blank = await Blank.findOne({ code: blank }).populate("colors")
+                        let design = await Design.findOne({ sku: designSku })
+                        let blankColor = blank?.colors.filter(c => c.name.toLowerCase() == colorName.toLowerCase() || c.sku.toLowerCase() == colorName.toLowerCase())[0]
+                        let blankSize = blank?.sizes.filter(c => c.name.toLowerCase() == sizeName.toLowerCase())[0]
+                        let DesignThreadColor = colors.filter(c => c.name.toLowerCase() == threadColor?.toLowerCase() || c.sku.toLowerCase() == threadColor?.toLowerCase())[0]
                         let designImages
-                        if(DesignThreadColor){
+                        if (DesignThreadColor) {
                             console.log((design != undefined && design.threadImages != undefined && design.threadImages[DesignThreadColor.name] != undefined), "design images")
                             if (design != undefined && design.threadImages != undefined && design.threadImages[DesignThreadColor.name] != undefined) designImages = design.threadImages[DesignThreadColor.name]
                             else if (design != undefined && design.threadImages != undefined && design.threadImages[threadColor] != undefined) designImages = design.threadImages[threadColor]
-                            else if(design) designImages = design.images
-                        }else if(design){
+                            else if (design) designImages = design.images
+                        } else if (design) {
                             designImages = design.images
                         }
-                        let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize? blankSize.name: size, threadColorName: DesignThreadColor? DesignThreadColor.name: threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor , size: blankSize, design: designImages, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0]?.value, poNumber: order.poNumber})
-                        if(o.tagIds != null || o.orderStatus == "shipped"){
+                        let item = new Item({ pieceId: await generatePieceID(), paid: true, sku: i.sku, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: blankSize ? blankSize.name : size, threadColorName: DesignThreadColor ? DesignThreadColor.name : threadColor, threadColor: DesignThreadColor, colorName: blankColor?.name, color: blankColor, size: blankSize, design: designImages, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: i.sku.split("_")[0], options: i.options[0]?.value, poNumber: order.poNumber })
+                        if (o.tagIds != null || o.orderStatus == "shipped") {
                             item.labelPrinted = true
                         }
-                        if(order.status == "cancelled"){
+                        if (order.status == "cancelled") {
                             item.canceled = true
                         }
                         //console.log(item)
@@ -145,7 +115,6 @@ export async function pullOrders(id){
                         items.push(item)
                     }
                 }
-                //console.log(items)
             }
             order.items = items
         }else{

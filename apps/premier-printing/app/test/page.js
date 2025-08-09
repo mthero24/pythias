@@ -1,6 +1,7 @@
 import { Nightlife } from "@mui/icons-material";
 import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, marketPlaces, ApiKeyIntegrations, Inventory} from "@pythias/mongo"
 import axios from "axios";
+import { pullOrders } from "@/functions/pullOrders"
 let converter = {
     YL: "L",
     YS: "S",
@@ -9,6 +10,7 @@ let converter = {
     YXXL: "2XL",
 }
 export default async function Test(){
+    await pullOrders()
     // let headers = {
     //     headers: {
     //         "Authorization": `Basic ${btoa(`${process.env.ssApiKey}:${process.env.ssApiSecret}`)}`
