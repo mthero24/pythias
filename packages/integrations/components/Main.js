@@ -8,7 +8,8 @@ import acenda from "./Acenda.png"
 import {TikTokModal} from "./TikTokModal";
 import {useState} from "react";
 import {AcendaModal} from "./AcendaModal";
-export function Main({tiktokShops, apiKeyIntegrations, provider}){
+import Link from "next/link";
+export function Main({ tiktokShops, apiKeyIntegrations, provider, etsyRedirectURI }){
     const [tikTokOpen, setTikTokOpen] = useState(false)
     const [acendaOpen, setAcendaOpen] = useState(false)
     const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || [])
@@ -28,9 +29,11 @@ export function Main({tiktokShops, apiKeyIntegrations, provider}){
                     </Grid2>
                     <Grid2 size={3}>
                         <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} >
-                             <Box >
-                                <Image src={etsy} alt={"etsy"} width={600} height={600} style={{width: "100%", height: "auto", background: "#fff"}}/>
-                            </Box>
+                            <Link href={etsyRedirectURI} target="_blank" style={{textDecoration: "none", color: "inherit"}}>
+                                <Box >
+                                    <Image src={etsy} alt={"etsy"} width={600} height={600} style={{width: "100%", height: "auto", background: "#fff"}}/>
+                                </Box>
+                            </Link>
                         </Card>
                     </Grid2>
                     <Grid2 size={3}>

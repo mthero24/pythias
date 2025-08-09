@@ -27,3 +27,5 @@ export {
   createProduct,
   getOrders as getOrdersTikTok,
 } from "./functions/tiktokpy";
+
+export {generateRedirectURI, getToken} from "./functions/etsy";
