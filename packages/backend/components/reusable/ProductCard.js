@@ -5,7 +5,7 @@ import {useState} from "react";
 import { useCSV } from "../reusable/CSVProvider";
 import { CreateNFProduct } from "../product/CreateNFProduct";
 import axios from "axios";
-export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, marketPlaces, setMarketplaceModal, setStart, des, setDesign, updateDesign, setPreview }) => {
+export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, marketPlaces, setMarketplaceModal, setStart, des, setDesign, updateDesign, setPreview, source }) => {
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteImage, setDeleteImage] = useState({});
     const [deleteTitle, setDeleteTitle] = useState("");
