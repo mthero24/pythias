@@ -9,6 +9,33 @@ import {TikTokModal} from "./TikTokModal";
 import {useState} from "react";
 import {AcendaModal} from "./AcendaModal";
 import Link from "next/link";
+import crypto from "crypto";
+const etsyKeyString = "480pxuspxi5wz93puk47snye"
+export const generateRedirectURI = (baseURL) => {
+    const sha256 = (buffer) =>
+        crypto.createHash("sha256").update(buffer).digest();
+
+    // We’ll use the verifier to generate the challenge.
+    // The verifier needs to be saved for a future step in the OAuth flow.
+    let codeVerifier = base64URLEncode("nicepajamas");
+
+    // With these functions, we can generate
+    // the values needed for our OAuth authorization grant.
+    const codeChallenge = base64URLEncode(sha256(codeVerifier));
+    const state = Math.random().toString(36).substring(7);
+
+    console.log(`State: ${state}`);
+    console.log(`Code challenge: ${codeChallenge}`);
+    console.log(`Code verifier: ${codeVerifier}`);
+    return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=${baseURL}/api/integrations/etsy&scope=transactions_r email_r transactions_w listings_r listings_w listings_d shops_r shops_w&client_id=${etsyKeyString}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+};
+const base64URLEncode = (str) =>
+    str
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=/g, "");
+
 export function Main({ tiktokShops, apiKeyIntegrations, provider, etsyRedirectURI }){
     const [tikTokOpen, setTikTokOpen] = useState(false)
     const [acendaOpen, setAcendaOpen] = useState(false)
@@ -29,7 +56,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, etsyRedirectUR
                     </Grid2>
                     <Grid2 size={3}>
                         <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} >
-                            <Link href={etsyRedirectURI} target="_blank" style={{textDecoration: "none", color: "inherit"}}>
+                            <Link href={generateRedirectURI("https://imperial.pythiastechnologies.com")} target="_blank" style={{textDecoration: "none", color: "inherit"}}>
                                 <Box >
                                     <Image src={etsy} alt={"etsy"} width={600} height={600} style={{width: "100%", height: "auto", background: "#fff"}}/>
                                 </Box>
