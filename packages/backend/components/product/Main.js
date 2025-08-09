@@ -353,6 +353,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                             marketPlaces={marketplaces}
                             setNFProduct={setNFProduct}
                             setStart={setStart}
+                            source={source}
                         />
                     })}
                 </Grid2>
@@ -361,7 +362,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                 </Stack>
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={selectedProduct} setProduct={setSelectedProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={gen} seasons={seas} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={them} sportUsedFor={sport} setThemes={setThemes} setSportUsedFor={setSportUsedFor} pageProducts={products} setPageProducts={setProducts} />
                     {loading && <LoaderOverlay/>}
-                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} />
+                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} source={source} />
                 <CreateNFProduct open={NFProduct} setOpen={setNFProduct} stage={start} setStage={setStart} product={selectedProduct} setProduct={setSelectedProduct} setProducts={setProducts} brands={brands} setBrands={setBrands} seasons={seasons} setSeasons={setSeasons} genders={genders} setGenders={setGenders} CreateSku={CreateSku} themes={themes} setThemes={setThemes} sportUsedFor={sportsUsedFor} setSportUsedFor={setSportUsedFor} />
             </Container>
             <Footer />

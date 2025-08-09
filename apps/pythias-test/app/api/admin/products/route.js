@@ -87,16 +87,6 @@ export async function GET(req = NextApiRequest) {
 }
 export async function POST(req = NextApiRequest) {
     const data = await req.json();
-    for (let product of data.products) {
-        if (product.variants) await update({ product: product });
-        if(product.isNFProduct && product.variantsArray) {
-            await updateArray({ product: product });
-            product.variantsArray.map(v=> {
-                v.size = v.size._id? v.size._id: v.size
-                return v
-            })
-        }
-    }
     let products = await saveProducts({ products: data.products, Products, Inventory });
     return NextResponse.json({ error: false, products });
 }

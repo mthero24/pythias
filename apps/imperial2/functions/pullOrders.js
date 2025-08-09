@@ -15,6 +15,7 @@ export async function pullOrders(id){
     console.log(orders.filter(o=> o.tagIds == null && o.orderStatus != "shipped").length, orders.filter(o=> o.tagIds != null).map(o=>{return o.tagIds}) )
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
+        if (o.customerNotes == "tiktok_fulfillment_type: 3PL") continue;
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
         if(!order){
             let marketplace = o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name
@@ -67,10 +68,34 @@ export async function pullOrders(id){
                     if (!product) await Products.findOne({ variantsArray: { $elemMatch: { previousSkus: i.sku } } }).populate("design variantsArray.blank variantsArray.color")
                     if(product) {
                         // Do something with the product
+                        console.log(product, "product found")
                         let variant = product.variantsArray.find(v => v.sku == i.sku)
                         if(!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
                         //console.log(variant, "variant")
-                        let item = new Item({ pieceId: await generatePieceID(), paid: true, sku: variant.sku, orderItemId: i.orderItemId, blank: variant.blank, styleCode: variant.blank.code, sizeName: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0]?.name, threadColorName: variant.threadColor?.name, threadColor: variant.threadColor, colorName: variant.color?.name, color: variant.color, size: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0], design: variant.threadColor? product.design.threadImages[variant.threadColor?.name]: product.design.images, designRef: product.design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date, type: product.design.printType, options: i.options[0]?.value })
+                        let item = new Item({ 
+                            pieceId: await generatePieceID(), 
+                            paid: true, 
+                            sku: variant.sku, 
+                            orderItemId: i.orderItemId, 
+                            blank: variant.blank, 
+                            styleCode: 
+                            variant.blank.code, 
+                            sizeName: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0]?.name, 
+                            threadColorName: variant.threadColor?.name, 
+                            threadColor: variant.threadColor, 
+                            colorName: variant.color?.name, 
+                            color: variant.color, 
+                            size: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0], 
+                            design: variant.threadColor? product.design.threadImages[variant.threadColor?.name]: product.design.images, 
+                            designRef: product.design, 
+                            order: order._id, 
+                            shippingType: order.shippingType, 
+                            quantity: 1, 
+                            status: order.status, 
+                            name: i.name, 
+                            date: order.date, 
+                            type: product.design.printType, 
+                            options: i.options[0]?.value })
                         console.log(i, "item to save")
                         await item.save();
                         order.items.push(item._id)

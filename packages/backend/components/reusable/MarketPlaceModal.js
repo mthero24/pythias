@@ -106,7 +106,7 @@ export const csvFunctions = {
     }
 };
 
-export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign }) => {
+export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source }) => {
     const [size, setSize] = useState([]);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteTitle, setDeleteTitle] = useState();
@@ -127,7 +127,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         setSize(sizeArray);
         const getConnections = async () => {
             //console.log("getConnections called");
-            let res = await axios.get("/api/admin/integrations", { params: { provider: "premierPrinting" } });
+            let res = await axios.get("/api/admin/integrations", { params: { provider: source } });
             //console.log(res.data);
             if(res.data && res.data.integration) {
                 setLoading(true);
@@ -289,6 +289,17 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                 setProduct(p);
                                             }}>Select</Button>}
                                         </Box>
+                                        {console.log("mp.connections", mp.connections)}
+                                        {connections && mp.connections && mp.connections.length > 0 && mp.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString() && conn.displayName.includes("shopify"))[0]).map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
+                                            const headers = {
+                                                headers: {
+                                                    "Content-Type": "application/json",
+                                                    "Authorization": `Bearer ${c.accessToken}`
+                                                }
+                                            }
+                                            let res = axios.post("http://localhost:59957/webhooks/products", {product, connection: c}, headers );
+                                        }}>{product.ids && product.ids[c?.displayName]? "Update": "Send"}</Button>)}
+                                        <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Remove</Button>
                                     </Card>
                                 ))}
                             </Box>
