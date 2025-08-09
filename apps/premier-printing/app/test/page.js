@@ -10,7 +10,7 @@ let converter = {
     YXXL: "2XL",
 }
 export default async function Test(){
-    await pullOrders()
+    //await pullOrders()
     // let headers = {
     //     headers: {
     //         "Authorization": `Basic ${btoa(`${process.env.ssApiKey}:${process.env.ssApiSecret}`)}`
