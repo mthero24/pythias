@@ -6,7 +6,7 @@ import {designPage} from "@pythias/backend";
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({ params }) {
     let { id } = await params;
-
+    console.log(id, "Design ID");
     ///some orhter change
     if (id) {
         try {

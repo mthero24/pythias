@@ -8,7 +8,7 @@ const CreateSku = async ({ blank, color, size, design, threadColor }) => {
     return sku;
 }
 export default async function Test(){
-
+    console.log("Test Page")
    //await pullOrders()
     return <h1>test</h1>
 }
