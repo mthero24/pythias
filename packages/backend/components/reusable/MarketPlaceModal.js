@@ -290,14 +290,15 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                             }}>Select</Button>}
                                         </Box>
                                         {console.log("mp.connections", mp.connections)}
-                                        {connections && mp.connections && mp.connections.length > 0 && mp.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString() && conn.displayName.includes("shopify"))[0]).map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
+                                        {connections && mp.connections && mp.connections.length > 0 && mp.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString() && conn.displayName.includes("shopify"))[0]).map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
                                             const headers = {
                                                 headers: {
                                                     "Content-Type": "application/json",
                                                     "Authorization": `Bearer ${c.accessToken}`
                                                 }
                                             }
-                                            let res = axios.post("http://localhost:59957/webhooks/products", {product, connection: c}, headers );
+                                            let res = await axios.post("http://localhost:62286/webhooks/products", {product, connection: c}, headers );
+                                            console.log(res, "res from webhook");
                                         }}>{product.ids && product.ids[c?.displayName]? "Update": "Send"}</Button>)}
                                         <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Remove</Button>
                                     </Card>
@@ -310,7 +311,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                     {marketPlace.headers.map((header, index) => (
                                         <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
                                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
-                                                {marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0]).length > 0 && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
+                                                {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0]).length > 0 && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
                                                     let res = await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]._id, productId: product._id } });
                                                 }}>Add Inventory</Button>}
                                                 <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
