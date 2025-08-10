@@ -73,7 +73,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                             </Box>
                             <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                 {styleImages.length > 0 && styleImages.map((si, i) => (
-                                    <img key={i} src={`https://${source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: styleImages.length > 1 ? "50%" : "100%", maxWidth: styleImages.length > 2 ? "33%" : styleImages.length > 1 ? "50%" : "100%" }} />
+                                    <img key={i} src={`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: styleImages.length > 1 ? "50%" : "100%", maxWidth: styleImages.length > 2 ? "33%" : styleImages.length > 1 ? "50%" : "100%" }} />
                                 ))}
                             </Box>
                             <Divider />

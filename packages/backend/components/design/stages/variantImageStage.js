@@ -40,7 +40,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                     for (let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes(product.imageGroup)).length > 0 ? blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes(product.imageGroup)) : blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup.includes("default"))) {
                         if (!imgs[blank.code]) imgs[blank.code] = {}
                         if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
-                        imgs[blank.code][color.name].push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}` })
+                        imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}` })
 
                     }
                 }
@@ -55,7 +55,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                             if (!imgs[blank.code]) imgs[blank.code] = {}
                             if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
                             if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
-                            imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
+                            imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
 
                         }
                     }

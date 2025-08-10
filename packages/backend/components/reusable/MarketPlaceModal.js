@@ -127,8 +127,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         setSize(sizeArray);
         const getConnections = async () => {
             //console.log("getConnections called");
-            let res = await axios.get("/api/admin/integrations", { params: { provider: source } });
-            //console.log(res.data);
+            //console.log("source", source);
+            let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test")? "pythias-test": source } });
+            console.log(res.data);
             if(res.data && res.data.integration) {
                 setLoading(true);
                 //console.log("Connections found:", res.data.integration);
@@ -227,7 +228,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 //console.log("checkForIds mp:", mp);
                 if (mp) {
                     //console.log("Marketplace found in product:", mp);
-                   // console.log("connections", connections);
+                    console.log("connections", connections);
                     let prod = { ...product }
                     for (let m of mp) {
                        // console.log(m, "Marketplace in connections");
@@ -269,58 +270,105 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                 <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} }); setAddMarketPlace(true);}}>Create MarketPlace</Button>
                             </Box>
                             <Box sx={{width: "100%", overflow: "auto", display: "flex", flexDirection: "row", justifyContent: "flex-start", gap: "2%", alignItems: "center", padding: "1%" }}>
-                                {marketPlaces && marketPlaces.map((mp, i) => (
-                                    <Card key={`${mp._id}-i`} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
-                                        <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
-                                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
-                                            <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
-                                            {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
-                                                let p = { ...product };
-                                                if (!p.marketPlacesArray) p.marketPlacesArray = [];
-                                                if (!p.marketPlacesArray.map(m => m._id ? m._id.toString() : m.toString()).includes(mp._id.toString())) p.marketPlacesArray.push(mp);
-                                                if(design){
-                                                    let d ={ ...design };
-                                                    d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
-                                                    d.products.push(p);
-                                                    setDesign({...d});
+                                {marketPlaces && marketPlaces.map((mp, i) => {
+                                    if(connections && connections.length > 0){
+                                        mp.connections = mp.connections.map(c=> {
+                                            console.log(c)
+                                            let conn = connections?.filter(conn=> conn?._id.toString() == c.toString())[0]
+                                            console.log(conn)
+                                            if(conn)return conn
+                                            return c
+                                        })
+                                    }
+                                    return (
+                                        <Card key={`${mp._id}-i`} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
+                                            <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
+                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
+                                                <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
+                                                {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
+                                                    let p = { ...product };
+                                                    if (!p.marketPlacesArray) p.marketPlacesArray = [];
+                                                    if (!p.marketPlacesArray.map(m => m._id ? m._id.toString() : m.toString()).includes(mp._id.toString())) p.marketPlacesArray.push(mp);
+                                                    if(design){
+                                                        let d ={ ...design };
+                                                        d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
+                                                        d.products.push(p);
+                                                        setDesign({...d});
+                                                    }
+                                                    checkForIds({ product: p });
+                                                    let res = awaitaxios.post("/api/admin/products", { products: [p] });
+                                                    setProduct(p);
+                                                }}>Select</Button>}
+                                            </Box>
+                                            {console.log("mp.connections", mp.connections, connections)}
+                                            {mp.connections && mp.connections.length > 0 && mp.connections.map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
+                                                console.log("Sending product to webhook for connection:", c);
+                                                if(c.displayName.includes("shopify")){
+                                                const headers = {
+                                                        headers: {
+                                                            "Content-Type": "application/json",
+                                                            "Authorization": `Bearer ${c.accessToken}`
+                                                        }
+                                                    }
+                                                    setLoading(true);
+                                                    let res = await axios.post("http://localhost:59173/webhooks/products", {product, connection: c}, headers );
+                                                    console.log(res, "res from webhook");
+                                                    let p = { ...product };
+                                                    if(res.data){
+                                                        if(!p.ids) p.ids = {};
+                                                        p.ids[c?.displayName] = res.data.productId;
+                                                        for(let v of p.variantsArray){
+                                                            if(!v.ids) v.ids = {};
+                                                            v.ids[c?.displayName] = res.data.variantIds.filter(vId=> vId.sku === v.sku)[0]?.id;
+                                                        }
+                                                        let update = await axios.post("/api/admin/products", { products: [p] });
+                                                        setProduct(p);
+                                                        setLoading(false);
+                                                    }
                                                 }
-                                                checkForIds({ product: p });
-                                                let res = axios.post("/api/admin/products", { products: [p] });
-                                                setProduct(p);
-                                            }}>Select</Button>}
-                                        </Box>
-                                        {console.log("mp.connections", mp.connections)}
-                                        {connections && mp.connections && mp.connections.length > 0 && mp.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString() && conn.displayName.includes("shopify"))[0]).map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
-                                            const headers = {
-                                                headers: {
-                                                    "Content-Type": "application/json",
-                                                    "Authorization": `Bearer ${c.accessToken}`
-                                                }
-                                            }
-                                            let res = await axios.post("http://localhost:62286/webhooks/products", {product, connection: c}, headers );
-                                            console.log(res, "res from webhook");
-                                        }}>{product.ids && product.ids[c?.displayName]? "Update": "Send"}</Button>)}
-                                        <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Remove</Button>
-                                    </Card>
-                                ))}
+                                            }}>{product.ids && product.ids[c?.displayName]? "Update": "Send"}</Button>)}
+                                            <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Remove</Button>
+                                        </Card>
+                                    )
+                                }
+                            )}
                             </Box>
                             <Divider sx={{ margin: ".5% 0" }} />
                             <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
-                            { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => (
-                                <Box key={marketPlace._id}>
-                                    {marketPlace.headers.map((header, index) => (
-                                        <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
-                                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
-                                                {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0]).length > 0 && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
-                                                    let res = await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]._id, productId: product._id } });
-                                                }}>Add Inventory</Button>}
-                                                <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
-                                            </Box>
-                                            <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} />
+                            { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => {
+                                    console.log("market place connections", marketPlace.connections)
+                                    if (connections && connections.length > 0) {
+                                        marketPlace.connections = marketPlace.connections.map(c => {
+                                            console.log(c)
+                                            let conn = connections?.filter(conn => conn?._id.toString() == c.toString())[0]
+                                            console.log(conn)
+                                            if (conn) return conn
+                                            return c
+                                        })
+                                    }
+                                    return (
+                                        <Box key={marketPlace._id}>
+                                            {marketPlace.headers.map((header, index) => (
+                                                <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
+                                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
+                                                        {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda")[0])) && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
+                                                            let res = await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]?._id, productId: product._id } });
+                                                        }}>Add Inventory</Button>}
+                                                        <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
+                                                    </Box>
+                                                    {marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0] && <Card sx={{display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "5%"}}>
+                                                        {product.ids && product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && <Typography>Shopify Id: {product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>}
+                                                        {product.variantsArray.map(v=>(
+                                                            <Typography>{v.sku}: {v.ids && v.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>
+                                                        ))}
+                                                    </Card>}
+                                                    <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} />
+                                                </Box>
+                                            ))}
                                         </Box>
-                                    ))}
-                                </Box>
-                            ))}
+                                    )
+                                }
+                            )}
                         </Box>
                         <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} />
                         <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
