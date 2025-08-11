@@ -328,7 +328,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         setLoading(false)
                                                     }
                                                 }
-                                            }}>{product.ids && product.ids[c?.displayName]? "Update": "Send"}</Button>)}
+                                            }}>{product && product.ids && product?.ids[c?.displayName]? "Update": "Send"}</Button>)}
                                             <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Remove</Button>
                                         </Card>
                                     )
