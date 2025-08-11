@@ -1,4 +1,4 @@
-import { Design, Items as Item, Blank, Color, Order, Products} from "@pythias/mongo";
+import { Design, Items as Item, Blank, Color, Order, Products, Inventory, ProductInventory} from "@pythias/mongo";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 export async function pullOrders(id){
     let blanks = await Blank.find({})
@@ -97,6 +97,28 @@ export async function pullOrders(id){
                             type: product.design.printType, 
                             options: i.options[0]?.value })
                         console.log(i, "item to save")
+                        let productInventory = await ProductInventory.findOne({ sku: i.sku })
+                        if(productInventory) {
+                            if(productInventory.quantity > 0){
+                                item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
+                                productInventory.quantity -= 1
+                                await productInventory.save()
+                            }
+                            
+                        }else{
+                            let inventory = await Inventory.findOne({ blank: variant.blank._id, color: variant.color? variant.color._id: null, sizeId: variant.size.toString()})
+                            if(inventory) {
+                                if(inventory.quantity > 0){
+                                    inventory.quantity -= 1
+                                    await inventory.save()
+                                    item.inventory = { type: "inventory", Inventory: inventory._id }
+                                } else {
+                                    if (!inventory.attached) inventory.attached = []
+                                    inventory.attached.push(item._id)
+                                    await inventory.save()
+                                }
+                            }
+                        }
                         await item.save();
                         order.items.push(item._id)
                     }else{
@@ -134,6 +156,27 @@ export async function pullOrders(id){
                         }
                         if (order.status == "cancelled") {
                             item.canceled = true
+                        }
+                        let productInventory = await ProductInventory.findOne({ sku: i.sku })
+                        if (productInventory) {
+                            if (productInventory.quantity > 0) {
+                                item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
+                                productInventory.quantity -= 1
+                                await productInventory.save()
+                            }
+                        } else {
+                            let inventory = await Inventory.findOne({ blank: variant.blank._id, color: variant.color ? variant.color._id : null, sizeId: variant.size.toString() })
+                            if (inventory) {
+                                if (inventory.quantity > 0) {
+                                    inventory.quantity -= 1
+                                    await inventory.save()
+                                    item.inventory = { type: "inventory", Inventory: inventory._id }
+                                }else{
+                                    if (!inventory.attached) inventory.attached = []
+                                    inventory.attached.push(item._id) 
+                                    await inventory.save()
+                                }
+                            }
                         }
                         //console.log(item)
                         await item.save()

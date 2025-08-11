@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+mongoose.set('autoIndex', false);
 const { TSPprints } = require("../lib/connection");
 import Color from "./Color";
 const Schema = mongoose.Schema;

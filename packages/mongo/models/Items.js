@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import { PremierPrinting }  from "../lib/connection";
 import Blanks from "./Blanks";
 import Design from "./Design"
+import Inventory from "./inventory";
+import ProductInventory from "./ProductInventory";
+import { InventoryTwoTone } from "@mui/icons-material";
 const schema = new mongoose.Schema(
   {
     date: {
@@ -109,7 +112,18 @@ const schema = new mongoose.Schema(
       user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     },
     pulledFromReturn: {type: Boolean, default: false},
-    returnBinNumber: Number
+    returnBinNumber: Number,
+    inventory: {
+      inventoryType: "String",
+      inventory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Inventory,
+      },
+      productInventory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: ProductInventory,
+      },
+    }
   },
   { suppressWarning: true }
 );

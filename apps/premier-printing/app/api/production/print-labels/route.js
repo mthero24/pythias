@@ -42,39 +42,16 @@ export async function POST(req=NextApiRequest){
         batchID += letters[Math.floor(Math.random() * letters.length)]
     // build labels
     let preLabels = [];
-    let preLabelsReturns = []
     let j = 0
-    let returnPieceIds = []
     let pieceIds = []
     console.log(data.items.length)
     for(let i of data.items){
-        let hasReturn = await ReturnBins.findOne({$or: [{"inventory.upc": i.upc}, {"inventory.sku": i.sku}], "inventory.quantity": {$gt: 0}})
-        let rInv
-        if(hasReturn){
-            updateReturnBin(hasReturn, i.upc, i.sku)
-            rInv = hasReturn.inventory.filter(inv=> inv.upc == i.upc || inv.sku == i.sku)[0]
-        }
-        if(rInv && rInv.quantity > 0){
-            let label = await buildLabelData(i, j, hasReturn)
-            //console.log(label)
-            preLabelsReturns.push(label)
-            returnPieceIds.push(i.pieceId)
-            j++
-        }else{
-            console.log(i.blank, i.colorName, i.sizeName)
-            let inv = await Inventory.findOne({blank: i.blank._id? i.blank._id: i.blank, color_name: i.colorName, size_name: i.sizeName})
-            if(inv){
-              inv.quantity -= 1
-              await inv.save()
-            }
-            let label = await buildLabelData(i, j)
-            pieceIds.push(i.pieceId)
-            preLabels.push(label)
-            j++
-        }
-        console.log(preLabels.length, preLabelsReturns.length)
+      if(!i.labelPrinted){
+        let label = await buildLabelData(i, j)
+        pieceIds.push(i.pieceId)
+        preLabels.push(label)
+      }
     }
-    preLabels = preLabelsReturns.concat(preLabels)
     console.log(preLabels.length)
     preLabels.map(l=> labelsString += l)
     console.log(preLabels)

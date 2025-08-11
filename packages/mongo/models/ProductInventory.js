@@ -15,6 +15,7 @@ const SchemaObj = new Schema({
     size: { type: mongoose.Schema.Types.ObjectId, },
     unit_cost: {type: Number, default: 0},
     location: String,
-    sku: {type: String}
+    sku: {type: String},
+    attached: [String],
 });
 export default PremierPrinting.model("ProductInventory", SchemaObj,);

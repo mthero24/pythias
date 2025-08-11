@@ -166,19 +166,14 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         let items = [];
         if(type == "selected"){
             Object.keys(useLabels).map(l=>{
-                items.push(...useLabels[l].filter(s=> selected.includes(s.pieceId)));
+              items.push(...useLabels[l].filter(s => selected.includes(s.pieceId) && s.inventory?.inventoryType != undefined));
             })
             items = Sort(items, source);
         }else if(type == "gift"){
             items = gift
         }else {
           console.log()
-            items.push(...useLabels[type].map(s=> {
-                if(source != "PP" && s.inventory?.quantity > 0) return s
-                else if(source == "PP") return s
-              
-              }));
-            items = items.filter(s=> s != undefined)
+            items.push(...useLabels[type].filter(s=> s.inventory?.inventoryType != undefined));
             items = Sort(items, source);
         }
         //console.log(items);
@@ -396,9 +391,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                   <Typography
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >
-                    {l} Labels ({useLabels[l].length})
+                    {l} In Stock ({useLabels[l].filter(i => i.inventory?.inventoryType != undefined).length})
                     <br/>
-                    Out Of Stock ({useLabels[l].filter(i=> i.inventory?.quantity <=0).length})
+                    Out Of Stock ({useLabels[l].filter(i=> i.inventory?.inventoryType == undefined).length})
                   </Typography>
                   <Box sx={row}>
                     <Button
@@ -529,24 +524,14 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                           }}
                         >
                           <Grid2 size={1}>
+                            {console.log(i.inventory?.inventoryType)}
                             <Typography
                               sx={{
                                 textAlign: "center",
-                                color: i.inventory
-                                  ? i.inventory.quantity > 0
-                                    ? "#228C22"
-                                    : i.inventory.quantity +
-                                          i.inventory.pending_quantity >
-                                        0
-                                      ? "#feb204"
-                                      : "#d0342c"
-                                  : "#d0342c",
+                                color: i.inventory?.inventoryType == "productInventory" ? "#feb204" : i.inventory?.inventoryType == "inventory" ? "#228C22" : "#d0342c",
                               }}
                             >
-                              {i.inventory
-                                ? i.inventory.quantity +
-                                  i.inventory.pending_quantity
-                                : "NAN"}
+                              {i.inventory?.inventoryType == "productInventory" ? "Pre Made" : i.inventory?.inventoryType == "inventory" ? "In Stock" : "Out Of Stock"}
                             </Typography>
                           </Grid2>
                           <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>

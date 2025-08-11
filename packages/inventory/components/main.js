@@ -38,10 +38,12 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
         //console.log(s)
         let blank = s.filter(s=> s.blank._id.toString() == inventory.blank.toString())[0]
         let inv = blank.inventories.filter(iv=> iv._id.toString() == inventory._id.toString())[0]
-        
-        inv[param] = param != "location"? parseInt(event.target.value): event.target.value;
+
+        inv[param] = param != "location" && param != "row" && param != "bin" && param != "shelf" && param != "unit"  ? parseInt(event.target.value): event.target.value;
+        let res = await axios.post("/api/admin/inventory", { inventory: inv })
+        inv.quantity = res.data.inventory.quantity
+        inv.attached = res.data.inventory.attached
         setStyles([...s])
-        save(inv)
     }
     const search = async (term)=>{
         let res = await axios.get(`/api/admin/inventory?q=${term}`)
@@ -112,10 +114,10 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                             <Grid2 size={1}>
                                                 <Typography>Pend</Typography>
                                             </Grid2>
-                                            <Grid2 size={1}>
-                                                <Typography>Active</Typography>
+                                            <Grid2 size={1.5}>
+                                                <Typography>Out Of Stock</Typography>
                                             </Grid2>
-                                            {binType == "location" && <Grid2 size={1}>
+                                            {binType == "location" && <Grid2 size={2}>
                                                 <Typography>Location</Typography>
                                             </Grid2>}
                                             
@@ -157,9 +159,8 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                             <Grid2 size={1}>
                                                 <Typography>{i.pending_quantity}</Typography>
                                             </Grid2>
-                                            <Grid2 size={1}>
-                                                
-                                                <Typography >{items.filter(it=> it.sizeName == i.size_name && it.colorName == i.color_name && it.blank? it.blank?.toString() == i.blank?.toString() : it.styleV2?.code == i.style_code).length}</Typography>
+                                            <Grid2 size={1.5}>
+                                                <Typography >{i.attached ? i.attached.length : 0}</Typography>
                                             </Grid2>
                                            {binType == "location" && <Grid2 size={2}>
                                                 <TextField fullWidth value={i.location} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"location"})}}/>

@@ -1,10 +1,9 @@
 import mongoose from "mongoose";
+mongoose.set('autoIndex', false);
 import { TSPprints }  from "../lib/connection";
-import Order from "./Order";
 import Color from "./Color";
-import Size from "./Size";
-import Style from "./Style";
-import StyleV2 from "./StyleV2";
+import { Inventory, ProductInventory } from "@pythias/mongo";
+
 const PRINT_AREAS = [
   "front",
   "back",
@@ -143,6 +142,17 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    inventory: {
+      inventoryType: "String",
+      inventory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Inventory,
+      },
+      productInventory: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: ProductInventory,
+      },
+    }
   },
   { suppressWarning: true }
 );

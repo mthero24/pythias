@@ -13,17 +13,15 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-        }).populate("color", "name").populate("designRef", "sku name printType").lean(),
+            }).populate("color", "name").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
     }
     //console.log(labels)
-    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name sizeId style_code row unit shelf bin location").lean();
-    let rePulls = 0
+    let rePulls = 0;
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        labels[k] = labels[k].map(s => { s.inventory = inventoryArray.filter(i => i.color_name == s.color.name && i.sizeId?.toString() == s.size?.toString() && i.style_code == s.styleCode)[0];  return {...s}})
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k], "IM")
     }
@@ -52,5 +50,6 @@ export async function LabelsData(){
         JSON.stringify(await Batches.find({}).limit(20).sort({ _id: -1 }).lean())
     );
     //console.log(batches)
+    console.log(labels.Standard.filter(l=> l.inventory?.inventoryType !== undefined).map(l => ({ ...l.inventory, })), "labels.Standard")
     return {labels, giftMessages, rePulls, batches}
 }

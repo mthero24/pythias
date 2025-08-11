@@ -1,7 +1,4 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
-import Inventory from "@/models/inventory";
-import Batches from "@/models/batches";
+import {Items, Order, Inventory, Batches} from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
@@ -17,7 +14,7 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: "Standard",
-        }).populate("color", "name _id").populate("designRef", "sku name printType").lean(),
+        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
             Expedited: await Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
@@ -28,10 +25,9 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: { $ne: "Standard" },
-        }).populate("color", "name _id").populate("designRef", "sku name printType").lean()
+            }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean()
     }
     //console.log(labels)
-    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name blank  style_code row unit shelf bin color blank").lean();
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
@@ -45,26 +41,6 @@ export async function LabelsData(){
         }else{
             s.type = "DTF"
         };  return {...s}})
-        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color.toString() == s.color._id.toString() && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
-        //labels[k].map(l=>{console.log(l.inventory, `${l.color.name}-${l.sizeName}-${l.styleCode}`, k)})
-        // let missing = labels[k].filter(l=> l.inventory == undefined)
-        // missing.map(async m=>{
-        //     let i = await Inventory.findOne({color_name: )})
-        //     if(!i){
-        //         i = new Inventory({
-        //             inventory_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`),
-        //             pending_quantity: 0,
-        //             quantity: 0,
-        //             order_at_quantity: 10,
-        //             desired_order_quantity: 10,
-        //             color: m.color,
-        //             color_name: m.colorName,
-        //             size_name: m.sizeName,
-        //             barcode_id: encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)
-        //         })
-        //         await i.save()
-        //     }
-        // })
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k])
     }
