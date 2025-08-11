@@ -301,7 +301,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                 }}>Select</Button>}
                                             </Box>
                                             
-                                            {mp.connections && mp.connections.length > 0 && mp.connections.map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
+                                            {product && mp.connections && mp.connections.length > 0 && mp.connections.map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
                                                 //console.log("Sending product to webhook for connection:", c);
                                                 if(c.displayName.includes("shopify")){
                                                 const headers = {
