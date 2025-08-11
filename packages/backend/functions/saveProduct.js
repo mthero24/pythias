@@ -37,6 +37,7 @@ export const saveProducts = async ({products, Products, Inventory}) => {
                 }
             }    
         }
+        console.log("variantsArray", variantsArray, )
         if(variantsArray.length > 0) {
             product.variantsArray = variantsArray
         }
@@ -54,7 +55,8 @@ export const saveProducts = async ({products, Products, Inventory}) => {
             }
         }
         if(product._id) {
-            product = await Products.findByIdAndUpdate(product._id, product, { new: true, returnNewDocument: true}).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});
+            product = await Products.findByIdAndUpdate(product._id, product, { new: true, returnNewDocument: true }).populate("design colors productImages.blank productImages.color productImages.threadColor").populate({path:"blanks", populate: "colors"});
+            //console.log( product.variantsArray, "variantsArray after update");
         }else{
             product = await Products.create(product)
             product = await Products.findById(product._id).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({path:"blanks", populate: "colors"});

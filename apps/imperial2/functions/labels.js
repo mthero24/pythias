@@ -16,14 +16,14 @@ export async function LabelsData(){
         }).populate("color", "name").populate("designRef", "sku name printType").lean(),
     }
     //console.log(labels)
-    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin location").lean();
+    let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name sizeId style_code row unit shelf bin location").lean();
     let rePulls = 0
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        labels[k] = labels[k].map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
+        labels[k] = labels[k].map(s => { s.inventory = inventoryArray.filter(i => i.color_name == s.color.name && i.sizeId?.toString() == s.size?.toString() && i.style_code == s.styleCode)[0];  return {...s}})
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k], "IM")
     }

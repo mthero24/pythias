@@ -129,7 +129,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             //console.log("getConnections called");
             //console.log("source", source);
             let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test")? "pythias-test": source } });
-            console.log(res.data);
+            //console.log(res.data);
             if(res.data && res.data.integration) {
                 setLoading(true);
                 //console.log("Connections found:", res.data.integration);
@@ -220,7 +220,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         overflowY: "none",
     };
     const checkForIds = async ({ product }) => {
-        console.log("checkForIds product:", product);
+        //console.log("checkForIds product:", product);
         setLoading(true);
         if (product) {
             if (product && product.marketPlacesArray && product.marketPlacesArray.length > 0) {
@@ -228,7 +228,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 //console.log("checkForIds mp:", mp);
                 if (mp) {
                     //console.log("Marketplace found in product:", mp);
-                    console.log("connections", connections);
+                   // console.log("connections", connections);
                     let prod = { ...product }
                     for (let m of mp) {
                        // console.log(m, "Marketplace in connections");
@@ -273,9 +273,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                 {marketPlaces && marketPlaces.map((mp, i) => {
                                     if(connections && connections.length > 0){
                                         mp.connections = mp.connections.map(c=> {
-                                            console.log(c)
+                                            //console.log(c)
                                             let conn = connections?.filter(conn=> conn?._id.toString() == c.toString())[0]
-                                            console.log(conn)
+                                            //console.log(conn)
                                             if(conn)return conn
                                             return c
                                         })
@@ -300,9 +300,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                     setProduct(p);
                                                 }}>Select</Button>}
                                             </Box>
-                                            {console.log("mp.connections", mp.connections, connections)}
+                                            
                                             {mp.connections && mp.connections.length > 0 && mp.connections.map((c, ci) => <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
-                                                console.log("Sending product to webhook for connection:", c);
+                                                //console.log("Sending product to webhook for connection:", c);
                                                 if(c.displayName.includes("shopify")){
                                                 const headers = {
                                                         headers: {
@@ -311,7 +311,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         }
                                                     }
                                                     setLoading(true);
-                                                    let res = await axios.post("http://localhost:59173/webhooks/products", {product, connection: c}, headers );
+                                                    let res = await axios.post("http://localhost:58359/webhooks/products", {product, connection: c}, headers );
                                                     console.log(res, "res from webhook");
                                                     let p = { ...product };
                                                     if(res.data){
@@ -324,6 +324,8 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         let update = await axios.post("/api/admin/products", { products: [p] });
                                                         setProduct(p);
                                                         setLoading(false);
+                                                    }else{
+                                                        setLoading(false)
                                                     }
                                                 }
                                             }}>{product.ids && product.ids[c?.displayName]? "Update": "Send"}</Button>)}
@@ -336,12 +338,12 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                             <Divider sx={{ margin: ".5% 0" }} />
                             <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
                             { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => {
-                                    console.log("market place connections", marketPlace.connections)
+                                    //console.log("market place connections", marketPlace.connections)
                                     if (connections && connections.length > 0) {
                                         marketPlace.connections = marketPlace.connections.map(c => {
-                                            console.log(c)
+                                            //console.log(c)
                                             let conn = connections?.filter(conn => conn?._id.toString() == c.toString())[0]
-                                            console.log(conn)
+                                            //console.log(conn)
                                             if (conn) return conn
                                             return c
                                         })
@@ -356,13 +358,17 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         }}>Add Inventory</Button>}
                                                         <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                                     </Box>
-                                                    {marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0] && <Card sx={{display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "5%"}}>
+                                                    {marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0] && <Card sx={{display: "flex", flexDirection: "column", padding: "5%"}}>
+                                                        <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName}</Typography>
+                                                        <Divider sx={{marginBottom: "2%"}} />
                                                         {product.ids && product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && <Typography>Shopify Id: {product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>}
                                                         {product.variantsArray.map(v=>(
                                                             <Typography>{v.sku}: {v.ids && v.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>
                                                         ))}
                                                     </Card>}
-                                                    <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} />
+                                                    {header.length > 0 && (
+                                                        <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} />
+                                                    )}
                                                 </Box>
                                             ))}
                                         </Box>

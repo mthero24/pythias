@@ -57,6 +57,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                 ))}
                             </Box>
                         ))}
+                        {console.log(product, "product in previewStage")}
                         {preview && product.variantsArray && product.variantsArray && product.variantsArray.length > 0 && product.blanks.map(blank => {
                             return product.threadColors && product.threadColors.length > 0 ? (
                                 <Box key={blank} sx={{ marginBottom: "2%" }}>
@@ -67,10 +68,10 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                             setProducts([res.data.product]);
                                         }}>Add Product Inventory</Button>}
                                     </Box>
-                                    {product.threadColors && product.threadColors.length > 0 &&product.threadColors.map(threadColor => (
+                                    {product.threadColors && product.threadColors.length > 0 && product.threadColors.map(threadColor => (
                                         <Box key={threadColor.name} sx={{ marginLeft: "2%" }}>
                                             {product.colors.map(color => {
-                                                const variants = product.variantsArray.filter(v => v.blank?.toString() === blank._id.toString() && v.threadColor?.toString() === threadColor?._id.toString() && v.color?.toString() === color?._id.toString());
+                                                const variants = product.variantsArray.filter(v => (v.blank?._id? v.blank._id.toString() : v.blank?.toString()) === blank._id.toString() && (v.threadColor?._id? v.threadColor._id.toString() : v.threadColor?.toString()) === threadColor?._id.toString() && (v.color?._id? v.color._id.toString() : v.color?.toString()) === color?._id.toString());
                                                 return variants.length > 0 ? (
                                                     <VariantDisplay key={`${blank}-${threadColor}-${color}`} blank={blank.code} threadColor={threadColor.name} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} />
                                                 ) : null;
@@ -78,7 +79,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                         </Box>
                                     ))}
                                     {!product.threadColors || product.threadColors.length === 0 && product.colors.map(color => {
-                                        const variants = product.variantsArray.filter(v => v.blank.toString() === blank._id.toString() && v.color.toString() === color._id.toString());
+                                        const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank._id.toString() : v.blank?.toString()) === blank._id.toString() && (v.color?._id? v.color._id.toString(): v.color.toString()) === color._id.toString());
                                         return variants.length > 0 ? (
                                             <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} />
                                         ) : null;
@@ -93,8 +94,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                         }}>Add Product Inventory</Button>}
                                     </Box>
                                     {product.colors.map(color => {
-                                        console.log(product.variantsArray, "variantsArray", blank._id.toString(), color._id.toString())
-                                        const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank._id.toString() : v.blank.toString()) === blank._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) === color._id.toString());
+                                        const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank?._id.toString() : v.blank?.toString()) === blank._id.toString() && (v.color?._id? v.color._id.toString(): v.color?.toString()) === color._id.toString());
                                         return variants.length > 0 ? (
                                             <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} />
                                         ) : null;
@@ -406,7 +406,7 @@ const InventoryModal = ({ open, setOpen, variant, setVariant, product, setProduc
 export const ProductImageCarosel = ({ productImages, defaultColor }) => {
     const [image, setImage] = useState(0)
     const [loading, setLoading] = useState(true)
-    console.log(productImages, "productImages")
+    //console.log(productImages, "productImages")
     let order = productImages.sort((a, b) => a.color?.name?.localeCompare(b.color?.name)) 
     order = order.filter(img => img.color?.name === defaultColor?.name)
     order = [...order, ...productImages.filter(img => img.color?.name !== defaultColor?.name)]

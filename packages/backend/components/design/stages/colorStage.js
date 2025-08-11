@@ -2,6 +2,7 @@ import { Box, Grid2, Button, Typography, Card, Divider, } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 import CheckIcon from '@mui/icons-material/Check';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import { set } from "mongoose";
 
 
 export const ColorStage = ({ products, setProducts, setStage, design, source, combined, colors, cols, sizes, setImages, upcs, getTempUpcs }) => {
@@ -215,6 +216,17 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                     console.log("Getting temp upcs", vLength - used)
                                 }
                             }
+                            let prods = [...products]
+                            for(let p of prods){
+                                let pImages = []
+                                console.log(p.productImages, "product images before setting")
+                                for(let im of p.productImages){
+                                    console.log("im", im)
+                                    if(imgs[p._id.toString()].map(i => i.image).includes(im.image)) pImages.push(im)
+                                }
+                                p.productImages = pImages
+                            }
+                            setProducts(prods)
                             setImages(imgs)
                             setStage("product_images")
                         }}>Next</Button>
