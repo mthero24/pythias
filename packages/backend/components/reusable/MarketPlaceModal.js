@@ -285,7 +285,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                             <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
                                             <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
                                                 <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
-                                                {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={()=>{
+                                                {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
                                                     let p = { ...product };
                                                     if (!p.marketPlacesArray) p.marketPlacesArray = [];
                                                     if (!p.marketPlacesArray.map(m => m._id ? m._id.toString() : m.toString()).includes(mp._id.toString())) p.marketPlacesArray.push(mp);
@@ -296,7 +296,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         setDesign({...d});
                                                     }
                                                     checkForIds({ product: p });
-                                                    let res = awaitaxios.post("/api/admin/products", { products: [p] });
+                                                    let res = await axios.post("/api/admin/products", { products: [p] });
                                                     setProduct(p);
                                                 }}>Select</Button>}
                                             </Box>
@@ -311,7 +311,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         }
                                                     }
                                                     setLoading(true);
-                                                    let res = await axios.post("http://localhost:58359/webhooks/products", {product, connection: c}, headers );
+                                                    let res = await axios.post("http://localhost:55283/webhooks/products", {product, connection: c}, headers );
                                                     console.log(res, "res from webhook");
                                                     let p = { ...product };
                                                     if(res.data){

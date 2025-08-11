@@ -64,6 +64,7 @@ export async function POST(req=NextApiRequest){
     }
     itemsToPrint = itemsToPull.concat(itemsToPrint)
     // build labels
+    console.log("items to print", itemsToPrint.length)
     await createPdf({items: itemsToPrint, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
    //subtractInventory(data.items)
     let pieceIds = itemsToPrint.map(i=> i.pieceId)
