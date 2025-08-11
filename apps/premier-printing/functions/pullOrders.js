@@ -155,7 +155,7 @@ export async function pullOrders(){
                                     }
 
                                 } else {
-                                    let inventory = await Inventory.findOne({ blank: variant.blank._id, color: variant.color ? variant.color._id : null, sizeId: variant.size.toString() })
+                                    let inventory = await Inventory.findOne({ blank: item.blank._id, color: item.color ? item.color._id : null, sizeId: item.size._id.toString() })
                                     if (inventory) {
                                         if (inventory.quantity > 0) {
                                             inventory.quantity -= 1
