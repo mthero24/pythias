@@ -1,8 +1,17 @@
-import Items from "@/models/Items";
+import {Items, Inventory} from "@pythias/mongo";
 
 export const buildLabelData = async (item, i, returnBin, opts={},) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
-    
+    if(!item.inventory) item.inventory = {};
+    if(!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
+    if(!item.inventory.inventory) {
+      item.inventory.inventory = await Inventory.findOne({blank: item.blank._id? item.blank._id: item.blank, color: item.color._id? item.color._id: item.color, sizeId: item.size._id? item.size._id: item.size}).select("row bin shelf unit quantity");
+      if(item.inventory?.inventory){
+        item.inventory.inventory.quantity -= 1;
+        await item.inventory.inventory?.save();
+      }
+    }
+
     let frontBackString = "";
     for(let loc of Object.keys(item.design)){
       if(item.design[loc]){

@@ -97,7 +97,7 @@ export async function pullOrders(id){
     let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: id})
     console.log(orders.filter(o=> o.tagIds == null && o.orderStatus != "shipped").length, orders.filter(o=> o.tagIds != null).map(o=>{return o.tagIds}) )
     for(let o of orders){
-        console.log(o.orderStatus, o.orderDate)
+        console.log(o.orderStatus, o.orderDate, o)
         if (o.customerNotes?.includes("tiktok_fulfillment_type: 3PL")) continue;
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
         if(!order){

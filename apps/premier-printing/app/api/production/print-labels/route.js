@@ -50,6 +50,7 @@ export async function POST(req=NextApiRequest){
         let label = await buildLabelData(i, j)
         pieceIds.push(i.pieceId)
         preLabels.push(label)
+        j++
       }
     }
     console.log(preLabels.length)
@@ -66,7 +67,6 @@ export async function POST(req=NextApiRequest){
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
     await batch.save()
     await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
-    await Items.updateMany({pieceId: {$in: returnPieceIds}}, {labelPrinted: true, pulledFromReturn: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)
     return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})

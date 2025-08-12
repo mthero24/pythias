@@ -166,14 +166,18 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         let items = [];
         if(type == "selected"){
             Object.keys(useLabels).map(l=>{
-              items.push(...useLabels[l].filter(s => selected.includes(s.pieceId) && s.inventory?.inventoryType != undefined));
+              items.push(...useLabels[l].filter(s => selected.includes(s.pieceId)));
             })
             items = Sort(items, source);
         }else if(type == "gift"){
             items = gift
         }else {
           console.log()
-            items.push(...useLabels[type].filter(s=> s.inventory?.inventoryType != undefined));
+            if(source == "PP"){
+              items.push(...useLabels[type]);
+            }else{
+              items.push(...useLabels[type].filter(s=> s.inventory?.inventoryType != undefined));
+            }
             items = Sort(items, source);
         }
         //console.log(items);
@@ -531,7 +535,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                                 color: i.inventory?.inventoryType == "productInventory" ? "#feb204" : i.inventory?.inventoryType == "inventory" ? "#228C22" : "#d0342c",
                               }}
                             >
-                              {i.inventory?.inventoryType == "productInventory" ? "Pre Made" : i.inventory?.inventoryType == "inventory" ? "In Stock" : "Out Of Stock"}
+                              {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory.quantity}` : i.inventory?.inventoryType == "inventory" ? `In Stock ${i.inventory.inventory.quantity}` : "Out Of Stock"}
                             </Typography>
                           </Grid2>
                           <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>

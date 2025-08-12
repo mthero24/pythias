@@ -29,23 +29,27 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         options: i.options[0]?.value 
     })
     console.log(i, "item to save")
-    let productInventory = await ProductInventory.findOne({ sku: i.sku })
+    let productInventory = await ProductInventory.findOne({ sku: item.sku })
     if (productInventory) {
         if (productInventory.quantity > 0) {
-            item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
+            item.inventory = { type: "productInventory", productInventory: productInventory._id }
             productInventory.quantity -= 1
             await productInventory.save()
         }
     } else {
-        let inventory = await Inventory.findOne({ blank: blank?._id, color: color ? color._id : null, sizeId: size?._id? size._id.toString(): size?.toString() })
+        let inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
+        //console.log(inventory?.quantity, "inventory quantity for item",)
         if (inventory) {
             if (inventory.quantity > 0) {
+                console.log(inventory.quantity, "inventory quantity for item", item._id.toString())
                 inventory.quantity -= 1
                 await inventory.save()
-                item.inventory = { type: "inventory", Inventory: inventory._id }
+                if (!item.inventory) item.inventory = {}
+                item.inventory.inventoryType = "inventory"
+                item.inventory.inventory = inventory._id
             } else {
                 if (!inventory.attached) inventory.attached = []
-                inventory.attached.push(item._id)
+                if (!inventory.attached.includes(item._id)) inventory.attached.push(item._id)
                 await inventory.save()
             }
         }

@@ -9,15 +9,15 @@ const CreateSku = async ({ blank, color, size, design, threadColor }) => {
 }
 export default async function Test(){
     console.log("Test Page")
-    //await pullOrders()
-    let items = await Items.find({name: {$in: ["Seller discount", "Platform discount"]} }).populate("order").sort({ _id: -1 })
-    console.log(items.length, "items")
-    for(let item of items){
-        item.order.items = item.order.items.filter(i => i._id.toString() != item._id.toString())
-        await item.order.save()
-        await Items.findByIdAndDelete(item._id)
-        console.log(item._id.toString(), "deleted")
-    }
+   // await pullOrders("577070180753641509")
+    // let items = await Items.find({name: {$in: ["Seller discount", "Platform discount"]} }).populate("order").sort({ _id: -1 })
+    // console.log(items.length, "items")
+    // for(let item of items){
+    //     item.order.items = item.order.items.filter(i => i._id.toString() != item._id.toString())
+    //     await item.order.save()
+    //     await Items.findByIdAndDelete(item._id)
+    //     console.log(item._id.toString(), "deleted")
+    // }
     // console.log(items.length, "items to update")
     // for(let item of items){
     //     //console.log(item.threadColor, item.designRef.threadImages)

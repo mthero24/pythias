@@ -11,10 +11,7 @@ export async function POST(req=NextApiResponse) {
     let data = await req.json()
     console.log(data)
     let labelsString = ``
-    let inventoryArray = await Inventory.find({})
-    .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
-    .lean();
-    let items = await Items.find({batchID: data.batchID}).populate("designRef").lean()
+    let items = await Items.find({batchID: data.batchID}).populate("designRef inventory.inventory inventory.productInventory").lean()
 
     console.log(items.length, "length of items +++")
     let standardOrders = items.map(s=> s.order)
