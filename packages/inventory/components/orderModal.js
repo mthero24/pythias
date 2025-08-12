@@ -18,7 +18,7 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                 let cl = []
                 for(let blank of blanks){
                     for(let inv of blank.inventories){
-                        let inStock = inv.quantity + inv.pending_quantity
+                        let inStock = inv.quantity 
                         console.log(inv, "inv.blank")
                         let onOrder = (inv.attached ? inv.attached.length : 0)
                         //console.log(inStock - onOrder)
@@ -175,6 +175,7 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                         </AccordionDetails>
                     </Accordion>
                 ))}
+                    
                 <Divider sx={{marginTop: "3%"}}/>
                 <Button onClick={()=>{sub()}} fullWidth>Submit</Button>
             </Box>

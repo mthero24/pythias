@@ -18,7 +18,7 @@ export function Main({ord, blanks}){
     const [openDesign, setOpenDesign] =useState(false)
     const [shipped, setShipped] = useState(false)
     const [note, setNote] = useState(false)
-    const [showNotes, setShowNotes] = useState(order.notes.length > 0?true: false)
+    const [showNotes, setShowNotes] = useState(order?.notes?.length > 0?true: false)
     const handleItemUpdate = (i)=>{
         console.log("handleItemUpdate")
         let b
@@ -36,7 +36,7 @@ export function Main({ord, blanks}){
     }
     return (
         <Box sx={{padding: "2%", background: "#e2e2e2"}}>
-            <NoteSnackBar notes={order.notes} open={showNotes} setOpen={setShowNotes}/>
+            <NoteSnackBar notes={order?.notes} open={showNotes} setOpen={setShowNotes}/>
             
             <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", padding: '.5%'}}>
                 <Box sx={{margin: ".5%"}}>

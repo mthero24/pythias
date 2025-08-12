@@ -40,10 +40,8 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
         let inv = blank.inventories.filter(iv=> iv._id.toString() == inventory._id.toString())[0]
 
         inv[param] = param != "location" && param != "row" && param != "bin" && param != "shelf" && param != "unit"  ? parseInt(event.target.value): event.target.value;
-        let res = await axios.post("/api/admin/inventory", { inventory: inv })
-        inv.quantity = res.data.inventory.quantity
-        inv.attached = res.data.inventory.attached
         setStyles([...s])
+        save(inv)
     }
     const search = async (term)=>{
         let res = await axios.get(`/api/admin/inventory?q=${term}`)

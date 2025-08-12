@@ -1,5 +1,5 @@
 import { Nightlife } from "@mui/icons-material";
-import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, marketPlaces, ApiKeyIntegrations, Inventory, ProductInventory, Items} from "@pythias/mongo"
+import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, marketPlaces, ApiKeyIntegrations, Inventory, ProductInventory, Items, Order} from "@pythias/mongo"
 import axios from "axios";
 import { pullOrders } from "@/functions/pullOrders"
 let converter = {
@@ -10,7 +10,14 @@ let converter = {
     YXXL: "2XL",
 }
 export default async function Test(){
-    //await pullOrders()
+    await pullOrders()
+    // let orders = await Order.find({items: {$size: 0}, status: {$nin: ["cancelled", "shipped"]}}).sort({_id: -1})
+    // for(let order of orders){
+    //     let items = await Items.find({order: order._id})
+    //     console.log(items.length, "items for order", order.poNumber)
+    //     if(items.length > 0) order.items = items
+    //     await order.save()
+    // }
     // let items = await Items.find({"inventory.inventoryType": null, labelPrinted: false}).sort({_id: -1})
     // console.log(items.length, "items without inventory")
     // for(let item of items){
