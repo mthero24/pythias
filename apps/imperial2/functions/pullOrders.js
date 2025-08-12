@@ -67,7 +67,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
         }
 
     } else {
-        let inventory = await Inventory.findOne({ blank: blank._id, color: color ? color._id : null, sizeId: size?._id.toString() })
+        let inventory = await Inventory.findOne({ blank: blank._id, color: color ? color._id : null, sizeId: size?._id? size._id.toString() : size?.toString() })
         if (inventory) {
             if (inventory.quantity > 0) {
                 inventory.quantity -= 1
