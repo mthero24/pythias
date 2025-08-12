@@ -160,7 +160,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                                 <Typography>{i.pending_quantity}</Typography>
                                             </Grid2>
                                             <Grid2 size={1.5}>
-                                                <Typography >{i.attached ? i.attached.length : 0}</Typography>
+                                                <Typography >{i.attached ? i.attached.length - i.pending_quantity : 0}</Typography>
                                             </Grid2>
                                            {binType == "location" && <Grid2 size={2}>
                                                 <TextField fullWidth value={i.location} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"location"})}}/>

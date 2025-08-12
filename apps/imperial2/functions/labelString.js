@@ -26,7 +26,7 @@ export const buildLabelData = async (item, i, doc, type, opts={}) => {
     doc.font("./LibreBarcode39-Regular.ttf").fontSize(25).text(`*${item.pieceId}*`, 3, 8);
     doc.font("Courier-Bold").fontSize(8)
     doc.text(`Po#: ${item.order ? item.order.poNumber : "no order"} Piece: ${item.pieceId}`, 10 )
-    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${item.pulledFromReturn? `RB ${item.returnBinNUmber}`:item?.inventory?.location}`)
+    doc.font("Courier-Bold").fontSize(9).text(`${item.styleCode} loc: ${item.inventory?.inventoryType == "inventory" ? item.inventory.inventory.location : item.inventory.productInventory.location}`)
     doc.font("Courier-Bold").fontSize(9)
     doc.text(`Color: ${item.colorName}`, 10)
     doc.text(`Size: ${fullSize[item.sizeName]? fullSize[item.sizeName]: item.sizeName} CNT: ${totalQuantity}`)

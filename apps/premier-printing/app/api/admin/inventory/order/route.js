@@ -33,7 +33,7 @@ export async function PUT(req=NextApiRequest){
                     
                 }
             }
-            inv.attached = inv.attached.filter(a => !location.items.map(i => i.inventory.toString()).includes(a.toString()))
+            inv.attached = inv.attached.filter(a => !location.items.map(i => i._id.toString()).includes(a.toString()))
             inv.quantity = inv.quantity - itemsToPrint.length;
             printItems.push(...itemsToPrint)
             await inv.save()
@@ -81,13 +81,11 @@ export async function POST(req=NextApiRequest){
     console.log(order)
     await order.save()
     let inventory = await Inventory.find({}).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location")
-    let items = await Items.find({labelPrinted: false, status: "awaiting_shipment"}).select("colorName sizeName blank")
-    console.log("inventory", inventory.length)
     let blanks = await Blanks.find({}).populate("colors").select("code name colors sizes department")
     let combined = []
     for(let blank of blanks){
         blank.inventory = inventory.filter(i=> i.blank.toString() == blank._id.toString())
         combined.push({blank, inventories: blank.inventory})
     }
-    return NextResponse.json({error: false, combined, items})
+    return NextResponse.json({error: false, combined, items: []})
 }

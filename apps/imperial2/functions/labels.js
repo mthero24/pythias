@@ -50,6 +50,5 @@ export async function LabelsData(){
         JSON.stringify(await Batches.find({}).limit(20).sort({ _id: -1 }).lean())
     );
     //console.log(batches)
-    console.log(labels.Standard.filter(l=> l.inventory?.inventoryType !== undefined).map(l => ({ ...l.inventory, })), "labels.Standard")
     return {labels, giftMessages, rePulls, batches}
 }

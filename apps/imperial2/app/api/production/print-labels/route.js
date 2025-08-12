@@ -39,32 +39,13 @@ export async function POST(req=NextApiRequest){
       batchID += letters[Math.floor(Math.random() * letters.length)]
     }
     let itemsToPrint = []
-    let itemsToPull = []
     for(let i of data.items){
-      let hasReturn= await ReturnBins.findOne({$or: [{"inventory.upc": i.upc}, {"inventory.sku": i.sku}], "inventory.quantity": {$gt: 0}})
-      let inv = hasReturn?.inventory.filter(i=> i.sku == i.sku)[0]
-      if(inv && inv.quantity > 0){
-        updateReturnBin(hasReturn, i.upc, i.sku)
-        let item = await Items.findOne({_id: i._id})
-        item.pulledFromReturn =true
-        item.returnBinNumber = hasReturn.returnBinNumber
-        await item.save()
-        i.pulledFromReturn = true
-        i.returnBinNumber = hasReturn.returnBinNumber
-        itemsToPull.push(i)
-      }else{
-        let inventory = await Inventory.findOne({color_name: i.colorName, size_name: i.sizeName, style_code: i.styleCode})
-        if(inventory && inventory.quantity > 0){
-          inventory.quantity =
-          inventory.quantity - 1
-          await inventory.save()
+      if(i.labelPrinted == false){
           itemsToPrint.push(i)
-        }
       }
     }
-    itemsToPrint = itemsToPull.concat(itemsToPrint)
     // build labels
-    console.log("items to print", itemsToPrint.length)
+  console.log("items to print", itemsToPrint.length)
     await createPdf({items: itemsToPrint, buildLabelData, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
    //subtractInventory(data.items)
     let pieceIds = itemsToPrint.map(i=> i.pieceId)
@@ -73,6 +54,6 @@ export async function POST(req=NextApiRequest){
     await batch.save()
    await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
-    //console.log(giftMessages)
+    console.log(giftMessages)
     return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
 }
