@@ -3,35 +3,91 @@ import {Inventory, InventoryOrders, Products, Order, Items, ProductInventory } f
 import axios from "axios";
 import btoa from "btoa";
 import { getOrders, generatePieceID } from "@pythias/integrations";
+import { create } from "@mui/material/styles/createTransitions";
 const CreateSku = async ({ blank, color, size, design, threadColor }) => {
     let sku = `${design.printType}_${design.sku}_${color.sku}_${size.name}_${blank.code}${threadColor ? `_${threadColor}` : ""}`;
     return sku;
 }
-export default async function Test(){
-    console.log("Test Page")
-    //await pullOrders("577070468438331861")
-    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "577070468438331861" })
-    console.log(orders.length, "orders")
-    for(let o of orders){
-        for(let i of o.items){
-            if(i.name && i.name.toLowerCase() != "seller discount" && i.name.toLowerCase() != "platform discount"){
-               
-                console.log(i.sku, "item sku")
-                let product = await Products.findOne({ variantsArray: { $elemMatch: { sku: i.sku } } }).populate("design variantsArray.blank variantsArray.color variantsArray.threadColor").populate("blanks colors threadColors design")
-                console.log(product, "product")
-                if(product){
-                    let variant = product.variantsArray.filter(v => v.sku == i.sku)[0];
-                    if(variant){
-                        console.log(variant, "variant")
-                        let item = await CreateSku({ blank: variant.blank, color: variant.color, size: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0], design: product.design, threadColor: variant.threadColor });
-                        console.log(item, "item created")
-                    }else{
-                        console.log("no variant found for sku", i.sku)
-                    }
-                }
+const createItem = async ({ i, order, design, blank, size, color, threadColor, sku }) => {
+    if (!size) console.log("no size", blank.code, color?.name, color?.sku, design.sku)
+    let item = new Item({
+        pieceId: await generatePieceID(),
+        paid: true,
+        sku: sku,
+        orderItemId: i.orderItemId,
+        blank: blank,
+        styleCode: blank.code,
+        sizeName: size?.name,
+        threadColorName: threadColor?.name,
+        threadColor: threadColor,
+        colorName: color?.name,
+        color: color,
+        size: size,
+        design: design.threadColor ? design.threadImages[threadColor?.name] : design.images,
+        designRef: design,
+        order: order._id,
+        shippingType: order.shippingType,
+        quantity: 1,
+        status: order.status,
+        name: i.name,
+        date: order.date,
+        type: design.printType,
+        options: i.options[0]?.value
+    })
+    if (order.status == "cancelled") {
+        item.canceled = true
+    }
+    let productInventory = await ProductInventory.findOne({ sku: i.sku })
+    if (productInventory) {
+        if (productInventory.quantity > 0) {
+            item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
+            productInventory.quantity -= 1
+            await productInventory.save()
+        }
+
+    } else {
+        let inventory = await Inventory.findOne({ blank: blank._id, color: color ? color._id : null, sizeId: size?._id ? size._id.toString() : size?.toString() })
+        if (inventory) {
+            if (inventory.quantity > 0) {
+                inventory.quantity -= 1
+                await inventory.save()
+                item.inventory = { type: "inventory", Inventory: inventory._id }
+            } else {
+                if (!inventory.attached) inventory.attached = []
+                inventory.attached.push(item._id)
+                await inventory.save()
             }
         }
     }
+    await item.save();
+    return item;
+}
+export default async function Test(){
+    console.log("Test Page")
+    //await pullOrders("577070468438331861")
+    // let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "577070468438331861" })
+    // console.log(orders.length, "orders")
+    // for(let o of orders){
+    //     let order = await Order.findOne({ poNumber: o.orderId }).populate("items")
+    //     for(let i of o.items){
+    //         if(i.name && i.name.toLowerCase() != "seller discount" && i.name.toLowerCase() != "platform discount"){
+               
+    //             console.log(i.sku, "item sku")
+    //             let product = await Products.findOne({ variantsArray: { $elemMatch: { sku: i.sku } } }).populate("design variantsArray.blank variantsArray.color variantsArray.threadColor").populate("blanks colors threadColors design")
+    //             console.log(product, "product")
+    //             if(product){
+    //                 let variant = product.variantsArray.filter(v => v.sku == i.sku)[0];
+    //                 if(variant){
+    //                     console.log(variant, "variant")
+    //                     let item = await createItem({ i, order: o, design: product.design, blank: variant.blank, size: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0], color: variant.color, threadColor: variant.threadColor, sku: variant.sku })
+    //                     console.log(item, "item created")
+    //                 }else{
+    //                     console.log("no variant found for sku", i.sku)
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
     // let items = await Items.find({name: {$in: ["Seller discount", "Platform discount"]} }).populate("order").sort({ _id: -1 })
     // console.log(items.length, "items")
     // for(let item of items){
