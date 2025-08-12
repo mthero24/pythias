@@ -105,7 +105,7 @@ export async function pullOrders(){
             for(let i of o.items){
                 if(i.sku != ""){
                     let item
-                    let product = await Products.findOne({ variantsArray: { $elemMatch: { sku: i.sku } } }).populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
+                    let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: i.sku } } }, { variantsArray: { $elemMatch: { upc: i.upc } } }] }).populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
                     if (!product) await Products.findOne({ variantsArray: { $elemMatch: { previousSkus: i.sku } } }).populate("design variantsArray.blank variantsArray.color")
                     if (product) {
                         // Do something with the product
