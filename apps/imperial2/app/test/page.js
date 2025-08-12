@@ -118,8 +118,8 @@ export default async function Test(){
     // console.log(items.length, "items to update")
     //await pullOrders("577070468438331861")
     // const colors = await Color.find({}).lean();
-    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "577069874302062641" },  "1733" )
-    console.log(orders)
+    // let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "577069874302062641" },  "1733" )
+    // console.log(orders)
     // console.log(orders.length, "orders", orders[0])
     // for(let o of orders){
     //     if (o.customerNotes?.includes("tiktok_fulfillment_type: 3PL")) continue;

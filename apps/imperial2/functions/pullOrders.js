@@ -34,7 +34,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
     let item = new Item({
         pieceId: await generatePieceID(),
         paid: true,
-        sku: sku,
+        sku: i.sku,
         orderItemId: i.orderItemId,
         blank: blank,
         styleCode:blank.code,
@@ -129,8 +129,9 @@ export async function pullOrders(id){
                     if(product) {
                         // Do something with the product
                         console.log(product.sku, "product found")
-                        let variant = product.variantsArray.find(v => v.sku == i.sku)
+                        let variant = product.variantsArray.find(v => v.sku == i.sku)[0]
                         if(!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))[0]
+                        if(!variant){
                             let sku = i.sku.split("_")
                             let blank
                             let threadColor

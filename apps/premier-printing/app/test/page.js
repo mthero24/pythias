@@ -15,7 +15,7 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
     return sku;
 }
 export default async function Test(){
-    await pullOrders()
+    //await pullOrders()
     // let orders = await Order.find({items: {$size: 0}, status: {$nin: ["cancelled", "shipped"]}}).sort({_id: -1})
     // for(let order of orders){
     //     let items = await Items.find({order: order._id})

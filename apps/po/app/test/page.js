@@ -7,5 +7,6 @@ export default async function Test(){
     let res = await getCarriers({credentials: {apiKey: process.env.ssV2}})
     console.log("res", res)
     console.log(process.env.ssV2)
+    
     return <h1>Test</h1>
 }
