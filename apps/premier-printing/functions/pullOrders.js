@@ -6,7 +6,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     console.log(size, "size")
     let item = new Item({ pieceId: await generatePieceID(), 
         paid: true, 
-        sku: sku, 
+        sku: i.sku, 
         orderItemId: i.orderItemId, 
         blank: blank, 
         styleCode: blank?.code, 
@@ -110,7 +110,7 @@ export async function pullOrders(){
                     if (product) {
                         // Do something with the product
                         console.log(product, "product found")
-                        let variant = product.variantsArray.find(v => v.sku == i.sku)
+                        let variant = product.variantsArray.find(v => v.sku == i.sku || v.upc == i.upc)
                         if (!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
                         //console.log(variant, "variant")
                         for (let j = 0; j < parseInt(i.quantity); j++) {
@@ -167,16 +167,16 @@ export async function pullOrders(){
                                 //console.log(item)
                                 item = await createItem(i, order, sb, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
-                                item = await createItem(i, order, blank, color, threadColor, size, design, sku)
+                                item = await createItem(i, order, blank, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                             }else if(blank && blank.code == "LGDSET"){
                                 let sb = await Blanks.findOne({code: "GDT"})
-                                item = await createItem(i, order, sb, color, threadColor, size, design, sku)
+                                item = await createItem(i, order, sb, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
-                                item = await createItem(i, order, blank, color, threadColor, size, design, sku)
+                                item = await createItem(i, order, blank, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                             }else{
-                                item = await createItem(i, order, blank, color, threadColor, size, design, sku)
+                                item = await createItem(i, order, blank, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                             }
                         }

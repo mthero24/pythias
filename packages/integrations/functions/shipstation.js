@@ -2,7 +2,7 @@ import axios from "axios";
 import btoa from "btoa"
 
 export async function getOrders({auth, id}){
-    console.log(auth)
+    console.log(auth, id)
     let headers = {
         headers: {
             Authorization: `Basic ${btoa(auth)}`

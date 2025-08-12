@@ -130,8 +130,7 @@ export async function pullOrders(id){
                         // Do something with the product
                         console.log(product.sku, "product found")
                         let variant = product.variantsArray.find(v => v.sku == i.sku)
-                        if(!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
-                        if(!variant){
+                        if(!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))[0]
                             let sku = i.sku.split("_")
                             let blank
                             let threadColor
