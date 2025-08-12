@@ -259,7 +259,7 @@ export async function pullOrders(id){
                     }
                 }else{
                     console.log(i.sku, "no sku")
-                    if(i.name.toLowerCase() == "seller discount" && i.name.toLowerCase() != "platform discount"){ 
+                    if(i.name.toLowerCase() != "seller discount" && i.name.toLowerCase() != "platform discount"){ 
                         let item = new Item({
                             pieceId: await generatePieceID(),
                             paid: true,

@@ -9,7 +9,29 @@ const CreateSku = async ({ blank, color, size, design, threadColor }) => {
 }
 export default async function Test(){
     console.log("Test Page")
-   // await pullOrders("577070180753641509")
+    //await pullOrders("577070468438331861")
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "577070468438331861" })
+    console.log(orders.length, "orders")
+    for(let o of orders){
+        for(let i of o.items){
+            if(i.name && i.name.toLowerCase() != "seller discount" && i.name.toLowerCase() != "platform discount"){
+               
+                console.log(i.sku, "item sku")
+                let product = await Products.findOne({ variantsArray: { $elemMatch: { sku: i.sku } } }).populate("design variantsArray.blank variantsArray.color variantsArray.threadColor").populate("blanks colors threadColors design")
+                console.log(product, "product")
+                if(product){
+                    let variant = product.variantsArray.filter(v => v.sku == i.sku)[0];
+                    if(variant){
+                        console.log(variant, "variant")
+                        let item = await CreateSku({ blank: variant.blank, color: variant.color, size: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0], design: product.design, threadColor: variant.threadColor });
+                        console.log(item, "item created")
+                    }else{
+                        console.log("no variant found for sku", i.sku)
+                    }
+                }
+            }
+        }
+    }
     // let items = await Items.find({name: {$in: ["Seller discount", "Platform discount"]} }).populate("order").sort({ _id: -1 })
     // console.log(items.length, "items")
     // for(let item of items){

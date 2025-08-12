@@ -110,7 +110,7 @@ export function Main({ord, blanks}){
                                     <Box sx={{display: "flex", flexDirection: "column", alignContent: "center"}} >
                                         <Typography fontWeight={"bold"}>Piece Id: {i.pieceId}</Typography>
                                         <Grid2 container spacing={1}>
-                                            {i.steps.map(s=>(
+                                            {i.steps?.map(s=>(
                                                 <Grid2 key={s._id} size={3}>
                                                     <Typography>{s.status}</Typography>
                                                     <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
