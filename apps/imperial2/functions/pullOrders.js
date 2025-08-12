@@ -44,7 +44,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
         colorName: color?.name,
         color: color,
         size: size,
-        design: design.threadColor ? design.threadImages[threadColor?.name] : design.images,
+        design: threadColor ? design.threadImages[threadColor?.name] : design.images,
         designRef: design,
         order: order._id,
         shippingType: order.shippingType,
