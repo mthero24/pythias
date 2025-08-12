@@ -37,10 +37,10 @@ export const buildLabelData = async (item, i, opts={}) => {
           ^LH6,6^CFS,30,6^AXN,22,30^FO15,60^FDPiece: ${item.pieceId}^FS
           ^LH12,18^CFS,25,12^AXN,22,30^FO20,330^FD#${i + 1}^FS
           ^LH12,18^CFS,25,12^AXN,75,90^FO120,250^FD${item.styleCode}^FS
-          ^LH12,18^CFS,25,12^AXN,30,35^FO220,310^FD Row: ${item.inventory?.row}^FS
-          ^LH12,18^CFS,25,12^AXN,30,35^FO220,340^FD Unit: ${item.inventory?.unit}^FS
-          ^LH12,18^CFS,25,12^AXN,30,35^FO220,370^FD Shelf: ${item.inventory?.shelf}^FS
-          ^LH12,18^CFS,25,12^AXN,30,35^FO220,400^FD Bin: ${item.inventory?.bin}^FS
+          ^LH12,18^CFS,25,12^AXN,30,35^FO220,310^FD Row: ${item.inventory.inventory?.row}^FS
+          ^LH12,18^CFS,25,12^AXN,30,35^FO220,340^FD Unit: ${item.inventory.inventory?.unit}^FS
+          ^LH12,18^CFS,25,12^AXN,30,35^FO220,370^FD Shelf: ${item.inventory.inventory?.shelf}^FS
+          ^LH12,18^CFS,25,12^AXN,30,35^FO220,400^FD Bin: ${item.inventory.inventory?.bin}^FS
           ^LH12,18^CFS,25,12^AXN,30,35^FO20,360^FD${
               item.colorName
           }^FS
