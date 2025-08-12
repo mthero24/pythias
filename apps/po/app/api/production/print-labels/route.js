@@ -11,7 +11,7 @@ let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n",
 const subtractInventory = async (item)=>{
     console.log(item)
     if(item.type != "gift"){
-        let inv = await Inventory.findOne({_id: item.inventory._id})
+        let inv = await Inventory.findOne({_id: item.inventory.inventory._id})
         //console.log(inv, "invetory subrtact")
         console.log(inv.quantity)
         inv.quantity = inv.quantity - 1
@@ -22,7 +22,7 @@ const subtractInventory = async (item)=>{
 }
 const checkInventory = async (item)=>{
     if(item.type == "gift") return 100
-    let inv = await Inventory.findOne({_id: item.inventory._id})
+    let inv = await Inventory.findOne({_id: item.inventory.inventory._id})
     return inv.quantity
 }
 export const config = {
