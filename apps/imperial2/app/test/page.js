@@ -64,15 +64,41 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 }
 export default async function Test(){
     console.log("Test Page")
-    // let items = await Items.find({threadColor: {$ne: null}}).populate("threadColor designRef").sort({date: -1}).skip(500).limit(500)
-    // for(let i of items){
-    //     console.log(i.pieceId)
-    //     if(i.designRef.threadImages){
-    //         i.design = i.designRef.threadImages[i.threadColor.name];
+    //await pullOrders("577070468438331861")
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "577069177370219456" })
+    console.log(orders.length, "orders", orders[0])
+   
+    // let items = await Items.find({name: {$in: ["Seller discount", "Platform discount"]} }).populate("order").sort({ _id: -1 })
+    // console.log(items.length, "items")
+    // for(let item of items){
+    //     item.order.items = item.order.items.filter(i => i._id.toString() != item._id.toString())
+    //     await item.order.save()
+    //     await Items.findByIdAndDelete(item._id)
+    //     console.log(item._id.toString(), "deleted")
+    // }
+    // console.log(items.length, "items to update")
+    // for(let item of items){
+    //     //console.log(item.threadColor, item.designRef.threadImages)
+    //     if(item.designRef.threadImages){
+    //         item.design = item.designRef.threadImages[item.threadColor.name];
     //     }else{
-    //         i.design = i.designRef.images
+    //         item.design = item.designRef.images
     //     }
-    //     await i.save()
+    //     await item.save()
+    // }
+    //  let orders = await Order.find({items: {$size: 0}}).sort({_id: -1}).limit(100)
+    // for(let order of orders){
+    //     console.log(order._id.toString())
+    //     let items = await Items.find({order: order._id})
+    //     if(items.length > 0) {
+    //         order.items = items
+    //         await order.save()
+    //     }else{
+    //         await Order.findByIdAndDelete(order._id)
+    //         console.log("deleted")
+    //     }
+    //     console.log(items.length, "items")
+    //     //await order.save()
     // }
     return <h1>test</h1>
 }

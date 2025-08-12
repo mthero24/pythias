@@ -7,10 +7,7 @@ import {createPdf} from "@pythias/labels"
 export async function POST(req=NextApiResponse) {
     let data = await req.json()
     console.log(data)
-    let inventoryArray = await Inventory.find({})
-    .select("quantity pending_quantity inventory_id color_name size_name location style_code row unit shelf bin")
-    .lean();
-    let items = await Items.find({batchID: data.batchID}).populate("designRef").lean()
+    let items = await Items.find({batchID: data.batchID}).populate("designRef inventory.inventory inventory.productInventory").lean()
 
     console.log(items.length, "length of items +++")
     let standardOrders = items.map(s=> s.order)
@@ -21,7 +18,6 @@ export async function POST(req=NextApiResponse) {
     items = items.map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
     console.log(items.length, "before filter")
     items = items.filter(s=> s.order != undefined)
-    items = items.map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
     items = Sort(items)
 
     //full fill promises

@@ -21,7 +21,7 @@ export async function PUT(req=NextApiRequest){
                 for (let j = 0; j < inv.quantity; j++) {
                     console.log(inv.attached[j], "inv.attached[j]")
                     if(!inv.attached[j]) continue;
-                    let item = await Items.findOne({ _id: inv.attached[j] })
+                    let item = await Items.findOne({ _id: inv.attached[j] }).populate("designRef")
                     item.inventory = {
                         inventoryType: "inventory",
                         inventory: inv._id,
