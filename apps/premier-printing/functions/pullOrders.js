@@ -2,6 +2,57 @@ import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Invento
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import Blanks from "@/models/Blanks";
 import { options } from "pdfkit";
+const createItem = async (i, order, blank, color, threadColor, size, design, sku) => {
+    console.log(size, "size")
+    let item = new Item({ pieceId: await generatePieceID(), 
+        paid: true, 
+        sku: sku, 
+        orderItemId: i.orderItemId, 
+        blank: blank, 
+        styleCode: blank?.code, 
+        sizeName: size?.name, 
+        threadColorName: threadColor?.name, 
+        threadColor: threadColor, 
+        colorName: color?.name, 
+        color: color, 
+        size: size, 
+        design: threadColor ? design.threadImages[threadColor?.name] : design?.images, 
+        designRef: design, 
+        order: order._id, 
+        shippingType: order.shippingType, 
+        quantity: 1, 
+        status: order.status, 
+        name: i.name, 
+        date: order.date, 
+        type: design?.printType, 
+        upc: i.upc, 
+        options: i.options[0]?.value 
+    })
+    console.log(i, "item to save")
+    let productInventory = await ProductInventory.findOne({ sku: i.sku })
+    if (productInventory) {
+        if (productInventory.quantity > 0) {
+            item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
+            productInventory.quantity -= 1
+            await productInventory.save()
+        }
+    } else {
+        let inventory = await Inventory.findOne({ blank: blank?._id, color: color ? color._id : null, sizeId: size?._id? size._id.toString(): size?.toString() })
+        if (inventory) {
+            if (inventory.quantity > 0) {
+                inventory.quantity -= 1
+                await inventory.save()
+                item.inventory = { type: "inventory", Inventory: inventory._id }
+            } else {
+                if (!inventory.attached) inventory.attached = []
+                inventory.attached.push(item._id)
+                await inventory.save()
+            }
+        }
+    }
+    await item.save();
+    return item
+}
 export async function pullOrders(){
     console.log("pull orders")
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
@@ -49,6 +100,7 @@ export async function pullOrders(){
             let items = []
             for(let i of o.items){
                 if(i.sku != ""){
+                    let item
                     let product = await Products.findOne({ variantsArray: { $elemMatch: { sku: i.sku } } }).populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
                     if (!product) await Products.findOne({ variantsArray: { $elemMatch: { previousSkus: i.sku } } }).populate("design variantsArray.blank variantsArray.color")
                     if (product) {
@@ -57,31 +109,11 @@ export async function pullOrders(){
                         let variant = product.variantsArray.find(v => v.sku == i.sku)
                         if (!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
                         //console.log(variant, "variant")
-                        let item = new Item({ pieceId: await generatePieceID(), paid: true, sku: variant.sku, orderItemId: i.orderItemId, blank: variant.blank, styleCode: variant.blank.code, sizeName: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0]?.name, threadColorName: variant.threadColor?.name, threadColor: variant.threadColor, colorName: variant.color?.name, color: variant.color, size: variant.blank.sizes.filter(s => s._id.toString() == variant.size.toString())[0], design: variant.threadColor ? product.design.threadImages[variant.threadColor?.name] : product.design.images, designRef: product.design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: orders.date, type: product.design.printType, upc: i.upc, options: i.options[0]?.value })
-                        console.log(i, "item to save")
-                        let productInventory = await ProductInventory.findOne({ sku: i.sku })
-                        if (productInventory) {
-                            if (productInventory.quantity > 0) {
-                                item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
-                                productInventory.quantity -= 1
-                                await productInventory.save()
-                            }
-                        } else {
-                            let inventory = await Inventory.findOne({ blank: variant.blank._id, color: variant.color ? variant.color._id : null, sizeId: variant.size.toString() })
-                            if (inventory) {
-                                if (inventory.quantity > 0) {
-                                    inventory.quantity -= 1
-                                    await inventory.save()
-                                    item.inventory = { type: "inventory", Inventory: inventory._id }
-                                } else {
-                                    if (!inventory.attached) inventory.attached = []
-                                    inventory.attached.push(item._id)
-                                    await inventory.save()
-                                }
-                            }
+                        for (let j = 0; j < parseInt(i.quantity); j++) {
+                            //console.log(variant.blank, variant.color, variant.size, product.design, variant.sku)
+                            item = await createItem(i, order, variant.blank, variant.color, variant.threadColor, variant.size, product.design, variant.sku)
+                            items.push(item)
                         }
-                        await item.save();
-                        order.items.push(item._id)
                     }else{
                         let sku
                         if(i.upc){
@@ -93,10 +125,12 @@ export async function pullOrders(){
                             let blank
                             let color
                             let size
+                            let threadColor
                             if(sku) {
                                 design = await Design.findOne({_id: sku.design})
                                 blank = await Blank.findOne({_id: sku.blank})
                                 color = await Color.findOne({_id: sku.color})
+                                threadColor = await Color.findOne({ _id: sku.threadColor })
                                 size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.replace("Y", "").toLowerCase())[0]   
                             }else{
                                 blank = await Blank.findOne({code: i.sku?.split("_")[0]})
@@ -116,55 +150,29 @@ export async function pullOrders(){
                                     design = await Design.findOne({sku: designSku})
                                 }
                             }
+                            console.log(blank?.code, color?.name, size, design?.sku, sku ? sku.sku : i.sku, "item to save")
                             if(blank && blank.code.includes("PPSET")){
                                 let sb = await Blanks.findOne({code: blank.code.split("_")[1]})
-                                let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
-                                let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
                                 //console.log(item)
-                                await item.save()
-                                await shirtItem.save()
+                                item = await createItem(i, order, sb, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
-                                items.push(shirtItem)
+                                item = await createItem(i, order, blank, color, threadColor, size, design, sku ? sku.sku : i.sku)
+                                items.push(item)
                             }else if(blank && blank.code == "LGDSET"){
                                 let sb = await Blanks.findOne({code: "LGDSWT"})
-                                let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
-                                let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
                                 //console.log(item)
-                                await item.save()
-                                await shirtItem.save()
+                                item = await createItem(i, order, sb, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
-                                items.push(shirtItem)
+                                item = await createItem(i, order, blank, color, threadColor, size, design, sku)
+                                items.push(item)
                             }else if(blank && blank.code == "LGDSET"){
                                 let sb = await Blanks.findOne({code: "GDT"})
-                                let shirtItem = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank: sb, styleCode: sb?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date}) 
-                                let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
-                                //console.log(item)
-                                await item.save()
-                                await shirtItem.save()
+                                item = await createItem(i, order, sb, color, threadColor, size, design, sku)
                                 items.push(item)
-                                items.push(shirtItem)
+                                item = await createItem(i, order, blank, color, threadColor, size, design, sku)
+                                items.push(item)
                             }else{
-                                let item = new Item({pieceId: await generatePieceID(), paid: true, sku: i.sku, upc: i.upc, orderItemId: i.orderItemId, blank, styleCode: blank?.code, sizeName: size?.name, colorName: color?.name, color, size, design: design?.images, designRef: design, order: order._id, shippingType: order.shippingType, quantity: 1, status: order.status, name: i.name, date: order.date})
-                                //console.log(item)
-                                let productInventory = await ProductInventory.findOne({ sku: i.sku })
-                                if (productInventory) {
-                                    if (productInventory.quantity > 0) {
-                                        item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
-                                        productInventory.quantity -= 1
-                                        await productInventory.save()
-                                    }
-
-                                } else {
-                                    let inventory = await Inventory.findOne({ blank: item.blank._id, color: item.color ? item.color._id : null, sizeId: item.size._id.toString() })
-                                    if (inventory) {
-                                        if (inventory.quantity > 0) {
-                                            inventory.quantity -= 1
-                                            await inventory.save()
-                                            item.inventory = { type: "inventory", Inventory: inventory._id }
-                                        }
-                                    }
-                                }
-                                await item.save()
+                                item = await createItem(i, order, blank, color, threadColor, size, design, sku)
                                 items.push(item)
                             }
                         }

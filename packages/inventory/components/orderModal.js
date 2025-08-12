@@ -20,7 +20,7 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                     for(let inv of blank.inventories){
                         let inStock = inv.quantity + inv.pending_quantity
                         console.log(inv, "inv.blank")
-                        let onOrder = inv.attached ? inv.attached.length : 0
+                        let onOrder = (inv.attached ? inv.attached.length : 0)
                         //console.log(inStock - onOrder)
                         if(inStock - onOrder < 0) {
                             if(!bl.includes(inv.style_code))bl.push(inv.style_code)

@@ -361,6 +361,13 @@ const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, 
         console.log(i.color, i.colorName)
         setItem({...i})
     }
+    const handleThreadColorChange = (val) => {
+        let i = { ...item }
+        i.threadColor = val.value
+        i.threadColorName = val.label
+        console.log(i.threadColor, i.threadColorName)
+        setItem({ ...i })
+    }
     const updateItem = async ()=>{
         let res = await axios.put("/api/admin/items", {item})
         if(res.data.error) alert(res.data.msg)
@@ -426,7 +433,19 @@ const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, 
                     }}
                 />
             </Box>
-            <Button fullWidth onClick={()=>{updateItem()}}>Update Item</Button>
+            <Box sx={{margin: "1% 0%"}}>
+                <CreatableSelect
+                    placeholder="Thread Color"
+                    value={item?.threadColorName && item.threadColor ? { label: item?.threadColorName, value: item?.threadColor } : null}
+                    options={blank?.colors.map(b => {
+                        return { label: b.name, value: b._id }
+                    })}
+                    onChange={(val) => {
+                        handleThreadColorChange(val)
+                    }}
+                />
+            </Box>
+            <Button fullWidth onClick={() => { updateItem() }}>Update Item</Button>
         </Box>
       </Modal>
     )
