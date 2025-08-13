@@ -2,9 +2,11 @@ import {useState, useEffect} from "react"
 import { Box, Grid2, Typography, Button, Modal, Card, CardContent, CardActions, Divider, Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, setItems}){
     const [orders, setOrders] = useState([])
     const [check,setCheck] = useState(false)
+    const [showItems, setShowItems] = useState("")
     useEffect(()=>{
        const getOrders = async ()=>{
             let res = await axios.get("/api/admin/inventory/order")
@@ -85,9 +87,19 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                                         <Grid2 size={4}>
                                                             <Typography>{i.quantity}</Typography>
                                                         </Grid2>
-                                                        <Grid2 size={4}>
+                                                        <Grid2 size={3}>
                                                             <Typography>{l.name}</Typography>
                                                         </Grid2>
+                                                        <Grid2 size={1}>
+                                                            <ArrowDropDownIcon sx={{ cursor: "pointer" }} onClick={() => { setOpen(i._id.toString()); console.log(i.inventory.orders, "orders")}} />
+                                                        </Grid2>
+                                                        {open == i._id.toString() && i.inventory.orders?.filter(or => or.order.toString() == o._id.toString()).map((or, index) => (
+                                                            <Grid2 key={index} size={12}>
+                                                                {or.items.map((item, idx) => (
+                                                                    <Typography key={idx} sx={{ paddingLeft: "2%", marginBottom: "1%" }}>{item}</Typography>
+                                                                ))}
+                                                            </Grid2>
+                                                        ))}
                                                     </Grid2>
                                                 ))}
 
