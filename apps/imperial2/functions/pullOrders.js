@@ -59,23 +59,25 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
         item.canceled = true
     }
     let productInventory = await ProductInventory.findOne({ sku: i.sku })
-    if (productInventory) {
-        if (productInventory.quantity > 0) {
+    if (productInventory && productInventory.quantity > productInventory.quantity - productInventory.onhold) {
+        if (productInventory.quantity > productInventory.quantity - productInventory.onhold) {
             item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
-            productInventory.quantity -= 1
+            productInventory.onhold += 1
             await productInventory.save()
         }
 
     } else {
         let inventory = await Inventory.findOne({ blank: blank._id, color: color ? color._id : null, sizeId: size?._id? size._id.toString() : size?.toString() })
         if (inventory) {
-            if (inventory.quantity > 0) {
-                inventory.quantity -= 1
+            if (inventory.quantity > inventory.quantity - inventory.onhold) {
+                inventory.onhold += 1
                 await inventory.save()
                 item.inventory = { type: "inventory", Inventory: inventory._id }
             } else {
                 if (!inventory.attached) inventory.attached = []
                 inventory.attached.push(item._id)
+                inventory.onhold += 1
+                item.inventory = { type: "inventory", Inventory: inventory._id }
                 await inventory.save()
             }
         }

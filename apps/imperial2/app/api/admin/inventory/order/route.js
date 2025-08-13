@@ -18,10 +18,12 @@ export async function PUT(req=NextApiRequest){
             inv.quantity = inv.quantity + i.quantity
             inv.pending_quantity = inv.pending_quantity - i.quantity
             if (inv.quantity > 0 && inv.attached.length > 0) {
+                let items = await Items.find({ _id: { $in: inv.attached } }).sort({_id: -1}).populate("designRef")
+                inv.attached = items.map(i => i._id)
                 for (let j = 0; j < inv.quantity; j++) {
                     console.log(inv.attached[j], "inv.attached[j]")
                     if(!inv.attached[j]) continue;
-                    let item = await Items.findOne({ _id: inv.attached[j] }).populate("designRef")
+                    let item = items.filter(i => i._id.toString() == inv.attached[j].toString())[0]
                     item.inventory = {
                         inventoryType: "inventory",
                         inventory: inv._id,
@@ -32,6 +34,7 @@ export async function PUT(req=NextApiRequest){
 
                 }
             }
+            inv.onhold = inv.onhold - itemsToPrint.length;
             inv.attached = inv.attached.filter(a => !location.items.map(i => i._id.toString()).includes(a.toString()))
             inv.quantity = inv.quantity - itemsToPrint.length;
             printItems.push(...itemsToPrint)

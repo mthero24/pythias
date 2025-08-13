@@ -222,7 +222,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                 console.log(p.productImages, "product images before setting")
                                 for(let im of p.productImages){
                                     console.log("im", im)
-                                    if(imgs[p._id.toString()].map(i => i.image).includes(im.image)) pImages.push(im)
+                                    if(imgs[p.id.toString()].map(i => i.image).includes(im.image)) pImages.push(im)
                                 }
                                 p.productImages = pImages
                             }

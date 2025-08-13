@@ -1,5 +1,4 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
+import {Items, Order} from "@pythias/mongo";
 import {NextApiResponse, NextResponse} from "next/server";
 import {Sort} from "@pythias/labels";
 import { buildLabelData } from "@/functions/labelString";
@@ -20,7 +19,6 @@ export async function POST(req=NextApiResponse) {
     items = items.map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
     console.log(items.length, "before filter")
     items = items.filter(s=> s.order != undefined)
-    items = items.map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
     items = Sort(items)
     console.log(items.length)
     let preLabels = items.map(async (i, j)=>{

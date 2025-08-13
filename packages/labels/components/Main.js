@@ -395,9 +395,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                   <Typography
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >
-                    {l} In Stock ({useLabels[l].filter(i => i.inventory?.inventoryType != undefined).length})
+                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory.quantity - productInventory.onhold > 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory.quantity - l.inventory?.inventory.onhold > 0) ).length})
                     <br/>
-                    Out Of Stock ({useLabels[l].filter(i=> i.inventory?.inventoryType == undefined).length})
+                    Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory.quantity - productInventory.onhold <= 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory.quantity - l.inventory?.inventory.onhold <= 0)).length})
                   </Typography>
                   <Box sx={row}>
                     <Button
@@ -532,10 +532,10 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                             <Typography
                               sx={{
                                 textAlign: "center",
-                                color: i.inventory?.inventoryType == "productInventory" ? "#feb204" : i.inventory?.inventoryType == "inventory" ? "#228C22" : "#d0342c",
+                                color: i.inventory?.inventoryType == "productInventory" ? "#feb204" : i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0) > 0 ? "#228C22" : "#d0342c" : "#d0342c",
                               }}
                             >
-                              {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory.quantity}` : i.inventory?.inventoryType == "inventory" ? `In Stock ${i.inventory.inventory.quantity}` : "Out Of Stock"}
+                              {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory.quantity - (i.inventory?.productInventory.onhold ? i.inventory?.productInventory.onhold : 0)}` : i.inventory?.inventoryType == "inventory" ? `${i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0) > 0 ? "In Stock" : "Out Of Stock"} ${i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0)} (pending: ${i.inventory?.inventory.pending_quantity})` : "Out Of Stock"}
                             </Typography>
                           </Grid2>
                           <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>
