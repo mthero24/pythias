@@ -1,6 +1,9 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import {Color} from "@pythias/mongo";
-
+export async function GET() {
+  let colors = await Color.find({}).lean();
+  return NextResponse.json({ colors });
+}
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   let { color } = data;

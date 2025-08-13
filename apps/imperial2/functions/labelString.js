@@ -1,4 +1,4 @@
-import {Items, Order} from "@pythias/mongo";
+import {Items, Order, Inventory, ProductInventory} from "@pythias/mongo";
 let fullSize = {
   "XS": "XSMALL",
   "S": "SMALL",
@@ -13,8 +13,17 @@ export const buildLabelData = async (item, i, doc, type, opts={}) => {
     if(!item.order.poNumber)item.order = await Order.findOne({_id: item.order}).select("items poNumber")
     let totalQuantity = 1
     if(item.order) totalQuantity = await Items.find({_id: { $in: item.order.items }, canceled: false,}).countDocuments();
-   // console.log(item.order.items?.length, "item order")
-    //console.log(totalQuantity)
+    if (item.inventory.inventoryType == "productInventory") {
+      let productInventory = await productInventory.findOne({ _id: item.inventory.productInventory._id }).select("location quantity onHold");
+      productInventory.quantity -= 1;
+      productInventory.onhold -= 1;
+      await productInventory.save();
+    } else if (item.inventory.inventoryType == "inventory") {
+      let inventory = await Inventory.findOne({ _id: item.inventory.inventory._id }).select("quantity onHold");
+      inventory.quantity -= 1;
+      inventory.onhold -= 1;
+      await inventory.save();
+    }
     let frontBackString = ``
     for(let loc of Object.keys(item.design)){
         if(item.design[loc]){

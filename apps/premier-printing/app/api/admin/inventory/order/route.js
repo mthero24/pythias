@@ -37,9 +37,7 @@ export async function PUT(req=NextApiRequest){
 
                 }
             }
-            inv.onhold = inv.onhold - itemsToPrint.length;
             inv.attached = inv.attached.filter(a => !location.items.map(i => i._id.toString()).includes(a.toString()))
-            inv.quantity = inv.quantity - itemsToPrint.length;
             printItems.push(...itemsToPrint)
             await inv.save()
         }

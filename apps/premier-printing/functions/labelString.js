@@ -8,19 +8,19 @@ export const buildLabelData = async (item, i, returnBin, opts={},) => {
       item.inventory.inventory = await Inventory.findOne({blank: item.blank._id? item.blank._id: item.blank, color: item.color._id? item.color._id: item.color, sizeId: item.size._id? item.size._id: item.size}).select("row bin shelf unit quantity");
       if(item.inventory?.inventory){
         item.inventory.inventory.quantity -= 1;
-        item.inventory.inventory.onHold -= 1;
+        item.inventory.inventory.onhold -= 1;
         await item.inventory.inventory?.save();
       }
     }
     if(item.inventory.inventoryType == "productInventory") {
       let productInventory = await productInventory.findOne({_id: item.inventory.productInventory._id}).select("location quantity onHold");
       productInventory.quantity -= 1;
-      productInventory.onHold -= 1;
+      productInventory.onhold -= 1;
       await productInventory.save();
     }else if(item.inventory.inventoryType == "inventory") {
       let inventory = await Inventory.findOne({_id: item.inventory.inventory._id}).select("quantity onHold");
       inventory.quantity -= 1;
-      inventory.onHold -= 1;
+      inventory.onold -= 1;
       await inventory.save();
     }
 

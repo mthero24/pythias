@@ -1,6 +1,6 @@
 "use client"
 import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, Link, TextField} from "@mui/material"
-import {useState, useEffect} from "react"
+import {useState, useEffect, use} from "react"
 import CreatableSelect from "react-select/creatable";
 import axios from "axios"
 import {Search} from "@pythias/backend";
@@ -335,6 +335,7 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
 }
 
 const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, setBlank, setSize, setColor, setOrder})=>{
+    const [colors, setColors] = useState([])
     const style = {
         position: 'absolute',
         top: '50%',
@@ -346,6 +347,15 @@ const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, 
         boxShadow: 24,
         p: 4,
       };
+    useEffect(()=>{
+        const getColors = async ()=>{
+            let res = await axios.get("/api/admin/colors")
+            if(res && res.data.colors) {
+                setColors(res.data.colors)
+            }
+        }
+        if(open) getColors()
+    },[open])
     const handleBlankChange = (val)=>{
         let i = {...item}
         i.blank = blanks.filter(b=> b._id.toString() == val)[0]
@@ -442,7 +452,7 @@ const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, 
                     <CreatableSelect
                         placeholder="Thread Color"
                         value={item?.threadColorName && item.threadColor ? { label: item?.threadColorName, value: item?.threadColor } : null}
-                        options={blank?.colors.map(b => {
+                        options={colors.map(b => {
                             return { label: b.name, value: b._id }
                         })}
                         onChange={(val) => {
