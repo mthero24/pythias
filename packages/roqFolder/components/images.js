@@ -13,7 +13,7 @@ export function Images({item, source}){
                     style={{maxWidth: typeof window !== "undefined"? window.innerWidth * .5: "500px", height: 'auto'}}
                 />
             ))}
-            {item.sku.includes("gift") && item?.design?.front &&  <Image
+            {item.sku?.includes("gift") && item?.design?.front &&  <Image
                 src={item.sku.includes("gift")? item.design?.front.replace("https//:", "https://"): createImage(item.colorName, item.styleCode, {url: item.design.front}, source)}
                 alt={item.pieceId}
                 width={500}

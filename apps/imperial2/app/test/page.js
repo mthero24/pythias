@@ -84,6 +84,7 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 }
 export default async function Test(){
     console.log("Test Page")
+    // //await pullOrders();
     // let items = await Items.find({
     //     blank: { $ne: null },
     //     colorName: { $ne: null },
@@ -101,75 +102,64 @@ export default async function Test(){
     //         let inventory = await Inventory.findById(item.inventory.inventory)
     //         if(inventory){
     //            if(inventory.quantity - inventory.onhold > 0){
-    //                inventory.onhold += 1
+                   
     //                await inventory.save()
     //            }else{
     //                 console.log("inventory onhold exceeds quantity")
     //                 if(!inventory.attached) inventory.attached = []
     //                 if(!inventory.attached.includes(item._id)) {
     //                     inventory.attached.push(item._id)
-    //                     inventory.onhold += 1
+                        
     //                 }
     //                 await inventory.save()
     //            }
     //         }
     //     }
     // }
-    // let items = await Items.find({ pieceId: "FM9VUB3XR" }).sort({ _id: -1 })
+    // let items = await Items.find({ "inventory.inventoryType": null, labelPrinted: false }).sort({ _id: -1 })
     // console.log(items.length, "items without inventory")
-    // for (let item of items) {
-    //     console.log(item.inventory, "item inventory")
-    //     if (!item.inventory || !item.inventory.inventory) {
-    //         let productInventory = await ProductInventory.findOne({ sku: item.sku })
-    //         if (productInventory && productInventory.quantity > productInventory.onhold) {
+    // for(let i of items){
+    //     if(!i.inventory.inventoryType){
+    //         let productInventory = await ProductInventory.findOne({ sku: i.sku })
+    //         if (productInventory && productInventory.quantity > productInventory.quantity - productInventory.onhold) {
     //             if (productInventory.quantity > productInventory.quantity - productInventory.onhold) {
-    //                 item.inventory = { type: "productInventory", productInventory: productInventory._id }
+    //                 i.inventory.inventoryType = "productInventory"
+    //                 i.inventory.productInventory = productInventory._id
     //                 productInventory.onhold += 1
     //                 await productInventory.save()
     //             }
+
     //         } else {
-    //             let inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
-    //             console.log(item.blank, item.color, item.size, "item details")
-    //             console.log(inventory, "inventory quantity for item",)
+    //             let inventory = await Inventory.findOne({ blank: i.blank, color: i.color, sizeId: i.size })
     //             if (inventory) {
     //                 if (inventory.quantity > inventory.quantity - inventory.onhold) {
-    //                     console.log(inventory.quantity, "inventory quantity for item", item._id.toString())
-    //                     inventory.onhold += 1
+                    
     //                     await inventory.save()
-    //                     if (!item.inventory) item.inventory = {}
-    //                     item.inventory.inventoryType = "inventory"
-    //                     item.inventory.inventory = inventory._id
+    //                     if (!i.inventory) i.inventory = {}
+    //                     i.inventory.inventoryType = "inventory"
+    //                     i.inventory.inventory = inventory._id
     //                 } else {
     //                     if (!inventory.attached) inventory.attached = []
-    //                     if (!inventory.attached.includes(item._id)) inventory.attached.push(item._id)
-    //                     //inventory.onhold += 1
-    //                     if (!item.inventory) item.inventory = {}
-    //                     item.inventory.inventoryType = "inventory"
-    //                     item.inventory.inventory = inventory._id
+    //                     console.log(inventory.attached, "inventory attached")
+    //                     if (!inventory.attached.includes(i._id.toString())) inventory.attached.push(i._id)
+    //                     console.log(inventory.attached, "inventory attached")
+    //                     if (!i.inventory) i.inventory = {}
+    //                     i.inventory.inventoryType = "inventory"
+    //                     i.inventory.inventory = inventory._id
     //                     await inventory.save()
     //                 }
     //             }
     //         }
-    //     } //else {
-    // //         console.log("has inventory")
-    // //         if (item.inventory.inventoryType == "productInventory" && item.inventory.productInventory) {
-    // //             let productInventory = await ProductInventory.findOne({ _id: item.inventory.productInventory })
-    // //             if (productInventory) {
-    // //                 if (!productInventory.onhold) productInventory.onhold = 0;
-    // //                 productInventory.onhold += 1
-    // //                 await productInventory.save()
-    // //             }
-    // //         } else if (item.inventory.inventoryType == "inventory" && item.inventory.inventory) {
-    // //             console.log("has inventory")
-    // //             let inventory = await Inventory.findOne({ _id: item.inventory.inventory })
-    // //             if (inventory) {
-    // //                 console.log('here')
-    // //                 if (!inventory.onhold) inventory.onhold = 0;
-    // //                 inventory.onhold += 1
-    // //                 await inventory.save()
-    // //             }
-    // //         }
-    // //     }
+    //     }
+    //     console.log(i.inventory, "i.inventory")
+    //     await i.save()
+    // }
+    // for (let item of items) {
+    //     console.log(item.inventory, "item inventory")
+    //     let inv = await Inventory.findById(item.inventory.inventory._id)
+    //     if(!inv.attached.includes(item._id.toString())) inv.attached.push(item._id)
+    //     console.log(inv.attached, "inv attached")
+    //     await inv.save()
     //     await item.save()
     // }
     return <h1>test</h1>

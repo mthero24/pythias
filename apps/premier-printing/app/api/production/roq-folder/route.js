@@ -89,7 +89,7 @@ export async function POST(req = NextApiRequest){
                   label: item.order.shippingInfo.label,
                   labelType: "pdf",
                   style: item.blank.code,
-                  design: item.sku.split("-")[0],
+                  design: item.sku?.split("-")[0],
                   size: item.sizeName,
                   color: item.color,
                   quantity: 1,

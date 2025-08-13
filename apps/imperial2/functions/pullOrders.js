@@ -30,7 +30,6 @@ let sizeFixer = {
 
 }
 const createItem = async ({i, order, design, blank, size, color, threadColor, sku} ) => {
-    if(!size) console.log( "no size", blank.code, color?.name, color?.sku, design.sku)
     let item = new Item({
         pieceId: await generatePieceID(),
         paid: true,
@@ -61,7 +60,8 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
     let productInventory = await ProductInventory.findOne({ sku: i.sku })
     if (productInventory && productInventory.quantity > productInventory.quantity - productInventory.onhold) {
         if (productInventory.quantity > productInventory.quantity - productInventory.onhold) {
-            item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
+            item.inventory.inventoryType = "productInventory"
+            item.inventory.productInventory = productInventory._id
             productInventory.onhold += 1
             await productInventory.save()
         }
@@ -72,12 +72,16 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
             if (inventory.quantity > inventory.quantity - inventory.onhold) {
                 inventory.onhold += 1
                 await inventory.save()
-                item.inventory = { type: "inventory", Inventory: inventory._id }
+                if (!item.inventory) item.inventory = {}
+                item.inventory.inventoryType = "inventory"
+                item.inventory.inventory = inventory._id
             } else {
                 if (!inventory.attached) inventory.attached = []
-                inventory.attached.push(item._id)
+                if (!inventory.attached.includes(item._id.toString())) inventory.attached.push(item._id)
                 inventory.onhold += 1
-                item.inventory = { type: "inventory", Inventory: inventory._id }
+                if (!item.inventory) item.inventory = {}
+                item.inventory.inventoryType = "inventory"
+                item.inventory.inventory = inventory._id
                 await inventory.save()
             }
         }
@@ -94,12 +98,10 @@ export async function pullOrders(id){
         if(a.length < b.length) return 1
         return 0
     })
-    //console.log(fixers)
     console.log("pull orders")
     let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: id})
-    console.log(orders.filter(o=> o.tagIds == null && o.orderStatus != "shipped").length, orders.filter(o=> o.tagIds != null).map(o=>{return o.tagIds}) )
     for(let o of orders){
-        console.log(o.orderStatus, o.orderDate, o)
+        console.log(o.orderStatus, o.orderDate)
         if (o.customerNotes?.includes("tiktok_fulfillment_type: 3PL")) continue;
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
         if(!order){
@@ -120,7 +122,6 @@ export async function pullOrders(id){
                 total: o.orderTotal,
                 paid: true
             })
-            order = await order.save()
             let items = []
             for(let i of o.items){
                 if(i.sku && i.sku != ""){
@@ -130,9 +131,9 @@ export async function pullOrders(id){
                     let item
                     if(product) {
                         // Do something with the product
-                        console.log(product.sku, "product found")
+                        //console.log(product.sku, "product found")
                         let variant = product.variantsArray.find(v => v.sku == i.sku)[0]
-                        if(!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))[0]
+                        if(!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
                         if(!variant){
                             let sku = i.sku.split("_")
                             let blank
@@ -149,7 +150,7 @@ export async function pullOrders(id){
                             blank = await Blank.findOne({ code: blank }).populate("colors")
                             let design = await Design.findOne({ sku: designSku })
                             let blankColor = blank?.colors.filter(c => c.name.toLowerCase() == colorName.toLowerCase() || c.sku.toLowerCase() == colorName.toLowerCase())[0]
-                            let blankSize = blank?.sizes.filter(c => c.name.toLowerCase() == sizeName.toLowerCase() || c.name.toLowerCase() ==sizeFixer[sizeName].toLowerCase())[0]
+                            let blankSize = blank?.sizes.filter(c => c.name.toLowerCase() == sizeName.toLowerCase() || c.name.toLowerCase() ==sizeFixer[sizeName]?.toLowerCase())[0]
                             let DesignThreadColor = colors.filter(c => c.name.toLowerCase() == threadColor?.toLowerCase() || c.sku.toLowerCase() == threadColor?.toLowerCase())[0]
                             let designImages
                             if (DesignThreadColor) {

@@ -14,7 +14,7 @@ export const createImage = (colorName, styleCode, options, source, width=700) =>
             url = `https://images4.tshirtpalace.com/images/productImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?url=${options.url}&width=${width}`;
         }
         if(options.sku){
-            url = `https://images4.tshirtpalace.com/images/productImages/${options.sku}--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?width=${width}`;
+            url = `https://images4.tshirtpalace.com/images/productImages/${options?.sku}--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.webp?width=${width}`;
         }
         console.log(url, 'url')
         //console.log(url)
