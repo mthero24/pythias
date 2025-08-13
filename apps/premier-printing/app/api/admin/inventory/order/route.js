@@ -69,8 +69,16 @@ export async function POST(req=NextApiRequest){
                     inventory: i.inv._id,
                     quantity: i.order
                 })
-                let inv = await Inventory.findById(i.inv._id)
-                inv.pending_quantity += i.order
+                let inv = await Inventory.findById(i.inventory)
+                inv.quantity = inv.quantity + i.quantity
+                inv.pending_quantity = inv.pending_quantity - i.quantity
+                if (inv.orders) {
+                    order = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
+                    let items = await Items.find({ _id: { $in: order.items } }).sort({ _id: -1 })
+                    itemsToPrint.push(items)
+                }
+                inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())
+                printItems.push(...itemsToPrint)
                 await inv.save()
             }
         }
