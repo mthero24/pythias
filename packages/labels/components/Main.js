@@ -176,12 +176,30 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             if(source == "PP"){
               items.push(...useLabels[type]);
             }else{
-              items.push(...useLabels[type].filter(s=> s.inventory?.inventoryType != undefined));
+                let inventories = [];
+              for(let l of useLabels[type]){
+                if(l.inventory.inventoryType == "inventory" && !inventories.filter(i=> i._id.toString() == l.inventory.inventory._id.toString())[0]) inventories.push({...l.inventory.inventory})
+                else if(l.inventory.inventoryType == "productInventory" && !inventories.filter(i=> i._id.toString() == l.inventory.productInventory._id.toString())[0]) inventories.push({...l.inventory.productInventory})
+              }
+              for(let l of useLabels[type]){
+                let inventory 
+                if(l.inventoryType == "productInventory"){
+                  inventory = inventories.filter(i=> i._id.toString() == l.inventory.productInventory._id.toString())[0]
+                }else if(l.inventoryType != "inventory" ){
+                  inventory = inventories.filter(i => i._id.toString() == l.inventory.inventory._id.toString())[0]
+                } 
+                if(inventory.quantity > 0){
+                  items.push(l)
+                  inventory.quantity -= 1;
+                }
+              }
+              console.log(items.length)
             }
             items = Sort(items, source);
-        }
-        //console.log(items);
-        //console.log(items);
+            console.log(items.length, "items length")
+        } 
+        console.log(items);
+        console.log(items);
         let res = await axios.post("/api/production/print-labels", {items})
         console.log(res.data)
         if(res.data.error) alert(res.data.msg)
@@ -535,7 +553,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                                 color: i.inventory?.inventoryType == "productInventory" ? "#feb204" : i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0) > 0 ? "#228C22" : "#d0342c" : "#d0342c",
                               }}
                             >
-                              {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory.quantity - (i.inventory?.productInventory.onhold ? i.inventory?.productInventory.onhold : 0)}` : i.inventory?.inventoryType == "inventory" ? `${i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0) > 0 ? "In Stock" : "Out Of Stock"} ${i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0)} (pending: ${i.inventory?.inventory.pending_quantity})` : "Out Of Stock"}
+                              {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory.quantity - (i.inventory?.productInventory.onhold ? i.inventory?.productInventory.onhold : 0)}` : i.inventory?.inventoryType == "inventory" ? `${i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0) > 0 ? "In Stock" : "Out Of Stock"} ${i.inventory?.inventory.quantity - (i.inventory?.inventory.onhold ? i.inventory?.inventory.onhold : 0)} (pending: ${i.inventory?.inventory.pending_quantity}) (${i.inventory?.inventory.orders?.map(o => o.items.includes(i._id.toString())).filter(i => i != undefined)[0] ? "orderd" : "not orderd yet"})` : "Out Of Stock"}
                             </Typography>
                           </Grid2>
                           <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>

@@ -3,6 +3,7 @@ import { PremierPrinting } from "../lib/connection";
 const Schema = mongoose.Schema;
 import Color from "./Color";
 import Blank from "./Blanks"
+
 const SchemaObj = new Schema({
     quantity: { type: Number, required: true, default: 0 },
     inventory_id: { type: String, required: true, unique: true },
@@ -33,5 +34,13 @@ const SchemaObj = new Schema({
     sku: {type: String}, 
     onhold: {type: Number, default: 0},
     attached: [String],
+    orders: [
+        {
+            order: String,
+            items:[
+                String
+            ]
+        }
+    ]
 });
 export default PremierPrinting.model("InventoryV2", SchemaObj, "inventoryv2");

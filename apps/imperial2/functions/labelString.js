@@ -16,12 +16,12 @@ export const buildLabelData = async (item, i, doc, type, opts={}) => {
     if (item.inventory.inventoryType == "productInventory") {
       let productInventory = await productInventory.findOne({ _id: item.inventory.productInventory._id }).select("location quantity onHold");
       productInventory.quantity -= 1;
-      productInventory.onhold -= 1;
+      if(productInventory.onhold)productInventory.onhold -= 1;
       await productInventory.save();
     } else if (item.inventory.inventoryType == "inventory") {
       let inventory = await Inventory.findOne({ _id: item.inventory.inventory._id }).select("quantity onHold");
       inventory.quantity -= 1;
-      inventory.onhold -= 1;
+      if(inventory.onhold) inventory.onhold -= 1;
       await inventory.save();
     }
     let frontBackString = ``

@@ -84,8 +84,38 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 }
 export default async function Test(){
     console.log("Test Page")
-
-    // let items = await Items.find({ pieceId: "MN3KJNTXR" }).sort({ _id: -1 })
+    // let items = await Items.find({
+    //     blank: { $ne: null },
+    //     colorName: { $ne: null },
+    //     sizeName: { $ne: null },
+    //     designRef: { $ne: null },
+    //     design: { $ne: null },
+    //     labelPrinted: false,
+    //     canceled: false,
+    //     paid: true,
+    //     order: { $ne: null }
+    // }).populate("inventory.inventory inventory.productInventory").populate("order", "poNumber items marketplace date").lean()
+    // console.log(items.length, "items to print")
+    // for(let item of items){
+    //     if(item.inventory && item.inventory.inventoryType == "inventory" && item.inventory.inventory){
+    //         let inventory = await Inventory.findById(item.inventory.inventory)
+    //         if(inventory){
+    //            if(inventory.quantity - inventory.onhold > 0){
+    //                inventory.onhold += 1
+    //                await inventory.save()
+    //            }else{
+    //                 console.log("inventory onhold exceeds quantity")
+    //                 if(!inventory.attached) inventory.attached = []
+    //                 if(!inventory.attached.includes(item._id)) {
+    //                     inventory.attached.push(item._id)
+    //                     inventory.onhold += 1
+    //                 }
+    //                 await inventory.save()
+    //            }
+    //         }
+    //     }
+    // }
+    // let items = await Items.find({ pieceId: "FM9VUB3XR" }).sort({ _id: -1 })
     // console.log(items.length, "items without inventory")
     // for (let item of items) {
     //     console.log(item.inventory, "item inventory")
@@ -100,7 +130,7 @@ export default async function Test(){
     //         } else {
     //             let inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
     //             console.log(item.blank, item.color, item.size, "item details")
-    //             console.log(inventory?.quantity, "inventory quantity for item",)
+    //             console.log(inventory, "inventory quantity for item",)
     //             if (inventory) {
     //                 if (inventory.quantity > inventory.quantity - inventory.onhold) {
     //                     console.log(inventory.quantity, "inventory quantity for item", item._id.toString())
@@ -121,26 +151,26 @@ export default async function Test(){
     //             }
     //         }
     //     } //else {
-    //         console.log("has inventory")
-    //         if (item.inventory.inventoryType == "productInventory" && item.inventory.productInventory) {
-    //             let productInventory = await ProductInventory.findOne({ _id: item.inventory.productInventory })
-    //             if (productInventory) {
-    //                 if (!productInventory.onhold) productInventory.onhold = 0;
-    //                 productInventory.onhold += 1
-    //                 await productInventory.save()
-    //             }
-    //         } else if (item.inventory.inventoryType == "inventory" && item.inventory.inventory) {
-    //             console.log("has inventory")
-    //             let inventory = await Inventory.findOne({ _id: item.inventory.inventory })
-    //             if (inventory) {
-    //                 console.log('here')
-    //                 if (!inventory.onhold) inventory.onhold = 0;
-    //                 inventory.onhold += 1
-    //                 await inventory.save()
-    //             }
-    //         }
-    //     }
-        //await item.save()
-    //}
+    // //         console.log("has inventory")
+    // //         if (item.inventory.inventoryType == "productInventory" && item.inventory.productInventory) {
+    // //             let productInventory = await ProductInventory.findOne({ _id: item.inventory.productInventory })
+    // //             if (productInventory) {
+    // //                 if (!productInventory.onhold) productInventory.onhold = 0;
+    // //                 productInventory.onhold += 1
+    // //                 await productInventory.save()
+    // //             }
+    // //         } else if (item.inventory.inventoryType == "inventory" && item.inventory.inventory) {
+    // //             console.log("has inventory")
+    // //             let inventory = await Inventory.findOne({ _id: item.inventory.inventory })
+    // //             if (inventory) {
+    // //                 console.log('here')
+    // //                 if (!inventory.onhold) inventory.onhold = 0;
+    // //                 inventory.onhold += 1
+    // //                 await inventory.save()
+    // //             }
+    // //         }
+    // //     }
+    //     await item.save()
+    // }
     return <h1>test</h1>
 }
