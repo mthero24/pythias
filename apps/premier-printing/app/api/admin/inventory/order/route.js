@@ -5,6 +5,7 @@ import Blanks from "@/models/Blanks";
 import Items from "@/models/Items";
 import axios from "axios";
 export async function GET(){
+    console.log("Fetching inventory orders");
     let orders = await InventoryOrders.find({}).populate("locations.items.inventory")
     return NextResponse.json({error: false, orders})
 }
