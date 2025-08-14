@@ -127,7 +127,7 @@ export default async function Test(){
     //            }else{
     //                 console.log("inventory onhold exceeds quantity")
     //                 if(!inventory.attached) inventory.attached = []
-    //                 if(!inventory.attached.includes(item._id)) {
+    //                if (!inventory.attached.includes(item._id.toString()) && !inventory.orders.filter(o => o.items.includes(item._id).toString())[0]) {
     //                     inventory.attached.push(item._id)
                         
     //                 }
