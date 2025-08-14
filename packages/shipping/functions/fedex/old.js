@@ -214,6 +214,7 @@ export async function purchaseLabel({credentials, weight, poNumber, selectedShip
                             </v22:SpecialServicesRequested>`: ""}
                             ${((selectedShipping.packaging == "FEDEX_ENVELOPE" || selectedShipping.packaging == "FEDEX_PAK") && selectedShipping.name == "FEDEX_2_DAY") && !(selectedShipping.service == "FEDEX_2_DAY" && new Date(Date.now()).toString().split(" ")[0] == "Thu") && !saturdayDelivery ? `<v22:SpecialServicesRequested>
                             <v22:SpecialServiceTypes>FEDEX_ONE_RATE</v22:SpecialServiceTypes>
+                            <v22:SpecialServiceTypes>SATURDAY_DELIVERY</v22:SpecialServiceTypes>
                         </v22:SpecialServicesRequested>`: ""}
                         ${(((selectedShipping.packaging == "FEDEX_ENVELOPE" || selectedShipping.packaging == "FEDEX_PAK") && selectedShipping.name == "FEDEX_2_DAY") && (((selectedShipping.name == "FEDEX_2_DAY" && new Date(Date.now()).toString().split(" ")[0] == "Thu") && saturdayDelivery != false) || saturdayDelivery)) ? `<v22:SpecialServicesRequested>
                         <v22:SpecialServiceTypes>FEDEX_ONE_RATE</v22:SpecialServiceTypes>

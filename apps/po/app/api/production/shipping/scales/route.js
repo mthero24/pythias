@@ -11,6 +11,8 @@ export async function GET(req = NextApiRequest){
     }
     let res = await axios.get(`http://${process.env.localIP}/api/shipping/scales?station=${req.nextUrl.searchParams.get("station")}`, headers)
     console.log(res.data)
+    // res.data.error = false
+    // res.data.value = 8
     return NextResponse.json({...res.data})
     // let data = {error: false, value: 0}
     // let order = await Order.findById(req.nextUrl.searchParams.get("id")).populate({path: "items", populate: "styleV2"})

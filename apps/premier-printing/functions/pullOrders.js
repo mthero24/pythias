@@ -19,6 +19,7 @@ let colorFixer = {
     HNavy: "Heather Navy",
     "H.Navy": "Heather Navy",
     "TrueNavy": "True Navy",
+    HOTPINK: "Hot Pink",
 }
 
 const createItem = async (i, order, blank, color, threadColor, size, design, sku) => {
@@ -75,6 +76,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
                 item.inventory.inventory = inventory._id
                 inventory.onhold += 1
                 inventory.markModified("attached")
+                console.log(inventory.attached, "inventory to save")
                 await inventory.save()
             }
         }

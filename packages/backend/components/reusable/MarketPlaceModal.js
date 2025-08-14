@@ -106,6 +106,49 @@ export const csvFunctions = {
     }
 };
 
+
+
+const RemoveMarketPlaceModal = ({ open, setOpen, mp, removeMarketplaceConnection }) => {
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "35%",
+        height: "20%",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        overflowX: "auto",
+        overflowY: "none",
+    };
+
+    return (
+        <Modal
+            open={open}
+            onClose={() => setOpen(false)}
+            aria-labelledby="remove-marketplace-modal-title"
+            aria-describedby="remove-marketplace-modal-description"
+        >
+            <Box sx={style}>
+                <Typography id="remove-marketplace-modal-title" variant="h6" component="h2">
+                    Remove Marketplace Connection
+                </Typography>
+                <Typography id="remove-marketplace-modal-description" sx={{ mt: 2, marginBottom: "2%" }}>
+                    Are you sure you want to remove the connection to {mp.name}?
+                </Typography>
+                <Button variant="outlined" color="error" sx={{width: "50%", padding: "1%"}} onClick={() => removeMarketplaceConnection({mp})}>
+                    Remove
+                </Button>
+                <Button variant="outlined" color="primary" sx={{ width: "50%", padding: "1%" }} onClick={() => setOpen(false)}>
+                    Cancel
+                </Button>
+            </Box>
+        </Modal>
+    )
+}
+
 export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source, products, setProducts }) => {
     const [size, setSize] = useState([]);
     const [deleteModal, setDeleteModal] = useState(false);
@@ -115,6 +158,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const [marketplace, setMarketplace] = useState({ name: "", headers: [[]], defaultValues: {}, sizes: {} });
     const [connections, setConnections] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [openRemoveModal, setOpenRemoveModal] = useState(false);
     useEffect(() => {
         let sizeArray = [];
         for(let sizeArr of sizes? sizes : []) {
@@ -257,6 +301,55 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             setLoading(false);
         }
     }
+    const removeMarketplaceConnection = async ({mp, }) => {
+        setLoading(true);
+        let p = { ...product };
+        console.log(p, "dssd")
+        if (mp.connections && mp.connections.length > 0) {
+            console.log("Removing connections from product:", mp.connections);
+            let shopifyConnections = mp.connections.filter(c => c.displayName.toLowerCase().includes("shopify"))[0];
+            if (shopifyConnections) {
+                const headers = {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${shopifyConnections.accessToken}`
+                    }
+                }
+                setLoading(true);
+                if (p.ids && p.ids[shopifyConnections.displayName]) {
+                    let res = await axios.post("http://localhost:63133/webhooks/product/delete", { id: p.ids && p.ids[shopifyConnections.displayName], connection: shopifyConnections }, headers).catch(e => {
+                        console.log(e, "error from webhook");
+                        alert("Something Went Wron Please Try Again Later")
+                        setLoading(false);
+                    });
+                    if (p.ids && p.ids[shopifyConnections.displayName]) {
+                        delete p.ids[shopifyConnections.displayName];
+                    }
+                    for (let v of p.variantsArray) {
+                        if (v.ids && v.ids[shopifyConnections.displayName]) {
+                            delete v.ids[shopifyConnections.displayName];
+                        }
+                    }
+                }
+            }
+        }
+        p.marketPlacesArray = p.marketPlacesArray.filter(m => (m._id ? m._id.toString() : m?.toString()) !== mp?._id?.toString());
+        console.log(p.marketPlacesArray, "on Remove")
+        let res = await axios.post("/api/admin/products", { products: [p] });
+        setProduct({ ...p });
+        if (products && products.length > 0) {
+            let updatedProducts = products.map(prod => {
+                if (p._id.toString() === prod._id.toString()) {
+                    return { ...p };
+                }
+                return prod;
+            });
+            setProducts([...updatedProducts]);
+        }
+        setLoading(false);
+        setOpenRemoveModal(false);
+        setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} })
+    }
     return (
         <Modal
             open={open}
@@ -333,14 +426,14 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                                 }
                                                             }
                                                             setLoading(true);
-                                                            let res = await axios.post("http://localhost:59272/webhooks/products", {product, connection: c}, headers ).catch(e=> {
+                                                                let res = await axios.post("http://localhost:63133/webhooks/products", {product, connection: c}, headers ).catch(e=> {
                                                                 console.log(e, "error from webhook");
                                                                 alert("Something Went Wron Please Try Again Later")
                                                                 setLoading(false);
                                                             });
                                                             console.log(res, "res from webhook");
                                                             let p = { ...product };
-                                                            if(res.data){
+                                                            if(res && res.data){
                                                                 if(!p.ids) p.ids = {};
                                                                 p.ids[c?.displayName] = res.data.productId;
                                                                 for(let v of p.variantsArray){
@@ -369,54 +462,11 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                     
                                                 }
                                             })}
-                                            {product && product.marketPlacesArray && product.marketPlacesArray.filter(m=> m.toString() === mp._id.toString())[0] &&
-                                                <Button key={mp._id} fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
-                                                    setLoading(true);
-                                                    let p = { ...product };
-                                                    console.log(p, "dssd")
-                                                    if(mp.connections && mp.connections.length > 0) {
-                                                        console.log("Removing connections from product:", mp.connections);
-                                                    let shopifyConnections = mp.connections.filter(c => c.displayName.toLowerCase().includes("shopify"))[0];
-                                                    if(shopifyConnections) {
-                                                        const headers = {
-                                                            headers: {
-                                                                "Content-Type": "application/json",
-                                                                "Authorization": `Bearer ${shopifyConnections.accessToken}`
-                                                            }
-                                                        }
-                                                        setLoading(true);
-                                                        if(p.ids && p.ids[shopifyConnections.displayName]) {
-                                                            let res = await axios.post("http://localhost:59272/webhooks/product/delete", { id: p.ids && p.ids[shopifyConnections.displayName], connection: shopifyConnections }, headers).catch(e => {
-                                                                console.log(e, "error from webhook");
-                                                                alert("Something Went Wron Please Try Again Later")
-                                                                setLoading(false);
-                                                            });
-                                                            if(p.ids && p.ids[shopifyConnections.displayName]) {
-                                                                delete p.ids[shopifyConnections.displayName];
-                                                            }
-                                                            for(let v of p.variantsArray) {
-                                                                if(v.ids && v.ids[shopifyConnections.displayName]) {
-                                                                    delete v.ids[shopifyConnections.displayName];
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                p.marketPlacesArray = p.marketPlacesArray.filter(m => m?.toString() !== mp?._id?.toString());
-                                                console.log(p.marketPlacesArray, "on Remove")
-                                                let res = await axios.post("/api/admin/products", { products: [p] });
-                                                setProduct({...p});
-                                                if (products && products.length > 0) {
-                                                    let updatedProducts = products.map(prod => {
-                                                        if (p._id.toString() === prod._id.toString()) {
-                                                            return { ...p };
-                                                        }
-                                                        return prod;
-                                                    });
-                                                    setProducts([...updatedProducts]);
-                                                }
-                                                setLoading(false);
-                                            }}>Remove</Button>}
+                                            {product && product.marketPlacesArray && product.marketPlacesArray.filter(m=> (m._id? m._id.toString() : m.toString()) === mp._id.toString())[0] &&
+                                                <Button key={mp._id} fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{setMarketplace(mp); setOpenRemoveModal(true);}}>
+                                                    Remove
+                                                </Button>
+                                            }
                                         </Card>
                                     )
                                 }
@@ -465,6 +515,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                         </Box>
                         <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} />
                         <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
+                        <RemoveMarketPlaceModal open={openRemoveModal} setOpen={setOpenRemoveModal} mp={marketplace} removeMarketplaceConnection={removeMarketplaceConnection} />
                     </Box>
                 )}
             </Box>

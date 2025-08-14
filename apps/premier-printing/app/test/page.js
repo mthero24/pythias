@@ -23,6 +23,7 @@ export default async function Test(){
     //     if(items.length > 0) order.items = items
     //     await order.save()
     // }
-    
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "6650514796_1-A" })
+    console.log(orders)
     return <h1>test</h1>
 }
