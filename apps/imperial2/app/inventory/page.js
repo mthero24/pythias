@@ -4,6 +4,7 @@ import {Main} from "@pythias/inventory";
 import {getInv} from "@pythias/inventory"
 export const dynamic = 'force-dynamic'; 
 export default async function InventoryPage (searchParams){
+    console.log("searchParams", searchParams)
     let search = await searchParams;
     let page = search.page;
     let term = search.q
