@@ -1,5 +1,5 @@
 import { pullOrders } from "@/functions/pullOrders"
-import {Inventory, InventoryOrders, Products, Order, Items, ProductInventory, Blank, Design, Color, Item } from "@pythias/mongo"
+import {Inventory, InventoryOrders, Products, Order,  ProductInventory, Blank, Design, Color, Item } from "@pythias/mongo"
 import axios from "axios";
 import btoa from "btoa";
 import { getOrders, generatePieceID } from "@pythias/integrations";
@@ -8,6 +8,16 @@ import { isSingleItem } from "@/functions/itemFunctions";
 const CreateSku = async ({ blank, color, size, design, threadColor }) => {
     let sku = `${design.printType}_${design.sku}_${color.sku}_${size.name}_${blank.code}${threadColor ? `_${threadColor}` : ""}`;
     return sku;
+}
+let colorFixer = {
+    "White/Black": "Blk/Wht",
+    Sand: "Khaki",
+    "Red/Sand": "Red/Natl",
+    "Blue/Sand": "Ryl/Natl",
+    "Ash Grey": "Ash",
+    "Pink": "Light Pink, blossom, Blossom",
+    "Green/Sand": "Dk.Grn/Kha",
+    Blue: "Lt.Blue"
 }
 let sizeFixer = {
     "One Size Fits All": "OSFA",
@@ -58,33 +68,43 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
         item.canceled = true
     }
     let productInventory = await ProductInventory.findOne({ sku: i.sku })
-    if (productInventory) {
-        if (productInventory.quantity > 0) {
-            item.inventory = { type: "productInventory", ProductInventory: productInventory._id }
-            productInventory.quantity -= 1
+    if (productInventory && productInventory.quantity > productInventory.quantity - productInventory.onhold) {
+        if (productInventory.quantity > productInventory.quantity - productInventory.onhold) {
+            item.inventory.inventoryType = "productInventory"
+            item.inventory.productInventory = productInventory._id
+            productInventory.onhold += 1
             await productInventory.save()
+            await item.save();
         }
 
     } else {
         let inventory = await Inventory.findOne({ blank: blank._id, color: color ? color._id : null, sizeId: size?._id ? size._id.toString() : size?.toString() })
+        console.log(inventory, "inventory")
         if (inventory) {
-            if (inventory.quantity > 0) {
-                inventory.quantity -= 1
+            if (inventory.quantity > inventory.quantity - inventory.onhold) {
+                inventory.onhold += 1
                 await inventory.save()
-                item.inventory = { type: "inventory", Inventory: inventory._id }
+                if (!item.inventory) item.inventory = {}
+                item.inventory.inventoryType = "inventory"
+                item.inventory.inventory = inventory._id
+                await item.save();
             } else {
                 if (!inventory.attached) inventory.attached = []
-                inventory.attached.push(item._id)
+                if (!inventory.attached.includes(item._id.toString())) inventory.attached.push(item._id)
+                inventory.onhold += 1
+                if (!item.inventory) item.inventory = {}
+                item.inventory.inventoryType = "inventory"
+                item.inventory.inventory = inventory._id
                 await inventory.save()
+                await item.save();
             }
         }
     }
-    await item.save();
     return item;
 }
 export default async function Test(){
-    console.log("Test Page")
-    // //await pullOrders();
+    
+    await pullOrders();
     // let items = await Items.find({
     //     blank: { $ne: null },
     //     colorName: { $ne: null },

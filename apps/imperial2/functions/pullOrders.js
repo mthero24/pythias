@@ -206,7 +206,7 @@ export async function pullOrders(id){
                         } else if (design) {
                             designImages = design.images
                         }
-                        if(design, blank, blankSize, blankColor, DesignThreadColor){
+                        if(design && blank && blankSize && blankColor){
                             console.log("good sku")
                             item = await createItem({ i, order, design, blank, size: blankSize, color: blankColor, threadColor: DesignThreadColor, sku: i.sku })
                             items.push(item)
@@ -261,7 +261,7 @@ export async function pullOrders(id){
                         }
                     }
                 }else{
-                    console.log(i.sku, "no sku")
+                    console.log(i.sku, i, "no sku")
                     if(i.name.toLowerCase() != "seller discount" && i.name.toLowerCase() != "platform discount"){ 
                         let item = new Item({
                             pieceId: await generatePieceID(),
