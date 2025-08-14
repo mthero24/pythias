@@ -74,6 +74,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
                 item.inventory.inventoryType = "inventory"
                 item.inventory.inventory = inventory._id
                 inventory.onhold += 1
+                inventory.markModified("attached")
                 await inventory.save()
             }
         }
