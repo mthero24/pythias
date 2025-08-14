@@ -7,6 +7,8 @@ let colorFixer = {
     LtGreen: "Light Green",
     BLUEJEAN: "Blue Jean",
     ICEBLUE: "Ice Blue",
+    IceBlue: "Ice Blue",
+    "Armmy": "Army Green",
     "H. Grey": "Heather Grey",
     "H.Grey": "Heather Grey",
     HGrey: "Heather Grey",
