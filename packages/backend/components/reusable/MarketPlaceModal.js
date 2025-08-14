@@ -313,6 +313,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                     setLoading(true);
                                                     let res = await axios.post("http://localhost:56166/webhooks/products", {product, connection: c}, headers ).catch(e=> {
                                                         console.log(e, "error from webhook");
+                                                        alert("Something Went Wron Please Try Again Later")
                                                         setLoading(false);
                                                     });
                                                     console.log(res, "res from webhook");
@@ -333,14 +334,27 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                 }
                                             }}>{product && product.ids && product?.ids[c?.displayName]? "Update": "Send"}</Button>)}
                                             <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
+                                                setLoading(true);
                                                 let p = { ...product };
                                                 console.log(p, "dssd")
                                                 if(mp.connections && mp.connections.length > 0) {
                                                     console.log("Removing connections from product:", mp.connections);
+                                                    let shopifyConnections = mp.connections.filter(c => c.displayName.toLowerCase().includes("shopify"))[0];
+                                                    if(shopifyConnections) {
+                                                        if(p.ids && p.ids[shopifyConnections.displayName]) {
+                                                            delete p.ids[shopifyConnections.displayName];
+                                                        }
+                                                        for(let v of p.variantsArray) {
+                                                            if(v.ids && v.ids[shopifyConnections.displayName]) {
+                                                                delete v.ids[shopifyConnections.displayName];
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                                 p.marketPlacesArray = p.marketPlacesArray.filter(m => m?.toString() !== mp?._id?.toString());
                                                 let update = await axios.post("/api/admin/products", { products: [p] })
                                                 setProduct({...p});
+                                                setLoading(false);
                                             }}>Remove</Button>
                                         </Card>
                                     )
@@ -374,7 +388,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName}</Typography>
                                                         <Divider sx={{marginBottom: "2%"}} />
                                                         {product.ids && product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && <Typography>Shopify Id: {product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>}
-                                                        {product.variantsArray.map(v=>(
+                                                        {product.ids && product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && product.variantsArray.map(v=>(
                                                             <Typography>{v.sku}: {v.ids && v.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>
                                                         ))}
                                                     </Card>}

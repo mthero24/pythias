@@ -37,17 +37,15 @@ export async function LabelsData(){
         let inventoryArray = await Inventory.find({
             inventory_id: { $in: inventory_ids },
             })
-            .select("quantity pending_quantity inventory_id row unit shelf bin")
+            .select("quantity pending_quantity inventory_id row unit shelf bin onhold color color_name size_name style_code barcode_id")
             .lean();
         labels[k] = labels[k].map(s=> { 
             let inv = inventoryArray.filter(i => i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0]
-            if(inv && inv.quantity > 0){
-                s.inventory = {
-                    inventoryType: "inventory", 
-                    inventory: inventoryArray.filter(i=> i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0]
-                }; 
-            }
-            console.log(s.inventory? s.inventory: inv)
+            
+            s.inventory = {
+                inventoryType: "inventory", 
+                inventory: inventoryArray.filter(i=> i.color_name == s.colorName && i.size_name == s.sizeName && i.style_code == s.styleCode)[0]
+            }; 
             return {...s}
         })
         //labels[k].map(l=>{console.log(l.inventory, encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`), k)})
