@@ -369,8 +369,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                     
                                                 }
                                             })}
-                                            {console.log("product.marketPlacesArray", product.marketPlacesArray && product.marketPlacesArray.filter(m => m.toString() === mp._id.toString())[0])}
-                                            {product.marketPlacesArray && product.marketPlacesArray.filter(m=> m.toString() === mp._id.toString())[0] &&
+                                            {product && product.marketPlacesArray && product.marketPlacesArray.filter(m=> m.toString() === mp._id.toString())[0] &&
                                                 <Button key={mp._id} fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
                                                     setLoading(true);
                                                     let p = { ...product };
