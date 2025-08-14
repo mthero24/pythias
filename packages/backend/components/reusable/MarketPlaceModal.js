@@ -311,7 +311,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         }
                                                     }
                                                     setLoading(true);
-                                                    let res = await axios.post("http://localhost:55283/webhooks/products", {product, connection: c}, headers );
+                                                    let res = await axios.post("http://localhost:56166/webhooks/products", {product, connection: c}, headers );
                                                     console.log(res, "res from webhook");
                                                     let p = { ...product };
                                                     if(res.data){

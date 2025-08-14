@@ -16,6 +16,7 @@ let colorFixer = {
     "HRED": "Heather Red",
     HNavy: "Heather Navy",
     "H.Navy": "Heather Navy",
+    "TrueNavy": "True Navy",
 }
 
 const createItem = async (i, order, blank, color, threadColor, size, design, sku) => {
