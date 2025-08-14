@@ -2,6 +2,22 @@ import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Invento
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import Blanks from "@/models/Blanks";
 import { options } from "pdfkit";
+
+let colorFixer = {
+    LtGreen: "Light Green",
+    BLUEJEAN: "Blue Jean",
+    ICEBLUE: "Ice Blue",
+    "H. Grey": "Heather Grey",
+    "H.Grey": "Heather Grey",
+    HGrey: "Heather Grey",
+    HGREY: "Heather Grey",
+    HRed: "Heather Red",
+    "H.Red": "Heather Red",
+    "HRED": "Heather Red",
+    HNavy: "Heather Navy",
+    "H.Navy": "Heather Navy",
+}
+
 const createItem = async (i, order, blank, color, threadColor, size, design, sku) => {
     console.log(size, "size")
     let item = new Item({ pieceId: await generatePieceID(), 
@@ -142,8 +158,7 @@ export async function pullOrders(){
                                 size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.replace("Y", "").toLowerCase())[0]   
                             }else{
                                 blank = await Blank.findOne({code: i.sku?.split("_")[0]})
-                                color = await Color.findOne({name: i.sku?.split("_")[1]})
-                                if(!color) await Color.findOne({$or: [{name: i.sku?.split("_")[2]}, {sku: i.sku?.split("_")[2]}]})
+                                color = await Color.findOne({$or: [{name: i.sku?.split("_")[1]}, {sku: i.sku?.split("_")[1]}, {name: colorFixer[i.sku?.split("_")[1]]}]})
                                 if(blank){
                                     size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase())[0] 
                                     if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase())[0]
