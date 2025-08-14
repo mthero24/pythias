@@ -14,7 +14,10 @@ const updateFold = (blank)=>{
   if (!blank.fold) blank.fold = [];
   for(let s of blank.sizes){
     let fold = blank.fold.filter(f=> f.size.toString() == s._id)[0]
-    if(fold) newFold.push(fold)
+    if(fold) {
+      fold.sizeName = s.name
+      newFold.push(fold)
+    }
     else{
       newFold.push({
         size: s._id,
@@ -50,6 +53,10 @@ const updateEnvelopes = (blank)=>{
           width: 11,
           height: 14
         })
+      }else{
+        let envelope = newEnvelopes.filter(e => e.size.toString() == s?._id?.toString() && e.placement == loc)[0];
+        envelope.sizeName = s.name;
+        console.log(envelope, "envelope")
       }
     }
   }
