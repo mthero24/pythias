@@ -104,8 +104,8 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 }
 export default async function Test(){
     
-    await pullOrders();
-    // let items = await Items.find({
+    //await pullOrders();
+    // let items = await Item.find({
     //     blank: { $ne: null },
     //     colorName: { $ne: null },
     //     sizeName: { $ne: null },
@@ -116,7 +116,7 @@ export default async function Test(){
     //     paid: true,
     //     order: { $ne: null }
     // }).populate("inventory.inventory inventory.productInventory").populate("order", "poNumber items marketplace date").lean()
-    // console.log(items.length, "items to print")
+    // // console.log(items.length, "items to print")
     // for(let item of items){
     //     if(item.inventory && item.inventory.inventoryType == "inventory" && item.inventory.inventory){
     //         let inventory = await Inventory.findById(item.inventory.inventory)

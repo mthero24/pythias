@@ -77,7 +77,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
                 item.inventory.inventory = inventory._id
             } else {
                 if (!inventory.attached) inventory.attached = []
-                if (!inventory.attached.includes(item._id.toString())) inventory.attached.push(item._id)
+                if (!inventory.attached.includes(item._id)) inventory.attached.push(item._id)
                 inventory.onhold += 1
                 if (!item.inventory) item.inventory = {}
                 item.inventory.inventoryType = "inventory"

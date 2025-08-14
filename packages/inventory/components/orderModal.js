@@ -175,7 +175,7 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                         </AccordionDetails>
                     </Accordion>
                 ))}
-                    
+                <Typography sx={{ marginTop: "2%" }}>Total Item To Order: {needsOrdered.map(no => no.order).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}</Typography> 
                 <Divider sx={{marginTop: "3%"}}/>
                 <Button onClick={()=>{sub()}} fullWidth>Submit</Button>
             </Box>
