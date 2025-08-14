@@ -48,6 +48,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         options: i.options[0]?.value 
     })
     console.log(i, "item to save")
+    item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: item.sku })
     if (productInventory && productInventory.quantity - productInventory.onhold > 0) {
         if (productInventory.quantity > 0 - productInventory.onhold > 0) {

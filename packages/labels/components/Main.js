@@ -18,6 +18,8 @@ import axios from "axios";
 import {Sort} from "../functions/sort";
 import { UntrackedLabels } from "./untracked";
 import { Footer } from "@pythias/backend";
+import { set } from "mongoose";
+import LoaderOverlay from "./LoaderOverlay";
 export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [useLabels, setLabels] = useState(labels);
     const [rePull, setRePulls] = useState(rePulls);
@@ -33,11 +35,12 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [printTypeSelected, setPrintTypeSelected] = useState("Select")
     const [styleCodeSelected, setStyleCodeSelected] = useState("Select")
     const [styleCodes, setStyleCodes] = useState([])
+    const [loading, setLoading] = useState(false)
     useEffect(()=>{
       let pt = []
       let sc = []
       for(let lab of labels["Standard"]){
-        if(!pt.includes(lab.type.toUpperCase())) pt.push(lab.type.toUpperCase())
+        if(!pt.includes(lab.type?.toUpperCase())) pt.push(lab.type?.toUpperCase())
         if(!sc.includes(lab.styleCode)) sc.push(lab.styleCode)
       }
       setPrintTypes(pt)
@@ -163,6 +166,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
       setSelected([...sel])
     }
     const print = async (type)=>{
+      setLoading(true)
         let items = [];
         if(type == "selected"){
             Object.keys(useLabels).map(l=>{
@@ -204,6 +208,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         console.log(res.data)
         if(res.data.error) alert(res.data.msg)
         else{
+          setLoading(false)
             setLabels(res.data.labels);
             setBatches(res.data.batches);
             setGiftLabels(res.data.giftMessages)
@@ -626,6 +631,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
               </Grid2>
             ))}
         </Grid2>
+        {loading && <LoaderOverlay />}
       </Box>
         <Footer />
       </>

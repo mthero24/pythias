@@ -52,6 +52,7 @@ export async function GET(req=NextApiRequest){
     }
     return NextResponse.json({error: true, msg: "User does not exist"});
 }
+
 // async function products(req, res){
 //     console.log(req.user)
 //     if(req.method == "GET"){

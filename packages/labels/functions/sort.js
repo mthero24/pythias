@@ -21,8 +21,6 @@ export function Sort(list, source){
         if (a.shippingType?.toUpperCase() < b.shippingType?.toUpperCase()) return -1;
         if (a.vendor?.toUpperCase() > b.vendor?.toUpperCase()) return 1;
         if (a.vendor?.toUpperCase() < b.vendor?.toUpperCase()) return -1;
-        if(a.designRef?.sku?.toUpperCase() > b.designRef?.sku?.toUpperCase()) return 1
-        if(a.designRef?.sku?.toUpperCase()< b.designRef?.sku?.toUpperCase()) return -1
         if(a.styleCode?.toUpperCase() > b.styleCode?.toUpperCase()) return 1
         if(a.styleCode?.toUpperCase() < b.styleCode?.toUpperCase()) return -1
         if(a.colorName?.toUpperCase() > b.colorName?.toUpperCase()) return 1

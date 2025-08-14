@@ -43,7 +43,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
         colorName: color?.name,
         color: color,
         size: size,
-        design: threadColor ? design.threadImages[threadColor?.name] : design.images,
+        design: threadColor ? design?.threadImages[threadColor?.name] : design?.images,
         designRef: design,
         order: order._id,
         shippingType: order.shippingType,
@@ -51,12 +51,13 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
         status: order.status,
         name: i.name,
         date: order.date,
-        type: design.printType,
+        type: design?.printType,
         options: i.options[0]?.value
     })
     if (order.status == "cancelled") {
         item.canceled = true
     }
+    item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: i.sku })
     if (productInventory && productInventory.quantity > productInventory.quantity - productInventory.onhold) {
         if (productInventory.quantity > productInventory.quantity - productInventory.onhold) {
@@ -77,7 +78,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
                 item.inventory.inventory = inventory._id
             } else {
                 if (!inventory.attached) inventory.attached = []
-                if (!inventory.attached.includes(item._id)) inventory.attached.push(item._id)
+                inventory.attached.push(item._id)
                 inventory.onhold += 1
                 if (!item.inventory) item.inventory = {}
                 item.inventory.inventoryType = "inventory"
