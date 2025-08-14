@@ -311,7 +311,10 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         }
                                                     }
                                                     setLoading(true);
-                                                    let res = await axios.post("http://localhost:56166/webhooks/products", {product, connection: c}, headers );
+                                                    let res = await axios.post("http://localhost:56166/webhooks/products", {product, connection: c}, headers ).catch(e=> {
+                                                        console.log(e, "error from webhook");
+                                                        setLoading(false);
+                                                    });
                                                     console.log(res, "res from webhook");
                                                     let p = { ...product };
                                                     if(res.data){
@@ -322,14 +325,23 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                             v.ids[c?.displayName] = res.data.variantIds.filter(vId=> vId.sku === v.sku)[0]?.id;
                                                         }
                                                         let update = await axios.post("/api/admin/products", { products: [p] });
-                                                        setProduct(p);
+                                                        setProduct({...p});
                                                         setLoading(false);
                                                     }else{
                                                         setLoading(false)
                                                     }
                                                 }
                                             }}>{product && product.ids && product?.ids[c?.displayName]? "Update": "Send"}</Button>)}
-                                            <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }}>Remove</Button>
+                                            <Button fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
+                                                let p = { ...product };
+                                                console.log(p, "dssd")
+                                                if(mp.connections && mp.connections.length > 0) {
+                                                    console.log("Removing connections from product:", mp.connections);
+                                                }
+                                                p.marketPlacesArray = p.marketPlacesArray.filter(m => m?.toString() !== mp?._id?.toString());
+                                                let update = await axios.post("/api/admin/products", { products: [p] })
+                                                setProduct({...p});
+                                            }}>Remove</Button>
                                         </Card>
                                     )
                                 }
