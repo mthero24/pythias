@@ -72,6 +72,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
         if (inventory) {
             if (inventory.quantity > inventory.quantity - inventory.onhold) {
                 inventory.onhold += 1
+                if(!item.inventory.inStock.includes(item._id.toString())) item.inventory.inStock.push(item._id)
                 await inventory.save()
                 if (!item.inventory) item.inventory = {}
                 item.inventory.inventoryType = "inventory"

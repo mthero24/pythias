@@ -1,5 +1,5 @@
 import { pullOrders } from "@/functions/pullOrders"
-import {Inventory, InventoryOrders, Products, Order,  ProductInventory, Blank, Design, Color, Item } from "@pythias/mongo"
+import {Inventory, InventoryOrders, Products, Order,  ProductInventory, Blank, Design, Color, Item, } from "@pythias/mongo"
 import axios from "axios";
 import btoa from "btoa";
 import { getOrders, generatePieceID } from "@pythias/integrations";
@@ -105,37 +105,34 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 export default async function Test(){
     
    //await pullOrders();
-    // let items = await Item.find({
-    //     blank: { $ne: null },
-    //     colorName: { $ne: null },
-    //     sizeName: { $ne: null },
-    //     designRef: { $ne: null },
-    //     design: { $ne: null },
-    //     labelPrinted: false,
-    //     canceled: false,
-    //     paid: true,
-    //     order: { $ne: null }
-    // }).populate("inventory.inventory inventory.productInventory").populate("order", "poNumber items marketplace date").lean()
-    // // console.log(items.length, "items to print")
-    // for(let item of items){
-    //     if(item.inventory && item.inventory.inventoryType == "inventory" && item.inventory.inventory){
-    //         let inventory = await Inventory.findById(item.inventory.inventory)
-    //         if(inventory){
-    //            if(inventory.quantity - inventory.onhold > 0){
-                   
-    //                await inventory.save()
-    //            }else{
-    //                 console.log("inventory onhold exceeds quantity")
-    //                 if(!inventory.attached) inventory.attached = []
-    //                if (!inventory.attached.includes(item._id.toString()) && !inventory.orders.filter(o => o.items.includes(item._id).toString())[0]) {
-    //                     inventory.attached.push(item._id)
-                        
-    //                 }
-    //                 await inventory.save()
-    //            }
-    //         }
+    // let inventoryOrder = await InventoryOrders.findOne({ _id: "689e3828532ce9b3d575f1f2"}).populate("locations.items.inventory")
+    // console.log(inventoryOrder, "inventory order")
+    // let items = 0
+    // let orderd = 0
+    // let attached = 0
+    // for(let location of inventoryOrder.locations){
+    //     for(let item of location.items){
+    //         orderd += item.quantity
+    //         attached += item.inventory.attached.length
+    //         let ord = item.inventory.orders.filter(o => o.order.toString() == inventoryOrder._id.toString())[0]
+    //         //console.log(ord, "ord")
+    //         items += ord.items.length
+    //         // if(item.quantity > ord.items.length){
+    //         //     console.log(item.quantity, ord.items.length, item.inventory.attached.length, "item quantity greater than order items length")
+    //         //     if (item.inventory.attached.length > 0){
+    //         //         let itemsMoved = []
+    //         //         for (let i = 0; i < item.quantity - ord.items.length; i++) {
+    //         //             ord.items.push(item.inventory.attached[i])
+    //         //             itemsMoved.push(item.inventory.attached[i])
+    //         //         }
+    //         //         item.inventory.attached = item.inventory.attached.filter(i => !itemsMoved.includes(i))
+    //         //         item.inventory.markModified("attached orders");
+    //         //         await item.inventory.save()
+    //         //     }
+    //         // }
     //     }
     // }
+    // console.log(orderd, items, attached, "orderd items")
     // let items = await Items.find({ "inventory.inventoryType": null, labelPrinted: false }).sort({ _id: -1 })
     // console.log(items.length, "items without inventory")
     // for(let i of items){

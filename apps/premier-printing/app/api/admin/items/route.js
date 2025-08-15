@@ -14,28 +14,21 @@ export async function PUT(req = NextApiRequest) {
         sku.size = item.sizeName
         await sku.save()
     }
-    console.log(item.inventory?.inventoryType, item.blank.code, item.color?.name, item?.size)
-    if (!item.inventory?.inventoryType && item.blank && item.color && item.size) {
+    console.log(item.inventory?.inventoryType, item.blank.code, item.color?.name, item?.sizeName)
+    if (!item.inventory?.inventoryType && item.blank && item.color && item.sizeName) {
         let size = item.blank.sizes.filter(s => s._id.toString() == item.size.toString())[0]
         let inv = await Inventory.findOne({ blank: item.blank._id, color: item.color?._id, sizeId: size?._id })
-       //console.log(inv, "inv")
-        if (inv && inv.quantity > 0) {
+        if(!inv) inv = await Inventory.findOne({ style_code: item.styleCode, color_name: item.colorName, size_name: item.sizeName, })
+       console.log(inv, "inv")
+        if (inv) {
             item.inventory = {
                 inventoryType: "inventory",
                 inventory: inv._id,
                 productInventory: null,
             }
             item = await item.save()
-            inv.quantity -= 1
             await inv.save()
-        } else {
-            if (!inv.attached) inv.attached = []
-            if (!inv.attached.includes(item._id)) {
-                console.log("attaced")
-                inv.attached.push(item._id)
-                await inv.save()
-            }
-        }
+        } 
     }
     console.log(item.inventory, "item after update")
     let order = await Order.findOne({ _id: item.order }).populate("items").lean()

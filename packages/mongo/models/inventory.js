@@ -34,6 +34,7 @@ const SchemaObj = new Schema({
     sku: {type: String}, 
     onhold: {type: Number, default: 0},
     attached: [String],
+    inStock: [String],
     orders: [
         {
             order: String,

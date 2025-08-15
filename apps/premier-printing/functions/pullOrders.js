@@ -24,6 +24,7 @@ let colorFixer = {
     DkHeather: "Dark Heather",
     "H.Maroon": "Heather Maroon",
     HMaroon: "Heather Maroon",
+    HMAROON: "Heather Maroon",
     "Lt.Pink": "Light Pink",
     LtPink: "Light Pink",
     "DUST": "Dust",
@@ -61,6 +62,8 @@ let colorFixer = {
     FloBlue: "Flo Blue",
     "WhiteSpot": "White Spot",
     Crunchberry: "Crunchberry",
+    OCEAN: "Ocean",
+    GREY: "Grey",
 
 }
 const sizeFixer = {
@@ -110,6 +113,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         if (inventory) {
             if (inventory.quantity > 0 - inventory.onhold > 0) {
                 console.log(inventory.quantity, "inventory quantity for item", item._id.toString())
+                inventory.inStock.push(item._id)
                 inventory.onhold += 1
                 await inventory.save()
                 if (!item.inventory) item.inventory = {}

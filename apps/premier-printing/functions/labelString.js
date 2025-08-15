@@ -23,6 +23,8 @@ export const buildLabelData = async (item, i, returnBin, opts={},) => {
       if(inventory){
         inventory.quantity -= 1;
         inventory.onhold -= 1;
+        inventory.inStock = inventory.inStock.filter(i => i.toString() != item._id.toString());
+        inventory.attached = inventory.attached.filter(i => i.toString() != item._id.toString());
         await inventory.save();
       }
     }
