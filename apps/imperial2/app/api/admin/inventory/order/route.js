@@ -19,8 +19,8 @@ export async function PUT(req=NextApiRequest){
                 inv.quantity = inv.quantity + i.quantity
                 inv.pending_quantity = inv.pending_quantity - i.quantity
                 if(inv.orders){
-                    order = inv.orders.filter(o=> o.order.toString() == order._id.toString())[0]
-                    let items = await Items.find({_id: {$in: order.items}}).sort({_id: -1})
+                    let o = inv.orders.filter(o=> o.order.toString() == order._id.toString())[0]
+                    let items = await Items.find({_id: {$in: o.items}}).sort({_id: -1})
                     itemsToPrint.push(items)
                 }
                 inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())

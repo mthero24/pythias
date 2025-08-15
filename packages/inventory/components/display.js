@@ -7,6 +7,7 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
     const [orders, setOrders] = useState([])
     const [check,setCheck] = useState(false)
     const [showItems, setShowItems] = useState("")
+    let [orderLocation, setOrderLocation] = useState({})
     useEffect(()=>{
        const getOrders = async ()=>{
             let res = await axios.get("/api/admin/inventory/order")
@@ -74,7 +75,7 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                         </AccordionSummary>
                                         <AccordionDetails>
                                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end" }}>
-                                                {!l.received && <Button onClick={() => { setCheck(true) }}>Receive</Button>}
+                                                {!l.received && <Button onClick={() => { setOrderLocation({ o, l }); setCheck(true) }}>Receive</Button>}
                                                 {l.received && <Typography fontSize="1.3rem" fontWeight="bold">Already Received</Typography>}
                                             </Box>
                                             <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -91,7 +92,7 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                                             <Typography>{l.name}</Typography>
                                                         </Grid2>
                                                         <Grid2 size={1}>
-                                                            <ArrowDropDownIcon sx={{ cursor: "pointer" }} onClick={() => { setOpen(i._id.toString()); console.log(i.inventory.orders, "orders")}} />
+                                                            <ArrowDropDownIcon sx={{ cursor: "pointer" }} onClick={() => {setOpen(i._id.toString()); console.log(i.inventory.orders, "orders")}} />
                                                         </Grid2>
                                                         {open == i._id.toString() && i.inventory.orders?.filter(or => or.order.toString() == o._id.toString()).map((or, index) => (
                                                             <Grid2 key={index} size={12}>
@@ -112,13 +113,13 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                     </Grid2>
                 ))}  
             </Grid2>
-            <CheckModal open={check} setOpen={setCheck} markReceived={markReceived}/>
+            <CheckModal open={check} setOpen={setCheck} markReceived={markReceived} orderLocation={orderLocation} />
         </Box>
       </Modal>
     )
 }
 
-const CheckModal = ({open, setOpen, markReceived})=>{
+const CheckModal = ({open, setOpen, markReceived, orderLocation})=>{
     const style = {
         position: 'absolute',
         top: '50%',
@@ -143,7 +144,7 @@ const CheckModal = ({open, setOpen, markReceived})=>{
             <Divider sx={{marginBottom: "3%"}}/>
             <Box>
                 <Typography>Make sure you have the correct order selected.</Typography>
-                <Button onClick={()=>{markReceived()}}>Mark Received</Button>
+                <Button onClick={()=>{markReceived({order: orderLocation.o, location: orderLocation.l})}}>Mark Received</Button>
                 <Button onClick={()=>{setOpen(false)}}>Cancel</Button>
             </Box>
         </Box>
