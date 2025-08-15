@@ -70,9 +70,11 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
     } else {
         let inventory = await Inventory.findOne({ blank: blank._id, color: color ? color._id : null, sizeId: size?._id? size._id.toString() : size?.toString() })
         if (inventory) {
-            if (inventory.quantity > inventory.quantity - inventory.onhold) {
+            if (!inventory.inStock) inventory.inStock = []
+            if (inventory.quantity > inventory.quantity - inventory.inStock.length) {
                 inventory.onhold += 1
-                if(!item.inventory.inStock.includes(item._id.toString())) item.inventory.inStock.push(item._id)
+                if(!inventory.inStock) inventory.inStock = []
+                item.inventory.inStock.push(item._id)
                 await inventory.save()
                 if (!item.inventory) item.inventory = {}
                 item.inventory.inventoryType = "inventory"

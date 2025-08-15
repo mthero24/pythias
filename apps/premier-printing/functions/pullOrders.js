@@ -111,8 +111,10 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         let inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
         //console.log(inventory?.quantity, "inventory quantity for item",)
         if (inventory) {
-            if (inventory.quantity > 0 - inventory.onhold > 0) {
+            if (!inventory.inStock) inventory.inStock = []
+            if (inventory.quantity > inventory.quantity - inventory.inStock.length) {
                 console.log(inventory.quantity, "inventory quantity for item", item._id.toString())
+                if(!inventory.inStock) inventory.inStock = []
                 inventory.inStock.push(item._id)
                 inventory.onhold += 1
                 await inventory.save()

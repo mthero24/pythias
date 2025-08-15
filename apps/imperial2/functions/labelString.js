@@ -22,8 +22,8 @@ export const buildLabelData = async (item, i, doc, type, opts={}) => {
       let inventory = await Inventory.findOne({ _id: item.inventory.inventory._id }).select("quantity onHold");
       inventory.quantity -= 1;
       if(inventory.onhold) inventory.onhold -= 1;
-      inventory.inStock = inventory.inStock.filter(i => i.toString() != item._id.toString());
-      inventory.attached = inventory.attached.filter(i => i.toString() != item._id.toString());
+      if (inventory.inStock)inventory.inStock = inventory.inStock.filter(i => i.toString() != item._id.toString());
+      if (inventory.attached)inventory.attached = inventory.attached.filter(i => i.toString() != item._id.toString());
       await inventory.save();
     }
     let frontBackString = ``
