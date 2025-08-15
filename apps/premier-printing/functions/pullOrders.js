@@ -1,14 +1,14 @@
 import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory } from "@pythias/mongo";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import Blanks from "@/models/Blanks";
-import { options } from "pdfkit";
 
 let colorFixer = {
     LtGreen: "Light Green",
     BLUEJEAN: "Blue Jean",
+    "BlueJean": "Blue Jean",
     ICEBLUE: "Ice Blue",
     IceBlue: "Ice Blue",
-    "Armmy": "Army Green",
+    "Army": "Army Green",
     "H. Grey": "Heather Grey",
     "H.Grey": "Heather Grey",
     HGrey: "Heather Grey",
@@ -19,9 +19,56 @@ let colorFixer = {
     HNavy: "Heather Navy",
     "H.Navy": "Heather Navy",
     "TrueNavy": "True Navy",
+    TRUENAVY: "True Navy",
     HOTPINK: "Hot Pink",
-}
+    DkHeather: "Dark Heather",
+    "H.Maroon": "Heather Maroon",
+    HMaroon: "Heather Maroon",
+    "Lt.Pink": "Light Pink",
+    LtPink: "Light Pink",
+    "DUST": "Dust",
+    "WHITE": "White",
+    CAROLINA: "Carolina",
+    GRAPHITE: "Graphite",
+    LTGREEN: "Light Green",
+    BERRY: "Berry",
+    CHOCOLATE: "Chocolate",
+    "PINK": "Pink",
+    RASPBERRY: "Raspberry",
+    "CREAM": "Ceam",
+    "MINT": "Mint",
+    "SEAFOAM": "Seafoam",
+    GRASS: "Grass",
+    VintageMustard: "Vintage Mustard",
+    "Vintage/Black": "Vintage Black",
+    BLACK: "Black",
+    "CAMEL": "Camel",
+    "PEPPER": "Pepper",
+    "CARDINAL": "Cardinal",
+    "FOREST": "Forest",
+    "Royal": "Royal",
+    NeonViolet: "Neon Violet",
+    "NEONVIOLET": "Neon Violet",
+    BlueSpruce: "Blue Spruce",
+    "White/Seafoam": "White Seafoam",
+    "White/Black": "White Black",
+    "White/Red": "White Red",
+    "White/Charcoal": "White Charcoal",
+    "White/Coral": "White Coral",
+    "White/Red/Royal": "White Red Royal",
+    "White/Royal": "White Royal",
+    "White/HotPink": "White Hot Pink",
+    FloBlue: "Flo Blue",
+    "WhiteSpot": "White Spot",
+    Crunchberry: "Crunchberry",
 
+}
+const sizeFixer = {
+    "5/6": "5/6T",
+    "5T": "5/6T",
+    "15x16": "One Size",
+    "YOUTH": "Youth",
+}
 const createItem = async (i, order, blank, color, threadColor, size, design, sku) => {
     console.log(size, "size")
     let item = new Item({ pieceId: await generatePieceID(), 
@@ -95,7 +142,7 @@ export async function pullOrders(){
             order = new Order({orderId: o.orderId, poNumber: o.orderNumber, orderKey: o.orderKey, date: o.orderDate, status: o.orderStatus,
                 uniquePo: `${o.orderNumber}-${o.orderId}-${o.advancedOptions.source? o.advancedOptions.source: o.billTo.name}`,
                 shippingAddress: {
-                    name: o.shipTo.name,
+                    name: o.shipTo.name? o.shipTo.name: "not provided",
                     address1: o.shipTo.street1? o.shipTo.street1: "not provided",
                     address2: o.shipTo.street2,
                     city: o.shipTo.city? o.shipTo.city: "not provided",
@@ -164,11 +211,11 @@ export async function pullOrders(){
                                 threadColor = await Color.findOne({ _id: sku.threadColor })
                                 size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.replace("Y", "").toLowerCase())[0]   
                             }else{
-                                blank = await Blank.findOne({code: i.sku?.split("_")[0]})
+                                blank = await Blank.findOne({code: i.sku?.split("_")[0] == "TLS"? "RSTLS": i.sku?.split("_")[0]})
                                 color = await Color.findOne({$or: [{name: i.sku?.split("_")[1]}, {sku: i.sku?.split("_")[1]}, {name: colorFixer[i.sku?.split("_")[1]]}]})
                                 if(blank){
-                                    size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase())[0] 
-                                    if(!size) size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase())[0]
+                                    size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase() || sizeFixer[i.sku.split("_")[2]] == s.name)[0] 
+                                    if (!size) size = blank.sizes?.filter(s => s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase() || sizeFixer[i.sku.split("_")[1]] == s.name)[0]
                                 }
                                 let dSku = i.sku?.split("_").splice(3)
                                 let designSku =""

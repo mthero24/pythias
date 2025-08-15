@@ -14,10 +14,10 @@ export async function PUT(req = NextApiRequest) {
         sku.size = item.sizeName
         await sku.save()
     }
-    console.log(item.inventory?.inventoryType, item.blank.code, item.color.name, item.size)
+    console.log(item.inventory?.inventoryType, item.blank.code, item.color?.name, item?.size)
     if (!item.inventory?.inventoryType && item.blank && item.color && item.size) {
         let size = item.blank.sizes.filter(s => s._id.toString() == item.size.toString())[0]
-        let inv = await Inventory.findOne({ blank: item.blank._id, color: item.color._id, sizeId: size._id })
+        let inv = await Inventory.findOne({ blank: item.blank._id, color: item.color?._id, sizeId: size?._id })
        //console.log(inv, "inv")
         if (inv && inv.quantity > 0) {
             item.inventory = {
