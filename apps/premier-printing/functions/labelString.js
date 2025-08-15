@@ -8,21 +8,20 @@ export const buildLabelData = async (item, i, returnBin, opts={},) => {
       item.inventory.inventory = await Inventory.findOne({blank: item.blank._id? item.blank._id: item.blank, color: item.color._id? item.color._id: item.color, sizeId: item.size._id? item.size._id: item.size}).select("row bin shelf unit quantity onhold");
       if(item.inventory?.inventory){
         item.inventory.inventory.quantity -= 1;
-        item.inventory.inventory.onhold -= 1;
+        if (item.inventory.inventory.inStock) item.inventory.inventory.inStock = item.inventory.inventory.inStock.filter(i => i.toString() != item._id.toString());
+        if (item.inventory.inventory.attached) item.inventory.inventory.attached = item.inventory.inventory.attached.filter(i => i.toString() != item._id.toString());
         await item.inventory.inventory?.save();
       }
     }
     if(item.inventory?.inventoryType == "productInventory") {
       let productInventory = await productInventory.findOne({_id: item.inventory.productInventory._id}).select("location quantity onhold");
       productInventory.quantity -= 1;
-      
-      productInventory.onhold -= 1;
+      if(productInventory.inStock) productInventory.inStock = productInventory.inStock.filter(i => i.toString() != item._id.toString());
       await productInventory.save();
     }else if(item.inventory?.inventoryType == "inventory") {
       let inventory = await Inventory.findOne({_id: item.inventory?.inventory?._id}).select("quantity onhold");
       if(inventory){
         inventory.quantity -= 1;
-        inventory.onhold -= 1;
         if (inventory.inStock)inventory.inStock = inventory.inStock.filter(i => i.toString() != item._id.toString());
         if (inventory.attached) inventory.attached = inventory.attached.filter(i => i.toString() != item._id.toString());
         await inventory.save();

@@ -182,15 +182,15 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             }else{
                 let inventories = [];
               for(let l of useLabels[type]){
-                if(l.inventory.inventoryType == "inventory" && !inventories.filter(i=> i._id.toString() == l.inventory.inventory._id.toString())[0]) inventories.push({...l.inventory.inventory})
-                else if(l.inventory.inventoryType == "productInventory" && !inventories.filter(i=> i._id.toString() == l.inventory.productInventory._id.toString())[0]) inventories.push({...l.inventory.productInventory})
+                if(l.inventory.inventoryType == "inventory" && !inventories.filter(i=> i?._id?.toString() == l.inventory.inventory?._id?.toString())[0]) inventories.push({...l.inventory.inventory})
+                else if(l.inventory.inventoryType == "productInventory" && !inventories.filter(i=> i?._id?.toString() == l.inventory.productInventory?._id?.toString())[0]) inventories.push({...l.inventory.productInventory})
               }
               for(let l of useLabels[type]){
                 let inventory 
                 if(l.inventoryType == "productInventory"){
-                  inventory = inventories.filter(i=> i._id.toString() == l.inventory.productInventory._id.toString())[0]
+                  inventory = inventories.filter(i=> i?._id?.toString() == l.inventory.productInventory?._id?.toString())[0]
                 }else if(l.inventoryType != "inventory" ){
-                  inventory = inventories.filter(i => i._id.toString() == l.inventory.inventory._id.toString())[0]
+                  inventory = inventories.filter(i => i?._id?.toString() == l.inventory.inventory?._id?.toString())[0]
                 } 
                 if(inventory.quantity > 0){
                   items.push(l)

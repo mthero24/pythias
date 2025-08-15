@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export default async function InventoryPage (searchParams){
     let search = await searchParams;
     let page = search.page;
-    let term = search.q
+    let term = search.q;
     if(page){
         page = parseInt(page)
     }else page= 1

@@ -15,15 +15,6 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
     return sku;
 }
 export default async function Test(){
-    //await pullOrders()
-    // let orders = await Order.find({items: {$size: 0}, status: {$nin: ["cancelled", "shipped"]}}).sort({_id: -1})
-    // for(let order of orders){
-    //     let items = await Items.find({order: order._id})
-    //     console.log(items.length, "items for order", order.poNumber)
-    //     if(items.length > 0) order.items = items
-    //     await order.save()
-    // }
-    //let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "6650514796_1-A" })
-    //console.log(orders)
+    await pullOrders();
     return <h1>test</h1>
 }

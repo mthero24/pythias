@@ -104,80 +104,20 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 }
 export default async function Test(){
     
-   // await pullOrders();
-    // let inventoryOrder = await InventoryOrders.findOne({ _id: "689e3828532ce9b3d575f1f2"}).populate("locations.items.inventory")
-    // console.log(inventoryOrder, "inventory order")
-    // let items = 0
-    // let orderd = 0
-    // let attached = 0
-    // for(let location of inventoryOrder.locations){
-    //     for(let item of location.items){
-    //         orderd += item.quantity
-    //         attached += item.inventory.attached.length
-    //         let ord = item.inventory.orders.filter(o => o.order.toString() == inventoryOrder._id.toString())[0]
-    //         //console.log(ord, "ord")
-    //         items += ord.items.length
-    //         // if(item.quantity > ord.items.length){
-    //         //     console.log(item.quantity, ord.items.length, item.inventory.attached.length, "item quantity greater than order items length")
-    //         //     if (item.inventory.attached.length > 0){
-    //         //         let itemsMoved = []
-    //         //         for (let i = 0; i < item.quantity - ord.items.length; i++) {
-    //         //             ord.items.push(item.inventory.attached[i])
-    //         //             itemsMoved.push(item.inventory.attached[i])
-    //         //         }
-    //         //         item.inventory.attached = item.inventory.attached.filter(i => !itemsMoved.includes(i))
-    //         //         item.inventory.markModified("attached orders");
-    //         //         await item.inventory.save()
-    //         //     }
-    //         // }
-    //     }
-    // }
-    // console.log(orderd, items, attached, "orderd items")
-    // let items = await Items.find({ "inventory.inventoryType": null, labelPrinted: false }).sort({ _id: -1 })
-    // console.log(items.length, "items without inventory")
-    // for(let i of items){
-    //     if(!i.inventory.inventoryType){
-    //         let productInventory = await ProductInventory.findOne({ sku: i.sku })
-    //         if (productInventory && productInventory.quantity > productInventory.quantity - productInventory.onhold) {
-    //             if (productInventory.quantity > productInventory.quantity - productInventory.onhold) {
-    //                 i.inventory.inventoryType = "productInventory"
-    //                 i.inventory.productInventory = productInventory._id
-    //                 productInventory.onhold += 1
-    //                 await productInventory.save()
-    //             }
-
-    //         } else {
-    //             let inventory = await Inventory.findOne({ blank: i.blank, color: i.color, sizeId: i.size })
-    //             if (inventory) {
-    //                 if (inventory.quantity > inventory.quantity - inventory.onhold) {
-                    
-    //                     await inventory.save()
-    //                     if (!i.inventory) i.inventory = {}
-    //                     i.inventory.inventoryType = "inventory"
-    //                     i.inventory.inventory = inventory._id
-    //                 } else {
-    //                     if (!inventory.attached) inventory.attached = []
-    //                     console.log(inventory.attached, "inventory attached")
-    //                     if (!inventory.attached.includes(i._id.toString())) inventory.attached.push(i._id)
-    //                     console.log(inventory.attached, "inventory attached")
-    //                     if (!i.inventory) i.inventory = {}
-    //                     i.inventory.inventoryType = "inventory"
-    //                     i.inventory.inventory = inventory._id
-    //                     await inventory.save()
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     console.log(i.inventory, "i.inventory")
-    //     await i.save()
-    // }
-    // for (let item of items) {
-    //     console.log(item.inventory, "item inventory")
-    //     let inv = await Inventory.findById(item.inventory.inventory._id)
-    //     if(!inv.attached.includes(item._id.toString())) inv.attached.push(item._id)
-    //     console.log(inv.attached, "inv attached")
-    //     await inv.save()
-    //     await item.save()
-    // }
+   //await pullOrders();
+//     let orders = await Order.find({ date: { $gt: new Date("2025-08-06")}}).sort({ date: -1})
+//    console.log(orders.length, "orders to check")
+//    for(let order of orders){
+//     let items = await Item.find({ order: order._id})
+//     if(items.length > order.items.length) {
+//         console.log("found")
+//         for(let item of items) {
+//             if(!order.items.map(i => i._id.toString()).includes(item._id.toString())) {
+//                 order.items.push(item._id);
+//             }
+//         }
+//         await order.save();
+//     }
+   //}
     return <h1>test</h1>
 }

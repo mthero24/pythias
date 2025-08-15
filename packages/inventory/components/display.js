@@ -144,7 +144,7 @@ const CheckModal = ({open, setOpen, markReceived, orderLocation})=>{
             <Divider sx={{marginBottom: "3%"}}/>
             <Box>
                 <Typography>Make sure you have the correct order selected.</Typography>
-                <Button onClick={()=>{markReceived({order: orderLocation.o, location: orderLocation.l})}}>Mark Received</Button>
+                <Button onClick={()=>{markReceived({order: orderLocation.o, location: orderLocation.l}); setOpen(false)}}>Mark Received</Button>
                 <Button onClick={()=>{setOpen(false)}}>Cancel</Button>
             </Box>
         </Box>

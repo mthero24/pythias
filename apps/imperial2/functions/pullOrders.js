@@ -29,6 +29,61 @@ let sizeFixer = {
     "Youth XLarge": "XL",
 
 }
+
+const updateInventory = async () => {
+    let inventories = await Inventory.find({})
+    console.log(inventories.length, "inventories")
+    for (let inv of inventories) {
+        let items = await Item.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
+        if (inv.quantity < 0) {
+            inv.quantity = 0;
+        }
+        if (items.length > 0) {
+            let itemIds = items.map(i => i._id.toString());
+            inv.inStock = inv.inStock.filter(i => itemIds.includes(i.toString()));
+            inv.attached = inv.attached.filter(i => itemIds.includes(i.toString()));
+            if (inv.quantity > 0) {
+                if (inv.quantity > inv.inStock.length + inv.attached.length) {
+                    inv.attached = [];
+                }
+            }
+            let newInStck = [];
+            for (let id of inv.inStock) {
+                if (!newInStck.includes(id) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(id)) {
+                    newInStck.push(id);
+                }
+            }
+            inv.inStock = newInStck;
+            let newAttached = [];
+            for (let id of inv.attached) {
+                if (!newAttached.includes(id) && !inv.inStock.includes(id)) {
+                    newAttached.push(id);
+                }
+            }
+            inv.attached = newAttached;
+            console.log(inv.style_code, inv.color_name, inv.size_name, inv.quantity, inv.attached.length, inv.inStock.length, items.length, inv.orders.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
+            if (inv.quantity > 0) {
+                for (let item of items) {
+                    if (inv.quantity - inv.inStock.length > 0 && inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
+                        inv.inStock.push(item._id.toString())
+                    } else if (inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
+                        inv.attached.push(item._id.toString())
+                    }
+                }
+                await inv.save()
+            } else {
+                if (items.length > 0) {
+                    for (let item of items) {
+                        if (!inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
+                            inv.attached.push(item._id.toString())
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 const createItem = async ({i, order, design, blank, size, color, threadColor, sku} ) => {
     let item = new Item({
         pieceId: await generatePieceID(),
@@ -60,39 +115,24 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
     item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: i.sku })
     if (productInventory && productInventory.quantity > productInventory.quantity - productInventory.onhold) {
-        if (productInventory.quantity > productInventory.quantity - productInventory.onhold) {
+        if (productInventory.quantity > productInventory.quantity - productInventory.inStock.length) {
+            if (!item.inventory) item.inventory = {}
             item.inventory.inventoryType = "productInventory"
             item.inventory.productInventory = productInventory._id
-            productInventory.onhold += 1
+            if(!productInventory.inStock) productInventory.inStock = []
+            productInventory.inStock.push(item._id.toString())
             await productInventory.save()
         }
 
     } else {
         let inventory = await Inventory.findOne({ blank: blank._id, color: color ? color._id : null, sizeId: size?._id? size._id.toString() : size?.toString() })
         if (inventory) {
-            if (!inventory.inStock) inventory.inStock = []
-            if (inventory.quantity > inventory.quantity - inventory.inStock.length) {
-                inventory.onhold += 1
-                if(!inventory.inStock) inventory.inStock = []
-                item.inventory.inStock.push(item._id)
-                await inventory.save()
-                if (!item.inventory) item.inventory = {}
-                item.inventory.inventoryType = "inventory"
-                item.inventory.inventory = inventory._id
-            } else {
-                if (!inventory.attached) inventory.attached = []
-                inventory.attached.push(item._id)
-                inventory.onhold += 1
-                if (!item.inventory) item.inventory = {}
-                item.inventory.inventoryType = "inventory"
-                item.inventory.inventory = inventory._id
-                inventory.markModified("attached")
-                console.log(inventory.attached, "inventory to save")
-                await inventory.save()
-            }
+            if (!item.inventory) item.inventory = {}
+            item.inventory.inventoryType = "inventory"
+            item.inventory.inventory = inventory._id
+            console.log(inventory, "inventory")
         }
     }
-    await item.save();
     return item;
 }
 export async function pullOrders(id){
@@ -291,6 +331,11 @@ export async function pullOrders(id){
                 }
             }
             order.items = items
+            await order.save()
+            items.map(async i => {
+                i.order = order._id
+                await i.save()
+            })
         }else{
             order.status = o.orderStatus
             if(o.tagIds != null) order.status = "Links"
@@ -308,9 +353,10 @@ export async function pullOrders(id){
                     await i.save()
                 })
             }
+            await order.save();
         }
-        await order.save()
     }
+    await updateInventory();
 }
 setInterval(()=>{
     if(process.env.pm_id == 9 ) pullOrders()
