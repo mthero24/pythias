@@ -104,7 +104,7 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 }
 export default async function Test(){
     
-   await pullOrders();
+   //Sawait pullOrders();
     // let inventoryOrder = await InventoryOrders.findOne({ _id: "689e3828532ce9b3d575f1f2"}).populate("locations.items.inventory")
     // console.log(inventoryOrder, "inventory order")
     // let items = 0
