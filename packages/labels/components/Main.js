@@ -88,7 +88,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              if (k.order.poNumber.includes("RT") && k.inventory?.quantity > 0)
+              if (k.order.poNumber.includes("RT") && k.inventory?.inventory?.quantity > 0)
                 return k.pieceId;
             })
           );
@@ -105,8 +105,10 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.inventory?.quantity > 0)
-                  return k.pieceId;
+                if ((k.type.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.inventory?.inventory?.quantity > 0)
+                    if(k.inventory.inventory.inStock){
+                      if(k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                    }else return k.pieceId;
               })
             );
         });
@@ -114,8 +116,10 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.styleCode == styleCodeSelected) && k.inventory?.quantity > 0)
-                  return k.pieceId;
+                if ((k.styleCode == styleCodeSelected) && k.k.inventory?.inventory?.quantity > 0)
+                  if (k.inventory.inventory.inStock) {
+                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                  } else return k.pieceId;
               })
             );
         });
@@ -123,8 +127,11 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type.toLowerCase() == printType.toLowerCase()) && k.inventory?.quantity > 0)
-                  return k.pieceId;
+                console.log(k.type?.toLowerCase() || k.designRef.printType?.toLowerCase())
+                if (((k.type?.toLowerCase() || k.designRef.printType?.toLowerCase()) == printType.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
+                  if (k.inventory.inventory.inStock) {
+                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                  } else return k.pieceId;
               })
             );
         });
@@ -134,8 +141,10 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.inventory?.quantity > 0)
-                  return k.pieceId;
+                if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.inventory?.inventory?.quantity > 0)
+                  if (k.inventory.inventory.inStock) {
+                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                  } else return k.pieceId;
               })
             );
         });
@@ -144,8 +153,10 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
          Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.quantity > 0)
-                  return k.pieceId;
+                if ((k.type.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
+                  if (k.inventory.inventory.inStock) {
+                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                  } else return k.pieceId;
               })
             );
         });
@@ -155,7 +166,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             sel.push(
               ...useLabels[l].map((k) => {
                 if ((k.styleCode == styleCode) && k.inventory?.quantity > 0)
-                  return k.pieceId;
+                  if (k.inventory.inventory.inStock) {
+                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                  } else return k.pieceId;
               })
             );
         });
@@ -419,7 +432,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >
                     {}
-                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.inStock?.length > 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.onhold ? l.inventory?.inventory?.onhold : 0) > 0) ).length})
+                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.inStock?.length > 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.inStock ? l.inventory?.inventory?.inStock.length : 0) > 0 && l.inventory?.inventory?.inStock.includes(l._id.toString())) ).length})
                     <br/>
                     Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.onhold <= 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.onhold ? l.inventory?.inventory?.onhold : 0) <= 0)).length})
                   </Typography>
