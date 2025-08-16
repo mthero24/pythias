@@ -2,6 +2,7 @@ import Inventory from "@/models/inventory";
 import Blanks from "@/models/StyleV2";
 import {NextApiRequest, NextResponse} from "next/server";
 export async function GET(req){
+    console.log("Fetching inventory")
     console.log(req.nextUrl.searchParams.get("style"), "style")
     let page = req.nextUrl.searchParams.get("page") ? Number(req.nextUrl.searchParams.get("page")) - 1 : 0;
         if(page < 0){

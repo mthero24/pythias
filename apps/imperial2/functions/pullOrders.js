@@ -137,6 +137,7 @@ const createItem = async ({i, order, design, blank, size, color, threadColor, sk
     return item;
 }
 export async function pullOrders(id){
+    console.log("Pulling orders")
     let blanks = await Blank.find({})
     let colors = await Color.find({})
     let fixers = blanks.map(b=>{return b.fixerCode})

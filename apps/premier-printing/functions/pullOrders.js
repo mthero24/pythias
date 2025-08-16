@@ -181,7 +181,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export async function pullOrders(){
-    console.log("pull orders")
+    console.log("pulling orders")
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)

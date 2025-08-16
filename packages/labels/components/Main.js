@@ -556,18 +556,18 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                             <Typography
                               sx={{
                                 textAlign: "center",
-                                color: i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory?.quantity > 0 ? "#228C22" : i.inventory?.inventory?.quantity + i.inventory.inventory.pending_quantity > 0 ? "#ffa808ff" : "#d0342c" : "#d0342c",
+                                color: i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory?.quantity > 0 ? "#228C22" : i.inventory?.inventory?.quantity + i.inventory.inventory?.pending_quantity > 0 ? "#ffa808ff" : "#d0342c" : "#d0342c",
                               }}
                             >
-                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock && i.inventory.inventory.inStock.includes(i._id.toString())?  "In Stock" : "Out Of Stock" }
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock && i.inventory.inventory.inStock.includes(i._id.toString())?  "In Stock" : !i.inventory.inventory?.inStock ? i.inventory.inventory?.quantity > 0 ? "In Stock": "Out Of Stock" : "" }
                               <br/>
-                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory ? `Pending:  ${i.inventory.inventory.inStock?.length}`: "" }
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock ? `Pending:  ${i.inventory.inventory.inStock?.length}`: "" }
                               <br/>
-                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory ? `Need:  ${i.inventory.inventory.attached?.length}` : ""}
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.attached ? `Need:  ${i.inventory.inventory.attached?.length}` : ""}
                               <br/>
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.orders ? `Ordered ${i.inventory.inventory.orders?.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}` : ""}
                               <br/>
-                              {i.inventory && i.inventory.inventoryType == "inventory"? `Total Stock: ${i.inventory.inventory.quantity}`: "" }
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.quantity ? `Total Stock: ${i.inventory.inventory?.quantity}`: "" }
                               {/* {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory?.quantity - (i.inventory?.productInventory?.onhold ? i.inventory?.productInventory?.onhold : 0)}` : i.inventory?.inventoryType == "inventory" ? `${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0) > 0 ? "In Stock" : "Out Of Stock"} ${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0)} (pending: ${i.inventory?.inventory?.pending_quantity}) (${i.inventory?.inventory?.orders?.map(o => o.items.includes(i._id.toString())).filter(i => i != undefined)[0] ? "orderd" : "not orderd yet"})` : "Out Of Stock"} */}
                             </Typography>
                           </Grid2>
