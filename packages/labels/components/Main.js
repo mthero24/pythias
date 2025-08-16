@@ -559,7 +559,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                                 color: i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory?.quantity > 0 ? "#228C22" : i.inventory?.inventory?.quantity + i.inventory.inventory?.pending_quantity > 0 ? "#ffa808ff" : "#d0342c" : "#d0342c",
                               }}
                             >
-                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock && i.inventory.inventory.inStock.includes(i._id.toString())?  "In Stock" : !i.inventory.inventory?.inStock ? i.inventory.inventory?.quantity > 0 ? "In Stock": "Out Of Stock" : "" }
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock && i.inventory.inventory.inStock.includes(i._id.toString())?  "In Stock" : i.inventory && !i.inventory.inventory?.inStock ? i.inventory.inventory?.quantity > 0 ? "In Stock": "Out Of Stock" : "Out Of Stock" }
                               <br/>
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock ? `Pending:  ${i.inventory.inventory.inStock?.length}`: "" }
                               <br/>
