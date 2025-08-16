@@ -301,7 +301,6 @@ export async function pullOrders(id){
                                         item.canceled = true
                                     }
                                     //console.log(item)
-                                    await item.save()
                                     items.push(item)
                                 }
                             }
@@ -326,7 +325,6 @@ export async function pullOrders(id){
                         if (order.status == "cancelled") {
                             item.canceled = true
                         }
-                        await item.save()
                         items.push(item)
                     }
                 }
