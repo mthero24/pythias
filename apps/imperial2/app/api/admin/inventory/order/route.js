@@ -17,19 +17,19 @@ export async function PUT(req=NextApiRequest){
                 let itemsToPrint = []
                 let inv = await Inventory.findById(i.inventory)
                 inv.quantity = inv.quantity + i.quantity
-                //inv.pending_quantity = inv.pending_quantity - i.quantity
+                inv.pending_quantity = inv.pending_quantity - i.quantity
                 if(inv.orders){
                     let o = inv.orders.filter(o=> o.order.toString() == order._id.toString())[0]
                     let items = await Items.find({_id: {$in: o.items}}).populate("designRef").sort({_id: -1})
                     itemsToPrint.push(...items)
                 }
-                //inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())
+                inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())
                 printItems.push(...itemsToPrint)
                 await inv.save()
             }
             console.log(printItems.length)
             location.received = true
-            let printLabels = await axios.post("http://localhost:3009/api/production/print-labels", { items: printItems })
+            let printLabels = await axios.post("https://imperial.pythiastechnologies.com/api/production/print-labels", { items: printItems })
             console.log(printLabels?.data)
             if (order.locations.filter(l => l.received == false).length == 0) order.received = true
             order.markModified("locations received")

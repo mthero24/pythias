@@ -418,7 +418,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                   <Typography
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >
-                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.onhold > 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.onhold ? l.inventory?.inventory?.onhold : 0) > 0) ).length})
+                    {}
+                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.inStock?.length > 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.onhold ? l.inventory?.inventory?.onhold : 0) > 0) ).length})
                     <br/>
                     Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.onhold <= 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.onhold ? l.inventory?.inventory?.onhold : 0) <= 0)).length})
                   </Typography>
@@ -450,12 +451,12 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                     spacing={1}
                     sx={{ padding: "3%", background: "#0079DC", color: "#fff" }}
                   >
-                    <Grid2 size={1}>
+                    <Grid2 size={2}>
                       <Typography sx={{ textAlign: "center" }}>
                         In Stock
                       </Typography>
                     </Grid2>
-                    <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>
+                    <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 1: 2 }}>
                       <Typography sx={{ textAlign: "center" }}>
                         Piece ID
                       </Typography>
@@ -550,18 +551,27 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                               : "#000",
                           }}
                         >
-                          <Grid2 size={1}>
+                          <Grid2 size={2}>
                             {console.log(i.inventory?.inventoryType)}
                             <Typography
                               sx={{
                                 textAlign: "center",
-                                color: i.inventory?.inventoryType == "productInventory" ? "#feb204" : i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0) > 0 ? "#228C22" : "#d0342c" : "#d0342c",
+                                color: i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory?.quantity > 0 ? "#228C22" : i.inventory?.inventory?.quantity + i.inventory.inventory.pending_quantity > 0 ? "#ffa808ff" : "#d0342c" : "#d0342c",
                               }}
                             >
-                              {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory?.quantity - (i.inventory?.productInventory?.onhold ? i.inventory?.productInventory?.onhold : 0)}` : i.inventory?.inventoryType == "inventory" ? `${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0) > 0 ? "In Stock" : "Out Of Stock"} ${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0)} (pending: ${i.inventory?.inventory?.pending_quantity}) (${i.inventory?.inventory?.orders?.map(o => o.items.includes(i._id.toString())).filter(i => i != undefined)[0] ? "orderd" : "not orderd yet"})` : "Out Of Stock"}
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock && i.inventory.inventory.inStock.includes(i._id.toString())?  "In Stock" : "Out Of Stock" }
+                              <br/>
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory ? `Pending:  ${i.inventory.inventory.inStock?.length}`: "" }
+                              <br/>
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory ? `Need:  ${i.inventory.inventory.attached?.length}` : ""}
+                              <br/>
+                              {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.orders ? `Ordered ${i.inventory.inventory.orders?.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}` : ""}
+                              <br/>
+                              {i.inventory && i.inventory.inventoryType == "inventory"? `Total Stock: ${i.inventory.inventory.quantity}`: "" }
+                              {/* {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory?.quantity - (i.inventory?.productInventory?.onhold ? i.inventory?.productInventory?.onhold : 0)}` : i.inventory?.inventoryType == "inventory" ? `${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0) > 0 ? "In Stock" : "Out Of Stock"} ${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0)} (pending: ${i.inventory?.inventory?.pending_quantity}) (${i.inventory?.inventory?.orders?.map(o => o.items.includes(i._id.toString())).filter(i => i != undefined)[0] ? "orderd" : "not orderd yet"})` : "Out Of Stock"} */}
                             </Typography>
                           </Grid2>
-                          <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 2: 3 }}>
+                          <Grid2 size={{ xs: 6, sm: source == "IM"? 2: 4, md: source == "IM"? 1: 2 }}>
                             <Typography sx={{ textAlign: "center" }}>
                               {i.pieceId}
                             </Typography>

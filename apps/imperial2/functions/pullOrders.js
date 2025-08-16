@@ -78,6 +78,7 @@ const updateInventory = async () => {
                             inv.attached.push(item._id.toString())
                         }
                     }
+                    await inv.save()
                 }
             }
         }

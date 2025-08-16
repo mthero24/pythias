@@ -21,30 +21,18 @@ export async function PUT(req=NextApiRequest){
             let inv = await Inventory.findById(i.inventory)
             inv.quantity = inv.quantity + i.quantity
             inv.pending_quantity = inv.pending_quantity - i.quantity
-            if (inv.quantity > 0 && inv.attached.length > 0) {
-                let items = await Items.find({ _id: { $in: inv.attached } }).sort({ _id: -1 }).populate("designRef")
-                inv.attached = items.map(i => i._id)
-                for (let j = 0; j < inv.quantity; j++) {
-                    console.log(inv.attached[j], "inv.attached[j]")
-                    if (!inv.attached[j]) continue;
-                    let item = items.filter(i => i._id.toString() == inv.attached[j].toString())[0]
-                    item.inventory = {
-                        inventoryType: "inventory",
-                        inventory: inv._id,
-                        productInventory: null,
-                    }
-                    await item.save()
-                    itemsToPrint.push(item)
-
-                }
+            if (inv.orders) {
+                let o = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
+                let items = await Items.find({ _id: { $in: o.items } }).populate("designRef").sort({ _id: -1 })
+                itemsToPrint.push(...items)
             }
-            inv.attached = inv.attached.filter(a => !location.items.map(i => i._id.toString()).includes(a.toString()))
+            inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())
             printItems.push(...itemsToPrint)
             await inv.save()
         }
         console.log(printItems.length)
         location.received = true
-        let printLabels = await axios.post("https://simplysage.pythiastechnologies.com/api/production/print-labels", { items: printItems })
+        let printLabels = await axios.post("http://localhost:3009/api/production/print-labels", { items: printItems })
         console.log(printLabels?.data)
         if (order.locations.filter(l => l.received == false).length == 0) order.received = true
         order.markModified("locations received")

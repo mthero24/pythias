@@ -105,19 +105,6 @@ const createItem = async ({ i, order, design, blank, size, color, threadColor, s
 export default async function Test(){
     
    //await pullOrders();
-//     let orders = await Order.find({ date: { $gt: new Date("2025-08-06")}}).sort({ date: -1})
-//    console.log(orders.length, "orders to check")
-//    for(let order of orders){
-//     let items = await Item.find({ order: order._id})
-//     if(items.length > order.items.length) {
-//         console.log("found")
-//         for(let item of items) {
-//             if(!order.items.map(i => i._id.toString()).includes(item._id.toString())) {
-//                 order.items.push(item._id);
-//             }
-//         }
-//         await order.save();
-//     }
-   //}
+    
     return <h1>test</h1>
 }
