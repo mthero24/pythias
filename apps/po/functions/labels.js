@@ -41,10 +41,10 @@ export async function LabelsData(){
             .lean();
         labels[k] = labels[k].map(s=> { 
             let inv = inventoryArray.filter(i => i.inventory_id == encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`))[0]
-            
             s.inventory = {
                 inventoryType: "inventory", 
-                inventory: inventoryArray.filter(i=> i.color_name == s.colorName && i.size_name == s.sizeName && i.style_code == s.styleCode)[0]
+                inventory: inv,
+                productInventory: undefined,
             }; 
             return {...s}
         })
