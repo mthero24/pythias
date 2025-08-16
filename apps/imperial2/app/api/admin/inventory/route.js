@@ -26,10 +26,19 @@ export async function POST(req=NextApiRequest){
             }
         }
     }
+    let removedItems = []
+    if (data.inventory.quantity < data.inventory.inStock?.length) {
+        let items = await Items.find({ _id: { $in: data.inventory.inStock } }).sort({ _id: 1 });
+        for (let i = 0; i < data.inventory.quantity; i++) {
+            removedItems.push(items[i]?._id)
+            data.inventory.attached.push(items[i]?._id)
+        }
+        data.inventory.inStock = data.inventory.inStock.filter(i => !removedItems.includes(i));
+
+    }
     console.log(updateItems.length, "updateItems in POST inventory route")
-    data.inventory.quantity = data.inventory.quantity - updateItems.length;
     data.inventory.attached = data.inventory.attached.filter(a => !updateItems.includes(a));
-    if(!data.inventory.inStock){
+    if (!data.inventory.inStock) {
         data.inventory.inStock = []
     }
     data.inventory.inStock = [...data.inventory.inStock, ...updateItems];

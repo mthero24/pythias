@@ -14,7 +14,7 @@ export async function getInv({Blanks, Inventory, term, page} ){
         count = await Blanks.find({}).countDocuments()
     }
     if(blanks){
-        let inventory = await Inventory.find({style_code: {$in: blanks.map(b=> b.code)}, type: {$ne: "product"}}).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin attached sizeId skus orders").lean().catch(e=>{console.log(e)});
+        let inventory = await Inventory.find({style_code: {$in: blanks.map(b=> b.code)}, type: {$ne: "product"}}).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin attached sizeId skus orders inStock").lean().catch(e=>{console.log(e)});
         let combined = []
         for(let blank of blanks){
             blank.inventory = inventory.filter(i=> i.style_code == blank.code)
