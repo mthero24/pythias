@@ -3,7 +3,7 @@ import {Blank as Blanks, Item as Items, Inventory, InventoryOrders} from "@pythi
 import axios from "axios";
 export async function GET(){
     console.log("Fetching inventory orders");
-    let orders = await InventoryOrders.find({}).populate("locations.items.inventory")
+    let orders = await InventoryOrders.find({received: false}).populate("locations.items.inventory")
     return NextResponse.json({error: false, orders})
 }
 export async function PUT(req=NextApiRequest){
