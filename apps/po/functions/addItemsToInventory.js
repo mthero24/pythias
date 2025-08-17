@@ -70,3 +70,7 @@ export async function addItemsToInventory(){
         return <h1>Test</h1>
     
 }
+
+setInterval(() => {
+    if (process.env.pm_id == 24 || process.env.pm_id == "24") addItemsToInventory();
+}, 1000 * 60 * 60); // Run every hour

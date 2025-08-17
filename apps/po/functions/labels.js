@@ -6,7 +6,6 @@ import {Sort} from "@pythias/labels";
 import { style } from "@mui/system";
 import { addItemsToInventory } from "./addItemsToInventory";
 export async function LabelsData(){
-    addItemsToInventory();
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
     let labels = {
