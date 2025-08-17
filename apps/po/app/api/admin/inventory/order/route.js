@@ -2,7 +2,7 @@ import {NextApiRequest, NextResponse} from "next/server";
 import { InventoryOrders, Inventory, Blank, Items }from "@pythias/mongo";
 import axios from "axios";
 export async function GET(){
-    let orders = await InventoryOrders.find({}).populate("locations.items.inventory")
+    let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory")
     return NextResponse.json({error: false, orders})
 }
 export async function PUT(req=NextApiRequest){
