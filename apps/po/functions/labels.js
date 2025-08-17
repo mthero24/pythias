@@ -4,7 +4,7 @@ import {Inventory} from "@pythias/mongo";
 import Batches from "../models/batches";
 import {Sort} from "@pythias/labels";
 import { style } from "@mui/system";
-import { addItemsToInventory } from "./addItemsToInventory";
+import "@/functions/addItemsToInventory";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
