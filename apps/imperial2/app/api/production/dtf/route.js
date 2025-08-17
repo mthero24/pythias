@@ -164,3 +164,67 @@ export async function POST(req = NextApiRequest) {
         return NextResponse.json({ error: true, msg: "item not found" });
     }
 }
+
+export async function PUT(req = NextApiRequest) {
+    let data = await req.json();
+    //console.log(data, "data")
+    try{
+        let items = await Items.find({
+            blank: { $ne: null },
+            colorName: { $ne: null },
+            sizeName: { $ne: null },
+            designRef: { $ne: null },
+            design: { $ne: null },
+            labelPrinted: false,
+            canceled: false,
+            paid: true,
+        }).populate("color", "name").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").populate("order", "poNumber items marketplace date").populate("blank", "code envelopes box sizes multiImages")
+        console.log(items.length, "items to print")
+        let chunks = items.length / data.printers.length;
+        chunks = Math.ceil(chunks);
+        let send = [];
+        for (let i = 0; i < data.printers.length; i++) {
+            send.push({ printer: data.printers[i], items: items.slice(i * chunks, i * chunks + chunks)});
+        }
+        console.log(send, "send");
+        for(let s of send){
+            for(let item of s.items){
+                if (item && !item.canceled && !item.dtfScan) {
+                    item.dtfScan = true
+                    Object.keys(item.design).map(async key => {
+                        if (key != undefined && item.design[key]) {
+                            let envelopes = item.blank.envelopes.filter(
+                                (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
+                            );
+                            await createImage({
+                                url: item.design[key],
+                                pieceID: `${item.pieceId}-${key}`,
+                                horizontal: false,
+                                size: `${envelopes[0].width}x${envelopes[0].height}`,
+                                offset: envelopes[0].vertoffset,
+                                style: item.blank.code,
+                                styleSize: item.sizeName,
+                                color: item.colorName,
+                                sku: item.sku,
+                                shouldFitDesign: null,
+                                printer: s.printer
+                            })
+                        }
+                    })
+
+                    item.status = "DTF Load";
+                    if (!item.steps) item.steps = [];
+                    item.steps.push({
+                        status: "DTF Load",
+                        date: new Date(),
+                    });
+                    await item.save()
+                }
+            }
+        }
+        return NextResponse.json({ error: false, msg: `${items.length} sent to printers`, items: send });
+    } catch (error) {
+        console.error("Error in DTF PUT:", error);
+        return NextResponse.json({ error: true, msg: "Error processing request" });
+    }
+}
