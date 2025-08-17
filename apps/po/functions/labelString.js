@@ -1,6 +1,6 @@
 import Items from "../models/Items";
 
-export const buildLabelData = async (item, i, opts={}) => {
+export const buildLabelData = async (item, i, poNumber, opts={}) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let frontBackString = "";
     //console.log(totalQuantity, "TQ");
@@ -56,6 +56,7 @@ export const buildLabelData = async (item, i, opts={}) => {
           ^LH12,18^CFS,25,12^AXN,22,30^FO20,480^FD PrintO Design: ${
             item.sku.split("-")[0]
         }^FS
+          ${poNumber ? `^LH12,18^CFS,25,12^AXN,40,50^FO100,540^FDPO: ${poNumber}^FS`: ""}
           ${frontBackString}
       ^XZ`;
     }

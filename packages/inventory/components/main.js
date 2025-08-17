@@ -21,7 +21,6 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
     const [expanded, setExpanded] = useState("")
     const [expandedColor, setExpandedColor] = useState("")
     const [inventories, setInventories] = useState([]) 
-    const [loading, setLoading] = useState(true)
     const [query, setQuery] = useState(q)
     const [count, setCount] = useState(cou)
     const save = async (inventory)=>{
@@ -56,8 +55,8 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
     return <Box>
         <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%"}}>
             <Typography variant="h3" sx={{marginLeft: "3%", marginBottom: "2%"}}>Inventory</Typography>
-            <Button onClick={()=>{setLoading(true); setOrderType("Inventory Order"); setOpen(true)}}>Create Inventory Order</Button>
-            <Button onClick={()=>{setLoading(true); setOrderType("Out Of Stock"); setOpen(true)}}>Create Out Of Stock Order</Button>
+            <Button onClick={()=>{setOrderType("Inventory Order"); setOpen(true)}}>Create Inventory Order</Button>
+            <Button onClick={()=>{setOrderType("Out Of Stock"); setOpen(true)}}>Create Out Of Stock Order</Button>
             <Button onClick={() => { setOpenDisplay(true) }}>Orders</Button>
         </Box>
         <Container sx={{minHeight: "70vh"}}>
@@ -205,8 +204,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                 />
         </Box>
         <DisplayModal open={openDisplay} setOpen={setOpenDisplay} />
-        <LoaderOverlay loading={loading}/>
-        <OrderModal open={open} setOpen={setOpen} type={orderType} blanks={fullStyles} items={items} setBlanks={setFullStyles} setItems={setItems} defaultLocation={defaultLocation} setLoading={setLoading}/>
+        <OrderModal open={open} setOpen={setOpen} type={orderType} blanks={fullStyles} items={items} setBlanks={setFullStyles} setItems={setItems} defaultLocation={defaultLocation}/>
         <Footer fixed={true} />
     </Box>
 }

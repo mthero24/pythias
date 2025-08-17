@@ -8,7 +8,7 @@ let fullSize = {
   "2XL": "2XLARGE",
   "3XL": "3XLARGE"
 }
-export const buildLabelData = async (item, i, doc, type, opts={}) => {
+export const buildLabelData = async (item, i, doc, type, poNumber, opts={}) => {
     //console.log(item.inventory)
     if(!item.order.poNumber)item.order = await Order.findOne({_id: item.order}).select("items poNumber")
     let totalQuantity = 1
@@ -46,7 +46,7 @@ export const buildLabelData = async (item, i, doc, type, opts={}) => {
     doc.text(`Thread: ${item.threadColorName}`)
     doc.text(`Art: ${item.designRef && item.designRef.name? item.designRef.name.substring(0, 20): item.sku}`)
     doc.text(`${item.type} ${new Date(item.date).toLocaleDateString("EN-us")}`)
-    doc.text(`#${i + 1}`)
+    doc.text(`#${i + 1} ${poNumber? `PO: ${poNumber}`: ""}`)
     if(printPO){
       doc.text(printPO)
     }

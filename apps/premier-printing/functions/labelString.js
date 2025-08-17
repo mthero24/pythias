@@ -1,6 +1,6 @@
 import {Items, Inventory, productInventory} from "@pythias/mongo";
 
-export const buildLabelData = async (item, i, returnBin, opts={},) => {
+export const buildLabelData = async (item, i, poNumber, opts={},) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     if(!item.inventory) item.inventory = {};
     if(!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
@@ -36,7 +36,7 @@ export const buildLabelData = async (item, i, returnBin, opts={},) => {
     }
     frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FD${frontBackString}^FS`;
     if(!item.design) frontBackString = "Missing Design";
-    let printPO = opts.printPO ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${opts.printPO}^FS`: "";
+    let printPO = poNumber ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${poNumber}^FS`: "";
     let printTypeAbbr;
     if (item.designRef && item.designRef.sku && item.designRef.sku.includes("PU")) printTypeAbbr = "PUF";
     if (item.designRef && item.designRef.sku && item.designRef.sku.includes("EMB")) printTypeAbbr = "EMB";

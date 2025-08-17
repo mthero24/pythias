@@ -1,8 +1,5 @@
-import {NextApiRequest, NextResponse} from "next/server";
-import InventoryOrders from "@/models/InventoryOrders";
-import Inventory from "@/models/inventory";
-import Blanks from "@/models/Blanks";
-import Items from "@/models/Items";
+import {NextApiRequest, NextResponse} from "next/server"
+import {Blank as Blanks, Item as Items, Inventory, InventoryOrders} from "@pythias/mongo";
 import axios from "axios";
 export async function GET(){
     console.log("Fetching inventory orders");
@@ -32,7 +29,7 @@ export async function PUT(req=NextApiRequest){
         }
         console.log(printItems.length)
         location.received = true
-        let printLabels = await axios.post("https://simplysage.pythiastechnologies.com/api/production/print-labels", { items: printItems })
+        let printLabels = await axios.post("https://simplysage.pythiastechnologies.com/api/production/print-labels", { items: printItems, poNumber: order.poNumber })
         console.log(printLabels?.data)
         if (order.locations.filter(l => l.received == false).length == 0) order.received = true
         order.markModified("locations received")

@@ -48,7 +48,7 @@ export async function POST(req=NextApiRequest){
     for(let i of data.items){
         let quantity = await checkInventory(i)
         if(quantity > 0){
-            let label = await buildLabelData(i, j)
+            let label = await buildLabelData(i, j, poNumber)
             preLabels.push(label)
             pieceIds.push(i.pieceId)
             j++

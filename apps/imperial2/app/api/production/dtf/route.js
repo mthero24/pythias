@@ -177,6 +177,7 @@ export async function PUT(req = NextApiRequest) {
             design: { $ne: null },
             labelPrinted: false,
             canceled: false,
+            type: "DTF",
             paid: true,
         }).populate("color", "name").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").populate("order", "poNumber items marketplace date").populate("blank", "code envelopes box sizes multiImages")
         console.log(items.length, "items to print")

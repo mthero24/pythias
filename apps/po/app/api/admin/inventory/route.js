@@ -1,60 +1,19 @@
-import Inventory from "@/models/inventory";
-import Blanks from "@/models/StyleV2";
+import {Inventory} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
-export async function GET(req){
-    console.log("Fetching inventory")
-    console.log(req.nextUrl.searchParams.get("style"), "style")
-    let page = req.nextUrl.searchParams.get("page") ? Number(req.nextUrl.searchParams.get("page")) - 1 : 0;
-        if(page < 0){
-            page = 0;
-        }
-        let options = {};
-        let sort = {_id: -1};
-        if(req.nextUrl.searchParams.get("style")){
-            options['inventory_id'] = {$regex: new RegExp("-" + req.nextUrl.searchParams.get("style"), 'gi')}
-        }
-        if(req.nextUrl.searchParams.get("size")){
-            options['size_name'] = {$regex: new RegExp(req.nextUrl.searchParams.get("size"), 'gi')}
-        }
-        if(req.nextUrl.searchParams.get("color")){
-            options['color_name'] = {$regex: new RegExp(req.nextUrl.searchParams.get("color"), 'gi')}
-        }
-        if(req.nextUrl.searchParams.get("sort")){
-            sort = JSON.parse(req.nextUrl.searchParams.get("sort"));
-            console.log(sort)
-        }
-        if(req.nextUrl.searchParams.get("pendingOrders") && req.nextUrl.searchParams.get("pendingOrders") == 'true'){
-            options = {
-                $and: [
-                    { pending_orders: { $gt: 0 } },
-                    {
-                      $expr: {
-                        $gt: [
-                          '$pending_orders',
-                          { $add: ['$pending_quantity', '$quantity'] }
-                        ]
-                      }
-                    }
-                  ]
-            };
-            let inventory = await Inventory.find(options).skip(page * 400).sort({style_code: 1}).limit(400).lean();
-            return NextResponse.json(inventory)
-        }
-        let inventory = await Inventory.find(options).skip(page * 400).sort({style_code: 1}).limit(400).lean();
-        return NextResponse.json(inventory)
+import {default as Blanks} from "@/models/StyleV2";
+import Items from "@/models/Items";
+import {getInv} from "@pythias/inventory"
+export async function GET(req=NextApiRequest){
+    let term = req.nextUrl.searchParams.get("q");
+    let res = await getInv({ Blanks, Inventory, term, page: 1})
+    return NextResponse.json({...res})
 }
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     //console.log(data)
-    let inventory = await Inventory.findOne({inventory_id: data.inventory_id});
-    inventory.quantity = Number(data.quantity);
-    inventory.unit_cost = Number(data.cost);
-    inventory.row = data.aisle
-    inventory.unit = data.unit
-    inventory.shelf = data.shelf
-    inventory.bin = data.bin
-    await inventory.save();
-    return NextResponse.json({error: false})
+    await Inventory.findByIdAndUpdate(data.inventory._id, data.inventory);
+    let items = await Items.find({labelPrinted: false, status: "awaiting_shipment"})
+    return NextResponse.json({error: false, items})
 }
 export async function PUT(req=NextApiRequest){
     console.log("here")

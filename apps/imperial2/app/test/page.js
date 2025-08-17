@@ -9,6 +9,28 @@ import { isSingleItem } from "@/functions/itemFunctions";
 export default async function Test(){
     
    //await pullOrders();
+    // let order = await InventoryOrders.findOne({ _id: "689f9112000d8326706d6379"}).populate("locations.items.inventory")
+    // for(let loc of order.locations){
+    //     for(let item of loc.items){
+    //        //console.log(item, "item")
+    //         let addItems = await Item.find({"inventory.inventory": item.inventory._id, canceled: false, paid: true, shipped: false, labelPrinted: false}).sort({_id: 1})
+    //         console.log(addItems.length, "add items")
+    //         console.log(item.quantity, "inv quantity before")
+    //         item.inventory.orders = item.inventory.orders.filter(o=> o.order.toString() !== order._id.toString())
+    //         item.inventory.orders.push({order: order._id, items: []})
+    //         for(let i = 0; i < item.quantity; i++){
+    //             let addItem = addItems[i];
+    //             if(addItem){
+    //                 let o = item.inventory.orders.filter(o=> o.order.toString() == order._id.toString())[0]
+    //                 o.items.push(addItem._id)
+    //                 item.inventory.inStock = item.inventory.inStock.filter(it=> it.toString() !== addItem._id.toString())
+    //                 item.inventory.attached = item.inventory.attached.filter(it=> it.toString() !== addItem._id.toString())
+    //             }
+    //         }
+    //         console.log(item.inventory.orders, "new orders")
+    //         await item.inventory.save();
+    //     }
+    // }
     let inventories = await Inventory.find({})
     console.log(inventories.length, "inventories")
     for (let inv of inventories) {
@@ -41,9 +63,7 @@ export default async function Test(){
             inv.attached = newAttached;
             console.log(inv.style_code, inv.color_name, inv.size_name, inv.quantity, inv.attached.length, inv.inStock.length, items.length, inv.orders.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
             if (inv.quantity > 0) {
-                console.log("inv quantity > 0")
                 for (let item of items) {
-                    console.log("Checking item:", inv.quantity - inv.inStock.length > 0, !inv.attached.includes(item._id.toString()), !inv.inStock.includes(item._id.toString()), !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString()));
                     if (inv.quantity - inv.inStock.length > 0 && !inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
                         inv.inStock.push(item._id.toString())
                     } else if (!inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
@@ -52,17 +72,15 @@ export default async function Test(){
                 }
                 await inv.save()
             } else {
-                console.log("inv quantity <= 0")
                 if (items.length > 0) {
                     for (let item of items) {
-                        console.log("Checking item:", inv.attached.includes(item._id.toString()), inv.inStock.includes(item._id.toString()), inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString()));
                         if (!inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
                             inv.attached.push(item._id.toString())
                         }
                     }
+                    await inv.save()
                 }
             }
-            await inv.save()
         }
     }
     return <h1>test</h1>

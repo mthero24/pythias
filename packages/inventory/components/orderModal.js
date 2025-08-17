@@ -1,31 +1,39 @@
 import {useState, useEffect} from "react"
 import {Box, Grid2, Typography, Button, Modal, TextField, FormControlLabel, Checkbox, Divider, Accordion, AccordionActions,AccordionSummary,AccordionDetails  } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LoaderOverlay from "./LoaderOverlay"
+import { CircularProgress } from '@mui/material'
 import axios from "axios";
-export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setItems, defaultLocation, setLoading}){
+export function OrderModal({open, setOpen, type, items, setBlanks, setItems, defaultLocation,}){
     const [needsOrdered, setNeedsOrdered] = useState([])
     const [order, setOrder] = useState({poNumber: "", company: "", dateOrdered: "", dateExpected: ""})
     const [blankCodes, setBlankCodes] = useState([])
     const [colors, setColors] = useState([])
+    const [blanks, setBlan] = useState([])
+    const [loading, setLoading] = useState(false)
     useEffect(()=>{
         console.log(open)
-        setLoading(true)
+        const getBlanks = async()=>{
+            setLoading(true)
+           let res = await axios.get("/api/admin/inventory/create-order")
+            if(res && res.data){
+                setBlan(res.data.blanks)
+            }
+        }
         if(open){
+            console.log(loading)
+            if(blanks.length == 0)getBlanks()
             let no = []
             if(type == "Out Of Stock"){
                 let bl = []
                 let cl = []
                 for(let blank of blanks){
                     for(let inv of blank.inventories){
-                        let inStock = inv.quantity 
-                        console.log(inv, "inv.blank")
                         let onOrder = (inv.attached ? inv.attached.length : 0)
                         //console.log(inStock - onOrder)
-                        if(inStock - onOrder < 0) {
+                        if(onOrder > 0) {
                             if(!bl.includes(inv.style_code))bl.push(inv.style_code)
                             if(!cl.includes(inv.color_name))cl.push(inv.color_name)
-                            no.push({inv, order: (inStock - onOrder) * -1, included: true, location: defaultLocation})
+                            no.push({inv, order: (onOrder), included: true, location: defaultLocation})
                         }
                     }
                 }
@@ -50,9 +58,11 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                 setColors([...cl])
             }
             setNeedsOrdered([...no])
+            if(blanks && blanks.length > 0){
+                setLoading(false)
+            }
         }
-        setLoading(false)
-    }, [open])
+    }, [open, blanks])
     const updateOrder = (param)=>{
         let o = {...order}
         o[param] = event.target.value
@@ -103,7 +113,7 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                 Order {type}
             </Typography>
             <Divider sx={{marginBottom: "3%"}}/>
-            <Box>
+            {!loading && <Box>
                 <Box>
                     <Grid2 container spacing={1}>
                         <Grid2 size={6}>
@@ -178,7 +188,10 @@ export function OrderModal({open, setOpen, type, items, blanks, setBlanks, setIt
                 <Typography sx={{ marginTop: "2%" }}>Total Item To Order: {needsOrdered.map(no => no.order).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}</Typography> 
                 <Divider sx={{marginTop: "3%"}}/>
                 <Button onClick={()=>{sub()}} fullWidth>Submit</Button>
-            </Box>
+            </Box>}
+            {loading && <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}><CircularProgress color="#e2e2e2" size={100} />
+                  <Typography variant="h6" sx={{ display: "block", color: "#e2e2e2", marginTop: "20px", fontSize: "2.6rem", fontWeight: "bold" }}>
+                    Loading...</Typography></Box>}
         </Box>
       </Modal>
     )

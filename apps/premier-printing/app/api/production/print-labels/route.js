@@ -47,7 +47,7 @@ export async function POST(req=NextApiRequest){
     console.log(data.items.length)
     for(let i of data.items){
       if(!i.labelPrinted){
-        let label = await buildLabelData(i, j)
+        let label = await buildLabelData(i, j, data.poNumber)
         pieceIds.push(i.pieceId)
         preLabels.push(label)
         j++
