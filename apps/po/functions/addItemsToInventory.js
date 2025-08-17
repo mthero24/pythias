@@ -1,15 +1,10 @@
-
-import Styles from "@/models/StyleV2"
-import Design from "@/models/Design"
-import Colors from "@/models/Color"
-import { getCarriers } from "@pythias/shipping"
-import { Inventory } from "@pythias/mongo";
+import {Inventory} from "@pythias/mongo";
 import Items from "@/models/Items";
-const updateInventory = async (invIds) => {
-    let inventories = await Inventory.find({ _id: { $in: invIds } })
-    console.log(inventories.length, "inventories")
+
+const updateInventory = async () => {
+    let inventories = await Inventory.find({  })
     for (let inv of inventories) {
-        let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
+        let items = await Items.find({ "inventory.inventory": inv._id, order: { $ne: null }, labelPrinted: false, canceled: false, shipped: false, paid: true })
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }
@@ -59,18 +54,19 @@ const updateInventory = async (invIds) => {
         }
     }
 }
-export default async function Test(){
-    let items = await Items.find({labelPrinted: false, inventory: null, canceled: false, shipped: false, paid: true})
-    console.log(items.length, "items to add to inventory")
-    for(let item of items){
-        item.inventory = {
-            inventoryType: "inventory",
-            inventory: await Inventory.findOne({style_code: item.styleCode, color_name: item.colorName, size_name: item.sizeName}),
-            productInventory: null,
+
+export async function addItemsToInventory(){
+    let items = await Items.find({labelPrinted: false, order: {$ne: null}, canceled: false, shipped: false, paid: true})
+        console.log(items.length, "items to add to inventory")
+        for(let item of items){
+            item.inventory = {
+                inventoryType: "inventory",
+                inventory: await Inventory.findOne({style_code: item.styleCode, color_name: item.colorName, size_name: item.sizeName}),
+                productInventory: null,
+            }
+            await item.save()
         }
-        await item.save()
-    }
-    let invIds = items.map(i=> i.inventory.inventory_id).filter(i=> i != null)
-    await updateInventory(invIds);
-    return <h1>Test</h1>
+        await updateInventory();
+        return <h1>Test</h1>
+    
 }

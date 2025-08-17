@@ -105,7 +105,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.inventory?.inventory?.quantity > 0)
+                if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.inventory?.inventory?.quantity > 0)
                     if(k.inventory.inventory.inStock){
                       if(k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
                     }else return k.pieceId;
@@ -127,8 +127,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                console.log(k.type?.toLowerCase() || k.designRef.printType?.toLowerCase())
-                if (((k.type?.toLowerCase() || k.designRef.printType?.toLowerCase()) == printType.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
+                console.log(k.type?.toLowerCase() || k.designRef?.printType?.toLowerCase())
+                if (((k.type?.toLowerCase() || k.designRef?.printType?.toLowerCase()) == printType.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
                   if (k.inventory.inventory.inStock) {
                     if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
                   } else return k.pieceId;
@@ -153,7 +153,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
          Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
+                if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
                   if (k.inventory.inventory.inStock) {
                     if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
                   } else return k.pieceId;
@@ -428,14 +428,20 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             Object.keys(useLabels).map((l, i) => (
               <Grid2 size={{ xs: 12, sm: source == "IM"? 12: 6, md:  source == "IM"? 12: 6, lg:  source == "IM"? 12: 6 }} key={i}>
                 <Card sx={{ width: "100%", minHeight: "100vh" }}>
-                  <Typography
+                  {source != "PO" && <Typography
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >
-                    {}
-                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.inStock?.length > 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.inStock ? l.inventory?.inventory?.inStock.length : 0) > 0 && l.inventory?.inventory?.inStock.includes(l._id.toString())) ).length})
+                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.inStock?.includes(l._id.toString())) ).length})
                     <br/>
-                    Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.quantity - productInventory.onhold <= 0) || (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.quantity - (l.inventory?.inventory?.onhold ? l.inventory?.inventory?.onhold : 0) <= 0)).length})
-                  </Typography>
+                    Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && !l.inventory?.inventory?.inStock?.includes(l._id.toString()))).length})
+                  </Typography>}
+                  {/* {source == "PO" && <Typography
+                    sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
+                  >
+                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.inStock.includes(l._id.toString())) ).length})
+                    <br/>
+                    Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && !l.inventory?.inventory?.inStock.includes(l._id.toString()))).length})
+                  </Typography>} */}
                   <Box sx={row}>
                     <Button
                         onClick={()=>{print(l)}}
@@ -565,11 +571,10 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                           }}
                         >
                           <Grid2 size={2}>
-                            {console.log(i.inventory?.inventoryType)}
                             <Typography
                               sx={{
                                 textAlign: "center",
-                                color: i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory?.quantity > 0 ? "#228C22" : i.inventory?.inventory?.quantity + i.inventory.inventory?.pending_quantity > 0 ? "#ffa808ff" : "#d0342c" : "#d0342c",
+                                color: i.inventory?.inventoryType == "inventory" ? i.inventory?.inventory?.inStock && i.inventory?.inventory?.inStock.includes(i._id.toString()) ? "#228C22" : i.inventory?.inventory?.orders?.map(o=> o.items.includes(i._id.toString())).filter(i => i != undefined)[0] ? "#ffa808ff" : "#d0342c" : "#d0342c",
                               }}
                             >
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock && i.inventory.inventory.inStock.includes(i._id.toString())?  "In Stock" : i.inventory && !i.inventory.inventory?.inStock ? i.inventory.inventory?.quantity > 0 ? "In Stock": "Out Of Stock" : "Out Of Stock" }

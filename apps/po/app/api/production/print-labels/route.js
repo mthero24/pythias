@@ -16,6 +16,8 @@ const subtractInventory = async (item)=>{
         console.log(inv.quantity)
         inv.quantity = inv.quantity - 1
         console.log( inv.quantity, "qty")
+        inv.inStock = inv.inStock.filter(i=> i.toString() != item._id.toString())
+        inv.attached = inv.attached.filter(i=> i.toString() != item._id.toString())
         await inv.save()
         //console.log(inv, "invetory subrtact")
     }

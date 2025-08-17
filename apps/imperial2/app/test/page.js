@@ -46,7 +46,7 @@ export default async function Test(){
                     console.log("Checking item:", inv.quantity - inv.inStock.length > 0, !inv.attached.includes(item._id.toString()), !inv.inStock.includes(item._id.toString()), !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString()));
                     if (inv.quantity - inv.inStock.length > 0 && !inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
                         inv.inStock.push(item._id.toString())
-                    } else if (inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
+                    } else if (!inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
                         inv.attached.push(item._id.toString())
                     }
                 }
