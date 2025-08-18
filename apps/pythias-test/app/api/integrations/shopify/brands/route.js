@@ -1,6 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
 import { headers } from "next/headers";
-import Brands from "@/models/Brands";
 import User from "@/models/User";
 
 export async function GET(req=NextApiRequest){
