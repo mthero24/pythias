@@ -80,8 +80,8 @@ export async function addItemsToInventory(){
             console.log(item.inventory.inventory, "inventory for item", item._id);
             await item.save()
         }
-        await updateInventory();
-        return <h1>Test</h1>
+    }
+    await updateInventory();
     
 }
 
