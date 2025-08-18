@@ -73,4 +73,4 @@ export async function addItemsToInventory(){
 
 setInterval(() => {
     if (process.env.pm_id == 24 || process.env.pm_id == "24") addItemsToInventory();
-}, 1000 * 60 * 60); // Run every hour
+}, 1000 * 60 * 30); // Run every hour
