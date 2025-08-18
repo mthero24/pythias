@@ -3,7 +3,7 @@ mongoose.set('autoIndex', false);
 import { TSPprints }  from "../lib/connection";
 import Color from "./Color";
 import { Inventory, ProductInventory } from "@pythias/mongo";
-import Order from "./Order";
+
 const PRINT_AREAS = [
   "front",
   "back",
@@ -48,7 +48,7 @@ const schema = new mongoose.Schema(
     ],
     order: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: Order,
+      ref: "Order",
     },
     orderId: { type: String },
     style: {
