@@ -60,16 +60,16 @@ const updateInventory = async (invIds) => {
     }
 }
 export default async function Test(){
-    let items = await Items.find({labelPrinted: false, inventory: null, canceled: false, shipped: false, paid: true})
-    console.log(items.length, "items to add to inventory")
-    for(let item of items){
-        item.inventory = {
-            inventoryType: "inventory",
-            inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.color.name}-${item.size.number}-${item.styleCode}`) }),
-            productInventory: null,
-        }
-        await item.save()
-    }
-    await updateInventory();
+    // let items = await Items.find({labelPrinted: false, inventory: null, canceled: false, shipped: false, paid: true})
+    // console.log(items.length, "items to add to inventory")
+    // for(let item of items){
+    //     item.inventory = {
+    //         inventoryType: "inventory",
+    //         inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.color.name}-${item.size.number}-${item.styleCode}`) }),
+    //         productInventory: null,
+    //     }
+    //     await item.save()
+    // }
+    // await updateInventory();
     return <h1>Test</h1>
 }
