@@ -9,6 +9,43 @@ export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
     //return NextResponse.json({error: true})
+    let order = await Order.findOne({ _id: data.orderId }).populate("items")
+    if (order.preShipped) {
+        let headers = {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer $2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO`
+            }
+        }
+        let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, { label: order.shippingInfo.label, station: data.station, barcode: "ppp" }, headers)
+        console.log(res.data)
+        for (let i of order.items) {
+            i.shipped = true
+            await i.save()
+        }
+        let bin = await Bin.findOneAndUpdate({ order: order._id }, { "items": [], "ready": false, "inUse": false, "order": null, "giftWrap": false, "readyToWrap": false, "wrapped": false, "wrapImage": null })
+        if (res.error) {
+            return NextResponse.json({ error: true, msg: "error printing label" })
+        } else {
+            console.log("retrun")
+            return NextResponse.json({
+                error: false, label: order.shippingInfo.label,
+                bins: {
+                    readyToShip: await Bin.find({ ready: true })
+                        .sort({ number: 1 })
+                        .populate({ path: "order", populate: "items" })
+                        .lean(),
+                    inUse: await Bin.find({ inUse: true })
+                        .sort({ number: 1 })
+                        .populate({ path: "order", populate: "items" })
+                        .lean(),
+                },
+            })
+        }
+    }
+    else if (order.status == "shipped" && order.shippingInfo.label == undefined) {
+        return NextResponse.json({ error: true, msg: "Order Already Shipped reprint label" })
+    }
     if(!data.address.country) data.address.country = "US"
 
     try{
