@@ -312,6 +312,15 @@ export async function pullOrders(){
             })
         }else{
             order.status = o.orderStatus
+            if(order.shippingAddress.name != o.shipTo.name || order.shippingAddress.address1 != o.shipTo.street1 || order.shippingAddress.address2 != o.shipTo.street2 || order.shippingAddress.city != o.shipTo.city || order.shippingAddress.zip != o.shipTo.postalCode || order.shippingAddress.state != o.shipTo.state || order.shippingAddress.country != o.shipTo.country){
+                order.shippingAddress.name = o.shipTo.name? o.shipTo.name: "not provided"
+                order.shippingAddress.address1 = o.shipTo.street1 ? o.shipTo.street1 : "not provided"
+                order.shippingAddress.address2 = o.shipTo.street2 ? o.shipTo.street2 : "not provided"
+                order.shippingAddress.city = o.shipTo.city ? o.shipTo.city : "not provided"
+                order.shippingAddress.zip = o.shipTo.postalCode ? o.shipTo.postalCode : "not provided"
+                order.shippingAddress.state = o.shipTo.state ? o.shipTo.state : "not provided"
+                order.shippingAddress.country = o.shipTo.country ? o.shipTo.country : "not provided"
+            }
             if(order.status == "shipped"){
                 order.items.map(async i=>{
                     i.status = order.status;
