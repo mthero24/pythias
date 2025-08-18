@@ -6,7 +6,7 @@ import { getCarriers } from "@pythias/shipping"
 import { Inventory } from "@pythias/mongo";
 import Items from "@/models/Items";
 const updateInventory = async (invIds) => {
-    let inventories = await Inventory.find({ _id: { $in: invIds } })
+    let inventories = await Inventory.find({ })
     console.log(inventories.length, "inventories")
     for (let inv of inventories) {
         let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
@@ -70,7 +70,6 @@ export default async function Test(){
         }
         await item.save()
     }
-    let invIds = items.map(i=> i.inventory.inventory_id).filter(i=> i != null)
-    await updateInventory(invIds);
+    await updateInventory();
     return <h1>Test</h1>
 }

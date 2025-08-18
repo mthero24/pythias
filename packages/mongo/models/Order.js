@@ -159,6 +159,8 @@ const schema = new mongoose.Schema({
   archived: { type: Boolean, default: false },
   finalized: { type: Boolean, default: false },
   pricingChanges: { type: Number, default: 0 },
+  shopifyOrderId: { type: String, unique: true, sparse: true },
+  shopifyShop: { type: String, sparse: true },
 });
 
 // schema.pre("save", async function (next) {
