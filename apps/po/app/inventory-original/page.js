@@ -426,7 +426,7 @@ const Index = (props) => {
   
     const receiveOrder = async (name, vendor) => {
       console.log("receiveOrder", name);
-      let results = await axios.post("/api/admin/inventory/receive-order", {
+      let results = await axios.post("/api/admin/inventory-original/receive-order", {
         name,
         vendor,
       });
