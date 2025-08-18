@@ -7,9 +7,11 @@ import { Inventory } from "@pythias/mongo";
 import Items from "@/models/Items";
 const updateInventory = async (invIds) => {
     let inventories = await Inventory.find({ })
+    inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
     console.log(inventories.length, "inventories")
     for (let inv of inventories) {
-        let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
+        let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
+        items = items.filter(i => i.order != null)
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }
@@ -56,20 +58,30 @@ const updateInventory = async (invIds) => {
                     await inv.save()
                 }
             }
+        }else{
+            inv.inStock = [];
+            inv.attached = [];
+            await inv.save()
         }
     }
 }
 export default async function Test(){
-    // let items = await Items.find({labelPrinted: false, inventory: null, canceled: false, shipped: false, paid: true})
-    // console.log(items.length, "items to add to inventory")
-    // for(let item of items){
-    //     item.inventory = {
-    //         inventoryType: "inventory",
-    //         inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.color.name}-${item.size.number}-${item.styleCode}`) }),
-    //         productInventory: null,
-    //     }
-    //     await item.save()
-    // }
-    // await updateInventory();
+    let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
+    console.log(items.length, "items to add to inventory")
+    let cancel = items.filter(i=> i.order == null)
+    for(let c of cancel){
+        c.canceled = true;
+        await c.save()
+    }
+    items = items.filter(i => i.order != null)
+    for(let item of items){
+        item.inventory = {
+            inventoryType: "inventory",
+            inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
+            productInventory: null,
+        }
+        await item.save()
+    }
+    await updateInventory();
     return <h1>Test</h1>
 }

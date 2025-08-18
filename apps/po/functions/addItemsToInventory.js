@@ -3,8 +3,10 @@ import Items from "@/models/Items";
 
 const updateInventory = async () => {
     let inventories = await Inventory.find({  })
+    inventories = inventories.sort((a, b) => a.label.localeCompare(b.label))
     for (let inv of inventories) {
-        let items = await Items.find({ "inventory.inventory": inv._id, order: { $ne: null }, labelPrinted: false, canceled: false, shipped: false, paid: true })
+        let items = await Items.find({ "inventory.inventory": inv._id, order: { $ne: null }, labelPrinted: false, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
+        items = items.filter(i => i.order != null)
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }
@@ -51,19 +53,31 @@ const updateInventory = async () => {
                     await inv.save()
                 }
             }
+        } else {
+            inv.inStock = [];
+            inv.attached = [];
+            await inv.save()
         }
     }
 }
 
 export async function addItemsToInventory(){
-    let items = await Items.find({labelPrinted: false, order: {$ne: null}, canceled: false, shipped: false, paid: true})
+    let items = await Items.find({ labelPrinted: false, order: {$ne: null}, canceled: false, shipped: false, paid: true}).populate("order", "poNumber items")
+    let cancel = items.filter(i => i.order == null)
+    for (let c of cancel) {
+        c.canceled = true;
+        await c.save()
+    }
+    items = items.filter(i => i.order != null)
+    if(items.length > 0){
         console.log(items.length, "items to add to inventory")
         for(let item of items){
             item.inventory = {
                 inventoryType: "inventory",
-                inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.color.name}-${item.size.number}-${item.style.code}`) }),
+                inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
                 productInventory: null,
             }
+            console.log(item.inventory.inventory, "inventory for item", item._id);
             await item.save()
         }
         await updateInventory();

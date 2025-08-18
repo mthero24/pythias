@@ -7,6 +7,87 @@ import axios from "axios"
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
+    
+        if(data.preShip){
+            let item = await Items.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+            let order
+            if(item){
+                order = item.order
+            }else{
+                order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
+                item = order.items[0]
+                item.order = order
+            }
+            let weight = 0
+            for(let i of order.items){
+                let blank = await Blank.findOne({_id: i.blank})
+                let size = blank.sizes.filter(s=> s.name == item.sizeName)[0]
+                weight = size.weight && size.weight > 0? size.weight: 3
+            }
+            let send = {
+                address: item.order.shippingAddress, 
+                poNumber: item.order.poNumber, 
+                weight: weight? weight: 3, 
+                selectedShipping: {provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
+                businessAddress: JSON.parse(process.env.businessAddress),
+                providers: ["usps",],                
+                credentials: {
+                    clientId: process.env.uspsClientId,
+                    clientSecret: process.env.uspsClientSecret,
+                    crid: process.env.uspsCRID,
+                    mid: process.env.uspsMID,
+                    manifestMID: process.env.manifestMID,
+                    accountNumber: process.env.accountNumber,
+                    api: "apis"
+                },
+                enSettings: {
+                    requesterID: process.env.endiciaRequesterID,
+                    accountNumber: process.env.endiciaAccountNUmber,
+                    passPhrase: process.env.endiciaPassPhrase,
+                },
+                credentialsShipStation: {
+                    apiKey: process.env.ssV2
+                },
+                imageFormat: "PDF",
+                    carrierCodes :{
+                    usps: "se-1652813",
+                },
+                warehouse_id: 62666,
+                ignoreBadAddress: true,
+            }
+            if(!item.order.preShipped){
+                //console.log("pre shipping", item.order.poNumber)
+                let label = await buyLabel(send)
+                console.log(label)
+                if(label.error) return NextResponse.json(label)
+                let man = new Manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
+                await man.save()
+                item.order.preShipped = true
+                item.order.shippingInfo.label = label.label
+                item.order.shippingInfo.shippingCost += parseFloat(label.cost);
+                item.order.status = "Shipped"
+                item.order.shippingInfo.labels.push({
+                    trackingNumber: label.trackingNumber,
+                    label: label.label,
+                    cost: parseFloat(label.cost),
+                    trackingInfo: ["Label Purchased"],
+                });
+                for(let i of item.order.items){
+                    i.status = "PreShipped"
+                    i.steps.push({
+                        status: `PreShipped`,
+                        date: new Date(),
+                    });
+                    await i.save()
+                }
+                await item.order.save();
+                if(label.error){
+                    return NextResponse.json({error: true, msg: "error printing label"})
+                }else{
+                    return NextResponse.json({label})
+                }
+            }
+        }
     if(data.reprint){
         let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order

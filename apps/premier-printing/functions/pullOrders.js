@@ -1,4 +1,4 @@
-import { Design, Items as Item, Blank as Blanks, Color, Order, Products, SkuToUpc, Inventory, ProductInventory } from "@pythias/mongo";
+import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory } from "@pythias/mongo";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 
 let colorFixer = {

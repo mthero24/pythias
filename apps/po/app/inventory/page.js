@@ -12,9 +12,7 @@ export default async function InventoryPage ({ params, searchParams }){
     if(page){
         page = parseInt(page)
     }else page= 1
-    let items = await Items.find({labelPrinted: false, paid: true, canceled: false}).select("colorName sizeName style")
     let res = await getInv({Blanks, Inventory, term, page})
     let combined = serialize(res.blanks)
-    items = serialize(items)
-    return <Main bla={combined} it={items} defaultLocation="Orlando" binType="location" pagination={true} cou={res.count} pa={page} q={term}/>
+    return <Main bla={combined} it={[]} defaultLocation="Ohio" binType="location" pagination={true} cou={res.count} pa={page} q={term}/>
 }
