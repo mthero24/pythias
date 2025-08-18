@@ -189,15 +189,14 @@ export const downloadProduct = async ({ products, marketPlace, header }) => {
     let sendVarianrts = [];
     if (marketPlace.hasProductLine && (marketPlace.hasProductLine[header])) {
         for (let product of products) {
-            for (let b of product.blanks) {
-                let thisHead = { ...headers };
-                for (let h of Object.keys(headers)) {
-                    let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
-                    console.log("Header value for", h, ":", val);
-                    thisHead[h] = val != "N/A" ? val : "";
-                }
-                sendVarianrts.push(thisHead);
+            console.log("Processing product:", product.name);
+            let thisHead = { ...headers };
+            for (let h of Object.keys(headers)) {
+                let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks[0].marketPlaceOverrides ? product.blanks[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: product.blanks[0].code, category: product.blanks[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: product.blanks[0].name, type: "product" })
+                console.log("Header value for", h, ":", val);
+                thisHead[h] = val != "N/A" ? val : "";
             }
+            sendVarianrts.push(thisHead);
         }
     }
     for (let product of products) {

@@ -529,11 +529,9 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
     }
     if(productLine) {
         for(let product of products){
-            for (let b of product.blanks) {
-                for (let h of Object.keys(headers)) {
-                    let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: b.name, type: "product" })
-                    headers[h].push(val);
-                }
+            for (let h of Object.keys(headers)) {
+                let val = HeaderList({ product, mp: marketPlace, variant: {}, blankOverRides: product.blanks[0].marketPlaceOverrides ? product.blanks[0].marketPlaceOverrides[marketPlace.name] : [], headerLabel: h, color: "", blankCode: product.blanks[0].code, category: product.blanks[0].category[0], threadColor: "", numBlanks: product.blanks.length, blankName: product.blanks[0].name, type: "product" })
+                headers[h].push(val);
             }
         }
     }
