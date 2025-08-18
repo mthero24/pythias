@@ -420,7 +420,7 @@ const Index = (props) => {
     const [activeOrder, setActiveOrder] = useState();
   
     const getOrders = async () => {
-      let results = await axios.get("/api/admin/inventory/orders");
+      let results = await axios.get("/api/admin/inventory-original/orders");
       setOrders(results.data);
     };
   

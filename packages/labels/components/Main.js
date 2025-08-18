@@ -193,21 +193,12 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             if(source == "PP"){
               items.push(...useLabels[type]);
             }else{
-                let inventories = [];
+              let items = [];
               for(let l of useLabels[type]){
-                if(l.inventory.inventoryType == "inventory" && !inventories.filter(i=> i?._id?.toString() == l.inventory.inventory?._id?.toString())[0]) inventories.push({...l.inventory.inventory})
-                else if(l.inventory.inventoryType == "productInventory" && !inventories.filter(i=> i?._id?.toString() == l.inventory.productInventory?._id?.toString())[0]) inventories.push({...l.inventory.productInventory})
-              }
-              for(let l of useLabels[type]){
-                let inventory 
-                if(l.inventoryType == "productInventory"){
-                  inventory = inventories.filter(i=> i?._id?.toString() == l.inventory.productInventory?._id?.toString())[0]
-                }else if(l.inventoryType != "inventory" ){
-                  inventory = inventories.filter(i => i?._id?.toString() == l.inventory.inventory?._id?.toString())[0]
-                } 
-                if(inventory.quantity > 0){
+                if(l.inventory && l.inventory.inventory && l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id)){
                   items.push(l)
-                  inventory.quantity -= 1;
+                }else if(l.inventory && l.inventory.productInventory && l.inventory.productInventory.inStock && l.inventory.productInventory.inStock.length > 0 && l.inventory.productInventory.inStock.includes(l._id)){
+                  items.push(l)
                 }
               }
               console.log(items.length)

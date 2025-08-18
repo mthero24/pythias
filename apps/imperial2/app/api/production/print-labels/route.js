@@ -46,7 +46,7 @@ export async function POST(req=NextApiRequest){
     }
     // build labels
   console.log("items to print", itemsToPrint.length)
-    await createPdf({items: itemsToPrint, buildLabelData, poNumber: data.order?.poNumber, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
+    await createPdf({items: itemsToPrint, buildLabelData, poNumber: data.poNumber, localIP: process.env.localIP, key: "$2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO"})
    //subtractInventory(data.items)
     let pieceIds = itemsToPrint.map(i=> i.pieceId)
     // console.log(pieceIds)

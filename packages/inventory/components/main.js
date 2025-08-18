@@ -34,8 +34,8 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
     //console.log(items.length)
     const updateInventory = async ({inventory, param})=>{
         let s = [...styles]
-        //console.log(s)
-        let blank = s.filter(s=> s.blank._id.toString() == inventory.blank.toString())[0]
+        console.log(inventory);
+        let blank = s.filter(s=> s.blank._id.toString() == inventory.blank?.toString() || s.blank?.code == inventory.style_code)[0]
         let inv = blank.inventories.filter(iv=> iv._id.toString() == inventory._id.toString())[0]
 
         inv[param] = param != "location" && param != "row" && param != "bin" && param != "shelf" && param != "unit"  ? parseInt(event.target.value): event.target.value;
