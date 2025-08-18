@@ -15,7 +15,7 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
     return sku;
 }
 export default async function Test(){
-    await pullOrders();
+   // await pullOrders();
     // let inventories = await Inventory.find({})
     // console.log(inventories.length, "inventories")
     // for (let inv of inventories) {
