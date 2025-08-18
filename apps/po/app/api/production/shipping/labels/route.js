@@ -7,7 +7,7 @@ import axios from "axios"
 import Bin from "../../../../../models/Bin";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
-    console.log(data)
+    
     //return NextResponse.json({error: true})
     let order = await Order.findOne({ _id: data.orderId }).populate("items")
     if (order.preShipped) {
