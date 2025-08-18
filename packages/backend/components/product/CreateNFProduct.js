@@ -174,27 +174,31 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                         {product && product.blanks[0] && product.blanks[0].multiImages && (
                             <Box>
                                 <Typography variant="h6" textAlign="center" sx={{marginBottom: "2%"}}>Select Product Images for {product.name}</Typography>
-                                {Object.keys(product.blanks[0].multiImages).map((key) => (
+                                {Object.keys(product.blanks[0].multiImages).filter(key=> key == "front" || key=="back" || key == "modelFront" || key == "modelBack").sort((a,b)=>{
+                                    if(a.includes("front") && b.includes("back")) return -1;
+                                    if(a.includes("back") && b.includes("front")) return 1;
+                                    return 0;
+                                }).map((key) => (
                                     <Grid2 container spacing={2} key={key}>
                                         {product.blanks[0].multiImages[key].map((image) => (
                                             <Grid2 item xs={6} sm={4} md={3} key={image._id} sx={{cursor: "pointer"}} onClick={() => {
                                                 let prod = {...product};
                                                 if(!prod.productImages) prod.productImages = [];
                                                 if(!prod.productImages.filter(img => img.image === image.image)[0]){
-                                                    prod.productImages.push({image: image.image, color: product.colors.filter(color => color._id.toString() === image.color.toString())[0], blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}-${key}`, side: key});
+                                                    prod.productImages.push({image: `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`, color: product.colors.filter(color => color._id.toString() === image.color.toString())[0], blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}-${key}`, side: key});
 
                                                 }
                                                 else{
-                                                    prod.productImages = prod.productImages.filter(img => img.image !== image.image);
+                                                    prod.productImages = prod.productImages.filter(img => img.image !== `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`);
                                                 }
                                                 setProduct({...prod});
                                             }}>
                                                 <Card sx={{margin: "1% 0"}}>
-                                                    {product.productImages.filter(img => img.image === image.image)[0] &&
+                                                    {product.productImages.filter(img => img.image === `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`)[0] &&
                                                     <Box sx={{position: "relative", top: 40, backgroundColor: "rgba(255, 255, 255, 0.7)", background: "transparent", padding: "2px", marginTop: "-40px"}}>
                                                             <Checkbox checked={true} />
                                                     </Box> }
-                                                    {!product.productImages.filter(img => img.image === image.image)[0] &&
+                                                    {!product.productImages.filter(img => img.image === `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`)[0] &&
                                                         <Box sx={{ position: "relative", top: 40, backgroundColor: "rgba(255, 255, 255, 0.7)", background: "transparent", padding: "2px", marginTop: "-40px" }}>
                                                             <Checkbox checked={false} />
                                                         </Box>}
