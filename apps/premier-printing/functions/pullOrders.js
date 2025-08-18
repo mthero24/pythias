@@ -276,21 +276,21 @@ export async function pullOrders(){
                             }
                             console.log(blank?.code, color?.name, size, design?.sku, sku ? sku.sku : i.sku, "item to save")
                             if(blank && blank.code.includes("PPSET")){
-                                let sb = await Blanks.findOne({code: blank.code.split("_")[1]})
+                                let sb = await Blank.findOne({code: blank.code.split("_")[1]})
                                 //console.log(item)
                                 item = await createItem(i, order, sb, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                                 item = await createItem(i, order, blank, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                             }else if(blank && blank.code == "LGDSET"){
-                                let sb = await Blanks.findOne({code: "LGDSWT"})
+                                let sb = await Blank.findOne({code: "LGDSWT"})
                                 //console.log(item)
                                 item = await createItem(i, order, sb, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                                 item = await createItem(i, order, blank, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                             }else if(blank && blank.code == "LGDSET"){
-                                let sb = await Blanks.findOne({code: "GDT"})
+                                let sb = await Blank.findOne({code: "GDT"})
                                 item = await createItem(i, order, sb, color, threadColor, size, design, sku ? sku.sku : i.sku)
                                 items.push(item)
                                 item = await createItem(i, order, blank, color, threadColor, size, design, sku ? sku.sku : i.sku)
