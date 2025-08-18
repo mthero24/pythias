@@ -61,7 +61,7 @@ export async function addItemsToInventory(){
         for(let item of items){
             item.inventory = {
                 inventoryType: "inventory",
-                inventory: await Inventory.findOne({style_code: item.styleCode, color_name: item.colorName, size_name: item.sizeName}),
+                inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.color.name}-${item.size.number}-${item.style.code}`) }),
                 productInventory: null,
             }
             await item.save()
