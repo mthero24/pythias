@@ -51,8 +51,7 @@ export async function POST(req= NextApiRequest){
             credentialsShipStation: {
                 apiKey: process.env.ssV2
             },
-            imageFormat: "zpl",
-                carrierCodes :{
+            carrierCodes :{
                 usps: "se-1652813",
             },
             warehouse_id: 62666,
