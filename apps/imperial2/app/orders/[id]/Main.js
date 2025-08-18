@@ -305,7 +305,8 @@ const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
                                 i.designRef = d._id
                                 if(d.threadColors.length > 0 && d.threadImages && Object.keys(d.threadImages).length > 0){
                                     console.log("has", d.threadImages, i.threadColorName, d.threadImages[i.threadColorName])
-                                    i.design = d.threadImages[i.threadColorName]
+                                    if (!d.threadImages[i.threadColorName]) alert(`Please select a thread color for this design, the thread color ${i.threadColorName} images do not exist for this design`)
+                                    else i.design = d.threadImages[i.threadColorName]
                                     console.log(i.design)
                                 }
                                 else i.design =d.images

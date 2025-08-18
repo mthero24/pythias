@@ -2,6 +2,7 @@ import {NextApiRequest, NextResponse} from "next/server";
 import { headers } from "next/headers";
 import { User, Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory } from "@pythias/mongo";
 import { generatePieceID } from "@pythias/integrations";
+import inventory from "@/models/inventory";
 
 const updateInventory = async () => {
     let inventories = await Inventory.find({})
@@ -58,52 +59,36 @@ const updateInventory = async () => {
     }
 }
 
-const createItem = async (i, order, blank, color, threadColor, size, design, sku) => {
-    console.log(size, "size")
+const createItem = async ({variant, design, order, inventoryType, name}) => {
     let item = new Item({
         pieceId: await generatePieceID(),
         paid: true,
-        sku: i.sku,
-        orderItemId: i.orderItemId,
-        blank: blank,
-        styleCode: blank?.code,
-        sizeName: size?.name,
-        threadColorName: threadColor?.name,
-        threadColor: threadColor,
-        colorName: color?.name,
-        color: color,
-        size: size,
-        design: threadColor ? design.threadImages[threadColor?.name] : design?.images,
+        sku: variant.sku,
+        blank: variant.blank,
+        styleCode: variant.blank?.code,
+        sizeName: variant.blank.sizes.find(s => s._id.toString() == variant.sizeId)?.name,
+        threadColorName: variant.threadColor?.name,
+        threadColor: variant.threadColor,
+        colorName: variant.color?.name,
+        color: variant.color,
+        size: variant.blank.sizes.find(s => s._id.toString() == variant.sizeId),
+        design: variant.threadColor ? design.threadImages[variant.threadColor?.name] : design?.images,
         designRef: design,
         order: order._id,
-        shippingType: order.shippingType,
+        shippingType: "Standard",
         quantity: 1,
         status: order.status,
-        name: i.name,
+        name: name,
         date: order.date,
         type: design?.printType,
-        upc: i.upc,
-        options: i.options[0]?.value
+        upc: variant.upc,
+        inventory: {
+            inventoryType: inventoryType,
+            inventory: inventoryType == "inventory" ? variant.inventory : null,
+            productInventory: inventoryType == "productInventory" ? variant.productInventory : null,
+        }
     })
     item = await item.save();
-    let productInventory = await ProductInventory.findOne({ sku: item.sku })
-    if (productInventory && productInventory.quantity - productInventory.onhold > 0) {
-        if (productInventory.quantity > 0 - productInventory.onhold > 0) {
-            item.inventory.inventoryType = "productInventory"
-            item.inventory.productInventory = productInventory._id
-            productInventory.inStock.push(item._id.toString())
-            await productInventory.save()
-        }
-    } else {
-        let inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
-        //console.log(inventory?.quantity, "inventory quantity for item",)
-        if (inventory) {
-            if (!item.inventory) item.inventory = {}
-            item.inventory.inventoryType = "inventory"
-            item.inventory.inventory = inventory._id
-            console.log(inventory.attached, "inventory to save")
-        }
-    }
     return item
 }
 
@@ -111,23 +96,30 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
     let data = await req.json()
     const headersList = await headers();
     const authorizationHeader = headersList.get("authorization");
-    console.log("Authorization:", authorizationHeader);
-    console.log("Authorization:", authorizationHeader);
+    //console.log("Authorization:", authorizationHeader);
     if(authorizationHeader){
         let password = authorizationHeader?.split(" ")[1]
-        console.log(password)
+        //console.log(password)
         let user = await User.findOne({password: password})
-        console.log(user)
+        //console.log(user)
         if(user){
-            console.log(data)
-            let order = await Order.findOne({ shopifyOrderId: data.shopifyOrderId });
+            console.log(data, "data")
+            let order = await Order.findOne({shopifyOrderId: data.order.shopifyOrderId }).populate("items");
+            console.log(order, "order")
             if(!order){
+                console.log("Creating new order")
                 order = new Order({
                     shopifyOrderId: data.order.shopifyOrderId,
+                    orderId: data.order.shopifyOrderId.split("/")[data.order.shopifyOrderId.split("/").length - 1],
+                    date: new Date(data.order.date),
+                    shopifyShop: data.shop,
+                    marketplace: "shopify",
+                    poNumber: data.order.poNumber,
+                    uniquePo: `${data.order._id}-${data.order.poNumber}-shopify`,
                     shippingAddress: {
                         name: data.order.shippingAddress.name,
-                        addressLine1: data.order.shippingAddress.address1,
-                        addressLine2: data.order.shippingAddress.address2,
+                        address1: data.order.shippingAddress.address1,
+                        address2: data.order.shippingAddress.address2,
                         city: data.order.shippingAddress.city,
                         state: data.order.shippingAddress.provinceCode,
                         zip: data.order.shippingAddress.zip,
@@ -135,7 +127,54 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
                     },
                     total: data.order.totalPrice,
                     status: data.order.status,
+                    shippingType: "Standard",
                 });
+                console.log(order, "order to save")
+                let items = [];
+                for (let i of data.order.items) {
+                    console.log(i, "item")
+                    let product = await Products.findById(i.product).populate("design variantsArray.color variantsArray.threadColor variantsArray.blank variantsArray.inventory variantsArray.productInventory");
+                    console.log(product, "product")
+                    let variant = product.variantsArray.find(v => v.sku == i.sku);
+                    for(let j = 0; j < i.quantity; j++) {
+                        let inventoryType
+                        if(variant.productInventory && variant.productInventory.quantity > 0 && variant.productInventory.quantity > variant.productInventory.inStock.length) {
+                            inventoryType = "productInventory";
+                        }else{
+                            inventoryType = "inventory";
+                        }
+                        let item = await createItem({variant, design: product.design, order, inventoryType, name: product.name});
+                        if(inventoryType == "productInventory") {
+                            if(!variant.productInventory.inStock) variant.productInventory.inStock = [];
+                            variant.productInventory.inStock.push(item._id);
+                            await variant.productInventory.save();
+                        }
+                        items.push(item);
+                    }
+                }
+                order.items = items;
+                order = await order.save();
+                updateInventory();
+            }else{
+                order.status = data.order.status;
+                order.shippingAddress = {
+                    name: data.order.shippingAddress.name,
+                    address1: data.order.shippingAddress.address1,
+                    address2: data.order.shippingAddress.address2,
+                    city: data.order.shippingAddress.city,
+                    state: data.order.shippingAddress.provinceCode,
+                    zip: data.order.shippingAddress.zip,
+                    country: data.order.shippingAddress.countryCode,
+                };
+                order.total = data.order.totalPrice;
+                if(order.status == "CANCELED"){
+                    order.canceled = true;
+                    for(let item of order.items){
+                        item.canceled = true;
+                        await item.save();
+                    }
+                }
+                await order.save();
             }
             return NextResponse.json({error: false, orderId: order._id })
         }
