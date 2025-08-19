@@ -147,7 +147,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         orderItemId: i.orderItemId, 
         blank: blank, 
         styleCode: blank?.code, 
-        sizeName: size?.name, 
+        sizeName: size && size.name? size.name: blank?.sizes.find(s => s._id.toString() == size)?.name, 
         threadColorName: threadColor?.name, 
         threadColor: threadColor, 
         colorName: color?.name, 

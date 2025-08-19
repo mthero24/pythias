@@ -101,8 +101,8 @@ export const csvFunctions = {
        //console.log("variant", variant.images, "index", index);
         return variant.images && variant.images.length > index ? variant.images[index] : "N/A";
     },
-    variantColorFamily: (variant) => {
-        return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "N/A";
+    variantColorFamily: (variant, sizeConverter, numBlanks, blankName, connection, colorFamilyConverter) => {
+        return variant.color && variant.color.colorFamily ? colorFamilyConverter[variant.color.colorFamily] ? colorFamilyConverter[variant.color.colorFamily] : variant.color.colorFamily : "N/A";
     }
 };
 
@@ -667,6 +667,7 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
 }
 const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace, setDeleteModal, setDeleteImage, setOnDelete, setDeleteTitle, setMarketPlaces, blank, setBlank, connections }) => {
     const [showSizeConverter, setShowSizeConverter] = useState(false);
+    const [showColorFamily, setShowColorFamily] = useState(false);
     const [update, setUpdate] = useState(false);
     const [header, setHeader] = useState("");
     useEffect(() => {
@@ -678,7 +679,20 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
             }
             let m = { ...marketPlace };
             m.sizeConverter = sizeObj;
-            setMarketPlace({...m});
+            const getColors = async () => {
+                let res = await axios.get("/api/admin/colors");
+                if (res.data && !res.data.error) {
+                    let colorConverter = marketPlace.colorFamilyConverter ? marketPlace.colorFamilyConverter : {};
+                    for (let color of res.data.colors) {
+                        if (!colorConverter[color.colorFamily]) {
+                            colorConverter[color.colorFamily] = color.colorFamily;
+                        }
+                    }
+                    m.colorFamilyConverter = colorConverter;
+                    setMarketPlace({ ...m });
+                }
+            }
+            getColors();
             
         }
     }, [open]);
@@ -883,6 +897,46 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                 </Card>
                             )
                         })}
+                        <Card sx={{ margin: "1% 0%" }}>
+                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: ".5%"}}>
+                                <Typography variant="h6" sx={{ marginBottom: "1%", padding: "2%" }}>Color Family Converter</Typography>
+                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", padding: ".5% 2%", cursor: "pointer", "&:hover": { opacity: .6 } }}>
+                                    {showColorFamily ? (
+                                        <KeyboardArrowUpIcon onClick={() => setShowColorFamily(false)} />
+                                    ) : (
+                                        <KeyboardArrowDownIcon onClick={() => setShowColorFamily(true)} />
+                                    )}
+                                </Box>
+                            </Box>
+                            {showColorFamily && (
+                                <Container sx={{ marginTop: "2%" }}>
+                                    <Box sx={{ display: "flex", flexDirection: "column", gap: "1%", justifyContent: "center", alignItems: "center", padding: "1%" }}>
+                                        {Object.keys(marketPlace.colorFamilyConverter ? marketPlace.colorFamilyConverter : {}).map((colorItem, index) => (
+                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                                                <TextField
+                                                    variant="outlined"
+                                                    size="small"
+                                                    value={colorItem}
+                                                    disabled
+                                                />
+                                                <Box sx={{ padding: "0 10px", fontSize: "14px" }}>:</Box>
+                                                <TextField
+                                                    variant="outlined"
+                                                    size="small"
+                                                    value={marketPlace.colorFamilyConverter[colorItem]}
+                                                    onChange={(e) => {
+                                                        let m = { ...marketPlace };
+                                                        m.colorFamilyConverter[colorItem] = e.target.value;
+                                                        setMarketPlace({ ...m });
+                                                    }}
+                                                />
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                </Container>
+                            )}
+                            
+                        </Card>
                         <Card>
                             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: ".5%" }}>
                                 <Typography variant="h6" sx={{ marginBottom: "1%", padding: "2%" }}>Size Name Converter</Typography>
@@ -921,8 +975,8 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                     </Box>
                                 </Container>
                             )}
+
                         </Card>
-                        
                         <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: "2%" }}>
                             <Button variant="contained" color="primary" onClick={() => {
                                 createMarketplace();

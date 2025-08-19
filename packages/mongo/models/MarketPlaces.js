@@ -4,6 +4,7 @@ import { PremierPrinting } from "../lib/connection";
 const schema = new mongoose.Schema({
     name: { type: String, required: true },
     sizeConverter: Object,
+    colorFamilyConverter: Object,
     headers: [Object],
     brand: String,
     credentials: Object,

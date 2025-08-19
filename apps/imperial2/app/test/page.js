@@ -7,7 +7,11 @@ import { create } from "@mui/material/styles/createTransitions";
 import { isSingleItem } from "@/functions/itemFunctions";
 
 export default async function Test(){
-    
+    // let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "577071521060065344" })
+    // console.log(orders, "orders")
+    // for(let order of orders){
+    //     console.log(order.items)
+    // }
    //await pullOrders();
     // let order = await InventoryOrders.findOne({ _id: "689f9112000d8326706d6379"}).populate("locations.items.inventory")
     // for(let loc of order.locations){

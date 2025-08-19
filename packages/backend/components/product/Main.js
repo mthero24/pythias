@@ -14,7 +14,7 @@ import {useCSV} from "../reusable/CSVProvider";
 import {CreateNFProduct} from "./CreateNFProduct";
 import { set } from "mongoose";
 export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts}) => {
-    const [products, setProducts] = useState(prods);
+    const [products, setProducts] = useState(prods? prods : []);
     const [count, setCount] = useState(co);
     const [page, setPage] = useState(pa);
     const [search, setSearch] = useState(query? query: "");
