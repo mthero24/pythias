@@ -184,7 +184,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                             <Grid2 item xs={6} sm={4} md={3} key={image._id} sx={{cursor: "pointer"}} onClick={() => {
                                                 let prod = {...product};
                                                 if(!prod.productImages) prod.productImages = [];
-                                                if(!prod.productImages.filter(img => img.image === image.image)[0]){
+                                                if (!prod.productImages.filter(img => img.image === `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`)[0]){
                                                     prod.productImages.push({image: `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`, color: product.colors.filter(color => color._id.toString() === image.color.toString())[0], blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}-${key}`, side: key});
 
                                                 }
@@ -269,25 +269,25 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                             <Box key={color._id} sx={{marginBottom: "2%"}}>
                                 <Typography variant="subtitle1" sx={{marginBottom: "1%"}}>{color.name}</Typography>
                                 <Box sx={{width: "100%"}}>
-                                    {product.colors && product.colors.length > 0 && product.blanks[0].multiImages && Object.keys(product.blanks[0].multiImages).map((key) => (
+                                    {product.colors && product.colors.length > 0 && product.blanks[0].multiImages && Object.keys(product.blanks[0].multiImages).filter(k=> k=="front" || k=="back" || k=== "modelFront" || k == "modelBack").map((key) => (
                                         <Grid2 container spacing={2} key={key}>
                                             {product.blanks[0].multiImages[key].length > 0 && product.blanks[0].multiImages[key].filter(img => img.color.toString() === color._id.toString()).map((image) => (
-                                                <Grid2 size={{ xs: 6, sm: 4, md: 3 }} key={image._id} sx={{cursor: "pointer", margin: "1% 0%"}} onClick={() => {
+                                                <Grid2 size={{ xs: 6, sm: 3, md: 2 }} key={image._id} sx={{cursor: "pointer", margin: "1% 0%"}} onClick={() => {
                                                     let prod = {...product};
                                                     if(primaryImage){
                                                         let variants = prod.variantsArray.filter(v => v.color._id.toString() === color._id.toString());
                                                         for(let v of variants){
-                                                            v.image = image.image;
+                                                            v.image = `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`;
                                                         }
                                                     }else{
                                                         let variants = prod.variantsArray.filter(v => v.color._id.toString() === color._id.toString());
                                                         for(let v of variants){
                                                             if(!v.images) v.images = [];
-                                                            if(v.image !== image.image){
-                                                                if(!v.images.filter(img => img === image.image)[0]){
-                                                                    v.images.push(image.image);
+                                                            if (v.image !== `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`){
+                                                                if (!v.images.filter(img => img === `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`)[0]){
+                                                                    v.images.push(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`);
                                                                 }else{
-                                                                    v.images = v.images.filter(img => img !== image.image);
+                                                                    v.images = v.images.filter(img => img !== `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`);
                                                                 }
                                                             }
                                                         }
@@ -295,15 +295,15 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                                     setProduct({...prod});
                                                 }}>
                                                     <Card sx={{width: "100%"}}>
-                                                        {product.variantsArray.filter(v => v.color._id.toString() === color._id.toString() && v.image === image.image)[0] &&
+                                                        {product.variantsArray.filter(v => v.color._id.toString() === color._id.toString() && v.image === `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`)[0] &&
                                                         <Box sx={{position: "relative", top: 40, backgroundColor: "rgba(255, 255, 255, 0.7)", background: "transparent", padding: "2px", marginTop: "-40px"}}>
                                                             <Checkbox checked={true} /> 
                                                         </Box> }
-                                                        {product.variantsArray.filter(v => v.color._id.toString() === color._id.toString() && v.images.includes(image.image))[0] &&
+                                                        {product.variantsArray.filter(v => v.color._id.toString() === color._id.toString() && v.images.includes(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`))[0] &&
                                                             <Box sx={{ position: "relative", top: 40, backgroundColor: "rgba(255, 255, 255, 0.7)", background: "transparent", padding: "2px", marginTop: "-40px" }}>
                                                                 <Checkbox checked={true} color="error" />
                                                             </Box>}
-                                                        <img src={image.image} alt={image.alt} style={{ width: "100%", height: "auto" }} />
+                                                        <img src={`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={image.alt} style={{ width: "100%", height: "auto" }} />
                                                         <Typography variant="body2" textAlign="center">{key}</Typography>
                                                     </Card>
                                                 </Grid2>

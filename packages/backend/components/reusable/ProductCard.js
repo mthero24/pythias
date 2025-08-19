@@ -116,10 +116,10 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
                     <DeleteIcon sx={{ color: "#780606" }} />
                 </Box>
                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-                    <img src={p?.productImages?.filter(i => i.color._id?.toString() == (p.defaultColor ? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString() : p.colors[0]._id.toString()) && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
+                    <img src={p?.productImages?.filter(i => i.color?._id?.toString() == (p.defaultColor ? p.defaultColor?._id ? p.defaultColor?._id?.toString() : p.defaultColor?.toString() : p.colors[0]?._id?.toString()) && i.side != "back")[0]?.image} width={400} height={400} style={{ objectFit: "cover", borderRadius: "5px" }} />
                 </Box>
-                {p.productImages?.filter(i => i.color?._id?.toString() == (p.defaultColor ? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString() : p.colors[0]._id.toString()) && (i.side == "back" || i.side == "modelBack"))[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", position: "relative", zIndex: 1, top: -130, left: 0, padding: "2%", marginBottom: "-130px", }}>
-                    <img src={p.productImages.filter(i => i.color._id.toString() == (p.defaultColor ? p.defaultColor._id ? p.defaultColor._id.toString() : p.defaultColor.toString() : p.colors[0]._id.toString()) && (i.side == "back" || i.side == "modelBack"))[0]?.image} width={120} height={120} style={{ objectFit: "cover", borderRadius: "100px" }} />
+                {p.productImages?.filter(i => i.color?._id?.toString() == (p.defaultColor ? p.defaultColor?._id ? p.defaultColor?._id?.toString() : p.defaultColor?.toString() : p.colors[0]?._id?.toString()) && (i.side == "back" || i.side == "modelBack"))[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", position: "relative", zIndex: 1, top: -130, left: 0, padding: "2%", marginBottom: "-130px", }}>
+                    <img src={p.productImages.filter(i => i.color?._id?.toString() == (p.defaultColor ? p.defaultColor?._id ? p.defaultColor?._id?.toString() : p.defaultColor?.toString() : p.colors[0]?._id?.toString()) && (i.side == "back" || i.side == "modelBack"))[0]?.image} width={120} height={120} style={{ objectFit: "cover", borderRadius: "100px" }} />
                 </Box>}
                 <Divider sx={{ margin: "2% 0" }} />
                 <Box sx={{ display: "flex", flexDirection: "column", }}>
