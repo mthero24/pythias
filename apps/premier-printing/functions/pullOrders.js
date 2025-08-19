@@ -8,6 +8,7 @@ let colorFixer = {
     ICEBLUE: "Ice Blue",
     IceBlue: "Ice Blue",
     "Army": "Army Green",
+    "ARMY": "Army Green",
     "H. Grey": "Heather Grey",
     "H.Grey": "Heather Grey",
     HGrey: "Heather Grey",
@@ -41,6 +42,8 @@ let colorFixer = {
     GRASS: "Grass",
     VintageMustard: "Vintage Mustard",
     "Vintage/Black": "Vintage Black",
+    VintageBlack: "Vintage Black",
+    VintageRed: "Vintage Red",
     BLACK: "Black",
     "CAMEL": "Camel",
     "PEPPER": "Pepper",
@@ -76,6 +79,11 @@ const sizeFixer = {
     "5T": "5/6T",
     "15x16": "One Size",
     "YOUTH": "Youth",
+    Small: "S",
+    Medium: "M",
+    Large: "L",
+    XLarge: "XL",
+    XXLarge: "2XL",
 }
 const updateInventory = async ()=>{
     let inventories = await Inventory.find({})

@@ -47,7 +47,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             }
         }
     } else {
-        for (let threadColor of Object.keys(design? design : {})) {
+        for (let threadColor of Object.keys(design? design : {}).filter(tc=> product.threadColors.find(t => t.name == tc))) {
             for (let side of Object.keys(design[threadColor])) {
                 for (let blank of product.blanks) {
                     for (let color of product.colors) {

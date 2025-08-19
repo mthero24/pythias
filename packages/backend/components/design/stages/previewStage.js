@@ -51,6 +51,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     <Box key={threadColor} sx={{ marginLeft: "2%" }}>
                                         {Object.keys(product.variants[blank][threadColor]).map(color => (
                                             <Box key={color} sx={{ marginLeft: "4%" }}>
+                                                {console.log(color)}
                                                 <VariantDisplay blank={blank} threadColor={threadColor} color={color} variants={product.variants[blank][threadColor][color]} product={product} setProducts={setProducts} products={products} />
                                             </Box>
                                         ))}
@@ -105,7 +106,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     {!product.threadColors || product.threadColors.length === 0 && product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank._id.toString() : v.blank?.toString()) === blank._id.toString() && (v.color?._id? v.color._id.toString(): v.color.toString()) === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} design={design} setDesign={setDesign} />
+                                            <VariantDisplay key={`${blank.code}-${color.name}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} design={design} setDesign={setDesign} />
                                         ) : null;
                                     })}
                                 </Box>
@@ -127,7 +128,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
 
                                             setDesign({ ...d })
                                             if (pageProducts) {
-                                                console.log(pageProducts, "page products before update")
+                                                
                                                 let prods = [...pageProducts]
                                                 let newProds = []
                                                 for (let po of prods) {
@@ -137,7 +138,6 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                                         newProds.push(po)
                                                     }
                                                 }
-                                                console.log(newProds, "new products after update")
                                                 setPageProducts([...newProds])
                                             }
                                         }}>Add Product Inventory</Button>}
@@ -145,7 +145,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                     {product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank?._id.toString() : v.blank?.toString()) === blank._id.toString() && (v.color?._id? v.color._id.toString(): v.color?.toString()) === color._id.toString());
                                         return variants.length > 0 ? (
-                                            <VariantDisplay key={`${blank}-${color}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} pageProducts={pageProducts} setPageProducts={setPageProducts} design={design} setDesign={setDesign} />
+                                            <VariantDisplay key={`${blank.code}-${color.name}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} pageProducts={pageProducts} setPageProducts={setPageProducts} design={design} setDesign={setDesign} />
                                         ) : null;
                                     })}
                                 </Box>
@@ -248,23 +248,78 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
             setProducts([...prods]);
         }
         else if (prod.variantsArray && prod.variantsArray.length > 0) {
-            console.log("Removing variants from variantsArray",variants[0]._id);
-            if(variants[0]._id != undefined && variants[0]._id != null){
+            console.log("Removing variants from variantsArray", variants, "here ");
+            if (variants[0]._id != undefined && variants[0]._id != null) {
+                console.log("Removing variants from variantsArray", blank, threadColor, color);
                 let vArray = prod.variantsArray.filter(v => !variants.map(va => va._id.toString()).includes(v._id.toString()));
                 prod.variantsArray = vArray;
+                console.log(vArray, "new variants array");
                 let res = await axios.put("/api/admin/products", { product: prod });
-                if (setProducts) setProducts([res.data.product]);
-                else setProduct({...res.data.product});
+                console.log(res.data, "updated product", setProducts, "set products");
+                if(design && design.products && design.products.length > 0) {
+                    let prods = []
+
+                    if (design && design?.products && design?.products.length > 0) {
+                        design.products = design.products.filter(prod => prod._id != res.data.product._id)
+                    }
+                    prods.push(res.data.product);
+
+                    let d = { ...design }
+                    d.products = [...design?.products, ...prods]
+
+                    setDesign({ ...d })
+                }
+                if (pageProducts) {
+
+                    let prods = [...pageProducts]
+                    let newProds = []
+                    for (let po of prods) {
+                        if (res.data.product._id.toString() === po._id.toString()) {
+                            newProds.push(res.data.product)
+                        } else {
+                            newProds.push(po)
+                        }
+                    }
+                    console.log(newProds, "new products after update")
+                    setPageProducts([...newProds])
+                }
+                setProducts([{...res.data.product}]);
             }else{
-                console.log("Removing variants from variantsArray", blank, threadColor, color);
+                //console.log("Removing variants from variantsArray", blank, threadColor, color, "herer");
                 let vArray = prod.variantsArray.filter(v => !(v.blank.code === blank && v.threadColor === threadColor?.name && v.color.name === color));
                 console.log(vArray, "new variants array");
                 prod.variantsArray = vArray;
                 if(setProducts)setProducts([prod]);
                 else setProduct({...prod});
+                let prods = []
+
+                if (design.products && design.products.length > 0) {
+                    design.products = design.products.filter(prod => prod._id != res.data.product._id)
+                }
+                prods.push(res.data.product);
+
+                let d = { ...design }
+                d.products = [...design.products, ...prods]
+
+                setDesign({ ...d })
+                if (pageProducts) {
+
+                    let prods = [...pageProducts]
+                    let newProds = []
+                    for (let po of prods) {
+                        if (res.data.product._id.toString() === po._id.toString()) {
+                            newProds.push(res.data.product)
+                        } else {
+                            newProds.push(po)
+                        }
+                    }
+                    setPageProducts([...newProds])
+                }
+                setProducts([res.data.product]);
             }
         }
         setRemoveOpen(false);
+        console.log(removeOpen, "remove open after close");
     }
     return (
         <Card sx={{ margin: "1% 0%", padding: "1%", background: "#f0f0f0", borderRadius: "10px", boxShadow: "2px 2px 2px #ccc" }}>
@@ -282,8 +337,8 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
             {open && (
                 <Box sx={{ padding: "2%" }}>
                     <List>
-                        {variants.map(variant => (
-                            <ListItem key={variant.id}>
+                        {variants.map((variant, i) => (
+                            <ListItem key={i}>
                                 <ListItemAvatar>
                                     <Avatar>
                                         <img src={`${variant.image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
@@ -312,7 +367,7 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                     <InventoryModal open={inventoryOpen} setOpen={setInventoryOpen} variant={variant} setVariant={setVariant} product={product} setProducts={setProducts} pageProducts={pageProducts} setPageProducts={setPageProducts} design={design} setDesign={setDesign} />
                 </Box>
             )}
-            <RemoveVariants open={removeOpen} setOpen={setRemoveOpen} removeVariants={removeVariants} />
+            <RemoveVariants open={removeOpen} setOpen={setRemoveOpen} removeVariants={removeVariants} setProducts={setProducts} setPageProducts={setPageProducts} pageProducts={pageProducts} />
         </Card>
     )
 }
@@ -389,7 +444,7 @@ const UpdatePriceModal = ({ open, setOpen, variant, setVariant, product, setProd
         </Modal>
     );
 }
-const RemoveVariants = ({open, setOpen, removeVariants}) => {
+const RemoveVariants = ({open, setOpen, removeVariants, setProducts, setPageProducts, pageProducts}) => {
     const style = {
         position: 'absolute',
         top: '50%',
@@ -411,7 +466,7 @@ const RemoveVariants = ({open, setOpen, removeVariants}) => {
                 <Box sx={{ display: "flex", flexDirection: "column", padding: "2%" }}>
                     <Typography>Are you sure you want to remove these variants?</Typography>
                     <Box sx={{ display: "flex", flexDirection: "row", padding: "2%" }}>
-                        <Button onClick={removeVariants}>Yes</Button>
+                        <Button onClick={() => removeVariants(setProducts, setPageProducts, pageProducts)}>Yes</Button>
                         <Button onClick={() => setOpen(false)}>No</Button>
                     </Box>
                 </Box>

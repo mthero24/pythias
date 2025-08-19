@@ -125,8 +125,8 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                         let prods = [...products]
                         for(let product of prods){
                             let variants = {};
-                            if (design.threadColors?.length > 0) {
-                                for (let d of Object.keys(design.threadImages)) {
+                            if (product.threadColors?.length > 0) {
+                                for (let d of Object.keys(design.threadImages).filter(d => product.threadColors.find(t => t.name == d))) {
                                     for (let blank of product.blanks) {
                                         for (let color of product.colors) {
                                             if (blank.colors.filter(c => c._id.toString() == color._id.toString())[0]) {
