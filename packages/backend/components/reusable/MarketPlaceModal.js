@@ -101,8 +101,8 @@ export const csvFunctions = {
        //console.log("variant", variant.images, "index", index);
         return variant.images && variant.images.length > index ? variant.images[index] : "N/A";
     },
-    variantColorFamily: (variant, sizeConverter, numBlanks, blankName, connection, colorFamilyConverter) => {
-        return variant.color && variant.color.colorFamily ? colorFamilyConverter[variant.color.colorFamily] ? colorFamilyConverter[variant.color.colorFamily] : variant.color.colorFamily : "N/A";
+    variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
+        return variant.color && variant.color.colorFamily ? colorFamilyConverter && colorFamilyConverter[variant.color.colorFamily] ? colorFamilyConverter[variant.color.colorFamily] : variant.color.colorFamily : "N/A";
     }
 };
 
@@ -621,7 +621,7 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
             else value = csvFunctions[mp.productDefaultValues[headerLabel]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("variant") && csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]]) {
-            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1]);
+            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1], mp.colorFamilyConverter);
         } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] == "index") {
             if (index < product.productImages.length) {
                 value = index + 1;
