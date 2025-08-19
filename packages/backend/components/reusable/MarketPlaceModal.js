@@ -673,11 +673,13 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
         if (open ) {
             let sizeObj = {};
             for (let size of sizes) {
-                sizeObj[size] = size;
+                if(!marketPlace.sizeConverter[size]) sizeObj[size] = size;
+                else sizeObj[size] = marketPlace.sizeConverter[size];
             }
             let m = { ...marketPlace };
             m.sizeConverter = sizeObj;
             setMarketPlace({...m});
+            
         }
     }, [open]);
     const style = {

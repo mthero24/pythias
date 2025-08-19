@@ -270,7 +270,7 @@ export async function pullOrders(){
                                 color = await Color.findOne({$or: [{name: i.sku?.split("_")[1]}, {sku: i.sku?.split("_")[1]}, {name: colorFixer[i.sku?.split("_")[1]]}]})
                                 if(blank){
                                     size = blank.sizes?.filter(s=> s.name.toLowerCase() == i.sku.split("_")[2]?.replace("Y", "").toLowerCase() || sizeFixer[i.sku.split("_")[2]] == s.name)[0] 
-                                    if (!size) size = blank.sizes?.filter(s => s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").toLowerCase() || sizeFixer[i.sku.split("_")[1]] == s.name)[0]
+                                    if (!size) size = blank.sizes?.filter(s => s.name.toLowerCase() == i.sku.split("_")[1]?.replace("Y", "").trim().toLowerCase() || sizeFixer[i.sku.split("_")[1]?.trim()] == s.name)[0]
                                 }
                                 let dSku = i.sku?.split("_").splice(3)
                                 let designSku =""
