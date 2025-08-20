@@ -62,22 +62,22 @@ const updateInventory = async (invIds) => {
     }
 }
 export default async function Test(){
-    let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
-    console.log(items.length, "items to add to inventory")
-    let cancel = items.filter(i=> i.order == null)
-    for(let c of cancel){
-        c.canceled = true;
-        await c.save()
-    }
-    items = items.filter(i => i.order != null)
-    for(let item of items){
-        item.inventory = {
-            inventoryType: "inventory",
-            inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
-            productInventory: null,
-        }
-        await item.save()
-    }
-    await updateInventory();
+    // let items = await Items.find({ labelPrinted: false, "inventory.inventory": {$ne: null}, order: { $ne: null }, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
+    // console.log(items.length, "items to add to inventory")
+    // let cancel = items.filter(i=> i.order == null)
+    // for(let c of cancel){
+    //     c.canceled = true;
+    //     await c.save()
+    // }
+    // items = items.filter(i => i.order != null)
+    // for(let item of items){
+    //     item.inventory = {
+    //         inventoryType: "inventory",
+    //         inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
+    //         productInventory: null,
+    //     }
+    //     await item.save()
+    // }
+    // await updateInventory();
     return <h1>Test</h1>
 }
