@@ -4,7 +4,7 @@ import { getToken } from "next-auth/jwt";
 import { serialize } from "@/functions/serialize";
 import {headers} from "next/headers"
 export default async function Account(req){
-    console.log("Account page accessed");
+    console.log("Account page accessed", "againg");
     const headersList = await headers()
     console.log(headersList.get("user"))
     let user = await User.findOne({userName: headersList.get("user")})

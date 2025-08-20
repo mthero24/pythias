@@ -4,6 +4,7 @@ import {default as Blanks} from "@/models/StyleV2";
 import Items from "@/models/Items";
 import {getInv} from "@pythias/inventory"
 export async function GET(req=NextApiRequest){
+    console.log("GET Inventory");
     let term = req.nextUrl.searchParams.get("q");
     let res = await getInv({ Blanks, Inventory, term, page: 1})
     return NextResponse.json({...res})

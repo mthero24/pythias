@@ -317,7 +317,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 }
                 setLoading(true);
                 if (p.ids && p.ids[shopifyConnections.displayName]) {
-                    let res = await axios.post("http://localhost:63133/webhooks/product/delete", { id: p.ids && p.ids[shopifyConnections.displayName], connection: shopifyConnections }, headers).catch(e => {
+                    let res = await axios.post("https://shopapp.pythiastechnologies.com/webhooks/product/delete", { id: p.ids && p.ids[shopifyConnections.displayName], connection: shopifyConnections }, headers).catch(e => {
                         console.log(e, "error from webhook");
                         alert("Something Went Wron Please Try Again Later")
                         setLoading(false);
@@ -426,7 +426,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                                 }
                                                             }
                                                             setLoading(true);
-                                                                let res = await axios.post("http://localhost:63133/webhooks/products", {product, connection: c}, headers ).catch(e=> {
+                                                                let res = await axios.post("https://shopapp.pythiastechnologies.com/webhooks/products", {product, connection: c}, headers ).catch(e=> {
                                                                 console.log(e, "error from webhook");
                                                                 alert("Something Went Wron Please Try Again Later")
                                                                 setLoading(false);
