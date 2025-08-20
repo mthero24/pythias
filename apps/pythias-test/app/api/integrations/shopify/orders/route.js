@@ -103,9 +103,9 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
         let user = await User.findOne({password: password})
         //console.log(user)
         if(user){
-            console.log(data, "data")
+            ///console.log(data, "data")
             let order = await Order.findOne({shopifyOrderId: data.order.shopifyOrderId }).populate("items");
-            console.log(order, "order")
+            //console.log(order, "order")
             if(!order){
                 console.log("Creating new order")
                 order = new Order({
@@ -117,39 +117,48 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
                     poNumber: data.order.poNumber,
                     uniquePo: `${data.order._id}-${data.order.poNumber}-shopify`,
                     shippingAddress: {
-                        name: data.order.shippingAddress.name,
-                        address1: data.order.shippingAddress.address1,
-                        address2: data.order.shippingAddress.address2,
-                        city: data.order.shippingAddress.city,
-                        state: data.order.shippingAddress.provinceCode,
-                        zip: data.order.shippingAddress.zip,
-                        country: data.order.shippingAddress.countryCode,
+                        name: data.order.shippingAddress?.name,
+                        address1: data.order.shippingAddress?.address1,
+                        address2: data.order.shippingAddress?.address2,
+                        city: data.order.shippingAddress?.city,
+                        state: data.order.shippingAddress?.provinceCode,
+                        zip: data.order.shippingAddress?.zip,
+                        country: data.order.shippingAddress?.countryCode,
                     },
                     total: data.order.totalPrice,
                     status: data.order.status,
                     shippingType: "Standard",
                 });
-                console.log(order, "order to save")
+                //console.log(order, "order to save")
                 let items = [];
                 for (let i of data.order.items) {
                     console.log(i, "item")
                     let product = await Products.findById(i.product).populate("design variantsArray.color variantsArray.threadColor variantsArray.blank variantsArray.inventory variantsArray.productInventory");
-                    console.log(product, "product")
-                    let variant = product.variantsArray.find(v => v.sku == i.sku);
-                    for(let j = 0; j < i.quantity; j++) {
-                        let inventoryType
-                        if(variant.productInventory && variant.productInventory.quantity > 0 && variant.productInventory.quantity > variant.productInventory.inStock.length) {
-                            inventoryType = "productInventory";
-                        }else{
-                            inventoryType = "inventory";
+                    //console.log(product, "product")
+                    if(product){
+                        let variant = product.variantsArray.find(v => v.sku == i.sku);
+                        for(let j = 0; j < i.quantity; j++) {
+                            let inventoryType
+                            if(variant.productInventory && variant.productInventory.quantity > 0 && variant.productInventory.quantity > variant.productInventory.inStock.length) {
+                                inventoryType = "productInventory";
+                            }else{
+                                inventoryType = "inventory";
+                            }
+                            let item = await createItem({variant, design: product.design, order, inventoryType, name: product.name})
+                            if (data.order.paymentStatus == "PAID") {
+                                order.paid = true;
+                                item.paid = true;
+                                item = await item.save();
+                            }
+                            if(inventoryType == "productInventory") {
+                                if(!variant.productInventory.inStock) variant.productInventory.inStock = [];
+                                variant.productInventory.inStock.push(item._id);
+                                await variant.productInventory.save();
+                            }
+                            items.push(item);
                         }
-                        let item = await createItem({variant, design: product.design, order, inventoryType, name: product.name});
-                        if(inventoryType == "productInventory") {
-                            if(!variant.productInventory.inStock) variant.productInventory.inStock = [];
-                            variant.productInventory.inStock.push(item._id);
-                            await variant.productInventory.save();
-                        }
-                        items.push(item);
+                    }else{
+                        console.log("Product not found for item", i);
                     }
                 }
                 order.items = items;
@@ -157,23 +166,33 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
                 updateInventory();
             }else{
                 order.status = data.order.status;
-                order.shippingAddress = {
-                    name: data.order.shippingAddress.name,
-                    address1: data.order.shippingAddress.address1,
-                    address2: data.order.shippingAddress.address2,
-                    city: data.order.shippingAddress.city,
-                    state: data.order.shippingAddress.provinceCode,
-                    zip: data.order.shippingAddress.zip,
-                    country: data.order.shippingAddress.countryCode,
-                };
-                order.total = data.order.totalPrice;
-                if(order.status == "CANCELED"){
-                    order.canceled = true;
-                    for(let item of order.items){
-                        item.canceled = true;
-                        await item.save();
+                if (data.order.paymentStatus == "PAID"){
+                    order.paid = true;
+                    for (let item of order.items) {
+                        if(!item.paid){
+                            item.paid = true;
+                            item = await item.save();
+                        }
                     }
                 }
+                if(data.order.status == "CANCELED"){
+                    order.canceled = true;
+                    order.status = data.order.displayFinancialStatus
+                    for(let item of order.items){
+                        item.canceled = true;
+                        item = await item.save();
+                    }
+                }
+                order.shippingAddress = {
+                    name: data.order.shippingAddress?.name,
+                    address1: data.order.shippingAddress?.address1,
+                    address2: data.order.shippingAddress?.address2,
+                    city: data.order.shippingAddress?.city,
+                    state: data.order.shippingAddress?.provinceCode,
+                    zip: data.order.shippingAddress?.zip,
+                    country: data.order.shippingAddress?.countryCode,
+                };
+                order.total = data.order.totalPrice;
                 await order.save();
             }
             return NextResponse.json({error: false, orderId: order._id })

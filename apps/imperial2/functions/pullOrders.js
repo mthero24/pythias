@@ -40,8 +40,8 @@ const updateInventory = async () => {
         }
         if (items.length > 0) {
             let itemIds = items.map(i => i._id.toString());
-            inv.inStock = inv.inStock.filter(i => itemIds.includes(i.toString()));
-            inv.attached = inv.attached.filter(i => itemIds.includes(i.toString()));
+            inv.inStock = inv.inStock.filter(i => !itemIds.includes(i.toString()));
+            inv.attached = inv.attached.filter(i => !itemIds.includes(i.toString()));
             if (inv.quantity > 0) {
                 if (inv.quantity > inv.inStock.length + inv.attached.length) {
                     inv.attached = [];

@@ -52,7 +52,7 @@ export async function POST(req=NextApiRequest){
                 let printOutItems = unprintedItems.filter(
                 (i) =>
                     i.styleV2.toString() == style._id.toString() &&
-                    i.color.toString() == inventory_item.color.toString() &&
+                    i.colorName.toString() == inventory_item.color_name &&
                     i.sizeName.toString() == inventory_item.size_name.toString()
                 );
                 let qty = item.quantity;
