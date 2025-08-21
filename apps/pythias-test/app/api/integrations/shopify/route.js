@@ -13,7 +13,6 @@ export async function POST(req=NextApiRequest){
     console.log(userName, password)
     let user = await User.findOne({$or: [{email: userName}, {userName: userName}]})
     console.log(user)
-    console.log(await user.comparePassword(password))
     if(user){
         console.log(await user.comparePassword(password))
         if(await user.comparePassword(password)){
