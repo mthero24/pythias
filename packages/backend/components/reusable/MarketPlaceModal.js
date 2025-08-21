@@ -304,21 +304,21 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const removeMarketplaceConnection = async ({mp, }) => {
         setLoading(true);
         let p = { ...product };
-        console.log(p, "dssd")
+        //console.log(p, "dssd")
         if (mp.connections && mp.connections.length > 0) {
-            console.log("Removing connections from product:", mp.connections);
+            //console.log("Removing connections from product:", mp.connections);
             let shopifyConnections = mp.connections.filter(c => c.displayName.toLowerCase().includes("shopify"))[0];
             if (shopifyConnections) {
                 const headers = {
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${shopifyConnections.accessToken}`
+                        "Authorization": `Bearer ${shopifyConnections.apiKey}`
                     }
                 }
                 setLoading(true);
                 if (p.ids && p.ids[shopifyConnections.displayName]) {
-                    let res = await axios.post("https://shopapp.pythiastechnologies.com/webhooks/product/delete", { id: p.ids && p.ids[shopifyConnections.displayName], connection: shopifyConnections }, headers).catch(e => {
-                        console.log(e, "error from webhook");
+                    let res = await axios.post("/api/integrations/shopify/delete", { id: p.ids && p.ids[shopifyConnections.displayName], connection: shopifyConnections }, headers).catch(e => {
+                        //console.log(e, "error from webhook");
                         alert("Something Went Wron Please Try Again Later")
                         setLoading(false);
                     });
@@ -334,7 +334,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             }
         }
         p.marketPlacesArray = p.marketPlacesArray.filter(m => (m._id ? m._id.toString() : m?.toString()) !== mp?._id?.toString());
-        console.log(p.marketPlacesArray, "on Remove")
+       // console.log(p.marketPlacesArray, "on Remove")
         let res = await axios.post("/api/admin/products", { products: [p] });
         setProduct({ ...p });
         if (products && products.length > 0) {
@@ -413,7 +413,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                             </Box>
                                             
                                             {product && mp.connections && mp.connections.length > 0 && mp.connections.map((c, ci) => {
-                                                console.log(product.marketPlacesArray, "marketplace array", mp, c)
+                                                //console.log(product.marketPlacesArray, "marketplace array", mp, c)
                                                 if (product.marketPlacesArray && product.marketPlacesArray.length > 0 && product.marketPlacesArray.filter(m=> m.toString() === mp._id.toString()[0])) {
                                                     return (
                                                         <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
@@ -422,11 +422,12 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                             const headers = {
                                                                 headers: {
                                                                     "Content-Type": "application/json",
-                                                                    "Authorization": `Bearer ${c.accessToken}`
+                                                                    "Authorization": `Bearer ${c.apiKey}`,
                                                                 }
                                                             }
+                                                            console.log(headers, "headers for shopify", c);
                                                             setLoading(true);
-                                                                let res = await axios.post("https://shopapp.pythiastechnologies.com/webhooks/products", {product, connection: c}, headers ).catch(e=> {
+                                                                let res = await axios.post("/api/integrations/shopify/send", {product, connection: c}, headers ).catch(e=> {
                                                                 console.log(e, "error from webhook");
                                                                 alert("Something Went Wron Please Try Again Later")
                                                                 setLoading(false);
@@ -438,7 +439,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                                 p.ids[c?.displayName] = res.data.productId;
                                                                 for(let v of p.variantsArray){
                                                                     if(!v.ids) v.ids = {};
-                                                                    v.ids[c?.displayName] = res.data.variantIds.filter(vId=> vId.sku === v.sku)[0]?.id;
+                                                                    v.ids[c?.displayName] = res.data.variantIds?.filter(vId=> vId.sku === v.sku)[0]?.id;
                                                                 }
                                                                 let update = await axios.post("/api/admin/products", { products: [p] });
                                                                 setProduct({...p});
