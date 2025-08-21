@@ -1,9 +1,8 @@
 
-import{User, Design} from "@pythias/mongo";
+import { User, Design, SkuToUpc } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import { headers } from "next/headers";
 import SkuToUpc from "@/models/skuUpcConversion";
-import { createUpc } from "@/functions/createUpcs";
 const doUPC = async ({design, blank})=>{
     let soemthing = await createUpc({design, blank})
     return soemthing
