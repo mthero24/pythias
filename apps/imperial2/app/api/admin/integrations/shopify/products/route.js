@@ -1,5 +1,5 @@
-import User from "@/models/User";
-import Design from "@/models/Design";
+
+import{User, Design} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import { headers } from "next/headers";
 import SkuToUpc from "@/models/skuUpcConversion";
