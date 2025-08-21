@@ -1,6 +1,6 @@
 import {NextApiRequest, NextResponse} from "next/server";
 import { headers } from "next/headers";
-import User from "@/models/User";
+import {User} from "@pythias/mongo";
 
 export async function GET(req=NextApiRequest){
      const headersList = await headers();

@@ -2,7 +2,6 @@ import {NextApiRequest, NextResponse} from "next/server";
 import { headers } from "next/headers";
 import { User, Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory } from "@pythias/mongo";
 import { generatePieceID } from "@pythias/integrations";
-import inventory from "@/models/inventory";
 
 const updateInventory = async () => {
     let inventories = await Inventory.find({})
