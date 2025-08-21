@@ -3,17 +3,13 @@ import { User, Design, SkuToUpc } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import { headers } from "next/headers";
 import SkuToUpc from "@/models/skuUpcConversion";
-const doUPC = async ({design, blank})=>{
-    let soemthing = await createUpc({design, blank})
-    return soemthing
-}
+
 const createProducts = async (design, brand)=>{
     let products = []
 
     for(let b of design.blanks){
         if(b.blank && ((brand == "The Juniper Shop" && b.blank.department.toLowerCase() == "kids") || (brand== "Simply Sage Market" && b.blank.department.toLowerCase() != "kids") || (brand != "The Juniper Shop" && brand != "Simply Sage Market"))){
             let skus = await SkuToUpc.find({design: design._id, blank: b.blank._id})
-            if(skus.length < (b.colors.length * b.blank.sizes.length)) await doUPC({design, blank: b.blank._id})
             let product = {
                 design,
                 blank: b.blank,
