@@ -5,7 +5,7 @@ import inventory from "@/models/inventory";
 
 export async function POST(request) {
   try {
-    const { email, password, firstName, lastName, userName, permissions } = await request.json();
+    let { email, password, firstName, lastName, userName, permissions } = await request.json();
     if(!permissions) permissions = {
       production: true,
     }
