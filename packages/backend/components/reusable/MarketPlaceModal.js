@@ -674,6 +674,7 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
     useEffect(() => {
         if (open ) {
             let sizeObj = {};
+            if(!marketPlace.sizeConverter) marketPlace.sizeConverter = {};
             for (let size of sizes) {
                 if(!marketPlace.sizeConverter[size]) sizeObj[size] = size;
                 else sizeObj[size] = marketPlace.sizeConverter[size];
@@ -771,13 +772,16 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                         <Typography variant="body1" sx={{ marginTop: "1%" }}>Select Connection:</Typography>
                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", overflowX: "auto", width: "100%" }}>
                             {connections && connections.length > 0 && connections.map((connection) => (
-                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", border: "1px solid #ccc", background: marketPlace.connections && marketPlace.connections.map(c => c._id ? c._id.toString() : c.toString()).includes(connection._id.toString()) ? "#1976d2" : "#fff", color: marketPlace.connections && marketPlace.connections.map(c => c._id? c._id.toString(): c.toString()).includes(connection._id.toString()) ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={connection._id} onClick={() => {
+                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", border: "1px solid #ccc", background: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#1976d2" : "#fff", color: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={connection._id} onClick={() => {
                                     let m = { ...marketPlace };
+                                    console.log("Connection clicked", connection._id.toString());
                                     if(!m.connections) m.connections = [];
-                                    if (!m.connections.map(c => c => c._id ? c._id.toString() : c.toString()).includes(connection._id.toString())) {
+                                    if (!m.connections.includes(connection._id.toString())) {
+                                        console.log("Adding connection", connection._id.toString());
                                         m.connections.push(connection._id.toString());
                                     }else{
-                                        m.connections = m.connections.filter(conn => conn !== connection._id.toString());
+                                        console.log("Removing connection", connection._id.toString());
+                                        m.connections = m.connections.filter(conn => conn.toString() !== connection._id.toString());
                                     }
                                    // console.log("marketPlace", m);
                                     setMarketPlace({ ...m });

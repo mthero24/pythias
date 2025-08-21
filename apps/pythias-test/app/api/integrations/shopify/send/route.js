@@ -10,7 +10,7 @@ export async function POST(req=NextApiRequest) {
             "Authorization": `Bearer ${body.connection.apiKey}`,
         }
     }
-    let res = await axios.post("https://shopapp.pythiastechnologies.com/webhooks/products", {...body}, headers).catch(e => { console.log(e.response.data) })
+    let res = await axios.post("http://localhost:53023/webhooks/products", {...body}, headers).catch(e => { console.log(e.response.data) })
     console.log(res?.data, "res data")
     return NextResponse.json({...res?.data,});
 }
