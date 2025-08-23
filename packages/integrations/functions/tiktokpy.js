@@ -24,9 +24,10 @@ export const getAccessTokenUsingAuthCode = async (config, authCode) => {
 // getAccessTokenUsingAuthCode();
 
 export const getAccessTokenFromRefreshToken = async (refreshToken) => {
+    console.log(refreshToken, "refresh token")
     let config = await getConfig()
     const accessToken = await tiktokShop.generateToken(config, refreshToken);
-    //console.log(accessToken)
+    console.log(accessToken)
     return accessToken;
 };
 export const generateAuthorizationUrl = () => {
@@ -258,6 +259,7 @@ export const getWarehouses = async (credentials) => {
     return {error: false, warehouses: result.data.data.warehouses};
 };
 export const uploadProductImage = async (uri, credentials, type) => {
+    //console.log(credentials, "credentials")
     const config = await getConfig()
     const baseUrl =
       "https://open-api.tiktokglobalshop.com/product/202309/images/upload";

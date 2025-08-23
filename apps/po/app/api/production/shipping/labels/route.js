@@ -17,7 +17,7 @@ export async function POST(req= NextApiRequest){
                 "Authorization": `Bearer $2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO`
             }
         }
-        let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, { label: order.shippingInfo.label, station: data.station, barcode: "ppp" }, headers)
+        let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, { label: order.shippingInfo.label, station: data.station, barcode: "ppp" }, headers)
         console.log(res.data)
         for (let i of order.items) {
             i.shipped = true

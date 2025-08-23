@@ -9,12 +9,7 @@ import {
   createProduct,
   getOrdersTikTok,
 } from "@pythias/integrations";
-import Design from "@/models/Design";
-import Order from "@/models/Order";
-import SkuToUpc from "@/models/skuUpcConversion";
-import Colors from "@/models/Color";
-import Blanks from "@/models/Blanks";
-import Item from "@/models/Items";
+import {Order, SkuToUpc, Products as Product, Color as Colors, Blank as Blanks, Item} from "@pythias/mongo"
 import {generatePieceID } from "@pythias/integrations";
 const refresh = async (creds, cipher) =>{
     let credentials = await TikTokAuth.findOne({ _id: creds._id });
@@ -84,8 +79,7 @@ const stateAbbreviations = {
     Wisconsin: "WI",
     Wyoming: "WY",
 };
-export async function getShops(){
-    let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
+export async function getShops(credentials){
     let shop = await getAuthorizedShops(credentials)
     if(shop.error && shop.msg == "refresh"){
         credentials = await refresh(credentials)
@@ -95,8 +89,7 @@ export async function getShops(){
     await credentials.save()
 }
 
-export async function uploadTikTokImage({image,type}){
-    let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
+export async function uploadTikTokImage({image, type, credentials}){
     let res = await uploadProductImage(image, credentials, type)
     if(res.error && res.error.msg == "refresh"){
         credentials = await refresh(credentials);
@@ -104,12 +97,13 @@ export async function uploadTikTokImage({image,type}){
     }
     return res
 }
-export async function createTikTokProduct({product}){
-    let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
+export async function createTikTokProduct({product, credentials}){
+    product = await Product.findOne({ _id: product._id }).populate("blanks design variantsArray.color variantsArray.threadColor");
+    //console.log(credentials, "credentials")
     let tiktokProduct = {
         save_mode: "LISTING",
         description: product.description,
-        title: product.name,
+        title: product.title,
         is_cod_allowed: false,
         package_dimensions: {
             length: "13",
@@ -118,19 +112,19 @@ export async function createTikTokProduct({product}){
             unit: "INCH"
         },
         package_weight: {
-            value:( product.blank.sizes[0].weight / 16).toFixed(2),
+            value: (product.sizes[0].weight / 16 > 0 ? product.sizes[0].weight / 16: 0.4 ).toFixed(2),
             unit: "POUND"
         },
         main_images: [],
         skus: [],
         category_version: "v2",
-        idempotency_key: `${product.design.sku}_${product.blank.code}`
+        idempotency_key: `${product.sku}`
     }
-    let categories = await getRecommendedCategory(product.name, credentials)
-    console.log(categories)
+    let categories = await getRecommendedCategory(product.title, credentials)
+    //console.log(categories)
     if(categories.error && categories.msg == "refresh"){
         credentials = await refresh(credentials);
-        categories = await getRecommendedCategory(product.name, credentials)
+        categories = await getRecommendedCategory(product.title, credentials)
     }
     //console.log(categories)
     tiktokProduct.category_id = categories.categories.filter(c=> c.is_leaf == true)[0].id
@@ -140,17 +134,19 @@ export async function createTikTokProduct({product}){
         warehouses = await await getWarehouses(credentials)
     }
     let warehouse = warehouses.warehouses.filter(w=> w.is_default)[0]
-    for(let im of product.images){
-        let res = await uploadTikTokImage({image:im, type:"MAIN_IMAGE"})
+    for(let im of product.productImages){
+        let res = await uploadTikTokImage({ image: im.image.replace("=400", "=2400"), type:"MAIN_IMAGE", credentials})
         if(!res.error) tiktokProduct.main_images.push({uri:res.uri})
     }
-    for(let v of product.variants){
+    for(let v of product.variantsArray){
         let attributes = []
         let mainImage
         let images = []
         let identifier_code
+        let res = await uploadTikTokImage({ image: v.image.replace("=400", "=2400"), type: "MAIN_IMAGE", credentials })
+        mainImage = { uri: res.uri }
         for(let im of v.images){
-            let res = await uploadTikTokImage({image:im, type:"MAIN_IMAGE"})
+            let res = await uploadTikTokImage({ image: im.replace("=400", "=2400"), type:"MAIN_IMAGE", credentials })
             //console.log(res)
             if(!res.error && mainImage == undefined) mainImage = {uri: res.uri}
             else if(!res.error) images.push({uri: res.uri})
@@ -166,9 +162,10 @@ export async function createTikTokProduct({product}){
             value_name: v.color.name,
             sku_image:  mainImage,
         })
+        //console.log(v.size, "size")
         attributes.push({
             name: "Size",
-            value_name: v.size
+            value_name: product.sizes.filter(s=> s._id.toLowerCase() == v.size.toLowerCase())[0].name,
         })
         if(v.threadColor && v.threadColor.length > 0){
             attributes.push({
@@ -176,7 +173,7 @@ export async function createTikTokProduct({product}){
                 value_name: v.threadColor.name
             })
         }
-        console.log(attributes)
+        //console.log(attributes)
         tiktokProduct.skus.push({
             sales_attributes: attributes,
             inventory: [{
@@ -186,7 +183,7 @@ export async function createTikTokProduct({product}){
             seller_sku: v.sku,
             identifier_code,
             price: {
-                amount: `${v.price.toFixed(2)}`,
+                amount: `${v.price? v.price.toFixed(2): v.size.retailPrice.toFixed(2)}`,
                 currency: "USD"
             },
         })
@@ -194,15 +191,16 @@ export async function createTikTokProduct({product}){
     //console.log(tiktokProduct)
     let attributes = await getAttributes(tiktokProduct.category_id, credentials)
     if(attributes.error && attributes.msg == "refresh"){
+        console.log("refreshing credentials", credentials)
         credentials = await refresh(credentials);
         attributes = await getAttributes(tiktokProduct.category_id, credentials)
     }
     let attrs = []
-    if(product.design.season){
+    if(product.season){
         attrs.push({
             id: attributes.attributes.filter(a=> a.name == "Season")[0].id,
             values: [{
-                name: product.design.season
+                name: product.season
             }]
         })
     }
@@ -221,17 +219,19 @@ export async function createTikTokProduct({product}){
         }]
     })
     console.log(attributes.attributes.filter(a=> a.is_requried == true))
-    if(product.blank.tikTokHeader){
-        for(let key of Object.keys(product.blank.tikTokHeader)){
-            if(key.toLowerCase() != "CA Prop 65: Repro. Chems".toLowerCase() && key.toLowerCase() != "CA Prop 65: Carcinogens".toLowerCase()){
-                let at = attributes.attributes.filter(a=> a.name.toLowerCase() == key.toLowerCase())[0]
-                if(at){
-                     attrs.push({
-                        id: at.id,
-                        values: [{
-                            name: product.blank.tikTokHeader[key]
-                        }]
-                    })
+    for(let blank of product.blanks){
+        if(blank.tikTokHeader){
+            for(let key of Object.keys(product.blank.tikTokHeader)){
+                if(key.toLowerCase() != "CA Prop 65: Repro. Chems".toLowerCase() && key.toLowerCase() != "CA Prop 65: Carcinogens".toLowerCase()){
+                    let at = attributes.attributes.filter(a=> a.name.toLowerCase() == key.toLowerCase())[0]
+                    if(at){
+                        attrs.push({
+                            id: at.id,
+                            values: [{
+                                name: product.blank.tikTokHeader[key]
+                            }]
+                        })
+                    }
                 }
             }
         }
@@ -240,8 +240,8 @@ export async function createTikTokProduct({product}){
     
     tiktokProduct.product_attributes = attrs
     //console.log(product.blank.sizeGuide)
-    if(product.blank.sizeGuide?.images[0]){
-        let res = await uploadTikTokImage({image:product.blank.sizeGuide?.images[0], type:"SIZE_CHART_IMAGE"})
+    if(product.blanks[0].sizeGuide?.images[0]){
+        let res = await uploadTikTokImage({image:product.blanks[0].sizeGuide?.images[0], type:"SIZE_CHART_IMAGE", credentials})
         //console.log(res)
         if(!res.error ){
             tiktokProduct.size_chart = {}
@@ -254,17 +254,16 @@ export async function createTikTokProduct({product}){
         res = await createProduct({tiktokProduct, credentials})
     }
     console.log(res.product?.skus[0].sales_attributes)
-    let design = await Design.findById(product.design._id)
-    for(let bl of design.blanks){
-        if(bl._id.toString() == product.blankObj._id.toString()){
-            if(!bl.marketPlaceIds){
-                bl.marketPlaceIds = {}
-            }
-            bl.marketPlaceIds["tiktok"] = res.product.product_id
-        }
+    console.log(res.product, res.product.product_id)
+    product.ids[`tiktok-${credentials.seller_name}`] = res.product.product_id
+    console.log(product._id)
+    for(let v of product.variantsArray){
+        if(!v.ids) v.ids = {}
+        v.ids[`tiktok-${credentials.seller_name}`] = res.product.skus.filter(s=> s.seller_sku == v.sku)[0]?.sku_id
     }
-    design.markModified("blanks")
-    await design.save()
+    product.markModified("ids variantsArray");
+    await product.save()
+    return product    
 }
 
 export const getOrders = async (auths)=>{

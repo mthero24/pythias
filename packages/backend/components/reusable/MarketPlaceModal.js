@@ -157,6 +157,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const [deleteImage, setDeleteImage] = useState();
     const [marketplace, setMarketplace] = useState({ name: "", headers: [[]], defaultValues: {}, sizes: {} });
     const [connections, setConnections] = useState([]);
+    const [tiktokAuth, setTiktokAuth] = useState([]);
     const [loading, setLoading] = useState(false);
     const [openRemoveModal, setOpenRemoveModal] = useState(false);
     useEffect(() => {
@@ -200,6 +201,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     }
                 }
                 setLoading(false);
+            }
+            if(res.data && res.data.tiktokAuth) {
+                setTiktokAuth(res.data.tiktokAuth);
             }
             setConnections(res.data.integration);
         }
@@ -377,6 +381,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                         mp.connections = mp.connections.map(c=> {
                                             //console.log(c)
                                             let conn = connections?.filter(conn=> conn?._id.toString() == c.toString())[0]
+                                            if(!conn) conn = tiktokAuth?.filter(conn=> conn?._id.toString() == c.toString())[0]
                                             //console.log(conn)
                                             if(conn)return conn
                                             return c
@@ -417,46 +422,76 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                 if (product.marketPlacesArray && product.marketPlacesArray.length > 0 && product.marketPlacesArray.filter(m=> m.toString() === mp._id.toString()[0])) {
                                                     return (
                                                         <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
-                                                            //console.log("Sending product to webhook for connection:", c);
-                                                            if(c.displayName.includes("shopify")){
-                                                            const headers = {
-                                                                headers: {
-                                                                    "Content-Type": "application/json",
-                                                                    "Authorization": `Bearer ${c.apiKey}`,
+                                                            console.log("Sending product to webhook for connection:", c);
+                                                            if (c.displayName && c.displayName.includes("shopify")){
+                                                                const headers = {
+                                                                    headers: {
+                                                                        "Content-Type": "application/json",
+                                                                        "Authorization": `Bearer ${c.apiKey}`,
+                                                                    }
+                                                                }
+                                                                console.log(headers, "headers for shopify", c);
+                                                                setLoading(true);
+                                                                    let res = await axios.post("/api/integrations/shopify/send", {product, connection: c}, headers ).catch(e=> {
+                                                                    console.log(e, "error from webhook");
+                                                                    alert("Something Went Wron Please Try Again Later")
+                                                                    setLoading(false);
+                                                                });
+                                                                console.log(res, "res from webhook");
+                                                                let p = { ...product };
+                                                                if(res && res.data){
+                                                                    if(!p.ids) p.ids = {};
+                                                                    p.ids[c?.displayName] = res.data.productId;
+                                                                    for(let v of p.variantsArray){
+                                                                        if(!v.ids) v.ids = {};
+                                                                        v.ids[c?.displayName] = res.data.variantIds?.filter(vId=> vId.sku === v.sku)[0]?.id;
+                                                                    }
+                                                                    let update = await axios.post("/api/admin/products", { products: [p] });
+                                                                    setProduct({...p});
+                                                                    if (products && products.length > 0) {
+                                                                        let updatedProducts = products.map(prod => {
+                                                                            if (p._id.toString() === prod._id.toString()) {
+                                                                                return { ...p };
+                                                                            }
+                                                                            return prod;
+                                                                        });
+                                                                        setProducts(updatedProducts);
+                                                                    }
+                                                                    setLoading(false);
+                                                                }else{
+                                                                    setLoading(false)
+                                                                }
+                                                            }else if(c.seller_name){
+                                                                let res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c }).catch(e => {
+                                                                    console.log(e, "error from webhook");
+                                                                    alert("Something Went Wron Please Try Again Later")
+                                                                    setLoading(false);
+                                                                });
+                                                                console.log(res, "res from webhook");
+                                                                let p = { ...product };
+                                                                if (res && res.data) {
+                                                                    if (!p.ids) p.ids = {};
+                                                                    p.ids[c?.displayName] = res.data.productId;
+                                                                    for (let v of p.variantsArray) {
+                                                                        if (!v.ids) v.ids = {};
+                                                                        v.ids[c?.displayName] = res.data.variantIds?.filter(vId => vId.sku === v.sku)[0]?.id;
+                                                                    }
+                                                                    let update = await axios.post("/api/admin/products", { products: [p] });
+                                                                    setProduct({ ...p });
+                                                                    if (products && products.length > 0) {
+                                                                        let updatedProducts = products.map(prod => {
+                                                                            if (p._id.toString() === prod._id.toString()) {
+                                                                                return { ...p };
+                                                                            }
+                                                                            return prod;
+                                                                        });
+                                                                        setProducts(updatedProducts);
+                                                                    }
+                                                                    setLoading(false);
+                                                                } else {
+                                                                    setLoading(false)
                                                                 }
                                                             }
-                                                            console.log(headers, "headers for shopify", c);
-                                                            setLoading(true);
-                                                                let res = await axios.post("/api/integrations/shopify/send", {product, connection: c}, headers ).catch(e=> {
-                                                                console.log(e, "error from webhook");
-                                                                alert("Something Went Wron Please Try Again Later")
-                                                                setLoading(false);
-                                                            });
-                                                            console.log(res, "res from webhook");
-                                                            let p = { ...product };
-                                                            if(res && res.data){
-                                                                if(!p.ids) p.ids = {};
-                                                                p.ids[c?.displayName] = res.data.productId;
-                                                                for(let v of p.variantsArray){
-                                                                    if(!v.ids) v.ids = {};
-                                                                    v.ids[c?.displayName] = res.data.variantIds?.filter(vId=> vId.sku === v.sku)[0]?.id;
-                                                                }
-                                                                let update = await axios.post("/api/admin/products", { products: [p] });
-                                                                setProduct({...p});
-                                                                if (products && products.length > 0) {
-                                                                    let updatedProducts = products.map(prod => {
-                                                                        if (p._id.toString() === prod._id.toString()) {
-                                                                            return { ...p };
-                                                                        }
-                                                                        return prod;
-                                                                    });
-                                                                    setProducts(updatedProducts);
-                                                                }
-                                                                setLoading(false);
-                                                            }else{
-                                                                setLoading(false)
-                                                            }
-                                                        }
                                                     
                                                         }}>{product && product.ids && product?.ids[c?.displayName]? "Update": "Send"}</Button>
                                                     )
@@ -514,7 +549,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                 }
                             )}
                         </Box>
-                        <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} />
+                        <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} tiktokAuth={tiktokAuth} setTiktokAuth={setTiktokAuth} />
                         <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
                         <RemoveMarketPlaceModal open={openRemoveModal} setOpen={setOpenRemoveModal} mp={marketplace} removeMarketplaceConnection={removeMarketplaceConnection} />
                     </Box>
@@ -542,8 +577,8 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
             for (let b of product.blanks) {
                 for (let tc of product.threadColors) {
                     for (let c of product.colors) {
-                        if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id ? v.threadColor._id.toString() == tc._id.toString() : v.threadColor.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString()).length > 0) {
-                            for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && v.threadColor._id ? v.threadColor._id.toString() == tc._id.toString() : v.threadColor.toString() == tc._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id?.toString())) {
+                        if (product.variantsArray.filter(v => v.blank?.toString() == b._id?.toString() && v.threadColor?._id ? v.threadColor._id?.toString() == tc._id?.toString() : v.threadColor?.toString() == tc._id?.toString() && (v.color._id ? v.color._id?.toString() : v.color?.toString()) == c._id?.toString()).length > 0) {
+                            for (let v of product.variantsArray.filter(v => v.blank?.toString() == b._id?.toString() && v.threadColor?._id ? v.threadColor._id?.toString() == tc._id?.toString() : v.threadColor?.toString() == tc._id?.toString() && (v.color._id ? v.color._id?.toString() : v.color?.toString()) == c._id?.toString())) {
                                 if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
                                 if (!v.color._id) v.color = c;
                                 if (!v.threadColor._id) v.threadColor = tc;
@@ -666,7 +701,7 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
     }
     return value
 }
-const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace, setDeleteModal, setDeleteImage, setOnDelete, setDeleteTitle, setMarketPlaces, blank, setBlank, connections }) => {
+const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace, setDeleteModal, setDeleteImage, setOnDelete, setDeleteTitle, setMarketPlaces, blank, setBlank, connections, tiktokAuth, setTiktokAuth }) => {
     const [showSizeConverter, setShowSizeConverter] = useState(false);
     const [showColorFamily, setShowColorFamily] = useState(false);
     const [update, setUpdate] = useState(false);
@@ -786,7 +821,24 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                    // console.log("marketPlace", m);
                                     setMarketPlace({ ...m });
                                 }}>
-                                    <Typography variant="body1" sx={{ marginRight: "1%" }}>{connection.displayName}</Typography>
+                                    <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{connection.displayName}</Typography>
+                                </Box>
+                            ))}
+                            {tiktokAuth && tiktokAuth.map((auth) => (
+                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", minHeight: "100%", border: "1px solid #ccc", background: marketPlace.connections && marketPlace.connections.includes(auth._id.toString()) ? "#1976d2" : "#fff", color: marketPlace.connections && marketPlace.connections.includes(auth._id.toString()) ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={auth._id} onClick={() => {
+                                    let m = { ...marketPlace };
+                                    if(!m.connections) m.connections = [];
+                                    if (!m.connections.includes(auth._id.toString())) {
+                                        console.log("Adding connection", auth._id.toString());
+                                        m.connections.push(auth._id.toString());
+                                    }else{
+                                        console.log("Removing connection", auth._id.toString());
+                                        m.connections = m.connections.filter(conn => conn.toString() !== auth._id.toString());
+                                    }
+                                    // console.log("marketPlace", m);
+                                    setMarketPlace({ ...m });
+                                }}>
+                                    <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{auth.seller_name}</Typography>
                                 </Box>
                             ))}
                         </Box>

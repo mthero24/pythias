@@ -62,7 +62,7 @@ const updateInventory = async () => {
 }
 
 export async function addItemsToInventory(){
-    let items = await Items.find({ labelPrinted: false, order: {$ne: null}, canceled: false, shipped: false, paid: true}).populate("order", "poNumber items")
+    let items = await Items.find({ labelPrinted: false, "inventory.inventory": { $ne: null }, order: {$ne: null}, canceled: false, shipped: false, paid: true}).populate("order", "poNumber items")
     let cancel = items.filter(i => i.order == null)
     for (let c of cancel) {
         c.canceled = true;
