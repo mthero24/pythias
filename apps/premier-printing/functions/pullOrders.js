@@ -72,6 +72,13 @@ let colorFixer = {
     "HGreen": "Heather Green",
     "H.Green": "Heather Green",
     "BlueAqua": "Blue Aqua",
+    AUTUMN: "Autumn",
+    "ORANGE": "Orange",
+    "PURPLE": "Purple",
+    "ChalkyMint": "Chalky Mint",
+    "HGREEN": "Heather Green",
+    "SAGE": "Sage",
+    "NAVY": "Navy",
 
 }
 const sizeFixer = {
@@ -85,12 +92,12 @@ const sizeFixer = {
     XLarge: "XL",
     XXLarge: "2XL",
 }
-const updateInventory = async ()=>{
+export const updateInventory = async ()=>{
     let inventories = await Inventory.find({})
     console.log(inventories.length, "inventories")
     for (let inv of inventories) {
         let items = await Item.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
-        if (inv.quantity < 0) {
+        if (inv.quantity < 0 || !inv.quantity) {
             inv.quantity = 0;
         }
         if (items.length > 0) {
@@ -101,6 +108,9 @@ const updateInventory = async ()=>{
                 if(inv.quantity > inv.inStock.length + inv.attached.length) {
                     inv.attached = [];
                 }
+            }
+            if(inv.quantity > inv.inStock.length){
+                inv.attached = []
             }
             let newInStck = [];
             for(let id of inv.inStock) {

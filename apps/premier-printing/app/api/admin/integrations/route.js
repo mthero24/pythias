@@ -4,7 +4,7 @@ import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 export async function GET(req=NextApiRequest){
     console.log(process.env.pythiasMongoURL)
     try{
-        let integration = await ApiKeyIntegrations.find({ provider: req.nextUrl.searchParams.get("provider") });
+        let integration = await ApiKeyIntegrations.find();
         console.log("Integration found:", integration);
         return NextResponse.json({error: false, integration})
     }catch(err){

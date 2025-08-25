@@ -5,6 +5,9 @@ let schema = new mongoose.Schema({
     apiKey: String,
     apiSecret: String,
     organization: String,
+    tokenType: String,
+    refreshToken: String,
+    type: String,
     provider: String,
 })
 export default PremierPrinting.model("ApiKeyIntegrations", schema);

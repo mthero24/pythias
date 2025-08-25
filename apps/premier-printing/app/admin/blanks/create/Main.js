@@ -584,6 +584,8 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
                         options={[
                           "DTF",
                           "DTG",
+                          "DTF/Vinyl Hybrid",
+                          "Vinyl",
                           "Sublimation",
                           "Embroidery",
                           "Paper Printing",

@@ -8,7 +8,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import Link from "next/link";
-import { connect, set } from "mongoose";
+import { connect, connection, set } from "mongoose";
 
 export const csvFunctions = {
     productSku: (product) => {
@@ -65,17 +65,15 @@ export const csvFunctions = {
     variantGtin: (variant) => {
         return variant.upc ? variant.upc : "N/A";
     },
-    variantMarketPlaceId: (variant, sizeConverter, numBlanks, blankName, connection) => {
-        //console.log("variant", variant, "connection", connection);
-        if (variant.ids && variant.ids[connection]) {
-            return variant.ids[connection];
+    variantMarketPlaceId: (variant, sizeConverter, numBlanks, blankName, index, connection) => {
+        if (variant.ids && variant.ids[connection?.toLowerCase().includes("target")? "acenda": connection]) {
+            return variant.ids[connection?.toLowerCase().includes("target") ? "acenda" : connection];
         }
         return "N/A";
     },
-    productMarketPlaceId: (product, index, connection) => {
-       // console.log("product", product, "connection", connection);
-        if (product.ids && product.ids[connection]) {
-            return product.ids[connection];
+    productMarketPlaceId: (product, index, name) => {
+        if (product.ids && product.ids[name?.toLowerCase().includes("target")? "acenda": name]) {
+            return product.ids[name.toLowerCase().includes("target")? "acenda": name];
         }
         return "N/A";
     },
@@ -98,7 +96,6 @@ export const csvFunctions = {
         return variant.image ? variant.image : "N/A";
     },
     variantImages: (variant, sizeConverter, numBlanks, blankName, index) => {
-       //console.log("variant", variant.images, "index", index);
         return variant.images && variant.images.length > index ? variant.images[index] : "N/A";
     },
     variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
@@ -171,28 +168,24 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         }
         setSize(sizeArray);
         const getConnections = async () => {
-            //console.log("getConnections called");
-            //console.log("source", source);
-            let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test")? "pythias-test": source } });
-            //console.log(res.data);
+            console.log("getConnections called");
+            let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test")? "pythias-test": source == "simplesage"? "premierPrinting":  source } });
             if(res.data && res.data.integration) {
                 setLoading(true);
-                //console.log("Connections found:", res.data.integration);
                 let connections = res.data.integration ? res.data.integration : [];
                 if (product && product.marketPlacesArray && product.marketPlacesArray.length > 0) {
                     let mp = marketPlaces.filter(m => product.marketPlacesArray.map(mp => mp._id ? mp._id.toString() : mp.toString()).includes(m._id.toString()));
+                    //console.log(mp, "mp")
                     if (mp) {
-                        //console.log("Marketplace found in product:", mp);
-                        //console.log("connections", connections);
+                        //console.log("here")
                         let prod = {...product}
                         for (let m of mp) {
-                            //console.log(m, "Marketplace in connections");
+                            //console.log("here")
                             for( let c of connections) {
-                                //console.log(c, "Connection in connections");
-                                if (c.displayName.toLowerCase().includes("acenda") && m.connections && m.connections.includes(c._id.toString())) {
-                                    //console.log("Marketplace connection found:", c);
+                               // console.log(c, "c", m.connections)
+                                if (c.displayName.toLowerCase().includes("acenda") && m.connections && (m.connections.includes(c._id.toString()) || m.connections.filter(co=> co._id?.toString() == c._id?.toString())[0])) {
+                                    //console.log("here")
                                     let res = await axios.post("/api/integrations/acenda", { connection: c, product });
-                                    //console.log(res, "Response from Acenda integration");
                                     prod = res.data.product;
                                 }
                             }
@@ -200,12 +193,12 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                         setProduct({...prod});
                     }
                 }
+                setConnections(res.data.integration);
                 setLoading(false);
             }
             if(res.data && res.data.tiktokAuth) {
                 setTiktokAuth(res.data.tiktokAuth);
             }
-            setConnections(res.data.integration);
         }
         if(open) {
             getConnections();
@@ -218,7 +211,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     if (image.image) {
                         try {
                             await axios.get(image.image.replace("=400", "=2400"));
-                            //console.log("Pre-caching product image:", image.image);
                         } catch (error) {
                             console.error("Error pre-caching image:", error);
                         }
@@ -232,7 +224,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                             if (image) {
                                 try {
                                     await axios.get(image.replace("=400", "=2400"));
-                                    //console.log("Pre-caching variant image:", image);
                                 } catch (error) {
                                     console.error("Error pre-caching variant image:", error);
                                 }
@@ -242,7 +233,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     if(variant.image) {
                         try {
                             await axios.get(variant.image.replace("=400", "=2400"));
-                            //console.log("Pre-caching variant image:", variant.image);
                         } catch (error) {
                             console.error("Error pre-caching variant image:", error);
                         }
@@ -268,24 +258,16 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         overflowY: "none",
     };
     const checkForIds = async ({ product }) => {
-        //console.log("checkForIds product:", product);
         setLoading(true);
         if (product) {
             if (product && product.marketPlacesArray && product.marketPlacesArray.length > 0) {
                 let mp = marketPlaces.filter(m => product.marketPlacesArray.map(mp => mp._id ? mp._id.toString() : mp.toString()).includes(m._id.toString()));
-                //console.log("checkForIds mp:", mp);
                 if (mp) {
-                    //console.log("Marketplace found in product:", mp);
-                   // console.log("connections", connections);
                     let prod = { ...product }
                     for (let m of mp) {
-                       // console.log(m, "Marketplace in connections");
                         for (let c of connections) {
-                            //console.log(c, "Connection in connections");
                             if (c.displayName.toLowerCase().includes("acenda") && m.connections && m.connections.includes(c._id.toString())) {
-                               // console.log("Marketplace connection found:", c);
                                 let res = await axios.post("/api/integrations/acenda", { connection: c, product });
-                               // console.log(res, "Response from Acenda integration");
                                 prod = res.data.product;
                             }
                         }
@@ -308,9 +290,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const removeMarketplaceConnection = async ({mp, }) => {
         setLoading(true);
         let p = { ...product };
-        //console.log(p, "dssd")
         if (mp.connections && mp.connections.length > 0) {
-            //console.log("Removing connections from product:", mp.connections);
             let shopifyConnections = mp.connections.filter(c => c.displayName.toLowerCase().includes("shopify"))[0];
             if (shopifyConnections) {
                 const headers = {
@@ -322,7 +302,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 setLoading(true);
                 if (p.ids && p.ids[shopifyConnections.displayName]) {
                     let res = await axios.post("/api/integrations/shopify/delete", { id: p.ids && p.ids[shopifyConnections.displayName], connection: shopifyConnections }, headers).catch(e => {
-                        //console.log(e, "error from webhook");
                         alert("Something Went Wron Please Try Again Later")
                         setLoading(false);
                     });
@@ -338,7 +317,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             }
         }
         p.marketPlacesArray = p.marketPlacesArray.filter(m => (m._id ? m._id.toString() : m?.toString()) !== mp?._id?.toString());
-       // console.log(p.marketPlacesArray, "on Remove")
         let res = await axios.post("/api/admin/products", { products: [p] });
         setProduct({ ...p });
         if (products && products.length > 0) {
@@ -378,11 +356,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                             <Box sx={{width: "100%", overflow: "auto", display: "flex", flexDirection: "row", justifyContent: "flex-start", gap: "2%", alignItems: "center", padding: "1%" }}>
                                 {marketPlaces && marketPlaces.map((mp, i) => {
                                     if(connections && connections.length > 0){
-                                        mp.connections = mp.connections.map(c=> {
-                                            //console.log(c)
+                                        mp.connections = mp.connections?.map(c=> {
                                             let conn = connections?.filter(conn=> conn?._id.toString() == c.toString())[0]
                                             if(!conn) conn = tiktokAuth?.filter(conn=> conn?._id.toString() == c.toString())[0]
-                                            //console.log(conn)
                                             if(conn)return conn
                                             return c
                                         })
@@ -418,11 +394,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                             </Box>
                                             
                                             {product && mp.connections && mp.connections.length > 0 && mp.connections.map((c, ci) => {
-                                                //console.log(product.marketPlacesArray, "marketplace array", mp, c)
                                                 if (product.marketPlacesArray && product.marketPlacesArray.length > 0 && product.marketPlacesArray.filter(m=> m.toString() === mp._id.toString()[0])) {
                                                     return (
                                                         <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
-                                                            console.log("Sending product to webhook for connection:", c);
                                                             if (c.displayName && c.displayName.includes("shopify")){
                                                                 const headers = {
                                                                     headers: {
@@ -430,14 +404,11 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                                         "Authorization": `Bearer ${c.apiKey}`,
                                                                     }
                                                                 }
-                                                                console.log(headers, "headers for shopify", c);
                                                                 setLoading(true);
                                                                     let res = await axios.post("/api/integrations/shopify/send", {product, connection: c}, headers ).catch(e=> {
-                                                                    console.log(e, "error from webhook");
                                                                     alert("Something Went Wron Please Try Again Later")
                                                                     setLoading(false);
                                                                 });
-                                                                console.log(res, "res from webhook");
                                                                 let p = { ...product };
                                                                 if(res && res.data){
                                                                     if(!p.ids) p.ids = {};
@@ -463,11 +434,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                                 }
                                                             }else if(c.seller_name){
                                                                 let res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c }).catch(e => {
-                                                                    console.log(e, "error from webhook");
                                                                     alert("Something Went Wron Please Try Again Later")
                                                                     setLoading(false);
                                                                 });
-                                                                console.log(res, "res from webhook");
                                                                 let p = { ...product };
                                                                 if (res && res.data) {
                                                                     if (!p.ids) p.ids = {};
@@ -511,12 +480,9 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                             <Divider sx={{ margin: ".5% 0" }} />
                             <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
                             { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => {
-                                    //console.log("market place connections", marketPlace.connections)
                                     if (connections && connections.length > 0) {
-                                        marketPlace.connections = marketPlace.connections.map(c => {
-                                            //console.log(c)
+                                        marketPlace.connections = marketPlace.connections?.map(c => {
                                             let conn = connections?.filter(conn => conn?._id.toString() == c.toString())[0]
-                                            //console.log(conn)
                                             if (conn) return conn
                                             return c
                                         })
@@ -540,7 +506,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         ))}
                                                     </Card>}
                                                     {header.length > 0 && (
-                                                        <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} />
+                                                        <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} connections={connections} />
                                                     )}
                                                 </Box>
                                             ))}
@@ -582,7 +548,6 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
                                 if (!v.size._id) v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
                                 if (!v.color._id) v.color = c;
                                 if (!v.threadColor._id) v.threadColor = tc;
-                                //console.log(v, "variant in MarketPlaceList");
                                 for (let h of Object.keys(headers)) {
                                     let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0].marketPlaceOverrides[marketPlace.name]: [], headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0].category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, })
                                     headers[h].push(val);
@@ -595,10 +560,8 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
                 }
             }
         }else{
-        // console.log(product, "product")
             for(let b of product.blanks) {
                 for(let c of product.colors) {
-                    //console.log(product.variantsArray)
                     if (product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id ? v.color._id.toString() : v.color.toString()) == c._id.toString()).length > 0) {
                         for (let v of product.variantsArray.filter(v => v.blank.toString() == b._id.toString() && (v.color._id? v.color._id.toString(): v.color.toString()) == c._id.toString())) {
                             if (v.size && !v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
@@ -640,15 +603,11 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
     ); 
 }
 
-export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type }) => {
-
+export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type, connection }) => {
     let value = "N/A";
     if(type && type == "product") {
-        if (mp.productDefaultValues[headerLabel] && headerLabel == "id") {
-            //console.log(mp.productDefaultValues[headerLabel].split(",")[0], "mp.productDefaultValues[headerLabel].split(',')[0]");
-           // console.log(csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]));
-            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]);
-            //console.log(value, "value in HeaderList");
+        if (mp.productDefaultValues[headerLabel] && headerLabel == "id" && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+            value = csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]](product, index, mp.name);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
             if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
@@ -664,7 +623,11 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
             }
         }
         else if (blankOverRides && blankOverRides[headerLabel]) {
-            value = blankOverRides[headerLabel];
+            if (blankOverRides[headerLabel].includes("variant") && csvFunctions[blankOverRides[headerLabel].split(",")[0]]) {
+                value = csvFunctions[blankOverRides[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, blankOverRides[headerLabel].split(",")[1], mp.colorFamilyConverter);
+            } else {
+                value = blankOverRides[headerLabel];
+            }
         } else if (headerLabel == "Category" || headerLabel == "Type") {
             value = category;
         } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel]) {
@@ -682,14 +645,18 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
             else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
         }
         else if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
-            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1]);
+            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter);
         } else if (mp.defaultValues && mp.defaultValues[headerLabel]== "index") {
             if(index < product.productImages.length) {
                 value = index + 1;
             }
         }
         else if( blankOverRides && blankOverRides[headerLabel]) {
-            value = blankOverRides[headerLabel];
+            if (blankOverRides[headerLabel].includes("variant") && csvFunctions[blankOverRides[headerLabel].split(",")[0]]) {
+                value = csvFunctions[blankOverRides[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, blankOverRides[headerLabel].split(",")[1], mp.colorFamilyConverter);
+            } else {
+                value = blankOverRides[headerLabel];
+            }
         }else if(headerLabel == "Category" || headerLabel == "Type") {
             value = category;
         }else if (mp.defaultValues && mp.defaultValues[headerLabel]) {
@@ -765,7 +732,6 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
         if (res.data.error) {
             return alert("Error creating marketplace");
         }else {
-           // console.log("res", res.data.marketPlaces);
             setMarketPlaces([...res.data.marketPlaces]);
             setOpen(false);
         }
@@ -809,16 +775,12 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                             {connections && connections.length > 0 && connections.map((connection) => (
                                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", border: "1px solid #ccc", background: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#1976d2" : "#fff", color: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={connection._id} onClick={() => {
                                     let m = { ...marketPlace };
-                                    console.log("Connection clicked", connection._id.toString());
                                     if(!m.connections) m.connections = [];
                                     if (!m.connections.includes(connection._id.toString())) {
-                                        console.log("Adding connection", connection._id.toString());
                                         m.connections.push(connection._id.toString());
                                     }else{
-                                        console.log("Removing connection", connection._id.toString());
                                         m.connections = m.connections.filter(conn => conn.toString() !== connection._id.toString());
                                     }
-                                   // console.log("marketPlace", m);
                                     setMarketPlace({ ...m });
                                 }}>
                                     <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{connection.displayName}</Typography>
@@ -829,13 +791,10 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                     let m = { ...marketPlace };
                                     if(!m.connections) m.connections = [];
                                     if (!m.connections.includes(auth._id.toString())) {
-                                        console.log("Adding connection", auth._id.toString());
                                         m.connections.push(auth._id.toString());
                                     }else{
-                                        console.log("Removing connection", auth._id.toString());
                                         m.connections = m.connections.filter(conn => conn.toString() !== auth._id.toString());
                                     }
-                                    // console.log("marketPlace", m);
                                     setMarketPlace({ ...m });
                                 }}>
                                     <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{auth.seller_name}</Typography>
@@ -855,7 +814,6 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                                 document.getElementById("newHeader").value = "";
                                             }}>Add Header</Button>
                                             <FormControlLabel control={<Checkbox checked={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} onChange={(event)=>{
-                                                //console.log(event.target.checked);
                                                 let m = { ...marketPlace };
                                                 if(!m.hasProductLine) m.hasProductLine = [];
                                                 m.hasProductLine[index] = event.target.checked;

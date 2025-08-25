@@ -13,7 +13,7 @@ export async function POST(req = NextApiRequest) {
             console.log("Checking SKU for variant:", variant.sku);
             let res = await getSkuAcenda({sku: variant.sku, clientId: body.connection.apiKey, clientSecret: body.connection.apiSecret, organization: body.connection.organization});
             if(res && res[0] && res[0].id){
-                //console.log("Received SKU from Acenda:", res[0].id);
+                console.log("Received SKU from Acenda:", res[0].id);
                 variant.ids["acenda"] = res[0].id;
                 acendaProductSku = res[0].group_skus[0];
             }else{

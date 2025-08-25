@@ -25,8 +25,9 @@ export async function POST(req = NextApiRequest) {
                             let res = await getSkuAcenda({sku: previousSku, clientId: body.connection.apiKey, clientSecret: body.connection.apiSecret, organization: body.connection.organization});
                             if(res && res[0] && res[0].id){
                                 console.log("Received SKU from Acenda for previous SKU:", res[0].id);
+                                if(!variant.ids) variant.ids = {}
                                 variant.ids["acenda"] = res[0].id;
-                                acendaProductSku = res[0].group_skus[0];
+                                acendaProductSku = res[0].group_skus ? res[0].group_skus[0] : undefined;
                                 break;
                             }
                         }

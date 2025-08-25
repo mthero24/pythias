@@ -1,7 +1,7 @@
 import { Nightlife } from "@mui/icons-material";
 import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, marketPlaces, ApiKeyIntegrations, Inventory, ProductInventory, Items, Order} from "@pythias/mongo"
 import axios from "axios";
-import { pullOrders } from "@/functions/pullOrders"
+import { pullOrders, updateInventory} from "@/functions/pullOrders"
 import { getOrders, generatePieceID } from "@pythias/integrations";
 let converter = {
     YL: "L",
@@ -15,7 +15,8 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
     return sku;
 }
 export default async function Test(){
-   //await pullOrders();
+   // await pullOrders();
+    await updateInventory();
     // let inventories = await Inventory.find({})
     // console.log(inventories.length, "inventories")
     // for (let inv of inventories) {

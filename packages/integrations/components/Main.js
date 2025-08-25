@@ -9,9 +9,9 @@ import {TikTokModal} from "./TikTokModal";
 import {useState} from "react";
 import {AcendaModal} from "./AcendaModal";
 import Link from "next/link";
+import { generateRedirectURI } from "../functions/etsy";
 
-
-export function Main({ tiktokShops, apiKeyIntegrations, provider, etsyRedirectURI }){
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source }){
     const [tikTokOpen, setTikTokOpen] = useState(false)
     const [acendaOpen, setAcendaOpen] = useState(false)
     const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || [])
@@ -31,7 +31,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, etsyRedirectUR
                     </Grid2>
                     <Grid2 size={3}>
                         <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} >
-                            <Link href={""} target="_blank" style={{textDecoration: "none", color: "inherit"}}>
+                            <Link href={generateRedirectURI(source)} target="_blank" style={{textDecoration: "none", color: "inherit"}}>
                                 <Box >
                                     <Image src={etsy} alt={"etsy"} width={600} height={600} style={{width: "100%", height: "auto", background: "#fff"}}/>
                                 </Box>

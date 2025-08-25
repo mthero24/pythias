@@ -272,8 +272,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                             <Grid2 size={6}>
                                 <CreatableSelect
                                     placeholder="Print Type"
-                                    options={[{label: "Direct To Transfer", value: "DTF"}, {label: "Vinyl", value: "VIN"}, {label: "Embroidery", value: "EMB"}, {label: "Screen Print", value: "SCN"}]}
-                                    value={{label: des.printType == "DTF"? "Direct To Transfer": des.printType == "VIN"? "Vinyl": des.printType == "EMB"? "Embroidery": des.printType == "SCN"? "Screen Print": "Direct To Transfer", value: des.printType? des.printType: "DTF"  }}
+                                    options={[{ label: "Direct To Transfer", value: "DTF" }, { label: "Vinyl", value: "VIN" }, { label: "DTF/Vinyl Hybrid", value: "DTF/VIN" }, { label: "Embroidery", value: "EMB" }, { label: "Screen Print", value: "SCN" }]}
+                                    value={{ label: des.printType == "DTF" ? "Direct To Transfer" : des.printType == "VIN" ? "Vinyl" : des.printType == "DTF/VIN" ? "DTF/Vinyl Hybrid" : des.printType == "EMB" ? "Embroidery" : des.printType == "SCN" ? "Screen Print" : "Direct To Transfer", value: des.printType ? des.printType : "DTF" }}
                                     onChange={(vals)=>{
                                         let d = {...des}
                                         d.printType = vals.value

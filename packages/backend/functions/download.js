@@ -57,17 +57,15 @@ const csvFunctions = {
     productSportUsedFor: (product) => {
         return product.sportUsedFor ? product.sportUsedFor : "N/A";
     },
-    variantMarketPlaceId: (variant, sizeConverter, numBlanks, blankName, connection) => {
-        //console.log("variant", variant, "connection", connection);
-        if (variant.ids && variant.ids[connection]) {
-            return variant.ids[connection];
+    variantMarketPlaceId: (variant, sizeConverter, numBlanks, blankName, index, connection) => {
+        if (variant.ids && variant.ids[connection?.toLowerCase().includes("target") ? "acenda" : connection]) {
+            return variant.ids[connection?.toLowerCase().includes("target") ? "acenda" : connection];
         }
         return "N/A";
     },
-    productMarketPlaceId: (product, index, connection) => {
-        console.log("product", product, "connection", connection);
-        if (product.ids && product.ids[connection]) {
-            return product.ids[connection];
+    productMarketPlaceId: (product, index, name) => {
+        if (product.ids && product.ids[name?.toLowerCase().includes("target") ? "acenda" : name]) {
+            return product.ids[name.toLowerCase().includes("target") ? "acenda" : name];
         }
         return "N/A";
     },
@@ -87,8 +85,8 @@ const csvFunctions = {
         // console.log("variant", variant, "index", index);
         return variant.images && variant.images.length > index ? variant.images[index].replace("=400", "=2400") : "N/A";
     },
-    variantColorFamily: (variant) => {
-        return variant.color && variant.color.colorFamily ? variant.color.colorFamily : "";
+    variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
+        return variant.color && variant.color.colorFamily ? colorFamilyConverter && colorFamilyConverter[variant.color.colorFamily] ? colorFamilyConverter[variant.color.colorFamily] : variant.color.colorFamily : "N/A";
     }
 };
 export const preCacheImages = async (product) => {
@@ -120,11 +118,8 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
 
     let value = "N/A";
     if (type && type == "product") {
-         if (mp.productDefaultValues[headerLabel] && headerLabel == "id") {
-            console.log(mp.productDefaultValues[headerLabel].split(",")[0], "mp.productDefaultValues[headerLabel].split(',')[0]");
-            console.log(csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]));
-            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](product, index, mp.productDefaultValues[headerLabel].split(",")[1]);
-            console.log(value, "value in HeaderList");
+        if (mp.productDefaultValues[headerLabel] && headerLabel == "id" && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+            value = csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]](product, index, mp.name);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
             if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
@@ -157,14 +152,18 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
             else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
         }
         else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
-            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1]);
+            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter);
         } else if (mp.defaultValues[headerLabel] == "index") {
             if (index < product.productImages.length) {
                 value = index + 1;
             }
         }
         else if (blankOverRides && blankOverRides[headerLabel]) {
-            value = blankOverRides[headerLabel];
+            if (blankOverRides[headerLabel].includes("variant") && csvFunctions[blankOverRides[headerLabel].split(",")[0]]) {
+                value = csvFunctions[blankOverRides[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, blankOverRides[headerLabel].split(",")[1], mp.colorFamilyConverter);
+            } else {
+                value = blankOverRides[headerLabel];
+            }
         } else if (headerLabel == "Category" || headerLabel == "Type") {
             value = category;
         } else if (mp.defaultValues && mp.defaultValues[headerLabel]) {

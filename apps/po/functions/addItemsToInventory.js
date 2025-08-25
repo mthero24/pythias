@@ -2,14 +2,17 @@ import {Inventory} from "@pythias/mongo";
 import Items from "@/models/Items";
 
 const updateInventory = async () => {
-    let inventories = await Inventory.find({  })
-    inventories = inventories.sort((a, b) => a.label.localeCompare(b.label))
+    let inventories = await Inventory.find({ })
+    inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
+    console.log(inventories.length, "inventories")
     for (let inv of inventories) {
-        let items = await Items.find({ "inventory.inventory": inv._id, order: { $ne: null }, labelPrinted: false, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
+        let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
         items = items.filter(i => i.order != null)
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }
+        inv.inStock = [];
+        inv.attached = [];
         if (items.length > 0) {
             let itemIds = items.map(i => i._id.toString());
             inv.inStock = inv.inStock.filter(i => !itemIds.includes(i.toString()));
@@ -53,33 +56,30 @@ const updateInventory = async () => {
                     await inv.save()
                 }
             }
-        } else {
-            inv.inStock = [];
-            inv.attached = [];
-            await inv.save()
         }
     }
 }
 
 export async function addItemsToInventory(){
-    let items = await Items.find({ labelPrinted: false, "inventory.inventory": { $ne: null }, order: {$ne: null}, canceled: false, shipped: false, paid: true}).populate("order", "poNumber items")
-    let cancel = items.filter(i => i.order == null)
-    for (let c of cancel) {
+    let items = await Items.find({ labelPrinted: false, "inventory.inventory": {$eq: null}, order: { $ne: null }, canceled: false, shipped: false, paid: true })
+    items = await Promise.all(items.map(async i=> {
+        i.order = await Order.findOne({ _id: i.order });
+        return i;
+    }));
+    console.log(items.length, "items to add to inventory")
+    let cancel = items.filter(i=> i.order == null)
+    for(let c of cancel){
         c.canceled = true;
         await c.save()
     }
     items = items.filter(i => i.order != null)
-    if(items.length > 0){
-        console.log(items.length, "items to add to inventory")
-        for(let item of items){
-            item.inventory = {
-                inventoryType: "inventory",
-                inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
-                productInventory: null,
-            }
-            console.log(item.inventory.inventory, "inventory for item", item._id);
-            await item.save()
+    for(let item of items){
+        item.inventory = {
+            inventoryType: "inventory",
+            inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
+            productInventory: null,
         }
+        await item.save()
     }
     await updateInventory();
     

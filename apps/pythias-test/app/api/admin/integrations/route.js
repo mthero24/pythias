@@ -2,9 +2,9 @@ import {NextApiRequest, NextResponse} from "next/server"
 import {generateAuthorizationUrl} from "@pythias/integrations"
 import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 export async function GET(req=NextApiRequest){
-    console.log(process.env.pythiasMongoURL)
+    //console.log(process.env.pythiasMongoURL)
     try{
-        let integration = await ApiKeyIntegrations.find({ provider: req.nextUrl.searchParams.get("provider") });
+        let integration = await ApiKeyIntegrations.find();
         let tiktokAuth = await TikTokAuth.find({ provider: req.nextUrl.searchParams.get("provider") });
         console.log("Integration found:", integration, tiktokAuth);
         return NextResponse.json({error: false, integration, tiktokAuth})
