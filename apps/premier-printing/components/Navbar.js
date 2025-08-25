@@ -140,6 +140,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => {
             <ListItemText primary={`Orders`} />
           </ListItemButton>
         </Link>
+          <Link href="/admin/track-labels" onClick={() => handleClose(false)} >
+            <ListItemButton>
+              <ListItemText primary={`Track Labels`} />
+            </ListItemButton>
+          </Link>
           <Link href="/production/print-labels" onClick={() => handleClose(false)}>
           <ListItemButton>
             <ListItemText primary={`Print Labels`} />

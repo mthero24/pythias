@@ -1,7 +1,7 @@
 
 import {Blank as Blanks, Color, PrintPricing} from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
-import {Main} from "./Main";
+import {CreateBlank} from "@pythias/backend";
 import PrintLocations from "@/models/printLocations";
 export const dynamic = 'force-dynamic'; 
 export default async function Create(req,res) {
@@ -23,7 +23,7 @@ export default async function Create(req,res) {
     printPricing = serialize(printPricing)
     printLocations = serialize(printLocations)
     return (
-      <Main
+      <CreateBlank
         colors={colors}
         blanks={blanks}
         bla={blank}

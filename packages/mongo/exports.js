@@ -1,11 +1,10 @@
 export { default as Blank } from "./models/Blanks";
 export { default as PrintLocations } from "./models/printLocations";
 export { default as MarketPlaces } from "./models/MarketPlaces";    
-export { default as Brands } from "./models/Brands";
 export { default as PrintPricing } from "./models/PrintPricing";    
 export { default as Order } from "./models/Order";
 export { default as Item } from "./models/Items";   
-export { Seasons, Genders, Themes, SportUsedFor } from "./models/oneoffs";
+export { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons } from "./models/oneoffs";
 export { default as Bin } from "./models/Bin";  
 export { default as Color } from "./models/Color";
 export { default as User } from "./models/User";
