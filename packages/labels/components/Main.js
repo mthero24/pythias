@@ -579,6 +579,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory ? `Total Stock: ${i.inventory.inventory.quantity}` : "" }
                               {i.rePulled && <br/>}
                               {i.rePulled ? <span style={{color: "red"}}>RePulled: {i.rePulled} - {i.rePulledReasons[0]}</span> : ""}
+                              {i.labelPrintedDates && i.labelPrintedDates.length > 0 && <br/>}
+                              {i.labelPrintedDates && i.labelPrintedDates.length > 0 && <span style={{ color: "red" }}>Last Printed: {new Date(i.labelPrintedDates[i.labelPrintedDates.length -1]).toLocaleDateString("en-US")}</span>}
                               {/* {i.inventory?.inventoryType == "productInventory" ? `Returns ${i.inventory?.productInventory?.quantity - (i.inventory?.productInventory?.onhold ? i.inventory?.productInventory?.onhold : 0)}` : i.inventory?.inventoryType == "inventory" ? `${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0) > 0 ? "In Stock" : "Out Of Stock"} ${i.inventory?.inventory?.quantity - (i.inventory?.inventory?.onhold ? i.inventory?.inventory?.onhold : 0)} (pending: ${i.inventory?.inventory?.pending_quantity}) (${i.inventory?.inventory?.orders?.map(o => o.items.includes(i._id.toString())).filter(i => i != undefined)[0] ? "orderd" : "not orderd yet"})` : "Out Of Stock"} */}
                             </Typography>
                           </Grid2>
