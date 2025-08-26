@@ -15,7 +15,7 @@ import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import { ProductCard } from "../reusable/ProductCard";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useCSV } from "../reusable/CSVProvider";
-export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport }) {
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport, printTypes}) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
     const [bran, setBrands] = useState(brands)
@@ -270,10 +270,11 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                     <Grid2 size={12} sx={{marginBottom: "2%"}}>
                         <Grid2 container spacing={2}>
                             <Grid2 size={6}>
+                                {console.log(printTypes, "Print Type")}
                                 <CreatableSelect
                                     placeholder="Print Type"
-                                    options={[{ label: "Direct To Transfer", value: "DTF" }, { label: "Vinyl", value: "VIN" }, { label: "DTF/Vinyl Hybrid", value: "DTF/VIN" }, { label: "Embroidery", value: "EMB" }, { label: "Screen Print", value: "SCN" }]}
-                                    value={{ label: des.printType == "DTF" ? "Direct To Transfer" : des.printType == "VIN" ? "Vinyl" : des.printType == "DTF/VIN" ? "DTF/Vinyl Hybrid" : des.printType == "EMB" ? "Embroidery" : des.printType == "SCN" ? "Screen Print" : "Direct To Transfer", value: des.printType ? des.printType : "DTF" }}
+                                    options={[...printTypes?.map(pt=> {return {label: pt.name, value: pt.name}})]}
+                                    value={{ label: des.printType, value: des.printType ? des.printType : "DTF" }}
                                     onChange={(vals)=>{
                                         let d = {...des}
                                         d.printType = vals.value

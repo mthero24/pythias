@@ -1,15 +1,16 @@
-import { Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations, Products, Seasons, Genders, Themes, SportUsedFor } from "@pythias/mongo";
+import { Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations, Products, Seasons, Genders, Themes, SportUsedFor, PrintTypes } from "@pythias/mongo";
 import { CreateSku } from "@/functions/CreateSku";
 import { DesignMain, serialize } from "@pythias/backend";
 import { notFound } from "next/navigation";
 import { designPage } from "@pythias/backend";
+import { Print } from "@mui/icons-material";
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({ params }) {
     let { id } = await params;
     //console.log("Design ID:", id);
     if (id) {
         try {
-            let { design, blanks, brands, marketPlaces, productImages, licenses, colors, printLocations, genders, seasons, sportUsedFor, themes } = await designPage({
+            let { design, blanks, brands, marketPlaces, productImages, licenses, colors, printLocations, genders, seasons, sportUsedFor, themes, printTypes } = await designPage({
                 id,
                 Brands,
                 LicenseHolders,
@@ -26,9 +27,10 @@ export default async function DesignPage({ params }) {
                 SportUsedFor,
                 Themes,
                 ProductImages,
+                PrintTypes
             });
             return (
-                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"imperial"} them={themes} sport={sportUsedFor} />
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"imperial"} them={themes} sport={sportUsedFor} printTypes={printTypes} />
             )
         } catch (e) {
             console.log(e)

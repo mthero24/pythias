@@ -33,81 +33,47 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                         <CreatableSelect isMulti placeholder="Tags" options={design.tags.map(tag => { return { value: tag, label: tag } })} value={design.tags.map(tag => { return { value: tag, label: tag } })} onChange={async (newValue) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
-                            p.brand = newValue.value
-                            if (!brands.filter(b => b.name == newValue.value)[0]) {
-                                let res = await axios.post("/api/admin/brands", { name: newValue.value })
-                                if (res.data.error) alert(res.data.msg)
-                                else {
-                                    setBrands(res.data.brands)
-                                }
-                            }
+                            p.tags.push(newValue.value)
                             setProducts([...prods])
                         }} />
                     </Grid2>
                     <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Brand" options={brands.map(brand => ({ value: brand.name, label: brand.name }))} value={product.brand ? { value: product.brand, label: product.brand } : null} onChange={async (newValue) => {
+                        <CreatableSelect placeholder="Select Brand" options={[{value: null, label: "Select Brand"}, ...brands.map(brand => ({ value: brand.name, label: brand.name }))]} value={product.brand ? { value: product.brand, label: product.brand } : null} onChange={async (newValue) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
-                            p.brand = newValue.value
-                            if (!brands.filter(b => b.name == newValue.value)[0]) {
-                                let res = await axios.post("/api/admin/brands", { name: newValue.value })
-                                if (res.data.error) alert(res.data.msg)
-                                else {
-                                    setBrands(res.data.brands)
-                                }
-                            }
+                            if (brands.filter(b => b.name == newValue.value)[0] || newValue.value == null) p.brand = newValue.value
                             setProducts([...prods])
                         }} />
                     </Grid2>
                     <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Gender" options={genders.map(gender => ({ value: gender.name, label: gender.name }))} value={product.gender ? { value: product.gender, label: product.gender } : null} onChange={async (newValue) => {
+                        <CreatableSelect placeholder="Select Gender" options={[{value: null, label: "Select Gender"}, ...genders.map(gender => ({ value: gender.name, label: gender.name }))]} value={product.gender ? { value: product.gender, label: product.gender } : null} onChange={async (newValue) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
-                            p.gender = newValue.value
-                            if (!genders.filter(s => s.name == newValue.value)[0]) {
-                                let res = await axios.post("/api/admin/oneoffs", { type: "gender", value: newValue.value })
-                                if (res.data && res.data.error) alert(res.data.msg)
-                                else setGenders(res.data.genders)
-                            }
+                            if(genders.filter(s => s.name == newValue.value)[0] || newValue.value == null) p.gender = newValue.value
                             setProducts([...prods])
                         }} />
                     </Grid2>
                     <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Season" options={seasons.map(season => ({ value: season.name, label: season.name }))} value={product.season ? { value: product.season, label: product.season } : null} onChange={async (newValue) => {
+                        <CreatableSelect placeholder="Select Season" options={[{value: null, label: "Select Season"}, ...seasons.map(season => ({ value: season.name, label: season.name }))]} value={product.season ? { value: product.season, label: product.season } : null} onChange={async (newValue) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
-                            p.season = newValue.value
-                            if (!seasons.filter(s => s.name == newValue.value)[0]) {
-                                let res = await axios.post("/api/admin/oneoffs", { type: "season", value: newValue.value })
-                                if (res.data && res.data.error) alert(res.data.msg)
-                                else setSeasons(res.data.seasons)
-                            }
+                            if(seasons.filter(s => s.name == newValue.value)[0] || newValue.value == null)p.season = newValue.value
                             setProducts([...prods])
                         }} />
                     </Grid2>
                     <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Theme" options={themes.map(theme => ({ value: theme.name, label: theme.name }))} value={product.theme ? { value: product.theme, label: product.theme } : null} onChange={async (newValue) => {
+                        <CreatableSelect placeholder="Select Theme" options={[{value: null, label: "Select Theme"}, ...themes.map(theme => ({ value: theme.name, label: theme.name }))]} value={product.theme ? { value: product.theme, label: product.theme } : null} onChange={async (newValue) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
-                            p.theme = newValue.value
-                            if (!themes.filter(s => s.name == newValue.value)[0]) {
-                                let res = await axios.post("/api/admin/oneoffs", { type: "theme", value: newValue.value })
-                                if (res.data && res.data.error) alert(res.data.msg)
-                                else setThemes(res.data.themes)
-                            }
+                            if(themes.filter(t => t.name == newValue.value)[0] || newValue.value == null)p.theme = newValue.value
                             setProducts([...prods])
                         }} />
                     </Grid2>
                     <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Sport Used For" options={sportUsedFor.map(sport => ({ value: sport.name, label: sport.name }))} value={product.sportUsedFor ? { value: product.sportUsedFor, label: product.sportUsedFor } : null} onChange={async (newValue) => {
+                        <CreatableSelect placeholder="Select Sport Used For" options={[{value: null, label: "Select Sport Used For"}, ...sportUsedFor.map(sport => ({ value: sport.name, label: sport.name }))]} value={product.sportUsedFor ? { value: product.sportUsedFor, label: product.sportUsedFor } : null} onChange={async (newValue) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
-                            p.sportUsedFor = newValue.value
-                            if (!sportUsedFor.filter(s => s.name == newValue.value)[0]) {
-                                let res = await axios.post("/api/admin/oneoffs", { type: "sportUsedFor", value: newValue.value })
-                                if (res.data && res.data.error) alert(res.data.msg)
-                                else setSportUsedFor(res.data.sportUsedFor)
-                            }
+                            if(sportUsedFor.filter(s => s.name == newValue.value)[0] || newValue.value == null)p.sportUsedFor = newValue.value
                             setProducts([...prods])
                         }} />
                     </Grid2>

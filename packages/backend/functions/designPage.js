@@ -1,5 +1,5 @@
 import { serialize } from "./serialize";
-export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocations, Design, Products, Blank, MarketPlaces, Genders, Seasons, SportUsedFor, Themes, ProductImages})=>{
+export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocations, Design, Products, Blank, MarketPlaces, Genders, Seasons, SportUsedFor, Themes, ProductImages, PrintTypes})=>{
     let colors = await Color.find({});
     for (let color of colors) {
         if (!color.sku) {
@@ -17,13 +17,14 @@ export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocati
     design.products = products;
     let blanks = await Blank.find({}).select("colors code name sizes multiImages").populate("colors").lean();
     let licenses = await LicenseHolders.find({}).lean();
-    let brands = await Brands.find({}).populate("marketPlaces.marketplace").lean();
+    let brands = await Brands.find({}).lean();
     let marketPlaces = await MarketPlaces.find({}).lean();
     let genders = await Genders.find().lean()
     let seasons = await Seasons.find().lean()
     let themes = await Themes.find().lean()
     let sportUsedFor = await SportUsedFor.find().lean()
     let productImages = await ProductImages.find({ design: design._id }).lean();
+    let printTypes = await PrintTypes.find().lean()
     if (!design) return notFound();
     design = serialize(design);
     blanks = serialize(blanks);
@@ -37,5 +38,6 @@ export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocati
     seasons = serialize(seasons)
     sportUsedFor = serialize(sportUsedFor)
     themes = serialize(themes)
-    return {design, blanks, brands, marketPlaces, productImages, licenses, colors, printLocations, genders, seasons, sportUsedFor, themes}
+    printTypes = serialize(printTypes)
+    return {design, blanks, brands, marketPlaces, productImages, licenses, colors, printLocations, genders, seasons, sportUsedFor, themes, printTypes}
 }

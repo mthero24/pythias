@@ -46,7 +46,7 @@ export function TrackLabels({items, source}){
                                 <Box>
                                     <Typography variant="h6"><Link href={`/orders/${item.order?._id}`} target="_blank">PoNumber: {item.order?.poNumber}</Link></Typography>
                                     <Typography variant="body2">status: {item.order?.status}</Typography>
-                                    <Typography variant="body2">Preshipped: {item.order?.preshipped ? "Yes" : "No"}</Typography>
+                                    <Typography variant="body2">Preshipped: {item.order?.preShipped ? "Yes" : "No"}</Typography>
                                     <Typography variant="body2">{new Date(item.order?.date).toLocaleString()}</Typography>
                                 </Box>
                                 <Box>
