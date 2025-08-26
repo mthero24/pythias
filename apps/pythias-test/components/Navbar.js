@@ -17,7 +17,7 @@ import {
 import Link from "next/link";
 import { theme, themeDark } from "./UI/Theme";
 import Image from "next/image";
-import * as Logo from '../public/premierprinting-logo.png';
+import * as Logo from '../public/pythias-logo--new-gold-50.png';
 import { useCSV } from "@pythias/backend";
 export default function ButtonAppBar() {
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -33,12 +33,12 @@ export default function ButtonAppBar() {
           <IconButton
             size="large"
             edge="start"
-            color="#565660"
+            color="#ffffffff"
             aria-label="menu"
             sx={{ mr: 2 }}
             onClick={toggleDrawer}
           >
-            <MenuIcon />
+            <MenuIcon sx={{ color: "#c2a167" }} />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
             <Link href="/admin">
@@ -48,12 +48,12 @@ export default function ButtonAppBar() {
                 height={40}
                 alt="logo"
                 sx={{width: "100%", height: "auto"}}
-                src={Logo}
+                src="https://www.pythiastechnologies.com/logo.png"
               />
             </Link>
           </Box>
           
-            <Button sx={{color: "#565660"}} onClick={()=>{signOut({ callbackUrl: "/" })}}>
+            <Button sx={{color: "#ffffffff"}} onClick={()=>{signOut({ callbackUrl: "/" })}}>
               Logout
             </Button>
          
@@ -90,7 +90,7 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => {
     >
       <Box sx={{ flexGrow: 1, }}>
           <Link href="/admin" onClick={() => handleClose(false)}>
-          <img className="img-fluid" width="170" src="/premierprinting-logo.png" />
+          <img className="img-fluid" width="170" src="https://www.pythiastechnologies.com/logo.png" />
         </Link>
       </Box>
       <Divider />
@@ -115,6 +115,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => {
             <ListItemText primary={`Colors`} />
           </ListItemButton>
         </Link>
+          <Link href="/admin/edit-data" onClick={() => handleClose(false)}>
+            <ListItemButton>
+              <ListItemText primary={`Edit Data`} />
+            </ListItemButton>
+          </Link>
         <Link href="/admin/blanks" onClick={() => handleClose(false)}>
           <ListItemButton>
             <ListItemText primary={`Blanks`} />

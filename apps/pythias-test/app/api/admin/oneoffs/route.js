@@ -1,12 +1,12 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons } from "@pythias/mongo";
+import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories } from "@pythias/mongo";
 import {saveOneOffs} from "@pythias/backend";
 export async function POST(req = NextApiRequest){
     let data = await req.json()
     console.log(data)
     try{
-        const { seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons } = await saveOneOffs({ data, Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons })
-        return NextResponse.json({ error: false, seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons })
+        const { seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories } = await saveOneOffs({ data, Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories })
+        return NextResponse.json({ error: false, seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories })
     }catch(e){
         console.error("Error saving one-offs", e)
         return NextResponse.json({error: true, msg: `Error saving ${data.type}`})
@@ -57,6 +57,10 @@ export async function DELETE(req = NextApiRequest){
             await RepullReasons.deleteOne({_id: id})
             let repullReasons = await RepullReasons.find({})
             return NextResponse.json({error: false, repullReasons})
+        }else if(type == "categories"){
+            await Categories.deleteOne({_id: id})
+            let categories = await Categories.find({})
+            return NextResponse.json({error: false, categories})
         }
     }catch(e){
         console.error("Error deleting one-off", e)

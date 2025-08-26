@@ -1,4 +1,4 @@
-import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons } from "@pythias/mongo";
+import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories } from "@pythias/mongo";
 import { serialize, Edit } from "@pythias/backend";
 
 export default async function EditPage(){
@@ -12,6 +12,7 @@ export default async function EditPage(){
     let vendors = await Vendors.find().lean();
     let printTypes = await PrintTypes.find().lean();
     let repullReasons = await RepullReasons.find().lean();
-    let data = serialize({seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons})
+    let categories = await Categories.find().lean();
+    let data = serialize({seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories})
     return <Edit data={data} />
 }

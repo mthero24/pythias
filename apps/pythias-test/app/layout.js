@@ -13,10 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Premier Printing",
-  description: "Premier Printing",
+  title: "Pythias - Test App",
+  description: "Pythias - Test App",
   icons: {
-    icon: "/premierprinting-favicon.ico",
+    icon: "/pythias-logo--new-gold-50.png",
   },
 };
 

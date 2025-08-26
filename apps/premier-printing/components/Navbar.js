@@ -115,6 +115,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => {
             <ListItemText primary={`Colors`} />
           </ListItemButton>
         </Link>
+          <Link href="/admin/edit-data" onClick={() => handleClose(false)}>
+            <ListItemButton>
+              <ListItemText primary={`Edit Data`} />
+            </ListItemButton>
+          </Link>
         <Link href="/admin/blanks" onClick={() => handleClose(false)}>
           <ListItemButton>
             <ListItemText primary={`Blanks`} />

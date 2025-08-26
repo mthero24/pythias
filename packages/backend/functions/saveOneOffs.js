@@ -1,6 +1,6 @@
 
-export const saveOneOffs = async ({data,Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons  }) => {
-    let seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons;
+export const saveOneOffs = async ({data,Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories }) => {
+    let seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories;
     if (data.type == "seasons") {
         let season = new Seasons({ name: data.value })
         await season.save()
@@ -42,7 +42,11 @@ export const saveOneOffs = async ({data,Seasons, Genders, Themes, SportUsedFor, 
         let repullReason = new RepullReasons({ name: data.value })
         await repullReason.save()
         repullReasons = await RepullReasons.find({})
+    }else if (data.type == "categories") {
+        let category = new Categories({ name: data.value })
+        await category.save()
+        categories = await Categories.find({})
     }
-    return { seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons }
+    return { seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories }
 }
 
