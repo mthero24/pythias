@@ -3,7 +3,7 @@ import {TrackLabels as TrackLabelsComponent, serialize} from "@pythias/backend";
 
 
 export default async function TrackLabels(){
-    let items = await Item.find({labelPrinted: true, shipped: false, canceled: false}).populate("order", "poNumber status date preShipped notes").sort({_id: 1});
+    //let items = await Item.find({labelPrinted: true, shipped: false, canceled: false}).populate("order", "poNumber status date preShipped notes").sort({_id: 1});
     //console.log(items.length, "items.length")
     // for(let item of items){
     //     if(item.order == undefined || item.order.poNumber == undefined) {
@@ -15,6 +15,6 @@ export default async function TrackLabels(){
     //     }
     //     await item.save();
     // }
-    items = serialize(items)
-    return <TrackLabelsComponent items={items} source="imperial" />;
+    //items = serialize(items)
+    return <TrackLabelsComponent items={[]} source="imperial" />;
 }
