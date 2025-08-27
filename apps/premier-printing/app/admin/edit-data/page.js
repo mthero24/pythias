@@ -13,6 +13,7 @@ export default async function EditPage(){
     let printTypes = await PrintTypes.find().lean();
     let repullReasons = await RepullReasons.find().lean();
     let categories = await Categories.find().lean();
+    console.log("brands", brands)
     let data = serialize({seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories})
     return <Edit data={data} />
 }

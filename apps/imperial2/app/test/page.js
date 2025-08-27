@@ -13,7 +13,7 @@ export default async function Test(){
     // item.inventory.invetoryType = "inventory"
     // console.log(item.inventory, "item inventory")
     //await item.save()
-   await pullOrders();
+   //await pullOrders();
     // let order = await InventoryOrders.findOne({ _id: "689f9112000d8326706d6379"}).populate("locations.items.inventory")
     // for(let loc of order.locations){
     //     for(let item of loc.items){

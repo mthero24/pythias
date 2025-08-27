@@ -8,7 +8,6 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import Link from "next/link";
-import { connect, connection, set } from "mongoose";
 
 export const csvFunctions = {
     productSku: (product) => {
@@ -95,8 +94,9 @@ export const csvFunctions = {
     variantImage: (variant, color, blankCode) => {
         return variant.image ? variant.image : "N/A";
     },
-    variantImages: (variant, sizeConverter, numBlanks, blankName, index) => {
-        return variant.images && variant.images.length > index ? variant.images[index] : "N/A";
+    variantImages: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter, sizeGuide) => {
+        console.log(sizeGuide, "sizeGuide in variantImages");
+        return variant.images && variant.images.length > index ? variant.images[index] : sizeGuide && sizeGuide.length > 0 && sizeGuide[index - variant.images.length] ? sizeGuide[index - variant.images.length] : "N/A";
     },
     variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
         return variant.color && variant.color.colorFamily ? colorFamilyConverter && colorFamilyConverter[variant.color.colorFamily] ? colorFamilyConverter[variant.color.colorFamily] : variant.color.colorFamily : "N/A";
@@ -567,7 +567,7 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
                             if (v.size && !v.size._id)v.size = b.sizes.filter(s => s._id.toString() == v.size)[0];
                             if(!v.color._id) v.color = c;
                             for(let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name })
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides ? product.blanks.filter(bl => bl.code == b.code)[0]?.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: index, color: c.name, blankCode: b.code, category: product.blanks.filter(bl => bl.code == b.code)[0]?.category[0], numBlanks: product.blanks.length, blankName: b.name, sizeGuide: b.sizeGuide.images && b.sizeGuide.images.length > 0 ? b.sizeGuide.images : [] })
                                 headers[h].push(val);
                             }
                             index++;
@@ -603,7 +603,7 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
     ); 
 }
 
-export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type, connection }) => {
+export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type, connection, sizeGuide }) => {
     let value = "N/A";
     if(type && type == "product") {
         if (mp.productDefaultValues[headerLabel] && headerLabel == "id" && csvFunctions[mp.productDefaultValues[headerLabel]]) {
@@ -645,7 +645,7 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
             else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
         }
         else if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
-            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter);
+            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter, sizeGuide);
         } else if (mp.defaultValues && mp.defaultValues[headerLabel]== "index") {
             if(index < product.productImages.length) {
                 value = index + 1;

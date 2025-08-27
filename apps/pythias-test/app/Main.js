@@ -19,8 +19,8 @@ export function Main(){
     <Box sx={{background: "#e2e2e2", minHeight: "vh"}}>
     <Container maxWidth="lg" >
       <Card sx={{width: "100%", display: "flex", flexDirection: "row", justifyContent: "space-between", margin: "2% 0%",}}>
-        <Box sx={{padding: "4%", width: "55%",  backgroundImage: `url(/2270.jpg)`, backgroundSize: 'cover',}}>
-          <Image src={logo} alt="premier printing logo" width={300} height={300} style={{width: "100%", height: "auto"}} />
+        <Box sx={{padding: "4%", width: "55%",  background: `#000`, backgroundSize: 'cover',}}>
+              <Image src={"https://www.pythiastechnologies.com/logo.png"} alt="premier printing logo" width={300} height={300} style={{width: "100%", height: "auto"}} />
         </Box>
         <Box sx={{padding: "4%", width: "45%"}}>
           <Typography sx={{textAlign: "center", fontSize: "2rem", fontWeight: 600}}>Find Us On</Typography>

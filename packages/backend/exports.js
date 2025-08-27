@@ -21,3 +21,4 @@ export { CSVProvider, useCSV } from "./components/reusable/CSVProvider";
 export {Create as CreateBlank} from "./components/blanks/Create";
 export { Edit } from "./components/edit/Edit";
 export {TrackLabels} from "./track-labels/TrackLabels";
+export { BlanksComponent } from "./components/blanks/Blanks";

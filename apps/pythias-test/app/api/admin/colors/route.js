@@ -1,6 +1,11 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Color from "@/models/Color";
 
+export async function GET(req = NextApiRequest) {
+  let colors = await Color.find({}).lean();
+  return NextResponse.json({ error: false, colors });
+}
+
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   let { color } = data;

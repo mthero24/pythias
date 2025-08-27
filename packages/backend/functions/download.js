@@ -81,9 +81,9 @@ const csvFunctions = {
     variantImage: (variant, color, blankCode) => {
         return variant.image ? variant.image.replace("=400", "=2400") : "N/A";
     },
-    variantImages: (variant, sizeConverter, numBlanks, blankName, index) => {
-        // console.log("variant", variant, "index", index);
-        return variant.images && variant.images.length > index ? variant.images[index].replace("=400", "=2400") : "N/A";
+    variantImages: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter, sizeGuide) => {
+        console.log(sizeGuide, "sizeGuid from variantImages");
+        return variant.images && variant.images.length > index ? variant.images[index].replace("=400", "=2400") : sizeGuide && sizeGuide.length > 0 && sizeGuide[index - variant.images.length] ? sizeGuide[index - variant.images.length] : "N/A";
     },
     variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
         return variant.color && variant.color.colorFamily ? colorFamilyConverter && colorFamilyConverter[variant.color.colorFamily] ? colorFamilyConverter[variant.color.colorFamily] : variant.color.colorFamily : "N/A";
@@ -114,7 +114,7 @@ export const preCacheImages = async (product) => {
         }
     }
 };
-const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type }) => {
+const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type, sizeGuide }) => {
 
     let value = "N/A";
     if (type && type == "product") {
@@ -128,7 +128,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
             else value = csvFunctions[mp.productDefaultValues[headerLabel]](product, index);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("variant") && csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]]) {
-            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1]);
+            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1], sizeGuide);
         } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] == "index") {
             if (index < product.productImages.length) {
                 value = index + 1;
@@ -152,7 +152,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
             else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
         }
         else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
-            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter);
+            value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter, sizeGuide);
         } else if (mp.defaultValues[headerLabel] == "index") {
             if (index < product.productImages.length) {
                 value = index + 1;
@@ -213,7 +213,7 @@ export const downloadProduct = async ({ products, marketPlace, header }) => {
                                 console.log(v.threadColor, "threadColor in MarketPlaceList");
                                 let thisHead = { ...headers };
                                 for (let h of Object.keys(headers)) {
-                                    let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index });
+                                    let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index, sizeGuide: b.sizeGuide.images && b.sizeGuide.images.length > 0 ? b.sizeGuide.images : [] });
                                     thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string
                                 }
                                 index++
@@ -232,7 +232,7 @@ export const downloadProduct = async ({ products, marketPlace, header }) => {
                             v.color = c;
                             let thisHead = { ...headers };
                             for (let h of Object.keys(headers)) {
-                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name, index, });
+                                let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name, index, sizeGuide: b.sizeGuide.images && b.sizeGuide.images.length > 0 ? b.sizeGuide.images : [] });
                                 thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string                       
                             }
                             index++
