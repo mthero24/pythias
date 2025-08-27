@@ -100,6 +100,8 @@ export const updateInventory = async ()=>{
         if (inv.quantity < 0 || !inv.quantity) {
             inv.quantity = 0;
         }
+        inv.attached = []
+        inv.inStock = []
         if (items.length > 0) {
             let itemIds = items.map(i => i._id.toString());
             inv.inStock = inv.inStock.filter(i => itemIds.includes(i.toString()));
@@ -135,7 +137,6 @@ export const updateInventory = async ()=>{
                         inv.attached.push(item._id.toString())
                     }
                 }
-                await inv.save()
             } else {
                 if (items.length > 0) {
                     for (let item of items) {
@@ -143,10 +144,10 @@ export const updateInventory = async ()=>{
                             inv.attached.push(item._id.toString())
                         }
                     }
-                    await inv.save()
                 }
             }
         }
+        await inv.save()
     }
 }
 const createItem = async (i, order, blank, color, threadColor, size, design, sku) => {

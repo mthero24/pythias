@@ -10,9 +10,13 @@ const updateInventory = async (invIds) => {
     let inventories = await Inventory.find({ })
     inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
     console.log(inventories.length, "inventories")
+    let total = 0
     for (let inv of inventories) {
-        let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true }).populate("order", "poNumber")
-        items = items.filter(i => i.order != null)
+        let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
+         items = await Promise.all(items.map(async i=> {
+            i.order = await Order.findOne({ _id: i.order });
+            return i;
+        }));
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }
@@ -50,7 +54,6 @@ const updateInventory = async (invIds) => {
                         inv.attached.push(item._id.toString())
                     }
                 }
-                await inv.save()
             } else {
                 if (items.length > 0) {
                     for (let item of items) {
@@ -58,33 +61,36 @@ const updateInventory = async (invIds) => {
                             inv.attached.push(item._id.toString())
                         }
                     }
-                    await inv.save()
                 }
             }
         }
+        console.log(inv.attached.length)
+        total += inv.attached.length
+        await inv.save()
     }
+    console.log("total: ", total)
 }
 export default async function Test(){
-    // let items = await Items.find({ labelPrinted: false, "inventory.inventory": {$eq: null}, order: { $ne: null }, canceled: false, shipped: false, paid: true })
-    // items = await Promise.all(items.map(async i=> {
-    //     i.order = await Order.findOne({ _id: i.order });
-    //     return i;
-    // }));
-    // console.log(items.length, "items to add to inventory")
-    // let cancel = items.filter(i=> i.order == null)
-    // for(let c of cancel){
-    //     c.canceled = true;
-    //     await c.save()
-    // }
-    // items = items.filter(i => i.order != null)
-    // for(let item of items){
-    //     item.inventory = {
-    //         inventoryType: "inventory",
-    //         inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
-    //         productInventory: null,
-    //     }
-    //     await item.save()
-    // }
-    // await updateInventory();
+    let items = await Items.find({ labelPrinted: false, "inventory.inventory": {$eq: null}, order: { $ne: null }, canceled: false, shipped: false, paid: true })
+    items = await Promise.all(items.map(async i=> {
+        i.order = await Order.findOne({ _id: i.order });
+        return i;
+    }));
+    console.log(items.length, "items to add to inventory")
+    let cancel = items.filter(i=> i.order == null)
+    for(let c of cancel){
+        c.canceled = true;
+        await c.save()
+    }
+    items = items.filter(i => i.order != null)
+    for(let item of items){
+        item.inventory = {
+            inventoryType: "inventory",
+            inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
+            productInventory: null,
+        }
+        await item.save()
+    }
+    await updateInventory();
     return <h1>Test</h1>
 }

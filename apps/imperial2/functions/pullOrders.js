@@ -34,10 +34,12 @@ const updateInventory = async () => {
     let inventories = await Inventory.find({})
     console.log(inventories.length, "inventories")
     for (let inv of inventories) {
-        let items = await Item.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
+        let items = await Item.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true }).sort({_id: -1})
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }
+        inv.attached = []
+        inv.inStock = []
         if (items.length > 0) {
             let itemIds = items.map(i => i._id.toString());
             inv.inStock = inv.inStock.filter(i => !itemIds.includes(i.toString()));
@@ -70,7 +72,6 @@ const updateInventory = async () => {
                         inv.attached.push(item._id.toString())
                     }
                 }
-                await inv.save()
             } else {
                 if (items.length > 0) {
                     for (let item of items) {
@@ -78,10 +79,10 @@ const updateInventory = async () => {
                             inv.attached.push(item._id.toString())
                         }
                     }
-                    await inv.save()
                 }
             }
         }
+        await inv.save()
     }
 }
 
