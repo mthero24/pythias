@@ -45,7 +45,6 @@ const updateInventory = async () => {
                         inv.attached.push(item._id.toString())
                     }
                 }
-                await inv.save()
             } else {
                 if (items.length > 0) {
                     for (let item of items) {
@@ -53,10 +52,10 @@ const updateInventory = async () => {
                             inv.attached.push(item._id.toString())
                         }
                     }
-                    await inv.save()
                 }
             }
         }
+        await inv.save()
     }
 }
 
