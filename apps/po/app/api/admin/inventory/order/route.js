@@ -57,6 +57,13 @@ export async function POST(req=NextApiRequest){
                 })
                 let inv = await Inventory.findById(i.inv._id)
                 inv.pending_quantity += i.order
+                 if(!inv.orders) inv.orders = []
+                inv.orders.push({
+                    order: order._id,
+                    items: it.map(i => i._id)
+                })
+                inv.attached = inv.attached.filter(a => !it.map(i => i._id.toString()).includes(a.toString()))
+                await inv.save()
                 await inv.save()
             }
         }

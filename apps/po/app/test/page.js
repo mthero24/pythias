@@ -3,7 +3,7 @@ import Styles from "@/models/StyleV2"
 import Design from "@/models/Design"
 import Colors from "@/models/Color"
 import { getCarriers } from "@pythias/shipping"
-import { Inventory } from "@pythias/mongo";
+import { Inventory, InventoryOrders } from "@pythias/mongo";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
 const updateInventory = async (invIds) => {
@@ -92,5 +92,18 @@ export default async function Test(){
     //     await item.save()
     // }
     // await updateInventory();
+    // let invOrder = await InventoryOrders.findOne({_id: "68af572573d1de811e6e3098"}).populate("locations.items.inventory")
+    // for(let loc of invOrder.locations){
+    //     for(let item of loc.items){
+    //         //console.log(item)
+    //         let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
+    //         console.log(labels.length, item.quantity)
+    //         item.inventory.orders.push({
+    //             order: invOrder._id.toString(),
+    //             items: labels.map(l=> l._id.toString())
+    //         })
+    //         await item.inventory.save()
+    //     }
+    // }
     return <h1>Test</h1>
 }
