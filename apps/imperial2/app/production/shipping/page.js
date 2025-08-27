@@ -2,7 +2,7 @@
 import {Main} from "@pythias/shipping";
 import {Bin as Bins} from "@pythias/mongo";
 export default async function Shipping(req,res){
-    await Bins
+  try{
     let stations = JSON.parse(process.env.shipping).shipStations
     let binCount = await Bins.find({}).countDocuments()
     let readyToShip = await Bins.find({ ready: true, inUse: true })
@@ -20,4 +20,12 @@ export default async function Shipping(req,res){
     let pieceId = params.pieceId
     let station = params.station
     return <Main stations={stations} binCount={binCount} bins={{readyToShip, inUse}} pieceId={pieceId} stat={station} source={"IM"}/>
+  }catch(e){
+    console.log(e)
+    let params = await req.searchParams
+    let pieceId = params.pieceId
+    let station = params.station
+    let stations = JSON.parse(process.env.shipping).shipStations
+    return <Main stations={stations} binCount={0} bins={{readyToShip:[], inUse:[]}} pieceId={pieceId} stat={station} source={"IM"}/>
+  }
 }
