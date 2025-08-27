@@ -91,7 +91,7 @@ export default async function Test(){
     //     }
     //     await item.save()
     // }
-    // await updateInventory();
+    //  await updateInventory();
     // let invOrder = await InventoryOrders.findOne({_id: "68af572573d1de811e6e3098"}).populate("locations.items.inventory")
     // for(let loc of invOrder.locations){
     //     for(let item of loc.items){
