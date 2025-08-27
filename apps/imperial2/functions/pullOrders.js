@@ -358,5 +358,5 @@ export async function pullOrders(id){
     await updateInventory();
 }
 setInterval(()=>{
-    if(process.env.pm_id == 9 ) pullOrders()
+    if(process.env.pm_id == 4 ) pullOrders()
 }, 1 * 60 *60 *1000)
