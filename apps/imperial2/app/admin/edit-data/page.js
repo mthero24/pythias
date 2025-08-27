@@ -17,7 +17,7 @@ export default async function EditPage(){
         return <Edit data={data} />
     }catch(e){
         console.log(e)
-        data = {seasons:[], genders:[], themes:[], sportUsedFor:[], departments:[], brands:[], suppliers:[], vendors:[], printTypes:[], repullReasons:[]}
+        let data = {seasons:[], genders:[], themes:[], sportUsedFor:[], departments:[], brands:[], suppliers:[], vendors:[], printTypes:[], repullReasons:[]}
         return <Edit data={data} />
     }
 }

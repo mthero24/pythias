@@ -1,7 +1,6 @@
 import {NextApiRequest, NextResponse} from "next/server"
 import {generateAuthorizationUrl} from "@pythias/integrations"
 import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
-import next from "next";
 export async function GET(req = NextApiRequest) {
     console.log(process.env.pythiasMongoURL)
     try {
