@@ -112,7 +112,7 @@ export async function GET(req){
         console.log(params[5], params[4], "params 5 and 4")
         designImage = design?.threadImages?.[params[5]][params[4]]
         console.log(designImage, "design image")
-        let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
+        let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
         blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
     } else{
         let blankCode = req.nextUrl.searchParams.get("blank")
