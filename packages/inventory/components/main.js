@@ -10,6 +10,7 @@ import LoaderOverlay from "./LoaderOverlay";
 import { Footer } from "@pythias/backend";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import SearchIcon from '@mui/icons-material/Search';
 export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
     const [fullStyles, setFullStyles] = useState(bla)
     const [styles, setStyles] = useState(bla)
@@ -43,13 +44,14 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
         save(inv)
     }
     const search = async (term)=>{
-        let res = await axios.get(`/api/admin/inventory?q=${term}`)
+        let res = await axios.get(`/api/admin/inventory?q=${query}`)
         if(res.data){
+            console.log(query)
             setPage(1)
             setQuery(term)
             console.log(res.data.count, "count")
             setCount(res.data.count)
-            return res.data.blanks
+            setStyles(res.data.blanks)
         }
     }
     return <Box>
@@ -60,15 +62,16 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
             <Button onClick={() => { setOpenDisplay(true) }}>Orders</Button>
         </Box>
         <Container sx={{minHeight: "70vh"}}>
-            <Box sx={{marginBottom: "1%"}}>
-                <TextField fullWidth placeholder="Filter.." sx={{background: "white"}} onChange={async ()=>{
-                    let s2 = await search(event.target.value)
-                    if(s2.length > 0){
-                        setStyles([...s2])
-                    }else{
-                        setStyles([...fullStyles])
-                    }
-                }}/>
+            <Box sx={{marginBottom: "1%", display: "flex", flexDirection: "row",}}>
+                <TextField fullWidth placeholder="Filter.." sx={{background: "white"}} onChange={async (e)=>{
+                   setQuery(e.target.value)
+                }}
+                onKeyDown={(e)=>{
+                    console.log(e.key)
+                    if(e.key == "Enter" || e.key == "enter") search()
+                }}
+                />
+                <SearchIcon sx={{position: "relative", right: 40, top: 15, cursor: "pointer", marginRight: "-35px"}} onClick={search} />
             </Box>
             {styles.map(s=>(
                 <Accordion expanded={expanded === s.blank.code} key={s.blank._id} sx={{marginBottom: "2%"}} >
