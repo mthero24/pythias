@@ -64,7 +64,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             })
             d.blanks.filter(b=> b.blank != undefined)
             d.brands = d.brands.map(br=>{
-                let brand = brands.filter(b=> b._id.toString() == (br._id? br._id.toString(): br.toString()))[0]
+                let brand = brands.filter(b=> b?._id.toString() == (br?._id? br?._id.toString(): br?.toString()))[0]
                 return brand
             })
             d.blanks = d.blanks.filter(b=> b.blank != undefined)
