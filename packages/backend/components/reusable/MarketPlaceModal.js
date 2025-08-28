@@ -170,6 +170,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         const getConnections = async () => {
             console.log("getConnections called");
             let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test")? "pythias-test": source == "simplesage"? "premierPrinting":  source } });
+            console.log(res?.data, "res in getConnections");
             if(res.data && res.data.integration) {
                 setLoading(true);
                 let connections = res.data.integration ? res.data.integration : [];
