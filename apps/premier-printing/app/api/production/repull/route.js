@@ -1,7 +1,9 @@
-import Items from "@/models/Items";
-import Bin from "@/models/Bin";
+import { Bin, Items, RepullReasons } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
-
+export async function GET(){
+    console.log("GET REASONS")
+    return NextResponse.json({ error: false, reasons: await RepullReasons.find()})
+}
 export async function POST(req=NextApiRequest){
     let data= await req.json()
     let item = await Items.findOne({pieceId: data.pieceId})
