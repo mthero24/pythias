@@ -5,7 +5,6 @@ import { serialize } from "@/functions/serialize";
 import {headers} from "next/headers"
 export default async function Account(req){
     //why wond you update the user?
-    console.log("Account page")
     const headersList = await headers()
     console.log(headersList.get("user"))
     let user = await User.findOne({userName: headersList.get("user")})
