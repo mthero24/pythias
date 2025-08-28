@@ -96,7 +96,11 @@ const createImage = async (data)=>{
 }
 export async function GET(req){
     let base = req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " ")
+    let rest = req.url.split("/")[req.url.split("/").length - 1].split(".")[1].replace(/%20/g, " ")
+    if(rest && !rest.includes("jpg"))base = base + rest
+    console.log(base, "base")
     let params = base.split("-")
+    console.log(params, "params")
     let width = parseInt(req.nextUrl.searchParams.get("width"))
     let designImage
     let blankImage
