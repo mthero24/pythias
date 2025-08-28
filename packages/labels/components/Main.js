@@ -289,6 +289,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             color="primary"
             variant="extended"
             aria-label="add"
+            disabled={loading}
             sx={{
               margin: 0,
               top: "auto",

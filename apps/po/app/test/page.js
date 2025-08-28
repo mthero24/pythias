@@ -105,5 +105,19 @@ export default async function Test(){
     //         await item.inventory.save()
     //     }
     // }
+    // let order = await InventoryOrders.findOne({_id: "68af572573d1de811e6e3098"}).populate("locations.items.inventory")
+    // console.log(order)
+    // for(let loc of order.locations){
+    //     for(let item of loc.items){
+            
+    //         let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
+    //         console.log(labels.length, item.quantity)
+    //         item.inventory.orders.push({
+    //             order: order._id.toString(),
+    //             items: labels.map(l=> l._id.toString())
+    //         })
+    //         await item.inventory.save()
+    //     }
+    // }
     return <h1>Test</h1>
 }

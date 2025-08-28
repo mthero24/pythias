@@ -7,36 +7,43 @@ export async function GET(){
 }
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
-    console.log(data)
+    //console.log(data)
     let printItems = []
     let order = await InventoryOrders.findById(data.id)
-    if(order){
-        let location = order.locations.filter(l=> l.name == data.location)[0]
-        for(let i of location.items){
-            let inv = await Inventory.findById(i.inventory)
-            inv.quantity = inv.quantity + i.quantity
-            inv.pending_quantity = inv.pending_quantity - i.quantity
-            let items = await Items.find({_id: {$in: order.items}, styleCode: inv.style_code, colorName: inv.color_name, sizeName: inv.size_name, labelPrinted: false }).populate("color", "name").populate("designRef", "sku name printType").lean().limit(i.quantity)
-            console.log(items.length)
-            items.map(i=>{
-                i.inventory = inv
-                return i
-            })
-            console.log(items)
-            printItems= printItems.concat(items)
-            console.log(inv)
-           await inv.save()
+    if (order) {
+        try {
+            let location = order.locations.filter(l => l.name == data.location)[0]
+            for (let i of location.items) {
+                let itemsToPrint = []
+                let inv = await Inventory.findById(i.inventory)
+                //inv.quantity = inv.quantity + i.quantity
+                //inv.pending_quantity = inv.pending_quantity - i.quantity
+                if (inv.orders) {
+                    let o = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
+                    if (o && o.items) {
+                        let items = await Items.find({ _id: { $in: o.items } }).populate("designRef").sort({ _id: -1 })
+                        itemsToPrint.push(...items)
+                    }
+                }
+                inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())
+                printItems.push(...itemsToPrint)
+                await inv.save()
+            }
+            console.log(printItems.length)
+            location.received = true
+            let printLabels = await axios.post("http://localhost:3004/api/production/print-labels", { items: printItems, poNumber: order.poNumber, })
+            console.log(printLabels?.data)
+            if (order.locations.filter(l => l.received == false).length == 0) order.received = true
+            order.markModified("locations received")
+            await order.save()
+            let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory")
+            return NextResponse.json({ error: false, orders: orders })
+        } catch (e) {
+            console.log(e)
+            return NextResponse.json({ error: true, msg: "Something went wrong marking order received" })
         }
-        console.log(printItems.length)
-        location.received = true
-        let printLabels = await axios.post("https://production.printoracle.com/api/print-labels", {items: printItems, poNumber: order.poNumber,})
-        //console.log(printLabels?.data)
-        if(!order.locations.filter(l=> l.received == false)[0]) order.received = true
-        order.markModified("locations received")
-        await order.save()
     }
-    let orders = await InventoryOrders.find({received: {$in: [null, false]}}).populate("locations.items.inventory")
-    return NextResponse.json({error: false, orders })
+    
 }
 export async function POST(req=NextApiRequest){
     let data = await req.json()
@@ -56,6 +63,7 @@ export async function POST(req=NextApiRequest){
                 })
                 let inv = await Inventory.findById(i.inv._id)
                 inv.pending_quantity += i.order
+                let it = await Items.find({ _id: { $in: inv.attached } }).sort({ _id: -1 })
                  if(!inv.orders) inv.orders = []
                 inv.orders.push({
                     order: order._id,
