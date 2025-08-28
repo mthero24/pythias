@@ -190,21 +190,22 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             items = gift
         }else {
           console.log()
-            if(source == "PP"){
-              items.push(...useLabels[type]);
-            }else{
-              let items = [];
-              for(let l of useLabels[type]){
-                if(l.inventory && l.inventory.inventory && l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id)){
-                  items.push(l)
-                }else if(l.inventory && l.inventory.productInventory && l.inventory.productInventory.inStock && l.inventory.productInventory.inStock.length > 0 && l.inventory.productInventory.inStock.includes(l._id)){
-                  items.push(l)
-                }
+          if(source == "PP"){
+            items.push(...useLabels[type]);
+          }else{
+            for(let l of useLabels[type]){
+              console.log(l.inventory && l.inventory.inventoryType == "inventory" &&  l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id))
+              if(l.inventory && l.inventory.inventory && l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id)){
+                items.push(l)
+              }else if(l.inventory && l.inventory.productInventory && l.inventory.productInventory.inStock && l.inventory.productInventory.inStock.length > 0 && l.inventory.productInventory.inStock.includes(l._id)){
+                items.push(l)
               }
-              console.log(items.length)
             }
-            items = Sort(items, source);
-            console.log(items.length, "items length")
+            console.log(items.length)
+          }
+          console.log(items.length, "items length")
+          items = Sort(items, source);
+          console.log(items.length, "items length")
         } 
         console.log(items);
         console.log(items);
