@@ -1,13 +1,27 @@
 "use client";
 import {Box, Modal, Fab, Button, TextField} from "@mui/material" ;
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import axios from "axios";
+import CreatableSelect from "react-select/creatable";
 export function Repull({}){
     let [open, setOpen] = useState(false)
+    let [reasons, setReasons] = useState([])
     let [repull, setRepull] = useState({
         pieceId: "",
         reason: ""
     })
+    useEffect(()=>{
+        //console.log(repull)
+        const getReasons = async ()=>{
+            let res = await axios.get("/api/production/repull")
+            if(res.data.error) alert(res.data.msg)
+            else{
+                console.log(res.data.reasons)
+                setReasons(res.data.reasons)
+            }
+        }
+        getReasons()
+    }, [open])
     const submit = async ()=>{
         let res = await axios.post("/api/production/repull", repull)
         if(res.data.error) alert(res.data.msg)
@@ -46,11 +60,14 @@ export function Repull({}){
                     r.pieceId = event.target.value
                     setRepull({...r})
                    }}/>
-                   <TextField fullWidth label="Reason" value={repull.reason} sx={{margin: "1%"}} onChange={()=>{
-                    let r ={...repull};
-                    r.reason = event.target.value
-                    setRepull({...r})
-                   }}/>
+                   <CreatableSelect
+                       isClearable
+                       placeholder="Select Reason"
+                       options={reasons.map(reason => ({ value: reason.name, label: reason.name }))}
+                       onChange={(selected) => {
+                           setRepull({ ...repull, reason: selected.value })
+                       }}
+                   />
                    <Button fullWidth sx={{margin: "1%"}} onClick={submit} >Repull Item</Button>
                 </Box>
             </Modal>
