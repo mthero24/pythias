@@ -82,7 +82,7 @@ const csvFunctions = {
         return variant.image ? variant.image.replace("=400", "=2400") : "N/A";
     },
     variantImages: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter, sizeGuide) => {
-        console.log(sizeGuide, "sizeGuid from variantImages");
+        //console.log(sizeGuide, "sizeGuid from variantImages");
         return variant.images && variant.images.length > index ? variant.images[index].replace("=400", "=2400") : sizeGuide && sizeGuide.length > 0 && sizeGuide[index - variant.images.length] ? sizeGuide[index - variant.images.length] : "N/A";
     },
     variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
@@ -93,10 +93,10 @@ export const preCacheImages = async (product) => {
     for(let image of product.productImages) {
         if (image.image) {
             try {
-                console.log(image.image.replace("=400", "=2400"))
+                //console.log(image.image.replace("=400", "=2400"))
                 await axios.get(image.image.replace("=400", "=2400"), { responseType: 'arraybuffer' }).catch(e=>{e.status});
             } catch (error) {
-                console.error(`Failed to pre-cache image ${image.image}:`, error);
+                //console.error(`Failed to pre-cache image ${image.image}:`, error);
             }
         }
     }
@@ -118,7 +118,8 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
 
     let value = "N/A";
     if (type && type == "product") {
-        if (mp.productDefaultValues[headerLabel] && headerLabel == "id" && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+        if (mp.productDefaultValues[headerLabel] && headerLabel == "id" && csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]]) {
+            //console.log("Getting product id for", csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]](product, index, mp.name));
             value = csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]](product, index, mp.name);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {

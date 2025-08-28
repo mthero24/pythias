@@ -95,7 +95,7 @@ export const csvFunctions = {
         return variant.image ? variant.image : "N/A";
     },
     variantImages: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter, sizeGuide) => {
-        console.log(sizeGuide, "sizeGuide in variantImages");
+        //console.log(sizeGuide, "sizeGuide in variantImages");
         return variant.images && variant.images.length > index ? variant.images[index] : sizeGuide && sizeGuide.length > 0 && sizeGuide[index - variant.images.length] ? sizeGuide[index - variant.images.length] : "N/A";
     },
     variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
@@ -606,7 +606,9 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
 export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, color, blankCode, threadColor, category, numBlanks, blankName, type, connection, sizeGuide }) => {
     let value = "N/A";
     if(type && type == "product") {
-        if (mp.productDefaultValues[headerLabel] && headerLabel == "id" && csvFunctions[mp.productDefaultValues[headerLabel]]) {
+        //console.log(mp.productDefaultValues[headerLabel], headerLabel == "id", mp.productDefaultValues[headerLabel]?.split(",")[0])
+        if (mp.productDefaultValues[headerLabel] && headerLabel == "id" && csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]]) {
+            //console.log("HERE", csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]](product, index, mp.name));
             value = csvFunctions[mp.productDefaultValues[headerLabel]?.split(",")[0]](product, index, mp.name);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("product") && csvFunctions[mp.productDefaultValues[headerLabel]]) {
