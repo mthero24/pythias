@@ -31,7 +31,7 @@ const readImage = async (url)=>{
     }
     return null
 }
-
+console.log("Starting server on port 3011")
 app.get("/origin/*", async (req, res) => {
     console.log(req.originalUrl)
     console.log(req.originalUrl.replace("/origin", ""))
@@ -46,19 +46,19 @@ app.get("/origin/*", async (req, res) => {
             position: sharp.strategy.attention,
             fastShrinkOnLoad: false
         })
-        if(req.headers['accept'] && req.headers['accept'].includes("webp")){
-            image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
-        }else{
+        // if(req.headers['accept'] && req.headers['accept'].includes("webp")){
+        //     image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
+        // }else{
             image = await image.toBuffer()
-        }
+        //}
     }else{
-        if (req.headers['accept'] && req.headers['accept'].includes("webp")) {
-            image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
-        } else {
+        // if (req.headers['accept'] && req.headers['accept'].includes("webp")) {
+        //     image = await image.webp({ lossless: true, quality: 90, alphaQuality: 90 }).toBuffer()
+        // } else {
             image = await image.toBuffer()
-        }
+        //}
     }
-    res.set('Content-Type', req.headers['accept'] && req.headers['accept'].includes("webp")? "image/webp": 'image/jpeg');
+    res.set('Content-Type', 'image/jpeg');
     res.header('Access-Control-Allow-Origin', '*');
     return res.status(200).send(image)
 })
@@ -68,5 +68,5 @@ app.get("/*", async (req, res)=>{
 })
 
 app.listen(3011, () => {
-    console.log('Server listening on port 3010');
+    console.log('Server listening on port 3011');
   });
