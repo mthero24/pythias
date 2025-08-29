@@ -49,22 +49,24 @@ export async function POST(req=NextApiRequest){
     }
     for(let loc of locations){
         let items = []
-        for(let i of data.needsOrdered){
-            if(i.location == loc && i.included){
+        for (let i of data.needsOrdered) {
+            if (i.location == loc && i.included) {
                 items.push({
                     inventory: i.inv._id,
                     quantity: i.order
                 })
-                let inv = await Inventory.findById(i.inventory)
-                inv.quantity = inv.quantity + i.quantity
-                inv.pending_quantity = inv.pending_quantity - i.quantity
-                if (inv.orders) {
-                    order = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
-                    let items = await Items.find({ _id: { $in: order.items } }).sort({ _id: -1 })
-                    itemsToPrint.push(items)
+                let inv = await Inventory.findById(i.inv._id)
+                inv.pending_quantity += i.order
+                let it = await Items.find({ _id: { $in: inv.attached } }).sort({ _id: -1 })
+                if (it.length > i.order) {
+                    it = it.slice(0, i.order)
                 }
-                inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())
-                printItems.push(...itemsToPrint)
+                if (!inv.orders) inv.orders = []
+                inv.orders.push({
+                    order: order._id,
+                    items: it.map(i => i._id)
+                })
+                inv.attached = inv.attached.filter(a => !it.map(i => i._id.toString()).includes(a.toString()))
                 await inv.save()
             }
         }

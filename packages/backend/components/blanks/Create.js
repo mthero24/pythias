@@ -16,6 +16,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import "cropperjs/dist/cropper.css";
 import EyeDropper from "./EyeDropper";
+
 import axios from "axios";
 import { Stage, Layer, Transformer, Rect } from "react-konva";
 import CreatableSelect from "react-select/creatable";
@@ -34,6 +35,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [printLocations, setPrintLocations] = useState(locations)
     const [isImageEditModalOpen, setIsImageEditModalOpen] = useState(false);
     const [selectedImageSrc, setSelectedImageSrc] = useState(null);
+    const [imageColor, setImageColor] = useState({id: null, name: null, hexcode: null});
     const handleImageSave = () => {
         // Handle saving the edited image here
     };
@@ -164,13 +166,13 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                         </Box>
                                         <Grid2 container spacing={1}>
                                             <Grid2 size={2}>
-                                                <Box sx={{ width: 100, height: 100, border: "1px dashed #1989df", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => { setIsImageEditModalOpen(true) }}>
+                                                <Box sx={{ width: 100, height: 100, border: "1px dashed #1989df", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => { setImageColor(color); setIsImageEditModalOpen(true); }}>
                                                     <Typography variant="caption"><AddIcon sx={{ color: "#1989df"}} /></Typography>
                                                 </Box>
                                             </Grid2>
                                             {images.map((img, imgIdx) => (
-                                                <Grid2 size={2} key={imgIdx}>
-                                                    <img src={img.url} alt={img.name} style={{ width: 100, height: 100 }} />
+                                                <Grid2 size={1} key={imgIdx}>
+                                                    <img src={`${img.image ? img.image : ''}`} alt={img.name} style={{ width: "100%", height: "auto", maxHeight: "100px" }} />
                                                 </Grid2>
                                             ))}
                                         </Grid2>
@@ -181,7 +183,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                     </Grid2>
                 </Box>
             </Container>
-            <ImageEditModal open={isImageEditModalOpen} onClose={() => setIsImageEditModalOpen(false)} imageSrc={selectedImageSrc} onSave={handleImageSave} printLocations={blank.printLocations} />
+            <ImageEditModal open={isImageEditModalOpen} color={imageColor} blank={blank} setBlank={setBlank} onClose={() => setIsImageEditModalOpen(false)} imageSrc={selectedImageSrc} onSave={handleImageSave} printLocations={blank.printLocations} />
             <Footer />
         </Box>
     )

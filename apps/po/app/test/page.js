@@ -64,9 +64,8 @@ const updateInventory = async (invIds) => {
                 }
             }
         }
-        console.log(inv.attached.length)
         total += inv.attached.length
-        await inv.save()
+        inv = await inv.save()
     }
     console.log("total: ", total)
 }
@@ -105,7 +104,7 @@ export default async function Test(){
     //         await item.inventory.save()
     //     }
     // }
-    // let order = await InventoryOrders.findOne({_id: "68af572573d1de811e6e3098"}).populate("locations.items.inventory")
+    // let order = await InventoryOrders.findOne({ _id: "68b0bd0cc8023d4c92ccc283"}).populate("locations.items.inventory")
     // console.log(order)
     // for(let loc of order.locations){
     //     for(let item of loc.items){

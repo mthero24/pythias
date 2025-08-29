@@ -8,6 +8,15 @@ import { isSingleItem } from "@/functions/itemFunctions";
 
 
 export default async function Test(){
+    // let order = await InventoryOrders.findOne({ _id: "68b0ad70f4d544877fdd68a7"}).populate("locations.items.inventory")
+    // console.log(order, "order")
+    // for(let loc of order.locations){
+    //     for(let item of loc.items){
+    //         console.log(item, "item")
+    //         // item.inventory.quantity = item.inventory.quantity - item.quantity;
+    //         // await item.inventory.save();
+    //     }
+    // }
     // let item = await Item.findOne({ pieceId: "3LZ8VCWA5" }).populate("inventory.inventory")
     // item.inventory.inventory = await Inventory.findOne({ style_code: item.styleCode, color_name: item.colorName, size_name: item.sizeName, })
     // item.inventory.invetoryType = "inventory"
@@ -36,12 +45,14 @@ export default async function Test(){
     //         await item.inventory.save();
     //     }
     // }
-    // let noInv = await Item.find({inventory: {$exists: false}, canceled: false, paid: true, shipped: false, labelPrinted: false, design: {$ne: null}, status: {$ne: "shipped"}}).sort({_id: 1}).populate("order", "poNumber")
+    // let noInv = await Item.find({type: "unknown"}).sort({_id: 1}).populate("order", "poNumber").populate("designRef", "printType")
     // for(let item of noInv){
     //     item.inventory = {
     //         inventoryType: "inventory",
     //         inventory: await Inventory.findOne({color: item.color, sizeId: item.size, blank: item.blank}),
     //     }
+    //     console.log(item.designRef, item.pieceId, "design ref")
+    //     item.type = item.designRef?.printType
     //     console.log(item, "no inv item")
     //     await item.save()
     // }

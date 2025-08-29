@@ -124,6 +124,7 @@ export async function POST(req = NextApiRequest) {
                 let envelopes = item.blank.envelopes.filter(
                     (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
                 );
+                console.log(envelopes, 'envelopes');
                 await createImage({
                     url: item.design[key],
                     pieceID: `${item.pieceId}-${key}`,
