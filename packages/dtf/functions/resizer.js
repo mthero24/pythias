@@ -219,8 +219,8 @@ export const createImage = async (
       }
   }
   console.log(Config, printer)
-    //let res = await axios.post(`http://${Config.internalIP}/api/dtf`, {files: [{buffer: finalBuffer, type: "png"}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response?.data})
-    // if(res?.data) return res.data
-    // else return resData
-  return {error: false}
+    let res = await axios.post(`http://${Config.internalIP}/api/dtf`, {files: [{buffer: finalBuffer, type: "png"}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response?.data})
+    if(res?.data) return res.data
+    else return resData
+  //return {error: false}
   };
