@@ -22,7 +22,7 @@ const csvFunctions = {
         return product.brand ? product.brand : "No Value";
     },
     variantColor: (variant, sizeConverer, numBlanks, blankName) => {
-        return variant.color ? numBlanks > 1 ? `${variant.color.name} (${blankName})` : variant.color.name : "";
+        return variant.color ? numBlanks > 1 ? `${variant.color.name}` : variant.color.name : "";
     },
     variantSize: (variant, sizeCoverter) => {
         return variant.size ? sizeCoverter && sizeCoverter[variant.size.name] ? sizeCoverter[variant.size.name] : variant.size.name : "";
