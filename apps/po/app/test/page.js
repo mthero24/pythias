@@ -104,19 +104,19 @@ export default async function Test(){
     //         await item.inventory.save()
     //     }
     // }
-    // let order = await InventoryOrders.findOne({ _id: "68b0bd0cc8023d4c92ccc283"}).populate("locations.items.inventory")
-    // console.log(order)
-    // for(let loc of order.locations){
-    //     for(let item of loc.items){
+    let order = await InventoryOrders.findOne({ _id: "68b1c2a4fcb2eb6cec918c4a"}).populate("locations.items.inventory")
+    console.log(order)
+    for(let loc of order.locations){
+        for(let item of loc.items){
             
-    //         let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
-    //         console.log(labels.length, item.quantity)
-    //         item.inventory.orders.push({
-    //             order: order._id.toString(),
-    //             items: labels.map(l=> l._id.toString())
-    //         })
-    //         await item.inventory.save()
-    //     }
-    // }
+            let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
+            console.log(labels.length, item.quantity)
+            item.inventory.orders.push({
+                order: order._id.toString(),
+                items: labels.map(l=> l._id.toString())
+            })
+            await item.inventory.save()
+        }
+    }
     return <h1>Test</h1>
 }

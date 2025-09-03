@@ -17,11 +17,11 @@ export async function PUT(req=NextApiRequest){
                 let itemsToPrint = []
                 let inv = await Inventory.findById(i.inventory)
                 inv.quantity = inv.quantity + i.quantity
-                //inv.pending_quantity = inv.pending_quantity - i.quantity
+                inv.pending_quantity = inv.pending_quantity - i.quantity
                 if (inv.orders) {
                     let o = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
                     if (o && o.items) {
-                        let items = await Items.find({ _id: { $in: o.items } }).populate("designRef").sort({ _id: -1 })
+                        let items = await Items.find({ _id: { $in: o.items } }).populate("design inventory.inventory").sort({ _id: -1 })
                         itemsToPrint.push(...items)
                     }
                 }
@@ -31,7 +31,7 @@ export async function PUT(req=NextApiRequest){
             }
             console.log(printItems.length)
             location.received = true
-            let printLabels = await axios.post("http://localhost:3004/api/production/print-labels", { items: printItems, poNumber: order.poNumber, })
+            let printLabels = await axios.post("https://production.printoracle.com/api/production/print-labels", { items: printItems, poNumber: order.poNumber, })
             console.log(printLabels?.data)
             if (order.locations.filter(l => l.received == false).length == 0) order.received = true
             order.markModified("locations received")

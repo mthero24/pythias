@@ -194,7 +194,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             items.push(...useLabels[type]);
           }else{
             for(let l of useLabels[type]){
-              console.log(l.inventory && l.inventory.inventoryType == "inventory" &&  l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id))
+              //console.log(l.inventory && l.inventory.inventoryType == "inventory" &&  l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id))
               if(l.inventory && l.inventory.inventory && l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id)){
                 items.push(l)
               }else if(l.inventory && l.inventory.productInventory && l.inventory.productInventory.inStock && l.inventory.productInventory.inStock.length > 0 && l.inventory.productInventory.inStock.includes(l._id)){
