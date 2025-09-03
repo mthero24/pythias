@@ -41,7 +41,7 @@ export const csvFunctions = {
         return product.sportUsedFor ? product.sportUsedFor : "N/A";
     },
     variantColor: (variant, sizeConverer, numBlanks, blankName) => {
-        return variant.color ? numBlanks > 1 ? `${variant.color.name} (${blankName})` : variant.color.name : "";
+        return variant.color ? numBlanks > 1 ? `${variant.color.name}` : variant.color.name : "";
     },
     variantSize: (variant, sizeConverter) => {
         return variant.size ? sizeConverter[variant.size.name] ? sizeConverter[variant.size.name] : "" : "";
