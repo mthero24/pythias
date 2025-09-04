@@ -13,7 +13,7 @@ export async function PUT(req=NextApiRequest){
         item = await item.save()
     }
     console.log(item.inventory.inventoryType, item.blank.code, item.color.name, item.size)
-    if(!item.inventory.inventoryType && item.blank && item.color && item.size){
+    if(!item.inventory.inventory && item.blank && item.color && item.size){
         let size = item.blank.sizes.filter(s => s._id.toString() == item.size.toString())[0]
         let inv = await Inventory.findOne({ blank: item.blank._id, color: item.color._id, sizeId: size._id })
         console.log(inv, "inv")
@@ -27,6 +27,12 @@ export async function PUT(req=NextApiRequest){
             inv.quantity -= 1
             await inv.save()
         }else{
+            item.inventory = {
+                inventoryType: "inventory",
+                inventory: inv._id,
+                productInventory: null,
+            }
+            item = await item.save()
             if(!inv.attached) inv.attached = []
             if(!inv.attached.includes(item._id)){
                 inv.attached.push(item._id)

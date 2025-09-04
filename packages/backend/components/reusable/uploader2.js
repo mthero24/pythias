@@ -24,20 +24,7 @@ export function Uploader2({afterFunction, image, setImage}){
         reader.readAsDataURL(file);
         reader.onload = async function () {
             let base64 = reader.result;
-            //console.log(base64, "base64")
-            //   if (resize) base64 = await resizeFunc(base64, width);
-            // let url = productImage? `products/${Date.now()}.${file.name.split(".")[file.name.split(".").length - 1]}`: `designs/${Date.now()}.${file.name.split(".")[file.name.split(".").length - 1]}`
-            // let params = {
-            //     Bucket: "images1.pythiastechnologies.com",
-            //     Key: url,
-            //     Body: base64,
-            //     ACL: "public-read",
-            //     ContentEncoding: "base64",
-            //     ContentDisposition: "inline",
-            //     ContentType: file.type,
-            // };
-            // const data = await s3.send(new PutObjectCommand(params));
-            // console.log("Success, object uploaded", data);
+           
             afterFunction({url: base64,})
         };
 
@@ -46,7 +33,8 @@ export function Uploader2({afterFunction, image, setImage}){
         };
     };
     const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop, accept: {
-    'image/png': ['.png'],
+        'image/png': ['.png'],
+        'image/jpeg': ['.jpg', '.jpeg'],
     }})
 
     return (

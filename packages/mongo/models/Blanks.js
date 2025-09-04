@@ -82,15 +82,11 @@ const SchemaObj = new Schema(
     ],
     // END
     slug: String,
-    /*
-    images[color_id].front
-    images[color_id].back
-    images[color_id].swatch
-    images[color_id].garment
-    images[color_id].model
-    images[color_id].extra
-    images[color_id].sleeve
-    */
+    imges: [{
+      boxes: Object,
+      url: String,
+      color: String,
+    }],
     multiImages: Object,
     //box.default['garment]
     //box[color_id]['garment]

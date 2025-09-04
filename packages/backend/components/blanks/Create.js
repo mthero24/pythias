@@ -16,18 +16,18 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import "cropperjs/dist/cropper.css";
 import EyeDropper from "./EyeDropper";
-
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from "axios";
-import { Stage, Layer, Transformer, Rect } from "react-konva";
+import { Stage, Layer, Rect } from "react-konva";
 import CreatableSelect from "react-select/creatable";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
 import {Footer} from "../reusable/Footer";
 import { ImageEditModal } from "./ImageEditModal";
-import "jimp";
+
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
-    console.log(locations, "locations")
+    //console.log(locations, "locations")
     const [imageGroups, setImageGroups] = useState([])
     const [blank, setBlank] = useState(bla? {...bla}: {});
     const [bulletPointsOpen, setBulletPointsOpen] = useState(false)
@@ -36,54 +36,127 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [isImageEditModalOpen, setIsImageEditModalOpen] = useState(false);
     const [selectedImageSrc, setSelectedImageSrc] = useState(null);
     const [imageColor, setImageColor] = useState({id: null, name: null, hexcode: null});
+    const [bulletModalOpen, setBulletModalOpen] = useState(false);
+    const [sizesModalOpen, setSizesModalOpen] = useState(false);
     const handleImageSave = () => {
         // Handle saving the edited image here
     };
+    const generateDescription = async () => {
+        // console.log("generateDescription()");
+        // console.log(name, description);
+        let result = await axios.post("/api/ai/", {
+            prompt: `generate me a description for a ${blank.name} using this data: ${blank.description}. limit to under 300 characters.`,
+        });
+        // console.log(result);
+        let bla = {...blank};
+        bla.description = result.data;
+        setBlank(bla);
+        update({blank: bla})
+    };
+    const update = async ({blank})=>{
+        console.log("update", blank)
+        let res = await axios.post("/api/admin/blanks", { blank });
+        if(res.data.error){
+            alert("Error saving blank")
+        }
+    }
     return (
         <Box>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                 <Box sx={{ p: 2, mb: 2, alignContent: "center", backgroundColor: "#fff", borderRadius: 2, boxShadow: 3 }}>
                     <Grid2 container spacing={2} sx={{width: "100%"}}>
                         <Grid2 size={{xs: 6, sm: 3}}>
-                            <TextField label="Name" fullWidth value={blank.name ? blank.name : ""} onChange={(e) => setBlank({...blank, name: e.target.value, slug: e.target.value.trim().replace(/ /g, "-").toLowerCase()})}/>
+                            <TextField label="Name" fullWidth value={blank.name ? blank.name : ""} onChange={(e) => {
+                                let bla = {...blank};
+                                bla.name = e.target.value;
+                                bla.slug = e.target.value.trim().replace(/ /g, "-").toLowerCase();
+                                console.log(bla, "blank name")
+                                setBlank(bla);
+                                update({blank: bla});
+                            }}/>
                         </Grid2>
                         <Grid2 size={{xs: 6, sm: 3}}>
-                            <TextField label="Code" fullWidth value={blank.code ? blank.code : ""} onChange={(e) => setBlank({ ...blank, code: e.target.value })} />
+                            <TextField label="Code" fullWidth value={blank.code ? blank.code : ""} onChange={(e) => {
+                                let bla = {...blank};
+                                bla.code = e.target.value;
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{xs: 6, sm: 3}}>
-                            <TextField label="Handling Time (days)" fullWidth value={blank.handlingTime ? blank.handlingTime : ""} onChange={(e) => setBlank({ ...blank, handlingTime: e.target.value })} />
+                            <TextField label="Handling Time (days)" fullWidth value={blank.handlingTime ? `${blank.handlingTime.min}-${blank.handlingTime.max} days` : ""} onChange={(e) => {
+                                let bla = {...blank};
+                                bla.handlingTime = e.target.value;
+                                setBlank(bla);                           
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{ xs: 6, sm: 3 }}>
-                            <TextField label="Slug" disabled fullWidth value={blank.slug ? blank.slug : ""} onChange={(e) => setBlank({ ...blank, slug: e.target.value })} />
+                            <TextField label="Slug" disabled fullWidth value={blank.slug ? blank.slug : ""} onChange={(e) => {
+                                let bla = {...blank};
+                                bla.slug = e.target.value;
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{ xs: 6, sm: 4 }}>
-                            <CreatableSelect placeholder="Vendor..." options={[{ label: "Select Vendor...", value: "" }, ...vendors.map(v=> ({ value: v._id, label: v.name }))]} />
+                            <CreatableSelect placeholder="Vendor..." options={[{ label: "Select Vendor...", value: "" }, ...vendors.map(v=> ({ value: v.name, label: v.name }))]} value={blank.vendor ? { value: blank.vendor, label: blank.vendor } : null} onChange={(selected) => {
+                                let bla = {...blank};
+                                bla.vendor = selected.value;
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{ xs: 6, sm: 4 }}>
-                            <CreatableSelect placeholder="Department..." options={[{ label: "Select Department...", value: "" }, ...departments.map(d=> ({ value: d._id, label: d.name }))]} />
+                            <CreatableSelect placeholder="Department..." options={[{ label: "Select Department...", value: "" }, ...departments.map(d=> ({ value: d.name, label: d.name }))]} value={blank.department ? { value: blank.department, label: blank.department } : null} onChange={(selected) => {
+                                let bla = {...blank};
+                                bla.department = selected.value;
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{ xs: 6, sm: 4 }}>
-                            <CreatableSelect placeholder="Category..." isMulti options={[{ label: "Select Category...", value: "" }, ...categories.map(c=> ({ value: c._id, label: c.name }))]} />
+                            <CreatableSelect placeholder="Category..." isMulti options={[{ label: "Select Category...", value: "" }, ...categories.map(c=> ({ value: c.name, label: c.name }))]} value={blank.category ? blank.category.map(c => ({ value: c, label: c })) : null} onChange={(selected) => {
+                                let bla = {...blank};
+                                bla.category = selected.map(s => s.value);
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{ xs: 6, sm: 4 }}>
-                            <CreatableSelect placeholder="Brand..." options={[{ label: "Select Brand...", value: "" }, ...brands.map(b=> ({ value: b._id, label: b.name }))]} />
+                            <CreatableSelect placeholder="Brand..." options={[{ label: "Select Brand...", value: "" }, ...brands.map(b=> ({ value: b.name, label: b.name }))]} value={blank.brand ? { value: blank.brand, label: blank.brand } : null} onChange={(selected) => {
+                                let bla = {...blank};
+                                bla.brand = selected.value;
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{ xs: 6, sm: 4 }}>
-                            <CreatableSelect placeholder="Supplier..." isMulti options={[{ label: "Select Supplier...", value: "" }, ...suppliers.map(s=> ({ value: s._id, label: s.name }))]} />
+                            <CreatableSelect placeholder="Supplier..." isMulti options={[{ label: "Select Supplier...", value: "" }, ...suppliers.map(s=> ({ value: s.name, label: s.name }))]} value={blank.supplier ? blank.supplier.map(s => ({ value: s, label: s })) : null} onChange={(selected) => {
+                                let bla = {...blank};
+                                bla.supplier = selected.map(s => s.value);
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={{ xs: 6, sm: 4 }}>
-                            <CreatableSelect placeholder="Print Types..." isMulti options={[{ label: "Select Print Type...", value: "" }, ...printTypes.map(pt=> ({ value: pt._id, label: pt.name }))]} />
+                            <CreatableSelect placeholder="Print Types..." isMulti options={[{ label: "Select Print Type...", value: "" }, ...printTypes.map(pt=> ({ value: pt._id, label: pt.name }))]} value={blank.printType ? blank.printType.map(p=> {return printTypes.filter(pt=> pt._id == p)[0]}).map(pt => ({ value: pt?._id, label: pt?.name })) : null} onChange={(selected) => {
+                                let bla = {...blank};
+                                bla.printType = selected.map(s => s.value);
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={12}>
                             <TextField placeholder="Description" multiline rows={4} fullWidth value={blank.description ? blank.description : ""} onChange={(e) => setBlank({ ...blank, description: e.target.value })} />
-                            <Button>Generate Description</Button>
+                            <Button onClick={generateDescription}>Generate Description</Button>
                         </Grid2>
                         <Grid2 size={12}>
                             <Box sx={{ border: "1px solid #ccc", padding: "1%", borderRadius: 2 }}>
                                 <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", }}>
                                     <Box>
                                         <Typography variant="h6">Bullet Points</Typography>
-                                        <Button onClick={() => setBulletPointsOpen(!bulletPointsOpen)}>Add Bullet Point</Button>
+                                        <Button onClick={() => setBulletModalOpen(true)}>Add Bullet Point</Button>
                                     </Box>
                                     <Box>
                                         {bulletPointsOpen ? <KeyboardArrowUpIcon sx={{ cursor: "pointer" }} onClick={() => setBulletPointsOpen(false)} /> : <KeyboardArrowDownIcon sx={{ cursor: "pointer" }} onClick={() => setBulletPointsOpen(true)} />}
@@ -91,9 +164,19 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                 </Box>
                                 <Box>
                                     {bulletPointsOpen && blank.bulletPoints && blank.bulletPoints.length > 0 && blank.bulletPoints.map((b, i) => (
-                                        <Box key={i} gap={2} sx={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "1%", border: "1px solid #ccc", padding: "2%", borderRadius: 2 }}>
-                                            <TextField label="Title" fullWidth value={b.title} onChange={(e) => { }} />
-                                            <TextField label="Description" multiline fullWidth value={b.description} onChange={(e) => { }} />
+                                        <Box sx={{ border: "1px solid #ccc", padding: "1%", borderRadius: 2, marginTop: "1%" }} key={i}>
+                                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "flex-end", gap: 2 }}>
+                                                <DeleteIcon sx={{ cursor: "pointer", color: "#8a261fff" }} onClick={() => {
+                                                    let bla = {...blank};
+                                                    bla.bulletPoints = bla.bulletPoints.filter((bp, index) => index !== i);
+                                                    setBlank(bla);
+                                                    update({blank: bla});
+                                                }} />
+                                            </Box>
+                                            <Box gap={2} sx={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "1%", }}>
+                                                <TextField label="Title" fullWidth value={b.title} onChange={(e) => { }} />
+                                                <TextField label="Description" multiline fullWidth value={b.description} onChange={(e) => { }} />
+                                            </Box>
                                         </Box>
                                     ))}
                                 </Box>
@@ -104,7 +187,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", }}>
                                     <Box>
                                         <Typography variant="h6">Sizes</Typography>
-                                        <Button onClick={() => setSizesOpen(!sizesOpen)}>Add Size</Button>
+                                        <Button onClick={() => setSizesModalOpen(true)}>Add Size</Button>
                                     </Box>
                                     <Box>
                                         {sizesOpen ? <KeyboardArrowUpIcon sx={{ cursor: "pointer" }} onClick={() => setSizesOpen(false)} /> : <KeyboardArrowDownIcon sx={{ cursor: "pointer" }} onClick={() => setSizesOpen(true)} />}
@@ -118,7 +201,12 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                     <TextField label="Size" fullWidth value={s.name} onChange={(e) => { }} />
                                                     <TextField label="Retail Price" fullWidth value={s.retailPrice} onChange={(e) => { }} />
                                                     <TextField label="Weight (lbs)" fullWidth value={s.weight} onChange={(e) => { }} />
-                                                    <Button variant="outlined" fullWidth color="error" onClick={() => { }}>Remove Size</Button>
+                                                    <Button variant="outlined" fullWidth color="error" onClick={() => { 
+                                                        let bla = {...blank};
+                                                        bla.sizes = bla.sizes.filter((sz, index) => index !== i);
+                                                        setBlank(bla);
+                                                        update({blank: bla});
+                                                    }}>Remove Size</Button>
                                                 </Box>
                                             </Grid2>
                                         ))}
@@ -142,17 +230,25 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                         </Box>
                                     </Box> })) : []}
                                     onChange={(newValue) => {
-                                       setBlank({ ...blank, colors: newValue ? newValue.map(nv => nv.value) : [] });
+                                        let bla = {...blank};
+                                        bla.colors = newValue ? newValue.map(nv => nv.value) : [];
+                                       setBlank(bla);
+                                       update({blank: bla});
                                     }}
                                 />
                         </Grid2>
                         <Grid2 size={12}>
-                            <CreatableSelect placeholder="Print Locations" isMulti options={[...printLocations.map(pl => ({ value: pl, label: pl.name }))]} value={blank.printLocations ? blank.printLocations.map(pl => ({ value: pl._id, label: pl.name })) : []} onChange={(newValue) => { setBlank({ ...blank, printLocations: newValue ? newValue.map(nv => nv.value) : [] }); }} />
+                            <CreatableSelect placeholder="Print Locations" isMulti options={[...printLocations.map(pl => ({ value: pl, label: pl.name }))]} value={blank.printLocations ? blank.printLocations.map(pl => ({ value: pl, label: pl.name })) : []} onChange={(newValue) => { 
+                                let bla = {...blank}; 
+                                bla.printLocations = newValue ? newValue.map(nv => nv.value) : [];
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                         </Grid2>
                         <Grid2 size={12}>
                             <Typography variant="h6">Images</Typography>
                             {blank.colors && blank.colors.length > 0 && blank.colors.map((color, idx) => {
-                                let images = blank.images.filter(img=> img.color.toString() === color._id.toString())
+                                let images = blank.images.filter(img=> img.color?.toString() === color._id.toString())
                                 return (
                                     <Box key={idx}>
                                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "2%" }}>
@@ -166,13 +262,43 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                         </Box>
                                         <Grid2 container spacing={1}>
                                             <Grid2 size={2}>
-                                                <Box sx={{ width: 100, height: 100, border: "1px dashed #1989df", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => { setImageColor(color); setIsImageEditModalOpen(true); }}>
+                                                <Box sx={{ width: "100%", height: "200px", border: "1px dashed #1989df", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }} onClick={() => { setImageColor(color); setIsImageEditModalOpen(true); }}>
                                                     <Typography variant="caption"><AddIcon sx={{ color: "#1989df"}} /></Typography>
                                                 </Box>
                                             </Grid2>
                                             {images.map((img, imgIdx) => (
-                                                <Grid2 size={1} key={imgIdx}>
-                                                    <img src={`${img.image ? img.image : ''}`} alt={img.name} style={{ width: "100%", height: "auto", maxHeight: "100px" }} />
+                                                <Grid2 size={2.2} key={imgIdx} sx={{cursor: "pointer"}} onClick={() => { setSelectedImageSrc({...img}); setImageColor(color); setIsImageEditModalOpen(true); }}>
+                                                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", position: "relative", top: 35, right: 2, zIndex: 1, marginTop: "-35px"}}>
+                                                        <IconButton size="small" color="error" onClick={() => {
+                                                            let bla = {...blank};
+                                                            bla.images = bla.images.filter((_, index) => index !== imgIdx);
+                                                            setBlank(bla);
+                                                            update({blank: bla});
+                                                        }}>
+                                                            <DeleteIcon />
+                                                        </IconButton>
+                                                    </Box>
+                                                    <img src={`${img.image ? `${img.image.replace('images1.pythieastechnologies.com', 'images2.pythieastechnologies.com/origin')}?width=200&height=200` : ''}`} alt={img.name} style={{ width: "200px", height: "auto", maxHeight: "200px" }} />
+                                                    <Stage width={200} height={200} style={{ position: "absolute", top: "auto", left: "auto", marginTop: "-200px", pointerEvents: "none" }}>
+                                                        {Object.keys(img.boxes).map((key, i) => {
+                                                            const rect = img.boxes[key];
+                                                            return (
+                                                                <Layer key={i}>
+                                                                    <Rect
+                                                                        key={i}
+                                                                        id={i}
+                                                                        x={rect.x / 2}
+                                                                        y={rect.y / 2}
+                                                                        width={rect.width / 2}
+                                                                        height={rect.height / 2}
+                                                                        rotation={rect.rotation}
+                                                                        stroke="#000"
+                                                                        dash={[5, 5]}
+                                                                    />
+                                                                </Layer>
+                                                            )
+                                                        })}
+                                                    </Stage>
                                                 </Grid2>
                                             ))}
                                         </Grid2>
@@ -183,8 +309,59 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                     </Grid2>
                 </Box>
             </Container>
-            <ImageEditModal open={isImageEditModalOpen} color={imageColor} blank={blank} setBlank={setBlank} onClose={() => setIsImageEditModalOpen(false)} imageSrc={selectedImageSrc} onSave={handleImageSave} printLocations={blank.printLocations} />
+            <ImageEditModal open={isImageEditModalOpen} color={imageColor} blank={blank} setBlank={setBlank} onClose={() => setIsImageEditModalOpen(false)} imageSrc={selectedImageSrc} onSave={handleImageSave} printLocations={blank.printLocations} update={update} selectedImageSrc={{...selectedImageSrc}} setSelectedImageSrc={setSelectedImageSrc} />
+            <BulletModal open={bulletModalOpen} onClose={() => setBulletModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
+            <SizesModal open={sizesModalOpen} onClose={() => setSizesModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
             <Footer />
         </Box>
     )
+}
+
+const BulletModal = ({ open, onClose, blank, setBlank, update }) => {
+    const [bullet, setBullet] = useState({title: "", description: ""})
+    return (<Modal open={open} onClose={onClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+                Add Bullet Point
+            </Typography>
+            <Box gap={2} sx={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "1%", padding: "2%"}}>
+                <TextField label="Title" fullWidth value={bullet.title} onChange={(e) => setBullet({...bullet, title: e.target.value})} />
+                <TextField label="Description" multiline fullWidth value={bullet.description} onChange={(e) => setBullet({...bullet, description: e.target.value})} />
+            </Box>
+            <Button variant="contained" onClick={() => {
+                let bla = {...blank};
+                if(!bla.bulletPoints) bla.bulletPoints = [];
+                bla.bulletPoints.push(bullet);
+                setBlank(bla);
+                setBullet({title: "", description: ""});
+                update({blank: bla})
+                onClose();
+            }}>Save</Button>
+        </Box>
+    </Modal>)
+}
+
+const SizesModal = ({ open, onClose, blank, setBlank, update }) => {
+    const [size, setSize] = useState({name: "", retailPrice: "", weight: ""})
+    return (<Modal open={open} onClose={onClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4 }}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+                Add Size
+            </Typography>
+            <Box gap={2} sx={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "1%", padding: "2%", }}>
+                <TextField label="name" fullWidth value={size.name} onChange={(e) => setSize({...size, name: e.target.value})} />
+                <TextField label="Retail Price" fullWidth value={size.retailPrice} onChange={(e) => setSize({...size, retailPrice: e.target.value})} />
+                <TextField label="Weight" fullWidth value={size.weight} onChange={(e) => setSize({...size, weight: e.target.value})} />
+            </Box>
+            <Button variant="contained" onClick={() => {
+                let bla = {...blank};
+                if(!bla.sizes) bla.sizes = [];
+                bla.sizes.push(size);
+                setSize({name: "", retailPrice: "", weight: ""});
+                setBlank(bla);
+                update({blank: bla});
+                onClose();
+            }}>Save</Button>
+        </Box>
+    </Modal>)
 }

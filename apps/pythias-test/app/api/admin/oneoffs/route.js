@@ -1,12 +1,12 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories } from "@pythias/mongo";
+import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories, PrintLocations } from "@pythias/mongo";
 import {saveOneOffs} from "@pythias/backend";
 export async function POST(req = NextApiRequest){
     let data = await req.json()
     console.log(data)
     try{
-        const { seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories } = await saveOneOffs({ data, Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories })
-        return NextResponse.json({ error: false, seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories })
+        const { seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories, printLocations } = await saveOneOffs({ data, Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories, PrintLocations })
+        return NextResponse.json({ error: false, seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories, printLocations })
     }catch(e){
         console.error("Error saving one-offs", e)
         return NextResponse.json({error: true, msg: `Error saving ${data.type}`})
@@ -61,6 +61,10 @@ export async function DELETE(req = NextApiRequest){
             await Categories.deleteOne({_id: id})
             let categories = await Categories.find({})
             return NextResponse.json({error: false, categories})
+        }else if(type == "printLocations"){
+            await PrintLocations.deleteOne({_id: id})
+            let printLocations = await PrintLocations.find({})
+            return NextResponse.json({error: false, printLocations})
         }
     }catch(e){
         console.error("Error deleting one-off", e)

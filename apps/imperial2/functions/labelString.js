@@ -19,7 +19,7 @@ export const buildLabelData = async (item, i, doc, type, poNumber, opts={}) => {
       if(productInventory.inStock) productInventory.inStock = productInventory.inStock.filter(i => i.toString() != item._id.toString());
       await productInventory.save();
     } else if (item.inventory.inventoryType == "inventory") {
-      let inventory = await Inventory.findOne({ _id: item.inventory.inventory._id }).select("quantity onHold inStock attached orders");
+      let inventory = await Inventory.findOne({ _id: item.inventory.inventory._id? item.inventory.inventory._id : item.inventory.inventory }).select("quantity onHold inStock attached orders");
       if(inventory){
         inventory.quantity -= 1;
         if(inventory.onhold) inventory.onhold -= 1;

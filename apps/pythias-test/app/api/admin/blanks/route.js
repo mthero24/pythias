@@ -97,6 +97,7 @@ let updateInventory = async (blank)=>{
 }
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
+  console.log("data", data)
   let blank = data.blank
   let newBlank
   try {
