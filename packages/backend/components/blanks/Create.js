@@ -280,7 +280,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                     </Box>
                                                     <img src={`${img.image ? `${img.image.replace('images1.pythieastechnologies.com', 'images2.pythieastechnologies.com/origin')}?width=200&height=200` : ''}`} alt={img.name} style={{ width: "200px", height: "auto", maxHeight: "200px" }} />
                                                     <Stage width={200} height={200} style={{ position: "absolute", top: "auto", left: "auto", marginTop: "-200px", pointerEvents: "none" }}>
-                                                        {Object.keys(img.boxes).map((key, i) => {
+                                                        {Object.keys(img.boxes ? img.boxes : {}).map((key, i) => {
                                                             const rect = img.boxes[key];
                                                             return (
                                                                 <Layer key={i}>

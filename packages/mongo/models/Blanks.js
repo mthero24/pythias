@@ -63,11 +63,7 @@ const SchemaObj = new Schema(
         height: { type: Number, default: 15 },
         vertoffset: { type: Number, default: 0.4 },
         horizoffset: { type: Number, default: 0 },
-        placement: {
-          type: String,
-          enum: ["front", "back", "sleeve", "pocket", "hood", "leg", "side"],
-          default: "front",
-        },
+        placement: String,
       },
     ],
 
@@ -82,7 +78,7 @@ const SchemaObj = new Schema(
     ],
     // END
     slug: String,
-    imges: [{
+    images: [{
       boxes: Object,
       url: String,
       color: String,

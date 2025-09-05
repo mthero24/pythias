@@ -29,9 +29,9 @@ export const buildLabelData = async (item, i, doc, type, poNumber, opts={}) => {
       }
     }
     let frontBackString = ``
-    for(let loc of Object.keys(item.design)){
+    for(let loc of Object.keys(item.design? item.design : item.designRef? item.designRef.images : {})){
         if(item.design[loc]){
-          frontBackString = `${frontBackString} ${frontBackString != ""? "&": ""} ${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
+          frontBackString = `${frontBackString} ${frontBackString != "" ? "&" : ""} ${loc} ${Object.keys(item.design ? item.design : item.designRef ? item.designRef.images : {}).length == 1? "Only": ""}`
         }
     }
     if(!item.design) frontBackString = "Missing Design";

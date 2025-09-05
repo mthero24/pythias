@@ -34,7 +34,7 @@ const updateInventory = async () => {
     let inventories = await Inventory.find({})
     console.log(inventories.length, "inventories")
     for (let inv of inventories) {
-        let items = await Item.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true }).sort({_id: -1})
+        let items = await Item.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true }).sort({_id: 1})
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }

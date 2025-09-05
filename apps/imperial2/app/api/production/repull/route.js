@@ -14,7 +14,7 @@ export async function POST(req=NextApiRequest){
         item.folded = false
         item.rePulled = true,
         item.shipped = false,
-        item.steps = []
+        item.steps.push({status: "Re-Pulled", date: new Date()})
         item.rePulledTimes++
         if(!item.rePulledReasons) item.rePulledReasons = []
         item.rePulledReasons.push(data.reason)

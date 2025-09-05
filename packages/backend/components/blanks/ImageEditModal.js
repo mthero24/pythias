@@ -67,13 +67,16 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const [addImage, setAddImage] = useState(null);
     const [cropAdd, setCropAdd] = useState(false);
     const [reloadTransformers, setReloadTransformers] = useState(false);
+    const [active, setActive] = useState("");
     useEffect(() => {
+        console.log(color, "color");
         let img = {...image}
         img.color = color?._id
         setImage(img);
-    }, [color]);
+    }, [color, open]);
     useEffect(() => {
         let img
+        console.log(color, selectedImageSrc)
         if(selectedImageSrc) img = {...selectedImageSrc}
         else img = {color: color?._id, image: null, boxes: {}}
         setImage(img);
@@ -290,9 +293,14 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     return (
         <Modal open={open} onClose={()=>{onClose(); setSelectedImageSrc(null)}} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
-                <Typography id="modal-modal-title" variant="h6" component="h2">
-                    Add Image
-                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography id="modal-modal-title" variant="h6" component="h2">
+                        Add Image
+                    </Typography>
+                    <Button variant="contained" color="primary" onClick={async () => {}}>
+                        Copy Boxes from Another Image
+                    </Button>
+                </Box>
                 <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2}}>
                     <Box width={120} height={100} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, cursor: "pointer" }} onClick={() => { 
                         let rects = [...rectangles]
@@ -322,12 +330,13 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                     x: 10, y: 10, width: 300, height: 300, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
                                     rotation: 0, }]
                             }
+                            setActive(loc.name)
                             setRectangles([...rects])
                             setStep("location")
                         }}>
                             <Button>{loc.name}</Button>
                             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                <input placeholder="Width" id={`width-${loc.name}`}  style={{ width: "50px" }} onChange={(e)=>{
+                                <input ref={active == loc.name ? widthRef : null} placeholder="Width" id={`width-${loc.name}`} defaultValue={image.boxes? image.boxes[loc.name]?.width:  0} style={{ width: "50px" }} onChange={(e)=>{
                                     let rects = [...rectangles];
                                     let index = rects.findIndex(r => r.id === loc.name);
                                     if (index !== -1) {
@@ -339,7 +348,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                         setRectangles(rects);
                                     }
                                 }} />
-                                <input placeholder="Height" id={`height-${loc.name}`}  style={{ width: "50px" }} onChange={(e)=>{
+                                <input ref={active == loc.name ? heightRef : null} placeholder="Height" id={`height-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.height : 0} style={{ width: "50px" }} onChange={(e)=>{
                                     let rects = [...rectangles];
                                     let index = rects.findIndex(r => r.id === loc.name);
                                     if (index !== -1) {
@@ -560,7 +569,9 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                         Add Image
                     </Button>
                     <Button variant="contained" color="primary" onClick={async ()=>{
-                        if(selectedImageSrc){
+                        console.log("image to save", image, selectedImageSrc)
+                        if(selectedImageSrc.image){
+                            console.log("updating existing image")
                             let b = { ...blank }
                             if (!b.images) b.images = []
                             b.images = b.images.filter(img => img.image !== selectedImageSrc.image)
@@ -572,6 +583,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             setSelectedImageSrc(null);
                             update({ blank: b });
                         }else{
+                            console.log("saving new image")
                             let url = `blanks/${Date.now()}.jpg`
                             let params = {
                                 Bucket: "images1.pythiastechnologies.com",
@@ -585,6 +597,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             const data = await s3.send(new PutObjectCommand(params));
                             await new Promise(r => setTimeout(r, 1000))
                             image.image = `https://images1.pythiastechnologies.com/${url}`
+                            image.color = color?._id
+                            console.log("uploaded image", data, image)
                             let b = {...blank}
                             if(!b.images) b.images = []
                             let img = {...image}
@@ -602,3 +616,4 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         </Modal>
     );
 }
+

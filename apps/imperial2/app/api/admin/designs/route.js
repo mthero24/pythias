@@ -69,19 +69,6 @@ export async function PUT(req=NextApiRequest){
         let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
         design = await Design.findOne({_id: design._id}).populate("blanks.blank blanks.colors blanks.defaultColor")
         //console.log(design.published)
-        if(design.published){
-            //await createUpc({design})
-            UnMarkRecycle(design)
-        }else{
-            MarkRecycle(design)
-        }
-        await Items.updateMany({designRef: design._id}, {design: design.images})
-        if(design.published && design.sendToMarketplaces == false) {
-            design.sendToMarketplaces = true
-            await design.save()
-        }
-        //console.log(design.gender, "design")
-        //console.log(design.blanks[0])
         return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)

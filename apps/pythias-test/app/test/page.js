@@ -3,6 +3,7 @@ import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, MarketPlace
 import axios from "axios";
 import { pullOrders } from "@/functions/pullOrders"
 import {refreshToken} from "@pythias/integrations"
+import { image } from "pdfkit";
 let converter = {
     YL: "L",
     YS: "S",
@@ -12,28 +13,18 @@ let converter = {
 }
 export default async function Test(){
     
-    // let connection = await ApiKeyIntegrations.findOne({provider: "pythias-test", type: "etsy"})
-    // // console.log(connection, "connection")
-    // // let newConnection = await refreshToken(connection.refreshToken)
-    // // connection.apiKey = newConnection.access_token
-    // // connection.refreshToken = newConnection.refresh_token
-    // // await connection.save()
-    // const requestOptions = {
-    //     headers: {
-    //         "x-api-key": "480pxuspxi5wz93puk47snye",
-    //     },
-    // };
-    // let url = `https://openapi.etsy.com/v3/application/shops?shop_name=PythiaShop`;
-    // let response = await axios.get(
-    //     url,
-    //     {
-    //         headers: {
-    //             "x-api-key": "480pxuspxi5wz93puk47snye",
-    //             Authorization: `Bearer ${connection.apiKey}`,
-    //         },
+    // let blanks = await Blank.find({}).populate("colors")
+    // for(let b of blanks){
+    //     console.log(b.multiImages, "multi images")
+    //     b.images = []
+    //     for(let key of Object.keys(b.multiImages)){
+    //         for(let img of b.multiImages[key]){
+    //             console.log(img.box[0])
+    //             b.images.push({image: img.image, color: img.color, boxes: {[key.toLowerCase().includes("model")? key.toLowerCase().replace("model", "") : key]: {x: img.box[0]?.x, y: img.box[0]?.y, width: img.box[0]?.boxWidth, height: img.box[0]?.boxHeight, rotation: img.box[0]?.rotation}}})
+    //         }
     //     }
-    // ).catch(e=>console.log(e.response.data));
-
-    // console.log(response?.data);
+    //     console.log(b.images, "images")
+    //     await b.save()
+    // }
     return <h1>test</h1>
 }
