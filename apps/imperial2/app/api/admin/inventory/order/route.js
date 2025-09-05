@@ -16,6 +16,7 @@ export async function PUT(req=NextApiRequest){
             for (let i of location.items) {
                 let itemsToPrint = []
                 let inv = await Inventory.findById(i.inventory)
+                //inv.quantity = 0
                 inv.quantity = inv.quantity + i.quantity
                 inv.pending_quantity = inv.pending_quantity - i.quantity
                 if(inv.orders){
