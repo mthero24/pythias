@@ -21,7 +21,7 @@ export async function PUT(req=NextApiRequest){
                 if (inv.orders) {
                     let o = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
                     if (o && o.items) {
-                        let items = await Items.find({ _id: { $in: o.items } }).populate("design inventory.inventory").populate("order", "poNumber items").sort({ _id: -1 })
+                        let items = await Items.find({ _id: { $in: o.items } }).populate("design inventory.inventory").populate("order", "poNumber items").sort({ _id: 1 })
                         itemsToPrint.push(...items)
                     }
                 }
@@ -63,14 +63,13 @@ export async function POST(req=NextApiRequest){
                 })
                 let inv = await Inventory.findById(i.inv._id)
                 inv.pending_quantity += i.order
-                let it = await Items.find({ _id: { $in: inv.attached } }).sort({ _id: -1 })
-                 if(!inv.orders) inv.orders = []
+                let it = await Items.find({ _id: { $in: inv.attached } }).sort({ _id: 1 })
+                if(!inv.orders) inv.orders = []
                 inv.orders.push({
                     order: order._id,
                     items: it.map(i => i._id)
                 })
                 inv.attached = inv.attached.filter(a => !it.map(i => i._id.toString()).includes(a.toString()))
-                await inv.save()
                 await inv.save()
             }
         }

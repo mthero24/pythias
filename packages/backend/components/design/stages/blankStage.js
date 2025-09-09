@@ -17,23 +17,36 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                 let designImages = Object.keys(design.images ? design.images : {})
                 let styleImages = []
                 let color;
-                for (let di of designImages) {
-                    if (di != null) {
-                        if (b.multiImages && b.multiImages[di] && b.multiImages[di].length > 0) {
-                            if (!color) {
-                                color = b.multiImages[di][0].color
-                                if (b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] && b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] != null) {
-                                    styleImages.push({ blankImage: b.multiImages[di][0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
-                                }
-                            } else {
-                                if (b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] && b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] != null) {
-                                    styleImages.push({ blankImage: b.multiImages[di].filter(i => i.color.toString() == color.toString())[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
+                if(b.images && b.images.length > 0){
+                    console.log(designImages, "design images")
+                    if(!color) color = b.images[0].color
+                    for(let di of designImages){
+                        let img = b.images.filter(i => i.color.toString() == color.toString() && Object.keys(i.boxes? i.boxes: {}).includes(di))
+                        console.log(img, "images for design side", di, "and color", color)
+                        if(img && img.length > 0){
+                            styleImages.push({ blankImage: img[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
+                        }
+                    }
+                }else{
+                    for (let di of designImages) {
+                        if (di != null) {
+                            if (b.multiImages && b.multiImages[di] && b.multiImages[di].length > 0) {
+                                if (!color) {
+                                    color = b.multiImages[di][0].color
+                                    if (b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] && b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] != null) {
+                                        styleImages.push({ blankImage: b.multiImages[di][0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
+                                    }
+                                } else {
+                                    if (b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] && b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] != null) {
+                                        styleImages.push({ blankImage: b.multiImages[di].filter(i => i.color.toString() == color.toString())[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                if (styleImages.length == 0 || designImages.length != styleImages.length) return null;
+                console.log(styleImages, "Style images for blank", b._id.toString());
+                if (styleImages.length == 0 ) return null;
                 return (
                     <Grid2 size={{ sm: 6 * styleImages.length, md: 3 * styleImages.length }} key={b._id} onClick={() => {
                         if(combined){

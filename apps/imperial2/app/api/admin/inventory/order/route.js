@@ -64,7 +64,7 @@ export async function POST(req=NextApiRequest){
                 })
                 let inv = await Inventory.findById(i.inv._id)
                 inv.pending_quantity += i.order
-                let it = await Items.find({ _id: { $in: inv.attached } }).sort({_id: -1})
+                let it = await Items.find({ _id: { $in: inv.attached } }).sort({_id: 1})
                 if(it.length > i.order){
                     it = it.slice(0, i.order)
                 }

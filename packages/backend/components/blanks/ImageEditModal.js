@@ -1,11 +1,10 @@
 import { Stage, Layer, Transformer, Rect, Image as KonvaImage } from "react-konva";
-import {Box, Modal, Button, Typography, TextField} from "@mui/material";
+import {Box, Modal, Button, Typography, TextField, Grid2} from "@mui/material";
 import React, { use, useEffect, useRef, useState } from "react";
 import { Uploader2 } from "../reusable/uploader2";
 import useImage from 'use-image';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { ControlTower } from "aws-sdk";
-import { set } from "mongoose";
+import Image from "next/image";
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
@@ -60,6 +59,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const stageRef = useRef();
     const widthRef = useRef();
     const heightRef = useRef();
+    const xRef = useRef();
+    const yRef = useRef();
     const [image, setImage] = useState(selectedImageSrc ? {...selectedImageSrc} : {color: color?._id, image: null, boxes: {}});
     const [reload, setReload] = useState(false);
     const [originalImage, setOriginalImage] = useState(null);
@@ -68,6 +69,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const [cropAdd, setCropAdd] = useState(false);
     const [reloadTransformers, setReloadTransformers] = useState(false);
     const [active, setActive] = useState("");
+    const [copyBoxesOpen, setCopyBoxesOpen] = useState(false);
     useEffect(() => {
         console.log(color, "color");
         let img = {...image}
@@ -297,7 +299,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                     <Typography id="modal-modal-title" variant="h6" component="h2">
                         Add Image
                     </Typography>
-                    <Button variant="contained" color="primary" onClick={async () => {}}>
+                    <Button variant="contained" color="primary" onClick={async () => {setCopyBoxesOpen(true)}}>
                         Copy Boxes from Another Image
                     </Button>
                 </Box>
@@ -335,6 +337,32 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             setStep("location")
                         }}>
                             <Button>{loc.name}</Button>
+                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
+                                <input ref={active == loc.name ? xRef : null} placeholder="X" id={`x-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.x : 0} style={{ width: "50px" }} onChange={(e) => {
+                                    let rects = [...rectangles];
+                                    let index = rects.findIndex(r => r.id === loc.name);
+                                    if (index !== -1) {
+                                        rects[index] = {
+                                            ...rects[index],
+                                            x: parseInt(e.target.value) || rects[index].x
+                                        };
+                                        xRef.current = e.target;
+                                        setRectangles(rects);
+                                    }
+                                }} />
+                                <input ref={active == loc.name ? yRef : null} placeholder="Y" id={`y-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.y : 0} style={{ width: "50px" }} onChange={(e) => {
+                                    let rects = [...rectangles];
+                                    let index = rects.findIndex(r => r.id === loc.name);
+                                    if (index !== -1) {
+                                        rects[index] = {
+                                            ...rects[index],
+                                            y: parseInt(e.target.value) || rects[index].y
+                                        };
+                                        yRef.current = e.target;
+                                        setRectangles(rects);
+                                    }
+                                }} />
+                            </Box>
                             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
                                 <input ref={active == loc.name ? widthRef : null} placeholder="Width" id={`width-${loc.name}`} defaultValue={image.boxes? image.boxes[loc.name]?.width:  0} style={{ width: "50px" }} onChange={(e)=>{
                                     let rects = [...rectangles];
@@ -612,8 +640,67 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                         Save Image
                     </Button>
                 </Box>
+                <CopyBoxesModal open={copyBoxesOpen} onClose={() => setCopyBoxesOpen(false)} blank={blank} image={image} setImage={setImage}/>
             </Box>
         </Modal>
     );
 }
 
+const CopyBoxesModal = ({ open, onClose, blank, image, setImage}) => {
+    const style ={
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '80%',
+        bgcolor: 'background.paper',
+        boxShadow: 24,
+        p: 4,
+    }
+    return(
+        <Modal open={open} onClose={onClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+            <Box sx={style}>
+                <Typography id="modal-modal-title" variant="h6" component="h2">
+                    Copy Boxes from Another Image
+                </Typography>
+                <Grid2 container spacing={2} sx={{ mt: 2, maxHeight: '70vh', overflowY: 'auto' }}>
+                    {blank.images && blank.images.length > 0 ? blank.images.sort((a, b) => a.color.localeCompare(b.color)).map((img, idx) => (
+                        <Grid2 size={2} key={idx} sx={{cursor: 'pointer', border: image._id == img._id ? '3px solid blue' : '1px solid #ccc', p: 1}} onClick={()=>{
+                            let newImage = {...image}
+                            for(let box of Object.keys(img.boxes)){
+                                console.log("copying box", box, img.boxes)
+                                if(!newImage.boxes[box])newImage.boxes[box] = img.boxes[box]
+                            }
+                            setImage(newImage);
+                            onClose();
+                        }}>
+                        
+                            <Image src={`${img.image ? `${img.image.replace('images1.pythieastechnologies.com', 'images2.pythieastechnologies.com/origin')}?width=200&height=200` : ''}`} alt={img.name} width={200} height={200} style={{ width: "200px", height: "auto", maxHeight: "200px" }} />
+                            <Stage width={200} height={200} style={{ position: "relative", top: "auto", left: "auto", marginTop: "-200px", pointerEvents: "none" }}>
+                                {Object.keys(img.boxes ? img.boxes : {}).map((key, i) => {
+                                    const rect = img.boxes[key];
+                                    if(!rect) return null;
+                                    return (
+                                        <Layer key={i}>
+                                            <Rect
+                                                key={i}
+                                                id={i}
+                                                x={rect.x / 2}
+                                                y={rect.y / 2}
+                                                width={rect.width / 2}
+                                                height={rect.height / 2}
+                                                rotation={rect.rotation}
+                                                stroke="#000"
+                                                dash={[5, 5]}
+                                            />
+                                        </Layer>
+                                    )
+                                })}
+                            </Stage>
+                        </Grid2>
+                    )) : <Typography>No images available</Typography>}
+                </Grid2>
+            </Box>
+        </Modal>
+    )
+}

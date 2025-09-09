@@ -8,7 +8,7 @@ import { isSingleItem } from "@/functions/itemFunctions";
 
 export default async function Test(){
   // await pullOrders();
-    // let order = await InventoryOrders.findOne({ _id: "68b9e9da46c5e083716094cf" }).populate("locations.items.inventory")
+    // let order = await InventoryOrders.findOne({ _id: "68bb3e4a1b69f041007e10c1" }).populate("locations.items.inventory")
     // console.log(order)
     // for (let loc of order.locations) {
     //     for (let item of loc.items) {

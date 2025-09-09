@@ -20,7 +20,7 @@ export async function PUT(req=NextApiRequest){
             inv.pending_quantity = inv.pending_quantity - i.quantity
             if (inv.orders) {
                 let o = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
-                let items = await Items.find({ _id: { $in: o.items } }).populate("designRef").sort({ _id: -1 })
+                let items = await Items.find({ _id: { $in: o.items } }).populate("designRef inventory.inventory").sort({ _id: 1 })
                 itemsToPrint.push(...items)
             }
             inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())
@@ -57,7 +57,7 @@ export async function POST(req=NextApiRequest){
                 })
                 let inv = await Inventory.findById(i.inv._id)
                 inv.pending_quantity += i.order
-                let it = await Items.find({ _id: { $in: inv.attached } }).sort({ _id: -1 })
+                let it = await Items.find({ _id: { $in: inv.attached } }).sort({ _id: 1 })
                 if (it.length > i.order) {
                     it = it.slice(0, i.order)
                 }

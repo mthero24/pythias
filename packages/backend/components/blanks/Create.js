@@ -25,7 +25,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
 import {Footer} from "../reusable/Footer";
 import { ImageEditModal } from "./ImageEditModal";
-
+import Image from "next/image";
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
     //console.log(locations, "locations")
     const [imageGroups, setImageGroups] = useState([])
@@ -267,38 +267,43 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                 </Box>
                                             </Grid2>
                                             {images.map((img, imgIdx) => (
-                                                <Grid2 size={2.2} key={imgIdx} sx={{cursor: "pointer"}} onClick={() => { setSelectedImageSrc({...img}); setImageColor(color); setIsImageEditModalOpen(true); }}>
-                                                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", position: "relative", top: 35, right: 2, zIndex: 1, marginTop: "-35px"}}>
-                                                        <IconButton size="small" color="error" onClick={() => {
-                                                            let bla = {...blank};
-                                                            bla.images = bla.images.filter((_, index) => index !== imgIdx);
-                                                            setBlank(bla);
-                                                            update({blank: bla});
-                                                        }}>
+                                                <Grid2 size={2.2} key={imgIdx} sx={{cursor: "pointer"}}>
+                                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", position: "relative", top: 35, right: 2, zIndex: 1, marginTop: "-35px" }} onClick={() => {
+                                                        let bla = { ...blank };
+                                                        console.log(img.image, "deleting image")
+                                                        let remove = bla.images.find(i => i.image === img.image);
+                                                        console.log(remove, "remove")
+                                                        setBlank({ ...bla, images: bla.images.filter(i => i.image !== img.image) });
+                                                        update({ blank: bla });
+                                                    }}>
+                                                        <IconButton size="small" color="error">
                                                             <DeleteIcon />
                                                         </IconButton>
                                                     </Box>
-                                                    <img src={`${img.image ? `${img.image.replace('images1.pythieastechnologies.com', 'images2.pythieastechnologies.com/origin')}?width=200&height=200` : ''}`} alt={img.name} style={{ width: "200px", height: "auto", maxHeight: "200px" }} />
-                                                    <Stage width={200} height={200} style={{ position: "absolute", top: "auto", left: "auto", marginTop: "-200px", pointerEvents: "none" }}>
-                                                        {Object.keys(img.boxes ? img.boxes : {}).map((key, i) => {
-                                                            const rect = img.boxes[key];
-                                                            return (
-                                                                <Layer key={i}>
-                                                                    <Rect
-                                                                        key={i}
-                                                                        id={i}
-                                                                        x={rect.x / 2}
-                                                                        y={rect.y / 2}
-                                                                        width={rect.width / 2}
-                                                                        height={rect.height / 2}
-                                                                        rotation={rect.rotation}
-                                                                        stroke="#000"
-                                                                        dash={[5, 5]}
-                                                                    />
-                                                                </Layer>
-                                                            )
-                                                        })}
-                                                    </Stage>
+                                                    <Box onClick={() => { setSelectedImageSrc({ ...img }); setImageColor(color); setIsImageEditModalOpen(true); }}>
+                                                        <Image src={`${img.image ? `${img.image.replace('images1.pythiastechnologies.com', 'images2.pythiastechnologies.com/origin')}?width=200&height=200` : ''}`} alt={img.name} width={200} height={200} style={{ width: "200px", height: "auto", maxHeight: "200px" }} />
+                                                        <Stage width={200} height={200} style={{ position: "absolute", top: "auto", left: "auto", marginTop: "-200px", pointerEvents: "none" }}>
+                                                            {Object.keys(img.boxes ? img.boxes : {}).map((key, i) => {
+                                                                const rect = img.boxes[key];
+                                                                if (!rect) return null;
+                                                                return (
+                                                                    <Layer key={i}>
+                                                                        <Rect
+                                                                            key={i}
+                                                                            id={i}
+                                                                            x={rect.x / 2}
+                                                                            y={rect.y / 2}
+                                                                            width={rect.width / 2}
+                                                                            height={rect.height / 2}
+                                                                            rotation={rect.rotation}
+                                                                            stroke="#000"
+                                                                            dash={[5, 5]}
+                                                                        />
+                                                                    </Layer>
+                                                                )
+                                                            })}
+                                                        </Stage>
+                                                    </Box>
                                                 </Grid2>
                                             ))}
                                         </Grid2>
