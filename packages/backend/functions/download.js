@@ -6,8 +6,10 @@ const csvFunctions = {
     productSku: (product) => {
         return product.sku ? product.sku : product.name.replace(/ /g, "-").toLowerCase();
     },
-    productTitle: (product) => {
-        return product.title ? product.title : product.sku;
+    productTitle: (product,index, mp) => {
+        if(mp?.name.toLowerCase().includes("kohl's") && product.title && product.title.length > 100){
+            return product.title ? product.title.slice(0, 100) : product.sku;
+        } else return product.title ? product.title : product.sku;
     },
     productDescription: (product) => {
         return product.description ? product.description : "";
@@ -150,7 +152,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
             if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
                 value = "N/A";
             }
-            else value = csvFunctions[mp.defaultValues[headerLabel]](product, index);
+            else value = csvFunctions[mp.defaultValues[headerLabel]](product, index, mp);
         }
         else if (mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
             value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter, sizeGuide);
