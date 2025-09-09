@@ -28,13 +28,14 @@ const updateFold = (blank)=>{
     }
   }
   blank.fold = newFold
+  //console.log(blank.envelopes.length, "fold")
   return blank
 }
 const updateEnvelopes = (blank)=>{
   let newEnvelopes = [];
-  console.log(blank.printLocations)
+ // console.log(blank.printLocations)
   let printLocations = blank.printLocations.map(l=> {return l.name})
-  console.log(printLocations)
+  //console.log(printLocations)
   if(!blank.envelopes) blank.envelopes = [];
   for(let e of blank.envelopes){
     if(printLocations.includes(e.placement)) newEnvelopes.push(e)
@@ -56,14 +57,16 @@ const updateEnvelopes = (blank)=>{
       }
     }
   }
+  //console.log(newEnvelopes.length)
   if(newEnvelopes.length > 0){
     blank.envelopes = newEnvelopes.sort((a,b)=>{
-      console.log(a)
+      //console.log(a)
       if(a.placement.length > b.placement.length) return -1
       if(a.placement.length < b.placement.length) return 1
       return 0
     })
   }
+  //console.log(blank.envelopes.length)
   return blank
 }
 let updateInventory = async (blank)=>{
@@ -87,9 +90,9 @@ let updateInventory = async (blank)=>{
         console.log("new")
         let inventory_id = encodeURIComponent(`${color.name}-${size.name}-${blank.code}`)
         let barcode_id= Math.floor(Math.random() * 999999)
-        console.log(inventory_id, barcode_id)
+        //console.log(inventory_id, barcode_id)
         inv = new Inventory({blank: blank._id, style_code: blank.code, inventory_id, barcode_id, color: color._id, color_name: color.name, sizeId: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,})
-        console.log(inv.inventory_id, inv.barcode_id)
+        //console.log(inv.inventory_id, inv.barcode_id)
         await inv.save()
       }
     }
@@ -102,7 +105,9 @@ export async function POST(req = NextApiRequest) {
   try {
     if (blank._id) {
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
-      if (blank.sizes.length > 0) blank = updateFold(blank)
+      //console.log(blank.envelopes.length, "before fold")
+      //if (blank.sizes.length > 0) blank = updateFold(blank)
+      //console.log(blank.envelopes.length, "last", blank)
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
       newBlank = await Blanks.findById(blank._id).populate("printLocations") 
       updateInventory(blank)

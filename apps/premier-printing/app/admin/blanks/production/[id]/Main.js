@@ -175,6 +175,7 @@ const EnvelopeSettings = ({ blank, handleUpdateEnvelope}) => {
                     <Grid2 container spacing={1}>
                         {keys.map((key)=>(
                           <Grid2 size={2.4} key={key}>
+                            {console.log(pl.name, s.name, blank.envelopes)}
                             <TextField
                               label={key}
                               type={key == "placement" ? "string" : "number"}
