@@ -213,6 +213,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         setRectangles(prevRects => {
             const newRects = [...prevRects];
             const index = newRects.findIndex(r => r.id === id);
+            if (xRef.current) xRef.current.value = parseInt(e.target.x());
+            if (yRef.current) yRef.current.value = parseInt(e.target.y());
             if (index !== -1) {
                 newRects[index] = {
                     ...newRects[index],
@@ -252,21 +254,16 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
 
         rect.x(newX);
         rect.y(newY);
-        newRects[index] = {
-            ...newRects[index],
-            x: newX,
-            y: newY
+        if (index !== -1) {
+            newRects[index] = {
+                ...newRects[index],
+                x: newX,
+                y: newY
+            }
         }
         setRectangles(newRects);
         // Optional: Update React state to persist position, but do so carefully
         // setPosition({ x: newX, y: newY }); 
-    };
-
-    const handleTransformEnd = (e) => {
-        // Find which rectangle(s) were transformed
-        const id = e.target.id();
-        const node = e.target;
-
     };
     const handleExportPartial = async() => {
         let crop = rectangles.find(r => r.id === "crop");
@@ -441,6 +438,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                         }
                                     }}
                                     onDragMove={handleDragMove}
+                                    onDragEnd={handleDragEnd}
                                     onTransformEnd={(e) => {
                                         // Get the transformed node
                                         const node = transformerRef.current;

@@ -22,7 +22,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                         }} />
                     </Grid2>
                     <Grid2 size={12}>
-                        <TextField fullWidth label="Description" multiline variant="outlined" value={product.description} onChange={(e) => {
+                        <TextField fullWidth label="Description" multiline variant="outlined" value={product.description && !product.description.includes("undefined")? product.description : `${design.description}-${product.blanks[0].description}`} onChange={(e) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
                             p.description = e.target.value
@@ -90,6 +90,9 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                     <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={async () => {
                         let prods = [...products]
                         for(let product of prods){
+                            if(!product.description || product.description.includes("undefined")){
+                                product.description = `${design.description}-${product.blanks[0].description}`
+                            }
                             let variants = {};
                             if (product.threadColors?.length > 0) {
                                 for (let d of Object.keys(design.threadImages).filter(d => product.threadColors.find(t => t.name == d))) {
