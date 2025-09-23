@@ -166,7 +166,7 @@ export default function TestimonialsSection() {
                       color: "#333333",
                     }}
                   >
-                    "{testimonial.quote}"
+                    {testimonial.quote}
                   </Typography>
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
