@@ -33,12 +33,20 @@ export function BlanksComponent({blanks, mPs, source}){
                 <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
                     {visibleBlanks.map((blank) => {
                         let frontImage = blank.images && blank.images.length > 0 ? blank.images[0] : (blank.multiImages && blank.multiImages["front"] ? blank.multiImages["front"][0] : null);
-
+                        if(!frontImage && blank.multiImages){
+                            let keys = Object.keys(blank.multiImages);
+                            for(let k of keys){
+                                if(blank.multiImages[k] && blank.multiImages[k].length > 0){
+                                    frontImage = blank.multiImages[k][0];
+                                    break;
+                                }
+                            }
+                        }
                         return (
                             <Grid2 item size={{xs: 6, sm: 4, md: 3}} key={blank.id}>
                             <Card sx={{padding: "2%", display: "flex", flexDirection: "column"}}>
                                 <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", }}>
-                                    <Image src={`${frontImage.image.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`} alt={blank.name} width={300} height={200} />
+                                    <Image src={frontImage ? `${frontImage?.image.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`: ""} alt={blank.name} width={300} height={200} />
                                 </Box>
                                 <Box>
                                     <Divider sx={{margin: "2% 0%"}} />

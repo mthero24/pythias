@@ -226,7 +226,7 @@ export async function pullOrders(){
                 let notesObj = {}
                 o.customerNotes.split("<br/>").map(b=>{
                     let sp = b.split(":")
-                    notesObj[sp[0].toLowerCase().replace(/ /g, "_").trim()] = sp[1].trim()
+                    notesObj[sp[0].toLowerCase().replace(/ /g, "_").trim()] = sp[1]?.trim()
                 })
                 console.log(notesObj)
                 if(notesObj.order_placed_from == "Kohl's"){

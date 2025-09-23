@@ -20,13 +20,20 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                 if(b.images && b.images.length > 0){
                     console.log(designImages, "design images")
                     if(!color) color = b.images[0].color
-                    for(let di of designImages){
+                    for(let im of b.images){
+                        console.log(Object.keys(im.boxes? im.boxes: {}), designImages.join("-"), "checking image boxes")
+                        if (Object.keys(im.boxes ? im.boxes : {}).filter(e => designImages.includes(e)).length > 0 && im.color.toString() == color.toString()){
+                            styleImages.push({ blankImage: im, designImages: design.images, sides: designImages.join("_"), colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
+                            break;
+                        }
+                    }
+                    {/* for(let di of designImages){
                         let img = b.images.filter(i => i.color.toString() == color.toString() && Object.keys(i.boxes? i.boxes: {}).includes(di))
                         console.log(img, "images for design side", di, "and color", color)
                         if(img && img.length > 0){
                             styleImages.push({ blankImage: img[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
                         }
-                    }
+                    } */}
                 }else{
                     for (let di of designImages) {
                         if (di != null) {
@@ -86,7 +93,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                             </Box>
                             <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
                                 {styleImages.length > 0 && styleImages.map((si, i) => (
-                                    <img key={i} src={`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: styleImages.length > 1 ? "50%" : "100%", maxWidth: styleImages.length > 2 ? "33%" : styleImages.length > 1 ? "50%" : "100%" }} />
+                                    <img key={i} src={`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side? si.side: si.sides}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: styleImages.length > 1 ? "50%" : "100%", maxWidth: styleImages.length > 2 ? "33%" : styleImages.length > 1 ? "50%" : "100%" }} />
                                 ))}
                             </Box>
                             <Divider />

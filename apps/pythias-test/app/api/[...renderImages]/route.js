@@ -113,6 +113,7 @@ export async function GET(req){
     let blankImage
     let type
     let sides = params && params[4]? params[4].split("_") : []
+    console.log(params.length, "params")
     if (params.length == 5) {
         let design = await Design.findOne({ sku: params[0] }).select("images").lean()
         designImage = design?.images

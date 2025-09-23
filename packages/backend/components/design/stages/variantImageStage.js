@@ -37,11 +37,22 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
         for (let side of Object.keys(design ? design : {})) {
             for (let blank of product.blanks) {
                 for (let color of product.colors) {
-                    for (let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)).length > 0 ? blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)) : blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes("default"))) {
-                        if (!imgs[blank.code]) imgs[blank.code] = {}
-                        if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
-                        imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}` })
+                    if(blank.images && blank.images.length > 0){
+                        for (let img of blank.images?.filter(i => i.color.toString() == color._id.toString() && Object.keys(i.boxes ? i.boxes : {}).includes(side))) {
+                            if (!imgs[blank.code]) imgs[blank.code] = {}
+                            if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
+                            if(imgs[blank.code][color.name].filter(i => i.sku == `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}`).length == 0){
+                                imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}` })
+                            }
 
+                        }
+                    }else{
+                        for (let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)).length > 0 ? blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)) : blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes("default"))) {
+                            if (!imgs[blank.code]) imgs[blank.code] = {}
+                            if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
+                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}` })
+
+                        }
                     }
                 }
             }
@@ -51,12 +62,25 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             for (let side of Object.keys(design[threadColor])) {
                 for (let blank of product.blanks) {
                     for (let color of product.colors) {
-                        for (let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)).length > 0 ? blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)) : blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes("default"))) {
-                            if (!imgs[blank.code]) imgs[blank.code] = {}
-                            if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
-                            if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
-                            imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
+                        if(blank.images && blank.images.length > 0){
+                            for (let img of blank.images?.filter(i => i.color.toString() == color._id.toString() && Object.keys(i.boxes ? i.boxes : {}).includes(side))) {
+                                if (!imgs[blank.code]) imgs[blank.code] = {}
+                            
+                                if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
+                                if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
+                                if(imgs[blank.code][threadColor][color.name].filter(i => i.sku == `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`).length == 0){
+                                    imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
+                                }
 
+                            }
+                        }else{
+                            for (let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)).length > 0 ? blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)) : blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes("default"))) {
+                                if (!imgs[blank.code]) imgs[blank.code] = {}
+                                if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
+                                if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
+                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
+
+                            }
                         }
                     }
                 }

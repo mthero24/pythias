@@ -665,9 +665,10 @@ const CopyBoxesModal = ({ open, onClose, blank, image, setImage}) => {
                     {blank.images && blank.images.length > 0 ? blank.images.sort((a, b) => a.color.localeCompare(b.color)).map((img, idx) => (
                         <Grid2 size={2} key={idx} sx={{cursor: 'pointer', border: image._id == img._id ? '3px solid blue' : '1px solid #ccc', p: 1}} onClick={()=>{
                             let newImage = {...image}
+                            if(!newImage.boxes) newImage.boxes = {}
                             for(let box of Object.keys(img.boxes)){
                                 console.log("copying box", box, img.boxes)
-                                if(!newImage.boxes[box])newImage.boxes[box] = img.boxes[box]
+                                newImage.boxes[box] = img.boxes[box]
                             }
                             setImage(newImage);
                             onClose();
