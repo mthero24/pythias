@@ -275,7 +275,22 @@ export async function pullOrders(){
                                 blank = await Blank.findOne({_id: sku.blank})
                                 color = await Color.findOne({_id: sku.color})
                                 threadColor = await Color.findOne({ _id: sku.threadColor })
-                                size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.replace("Y", "").toLowerCase())[0]   
+                                size = blank?.sizes?.filter(s=> s.name.toLowerCase() == sku.size?.replace("Y", "").toLowerCase())[0]
+                                let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: sku.sku } } }, { variantsArray: { $elemMatch: { upc: i.upc } } }] }).populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
+                                if (!product) await Products.findOne({ variantsArray: { $elemMatch: { previousSkus: sku.sku } } }).populate("design variantsArray.blank variantsArray.color")
+                                if (product) {
+                                    // Do something with the product
+                                    console.log(product, "product found")
+                                    let variant = product.variantsArray.find(v => v.sku == i.sku || v.upc == i.upc)
+                                    if (!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
+                                    //console.log(variant, "variant")
+                                    for (let j = 0; j < parseInt(i.quantity); j++) {
+                                        //console.log(variant.blank, variant.color, variant.size, product.design, variant.sku)
+                                        item = await createItem(i, order, variant.blank, variant.color, variant.threadColor, variant.size, product.design, variant.sku)
+                                        items.push(item)
+                                    }
+                                    continue
+                                }    
                             }else{
                                 blank = await Blank.findOne({code: i.sku?.split("_")[0] == "TLS"? "RSTLS": i.sku?.split("_")[0]})
                                 color = await Color.findOne({$or: [{name: i.sku?.split("_")[1]}, {sku: i.sku?.split("_")[1]}, {name: colorFixer[i.sku?.split("_")[1]]}]})

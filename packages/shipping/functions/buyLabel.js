@@ -8,8 +8,8 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
     credentialsFedEx,
     credentialsFedExNew,
     credentialsShipStation,
-    credentialsUPS, dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType, carrierCodes, warehouse_id, saterdayDelivery}) {
-    console.log(saterdayDelivery, items[0].saterdayDelivery, "saterdayDelivery ++++++++")
+    credentialsUPS, dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType, carrierCodes, warehouse_id, saturdayDelivery}) {
+    //console.log(saturdayDelivery, items[0]?.saturdayDelivery, "saturdayDelivery ++++++++")
     if(selectedShipping.provider == "usps"){
         if(providers.includes("endicia")){
             let res = await buyShippingLabelEn({address, poNumber, weight, selectedShipping, dimensions, businessAddress, enSettings, dpi,imageFormat, items})
