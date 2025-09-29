@@ -10,6 +10,8 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
     const [colors, setColors] = useState([])
     const [blanks, setBlan] = useState([])
     const [loading, setLoading] = useState(false)
+    const [blanksExcluded, setBlanksExcluded] = useState([])
+    const [blankColorsExcluded, setBlankColorsExcluded] = useState({})
     useEffect(()=>{
         console.log(open)
         const getBlanks = async()=>{
@@ -140,7 +142,36 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                             aria-controls="panel1-content"
                             id="panel1-header"
                             >
-                            <Typography component="span">{code}</Typography>
+                            <FormControlLabel control={<Checkbox checked={blanksExcluded.includes(code)? false: true} />} onClick={()=>{
+                                let no = [...needsOrdered]
+                                let bE = [...blanksExcluded]
+                                if(blanksExcluded.includes(code)){
+                                    bE = bE.filter(b=> b != code)
+                                    let bC = { ...blankColorsExcluded }
+                                    bC[code] = []
+                                    let invs = no.filter(n => n.inv.style_code == code)
+                                    invs.forEach(i => {
+                                        if(!i.included) updateOrderItems(i.inv._id, "included")
+                                    })
+                                    setBlankColorsExcluded({ ...bC })
+                                    setBlanksExcluded([...bE])
+                                }else{
+                                    bE.push(code)
+                                    setBlanksExcluded([...bE])
+                                    let invs = no.filter(n => n.inv.style_code == code)
+                                    let bC = { ...blankColorsExcluded }
+                                    if (!bC[code]) bC[code] = []
+                                    invs.forEach(i => {
+                                        if (!bC[code].includes(i.inv.color_name)) {
+                                            bC[code].push(i.inv.color_name)
+                                        }
+                                        if(i.included) updateOrderItems(i.inv._id, "included")
+                                    })
+                                    setBlankColorsExcluded({ ...bC })
+                                }
+                                
+                            }} />
+                            <Typography component="span" sx={{marginTop: ".8%"}}> {code}</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             {colors.map(cl=>{
@@ -152,7 +183,28 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                                             aria-controls="panel1-content"
                                             id="panel1-header"
                                             >
-                                            <Typography component="span">{cl}</Typography>
+                                                <FormControlLabel control={<Checkbox checked={blankColorsExcluded[code]?.includes(cl)? false: true} />} onClick={()=>{
+                                                    let no = [...needsOrdered]
+                                                    let bC = { ...blankColorsExcluded }
+                                                    if (!bC[code]) bC[code] = []
+                                                    if (bC[code].includes(cl)) {
+                                                        bC[code] = bC[code].filter(c => c !== cl)
+                                                        no.forEach(i => {
+                                                            if (i.inv.color_name === cl && i.inv.style_code === code) {
+                                                                if(!i.included) updateOrderItems(i.inv._id, "included")
+                                                            }
+                                                        })
+                                                    } else {
+                                                        bC[code].push(cl)
+                                                        no.forEach(i => {
+                                                            if (i.inv.color_name === cl && i.inv.style_code === code) {
+                                                                if (i.included) updateOrderItems(i.inv._id, "included")
+                                                            }
+                                                        })
+                                                    }
+                                                    setBlankColorsExcluded({ ...bC })
+                                                }}/>
+                                                <Typography component="span" sx={{ marginTop: ".8%" }}>{cl}</Typography>
                                             </AccordionSummary>
                                             <AccordionDetails>
                                                 {needsOrdered.filter(f=> f.inv.color_name == cl && f.inv.style_code == code).map(no=>(

@@ -1,6 +1,10 @@
 
 export function Sort(list, source){
     return list.sort((a,b)=>{
+        if(source == "PO"){
+            if(a.shippingType?.toUpperCase() > b.shippingType?.toUpperCase()) return 1
+            if(a.shippingType?.toUpperCase() < b.shippingType?.toUpperCase()) return -1
+        }
         if(a.type?.toUpperCase() > b.type?.toUpperCase()) return 1
         if(a.type?.toUpperCase() < b.type?.toUpperCase()) return -1
         if(source == "IM"){

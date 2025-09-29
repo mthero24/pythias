@@ -49,6 +49,7 @@ export async function POST(req= NextApiRequest){
     if(!data.address.country) data.address.country = "US"
 
     try{
+        console.log(data)
         let label = await buyLabel({
             ...data,
             businessAddress: JSON.parse(process.env.businessAddress),

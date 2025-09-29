@@ -8,7 +8,8 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
     credentialsFedEx,
     credentialsFedExNew,
     credentialsShipStation,
-    credentialsUPS, dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType, carrierCodes, warehouse_id}){
+    credentialsUPS, dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType, carrierCodes, warehouse_id, saterdayDelivery}) {
+    console.log(saterdayDelivery, items[0].saterdayDelivery, "saterdayDelivery ++++++++")
     if(selectedShipping.provider == "usps"){
         if(providers.includes("endicia")){
             let res = await buyShippingLabelEn({address, poNumber, weight, selectedShipping, dimensions, businessAddress, enSettings, dpi,imageFormat, items})
@@ -23,7 +24,7 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
         }else return {error: true, msg: "no usps provider selected please add endicia or usps to the providers array"}
     }else if(selectedShipping.provider == "fedex"){
         if(providers.includes("fedex")){
-            let res = await purchaseLabelFedEx({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials: credentialsFedEx, saturdayDelivery: false, imageFormat})
+            let res = await purchaseLabelFedEx({ address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials: credentialsFedEx, saturdayDelivery: items[0].saterdayDelivery ? items[0].saterdayDelivery : false, imageFormat})
             return res
         }else return {error: true, msg: "fedex is not in provider list"}
     }else if(selectedShipping.provider == "ups"){

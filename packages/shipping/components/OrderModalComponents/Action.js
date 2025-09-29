@@ -14,6 +14,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
     const [shippingSelected, setShippingSelected] = useState({name: "GroundAdvantage"})
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false)
     const [processing, setProcessing] = useState(false)
+    const [saterdayDelivery, setSaterdayDelivery] = useState(false)
     useEffect(()=>{
         if(shippingPrices){
             let res = shippingPrices.sort((a,b)=>{
@@ -32,7 +33,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
     }
     const ship = async ()=>{
         setProcessing(true)
-        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress, marketplace: order.marketplace, items: order.items.map(i=>{ return {itemDescription: i.sku, itemTotalValue: i.productCost, itemQuantity: parseInt(i.quantity), countryofOrigin: "US", weightUOM: "lb", itemTotalWeight: (weight / order.items.length)/ 16 }})})
+        let res = await axios.post("/api/production/shipping/labels", {address: order.shippingAddress, poNumber: order.poNumber, orderId: order._id, selectedShipping: shippingSelected, dimensions, weight, shippingType: order.shippingType, station, ignoreBadAddress, marketplace: order.marketplace, items: order.items.map(i=>{ return {itemDescription: i.sku, itemTotalValue: i.productCost, itemQuantity: parseInt(i.quantity), countryofOrigin: "US", weightUOM: "lb", itemTotalWeight: (weight / order.items.length)/ 16, saterdayDelivery }})})
         console.log(res.data)
         if(res.data.error){
             alert(res.data.msg)
@@ -154,6 +155,7 @@ export function Actions({bin, setBins, item, order, style, action, setAction, sh
                                                         <FormControlLabel value={p.service.name} control={<Radio value={p.service.name} />} label={`${p.label} - ${p.rate}`} key={i}/>
                                                 ))}
                                             </RadioGroup>
+                                            <FormControlLabel control={<Checkbox checked={saterdayDelivery} onChange={()=>{setSaterdayDelivery(!saterdayDelivery); console.log(!saterdayDelivery)}} />} label="Saturday Delivery" />
                                         </FormControl>
                                         <Grid2 container spacing={2}>
                                             <Grid2 size={11}>

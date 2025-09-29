@@ -1,5 +1,6 @@
 import {NextApiRequest, NextResponse} from "next/server";
 import { InventoryOrders, Inventory, Blank, Items }from "@pythias/mongo";
+import {Sort} from "@pythias/labels";
 import axios from "axios";
 export async function GET(){
     let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory")
@@ -31,7 +32,7 @@ export async function PUT(req=NextApiRequest){
             }
             console.log(printItems.length)
             location.received = true
-            let printLabels = await axios.post("https://production.printoracle.com/api/production/print-labels", { items: printItems, poNumber: order.poNumber, })
+            let printLabels = await axios.post("https://production.printoracle.com/api/production/print-labels", { items: Sort(printItems, "PO"), poNumber: order.poNumber, })
             console.log(printLabels?.data)
             if (order.locations.filter(l => l.received == false).length == 0) order.received = true
             order.markModified("locations received")
