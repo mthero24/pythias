@@ -1,6 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import axios from "axios";
-import Order from "@/models/Order"
 export async function GET(req = NextApiRequest){
     console.log(process.env.localIP)
     let headers = {
