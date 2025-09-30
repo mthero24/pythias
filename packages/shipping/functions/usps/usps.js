@@ -168,7 +168,7 @@ export async function purchaseLabel({address, poNumber, weight, dimensions, busi
             contents: newItems,
         }
     }
-    console.log("cutoms", customsForm.contents)
+    console.log("cutoms", customsForm)
     console.log(address)
     let token = await GetToken({credentials})
     let data = {
