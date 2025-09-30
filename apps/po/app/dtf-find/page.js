@@ -6,6 +6,5 @@ setConfig({
 })
 
 export default async function DtfFind(req, res){
-    console.log("DTF Find page called");
     return <DTFFind/>
 }
