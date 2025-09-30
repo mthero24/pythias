@@ -85,9 +85,11 @@ export function Main({ord, blanks}){
                     <Box sx={{margin: "2% 0%"}}>
                         {order.items.map(i=>(
                             <Accordion key={i._id} sx={{margin: "1% 0%"}}>
-                                <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
+                                {console.log(i.isBlank, "isBlank")}
+                                <AccordionSummary sx={{ textAlign: "center", background: (i.design == undefined && !i.isBlank) || (Object.keys(i.design ? i.design : {}).length == 0 && !i.isBlank) || i.size == undefined || i.color == undefined || i.blank == undefined ? "red" : "", color: (i.design == undefined && !i.isBlank) || (Object.keys(i.design ? i.design : {}).length == 0 && !i.isBlank) || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
                                     <Grid2 container>
                                         <Grid2 size={3}>
+                                            {i.isBlank? <Image key={i._id} src={`${blanks.filter(b => b._id == i.blank)[0]?.images.filter(im => im.color == i.color)[0]?.image.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}}/> : null}
                                             {Object.keys(i.design? i.design: {}).filter(k=> i.design[k] != undefined).map(key=>(
                                                 <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}}/>
                                             ))}

@@ -46,7 +46,7 @@ export function Main({ords, pages, page, q}){
                     </Card>
                 {orders.map(o=>(
                     <Card key={o.poNumber} sx={{padding: "3%", margin: "1% 1%", textAlign: "center", cursor: "pointer", background: o.items.map(i=> {
-                        if(o.status != "shipped" && (i.design == undefined || Object.keys(i.design).length == 0) || i.color == undefined || i.size == undefined || i.blank == undefined) {
+                        if(o.status != "shipped" && ((i.design == undefined && !i.isBlank) || (Object.keys(i.design? i.design: {}).length == 0 && !i.isBlank)) || i.color == undefined || i.size == undefined || i.blank == undefined) {
                             return true
                         }
                     }).filter(j=> j!= undefined).length > 0? "red": ""}} onClick={()=>router.push(`/orders/${o._id}`)}> 

@@ -29,18 +29,25 @@ export async function LabelsData(){
     }
     //console.log(labels)
     let rePulls = 0
+    let blankItems = await Items.find({
+        blank: { $ne: undefined },
+        colorName: { $ne: null },
+        sizeName: { $ne: null },
+        isBlank: true,
+        labelPrinted: false,
+        canceled: false,
+        paid: true,
+    }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean()
+    labels.Standard = labels.Standard.concat(blankItems)
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
+        labels[k] = labels[k].map(s=> {
+            if(s.type == undefined) s.type = "DTF"
+            return {...s}
+        })
         labels[k] = labels[k].filter(s=> s.order != undefined)
-        labels[k] = labels[k].map(s=> { if(s.designRef?.printType =="EMB"){
-            s.type = "EMB"
-        }else if(s.designRef?.sku.toUpperCase().includes("PU") || s.designRef?.sku.toUpperCase().includes("GL") || s.designRef?.printType =="VIN"){
-            s.type = "VIN"
-        }else{
-            s.type = "DTF"
-        };  return {...s}})
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k])
     }

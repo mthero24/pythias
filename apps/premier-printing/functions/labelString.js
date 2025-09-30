@@ -36,6 +36,7 @@ export const buildLabelData = async (item, i, poNumber, opts={},) => {
     }
     frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FD${frontBackString}^FS`;
     if(!item.design) frontBackString = "Missing Design";
+  if (!item.isBlank) frontBackString = "Blank Item";
     let printPO = poNumber ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${poNumber}^FS`: "";
     let printTypeAbbr;
     if (item.designRef && item.designRef.sku && item.designRef.sku.includes("PU")) printTypeAbbr = "PUF";
@@ -51,7 +52,7 @@ export const buildLabelData = async (item, i, poNumber, opts={},) => {
             item.colorName
         }, Size: ${item.sizeName}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-            item.designRef && item.designRef.sku? item.designRef.sku: item.sku
+            item.isBlank ? "Blank Item" : item.designRef && item.designRef.sku ? item.designRef.sku : item.sku
         }^FS
     ^XZ` : ""}
       ^XA
@@ -72,10 +73,10 @@ export const buildLabelData = async (item, i, poNumber, opts={},) => {
         }^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDSize: ${item.sizeName} Shipping: ${item.shippingType}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-            item.designRef && item.designRef.sku? item.designRef.sku: item.sku
+          item.isBlank ? "Blank Item" : item.designRef && item.designRef.sku? item.designRef.sku: item.sku
         } CNT ${totalQuantity}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,320^FD Title: ${
-            item.designRef && item.designRef.name? item.designRef.name: item.sku
+          item.isBlank ? "Blank Item" : item.designRef && item.designRef.name? item.designRef.name: item.sku
         }^FS
         ${
           `^LH12,18^CFS,25,12^AXN,40,50^FO10,355^FD${printTypeAbbr}^FS`
