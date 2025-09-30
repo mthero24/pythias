@@ -17,18 +17,8 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
 }
 export default async function Test(){
    //await pullOrders();
-//     let items = await Items.find({"inventory.inventoryType": null, labelPrinted: false})
-//    console.log(items.length, "items to update")
-//    for(let i of items){
-//     i.inventory = {inventoryType: "inventory"};
-//     i.inventory.inventory = await Inventory.findOne({blank:  i.blank, color:  i.color, sizeId: i.size})
-//     if (!i.inventory.inventory) {
-//         i.inventory.inventory = await Inventory.findOne({ inventory_id: `${i.colorName}-${i.sizeName}-${i.styleCode}` })
-//     }
-//     await i.save();
-//     console.log(i.inventory, "inventory for item")
-//    }
-    await updateInventory();
+
+    //await updateInventory();
    
     return <h1>test</h1>
 }
