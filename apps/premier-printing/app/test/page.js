@@ -17,7 +17,7 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
 }
 export default async function Test(){
    //await pullOrders();
-
+   console.log("test page called")
     //await updateInventory();
    
     return <h1>test</h1>
