@@ -188,7 +188,9 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         }
     } else {
         let inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
-        //console.log(inventory?.quantity, "inventory quantity for item",)
+        if (!inventory) {
+            inventory = await Inventory.findOne({ inventory_id: `${item.colorName}-${item.sizeName}-${item.styleCode}` })
+        }
         if (inventory) {
             if (!item.inventory) item.inventory = {}
             item.inventory.inventoryType = "inventory"

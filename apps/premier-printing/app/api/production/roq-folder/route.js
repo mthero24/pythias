@@ -71,7 +71,7 @@ export async function POST(req = NextApiRequest){
             }
         }
         //get fold settings
-        let foldSettings = await item.blank.fold.filter(f=> f.size.toLowerCase() == item.sizeName.toLowerCase() || f.sizeName?.toLowerCase() == item.sizeName.toLowerCase())[0]
+        let foldSettings = await item.blank.fold.filter(f=> f.size == item.size.toString() || f.sizeName?.toLowerCase() == item.sizeName.toLowerCase())[0]
         console.log(foldSettings)
         //send to folder
         if(foldSettings){

@@ -149,15 +149,24 @@ const paymentAuth = async ({token, credentials})=>{
 export async function purchaseLabel({address, poNumber, weight, dimensions, businessAddress, credentials, selectedShipping, dpi, ignoreBadAddress, items, imageFormat}){
     console.log(address, ignoreBadAddress)
     let customsForm
+    let newItems = []
+    for(let i of items){
+        let newItem = {}
+        for(let j of Object.keys(i)){
+            if(j == "itemDescription") newItem[j] = i[j].substring(0, 30)
+            else if(j != "saterdayDelivery")newItem[j] = i[j]
+        }
+        newItems.push(newItem)
+    }
     if(address.state == "AP" || address.state == "AA" || address.state == "AE"){
         
         customsForm = {
             AESITN: "NO EEI 30.37(a)",
             customsContentType: "MERCHANDISE",
-            contents: items
+            contents: newItems,
         }
     }
-    console.log("cutoms", customsForm)
+    console.log("cutoms", customsForm.contents)
     console.log(address)
     let token = await GetToken({credentials})
     let data = {
