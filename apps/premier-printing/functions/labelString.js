@@ -29,7 +29,7 @@ export const buildLabelData = async (item, i, poNumber, opts={},) => {
     }
     console.log(item.inventory, "item inventory in label string")
     let frontBackString = "";
-    for(let loc of Object.keys(item.design)){
+    for(let loc of Object.keys(item.design?item.design: {})){
       if(item.design[loc]){
         frontBackString = `${frontBackString}${frontBackString != ""? "&": ""}${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
       }

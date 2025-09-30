@@ -1,5 +1,5 @@
-import Order from "@/models/Order";
-import {Main} from "./Main";
+import {Order} from "@pythias/mongo";
+import {OrdersMain} from "@pythias/backend";
 import { serialize } from "@/functions/serialize";
 export const dynamic = 'force-dynamic'; 
 import "@/functions/pullOrders";
@@ -12,5 +12,5 @@ export default async function OrdersPage(req){
     let pages = Math.round(count / 200) + 1
     //console.log(orders.length)
     orders = serialize(orders)
-    return <Main ords={orders} page={page} pages={pages} />
+    return <OrdersMain ords={orders} page={page} pages={pages} />
 }
