@@ -15,7 +15,7 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
     return sku;
 }
 export default async function Test(){
-   await pullOrders();
+   //await pullOrders();
     //await updateInventory();
    
     return <h1>test</h1>
