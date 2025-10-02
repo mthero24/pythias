@@ -23,3 +23,5 @@ export { Edit } from "./components/edit/Edit";
 export {TrackLabels} from "./track-labels/TrackLabels";
 export { BlanksComponent } from "./components/blanks/Blanks";
 export { Main as OrdersMain } from "./components/orders/Main";
+export {Main as OrderMain} from "./components/orders/id/Main";
+export { NoteSnackBar } from "./components/orders/id/NoteSnackBar"
