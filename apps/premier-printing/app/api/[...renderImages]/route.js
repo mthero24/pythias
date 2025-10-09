@@ -30,8 +30,9 @@ const createImage = async (data) => {
     console.log(data.box, "box")
     if (data.box && data.box.length > 0 && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64 != undefined) {
         let composits = []
+        console.log(data.box, "boxes")
         for (let box of data.box) {
-            console.log(data.designImage, "design image")
+            console.log(data.designImage, box.side, "design image")
             if (data.designImage[box.side] == undefined) continue
             if (!box.boxWidth) box.boxWidth = box.width
             if (!box.boxHeight) box.boxHeight = box.height
@@ -118,13 +119,15 @@ export async function GET(req) {
         let design = await Design.findOne({ sku: params[0] }).select("images").lean()
         designImage = design?.images
         let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
-        blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+        blankImage = blank?.images?.filter(i => i.image.includes(params[2]))[0]
+        type = "images"
         if (blankImage == undefined) {
-            blankImage = blank?.multiImages[params[4] == "front" ? "modelFront" : "modelBack"]?.filter(i => i.image.includes(params[2]))[0]
+            blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+            type = undefined
         }
         if (blankImage == undefined) {
-            blankImage = blank?.images?.filter(i => i.image.includes(params[2]))[0]
-            type = "images"
+            blankImage = blank?.multiImages[params[4] == "front" ? "modelFront" : "modelBack"]?.filter(i => i.image.includes(params[2]))[0]
+            type = undefined
         }
     } else if (params.length == 6) {
         let design = await Design.findOne({ sku: params[0] }).lean()
@@ -167,7 +170,7 @@ export async function GET(req) {
         }
     }
     if (type == "images") console.log(blankImage.boxes["front"], "boxes")
-    console.log(designImage[sides[0]], "images")
+    console.log(blankImage?.boxes, "images")
     let data = { box: type == "images" ? Object.keys(blankImage?.boxes ? blankImage.boxes : {}).filter(key => sides.includes(key)).map(key => { return { ...blankImage.boxes[key], side: key } }) : blankImage?.box ? [{ ...blankImage?.box[0], side: sides[0] }] : null, styleImage: blankImage?.image, designImage, width }
     let base64 = await createImage(data)
     if (base64) {
