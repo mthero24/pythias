@@ -1,7 +1,7 @@
 import { serialize } from "@/functions/serialize";
 import Order from "@/models/Order";
 import Blank from "@/models/Blanks"
-import {Main} from "./Main";
+import {OrderMain} from "@pythias/backend";
 import Blanks from "@/app/admin/blanks/page";
 
 export default async function OrderPage(req){
@@ -13,5 +13,5 @@ export default async function OrderPage(req){
     
     order = serialize(order);
     blanks = serialize(blanks);
-    return <Main ord={order} blanks={blanks}/>
+    return <OrderMain ord={order} blanks={blanks}/>
 }

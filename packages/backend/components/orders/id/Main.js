@@ -1,5 +1,5 @@
 "use client"
-import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, Link, TextField, Snackbar, IconButton} from "@mui/material"
+import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, Link, TextField, Snackbar, IconButton, Container} from "@mui/material"
 import CloseIcon from '@mui/icons-material/Close';
 import {useState, Fragment} from "react"
 import CreatableSelect from "react-select/creatable";
@@ -8,6 +8,8 @@ import {Search} from "@pythias/backend";
 import Image from "next/image";
 import {Repull} from "@pythias/repull"
 import { NoteSnackBar } from "./NoteSnackBar";
+import {Footer} from "../../reusable/Footer"
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 const ups = ["TSC", "Zulily"]
 export function Main({ord, blanks}){
     const [order, setOrder] = useState(ord);
@@ -36,18 +38,9 @@ export function Main({ord, blanks}){
         setOpenUpdate(true)
     }
     return (
-        <Box sx={{padding: "2%", background: "#e2e2e2"}}>
-           
-            <NoteSnackBar notes={order.notes} open={showNotes} setOpen={setShowNotes}/>
+        <Box>
+        <Container maxWidth="lg" sx={{ marginTop: "2%",}}>
             
-            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", padding: '.5%'}}>
-                <Box sx={{margin: ".5%"}}>
-                    <Button sx={{background: "red", color: "#fff"}} onClick={()=>{setNote(true)}}>Create Note</Button>
-                </Box>
-                <Box sx={{margin: ".5%"}}>
-                    <Button sx={{background: "blue", color: "#fff"}} onClick={()=>{setShowNotes(true)}}>Show Notes</Button>
-                </Box>
-            </Box>
             <Card sx={{minHeight: "100vh", padding: "3%"}}>
                 <Typography sx={{textAlign: "center", fontWeight: 900, fontSize: "2rem", padding: "2%", "&:hover": {cursor: order.status.toLowerCase() != "shipped"? "pointer": "", opacity: order.status.toLowerCase() != "shipped"? 0.6: 1}}} onClick={()=>{
                     if(order.status.toLowerCase() != "shipped"){
@@ -81,22 +74,22 @@ export function Main({ord, blanks}){
                         </Card>
                     </Grid2>
                 </Grid2>
-                <Grid2 size={{xs: 12, sm:8}}>
-                    <Box sx={{margin: "2% 0%"}}>
+                <Grid2 container spacing={2} sx={{marginTop: "2%"}}>
+                    <Grid2 size={{ xs: 12, sm: 8, md: 8 }}>
                         {order.items.map(i=>(
-                            <Accordion key={i._id} sx={{margin: "1% 0%"}}>
+                            <Accordion key={i._id} sx={{margin: "0% 1%"}}>
                                 <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
                                     <Grid2 container>
-                                        <Grid2 size={3}>
+                                        <Grid2 size={2}>
                                             {Object.keys(i.design? i.design: {}).filter(k=> i.design[k] != undefined).map(key=>(
-                                                <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto"}}/>
+                                                <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={200} height={200} style={{width: "100%", height: "auto"}}/>
                                             ))}
                                         </Grid2>
                                         <Grid2 size={1}>
 
                                         </Grid2>
                                         <Grid2 size={8}>
-                                             <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", textAlign: "center", width: "100%", "&:hover": {opacity: 0.5}}}>
+                                            <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", textAlign: "center", width: "100%", "&:hover": {opacity: 0.5}}}>
                                                 <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
                                                 <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
                                                 <Typography onClick={()=>{handleItemUpdate(i)}}>{i.upc}</Typography>
@@ -105,32 +98,47 @@ export function Main({ord, blanks}){
                                                 {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
                                             </Box>
                                         </Grid2>
+                                        <Grid2 size={1}>
+                                            <Box sx={{display: "flex", height: "100%", justifyContent: "flex-end"}} >
+                                                <ArrowDropDownIcon />
+                                            </Box>
+                                        </Grid2>
                                     </Grid2>
                                 </AccordionSummary>
                                 <AccordionDetails>
-                                <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >
+                                    <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >
                                         <Typography>Piece Id: {i.pieceId}</Typography>
-                                        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center",}}>
+                                        <Grid2 container>
                                             {i.steps.map(s=>(
-                                                <Box key={s._id} sx={{ margin: "1%", width: "100px"}}>
+                                                <Grid2 size={2} key={s._id}>
                                                     <Typography>{s.status}</Typography>
                                                     <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
-                                                </Box>
+                                                </Grid2>
                                             ))}
-                                        </Box>
+                                        </Grid2>
                                     </Box>
                                 </AccordionDetails>
                             </Accordion>
                         ))}
-                    </Box>
-                </Grid2>
-                <Grid2 size={{xs:12, sm: 4}}>
-                    <Card sx={{padding: "2%", textAlign: "center"}}>
-                        <Typography>Shipping Info</Typography>
-                        {order.shippingInfo.labels.map(l=>(
-                            <Typography key={l._id}>Tracking: <Link target="_blank" href={ups.includes(order.marketplace)? `https://www.ups.com/track?track=yes&trackNums=${l.trackingNumber}&loc=en_US&requester=ST/`: `https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=${l.trackingNumber}`}>{l.trackingNumber}</Link></Typography>
-                        ))}
-                    </Card>
+                    </Grid2>
+                    <Grid2 size={{xs:12, sm: 4}}>
+                        <Card sx={{padding: "2%", textAlign: "center", margin: "1% 0%"}}>
+                            <Typography>Shipping Info</Typography>
+                            {order.shippingInfo.labels.map(l=>(
+                                <Typography key={l._id}>Tracking: <Link target="_blank" href={ups.includes(order.marketplace)? `https://www.ups.com/track?track=yes&trackNums=${l.trackingNumber}&loc=en_US&requester=ST/`: `https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=${l.trackingNumber}`}>{l.trackingNumber}</Link></Typography>
+                            ))}
+                        </Card>
+                        <NoteSnackBar notes={order.notes} open={showNotes} setOpen={setShowNotes} />
+
+                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", padding: '.5%' }}>
+                            <Box sx={{ margin: ".5%" }}>
+                                <Button sx={{ background: "red", color: "#fff" }} onClick={() => { setNote(true) }}>Create Note</Button>
+                            </Box>
+                            <Box sx={{ margin: ".5%" }}>
+                                <Button sx={{ background: "blue", color: "#fff" }} onClick={() => { setShowNotes(true) }}>Show Notes</Button>
+                            </Box>
+                        </Box>
+                    </Grid2>
                 </Grid2>
             </Card>
             <UpdateModal open={openUpdate} setOpen={setOpenUpdate} item={item} setItem={setItem} blank={blank} setBlank={setBlank} size={size} setSize={setSize} color={color} setColor={setColor} blanks={blanks} setOrder={setOrder}/>
@@ -138,6 +146,8 @@ export function Main({ord, blanks}){
             <ShippedModal open={shipped} setOpen={setShipped} order={order} setOrder={setOrder}/>
             <NoteModal open={note} setOpen={setNote} order={order} setOrder={setOrder} setNotesOpen={setShowNotes}/>
             <Repull />
+        </Container>
+        <Footer/>
         </Box>
     )
 }
@@ -150,7 +160,7 @@ const NoteModal = ({open, setOpen, order, setOrder, setNotesOpen})=>{
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: "50%",
-        height: "60%",
+        height: "40%",
         overflow: "auto",
         bgcolor: 'background.paper',
         border: '2px solid #000',
