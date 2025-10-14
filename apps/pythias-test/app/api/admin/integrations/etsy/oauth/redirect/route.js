@@ -2,11 +2,12 @@ import {NextApiRequest, NextResponse} from "next/server"
 import {ApiKeyIntegrations} from "@pythias/mongo";
 const clientID = '480pxuspxi5wz93puk47snye';
 const clientVerifier = 'catsaregreat';
-const redirectUri = 'http://localhost:3007/api/admin/integrations/etsy/oauth/redirect';
-
+const redirectUri = 'http://localhost:3008/api/admin/integrations/etsy/oauth/redirect';
+import axios from "axios";
 
 export async function GET(req=NextApiRequest) {
     let code = await req.nextUrl.searchParams.get('code');
+    console.log(code, "code +++++++")
     const authCode = code;
     const tokenUrl = 'https://api.etsy.com/v3/public/oauth/token';
     const requestOptions = {
@@ -25,7 +26,15 @@ export async function GET(req=NextApiRequest) {
     try {
         const response = await fetch(tokenUrl, requestOptions);
         const data = await response.json();
-        console.log(data, "data");
+        console.log(process.env.etsyApiKey, "data");
+        let res = await axios.get("https://openapi.etsy.com/v3/application/users/me", {
+            headers: {
+                Authorization: `Bearer ${data.access_token}`,
+                "x-api-key": `${process.env.etsyApiKey}`,
+            }
+        }).catch(e => console.log(e.response.data, "error"));
+       // console.log(res.data, "res")
+        //console.log(data, "data");
         let conn = new ApiKeyIntegrations({
             apiKey: data.access_token,
             apiSecret: clientVerifier,
@@ -34,10 +43,13 @@ export async function GET(req=NextApiRequest) {
             type: "etsy",
             refreshToken: data.refresh_token,
             tokenType: "bearer",
-            displayName: "Etsy Shop"
+            displayName: "Etsy Shop",
+            userId: res.data.user_id,
+            shopId: res.data.shop_id,
         })
+        //console.log(conn, "conn +++++++")
         await conn.save()
-        return NextResponse.redirect("http://localhost:3007/admin/integrations");
+        return NextResponse.redirect("http://localhost:3008/admin/integrations");
     } catch (e) {
         console.log(e);
         return Response.json({ error: e.toString() }, { status: 500 });

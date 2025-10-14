@@ -78,11 +78,12 @@ export function Main({ord, blanks}){
                     <Grid2 size={{ xs: 12, sm: 8, md: 8 }}>
                         {order.items.map(i=>(
                             <Accordion key={i._id} sx={{margin: "0% 1%"}}>
-                                <AccordionSummary sx={{textAlign: "center", background: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "red": "", color: i.design == undefined || Object.keys(i.design).length == 0 || i.size == undefined || i.color == undefined || i.blank == undefined? "#fff": "#000"}} >
+                                <AccordionSummary sx={{ textAlign: "center", background: (i.design == undefined && !i.isBlank) || (Object.keys(i.design ? i.design : {}).length == 0 && !i.isBlank) || i.size == undefined || i.color == undefined || i.blank == undefined ? "red" : "", color: (i.design == undefined && !i.isBlank) || (Object.keys(i.design ? i.design : {}).length == 0 && !i.isBlank) || i.size == undefined || i.color == undefined || i.blank == undefined ? "#fff" : "#000" }} >
                                     <Grid2 container>
                                         <Grid2 size={2}>
-                                            {Object.keys(i.design? i.design: {}).filter(k=> i.design[k] != undefined).map(key=>(
-                                                <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={200} height={200} style={{width: "100%", height: "auto"}}/>
+                                            {i.isBlank ? <Image key={i._id} src={`${blanks.filter(b => b._id == i.blank)[0]?.images.filter(im => im.color == i.color)[0]?.image.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`} alt={i.sku} width={400} height={400} style={{ width: "100%", height: "auto" }} /> : null}
+                                            {Object.keys(i.design ? i.design : {}).filter(k => i.design[k] != undefined).map(key => (
+                                                <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={400} height={400} style={{ width: "100%", height: "auto" }} />
                                             ))}
                                         </Grid2>
                                         <Grid2 size={1}>
@@ -106,8 +107,8 @@ export function Main({ord, blanks}){
                                     </Grid2>
                                 </AccordionSummary>
                                 <AccordionDetails>
-                                    <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center"}} >
-                                        <Typography>Piece Id: {i.pieceId}</Typography>
+                                    <Box sx={{display: "flex", flexDirection: "column"}} >
+                                        <Typography textAlign={"center"}>Piece Id: {i.pieceId}</Typography>
                                         <Grid2 container>
                                             {i.steps.map(s=>(
                                                 <Grid2 size={2} key={s._id}>

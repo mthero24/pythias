@@ -9,5 +9,9 @@ let schema = new mongoose.Schema({
     refreshToken: String,
     type: String,
     provider: String,
+    userId: String,
+    shopId: String,
+    shopName: String,
+    sellerName: String,
 })
 export default PremierPrinting.model("ApiKeyIntegrations", schema);
