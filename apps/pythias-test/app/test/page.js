@@ -26,12 +26,12 @@ export default async function Test(){
     //     console.log(b.images, "images")
     //     await b.save()
     // }
-    let res = await axios.get("https://openapi.etsy.com/v3/application/users/me", {
-        headers: {
-            Authorization: `Bearer 1116836678.U_7_oQDnmAGwtGkH3vRP3BUBrE3IEP0Z59WGtbRDCMzea2SjSTM2RvuQ1YhJKfk8H9pPcgFKHH4T5fiQTcl1GOD7j`,
-            "x-api-key": "480pxuspxi5wz93puk47snye:16xlth05x7",
-        }
-    }).catch(e => console.log(e.response.data, "error"));
-    console.log(res.data, "res")
+    // let res = await axios.get("https://openapi.etsy.com/v3/application/users/me", {
+    //     headers: {
+    //         Authorization: `Bearer 1116836678.U_7_oQDnmAGwtGkH3vRP3BUBrE3IEP0Z59WGtbRDCMzea2SjSTM2RvuQ1YhJKfk8H9pPcgFKHH4T5fiQTcl1GOD7j`,
+    //         "x-api-key": "480pxuspxi5wz93puk47snye:16xlth05x7",
+    //     }
+    // }).catch(e => console.log(e.response.data, "error"));
+    // console.log(res.data, "res")
     return <h1>test</h1>
 }
