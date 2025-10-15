@@ -29,6 +29,8 @@ import { ImageEditModal } from "./ImageEditModal";
 import Image from "next/image";
 import { UploadSizeGuide } from "./uploadSizeGuide";
 import { UploadVideo } from "./uploadVideo";
+import { DeleteImageModal } from "./deleteImageModal";
+import { set } from "mongoose";
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
     //console.log(locations, "locations")
     const [imageGroups, setImageGroups] = useState([])
@@ -45,6 +47,8 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
     const [videoOpen, setVideoOpen] = useState(false);
     const [videoModalOpen, setVideoModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [imageToDelete, setImageToDelete] = useState(null);
     const handleImageSave = () => {
         // Handle saving the edited image here
     };
@@ -342,12 +346,8 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                             {images.map((img, imgIdx) => (
                                                 <Grid2 size={2.2} key={imgIdx} sx={{cursor: "pointer"}}>
                                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", position: "relative", top: 35, right: 2, zIndex: 1, marginTop: "-35px" }} onClick={() => {
-                                                        let bla = { ...blank };
-                                                        console.log(img.image, "deleting image")
-                                                        let remove = bla.images.find(i => i.image === img.image);
-                                                        console.log(remove, "remove")
-                                                        setBlank({ ...bla, images: bla.images.filter(i => i.image !== img.image) });
-                                                        update({ blank: bla });
+                                                       setImageToDelete(img.image);
+                                                       setDeleteModalOpen(true);
                                                     }}>
                                                         <IconButton size="small" color="error">
                                                             <DeleteIcon />
@@ -392,6 +392,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
             <SizesModal open={sizesModalOpen} onClose={() => setSizesModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
             <UploadSizeGuide open={sizeGuideModalOpen} setOpen={setSizeGuideModalOpen} blank={blank} setBlank={setBlank} update={update} />
             <UploadVideo open={videoModalOpen} setOpen={setVideoModalOpen} blank={blank} setBlank={setBlank} update={update} />
+            <DeleteImageModal open={deleteModalOpen} setOpen={setDeleteModalOpen} imageToDelete={imageToDelete} setImageToDelete={setImageToDelete} blank={blank} setBlank={setBlank} update={update} />
             <Footer />
         </Box>
     )
