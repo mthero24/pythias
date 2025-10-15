@@ -44,9 +44,9 @@ export default function LeadCaptureSection() {
               lineHeight: 1.6,
             }}
           >
-            Interested in learning more? Fill out the form below and we'll send
-            you detailed information about our platform, pricing, and how it can
-            benefit your business
+            {` Interested in learning more? Fill out the form below and we'll send
+              you detailed information about our platform, pricing, and how it can
+              benefit your business.`}
           </Typography>
         </Box>
 
