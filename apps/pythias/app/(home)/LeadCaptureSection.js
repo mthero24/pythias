@@ -51,6 +51,8 @@ export default function LeadCaptureSection() {
 
         <Box
           component="form"
+          action="https://formspree.io/f/xyznljnl"
+          method="POST"
           sx={{
             backgroundColor: "white",
             padding: { xs: 3, md: 4 },
@@ -62,6 +64,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="name"
                 label="Full Name"
                 variant="outlined"
                 required
@@ -75,6 +78,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="email"
                 label="Email Address"
                 type="email"
                 variant="outlined"
@@ -89,6 +93,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="company"
                 label="Company Name"
                 variant="outlined"
                 sx={{
@@ -101,6 +106,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="orderVolume"
                 label="Monthly Order Volume"
                 select
                 SelectProps={{ native: true }}
@@ -121,6 +127,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
+                name="challenges"
                 label="Tell us about your current workflow challenges"
                 multiline
                 rows={4}
@@ -135,6 +142,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12}>
               <Box sx={{ textAlign: "center" }}>
                 <Button
+                  type="submit"
                   variant="contained"
                   size="large"
                   sx={{
