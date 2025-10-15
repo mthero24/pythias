@@ -33,7 +33,7 @@ export default function LeadCaptureSection() {
               color: "#1a1a1a",
             }}
           >
-            Ready to Streamline Your Print-On-Demand Workflow?
+            Get More Information About Pythias Technologies
           </Typography>
           <Typography
             variant="h6"
@@ -44,13 +44,16 @@ export default function LeadCaptureSection() {
               lineHeight: 1.6,
             }}
           >
-            Get a free demo of Pythias Technologies and see how it can save you
-            time and money
+            Interested in learning more? Fill out the form below and we'll send
+            you detailed information about our platform, pricing, and how it can
+            benefit your business
           </Typography>
         </Box>
 
         <Box
           component="form"
+          action="https://formspree.io/f/xyznljnl"
+          method="POST"
           sx={{
             backgroundColor: "white",
             padding: { xs: 3, md: 4 },
@@ -62,6 +65,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="name"
                 label="Full Name"
                 variant="outlined"
                 required
@@ -75,6 +79,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="email"
                 label="Email Address"
                 type="email"
                 variant="outlined"
@@ -89,6 +94,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="company"
                 label="Company Name"
                 variant="outlined"
                 sx={{
@@ -101,6 +107,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
+                name="orderVolume"
                 label="Monthly Order Volume"
                 select
                 SelectProps={{ native: true }}
@@ -121,6 +128,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12}>
               <TextField
                 fullWidth
+                name="challenges"
                 label="Tell us about your current workflow challenges"
                 multiline
                 rows={4}
@@ -135,6 +143,7 @@ export default function LeadCaptureSection() {
             <Grid item xs={12}>
               <Box sx={{ textAlign: "center" }}>
                 <Button
+                  type="submit"
                   variant="contained"
                   size="large"
                   sx={{
@@ -143,7 +152,7 @@ export default function LeadCaptureSection() {
                     borderRadius: 2,
                   }}
                 >
-                  Book My Demo
+                  Get More Information
                 </Button>
                 <Typography
                   variant="body2"
@@ -153,8 +162,8 @@ export default function LeadCaptureSection() {
                     fontStyle: "italic",
                   }}
                 >
-                  Free 30-minute consultation • No sales pressure • Custom
-                  workflow analysis
+                  No obligation • Detailed information packet • Custom pricing
+                  available
                 </Typography>
               </Box>
             </Grid>
