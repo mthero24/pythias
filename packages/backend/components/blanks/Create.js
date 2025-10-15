@@ -28,6 +28,7 @@ import {Footer} from "../reusable/Footer";
 import { ImageEditModal } from "./ImageEditModal";
 import Image from "next/image";
 import { UploadSizeGuide } from "./uploadSizeGuide";
+import { UploadVideo } from "./uploadVideo";
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
     //console.log(locations, "locations")
     const [imageGroups, setImageGroups] = useState([])
@@ -43,6 +44,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [sizesModalOpen, setSizesModalOpen] = useState(false);
     const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
     const [videoOpen, setVideoOpen] = useState(false);
+    const [videoModalOpen, setVideoModalOpen] = useState(false);
     const handleImageSave = () => {
         // Handle saving the edited image here
     };
@@ -254,7 +256,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", }}>
                                     <Box>
                                         <Typography variant="h6">Videos</Typography>
-                                        <Button onClick={() => { console.log(true); setSizeGuideModalOpen(true); }}>Add Video</Button>
+                                        <Button onClick={() => { console.log(true); setVideoModalOpen(true); }}>Add Video</Button>
                                     </Box>
                                     <Box>
                                         {videoOpen ? <KeyboardArrowUpIcon sx={{ cursor: "pointer" }} onClick={() => setVideoOpen(false)} /> : <KeyboardArrowDownIcon sx={{ cursor: "pointer" }} onClick={() => setVideoOpen(true)} />}
@@ -389,6 +391,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
             <BulletModal open={bulletModalOpen} onClose={() => setBulletModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
             <SizesModal open={sizesModalOpen} onClose={() => setSizesModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
             <UploadSizeGuide open={sizeGuideModalOpen} setOpen={setSizeGuideModalOpen} blank={blank} setBlank={setBlank} update={update} />
+            <UploadVideo open={videoModalOpen} setOpen={setVideoModalOpen} blank={blank} setBlank={setBlank} update={update} />
             <Footer />
         </Box>
     )

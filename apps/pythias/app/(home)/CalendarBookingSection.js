@@ -32,9 +32,9 @@ export default function CalendarBookingSection() {
               lineHeight: 1.6,
             }}
           >
-            Ready to see Pythias Technologies in action? Schedule a personalized
-            30-minute demo where we'll show you exactly how our platform can
-            streamline your operations
+            {`Ready to see Pythias Technologies in action? Schedule a personalized
+                30-minute demo where we'll show you exactly how our platform can
+                streamline your operations and boost your sales.`}
           </Typography>
         </Box>
 
@@ -67,8 +67,8 @@ export default function CalendarBookingSection() {
               fontStyle: "italic",
             }}
           >
-            Can't find a suitable time? Contact us directly and we'll arrange a
-            demo at your convenience
+            {`Can't find a suitable time? Contact us directly and we'll arrange a
+            demo at your convenience.`}
           </Typography>
         </Box>
       </Container>

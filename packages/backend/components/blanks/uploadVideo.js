@@ -11,11 +11,11 @@ const s3 = new S3Client({
     }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"
 }); // for S3
 
-export function UploadSizeGuide({ open, setOpen, blank, setBlank, update }) {
+export function UploadVideo({ open, setOpen, blank, setBlank, update }) {
     return (
         <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 450, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4, }}>
-                <Typography id="modal-modal-title" variant="h6" component="h2">Upload Size Guide</Typography>
+                <Typography id="modal-modal-title" variant="h6" component="h2">Upload Video</Typography>
                 <Grid2 container spacing={2}>
                     <Grid2 xs={12}>
                         <Uploader2 afterFunction={async (data) => { 
