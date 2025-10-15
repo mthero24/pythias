@@ -1,6 +1,6 @@
 import { Box, Modal, Button, Typography, TextField, Grid2 } from "@mui/material";
 import React, { use, useEffect, useRef, useState } from "react";
-import { Uploader2 } from "../reusable/uploader2";
+import { VideoUploader } from "../reusable/videoUploader";
 import useImage from 'use-image';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
@@ -18,23 +18,23 @@ export function UploadVideo({ open, setOpen, blank, setBlank, update }) {
                 <Typography id="modal-modal-title" variant="h6" component="h2">Upload Video</Typography>
                 <Grid2 container spacing={2}>
                     <Grid2 xs={12}>
-                        <Uploader2 afterFunction={async (data) => { 
+                        <VideoUploader afterFunction={async (data) => {
                                 let bla = {...blank};  
                                 console.log(data, "data +++++++")
-                                let url = `sizeGuide/${Date.now()}.jpg`
+                                let url = `videos/${Date.now()}.${data.ext}`
                                 let params = {
                                     Bucket: "images1.pythiastechnologies.com",
                                     Key: url,
-                                    Body: Buffer.from(data.url.split(",")[1], "base64"),
+                                    Body: data.url,
                                     ACL: "public-read",
                                     ContentEncoding: "base64",
                                     ContentDisposition: "inline",
-                                    ContentType: "image/jpeg",
+                                    ContentType: `video/${data.ext}`,
                                 };
                                 const data2 = await s3.send(new PutObjectCommand(params));
                                 await new Promise(r => setTimeout(r, 1000))
                                 console.log(bla.sizeGuide.images, "size guide images")
-                                bla.sizeGuide.images.push(`https://images1.pythiastechnologies.com/${url}`)
+                                bla.videos.push(`https://images1.pythiastechnologies.com/${url}`)
                                 update({ blank: { ...bla } });
                             setBlank({ ...bla })
                                 setOpen(false);

@@ -11,7 +11,7 @@ const s3 = new S3Client({ credentials:{
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
 }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
-export function Uploader2({afterFunction, image, setImage}){
+export function VideoUploader({afterFunction, image, setImage}){
     const onDrop = useCallback(acceptedFiles => {
         // Do something with the files
         console.log(acceptedFiles)
@@ -21,11 +21,11 @@ export function Uploader2({afterFunction, image, setImage}){
     }, [])
     let readFile = async (file) => {
         var reader = new FileReader();
-        reader.readAsDataURL(file);
+        reader.readAsArrayBuffer(file);
         reader.onload = async function () {
             let base64 = reader.result;
-           
-            afterFunction({url: base64,})
+            console.log(base64, "base64")
+            afterFunction({url: base64, ext: file.name.split('.').pop(), name: file.name});
         };
 
         reader.onerror = function (error) {
@@ -33,8 +33,9 @@ export function Uploader2({afterFunction, image, setImage}){
         };
     };
     const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop, accept: {
-        'image/png': ['.png'],
-        'image/jpeg': ['.jpg', '.jpeg'],
+        'video/mp4': ['.mp4'],
+        'video/x-m4v': ['.m4v'],
+        'video/x-ms-wmv': ['.wmv'],
     }})
 
     return (
