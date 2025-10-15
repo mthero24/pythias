@@ -11,6 +11,7 @@ import {
     Fab,
     IconButton,
     Card,
+    CardMedia,
     Divider,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
@@ -26,18 +27,22 @@ import AddIcon from '@mui/icons-material/Add';
 import {Footer} from "../reusable/Footer";
 import { ImageEditModal } from "./ImageEditModal";
 import Image from "next/image";
+import { UploadSizeGuide } from "./uploadSizeGuide";
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
     //console.log(locations, "locations")
     const [imageGroups, setImageGroups] = useState([])
     const [blank, setBlank] = useState(bla? {...bla}: {});
     const [bulletPointsOpen, setBulletPointsOpen] = useState(false)
     const [sizesOpen, setSizesOpen] = useState(false)
+    const [sizesGuideOpen, setSizesGuideOpen] = useState(false)
     const [printLocations, setPrintLocations] = useState(locations)
     const [isImageEditModalOpen, setIsImageEditModalOpen] = useState(false);
     const [selectedImageSrc, setSelectedImageSrc] = useState(null);
     const [imageColor, setImageColor] = useState({id: null, name: null, hexcode: null});
     const [bulletModalOpen, setBulletModalOpen] = useState(false);
     const [sizesModalOpen, setSizesModalOpen] = useState(false);
+    const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
+    const [videoOpen, setVideoOpen] = useState(false);
     const handleImageSave = () => {
         // Handle saving the edited image here
     };
@@ -215,6 +220,72 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             </Box>
                         </Grid2>
                         <Grid2 size={12}>
+                            <Box sx={{ border: "1px solid #ccc", padding: "1%", borderRadius: 2 }}>
+                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", }}>
+                                    <Box>
+                                        <Typography variant="h6">Size Guide</Typography>
+                                        <Button onClick={() => { console.log(true); setSizeGuideModalOpen(true); }}>Add Size Guide</Button>
+                                    </Box>
+                                    <Box>
+                                        {sizesGuideOpen ? <KeyboardArrowUpIcon sx={{ cursor: "pointer" }} onClick={() => setSizesGuideOpen(false)} /> : <KeyboardArrowDownIcon sx={{ cursor: "pointer" }} onClick={() => setSizesGuideOpen(true)} />}
+                                    </Box>
+                                </Box>
+                                <Box>
+                                    <Grid2 container spacing={2} sx={{ marginTop: "1%" }}>
+                                        {sizesGuideOpen && blank.sizeGuide && blank.sizeGuide.images && blank.sizeGuide.images.length > 0 && blank.sizeGuide.images.map((img, i) => (
+                                            <Grid2 item xs={12} sm={6} md={4} key={i}>
+                                                <Box gap={2} sx={{ border: "1px solid #ccc", padding: "2%", borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                                    <Image src={`${img ? `${img}` : ''}`} alt={"size Guide"} width={200} height={200} style={{ width: "200px", height: "auto", maxHeight: "200px" }} />
+                                                    <Button variant="outlined" fullWidth color="error" onClick={() => {
+                                                        let bla = { ...blank };
+                                                        bla.sizeGuide.images = bla.sizeGuide.images.filter((img, index) => index !== i);
+                                                        setBlank(bla);
+                                                        update({ blank: bla });
+                                                    }}>Remove Size Guide</Button>
+                                                </Box>
+                                            </Grid2>
+                                        ))}
+                                    </Grid2>
+                                </Box>
+                            </Box>
+                        </Grid2>
+                        <Grid2 size={12}>
+                            <Box sx={{ border: "1px solid #ccc", padding: "1%", borderRadius: 2 }}>
+                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", }}>
+                                    <Box>
+                                        <Typography variant="h6">Videos</Typography>
+                                        <Button onClick={() => { console.log(true); setSizeGuideModalOpen(true); }}>Add Video</Button>
+                                    </Box>
+                                    <Box>
+                                        {videoOpen ? <KeyboardArrowUpIcon sx={{ cursor: "pointer" }} onClick={() => setVideoOpen(false)} /> : <KeyboardArrowDownIcon sx={{ cursor: "pointer" }} onClick={() => setVideoOpen(true)} />}
+                                    </Box>
+                                </Box>
+                                <Box>
+                                    <Grid2 container spacing={2} sx={{ marginTop: "1%" }}>
+                                        {videoOpen && blank.videos && blank.videos.length > 0 && blank.videos.map((video, i) => (
+                                            <Grid2 item size={{ xs: 12, sm: 6, md: 4 }} key={i}>
+                                                <Card>
+                                                    <CardMedia
+                                                        component="video"
+                                                        width={"100%"}
+                                                        height={"auto"}
+                                                        src={video}
+                                                        controls
+                                                        />
+                                                    </Card>
+                                                    <Button variant="outlined" fullWidth color="error" onClick={() => {
+                                                        let bla = { ...blank };
+                                                        bla.videos = bla.videos.filter((vid, index) => index !== i);
+                                                        setBlank(bla);
+                                                        update({ blank: bla });
+                                                    }}>Remove Video</Button>
+                                            </Grid2>
+                                        ))}
+                                    </Grid2>
+                                </Box>
+                            </Box>
+                        </Grid2>
+                        <Grid2 size={12}>
                             <CreatableSelect placeholder="Colors" options={[...colors.map(c => ({ value: c, label: <Box>
                                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                                             <Box sx={{ width: 20, height: 20, backgroundColor: c.hexcode, border: "1px solid #000", marginRight: 1 }}></Box>
@@ -317,6 +388,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
             <ImageEditModal open={isImageEditModalOpen} color={imageColor} blank={blank} setBlank={setBlank} onClose={() => setIsImageEditModalOpen(false)} imageSrc={selectedImageSrc} onSave={handleImageSave} printLocations={blank.printLocations} update={update} selectedImageSrc={{...selectedImageSrc}} setSelectedImageSrc={setSelectedImageSrc} />
             <BulletModal open={bulletModalOpen} onClose={() => setBulletModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
             <SizesModal open={sizesModalOpen} onClose={() => setSizesModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
+            <UploadSizeGuide open={sizeGuideModalOpen} setOpen={setSizeGuideModalOpen} blank={blank} setBlank={setBlank} update={update} />
             <Footer />
         </Box>
     )
