@@ -33,7 +33,7 @@ export default function LeadCaptureSection() {
               color: "#1a1a1a",
             }}
           >
-            Ready to Streamline Your Print-On-Demand Workflow?
+            Get More Information About Pythias Technologies
           </Typography>
           <Typography
             variant="h6"
@@ -44,8 +44,9 @@ export default function LeadCaptureSection() {
               lineHeight: 1.6,
             }}
           >
-            Get a free demo of Pythias Technologies and see how it can save you
-            time and money
+            Interested in learning more? Fill out the form below and we'll send
+            you detailed information about our platform, pricing, and how it can
+            benefit your business
           </Typography>
         </Box>
 
@@ -151,7 +152,7 @@ export default function LeadCaptureSection() {
                     borderRadius: 2,
                   }}
                 >
-                  Book My Demo
+                  Get More Information
                 </Button>
                 <Typography
                   variant="body2"
@@ -161,8 +162,8 @@ export default function LeadCaptureSection() {
                     fontStyle: "italic",
                   }}
                 >
-                  Free 30-minute consultation • No sales pressure • Custom
-                  workflow analysis
+                  No obligation • Detailed information packet • Custom pricing
+                  available
                 </Typography>
               </Box>
             </Grid>
