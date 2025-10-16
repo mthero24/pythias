@@ -3,6 +3,7 @@ import {Box, Button, Typography, Modal, Card, TextField, Grid2} from "@mui/mater
 import CreatableSelect from "react-select/creatable";
 import {useState, useEffect} from "react";
 import axios from "axios";
+import CloseIcon from '@mui/icons-material/Close';
 const style = {
     position: 'absolute',
     top: '50%',
@@ -47,6 +48,9 @@ export function AddModal({open, setOpen, li, setLi, setLicenses}){
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: ".5%", marginBottom: "1%" }}>
+                <CloseIcon sx={{ cursor: "pointer", color: "#780606" }} onClick={() => setOpen(false)} />
+            </Box>
              <Grid2 container spacing={1}>
                 <Grid2 size={{xs: 6,sm: 3}}>
                     <TextField fullWidth label="Name Of License Holder" value={license.name} onChange={()=>{

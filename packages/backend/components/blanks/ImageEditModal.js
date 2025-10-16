@@ -300,8 +300,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                         Copy Boxes from Another Image
                     </Button>
                 </Box>
-                <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2}}>
-                    <Box width={120} height={100} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, cursor: "pointer" }} onClick={() => { 
+                <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2, height: "180px"}}>
+                    <Box width={120} height={150} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, cursor: "pointer" }} onClick={() => { 
                         let rects = [...rectangles]
                         if (!rects.find(r => r.id === "crop")) rects = [{
                             x: 10, y: 10, width: 350, height: 350, id: "crop", name: 'rect', fill: 'transparent', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
@@ -312,7 +312,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                         <Button>Crop</Button>
                     </Box>
                     {printLocations && printLocations.length > 0 && printLocations.map((loc, idx) => (
-                        <Box key={idx} width={120} height={100} padding={1} sx={{display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, backgroundColor: image.boxes && image.boxes[loc.name] != undefined ? '#959da5ff' : 'transparent'}} onClick={() => {
+                        <Box key={idx} width={120} height={150} padding={1} sx={{display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, backgroundColor: image.boxes && image.boxes[loc.name] != undefined ? '#959da5ff' : 'transparent'}} onClick={() => {
                             let rects = [...rectangles]
                             if (!rects.find(r => r.id === loc.name)){
                                 if(image.boxes && image.boxes[loc.name]){
@@ -385,6 +385,17 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                         setRectangles(rects);
                                     }
                                 }} />
+                            </Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
+                                <Button variant="contained" size="small" color="primary" onClick={()=>{
+                                    let img = { ...image }
+                                    let newBoxes = {}
+                                    for(let b in Object.keys(img.boxes)){
+                                        if(b !== loc.name)newBoxes[b] = img.boxes[b]
+                                    }
+                                    img.boxes = newBoxes
+                                    setImage({...img});
+                                }} >Remove</Button>
                             </Box>
                         </Box>
                     ))}

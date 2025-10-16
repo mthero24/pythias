@@ -18,10 +18,10 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                 let styleImages = []
                 let color;
                 if(b.images && b.images.length > 0){
-                    console.log(designImages, "design images")
+                   // console.log(designImages, "design images")
                     if(!color) color = b.images[0].color
                     for(let im of b.images){
-                        console.log(Object.keys(im.boxes? im.boxes: {}), designImages.join("-"), "checking image boxes")
+                        //console.log(Object.keys(im.boxes? im.boxes: {}), designImages.join("-"), "checking image boxes")
                         if (Object.keys(im.boxes ? im.boxes : {}).filter(e => designImages.includes(e)).length > 0){
                             styleImages.push({ blankImage: im, designImages: design.images, sides: designImages.join("_"), colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
                             break;
@@ -45,8 +45,11 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                         }
                     }
                 }
-                console.log(styleImages, "Style images for blank", b._id.toString());
-                if (styleImages.length == 0 ) return null;
+                //console.log(styleImages, "Style images for blank", b.code);
+                if (styleImages.length == 0 ) {
+                        console.log("No style images found for blank", b.code);
+                    return null;
+                }
                 return (
                     <Grid2 size={{ sm: 6 * styleImages.length, md: 3 * styleImages.length }} key={b._id} onClick={() => {
                         if(combined){

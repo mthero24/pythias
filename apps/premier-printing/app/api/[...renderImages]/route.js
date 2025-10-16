@@ -115,10 +115,14 @@ export async function GET(req) {
     let type
     let sides = params && params[4] ? params[4].split("_") : []
     console.log(params.length, "params")
+    console.log(params, "params")
     if (params.length == 5) {
         let design = await Design.findOne({ sku: params[0] }).select("images").lean()
         designImage = design?.images
+        console.log(designImage, "design image")
         let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
+        if (!blank) blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
+        console.log(blank.images.filter(i => i.image.includes(params[2])), "blank")
         blankImage = blank?.images?.filter(i => i.image.includes(params[2]))[0]
         type = "images"
         if (blankImage == undefined) {
@@ -129,6 +133,7 @@ export async function GET(req) {
             blankImage = blank?.multiImages[params[4] == "front" ? "modelFront" : "modelBack"]?.filter(i => i.image.includes(params[2]))[0]
             type = undefined
         }
+        console.log(blankImage, "blank image")
     } else if (params.length == 6) {
         let design = await Design.findOne({ sku: params[0] }).lean()
         designImage = design?.threadImages?.[params[5]]
