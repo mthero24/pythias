@@ -76,7 +76,7 @@ export function ChartModal({open, setOpen,}){
                     <Grid2 container spacing={2} sx={{ mt: 2 }}>
                         <Grid2 item size={9}>
                             <Typography variant="h5">Total Owed To License Holders</Typography>
-                            <Box sx={{ width: '100%', height: 600 }}>
+                            <Box sx={{ width: '100%', height: 400 }}>
                                 <BarChart
                                     series={dataOwed}
                                     xAxis={[{ data: monthNames }]}
@@ -86,7 +86,7 @@ export function ChartModal({open, setOpen,}){
                             <hr />
                             <br />
                             <Typography variant="h5">Total Sold by License Holders</Typography>
-                            <Box sx={{ width: '100%', height: 600 }}>
+                            <Box sx={{ width: '100%', height: 400 }}>
                                 <BarChart
                                     series={dataSold}
                                     xAxis={[{ data: monthNames }]}
