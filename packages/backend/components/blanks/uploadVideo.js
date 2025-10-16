@@ -33,7 +33,7 @@ export function UploadVideo({ open, setOpen, blank, setBlank, update }) {
                                 };
                                 const data2 = await s3.send(new PutObjectCommand(params));
                                 await new Promise(r => setTimeout(r, 1000))
-                                console.log(bla.sizeGuide.images, "size guide images")
+                                console.log(bla.videos, "videos")
                                 bla.videos.push(`https://images1.pythiastechnologies.com/${url}`)
                                 update({ blank: { ...bla } });
                             setBlank({ ...bla })

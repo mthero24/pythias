@@ -32,6 +32,7 @@
     "@jimp/plugin-crop": "^0.17.2",
     "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
+    "@mui/x-charts": "^8.14.0",
     "@pythias/backend": "^1.0.0",
     "@pythias/dtf": "^0.0.0",
     "@pythias/embroidery": "^1.0.0",

@@ -22,18 +22,11 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                     if(!color) color = b.images[0].color
                     for(let im of b.images){
                         console.log(Object.keys(im.boxes? im.boxes: {}), designImages.join("-"), "checking image boxes")
-                        if (Object.keys(im.boxes ? im.boxes : {}).filter(e => designImages.includes(e)).length > 0 && im.color.toString() == color.toString()){
+                        if (Object.keys(im.boxes ? im.boxes : {}).filter(e => designImages.includes(e)).length > 0){
                             styleImages.push({ blankImage: im, designImages: design.images, sides: designImages.join("_"), colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
                             break;
                         }
                     }
-                    {/* for(let di of designImages){
-                        let img = b.images.filter(i => i.color.toString() == color.toString() && Object.keys(i.boxes? i.boxes: {}).includes(di))
-                        console.log(img, "images for design side", di, "and color", color)
-                        if(img && img.length > 0){
-                            styleImages.push({ blankImage: img[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
-                        }
-                    } */}
                 }else{
                     for (let di of designImages) {
                         if (di != null) {

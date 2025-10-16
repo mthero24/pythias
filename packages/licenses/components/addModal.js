@@ -20,7 +20,8 @@ export function AddModal({open, setOpen, li, setLi, setLicenses}){
         "name": null,
         licenseType: null,
         paymentType: null,
-        amount: 0
+        amount: 0,
+        additionalFees: 0,
     }
     const [license, setLicense] = useState(li? li: blank)
     useEffect(()=>{
@@ -61,7 +62,7 @@ export function AddModal({open, setOpen, li, setLi, setLicenses}){
                         setLicense({...li})
                     }}/>
                 </Grid2>
-                <Grid2 size={{xs: 6,sm: 3}}>
+                <Grid2 size={{xs: 3,sm: 2}}>
                     <Box sx={{padding: "3%", background: "#e2e2e2", borderRadius: "5px"}}>
                         <CreatableSelect
                             placeholder="Payment Type"
@@ -76,13 +77,20 @@ export function AddModal({open, setOpen, li, setLi, setLicenses}){
                         />
                     </Box>
                 </Grid2>
-                <Grid2 size={{xs: 6,sm: 3}}>
+                <Grid2 size={{xs: 3,sm: 2}}>
                     <TextField fullWidth label="Payment Amount" value={license.amount} onChange={()=>{
                         let li = {...license}
                         li.amount = event.target.value
                         setLicense({...li})
                     }}/>
                 </Grid2>
+                    <Grid2 size={{ xs: 3, sm: 2 }}>
+                        <TextField fullWidth label="additional Fees" value={license.additionalFees} onChange={() => {
+                            let li = { ...license }
+                            li.additionalFees = event.target.value
+                            setLicense({ ...li })
+                        }} />
+                    </Grid2>
                 <Grid2 size={12}>
                     <Button fullWidth sx={{background: "#e2e2e2", color: "#000"}} onClick={()=>{create()}}>{li? "Edit": "Create"}</Button>
                 </Grid2>
