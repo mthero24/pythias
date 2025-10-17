@@ -79,6 +79,30 @@ let colorFixer = {
     "HGREEN": "Heather Green",
     "SAGE": "Sage",
     "NAVY": "Navy",
+    "MIDNIGHT": "Midnight",
+    "DkGreen": "Dark Green",
+    "DKGREEN": "Dark Green",
+    "TERRACOTTA": "Terracotta",
+    "MAUVE": "Mauve",
+    "DUSTYROSE": "Dusty Rose",
+    "LTPINK": "Light Pink",
+    "LTBLUE": "Light Blue",
+    "DkBlue": "Dark Blue",
+    MILITARY: "Military",
+    "DKBLUE": "Dark Blue",
+    "LTYELLOW": "Light Yellow",
+    "ORCHID": "Orchid",
+    "FUCHSIA": "Fuchsia",
+    "DkPurple": "Dark Purple",
+    CHAMBRAY: "Chambray",
+    "DKPURPLE": "Dark Purple",
+    "LTORANGE": "Light Orange",
+    "BLUSH": "Blush",
+    "TAN": "Tan",
+    "BURGUNDY": "Burgundy",
+    "HotPink": "Hot Pink",
+    "LTGREEN": "Light Green",
+    "DkHeather": "Dark Heather",
 
 }
 const sizeFixer = {
@@ -151,7 +175,7 @@ export const updateInventory = async ()=>{
     }
 }
 const createItem = async (i, order, blank, color, threadColor, size, design, sku, isBlank) => {
-    console.log(size, "size")
+    console.log(isBlank, "isBlank+++++++++++++++")
     let item = new Item({ pieceId: await generatePieceID(), 
         paid: true, 
         sku: i.sku, 
@@ -175,7 +199,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         type: design?.printType, 
         upc: i.upc, 
         options: i.options[0]?.value,
-        isBlank: isBlank
+        isBlank: isBlank == true? true: false
     })
     item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: item.sku })
@@ -202,7 +226,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
 }
 export async function pullOrders(){
     console.log("pulling orders")
-    let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}` })
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({orderId: o.orderId}).populate("items")
@@ -252,7 +276,7 @@ export async function pullOrders(){
                     if (!product) await Products.findOne({ variantsArray: { $elemMatch: { previousSkus: i.sku } } }).populate("design variantsArray.blank variantsArray.color")
                     if (product) {
                         // Do something with the product
-                        console.log(product, "product found")
+                        console.log(product.design? true: false, "product design found")
                         let variant = product.variantsArray.find(v => v.sku == i.sku || v.upc == i.upc)
                         if (!variant) variant = product.variantsArray.find(v => v.previousSkus && v.previousSkus.includes(i.sku))
                         //console.log(variant, "variant")

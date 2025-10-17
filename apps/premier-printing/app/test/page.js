@@ -16,7 +16,12 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
     return sku;
 }
 export default async function Test(){
-   //await pullOrders();
+   await pullOrders();
+    let productInventories = await ProductInventory.find({ quantity: { $gt: 0 } })
+   let items = await Items.find({sku: {$in: productInventories.map(pi => pi.sku)}}).populate("designRef blank color threadColor size order")
+   console.log(items.length, "items found")
+    items = items.filter(i => i.order && i.order.orderStatus == "awaiting_shipment")
+    console.log(items.length, "items found")
    //console.log("test page called")
     //await updateInventory();
     

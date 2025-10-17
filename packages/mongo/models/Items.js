@@ -56,6 +56,7 @@ const schema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Color",
     },
+    isBlank: { type: Boolean, default: false },
     sizeName: String,
     styleCode: String,
     colorName: String,
