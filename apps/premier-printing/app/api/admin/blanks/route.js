@@ -128,6 +128,7 @@ export async function POST(req = NextApiRequest) {
   }
 }
 export async function DELETE(req = NextApiRequest,) {
+  console.log("delete blank", req.nextUrl.searchParams.get("id"))
   await Blanks.findOneAndDelete({_id: req.nextUrl.searchParams.get("id")})
   return NextResponse.json({ error: false });
 }

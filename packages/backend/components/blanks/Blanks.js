@@ -21,6 +21,9 @@ export function BlanksComponent({blanks, mPs, source}){
     return (
         <Box>
             <Container maxWidth="lg" sx={{minHeight: "80vh", paddingTop: "2%"}}>
+                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: "2%"}}>
+                    <Button variant="contained" href="/admin/blanks/create">Create New Blank</Button>
+                </Box>
                 <Box>
                     <TextField
                         label="Search Blanks"

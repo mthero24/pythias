@@ -30,7 +30,7 @@ import Image from "next/image";
 import { UploadSizeGuide } from "./uploadSizeGuide";
 import { UploadVideo } from "./uploadVideo";
 import { DeleteImageModal } from "./deleteImageModal";
-import { set } from "mongoose";
+import { DeleteBlankModal } from "./deleteBlankModal";
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
     //console.log(locations, "locations")
     const [imageGroups, setImageGroups] = useState([])
@@ -49,6 +49,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [videoModalOpen, setVideoModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [imageToDelete, setImageToDelete] = useState(null);
+    const [deleteBlankModalOpen, setDeleteBlankModalOpen] = useState(false);
     const handleImageSave = () => {
         // Handle saving the edited image here
     };
@@ -74,6 +75,9 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     return (
         <Box>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: "2%" }}>
+                    <Button variant="outlined" color="warning" onClick={()=> setDeleteBlankModalOpen(true)}>Delete</Button>
+                </Box>
                 <Box sx={{ p: 2, mb: 2, alignContent: "center", backgroundColor: "#fff", borderRadius: 2, boxShadow: 3 }}>
                     <Grid2 container spacing={2} sx={{width: "100%"}}>
                         <Grid2 size={{xs: 6, sm: 3}}>
@@ -325,7 +329,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                         <Grid2 size={12}>
                             <Typography variant="h6">Images</Typography>
                             {blank.colors && blank.colors.length > 0 && blank.colors.map((color, idx) => {
-                                let images = blank.images.filter(img=> img.color?.toString() === color._id.toString())
+                                let images = blank.images?.filter(img=> img.color?.toString() === color._id.toString())
                                 return (
                                     <Box key={idx}>
                                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "2%" }}>
@@ -393,6 +397,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
             <UploadSizeGuide open={sizeGuideModalOpen} setOpen={setSizeGuideModalOpen} blank={blank} setBlank={setBlank} update={update} />
             <UploadVideo open={videoModalOpen} setOpen={setVideoModalOpen} blank={blank} setBlank={setBlank} update={update} />
             <DeleteImageModal open={deleteModalOpen} setOpen={setDeleteModalOpen} imageToDelete={imageToDelete} setImageToDelete={setImageToDelete} blank={blank} setBlank={setBlank} update={update} />
+            <DeleteBlankModal open={deleteBlankModalOpen} setOpen={setDeleteBlankModalOpen} blank={blank} />
             <Footer />
         </Box>
     )
