@@ -2,7 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server"
 import { Items, SkuToUpc, Order, Inventory } from "@pythias/mongo";
 export async function PUT(req = NextApiRequest) {
     let data = await req.json()
-    //console.log(data.item)
+    console.log(data.item)
     if(data.item.isBlank && data.item.design) data.item.isBlank = false
     let item = await Items.findOneAndUpdate({ _id: data.item._id }, { ...data.item })
     item = await Items.findOne({ _id: data.item._id }).populate("blank color")
