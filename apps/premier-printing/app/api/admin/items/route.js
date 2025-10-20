@@ -3,6 +3,7 @@ import { Items, SkuToUpc, Order, Inventory } from "@pythias/mongo";
 export async function PUT(req = NextApiRequest) {
     let data = await req.json()
     //console.log(data.item)
+    if(data.item.isBlank && data.item.design) data.item.isBlank = false
     let item = await Items.findOneAndUpdate({ _id: data.item._id }, { ...data.item })
     item = await Items.findOne({ _id: data.item._id }).populate("blank color")
     //console.log("here", item.design, Object.keys(item.design), Object.keys(item.design).length, !item.design && Object.keys(item.design).length == 0)
