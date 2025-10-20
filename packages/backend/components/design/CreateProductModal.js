@@ -90,14 +90,14 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         };
     }, []);    
     for(let b of blanks){
-        if (b.multiImages["modelFront"] && b.multiImages["modelFront"].length > 0) {
+        if (b.multiImages && b.multiImages["modelFront"] && b.multiImages["modelFront"].length > 0) {
             for (let i of b.multiImages["modelFront"]){
                 if (!b.multiImages["front"].filter(mi=> mi.image == i.image)[0]) {
                     b.multiImages["front"].push(i);
                 }
             }
         }
-        if (b.multiImages["modelBack"] && b.multiImages["modelBack"].length > 0) {
+        if (b.multiImages && b.multiImages["modelBack"] && b.multiImages["modelBack"].length > 0) {
             for (let i of b.multiImages["modelBack"]){
                 if (!b.multiImages["back"].filter(mi=> mi.image == i.image)[0]) {
                     b.multiImages["back"].push(i);
