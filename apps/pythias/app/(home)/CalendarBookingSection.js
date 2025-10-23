@@ -4,6 +4,7 @@ export default function CalendarBookingSection() {
   return (
     <Box
       component="section"
+      id="calendar-booking-section"
       sx={{
         padding: { xs: "4rem 0", lg: "6rem 0" },
         background: "white",
