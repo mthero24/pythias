@@ -1,7 +1,4 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
-import Inventory from "@/models/inventory";
-import Batches from "@/models/batches";
+import {Item as Items, Order, Inventory, Batches} from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
@@ -14,10 +11,9 @@ export async function LabelsData(){
             designRef: {$ne: null},
             design: {$ne: null},
             labelPrinted: false,
-            canceled: false,
             paid: true,
-            shippingType: "Standard",
-        }).populate("color", "name _id").populate("designRef", "sku name printType").lean(),
+            shippingType: {$in: ["Standard", "Economy shipping"]},
+        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("order", "poNumber").populate("inventory.inventory").lean(),
             Expedited: await Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
@@ -25,19 +21,14 @@ export async function LabelsData(){
             designRef: {$ne: null},
             design: {$ne: null},
             labelPrinted: false,
-            canceled: false,
             paid: true,
-            shippingType: { $ne: "Standard" },
-        }).populate("color", "name _id").populate("designRef", "sku name printType").lean()
+            shippingType: { $nin: ["Standard", "Economy shipping"] },
+        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("order", "poNumber").populate("inventory.inventory").lean()
     }
     //console.log(labels)
     let inventoryArray = await Inventory.find({}).select("quantity pending_quantity inventory_id color_name size_name blank  style_code row unit shelf bin color blank").lean();
     let rePulls = 0
     for(let k of Object.keys(labels)){
-        let standardOrders = labels[k].map(s=> s.order)
-        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
-        labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
-        labels[k] = labels[k].filter(s=> s.order != undefined)
         labels[k] = labels[k].map(s=> { if(s.designRef?.printType =="EMB"){
             s.type = "EMB"
         }else if(s.designRef?.sku.toUpperCase().includes("PU") || s.designRef?.sku.toUpperCase().includes("GL") || s.designRef?.printType =="VIN"){

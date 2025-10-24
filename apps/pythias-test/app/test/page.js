@@ -1,5 +1,5 @@
 import { Nightlife } from "@mui/icons-material";
-import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, MarketPlaces, ApiKeyIntegrations, Inventory} from "@pythias/mongo"
+import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, MarketPlaces, ApiKeyIntegrations, Item, Inventory} from "@pythias/mongo"
 import axios from "axios";
 import { pullOrders } from "@/functions/pullOrders"
 import {refreshToken} from "@pythias/integrations"
@@ -12,7 +12,18 @@ let converter = {
     YXXL: "2XL",
 }
 export default async function Test(){
-    
+    // let items = await Item.find()
+    // console.log(items.length)
+    // for(let item of items){
+    //     item.inventory = {
+    //         inventoryType: "inventory",
+    //         inventory: await Inventory.findOne({blank: item.blank, color: item.color, sizeId: item.size})
+    //     }
+    //     if(!item.inventory) item.inventory = await Inventory.findOne({styleCode: item.styleCode, colorName: item.colorName, size: item.sizeName})
+    //         if(!item.inventory) item.inventory = await Inventory.findOne({inventory_id: `${item.colorName}-${item.sizeName}-${item.styleCode}`})
+    //     console.log(item.inventory)
+    //     await item.save()
+    // }
     // let blanks = await Blank.find({}).populate("colors")
     // for(let b of blanks){
     //     console.log(b.multiImages, "multi images")
