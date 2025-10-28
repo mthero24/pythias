@@ -132,6 +132,38 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                                         </Grid2>
                                     ))}
                                 </Grid2>
+                                <Grid2 container spacing={2} sx={{ "&:hover": { cursor: "pointer", opacity: .7 } }}>
+                                    {product.tempImages && product.tempImages.filter(img=> img.color == c).map((img, k) => (
+                                        <Grid2 key={k} size={4} onClick={() => {
+                                            let prods = [...products]
+                                            let p = prods.filter(p => p.id == product.id)[0]
+                                            if (!p.variantImages) p.variantImages = {}
+                                            if (p.variantImages && !p.variantImages[b]) p.variantImages[b] = {}
+                                            if (!p.variantSecondaryImages) p.variantSecondaryImages = {}
+                                            if (p.variantSecondaryImages && !p.variantSecondaryImages[b]) p.variantSecondaryImages[b] = {}
+                                            if (!p.variantSecondaryImages[b][c]) p.variantSecondaryImages[b][c] = []
+                                            if (mainImage) {
+                                                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image)
+                                                p.variantImages[b][c] = img
+                                            } else {
+                                                if (!p.variantSecondaryImages[b][c].find(i => i.image == img.image)) {
+                                                    p.variantSecondaryImages[b][c].push(img)
+                                                } else {
+                                                    p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image)
+                                                }
+                                            }
+                                            setProducts([...prods])
+                                        }}>
+                                            <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
+                                            {product.variantImages && product.variantImages[b] && product.variantImages[b][c] && product.variantImages[b][c]?.image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
+                                                <Checkbox checked={true} />
+                                            </Box>}
+                                            {product.variantSecondaryImages && product.variantSecondaryImages[b] && product.variantSecondaryImages[b][c] && product.variantSecondaryImages[b][c].find(i => i.image == img.image) && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
+                                                <Checkbox checked={true} color="error" />
+                                            </Box>}
+                                        </Grid2>
+                                    ))}
+                                </Grid2>
                             </Grid2>
                         ))}
                     </Grid2>
