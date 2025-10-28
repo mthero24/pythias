@@ -35,6 +35,7 @@ export function BlanksComponent({blanks, mPs, source}){
                 </Box>
                 <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
                     {visibleBlanks.map((blank) => {
+                        console.log(blank.images, "blank images")
                         let frontImage = blank.images && blank.images.length > 0 ? blank.images[0] : (blank.multiImages && blank.multiImages["front"] ? blank.multiImages["front"][0] : null);
                         if(!frontImage && blank.multiImages){
                             let keys = Object.keys(blank.multiImages);

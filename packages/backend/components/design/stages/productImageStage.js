@@ -126,7 +126,8 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
     )
 }
 
-const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, des, setDesign, updateDesign, colors, threadColors, product, products, setProducts }) => {
+const AddImageModal = ({ open, setOpen, reload, setReload, setLoading, product, products, setProducts }) => {
+    console.log(product, "product in AddImageModal")
     const [location, setLocation] = useState("front")
     const [threadColor, setThreadColor] = useState(null)
     const [color, setColor] = useState(null)
@@ -154,7 +155,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
         setReload(true)
     }
     return (
-        <Modal
+        product && <Modal
             open={open}
             onClose={() => { setOpen(false); setBlank(null); setUpc([]); setColor(null); setThreadColor(null) }}
             aria-labelledby="modal-modal-title"
@@ -170,7 +171,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                     <Box sx={{ width: "100%", padding: "2%" }}>
                         <CreatableSelect
                             placeholder="Color"
-                            options={[...product.colors?.map(p => { return { value: p.name, label: p.name } }) ]}
+                            options={[...product?.colors?.map(p => { return { value: p.name, label: p.name } }) ]}
                             value={color ? { value: color, label: color } : null}
                             onChange={(vals) => {
                                 console.log(color, vals.value)
@@ -180,7 +181,7 @@ const AddImageModal = ({ open, setOpen, reload, setReload, loading, setLoading, 
                         />
                         <CreatableSelect
                             placeholder="Thread Color"
-                            options={[...product.threadColors?.map(p => { return { value: p.name, label: p.name } })]}
+                            options={[...product?.threadColors?.map(p => { return { value: p.name, label: p.name } })]}
                             value={threadColor ? { value: threadColor, label: threadColor } : null}
                             onChange={(vals) => {
                                 console.log(threadColor, vals.value)

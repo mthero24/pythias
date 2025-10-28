@@ -44,7 +44,7 @@ export async function LabelsData(){
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
         labels[k] = labels[k].map(s=> {
-            if(s.type == undefined) s.type = "DTF"
+            if(s.type == undefined) s.type = s.designRef && s.designRef.printType ? s.designRef.printType : "DTF"
             return {...s}
         })
         labels[k] = labels[k].filter(s=> s.order != undefined)

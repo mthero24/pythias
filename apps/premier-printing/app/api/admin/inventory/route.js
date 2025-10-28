@@ -52,3 +52,14 @@ export async function PUT(req=NextApiRequest){
     let inventory = await Inventory.findOneAndDelete({inventory_id: data.inventory_id});
     return NextResponse.json({error: false})
 }
+
+export async function DELETE(req=NextApiRequest){
+    let id = req.nextUrl.searchParams.get("id");
+    console.log("Deleting inventory with id:", id);
+    let inventory = await Inventory.findOneAndDelete({_id: id});
+    let term = req.nextUrl.searchParams.get("q");
+    let page = req.nextUrl.searchParams.get("page");
+    console.log(term, req.nextUrl.searchParams.get("q"),  page, "term and page in delete inventory route");
+    let res = await getInv({ Blanks, Inventory, term, page: Number(page) });
+    return NextResponse.json({...res})
+}

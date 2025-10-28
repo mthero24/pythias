@@ -38,10 +38,7 @@ export const buildLabelData = async (item, i, poNumber, opts={},) => {
     if(!item.design) frontBackString = "Missing Design";
   if (!item.isBlank) frontBackString = "Blank Item";
     let printPO = poNumber ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${poNumber}^FS`: "";
-    let printTypeAbbr;
-    if (item.designRef && item.designRef.sku && item.designRef.sku.includes("PU")) printTypeAbbr = "PUF";
-    if (item.designRef && item.designRef.sku && item.designRef.sku.includes("EMB")) printTypeAbbr = "EMB";
-    else printTypeAbbr = "DTF";
+    let printTypeAbbr = item.designRef && item.designRef.printType ? item.designRef.printType : "DTF";
 
     let labelString = `
       ${item.order.marketplace == "target" || item.order.marketplace == "Target Plus US Marketplace"? `^XA

@@ -11,6 +11,8 @@ import { Footer } from "@pythias/backend";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SearchIcon from '@mui/icons-material/Search';
+import DeleteIcon from '@mui/icons-material/Delete';
+import {DeleteInventoryModal} from "./deleteInventoryModal";
 export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
     const [fullStyles, setFullStyles] = useState(bla)
     const [styles, setStyles] = useState(bla)
@@ -24,6 +26,8 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
     const [inventories, setInventories] = useState([]) 
     const [query, setQuery] = useState(q)
     const [count, setCount] = useState(cou)
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [inventoryToDelete, setInventoryToDelete] = useState(null);
     const save = async (inventory)=>{
         //console.log(inventory)
         let res = await axios.post("/api/admin/inventory", {inventory})
@@ -48,7 +52,6 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
         if(res.data){
             console.log(query)
             setPage(1)
-            setQuery(term)
             console.log(res.data.count, "count")
             setCount(res.data.count)
             setStyles(res.data.blanks)
@@ -63,7 +66,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
         </Box>
         <Container sx={{minHeight: "70vh"}}>
             <Box sx={{marginBottom: "1%", display: "flex", flexDirection: "row",}}>
-                <TextField fullWidth placeholder="Filter.." sx={{background: "white"}} onChange={async (e)=>{
+                <TextField fullWidth placeholder="Filter.." sx={{background: "white"}} value={query} onChange={async (e)=>{
                    setQuery(e.target.value)
                 }}
                 onKeyDown={(e)=>{
@@ -99,7 +102,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                 </AccordionSummary>
                                 <AccordionDetails>
                                     <Grid2 container spacing={1} sx={{margin: '2%', textAlign: "center"}}>
-                                            <Grid2 size={2}>
+                                            <Grid2 size={1.5}>
                                                 <Typography>Size</Typography>
                                             </Grid2>
                                             <Grid2 size={1}>
@@ -114,7 +117,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                             <Grid2 size={1}>
                                                 <Typography>Pend</Typography>
                                             </Grid2>
-                                            <Grid2 size={1.5}>
+                                            <Grid2 size={1}>
                                                 <Typography>Out Of Stock</Typography>
                                             </Grid2>
                                             {binType == "location" && <Grid2 size={2}>
@@ -144,7 +147,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                     }).map(i=>(
                                         <Grid2 container spacing={1} key={i._id} sx={{margin: '2%', textAlign: "center"}}>
                                             {console.log(i)}
-                                            <Grid2 size={2}>
+                                            <Grid2 size={1.5}>
                                                 <Typography>{i.size_name}</Typography>
                                             </Grid2>
                                             <Grid2 size={1}>
@@ -159,7 +162,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                             <Grid2 size={1}>
                                                 <Typography>{i.pending_quantity}</Typography>
                                             </Grid2>
-                                            <Grid2 size={1.5}>
+                                            <Grid2 size={1}>
                                                 <Typography >{i.attached && i.attached.length > 0 ? i.attached.length : 0}</Typography>
                                             </Grid2>
                                            {binType == "location" && <Grid2 size={2}>
@@ -178,6 +181,12 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                                 <Grid2 size={1}>
                                                     <TextField fullWidth value={i.bin} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"bin"})}}/>
                                                 </Grid2>
+                                                <Grid2 size={1}>
+                                                    <DeleteIcon sx={{ cursor: "pointer", color: "#d32f2f"}} onClick={async ()=>{
+                                                        setInventoryToDelete(i);
+                                                        setDeleteModalOpen(true);
+                                                    }}/>
+                                                </Grid2>
                                             </>}
                                         </Grid2>
                                     ))}
@@ -188,6 +197,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                     </AccordionDetails>
                 </Accordion>
             ))}
+            <DeleteInventoryModal open={deleteModalOpen} setOpen={setDeleteModalOpen} inventory={inventoryToDelete} setInventory={setInventoryToDelete} setStyles={setStyles} query={query} page={page} setExpandedColor={setExpandedColor} />
         </Container>
         <Box sx={{display: "flex", justifyContent: "center", alignContent:"center", margin: "1%"}}>
                 <Pagination 
