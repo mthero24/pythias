@@ -103,6 +103,8 @@ let colorFixer = {
     "HotPink": "Hot Pink",
     "LTGREEN": "Light Green",
     "DkHeather": "Dark Heather",
+    "HFOREST": "Forest",
+    "CHARCOAL": "Charcoal",
 
 }
 const sizeFixer = {
@@ -203,8 +205,8 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     })
     item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: item.sku })
-    if (productInventory && productInventory.quantity - productInventory.onhold > 0) {
-        if (productInventory.quantity > 0 - productInventory.onhold > 0) {
+    if (productInventory && productInventory.quantity - productInventory.inStock.length > 0) {
+        if (productInventory.quantity > 0 ) {
             item.inventory.inventoryType = "productInventory"
             item.inventory.productInventory = productInventory._id
             productInventory.inStock.push(item._id.toString())
