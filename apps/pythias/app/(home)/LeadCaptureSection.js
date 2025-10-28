@@ -16,6 +16,7 @@ export default function LeadCaptureSection() {
   return (
     <Box
       component="section"
+      id="lead-capture-section"
       sx={{
         padding: { xs: "4rem 0", lg: "6rem 0" },
         background: "#fafafa",

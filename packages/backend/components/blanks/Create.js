@@ -34,6 +34,7 @@ import { DeleteBlankModal } from "./deleteBlankModal";
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
     //console.log(locations, "locations")
     const [imageGroups, setImageGroups] = useState([])
+    const [allColors, setAllColors] = useState(colors)
     const [blank, setBlank] = useState(bla? {...bla}: {});
     const [bulletPointsOpen, setBulletPointsOpen] = useState(false)
     const [sizesOpen, setSizesOpen] = useState(false)
@@ -296,10 +297,10 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             </Box>
                         </Grid2>
                         <Grid2 size={12}>
-                            <CreatableSelect placeholder="Colors" options={[...colors.map(c => ({ value: c, label: <Box>
+                            <CreatableSelect placeholder="Colors" options={[...allColors.map(c => ({ value: c, label: <Box>
                                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                                            <Box sx={{ width: 20, height: 20, backgroundColor: c.hexcode, border: "1px solid #000", marginRight: 1 }}></Box>
-                                            <Typography>{c.name}</Typography>
+                                            <Box sx={{ width: 20, height: 20, backgroundColor: c?.hexcode, border: "1px solid #000", marginRight: 1 }}></Box>
+                                            <Typography>{c?.name}</Typography>
                                         </Box>
                                     </Box> }))]} 
 
@@ -310,9 +311,27 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                             <Typography>{ac.name}</Typography>
                                         </Box>
                                     </Box> })) : []}
-                                    onChange={(newValue) => {
+                                    onChange={async (newValue) => {
                                         let bla = {...blank};
                                         bla.colors = newValue ? newValue.map(nv => nv.value) : [];
+                                        
+                                        for(let v of newValue){
+                                            console.log(v.value)
+                                            if(!v.value._id){
+                                                let newColor = {
+                                                    name: v.value,
+                                                    hexCode: "#000",
+                                                    sku: v.value.substring(0, 5).toLowerCase()
+
+                                                }
+                                                if (newColor.name.includes("Plaid")) {
+                                                    newColor.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").replace("top", "").replace(/black/g, "bl").replace("plaid", "pl").replace(/white/g, "wh").replace("red", "re").substring(0, 7)
+                                                }
+                                                else newColor.sku = newColor.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").substring(0, 7)
+                                                let res = await axios.post("/api/admin/colors",{color: newColor})
+                                                colors.push(setAllColors([...allColors, res.data.color]))
+                                            }
+                                        }
                                        setBlank(bla);
                                        update({blank: bla});
                                     }}
@@ -329,7 +348,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                         <Grid2 size={12}>
                             <Typography variant="h6">Images</Typography>
                             {blank.colors && blank.colors.length > 0 && blank.colors.map((color, idx) => {
-                                let images = blank.images?.filter(img=> img.color?.toString() === color._id.toString())
+                                let images = blank.images?.filter(img=> img.color?.toString() === color._id?.toString())
                                 return (
                                     <Box key={idx}>
                                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "2%" }}>

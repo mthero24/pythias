@@ -18,14 +18,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Logo from "../public/logo_vertical.png";
 
-const links = [
-  { href: "/dtf", label: "DTF Print Software" },
-  { href: "/DTG", label: "DTG Print Software" },
-  { href: "/Sublimation", label: "Sublimation Print Software" },
-  { href: "/Analytics", label: "Analytics" },
-  { href: "/inventory-management", label: "Inventory Management" },
-  { href: "/Shipping", label: "Shipping" },
-];
+const links = [];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);

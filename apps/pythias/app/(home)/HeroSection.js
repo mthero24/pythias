@@ -1,8 +1,19 @@
+"use client";
 import Image from "next/image";
 import { Box, Container, Typography, Button, Grid } from "@mui/material";
 import Logo from "../../public/logo_vertical.png";
 
 export default function HeroSection() {
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
   return (
     <Box
       component="section"
@@ -70,10 +81,18 @@ export default function HeroSection() {
                   flexWrap: "wrap",
                 }}
               >
-                <Button variant="contained" size="large">
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => scrollToSection("calendar-booking-section")}
+                >
                   Book a Demo
                 </Button>
-                <Button variant="outlined" size="large">
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => scrollToSection("lead-capture-section")}
+                >
                   Learn More
                 </Button>
               </Box>

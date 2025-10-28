@@ -3,7 +3,7 @@ import { Base64Encode } from "base64-stream";
 import axios from "axios"
 export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex, type, poNumber })=>{
     let labelsString = ``
-    let doc = new PDFDocument({ size: [2 * 72, 2 * 72], margin: 0 });
+    let doc = new PDFDocument({ size: [1 * 72, 1 * 72], margin: 0 });
     let stream = doc.pipe(new Base64Encode());
     stream.on('data', function(chunk) {
         labelsString += chunk;
@@ -13,10 +13,10 @@ export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex,
     for(let i of items){
        // console.log(lastIndex && j >= lastIndex)
         if(lastIndex && j >= lastIndex){
-            if(j != 0) doc.addPage({ size: [2 * 72, 2* 72], margin: 0  })
+            if(j != 0) doc.addPage({ size: [1 * 72, 1* 72], margin: 0  })
            await buildLabelData(i, j, doc, type, poNumber )
         }else if(!lastIndex){
-            if(j != 0) doc.addPage({ size: [2 * 72, 2* 72], margin: 0  })
+            if(j != 0) doc.addPage({ size: [1 * 72, 1* 72], margin: 0  })
             await buildLabelData(i, j, doc, type, poNumber)
         }
         j++
