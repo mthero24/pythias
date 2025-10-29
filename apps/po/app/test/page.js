@@ -105,7 +105,8 @@ export default async function Test(){
     //     }
     // }
     // let order = await InventoryOrders.findOne({ _id: "68b1c2a4fcb2eb6cec918c4a"}).populate("locations.items.inventory")
-    // console.log(order)
+    console.log("test page called")
+    console.log("test page called")
     // for(let loc of order.locations){
     //     for(let item of loc.items){
             
