@@ -133,7 +133,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                                     ))}
                                 </Grid2>
                                 <Grid2 container spacing={2} sx={{ "&:hover": { cursor: "pointer", opacity: .7 } }}>
-                                    {product.tempImages && product.tempImages.filter(img=> img.color == c).map((img, k) => (
+                                    {product.tempImages && product.tempImages.filter(img=> img.color.name == c).map((img, k) => (
                                         <Grid2 key={k} size={4} onClick={() => {
                                             let prods = [...products]
                                             let p = prods.filter(p => p.id == product.id)[0]

@@ -132,6 +132,7 @@ export async function POST(req= NextApiRequest){
                     await i.save()
                 }
                 item.order.shipped = false
+                item.order.preShipped = false
                 await item.order.save()
                 item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
             }else if(order){
@@ -139,6 +140,7 @@ export async function POST(req= NextApiRequest){
                     i.shipped = false
                     await i.save()
                 }
+                order.preShipped = false
                 order.shipped = false
                 await order.save()
                 order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")

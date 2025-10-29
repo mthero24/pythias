@@ -354,7 +354,7 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                                 {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
                                     <ListItemAvatar>
                                         <Avatar key={i}>
-                                            <img src={img.image ? `${img.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}width=75&height=75` : `${img.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                            <img src={img.image ? `${img.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75` : `${img.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                         </Avatar>
                                     </ListItemAvatar>
                                 ))}

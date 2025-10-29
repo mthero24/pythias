@@ -102,5 +102,6 @@ const schema = new mongoose.Schema({
     isNFProduct: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     lastUpdated: { type: Date, default: Date.now },
+    tempImages: [Object]
 });
 export default PremierPrinting.model("Products", schema);

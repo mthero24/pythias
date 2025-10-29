@@ -171,8 +171,8 @@ const AddImageModal = ({ open, setOpen, reload, setReload, setLoading, product, 
                     <Box sx={{ width: "100%", padding: "2%" }}>
                         <CreatableSelect
                             placeholder="Color"
-                            options={[...product?.colors?.map(p => { return { value: p.name, label: p.name } }) ]}
-                            value={color ? { value: color, label: color } : null}
+                            options={[...product?.colors?.map(p => { return { value: p, label: p.name } }) ]}
+                            value={color ? { value: color, label: color.name } : null}
                             onChange={(vals) => {
                                 console.log(color, vals.value)
                                 setColor(vals.value)
@@ -181,8 +181,8 @@ const AddImageModal = ({ open, setOpen, reload, setReload, setLoading, product, 
                         />
                         <CreatableSelect
                             placeholder="Thread Color"
-                            options={[...product?.threadColors?.map(p => { return { value: p.name, label: p.name } })]}
-                            value={threadColor ? { value: threadColor, label: threadColor } : null}
+                            options={[...product?.threadColors?.map(p => { return { value: p, label: p.name } })]}
+                            value={threadColor ? { value: threadColor, label: threadColor.name } : null}
                             onChange={(vals) => {
                                 console.log(threadColor, vals.value)
                                 setThreadColor(vals.value)
