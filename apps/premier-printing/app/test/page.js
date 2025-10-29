@@ -23,8 +23,8 @@ export default async function Test(){
    console.log(items.length, "items found")
     console.log(items[0].order.poNumber)
     let item = items[0]
-    let productInv = await ProductInventory.findOne({sku: item.sku})
-    console.log(productInv) 
+//     let productInv = await ProductInventory.findOne({sku: item.sku})
+//     console.log(productInv) 
    //console.log("test page called")
     //await updateInventory();
     

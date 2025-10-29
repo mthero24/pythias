@@ -161,8 +161,15 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                 <Grid2 size={6}>
                     <Button disabled={loading} fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={async () => {
                         setLoading(true)
-                        let res = await axios.post("/api/admin/products", { products: products });
-                        if (res.data.error) alert(res.data.msg)
+                        let res = await axios.post("/api/admin/products", { products: products }).catch(err => {
+                            console.log(err.response.data)
+                            setLoading(false)
+                            return { data: { error: true, msg: err.response.data.msg } };
+                        });
+                        if (res.data.error) {
+                            alert(res.data.msg)
+                            setLoading(false)
+                        }
                         else {
                             let prods = []
                             for (let p of res.data.products) {

@@ -2,14 +2,15 @@
 import {Scan} from "./scan"
 import { BinSettings } from "./binSettings"
 import { BinModal } from "./BinModal";
-import {Box, Card, Typography, Grid2, Button} from "@mui/material"
+import {Box, Card, Typography, Grid2, Button, Container, TextField} from "@mui/material"
 import {useState}from "react"
 import axios from "axios"
+import Image from "next/image";
 import { Footer } from "@pythias/backend";
-export function Main({binCount, binsInUse, source}){
-    const [bin, setBin] = useState(null)
+export function Main({source}){
+    const [variant, setVariant] = useState(null)
+    const [inventory, setInventory] = useState(null)
     const [auto, setAuto] = useState(true)
-    const [bins, setBins] = useState(binsInUse? binsInUse: [])
     const [open, setOpen] =useState(false)
     const [labelModal, setLabelModal] = useState(false)
     let modalStyle = {
@@ -25,66 +26,52 @@ export function Main({binCount, binsInUse, source}){
         p: 4,
         overflow: "auto"
       };
-    const emptyBin = async (bin)=>{
-        let res = await axios.delete(`/api/production/returns?bin=${bin._id}`)
-        if(res.data.error) console.log(res.data.msg)
-        else{
-            setBins(res.data.bins)
-            setOpen(false)
-            setBin(null)
-        }
-    }
-    return <Box sx={{background: "#e2e2e2", minHeight: "70vh"}}>
-        <Card sx={{padding: "2%", margin: "2%", display: "flex", flexBasis: "row", justifyContent: "space-between"}}>
-            <BinSettings binCount={binCount} setAuto={setAuto} setBinss={setBins} modalStyle={modalStyle} />
-            <Button sx={{background:"#d2d2d2", color: "#000"}}>Print Labels</Button>
-        </Card>
-        <Scan setBin={setBin} bin={bin} auto={auto} setAuto={setAuto} setBins={setBins} setOpen={setOpen} />
-        <BinModal open={open} setOpen={setOpen} setAuto={setAuto} bin={bin} setBin={setBin} setBins={setBins} modalStyle={modalStyle} source={source}/>
-        <Card sx={{padding: ".5%", margin: "2%", minHeight: "90vh"}}>
-            <Card sx={{padding: "2%"}}>
-                <Grid2 container spacing={2} sx={{textAlign: "center"}}>
-                    <Grid2 size={2}>
-                        <Typography>Bin Number</Typography>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Typography>Blank</Typography>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Typography>Color</Typography>
-                    </Grid2>
-                    <Grid2 size={2}>
-                        <Typography>Size</Typography>
-                    </Grid2>
-                    <Grid2 size={2}>
-                        
-                    </Grid2>
-                </Grid2>
-            </Card>
-            {bins.map((b, i)=>(
-                <Card  sx={{padding: "2%", cursor: "pointer", background: i % 2 == 0? "#e2e2e2": ""}} onClick={()=>{setBin(b); setOpen(true)}} key={i}>
-                     <Grid2 container spacing={2} sx={{textAlign: "center"}}>
-                    <Grid2 size={2}>
-                        <Typography>{b?.number}</Typography>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Typography>{b?.blank?.code}</Typography>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Typography>{b?.color?.name}</Typography>
-                    </Grid2>
-                    <Grid2 size={2}>
-                        <Typography>{b?.size}</Typography>
-                    </Grid2>
-                    <Grid2 size={2}>
-                        {/* <Button onClick={()=>{
-                            emptyBin(b)
-                        }}>Empty Bin</Button> */}
-                    </Grid2>
-                </Grid2>
-                </Card>
-            ))}
-        </Card>
-        <Footer fixed={true} />
-    </Box>
+    return (
+        <Box sx={{ minHeight: "70vh", paddingTop: "2%"}}>
+            <Container>
+                <Scan setVariant={setVariant} setInventory={setInventory} auto={auto} setAuto={setAuto}  />
+                <Box sx={{margin: "0% 2%", minHeight: "60vh"}}>
+                    {variant && inventory && (
+                        <Box>
+                            <Card sx={{padding: "2%", marginBottom: "2%"}}>
+                                <Typography variant="h6">Variant Information</Typography>
+                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", alignContent: "center", gap: "1rem", marginTop: "1rem"}}>
+                                    <Image src={variant.image.replace("400", "600")} width={600} height={400} alt="Variant Image" />
+                                </Box>
+                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", alignContent: "center", marginTop: "1rem"}}>
+                                    <Grid2 container spacing={2} sx={{marginTop: "1rem"}}>
+                                        <Grid2 xs={6}>
+                                            <Typography><strong>SKU:</strong> {variant.sku}</Typography>
+                                            <Typography><strong>UPC:</strong> {variant.upc}</Typography>
+                                            <Typography><strong>Blank:</strong> {variant.blank.code}</Typography>
+                                            <Typography><strong>Color:</strong> {variant.color.name}</Typography>
+                                            <Typography><strong>Size:</strong> {variant.blank.sizes.filter(s=> s._id.toString() == variant.size.toString())[0].name}</Typography>
+                                            <Typography><strong>Price:</strong> ${variant.price}</Typography>
+                                        </Grid2>
+                                        <Grid2 xs={6}>
+                                            <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", gap: "1rem"}}>
+                                                <Typography><strong>Quantity:</strong></Typography>
+                                                <TextField size="small" value={inventory.quantity} type={"number"} onChange={(e)=>{
+                                                    let inv = {...inventory}
+                                                    inv.quantity = parseInt(e.target.value)
+                                                    setInventory(inv)
+                                                }}/>
+                                                <Box variant="contained" size={"large"} sx={{ marginLeft: "-22%", backgroundColor: "#1722b9ff", color: "#fff", padding: "2%", zIndex: 1, cursor: "pointer", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }}>Update</Box>
+                                            </Box>
+                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "1rem", marginTop: "1rem" }}>
+                                                <Typography><strong>Location:</strong></Typography>
+                                                <TextField size="small" value={inventory.location} />
+                                                <Box variant="contained" size={"large"} sx={{ marginLeft: "-22%", backgroundColor: "#1722b9ff", color: "#fff", padding: "2%", zIndex: 1, cursor: "pointer", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }}>Update</Box>
+                                            </Box>
+                                        </Grid2>
+                                    </Grid2>
+                                </Box>
+                            </Card>
+                        </Box>
+                    )}
+                </Box>
+            </Container>
+            <Footer fixed={true} />
+        </Box>
+    )
 }

@@ -1,42 +1,41 @@
-import Items from "@/models/Items";
-import SkuToUpc from "@/models/skuUpcConversion"
+import {Products, SkuToUpc, ProductInventory} from "@pythias/mongo"
 import {NextApiRequest, NextResponse} from "next/server";
-import Bins from "@/models/returnBins"
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
-    let skuToUpc = await SkuToUpc.findOne({$or: [{sku: data.upc}, {upc: data.upc}]}).populate("design", "images sku").populate("blank color")
-    if(skuToUpc && skuToUpc.blank && skuToUpc.color && skuToUpc.design){
-        let bin = await Bins.findOne({blank: skuToUpc.blank, color: skuToUpc.color, size: skuToUpc.size}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
-        console.log(bin)
-        if(!bin && skuToUpc){
-            bin= await Bins.findOne({inUse: false})
-            bin.blank = skuToUpc.blank
-            bin.color = skuToUpc.color
-            bin.size = skuToUpc.size
-            bin.inUse = true
-        }
-        let inv = bin.inventory.filter(iv=> iv.upc == data.upc || iv.sku == data.upc)[0]
-        if(inv){
-            inv.quantity++
-            console.log(inv.quantity, "quantity")
-        }else{
-            inv = {
-                upc: skuToUpc.upc,
-                sku: skuToUpc.sku,
-                design: skuToUpc.design,
-                quantity: 1
-            }
-            bin.inventory.push(inv)
-        }
-        bin.inUse = true
-        await bin.save()
-        let bins = await Bins.find({inUse: true}).populate("inventory.design", "sku images").populate("blank", "sizes code multiImages").populate("color", "name")
-        //console.log(bin, "later bin")
-        return NextResponse.json({error: false, bin, bins})
+    console.log(data)
+    let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: data.upc } } }, { variantsArray: { $elemMatch: { upc: data.upc } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
+    console.log(product, "product found in returns bin route")
+    if(!product){
+        let skuToUpc = await SkuToUpc.findOne({ $or: [{sku: data.upc}, {upc: data.upc}]}) 
+        console.log(skuToUpc, "skuToUpc")    
     }
-    if(skuToUpc && !skuToUpc.blank && !skuToUpc.color && !skuToUpc.design){
-        return NextResponse.json({error: true, msg: "missing design color or blank information go to fix upcs tab and search the upc or sku and fix missing information"})
+    if(product){
+        let variant = product.variantsArray.find(v => v.sku === data.upc || v.upc === data.upc)
+        let productInventory = await ProductInventory.findOne({ sku: variant.sku })
+        console.log(productInventory, "productInventory")
+        if(!productInventory){
+            variant.productInventory = new ProductInventory({
+                quantity: 1,
+                order_at_quantity: 0,
+                pending_quantity: 0,
+                quantity_to_order: 0,
+                desired_order_quantity: 0,
+                color: variant.color,
+                blank: variant.blank,
+                size: variant.size,
+                unit_cost: variant.unit_cost,
+                location: variant.location,
+                sku: variant.sku
+            })
+            await variant.productInventory.save();
+            await product.save();
+            return NextResponse.json({error: false, msg: "Inventory created and updated", productInventory: variant.productInventory, variant})
+        }else{
+            productInventory.quantity += 1
+            await productInventory.save()
+            return NextResponse.json({ error: false, msg: "Inventory created and updated", productInventory: productInventory, variant })
+        }
     }
     return NextResponse.json({error: true, msg: "Look up SKU or UPC on the design page!!!"})
 
