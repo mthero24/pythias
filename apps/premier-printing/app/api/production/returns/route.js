@@ -42,9 +42,8 @@ export async function POST(req=NextApiRequest){
 }
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
-    console.log(data.bin)
-    await Bins.findByIdAndUpdate(data.bin._id, {...data.bin})
-    return NextResponse.json({error: false})
+    let inventory = await ProductInventory.findOneAndUpdate({_id: data.inventory._id}, data.inventory, {new: true})
+    return NextResponse.json({error: false, inventory})
 }
 export async function DELETE(req){
     let binId = await req.nextUrl.searchParams.get("bin")

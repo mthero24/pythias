@@ -38,22 +38,6 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         if(product) {
             let prods = []
             let prod = {...product}
-            for (let b of prod.blanks) {
-                if (b.multiImages["modelFront"] && b.multiImages["modelFront"].length > 0) {
-                    for (let i of b.multiImages["modelFront"]) {
-                        if (!b.multiImages["front"].filter(mi => mi.image == i.image)[0]) {
-                            b.multiImages["front"].push(i);
-                        }
-                    }
-                }
-                if (b.multiImages["modelBack"] && b.multiImages["modelBack"].length > 0) {
-                    for (let i of b.multiImages["modelBack"]) {
-                        if (!b.multiImages["back"].filter(mi => mi.image == i.image)[0]) {
-                            b.multiImages["back"].push(i);
-                        }
-                    }
-                }
-            }
             if(prod?.blanks.length > 1) setCombined(true);
             if(prod && prod._id)prods.push(prod);
             setProducts(prods);
@@ -89,22 +73,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
     }, []);    
-    for(let b of blanks){
-        if (b.multiImages && b.multiImages["modelFront"] && b.multiImages["modelFront"].length > 0) {
-            for (let i of b.multiImages["modelFront"]){
-                if (!b.multiImages["front"].filter(mi=> mi.image == i.image)[0]) {
-                    b.multiImages["front"].push(i);
-                }
-            }
-        }
-        if (b.multiImages && b.multiImages["modelBack"] && b.multiImages["modelBack"].length > 0) {
-            for (let i of b.multiImages["modelBack"]){
-                if (!b.multiImages["back"].filter(mi=> mi.image == i.image)[0]) {
-                    b.multiImages["back"].push(i);
-                }
-            }
-        }
-    }
+    
     const getUpcs = async ({ blanks, design }) => {
         let upcs = await axios.post("/api/upc", { blanks, design }).catch(e => {
             console.error(e);

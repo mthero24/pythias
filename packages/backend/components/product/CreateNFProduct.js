@@ -107,7 +107,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                         <Grid2 container spacing={2}>
                             {blanks && blanks.map((blank) => {
                                 let color = blank.colors && blank.colors.length > 0 ? blank.colors[0] : null;
-                                let fontImages = []
+                                {/* let fontImages = []
                                 let backImages = []
                                 for(let b of Object.keys(blank.multiImages)){
                                     for(let i of blank.multiImages[b]){
@@ -124,7 +124,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                         }
                                     }
                                     continue
-                                }
+                                } */}
                                 return (
                                     <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={blank._id}>
                                         <Card sx={{marginBottom: "1%", padding: "1%", width: "100%", cursor: "pointer", "&:hover": { boxShadow: 4, opacity: 0.9}}} onClick={() => {
@@ -148,17 +148,18 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                             setStage("Select Images");
                                         }}>
                                            <Box>
-                                                {fontImages.length > 0 && (
+                                                <img src={`${blank.images[0].image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={blank.name} style={{ width: "100%", height: "200px", objectFit: "contain" }} />
+                                                {/* {fontImages.length > 0 && (
                                                     <img src={`${fontImages[0].image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={blank.name} style={{ width: "100%", height: "200px", objectFit: "contain" }} />
                                                 ) }
                                                 {backImages.length > 0 && (
                                                     <Box sx={{position: "relative", marginBottom: "-85px", bottom: 100, width: "30%", border: "1px solid #ccc", borderRadius: "4px", overflow: "hidden"}}>
                                                         <img src={`${backImages[0].image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={blank.name} style={{ width: "100%", height: "auto", objectFit: "contain" }} />
                                                     </Box>
-                                                )}
-                                                {fontImages.length <= 0 && backImages.length <= 0 && (                                                   
+                                                )} */}
+                                                {/* {fontImages.length <= 0 && backImages.length <= 0 && (                                                   
                                                     <img src="/missingImage.jpg" alt="No Image Available" style={{ width: "100%", height: "200px", objectFit: "contain" }} />
-                                                )}
+                                                )} */}
                                            </Box>
                                             <Typography variant="body2" textAlign="center" sx={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{blank.name}</Typography>
                                         </Card>
@@ -171,21 +172,17 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                 {type === "From Blank" && stage == "Select Images" && (
                     <Box>
                         {/* Render product creation UI here */}
-                        {product && product.blanks[0] && product.blanks[0].multiImages && (
+                        {product && product.blanks[0] && (
                             <Box>
                                 <Typography variant="h6" textAlign="center" sx={{marginBottom: "2%"}}>Select Product Images for {product.name}</Typography>
-                                {Object.keys(product.blanks[0].multiImages).filter(key=> key == "front" || key=="back" || key == "modelFront" || key == "modelBack").sort((a,b)=>{
-                                    if(a.includes("front") && b.includes("back")) return -1;
-                                    if(a.includes("back") && b.includes("front")) return 1;
-                                    return 0;
-                                }).map((key) => (
-                                    <Grid2 container spacing={2} key={key}>
-                                        {product.blanks[0].multiImages[key].map((image) => (
+                                
+                                    <Grid2 container spacing={2}>
+                                        {product.blanks[0].images.map((image) => (
                                             <Grid2 item xs={6} sm={4} md={3} key={image._id} sx={{cursor: "pointer"}} onClick={() => {
                                                 let prod = {...product};
                                                 if(!prod.productImages) prod.productImages = [];
                                                 if (!prod.productImages.filter(img => img.image === `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`)[0]){
-                                                    prod.productImages.push({image: `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`, color: product.colors.filter(color => color._id.toString() === image.color.toString())[0], blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}-${key}`, side: key});
+                                                    prod.productImages.push({image: `${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`, color: product.colors.filter(color => color._id.toString() === image.color.toString())[0], blank: product.blanks[0]._id, sku: `${product.sku}-${image.color}`});
 
                                                 }
                                                 else{
@@ -202,13 +199,11 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                                         <Box sx={{ position: "relative", top: 40, backgroundColor: "rgba(255, 255, 255, 0.7)", background: "transparent", padding: "2px", marginTop: "-40px" }}>
                                                             <Checkbox checked={false} />
                                                         </Box>}
-                                                    <img src={`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={key} style={{ width: "100%", height: "200px", objectFit: "contain" }} />
-                                                    <Typography variant="body2" textAlign="center">{key}</Typography>
+                                                    <img src={`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`}  style={{ width: "100%", height: "200px", objectFit: "contain" }} />
                                                 </Card>
                                             </Grid2>
                                         ))}
                                     </Grid2>
-                                ))}
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", gap:2, marginTop: "2%"}}>
                                     <Button fullWidth variant="outlined" onClick={() => setStage("Select Blank")}>Back</Button>
                                     <Button fullWidth variant="contained" onClick={() => {
@@ -269,9 +264,9 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                             <Box key={color._id} sx={{marginBottom: "2%"}}>
                                 <Typography variant="subtitle1" sx={{marginBottom: "1%"}}>{color.name}</Typography>
                                 <Box sx={{width: "100%"}}>
-                                    {product.colors && product.colors.length > 0 && product.blanks[0].multiImages && Object.keys(product.blanks[0].multiImages).filter(k=> k=="front" || k=="back" || k=== "modelFront" || k == "modelBack").map((key) => (
-                                        <Grid2 container spacing={2} key={key}>
-                                            {product.blanks[0].multiImages[key].length > 0 && product.blanks[0].multiImages[key].filter(img => img.color.toString() === color._id.toString()).map((image) => (
+                                    {product.colors && product.colors.length > 0 && (
+                                        <Grid2 container spacing={2} >
+                                            {product.blanks[0].images.length > 0 && product.blanks[0].images.filter(img => img.color.toString() === color._id.toString()).map((image) => (
                                                 <Grid2 size={{ xs: 6, sm: 3, md: 2 }} key={image._id} sx={{cursor: "pointer", margin: "1% 0%"}} onClick={() => {
                                                     let prod = {...product};
                                                     if(primaryImage){
@@ -304,12 +299,12 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                                                 <Checkbox checked={true} color="error" />
                                                             </Box>}
                                                         <img src={`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={image.alt} style={{ width: "100%", height: "auto" }} />
-                                                        <Typography variant="body2" textAlign="center">{key}</Typography>
+                                                        
                                                     </Card>
                                                 </Grid2>
                                             ))}
                                         </Grid2>
-                                    ))}
+                                    )}
                                 </Box>
                             </Box>
                         ))}

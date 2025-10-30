@@ -7,6 +7,7 @@ import {useState}from "react"
 import axios from "axios"
 import Image from "next/image";
 import { Footer } from "@pythias/backend";
+import { set } from "mongoose";
 export function Main({source}){
     const [variant, setVariant] = useState(null)
     const [inventory, setInventory] = useState(null)
@@ -26,15 +27,30 @@ export function Main({source}){
         p: 4,
         overflow: "auto"
       };
+    const updateInventory = async () => {
+        console.log(inventory, "updating inventory")
+        let res = await axios.put("/api/production/returns", {inventory})
+        console.log(res.data)
+        setInventory(res.data.inventory)
+    }
     return (
         <Box sx={{ minHeight: "70vh", paddingTop: "2%"}}>
             <Container>
+                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: "2%"}}>
+                    <TextField label="Out Of Stock" onChange={async (e)=> {
+                        let res = await axios.post("/api/production/returns/outofstock", {upc: e.target.value})
+                        console.log(res.data)
+                        setVariant(res.data.variant)
+                        setInventory(res.data.productInventory)
+                        e.target.value = ""
+                    }} sx={{marginRight: "2%"}}/>
+                </Box>
                 <Scan setVariant={setVariant} setInventory={setInventory} auto={auto} setAuto={setAuto}  />
                 <Box sx={{margin: "0% 2%", minHeight: "60vh"}}>
                     {variant && inventory && (
                         <Box>
                             <Card sx={{padding: "2%", marginBottom: "2%"}}>
-                                <Typography variant="h6">Variant Information</Typography>
+                                <Typography variant="h6">Item Information</Typography>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", alignContent: "center", gap: "1rem", marginTop: "1rem"}}>
                                     <Image src={variant.image.replace("400", "600")} width={600} height={400} alt="Variant Image" />
                                 </Box>
@@ -56,12 +72,16 @@ export function Main({source}){
                                                     inv.quantity = parseInt(e.target.value)
                                                     setInventory(inv)
                                                 }}/>
-                                                <Box variant="contained" size={"large"} sx={{ marginLeft: "-22%", backgroundColor: "#1722b9ff", color: "#fff", padding: "2%", zIndex: 1, cursor: "pointer", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }}>Update</Box>
+                                                <Box variant="contained" size={"large"} sx={{ marginLeft: "-22%", backgroundColor: "#1722b9ff", color: "#fff", padding: "2%", zIndex: 1, cursor: "pointer", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }} onClick={()=> updateInventory()}>Update</Box>
                                             </Box>
                                             <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "1rem", marginTop: "1rem" }}>
                                                 <Typography><strong>Location:</strong></Typography>
-                                                <TextField size="small" value={inventory.location} />
-                                                <Box variant="contained" size={"large"} sx={{ marginLeft: "-22%", backgroundColor: "#1722b9ff", color: "#fff", padding: "2%", zIndex: 1, cursor: "pointer", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }}>Update</Box>
+                                                <TextField size="small" value={inventory.location? inventory.location: ""} onChange={(e)=>{
+                                                    let inv = {...inventory}
+                                                    inv.location = e.target.value
+                                                    setInventory(inv)
+                                                }}/>
+                                                <Box variant="contained" size={"large"} sx={{ marginLeft: "-22%", backgroundColor: "#1722b9ff", color: "#fff", padding: "2%", zIndex: 1, cursor: "pointer", borderTopRightRadius: "4px", borderBottomRightRadius: "4px" }} onClick={()=> updateInventory()}>Update</Box>
                                             </Box>
                                         </Grid2>
                                     </Grid2>
