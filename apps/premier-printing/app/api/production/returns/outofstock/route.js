@@ -1,4 +1,4 @@
-import {Products, SkuToUpc, ProductInventory, Item, Inventory} from "@pythias/mongo"
+import {Products, ProductInventory, Item, Inventory} from "@pythias/mongo"
 import {NextApiRequest, NextResponse} from "next/server";
 
 export async function POST(req=NextApiRequest){
