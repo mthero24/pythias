@@ -1,6 +1,5 @@
 import {Products, SkuToUpc, ProductInventory, Item, Inventory} from "@pythias/mongo"
 import {NextApiRequest, NextResponse} from "next/server";
-import { initMetadata } from "pdfkit";
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
