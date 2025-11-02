@@ -1,6 +1,7 @@
 import { Inventory } from "@mui/icons-material";
 import {Products, SkuToUpc, ProductInventory, Item, Inventory} from "@pythias/mongo"
 import {NextApiRequest, NextResponse} from "next/server";
+import { initMetadata } from "pdfkit";
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
@@ -25,6 +26,8 @@ export async function POST(req = NextApiRequest) {
     item.inventory.inventoryType = "inventory"
     item.inventory.productInventory = null
     item.inventory.inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
+    item.printed = false
+    item.steps.push({ step: "sent to production", date: new Date() })
     await item.save()
     let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: item.sku } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
     console.log(product, "product found in returns bin route")
