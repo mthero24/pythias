@@ -17,7 +17,7 @@ export async function POST(req=NextApiRequest){
     return NextResponse.json({error: true, msg: "Look up SKU or UPC on the design page!!!"})
 
 }
-export async function POST(req = NextApiRequest) {
+export async function PUT(req = NextApiRequest) {
     let data = await req.json()
     console.log(data)
     let item = await Item.findOne({ upc: data.upc })
