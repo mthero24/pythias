@@ -124,7 +124,8 @@ const schema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: ProductInventory,
       },
-    }
+    },
+    updated: {type: Boolean, default: false},
   },
   { suppressWarning: true }
 );

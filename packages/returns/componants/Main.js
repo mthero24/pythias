@@ -8,7 +8,7 @@ import axios from "axios"
 import Image from "next/image";
 import { Footer } from "@pythias/backend";
 import { set } from "mongoose";
-export function Main({source}){
+export function Main({blanks, source}){
     const [variant, setVariant] = useState(null)
     const [inventory, setInventory] = useState(null)
     const [auto, setAuto] = useState(true)
@@ -36,7 +36,7 @@ export function Main({source}){
     return (
         <Box sx={{ minHeight: "70vh", paddingTop: "2%"}}>
             <Container>
-                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: "2%"}}>
+                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: "2%", gap: "1rem"}}>
                     <TextField label="Out Of Stock" onChange={async (e)=> {
                         let res = await axios.post("/api/production/returns/outofstock", {upc: e.target.value})
                         console.log(res.data)
@@ -44,15 +44,22 @@ export function Main({source}){
                         setInventory(res.data.productInventory)
                         e.target.value = ""
                     }} sx={{marginRight: "2%"}}/>
+                    <TextField label="To Production (piece Id)" onChange={async (e) => {
+                        let res = await axios.put("/api/production/returns/outofstock", { upc: e.target.value })
+                        console.log(res.data)
+                        setVariant(res.data.variant)
+                        setInventory(res.data.productInventory)
+                        e.target.value = ""
+                    }} sx={{ marginRight: "2%" }} />
                 </Box>
-                <Scan setVariant={setVariant} setInventory={setInventory} auto={auto} setAuto={setAuto}  />
+                <Scan blanks={blanks} setVariant={setVariant} setInventory={setInventory} auto={auto} setAuto={setAuto}  />
                 <Box sx={{margin: "0% 2%", minHeight: "60vh"}}>
                     {variant && inventory && (
                         <Box>
                             <Card sx={{padding: "2%", marginBottom: "2%"}}>
                                 <Typography variant="h6">Item Information</Typography>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", alignContent: "center", gap: "1rem", marginTop: "1rem"}}>
-                                    <Image src={variant.image.replace("400", "600")} width={600} height={400} alt="Variant Image" />
+                                    <img src={variant.image.replace("width=400", "width=600")} width={600} height={400} alt="Variant Image" />
                                 </Box>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", alignContent: "center", marginTop: "1rem"}}>
                                     <Grid2 container spacing={2} sx={{marginTop: "1rem"}}>
