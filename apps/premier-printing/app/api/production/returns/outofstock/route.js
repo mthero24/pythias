@@ -1,4 +1,3 @@
-import { Inventory } from "@mui/icons-material";
 import {Products, SkuToUpc, ProductInventory, Item, Inventory} from "@pythias/mongo"
 import {NextApiRequest, NextResponse} from "next/server";
 import { initMetadata } from "pdfkit";
