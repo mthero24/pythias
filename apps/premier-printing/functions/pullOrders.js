@@ -140,8 +140,8 @@ let blankConverter = {
     "YLS": "RSYLS",
     BCSWT: "SWT",
 }
-const CreateSku = async ({ blank, color, size, design, threadColor }) => {
-    let sku = `${blank.code}_${color.sku}_${size.name}${threadColor ? `_${threadColor}` : ""}${design ? `_${design.sku}` : ""}`;
+const CreateSku = async ({ blank, color, size, design, threadColor, designSku }) => {
+    let sku = `${blank.code}_${color.sku}_${size.name}${threadColor ? `_${threadColor}` : ""}${design ? `_${design.sku}` : ""}${!design && designSku ? `_${designSku}` : ""}`;
     return sku;
 }
 export const updateInventory = async ()=>{
@@ -369,7 +369,7 @@ export async function pullOrders(){
                     let product
                     let newSku
                     if(blank && color && size){
-                        newSku = await CreateSku({blank, color, size, design})
+                        newSku = await CreateSku({blank, color, size, design, designSku})
                         product = await Products.findOne({ variantsArray: { $elemMatch: { sku: newSku } } }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
                         console.log(product, "found product")
                     }
@@ -433,8 +433,7 @@ export async function pullOrders(){
                     let pantSize = i.sku.split("_")[2]
                     let shirt = i.sku.split("_")[3]
                     let shirtColor = i.sku.split("_")[4]
-                    let shirtSize = i.sku.split("_")[5]
-                    let designSku = i.sku.split("_").slice(6, i.sku.split("_").length).join("_")
+                    let designSku = i.sku.split("_").slice(5, i.sku.split("_").length).join("_")
                     console.log(pant, pantColor, pantSize, shirt, shirtColor, shirtSize, designSku, "broken pp set sku")
                     let design = await Design.findOne({sku: designSku})
                     let blankPant = await Blank.findOne({ code: pant }).populate("colors")
@@ -451,7 +450,7 @@ export async function pullOrders(){
                     console.log(blankShirt.code, colorShirt?.name, sizeShirt?.name, "shirt info")
                     item = await createItem(i, order, blankPant, colorPant, null, sizePant, null, i.sku, true)
                     items.push(item)
-                    item = await createItem(i, order, blankShirt, colorShirt, null, sizeShirt, design, i.sku, (design || (designSku && !designSku === "") ? false : true))
+                    item = await createItem(i, order, blankShirt, colorShirt, null, sizePant, design, i.sku, (design || (designSku && !designSku === "") ? false : true))
                     items.push(item)
                 } else if(i.sku !== ""){
                     let item

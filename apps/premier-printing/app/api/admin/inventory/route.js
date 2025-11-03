@@ -10,7 +10,8 @@ export async function GET(req=NextApiRequest){
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     let updateItems = []
-    if (data.inventory.quantity > 0 && data.inventory.attached.length > 0) {
+    if(!data.inventory.attached) data.inventory.attached = [];
+    if (data.inventory.quantity > 0 && data.inventory.attached?.length > 0) {
         for (let i = 0; i < data.inventory.quantity; i++) {
             let item = await Items.findOne({ _id: data.inventory.attached[i] })
             if (item) {
@@ -26,6 +27,7 @@ export async function POST(req=NextApiRequest){
         }
     }
     let removedItems = []
+    if(!data.inventory.inStock) data.inventory.inStock = [];
     if(data.inventory.quantity < data.inventory.inStock.length){
         let items = await Items.find({_id: {$in: data.inventory.inStock}}).sort({_id: 1});
         for(let i = 0; i < data.inventory.quantity; i++){

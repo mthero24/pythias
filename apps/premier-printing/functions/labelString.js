@@ -61,7 +61,7 @@ export const buildLabelData = async (item, i, poNumber, opts={},) => {
         ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#${i + 1}^FS
         ^LH12,18^CFS,25,12^AXN,75,90^FO100,175^FD${item.styleCode}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,70^FD${new Date(item.date).toLocaleDateString("En-us")}^FS
-        ${item.inventory?.inventoryType == "productInventory" ? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDR Bin${item.inventory?.productInventory?.location}^FS` : `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${item.inventory?.inventory?.row}^FS
+        ${item.inventory?.inventoryType == "productInventory" ? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDR LOC: ${item.inventory?.productInventory?.location}^FS` : `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${item.inventory?.inventory?.row}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${item.inventory?.inventory?.unit}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${item.inventory?.inventory?.shelf}^FS
         ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${item.inventory?.inventory?.bin}^FS`}

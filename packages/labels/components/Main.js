@@ -36,15 +36,20 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [styleCodeSelected, setStyleCodeSelected] = useState("Select")
     const [styleCodes, setStyleCodes] = useState([])
     const [loading, setLoading] = useState(false)
+    const [marketplaceSelected, setMarketplaceSelected] = useState("Select")
+    const [marketplaces, setMarketplaces] = useState([])
     useEffect(()=>{
       let pt = []
       let sc = []
+      let mp = []
       for(let lab of labels["Standard"]){
         if(!pt.includes(lab.type?.toUpperCase())) pt.push(lab.type?.toUpperCase())
         if(!sc.includes(lab.styleCode)) sc.push(lab.styleCode)
+        if(!mp.includes(lab.order.marketplace)) mp.push(lab.order.marketplace)
       }
       setPrintTypes(pt)
       setStyleCodes(sc)
+      setMarketplaces(mp)
       const getUpdate = async()=>{
         console.log("run Get update")
         console.log("getting update")
@@ -98,10 +103,21 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
          setFilter("RT1");
         setSelected([...sel])
     }
-    const selectBasedOnPTSC = ({printType, styleCode})=>{
+    const selectBasedOnPTSC = ({printType, styleCode, marketplace})=>{
       let sel = []
       console.log(printTypeSelected)
-      if(printType && printType!= "Select" && styleCodeSelected && styleCodeSelected != "Select"){
+      if (printType && printType != "Select" && styleCodeSelected && styleCodeSelected != "Select" && marketplaceSelected && marketplaceSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
+                if(k.inventory.inventory.inStock){
+                  if(k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                }else return k.pieceId;
+            })
+          );
+        });
+      }else if(printType && printType!= "Select" && styleCodeSelected && styleCodeSelected != "Select"){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
@@ -112,16 +128,38 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
               })
             );
         });
+      } else if (printType == "Select" && styleCodeSelected != "Select" && marketplaceSelected && marketplaceSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              if ((k.styleCode == styleCodeSelected) && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
+                if(k.inventory.inventory.inStock){
+                  if(k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                }else return k.pieceId;
+            })
+          );
+        });
       }else if(printType == "Select" && styleCodeSelected != "Select"){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.styleCode == styleCodeSelected) && k.k.inventory?.inventory?.quantity > 0)
+                if ((k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
                   if (k.inventory.inventory.inStock) {
                     if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
                   } else return k.pieceId;
               })
             );
+        });
+      } else if (printType == "Select" && marketplaceSelected && marketplaceSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              if ((k.order.marketplace == marketplaceSelected) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
         });
       }else if(printType){
         Object.keys(useLabels).map((l, i) => {
@@ -136,7 +174,18 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             );
         });
       }
-      if(styleCode && styleCode != "Select" && printTypeSelected && printTypeSelected != "Select"){
+      if(styleCode && styleCode != "Select" && printTypeSelected && printTypeSelected != "Select" && marketplaceSelected && marketplaceSelected != "Select"){
+        Object.keys(useLabels).map((l, i) => {
+            sel.push(
+              ...useLabels[l].map((k) => {
+                if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
+                  if (k.inventory.inventory.inStock) {
+                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                  } else return k.pieceId;
+              })
+            );
+        });
+      }else if(styleCode && styleCode != "Select" && printTypeSelected && printTypeSelected != "Select"){
         console.log("here")
         Object.keys(useLabels).map((l, i) => {
             sel.push(
@@ -147,6 +196,17 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                   } else return k.pieceId;
               })
             );
+        });
+      }else if(styleCode && styleCode == "Select" && printTypeSelected && printTypeSelected != "Select" && marketplaceSelected && marketplaceSelected != "Select"){
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
         });
       }else if(styleCode == "Select" && printTypeSelected != "Select"){
         console.log("here")
@@ -160,17 +220,115 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
               })
             );
         });
+      }else if(styleCode == "Select" && marketplaceSelected && marketplaceSelected != "Select"){
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              if ((k.order.marketplace == marketplaceSelected) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
       }else if(styleCode){
         console.log("here or here")
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.styleCode == styleCode) && k.inventory?.quantity > 0)
+                if ((k.styleCode == styleCode) && k.inventory?.inventory?.quantity > 0)
                   if (k.inventory.inventory.inStock) {
                     if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
                   } else return k.pieceId;
               })
             );
+        });
+      }
+      if(marketplace && marketplace != "Select" && printTypeSelected && printTypeSelected != "Select" && styleCodeSelected && styleCodeSelected != "Select"){
+        console.log("here marketpalce")
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              console.log(k.order.marketplace, marketplace,)
+              if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      }else if(marketplace && marketplace != "Select" && printTypeSelected && printTypeSelected != "Select"){
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              console.log(k.order.marketplace, marketplace,)
+              if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      } else if (marketplace && marketplace != "Select" && styleCodeSelected && styleCodeSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              console.log(k.order.marketplace, marketplace,)
+              if ((k.order.marketplace == marketplace && k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      } else if (marketplace && marketplace == "Select" && printTypeSelected && printTypeSelected != "Select" && styleCodeSelected && styleCodeSelected != "Select") {
+        console.log("here marketpalce")
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              console.log(k.order.marketplace, marketplace,)
+              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      } else if (marketplace && marketplace == "Select" && printTypeSelected && printTypeSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              console.log(k.order.marketplace, marketplace,)
+              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      } else if (marketplace && marketplace == "Select" && styleCodeSelected && styleCodeSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              console.log(k.order.marketplace, marketplace,)
+              if ((k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      } else if(marketplace){
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              console.log(k.order.marketplace, marketplace,)
+              if ((k.order.marketplace == marketplace) && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
         });
       }
       console.log(sel)
@@ -370,50 +528,72 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                 <UntrackedLabels/>
             </Card>
         )}
-        
-        <Card sx={{display: "flex", width: "100%", padding: "2%", flexDirection: "row", margin: ".5%", justifyContent: "space-between"}}>
-          <Box sx={{width: "30%"}}>
-            <InputLabel id="demo-simple-select-label">Print Type</InputLabel>
-            <Select
-              labelId="demo-simple-select-label"
-              id="demo-simple-select"
-              label="Print Type"
-              value={printTypeSelected}
-              onChange={()=>{
-                console.log(event.target.dataset.value)
-                setPrintTypeSelected(event.target.dataset.value)
-                selectBasedOnPTSC({printType: event.target.dataset.value})
-              }}
-              sx={{width: "100%"}}
-            >
-              <MenuItem value={"Select"}>Select</MenuItem>
-              {printTypes.map(pt=>(
-                <MenuItem value={pt}>{pt}</MenuItem>
-              ))}
-            </Select>
+
+        <Card sx={{display: "flex", width: "100%", padding: "2%", flexDirection: "column", margin: ".5%", justifyContent: "space-between"}}>
+          <Box sx={{display: "flex", width: "100%", flexDirection: "row", justifyContent: "space-between"}}>
+            <Box sx={{width: "30%"}}>
+              <InputLabel id="demo-simple-select-label">Print Type</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                label="Print Type"
+                value={printTypeSelected}
+                onChange={()=>{
+                  console.log(event.target.dataset.value)
+                  setPrintTypeSelected(event.target.dataset.value)
+                  selectBasedOnPTSC({printType: event.target.dataset.value})
+                }}
+                sx={{width: "100%"}}
+              >
+                <MenuItem value={"Select"}>Select</MenuItem>
+                {printTypes.map(pt=>(
+                  <MenuItem value={pt}>{pt}</MenuItem>
+                ))}
+              </Select>
+            </Box>
+              <Box sx={{ width: "30%" }}>
+                <InputLabel id="demo-simple-select-label">Marketplace</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  id="demo-simple-select"
+                  label="Marketplace"
+                  value={marketplaceSelected}
+                  onChange={() => {
+                    console.log(event.target.dataset.value)
+                    setMarketplaceSelected(event.target.dataset.value)
+                    selectBasedOnPTSC({ marketplace: event.target.dataset.value })
+                  }}
+                  sx={{ width: "100%" }}
+                >
+                  <MenuItem value={"Select"}>Select</MenuItem>
+                  {marketplaces.map(pt => (
+                    <MenuItem value={pt}>{pt}</MenuItem>
+                  ))}
+                </Select>
+              </Box>
+            <Box sx={{width: "30%"}}>
+              <InputLabel id="demo-simple-select-label">Style Code</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={styleCodeSelected}
+                label="Blank Type"
+                sx={{width: "100%"}}
+                onChange={()=>{
+                  console.log(event.target.dataset.value)
+                  setStyleCodeSelected(event.target.dataset.value)
+                  selectBasedOnPTSC({styleCode: event.target.dataset.value})
+                }}
+              >
+                <MenuItem value={"Select"}>Select</MenuItem>
+                {styleCodes.map(pt=>(
+                  <MenuItem value={pt}>{pt}</MenuItem>
+                ))}
+              </Select>
+            </Box>
           </Box>
-          <Box>
-            <Typography>{selected.length > 0? `Labels Selected: ${selected.length}`: ""}</Typography>
-          </Box>
-          <Box sx={{width: "30%"}}>
-            <InputLabel id="demo-simple-select-label">Style Code</InputLabel>
-            <Select
-            labelId="demo-simple-select-label"
-            id="demo-simple-select"
-            value={styleCodeSelected}
-            label="Blank Type"
-            sx={{width: "100%"}}
-            onChange={()=>{
-              console.log(event.target.dataset.value)
-              setStyleCodeSelected(event.target.dataset.value)
-              selectBasedOnPTSC({styleCode: event.target.dataset.value})
-            }}
-          >
-            <MenuItem value={"Select"}>Select</MenuItem>
-            {styleCodes.map(pt=>(
-              <MenuItem value={pt}>{pt}</MenuItem>
-            ))}
-          </Select>
+          <Box sx={{display: "flex", width: "100%", justifyContent: "center", marginTop: "1%"}}>
+            <Typography>{selected.length > 0 ? `Labels Selected: ${selected.length}` : ""}</Typography>
           </Box>
         </Card>
       <Grid2 container spacing={1} sx={{ width: "100%", marginBottom: "1%" }}>
@@ -428,13 +608,6 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                     <br/>
                     Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && !l.inventory?.inventory?.inStock?.includes(l._id.toString()))).length})
                   </Typography>}
-                  {/* {source == "PO" && <Typography
-                    sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
-                  >
-                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.inStock.includes(l._id.toString())) ).length})
-                    <br/>
-                    Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && !l.inventory?.inventory?.inStock.includes(l._id.toString()))).length})
-                  </Typography>} */}
                   <Box sx={row}>
                     <Button
                         onClick={()=>{print(l)}}
