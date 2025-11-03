@@ -25,7 +25,7 @@ export async function PUT(req = NextApiRequest) {
         item.inventory.inventoryType = "inventory"
         item.inventory.productInventory = null
         item.inventory.inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
-        item.printed = false
+        item.labelPrinted = false
         item.steps.push({ step: "sent to production", date: new Date() })
         await item.save()
         let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: item.sku } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
