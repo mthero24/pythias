@@ -222,146 +222,148 @@ export async function pullOrders(){
             }
             let items = []
             for(let i of o.items){
-                if (i.sku != "" && i.sku.includes("_") && (!i.sku.includes("PPSET") || i.sku.includes("PPSET_C"))) {
-                    let item
-                    let sku = i.sku;
-                    let blankCode = sku.split("_")[0].trim();
-                    let colorSku = sku.split("_")[1].trim();
-                    let sizeName = sku.split("_")[2].trim();
-                    let skuBroken = sku.split("_");
-                    let designSku = skuBroken.slice(3, skuBroken.length).join("_");
-                    console.log(blankCode, colorSku, sizeName, designSku, "broken sku")
-                    let blank = await Blank.findOne({code: blankCode}).populate("colors")
-                    if(!blank) blank = await Blank.findOne({code: blankConverter[blankCode]? blankConverter[blankCode]: blankCode}).populate("colors")
-                    let color = blank.colors.find(c => c.sku === colorSku.toLowerCase())
-                    if(!color) color = blank.colors.find(c => c.name.toLowerCase() === colorSku.toLowerCase())
-                    if (!color) color = blank.colors.find(c => c.name === colorSku)
-                    if(!color) color = blank.colors.find(c => c.name.toLowerCase() === colorFixer[colorSku]?.toLowerCase())
-                    let size = blank.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName])
-                    let design = await Design.findOne({sku: designSku})
-                    if(!design) design = await Design.findOne({sku: designFixer[designSku]? designFixer[designSku]: designSku}) 
-                    console.log(blank.code, color?.name, size?.name, design?.sku, "found items")
-                    let product
-                    let newSku
-                    if(blank && color && size){
-                        newSku = await CreateSku({blank, color, size, design, designSku})
-                        product = await Products.findOne({ variantsArray: { $elemMatch: { sku: newSku } } }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
-                        console.log(product, "found product")
-                    }
-                    if (product) {
-                        let variant = product.variantsArray.find(v => v.sku === newSku)
-                        if (variant) {
-                            item = await createItemVariant(variant, product, order)
-                            items.push(item)
-                            let isBlank = product.design ? false : true
-                            if (blank && blank.code.includes("PPSET")) {
-                                let sb = await Blank.findOne({ code: blank.code.split("_")[1] })
-                                //console.log(item)
-                                item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                                items.push(item)
-                            } else if (blank && blank.code == "LGDSET") {
-                                let sb = await Blank.findOne({ code: "LGDSWT" })
-                                //console.log(item)
-                                item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                                items.push(item)
-                            } else if (blank && blank.code == "LGDSET") {
-                                let sb = await Blank.findOne({ code: "GDT" })
-                                item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                                items.push(item)
-                            }
+                for(let j = 0; j < parseInt(i.quantity); j++){
+                    if (i.sku != "" && i.sku.includes("_") && (!i.sku.includes("PPSET") || i.sku.includes("PPSET_C"))) {
+                        let item
+                        let sku = i.sku;
+                        let blankCode = sku.split("_")[0].trim();
+                        let colorSku = sku.split("_")[1].trim();
+                        let sizeName = sku.split("_")[2].trim();
+                        let skuBroken = sku.split("_");
+                        let designSku = skuBroken.slice(3, skuBroken.length).join("_");
+                        console.log(blankCode, colorSku, sizeName, designSku, "broken sku")
+                        let blank = await Blank.findOne({code: blankCode}).populate("colors")
+                        if(!blank) blank = await Blank.findOne({code: blankConverter[blankCode]? blankConverter[blankCode]: blankCode}).populate("colors")
+                        let color = blank.colors.find(c => c.sku === colorSku.toLowerCase())
+                        if(!color) color = blank.colors.find(c => c.name.toLowerCase() === colorSku.toLowerCase())
+                        if (!color) color = blank.colors.find(c => c.name === colorSku)
+                        if(!color) color = blank.colors.find(c => c.name.toLowerCase() === colorFixer[colorSku]?.toLowerCase())
+                        let size = blank.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName])
+                        let design = await Design.findOne({sku: designSku})
+                        if(!design) design = await Design.findOne({sku: designFixer[designSku]? designFixer[designSku]: designSku}) 
+                        console.log(blank.code, color?.name, size?.name, design?.sku, "found items")
+                        let product
+                        let newSku
+                        if(blank && color && size){
+                            newSku = await CreateSku({blank, color, size, design, designSku})
+                            product = await Products.findOne({ variantsArray: { $elemMatch: { sku: newSku } } }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
+                            console.log(product, "found product")
                         }
-                    } else {
-                        console.log("no product found")
-                        console.log(blank?.code, color?.name, size?.name, design?.sku, "found items")
-                        i.sku = newSku? newSku: i.sku
-                        let isBlank = design || (designSku && !designSku === "") ? false : true
-                        if (blank && blank.code.includes("PPSET")) {
-                            let sb = await Blank.findOne({code: blank.code.split("_")[1]})
-                            //console.log(item)
-                            item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                            items.push(item)
-                            item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                            items.push(item)
-                        }else if(blank && blank.code == "LGDSET"){
-                            let sb = await Blank.findOne({code: "LGDSWT"})
-                            //console.log(item)
-                            item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                            items.push(item)
-                            item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                            items.push(item)
-                        }else if(blank && blank.code == "LGDSET"){
-                            let sb = await Blank.findOne({code: "GDT"})
-                            item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                            items.push(item)
-                            item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                            items.push(item)
-                        }else{
-                            item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                            items.push(item)
-                        }
-                    }
-                } else if(i.sku.includes("PPSET")){
-                    let item
-                    console.log(i.sku, "pp set sku")
-                    let pant = i.sku.split("_")[0] + `_${i.sku.split("_")[3]}`
-                    let pantColor = i.sku.split("_")[1]
-                    let pantSize = i.sku.split("_")[2]
-                    let shirt = i.sku.split("_")[3]
-                    let shirtColor = i.sku.split("_")[4]
-                    let designSku = i.sku.split("_").slice(5, i.sku.split("_").length).join("_")
-                    console.log(pant, pantColor, pantSize, shirt, shirtColor, shirtSize, designSku, "broken pp set sku")
-                    let design = await Design.findOne({sku: designSku})
-                    let blankPant = await Blank.findOne({ code: pant }).populate("colors")
-                    let colorPant = blankPant.colors.find(c => c.sku === pantColor.toLowerCase())
-                    if (!colorPant) colorPant = blankPant.colors.find(c => c.name.toLowerCase() === pantColor.toLowerCase())
-                    if (!colorPant) colorPant = blankPant.colors.find(c => c.name.toLowerCase() === colorFixer[pantColor]?.toLowerCase())
-                    let sizePant = blankPant.sizes.find(s => s.name === pantSize || s.name === sizeFixer[pantSize])
-                    let blankShirt = await Blank.findOne({ code: shirt }).populate("colors")
-                    let colorShirt = blankShirt.colors.find(c => c.sku === shirtColor.toLowerCase())
-                    if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === shirtColor.toLowerCase())
-                    if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === colorFixer[shirtColor]?.toLowerCase())
-                    let sizeShirt = blankShirt.sizes.find(s => s.name === shirtSize || s.name === sizeFixer[shirtSize])
-                    console.log(blankPant.code, colorPant?.name, sizePant?.name, "pant info")
-                    console.log(blankShirt.code, colorShirt?.name, sizeShirt?.name, "shirt info")
-                    item = await createItem(i, order, blankPant, colorPant, null, sizePant, null, i.sku, true)
-                    items.push(item)
-                    item = await createItem(i, order, blankShirt, colorShirt, null, sizePant, design, i.sku, (design || (designSku && !designSku === "") ? false : true))
-                    items.push(item)
-                } else if(i.sku !== ""){
-                    let item
-                    console.log("no sku on item")
-                    console.log(item, "item without sku")
-                    if (i.upc || i.sku) {
-                        console.log("has upc or sku")
-                        let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { upc: i.upc } } }, { variantsArray: { $elemMatch: { upc: i.sku } } }] }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
-                        console.log(product, "found product by upc or sku")
                         if (product) {
-                            let variant = product.variantsArray.find(v => v.upc === i.upc || v.upc === i.sku)
+                            let variant = product.variantsArray.find(v => v.sku === newSku)
                             if (variant) {
                                 item = await createItemVariant(variant, product, order)
                                 items.push(item)
                                 let isBlank = product.design ? false : true
-                                if (variant.blank && variant.blank.code.includes("PPSET")) {
-                                    let sb = await Blank.findOne({ code: variant.blank.code.split("_")[1] })
+                                if (blank && blank.code.includes("PPSET")) {
+                                    let sb = await Blank.findOne({ code: blank.code.split("_")[1] })
                                     //console.log(item)
-                                    item = await createItem(i, order, sb, variant.color, variant.threadColor, variant.size, product.design, variant.sku ? variant.sku : i.sku, isBlank)
+                                    item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
                                     items.push(item)
-                                } else if (variant.blank && variant.blank.code == "LGDSET") {
+                                } else if (blank && blank.code == "LGDSET") {
                                     let sb = await Blank.findOne({ code: "LGDSWT" })
                                     //console.log(item)
-                                    item = await createItem(i, order, sb, variant.color, variant.threadColor, variant.size, product.design, variant.sku ? variant.sku : i.sku, isBlank)
+                                    item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
                                     items.push(item)
-                                } else if (variant.blank && variant.blank.code == "LGDSET") {
+                                } else if (blank && blank.code == "LGDSET") {
                                     let sb = await Blank.findOne({ code: "GDT" })
-                                    item = await createItem(i, order, sb, variant.color, variant.threadColor, variant.size, product.design, variant.sku ? variant.sku : i.sku, isBlank)
+                                    item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
                                     items.push(item)
                                 }
                             }
-                        }else{
+                        } else {
+                            console.log("no product found")
+                            console.log(blank?.code, color?.name, size?.name, design?.sku, "found items")
+                            i.sku = newSku? newSku: i.sku
+                            let isBlank = design || (designSku && !designSku === "") ? false : true
+                            if (blank && blank.code.includes("PPSET")) {
+                                let sb = await Blank.findOne({code: blank.code.split("_")[1]})
+                                //console.log(item)
+                                item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                items.push(item)
+                                item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                items.push(item)
+                            }else if(blank && blank.code == "LGDSET"){
+                                let sb = await Blank.findOne({code: "LGDSWT"})
+                                //console.log(item)
+                                item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                items.push(item)
+                                item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                items.push(item)
+                            }else if(blank && blank.code == "LGDSET"){
+                                let sb = await Blank.findOne({code: "GDT"})
+                                item = await createItem(i, order, sb, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                items.push(item)
+                                item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                items.push(item)
+                            }else{
+                                item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                items.push(item)
+                            }
+                        }
+                    } else if(i.sku.includes("PPSET")){
+                        let item
+                        console.log(i.sku, "pp set sku")
+                        let pant = i.sku.split("_")[0] + `_${i.sku.split("_")[3]}`
+                        let pantColor = i.sku.split("_")[1]
+                        let pantSize = i.sku.split("_")[2]
+                        let shirt = i.sku.split("_")[3]
+                        let shirtColor = i.sku.split("_")[4]
+                        let designSku = i.sku.split("_").slice(5, i.sku.split("_").length).join("_")
+                        console.log(pant, pantColor, pantSize, shirt, shirtColor, shirtSize, designSku, "broken pp set sku")
+                        let design = await Design.findOne({sku: designSku})
+                        let blankPant = await Blank.findOne({ code: pant }).populate("colors")
+                        let colorPant = blankPant.colors.find(c => c.sku === pantColor.toLowerCase())
+                        if (!colorPant) colorPant = blankPant.colors.find(c => c.name.toLowerCase() === pantColor.toLowerCase())
+                        if (!colorPant) colorPant = blankPant.colors.find(c => c.name.toLowerCase() === colorFixer[pantColor]?.toLowerCase())
+                        let sizePant = blankPant.sizes.find(s => s.name === pantSize || s.name === sizeFixer[pantSize])
+                        let blankShirt = await Blank.findOne({ code: shirt }).populate("colors")
+                        let colorShirt = blankShirt.colors.find(c => c.sku === shirtColor.toLowerCase())
+                        if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === shirtColor.toLowerCase())
+                        if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === colorFixer[shirtColor]?.toLowerCase())
+                        let sizeShirt = blankShirt.sizes.find(s => s.name === shirtSize || s.name === sizeFixer[shirtSize])
+                        console.log(blankPant.code, colorPant?.name, sizePant?.name, "pant info")
+                        console.log(blankShirt.code, colorShirt?.name, sizeShirt?.name, "shirt info")
+                        item = await createItem(i, order, blankPant, colorPant, null, sizePant, null, i.sku, true)
+                        items.push(item)
+                        item = await createItem(i, order, blankShirt, colorShirt, null, sizePant, design, i.sku, (design || (designSku && !designSku === "") ? false : true))
+                        items.push(item)
+                    } else if(i.sku !== ""){
+                        let item
+                        console.log("no sku on item")
+                        console.log(item, "item without sku")
+                        if (i.upc || i.sku) {
+                            console.log("has upc or sku")
+                            let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { upc: i.upc } } }, { variantsArray: { $elemMatch: { upc: i.sku } } }] }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
+                            console.log(product, "found product by upc or sku")
+                            if (product) {
+                                let variant = product.variantsArray.find(v => v.upc === i.upc || v.upc === i.sku)
+                                if (variant) {
+                                    item = await createItemVariant(variant, product, order)
+                                    items.push(item)
+                                    let isBlank = product.design ? false : true
+                                    if (variant.blank && variant.blank.code.includes("PPSET")) {
+                                        let sb = await Blank.findOne({ code: variant.blank.code.split("_")[1] })
+                                        //console.log(item)
+                                        item = await createItem(i, order, sb, variant.color, variant.threadColor, variant.size, product.design, variant.sku ? variant.sku : i.sku, isBlank)
+                                        items.push(item)
+                                    } else if (variant.blank && variant.blank.code == "LGDSET") {
+                                        let sb = await Blank.findOne({ code: "LGDSWT" })
+                                        //console.log(item)
+                                        item = await createItem(i, order, sb, variant.color, variant.threadColor, variant.size, product.design, variant.sku ? variant.sku : i.sku, isBlank)
+                                        items.push(item)
+                                    } else if (variant.blank && variant.blank.code == "LGDSET") {
+                                        let sb = await Blank.findOne({ code: "GDT" })
+                                        item = await createItem(i, order, sb, variant.color, variant.threadColor, variant.size, product.design, variant.sku ? variant.sku : i.sku, isBlank)
+                                        items.push(item)
+                                    }
+                                }
+                            }else{
 
-                            console.log("no product found by upc or sku")
-                            item = await createItem(i, order, null, null, null, null, null, i.sku, true)
-                            items.push(item)
+                                console.log("no product found by upc or sku")
+                                item = await createItem(i, order, null, null, null, null, null, i.sku, true)
+                                items.push(item)
+                            }
                         }
                     }
                 }

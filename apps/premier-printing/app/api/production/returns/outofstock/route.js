@@ -20,22 +20,24 @@ export async function POST(req=NextApiRequest){
 export async function PUT(req = NextApiRequest) {
     let data = await req.json()
     console.log(data)
-    let item = await Item.findOne({ upc: data.upc })
-    item.inventory.inventoryType = "inventory"
-    item.inventory.productInventory = null
-    item.inventory.inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
-    item.printed = false
-    item.steps.push({ step: "sent to production", date: new Date() })
-    await item.save()
-    let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: item.sku } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
-    console.log(product, "product found in returns bin route")
-    if (product) {
-        let variant = product.variantsArray.find(v => v.sku === data.upc || v.upc === data.upc)
-        let productInventory = await ProductInventory.findOne({ sku: variant.sku })
-        console.log(productInventory, "productInventory")
-        productInventory.quantity = 0
-        await productInventory.save()
-        return NextResponse.json({ error: false, msg: "Inventory created and updated", productInventory: productInventory, variant })
+    let item = await Item.findOne({ pieceId: data.upc })
+    if(item){
+        item.inventory.inventoryType = "inventory"
+        item.inventory.productInventory = null
+        item.inventory.inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
+        item.printed = false
+        item.steps.push({ step: "sent to production", date: new Date() })
+        await item.save()
+        let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: item.sku } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
+        console.log(product, "product found in returns bin route")
+        if (product) {
+            let variant = product.variantsArray.find(v => v.sku === item.sku || v.upc === item.upc)
+            let productInventory = await ProductInventory.findOne({ sku: variant.sku })
+            console.log(productInventory, "productInventory")
+            productInventory.quantity = 0
+            await productInventory.save()
+            return NextResponse.json({ error: false, msg: "Inventory created and updated", productInventory: productInventory, variant })
+        }
     }
     return NextResponse.json({ error: true, msg: "Look up SKU or UPC on the design page!!!" })
 
