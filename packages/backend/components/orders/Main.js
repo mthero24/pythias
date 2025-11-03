@@ -6,7 +6,7 @@ import {useState} from "react"
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import axios from "axios";
-export function Main({ords, pages, page, q}){
+export function Main({ords, pages, page, q, filter}){
     const router = useRouter()
     const [orders, setOrders] = useState(ords)
     const [search, setSearch] = useState(q)
@@ -21,7 +21,7 @@ export function Main({ords, pages, page, q}){
     }
     const handleChange = (event, value) => {
         console.log(value)
-        location.href = `/orders?page=${value}`
+        location.href = `/orders?page=${value}${filter? `&filter=${filter}`: ""}`
       };
     return (
         <Box sx={{padding: "3%", background: "#e2e2e2"}}>
@@ -31,8 +31,12 @@ export function Main({ords, pages, page, q}){
                         <Card sx={{padding: "2%", margin: "1% 0%", position: "sticky", top: "1%"}}>
                             <TextField placeholder="...Search" fullWidth onChange={()=>{setSearch(event.target.value)}} onKeyDown={()=>{if(event.key == 13 || event.key == "Enter") performSearch()}} />
                             <Box sx={{marginTop: "1%", padding: "1%", textAlign: "center"}}>
-                                <Typography>Missing Information</Typography>
-                                <Typography>Includes Blank Items</Typography>
+                                <Typography sx={{ cursor: "pointer", color: "blue" }} onClick={() => {
+                                    location.href = "/orders?page=1&filter=missinginfo"
+                                }}>Missing Information</Typography>
+                                <Typography sx={{ cursor: "pointer", color: "blue" }} onClick={()=>{
+                                    location.href= "/orders?page=1&filter=blank"
+                                }}>Includes Blank Items</Typography>
                             </Box>
                         </Card>
                     </Grid2>

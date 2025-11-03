@@ -424,7 +424,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                   {source != "PO" && <Typography
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >
-                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.inStock?.includes(l._id.toString())) ).length})
+                    {l} In Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && l.inventory?.inventory?.inStock?.includes(l._id.toString())) || (l.inventory?.inventoryType == "productInventory" && l.inventory?.productInventory?.inStock?.includes(l._id.toString()))).length})
                     <br/>
                     Out Of Stock ({useLabels[l].filter(l => (l.inventory?.inventoryType == "inventory" && !l.inventory?.inventory?.inStock?.includes(l._id.toString()))).length})
                   </Typography>}
@@ -573,7 +573,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock && i.inventory.inventory.inStock.includes(i._id.toString())?  "In Stock" : i.inventory && !i.inventory.inventory?.inStock ? i.inventory.inventory?.quantity > 0 ? "In Stock": i.inventory && i.inventory.productInventory && i.inventory.productInventory.quantity > 0 ? "In Stock" : "Out Of Stock" : "Out Of Stock" }
                               <br/>
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.inStock ? `Pending:  ${i.inventory.inventory.inStock?.length}`: "" }
-                              {i.inventory && i.inventory.inventoryType == "inventory" && <br />}
+                              {i.inventory && i.inventory.inventoryType == "productInventory" && i.inventory.productInventory && i.inventory.productInventory.inStock ? `Pending:  ${i.inventory.productInventory.inStock?.length}` : ""}
+                              <br />
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.attached ? `Need:  ${i.inventory.inventory.attached?.length}` : ""}
                               {i.inventory && i.inventory.inventoryType == "inventory" && <br />}
                               {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory && i.inventory.inventory.orders ? `Ordered ${i.inventory.inventory.orders?.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}` : ""}

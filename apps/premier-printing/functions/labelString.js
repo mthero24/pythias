@@ -1,4 +1,4 @@
-import {Items, Inventory, productInventory} from "@pythias/mongo";
+import {Items, Inventory, ProductInventory} from "@pythias/mongo";
 
 export const buildLabelData = async (item, i, poNumber, opts={},) => {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
@@ -14,7 +14,7 @@ export const buildLabelData = async (item, i, poNumber, opts={},) => {
       }
     }
     if(item.inventory?.inventoryType == "productInventory") {
-      let productInventory = await productInventory.findOne({_id: item.inventory.productInventory._id}).select("location quantity onhold");
+      let productInventory = await ProductInventory.findOne({_id: item.inventory.productInventory._id}).select("location quantity onhold");
       productInventory.quantity -= 1;
       if(productInventory.inStock) productInventory.inStock = productInventory.inStock.filter(i => i.toString() != item._id.toString());
       await productInventory.save();
