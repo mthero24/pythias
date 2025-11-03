@@ -18,7 +18,6 @@ import axios from "axios";
 import {Sort} from "../functions/sort";
 import { UntrackedLabels } from "./untracked";
 import { Footer } from "@pythias/backend";
-import { set } from "mongoose";
 import LoaderOverlay from "./LoaderOverlay";
 export function Main({labels, rePulls, giftLabels=[], batches, source}){
     const [useLabels, setLabels] = useState(labels);
@@ -46,6 +45,11 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         if(!pt.includes(lab.type?.toUpperCase())) pt.push(lab.type?.toUpperCase())
         if(!sc.includes(lab.styleCode)) sc.push(lab.styleCode)
         if(!mp.includes(lab.order.marketplace)) mp.push(lab.order.marketplace)
+      }
+      for (let lab of labels["Expedited"]) {
+        if (!pt.includes(lab.type?.toUpperCase())) pt.push(lab.type?.toUpperCase())
+        if (!sc.includes(lab.styleCode)) sc.push(lab.styleCode)
+        if (!mp.includes(lab.order.marketplace)) mp.push(lab.order.marketplace)
       }
       setPrintTypes(pt)
       setStyleCodes(sc)
@@ -117,7 +121,18 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             })
           );
         });
-      }else if(printType && printType!= "Select" && styleCodeSelected && styleCodeSelected != "Select"){
+      } else if (printType && printType != "Select" && marketplaceSelected && marketplaceSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      } else if(printType && printType!= "Select" && styleCodeSelected && styleCodeSelected != "Select"){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
@@ -197,7 +212,18 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
               })
             );
         });
-      }else if(styleCode && styleCode == "Select" && printTypeSelected && printTypeSelected != "Select" && marketplaceSelected && marketplaceSelected != "Select"){
+      } else if (styleCode && styleCode != "Select" && marketplaceSelected && marketplaceSelected != "Select") {
+        Object.keys(useLabels).map((l, i) => {
+          sel.push(
+            ...useLabels[l].map((k) => {
+              if ( k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
+                if (k.inventory.inventory.inStock) {
+                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                } else return k.pieceId;
+            })
+          );
+        });
+      } else if(styleCode && styleCode == "Select" && printTypeSelected && printTypeSelected != "Select" && marketplaceSelected && marketplaceSelected != "Select"){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
@@ -365,19 +391,17 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           items = Sort(items, source);
           console.log(items.length, "items length")
         } 
-        console.log(items);
-        console.log(items);
         let res = await axios.post("/api/production/print-labels", {items})
         console.log(res.data)
         if(res.data.error) alert(res.data.msg)
         else{
           setLoading(false)
-            setLabels(res.data.labels);
-            setBatches(res.data.batches);
-            setGiftLabels(res.data.giftMessages)
-            setRePulls(res.data.rePulls)
-            setSelected([])
-            setFilter()
+          setLabels(res.data.labels);
+          setBatches(res.data.batches);
+          setGiftLabels(res.data.giftMessages)
+          setRePulls(res.data.rePulls)
+          setSelected([])
+          setFilter()
         }
     }
     const restorePrint = async (options)=>{
@@ -724,7 +748,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                           container
                           spacing={1}
                           sx={{
-                            padding: "3%",
+                            paddingTop: "3%",
+                            paddingRight: "3%",
+                            paddingLeft: "3%",
                             background: selected.includes(i.pieceId)
                               ? "#0079DC"
                               : j % 2 == 0
@@ -827,6 +853,25 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                             </Typography>
                           </Grid2>
                         </Grid2>
+                        <Box sx={{
+                          paddingBottom: "3%",
+                          paddingRight: "3%",
+                          paddingLeft: "3%",
+                          background: selected.includes(i.pieceId)
+                            ? "#0079DC"
+                            : j % 2 == 0
+                              ? "#e2e2e2"
+                              : "#f2f2f2",
+                          cursor: "pointer",
+                          color: selected.includes(i.pieceId)
+                            ? "#fff"
+                            : "#000",
+                        }}>
+                          <Typography sx={{ fontSize: ".7rem", padding: "1%" }}>
+                            {i.inventory && i.inventory.inventoryType == "inventory" && i.inventory.inventory ? `Row: ${i.inventory.inventory.row} Unit: ${i.inventory.inventory?.unit} Shelf: ${i.inventory.inventory?.shelf} Bin: ${i.inventory.inventory?.bin}` : ""}
+                            {i.inventory && i.inventory.inventoryType == "productInventory" && i.inventory.productInventory ? `location: ${i.inventory.productInventory.location}` : ""}
+                          </Typography>
+                        </Box>
                       </Card>
                     ))}
                 </Card>

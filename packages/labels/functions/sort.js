@@ -12,12 +12,14 @@ export function Sort(list, source){
             if(a.designRef?.sku?.toUpperCase()< b.designRef?.sku?.toUpperCase()) return -1
             if(a.threadColorName?.toUpperCase() > b.threadColorName?.toUpperCase()) return 1
             if(a.threadColorName?.toUpperCase()< b.threadColorName?.toUpperCase()) return -1
-        } if (parseInt(a.inventory?.row ? a.inventory?.row : 0) > parseInt(b.inventory?.row ? b.inventory?.row : 0)) return 1
-        if (parseInt(a.inventory?.row ? a.inventory?.row : 0) < parseInt(b.inventory?.row ? b.inventory?.row : 0)) return -1
-        if (a.inventory?.unit?.toUpperCase() > b.inventory?.unit?.toUpperCase()) return 1
-        if (a.inventory?.unit?.toUpperCase() < b.inventory?.unit?.toUpperCase()) return -1
-        if (parseInt(a.inventory?.row ? a.inventory?.shelf : 0) > parseInt(b.inventory?.shelf ? b.inventory?.shelf : 0)) return 1
-        if (parseInt(a.inventory?.row ? a.inventory?.shelf : 0) < parseInt(b.inventory?.shelf ? b.inventory?.shelf : 0)) return -1
+        } if (parseInt(a.inventory?.inventory?.row ? a.inventory?.inventory?.row : 0) > parseInt(b.inventory?.inventory?.row ? b.inventory?.inventory?.row : 0)) return 1
+        if (parseInt(a.inventory?.inventory?.row ? a.inventory?.inventory?.row : 0) < parseInt(b.inventory?.inventory?.row ? b.inventory?.inventory?.row : 0)) return -1
+        if (a.inventory?.inventory?.unit?.toUpperCase() > b.inventory?.inventory?.unit?.toUpperCase()) return 1
+        if (a.inventory?.inventory?.unit?.toUpperCase() < b.inventory?.inventory?.unit?.toUpperCase()) return -1
+        if (parseInt(a.inventory?.inventory?.shelf ? a.inventory?.inventory?.shelf : 0) > parseInt(b.inventory?.inventory?.shelf ? b.inventory?.inventory?.shelf : 0)) return 1
+        if (parseInt(a.inventory?.inventory?.shelf ? a.inventory?.inventory?.shelf : 0) < parseInt(b.inventory?.inventory?.shelf ? b.inventory?.inventory?.shelf : 0)) return -1
+        if(a.inventory?.productInventory?.location > b.inventory?.productInventory?.location) return 1
+        if(a.inventory?.productInventory?.location < b.inventory?.productInventory?.location) return -1
         if (a.inventory?.bin?.toUpperCase() > b.inventory?.bin?.toUpperCase()) return 1
         if (a.inventory?.bin?.toUpperCase() < b.inventory?.bin?.toUpperCase()) return -1
         if (a.styleCode?.toUpperCase() > b.styleCode?.toUpperCase()) return 1

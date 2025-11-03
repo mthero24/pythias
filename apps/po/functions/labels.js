@@ -17,7 +17,7 @@ export async function LabelsData(){
             shippingType: "Standard",
             order: { $ne: null },
             type: { $nin: ["sublimation", "gift"] },
-            }).populate("order", "poNumber items").populate("inventory.inventory").lean(),
+            }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean(),
             Expedited: await Items.find({
             styleV2: { $ne: undefined },
             labelPrinted: false,
@@ -26,7 +26,7 @@ export async function LabelsData(){
             paid: true,
             type: { $nin: ["sublimation", "gift"] },
             shippingType: { $ne: "Standard" },
-        }).populate("order", "poNumber items").populate("inventory.inventory").lean()
+            }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean()
     }
     let rePulls = 0
     for(let k of Object.keys(labels)){
@@ -40,7 +40,7 @@ export async function LabelsData(){
             $in: ["gift-bag", "gift-message"]}
         }).lean()
     let giftOrders = giftMessages.map(s=> s.order)
-    giftOrders = await Order.find({_id: {$in: giftOrders}}).select("poNumber items")
+    giftOrders = await Order.find({_id: {$in: giftOrders}}).select("poNumber items marketplace").lean()
     //console.log(giftOrders)
     giftMessages = giftMessages.map(s=> { 
         s.order = giftOrders.filter(o=> o._id.toString() == s.order.toString())[0]; 
