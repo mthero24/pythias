@@ -1,145 +1,7 @@
-import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory } from "@pythias/mongo";
+import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory, Converters } from "@pythias/mongo";
 import { getOrders, generatePieceID } from "@pythias/integrations";
 
-let colorFixer = {
-    LtGreen: "Light Green",
-    BLUEJEAN: "Blue Jean",
-    "BlueJean": "Blue Jean",
-    ICEBLUE: "Ice Blue",
-    IceBlue: "Ice Blue",
-    "Army": "Army Green",
-    "ARMY": "Army Green",
-    "H. Grey": "Heather Grey",
-    "H.Grey": "Heather Grey",
-    HGrey: "Heather Grey",
-    HGREY: "Heather Grey",
-    HRed: "Heather Red",
-    "H.Red": "Heather Red",
-    "HRED": "Heather Red",
-    HNavy: "Heather Navy",
-    "H.Navy": "Heather Navy",
-    "TrueNavy": "True Navy",
-    TRUENAVY: "True Navy",
-    HOTPINK: "Hot Pink",
-    DkHeather: "Dark Heather",
-    "H.Maroon": "Heather Maroon",
-    HMaroon: "Heather Maroon",
-    HMAROON: "Heather Maroon",
-    "Lt.Pink": "Light Pink",
-    LtPink: "Light Pink",
-    "DUST": "Dust",
-    "WHITE": "White",
-    CAROLINA: "Carolina",
-    GRAPHITE: "Graphite",
-    LTGREEN: "Light Green",
-    BERRY: "Berry",
-    CHOCOLATE: "Chocolate",
-    "PINK": "Pink",
-    RASPBERRY: "Raspberry",
-    "CREAM": "Ceam",
-    "MINT": "Mint",
-    "SEAFOAM": "Seafoam",
-    GRASS: "Grass",
-    VintageMustard: "Vintage Mustard",
-    "Vintage/Black": "Vintage Black",
-    VintageBlack: "Vintage Black",
-    VintageRed: "Vintage Red",
-    VintageNavy: "Vintage Navy",
-    "Vintage/Red": "Vintage Red",
-    "Vintage/Navy": "Vintage Navy",
-    "VINTAGEMUSTARD": "Vintage Mustard",
-    "VINTAGE/BLACK": "Vintage Black",
-    BLACK: "Black",
-    "CAMEL": "Camel",
-    "PEPPER": "Pepper",
-    "CARDINAL": "Cardinal",
-    "FOREST": "Forest",
-    "Royal": "Royal",
-    NeonViolet: "Neon Violet",
-    "NEONVIOLET": "Neon Violet",
-    BlueSpruce: "Blue Spruce",
-    "White/Seafoam": "White Seafoam",
-    "White/Black": "White Black",
-    "White/Red": "White Red",
-    "White/Charcoal": "White Charcoal",
-    "White/Coral": "White Coral",
-    "White/Red/Royal": "White Red Royal",
-    "White/Royal": "White Royal",
-    "White/HotPink": "White Hot Pink",
-    FloBlue: "Flo Blue",
-    "WhiteSpot": "White Spot",
-    Crunchberry: "Crunchberry",
-    OCEAN: "Ocean",
-    GREY: "Grey",
-    GRAPE: "grape",
-    WhiteNavy: "White Navy",
-    "White/Navy": "White Navy",
-    "HGreen": "Heather Green",
-    "H.Green": "Heather Green",
-    "BlueAqua": "Blue Aqua",
-    AUTUMN: "Autumn",
-    "ORANGE": "Orange",
-    "PURPLE": "Purple",
-    "ChalkyMint": "Chalky Mint",
-    "HGREEN": "Heather Green",
-    "SAGE": "Sage",
-    "NAVY": "Navy",
-    "MIDNIGHT": "Midnight",
-    "DkGreen": "Dark Green",
-    "DKGREEN": "Dark Green",
-    "TERRACOTTA": "Terracotta",
-    "MAUVE": "Mauve",
-    "DUSTYROSE": "Dusty Rose",
-    "LTPINK": "Light Pink",
-    "LTBLUE": "Light Blue",
-    "DkBlue": "Dark Blue",
-    MILITARY: "Military",
-    "DKBLUE": "Dark Blue",
-    "LTYELLOW": "Light Yellow",
-    "ORCHID": "Orchid",
-    "FUCHSIA": "Fuchsia",
-    "DkPurple": "Dark Purple",
-    CHAMBRAY: "Chambray",
-    "DKPURPLE": "Dark Purple",
-    "LTORANGE": "Light Orange",
-    "BLUSH": "Blush",
-    "TAN": "Tan",
-    "BURGUNDY": "Burgundy",
-    "HotPink": "Hot Pink",
-    "LTGREEN": "Light Green",
-    "DkHeather": "Dark Heather",
-    "HFOREST": "Forest",
-    "CHARCOAL": "Charcoal",
-    "H. Maroon": "Heather Maroon",
-    "Lt. Pink": "Light Pink",
-    Grey: "Heather Grey",
-    BrightSalmon: "Bright Salmon",
-    "Bluespruce": "Blue Spruce",
 
-}
-const sizeFixer = {
-    "5/6": "5/6T",
-    "5T": "5/6T",
-    "15x16": "One Size",
-    "YOUTH": "Youth",
-    Small: "S",
-    Medium: "M",
-    Large: "L",
-    XLarge: "XL",
-    XXLarge: "2XL",
-    YXS: "XS",
-    YL: "L",
-    YS: "S",
-    YM: "M",
-    YXL: "XL",
-    YXXL: "2XL",
-}
-let blankConverter = {
-    "TLS": "RSTLS",
-    "MGDT": "GDT",
-    "YLS": "RSYLS",
-    BCSWT: "SWT",
-}
 const CreateSku = async ({ blank, color, size, design, threadColor, designSku }) => {
     let sku = `${blank.code}_${color.sku}_${size.name}${threadColor ? `_${threadColor}` : ""}${design ? `_${design.sku}` : ""}${!design && designSku ? `_${designSku}` : ""}`;
     return sku;
@@ -303,6 +165,18 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
 }
 
 export async function pullOrders(){
+    let colorFixer
+    let sizeFixer
+    let blankConverter 
+    let designFixer
+    let designConverterDoc = await Converters.findOne({type: "design"});
+    let blankConverterDoc = await Converters.findOne({type: "blank"});
+    let colorConverterDoc = await Converters.findOne({type: "color"});
+    let sizeConverterDoc = await Converters.findOne({type: "size"});
+    if(blankConverterDoc && blankConverterDoc.converter) blankConverter = blankConverterDoc.converter;
+    if(colorConverterDoc && colorConverterDoc.converter) colorFixer = colorConverterDoc.converter;
+    if(sizeConverterDoc && sizeConverterDoc.converter) sizeFixer = sizeConverterDoc.converter;
+    if(designConverterDoc && designConverterDoc.converter) designFixer = designConverterDoc.converter;
     console.log("pulling orders")
     let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}` })
     for(let o of orders){
@@ -365,6 +239,7 @@ export async function pullOrders(){
                     if(!color) color = blank.colors.find(c => c.name.toLowerCase() === colorFixer[colorSku]?.toLowerCase())
                     let size = blank.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName])
                     let design = await Design.findOne({sku: designSku})
+                    if(!design) design = await Design.findOne({sku: designFixer[designSku]? designFixer[designSku]: designSku}) 
                     console.log(blank.code, color?.name, size?.name, design?.sku, "found items")
                     let product
                     let newSku

@@ -25,3 +25,4 @@ export { BlanksComponent } from "./components/blanks/Blanks";
 export { Main as OrdersMain } from "./components/orders/Main";
 export {Main as OrderMain} from "./components/orders/id/Main";
 export { NoteSnackBar } from "./components/orders/id/NoteSnackBar"
+export { Converters } from "./components/converter/Main";

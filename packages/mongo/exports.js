@@ -26,3 +26,4 @@ export {default as Manifest} from "./models/manifest";
 export {default as ApiKeyIntegrations} from "./models/ApiKeyIntegrations";
 export {default as Temps} from "./models/Temps";
 export { default as ProductInventory } from "./models/ProductInventory";
+export { default as Converters } from "./models/converters";
