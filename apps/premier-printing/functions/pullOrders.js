@@ -181,7 +181,7 @@ export async function pullOrders(){
     let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}` })
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
-        let order = await Order.findOne({orderId: o.orderId}).populate("items")
+        let order = await Order.findOne({poNumber: o.orderNumber}).populate("items")
         if(!order){
             let marketplace = o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name
             order = new Order({orderId: o.orderId, poNumber: o.orderNumber, orderKey: o.orderKey, date: o.orderDate, status: o.orderStatus,

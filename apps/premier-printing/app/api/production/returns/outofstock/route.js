@@ -25,6 +25,10 @@ export async function PUT(req = NextApiRequest) {
         item.inventory.inventoryType = "inventory"
         item.inventory.productInventory = null
         item.inventory.inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
+        if(!item.inventory.inventory && item.inventory.inventory.quantity > 0 && item.inventory.inventory.quantity > item.inventory.inStock.length){
+            item.inventory.inventory.inStock.push(item._id.toString())
+            await item.inventory.inventory.save()
+        }
         item.labelPrinted = false
         item.steps.push({ step: "sent to production", date: new Date() })
         await item.save()
