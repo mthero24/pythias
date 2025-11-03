@@ -4,152 +4,7 @@ import axios from "axios";
 import { pullOrders, updateInventory} from "@/functions/pullOrders"
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import { canceled } from "@/functions/itemFunctions";
-let converter = {
-    YL: "L",
-    YS: "S",
-    YM: "M",
-    YXL: "XL",
-    YXXL: "2XL",
-}
-let colorFixer = {
-    LtGreen: "Light Green",
-    BLUEJEAN: "Blue Jean",
-    "BlueJean": "Blue Jean",
-    ICEBLUE: "Ice Blue",
-    IceBlue: "Ice Blue",
-    "Army": "Army Green",
-    "ARMY": "Army Green",
-    "H. Grey": "Heather Grey",
-    "H.Grey": "Heather Grey",
-    HGrey: "Heather Grey",
-    HGREY: "Heather Grey",
-    HRed: "Heather Red",
-    "H.Red": "Heather Red",
-    "HRED": "Heather Red",
-    HNavy: "Heather Navy",
-    "H.Navy": "Heather Navy",
-    "TrueNavy": "True Navy",
-    TRUENAVY: "True Navy",
-    HOTPINK: "Hot Pink",
-    DkHeather: "Dark Heather",
-    "H.Maroon": "Heather Maroon",
-    HMaroon: "Heather Maroon",
-    HMAROON: "Heather Maroon",
-    "Lt.Pink": "Light Pink",
-    LtPink: "Light Pink",
-    "DUST": "Dust",
-    "WHITE": "White",
-    CAROLINA: "Carolina",
-    GRAPHITE: "Graphite",
-    LTGREEN: "Light Green",
-    BERRY: "Berry",
-    CHOCOLATE: "Chocolate",
-    "PINK": "Pink",
-    RASPBERRY: "Raspberry",
-    "CREAM": "Ceam",
-    "MINT": "Mint",
-    "SEAFOAM": "Seafoam",
-    GRASS: "Grass",
-    VintageMustard: "Vintage Mustard",
-    "Vintage/Black": "Vintage Black",
-    VintageBlack: "Vintage Black",
-    VintageRed: "Vintage Red",
-    VintageNavy: "Vintage Navy",
-    "Vintage/Red": "Vintage Red",
-    "Vintage/Navy": "Vintage Navy",
-    "VINTAGEMUSTARD": "Vintage Mustard",
-    "VINTAGE/BLACK": "Vintage Black",
-    BLACK: "Black",
-    "CAMEL": "Camel",
-    "PEPPER": "Pepper",
-    "CARDINAL": "Cardinal",
-    "FOREST": "Forest",
-    "Royal": "Royal",
-    NeonViolet: "Neon Violet",
-    "NEONVIOLET": "Neon Violet",
-    BlueSpruce: "Blue Spruce",
-    "White/Seafoam": "White Seafoam",
-    "White/Black": "White Black",
-    "White/Red": "White Red",
-    "White/Charcoal": "White Charcoal",
-    "White/Coral": "White Coral",
-    "White/Red/Royal": "White Red Royal",
-    "White/Royal": "White Royal",
-    "White/HotPink": "White Hot Pink",
-    FloBlue: "Flo Blue",
-    "WhiteSpot": "White Spot",
-    Crunchberry: "Crunchberry",
-    OCEAN: "Ocean",
-    GREY: "Grey",
-    GRAPE: "grape",
-    WhiteNavy: "White Navy",
-    "White/Navy": "White Navy",
-    "HGreen": "Heather Green",
-    "H.Green": "Heather Green",
-    "BlueAqua": "Blue Aqua",
-    AUTUMN: "Autumn",
-    "ORANGE": "Orange",
-    "PURPLE": "Purple",
-    "ChalkyMint": "Chalky Mint",
-    "HGREEN": "Heather Green",
-    "SAGE": "Sage",
-    "NAVY": "Navy",
-    "MIDNIGHT": "Midnight",
-    "DkGreen": "Dark Green",
-    "DKGREEN": "Dark Green",
-    "TERRACOTTA": "Terracotta",
-    "MAUVE": "Mauve",
-    "DUSTYROSE": "Dusty Rose",
-    "LTPINK": "Light Pink",
-    "LTBLUE": "Light Blue",
-    "DkBlue": "Dark Blue",
-    MILITARY: "Military",
-    "DKBLUE": "Dark Blue",
-    "LTYELLOW": "Light Yellow",
-    "ORCHID": "Orchid",
-    "FUCHSIA": "Fuchsia",
-    "DkPurple": "Dark Purple",
-    CHAMBRAY: "Chambray",
-    "DKPURPLE": "Dark Purple",
-    "LTORANGE": "Light Orange",
-    "BLUSH": "Blush",
-    "TAN": "Tan",
-    "BURGUNDY": "Burgundy",
-    "HotPink": "Hot Pink",
-    "LTGREEN": "Light Green",
-    "DkHeather": "Dark Heather",
-    "HFOREST": "Forest",
-    "CHARCOAL": "Charcoal",
-    "H. Maroon": "Heather Maroon",
-    "Lt. Pink": "Light Pink",
-    Grey: "Heather Grey",
-    BrightSalmon: "Bright Salmon",
-    "Bluespruce": "Blue Spruce",
 
-}
-const sizeFixer = {
-    "5/6": "5/6T",
-    "5T": "5/6T",
-    "15x16": "One Size",
-    "YOUTH": "Youth",
-    Small: "S",
-    Medium: "M",
-    Large: "L",
-    XLarge: "XL",
-    XXLarge: "2XL",
-    YXS: "XS",
-    YL: "L",
-    YS: "S",
-    YM: "M",
-    YXL: "XL",
-    YXXL: "2XL",
-}
-let blankConverter = {
-    "TLS": "RSTLS",
-    "MGDT": "GDT",
-    "YLS": "RSYLS",
-    BCSWT: "SWT",
-}
 const CreateSku = async ({blank, color, size, design, threadColor}) => {
     let sku = `${blank.code}_${color.sku}_${size.name}${threadColor ? `_${threadColor}` : ""}${design? `_${design.sku}`: ""}`;
     return sku;
@@ -207,7 +62,7 @@ const createItemVariant = async (variant, product, order) => {
 }
 const createItem = async (i, order, blank, color, threadColor, size, design, sku, isBlank) => {
     console.log(isBlank, "isBlank+++++++++++++++")
-    let item = new Item({
+    let item = new Items({
         pieceId: await generatePieceID(),
         paid: true,
         sku: i.sku,
@@ -257,7 +112,43 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-   // await pullOrders();
+    //await pullOrders();
+    // let order = await Order.findOne({ poNumber: "912002978411370-8319663017"});
+    // let items = await Items.find({ order: order._id }).lean();
+    // for(let i of items){
+    //     let newItem = new Items({
+    //         pieceId: await generatePieceID(),
+    //         paid: true,
+    //         sku: i.sku,
+    //         orderItemId: i.orderItemId,
+    //         blank: i.blank,
+    //         styleCode: i.styleCode,
+    //         sizeName: i.sizeName,
+    //         threadColorName: i.threadColorName,
+    //         threadColor: i.threadColor,
+    //         colorName: i.colorName,
+    //         color: i.color,
+    //         size: i.size,
+    //         design: i.design,
+    //         designRef: i.designRef,
+    //         order: order._id,
+    //         shippingType: order.shippingType,
+    //         quantity: 1,
+    //         status: order.status,
+    //         name: i.name,
+    //         date: order.date,
+    //         type: i.type,
+    //         upc: i.upc,
+    //         options: i.options,
+    //         isBlank: i.isBlank,
+    //         inventory: i.inventory
+    //     })
+    //     newItem = await newItem.save();
+    //     order.items.push(newItem._id);
+    // }
+    // order.markModified("items");
+    // order = await order.save();
+    // console.log(order.items.length, "order items length++++++++++++++")
     /* let items = await Items.find({
         pieceId: { $in: ["0RZ1JX7FS",]}});
     for(let item of items){
