@@ -1,5 +1,6 @@
 import {Converters} from "@pythias/mongo"
 import {Converters as ConvertersComponent, serialize} from "@pythias/backend"
+export const dynamic = 'force-dynamic';
 export default async function ConverterPage(){
     let designConverter = await Converters.findOne({type: "design"});
     if(!designConverter){

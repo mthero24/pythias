@@ -9,21 +9,21 @@ export async function POST(req=NextApiRequest){
             pieceId: data.pieceId,
           });
     
-          console.log(item);
-    
-          let inventory = await Inventory.findOne({
-            color_name: item.colorName,
-            size_name: item.sizeName,
-            style_code: item.styleCode,
-          });
-          if (inventory) {
-            inventory.quantity = 0;
-            inventory.markModified("quantity");
-            await inventory.save();
-          }
-    
-          item.labelPrinted = false;
-          await item.save();
+            console.log(item);
+        
+            let inventory = await Inventory.findOne({
+                color_name: item.colorName,
+                size_name: item.sizeName,
+                style_code: item.styleCode,
+            });
+            if (inventory) {
+                inventory.quantity = 0;
+                inventory.markModified("quantity");
+                await inventory.save();
+            }
+            item.steps.push({ status: "Out of Stock", date: new Date() })
+            item.labelPrinted = false;
+            await item.save();
         const {labels, giftMessages, rePulls, batches} = await LabelsData()
         return NextResponse.json({error: false, labels, giftMessages, rePulls, batches})
     }catch(e){
@@ -51,6 +51,7 @@ export async function PUT(req=NextApiRequest){
             await inventory.save();
         }
         item.labelPrinted = false;
+        item.steps.push({status: "returned to inventory", date: new Date()})
         await item.save();
         const {labels, giftMessages, rePulls, batches} = await LabelsData()
         return NextResponse.json({error: false, labels, giftMessages, rePulls, batches})
