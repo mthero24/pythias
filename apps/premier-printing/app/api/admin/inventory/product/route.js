@@ -10,6 +10,7 @@ export async function POST(req = NextApiRequest,) {
             return NextResponse.json({ error: true, message: "Product not found" });
         }
         for (let variant of product.variantsArray) {
+            variant.productInventory = await ProductInventory.findOne({ sku: variant.sku });
             if (!variant.productInventory) {
                 variant.productInventory = new ProductInventory({
                     quantity: 0,
@@ -24,8 +25,8 @@ export async function POST(req = NextApiRequest,) {
                     location: variant.location,
                     sku: variant.sku
                 })
-                await variant.productInventory.save();
             }
+            await variant.productInventory.save();
         }
         product.markModified("variantsArray");
         await product.save();
