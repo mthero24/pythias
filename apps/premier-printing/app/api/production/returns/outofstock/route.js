@@ -30,7 +30,7 @@ export async function PUT(req = NextApiRequest) {
             await item.inventory.inventory.save()
         }
         item.labelPrinted = false
-        item.steps.push({ step: "sent to production", date: new Date() })
+        item.steps.push({ status: "sent to production", date: new Date() })
         await item.save()
         let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: item.sku } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
         console.log(product, "product found in returns bin route")

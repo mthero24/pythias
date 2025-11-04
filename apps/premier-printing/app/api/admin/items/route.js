@@ -28,8 +28,8 @@ export async function PUT(req = NextApiRequest) {
                 productInventory: null,
             }
             if (inv.quantity > 0 && inv.quantity > inv.inStock.length) {
-                item.inventory.inventory.inStock.push(item._id.toString())
-                await item.inventory.inventory.save()
+                inv.inStock.push(item._id.toString())
+                await inv.save()
             }
             item = await item.save()
             await inv.save()
