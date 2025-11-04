@@ -178,7 +178,7 @@ export async function pullOrders(){
     if(sizeConverterDoc && sizeConverterDoc.converter) sizeFixer = sizeConverterDoc.converter;
     if(designConverterDoc && designConverterDoc.converter) designFixer = designConverterDoc.converter;
     console.log("pulling orders")
-    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}` })
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({poNumber: o.orderNumber}).populate("items")
@@ -331,13 +331,13 @@ export async function pullOrders(){
                     } else if(i.sku !== ""){
                         let item
                         console.log("no sku on item")
-                        console.log(item, "item without sku")
+                        console.log(i, "item without sku")
                         if (i.upc || i.sku) {
                             console.log("has upc or sku")
                             let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { upc: i.upc } } }, { variantsArray: { $elemMatch: { upc: i.sku } } }] }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
                             console.log(product, "found product by upc or sku")
                             if (product) {
-                                let variant = product.variantsArray.find(v => v.upc === i.upc || v.upc === i.sku)
+                                let variant = product.variantsArray.find(v => v.upc === i.upc || v.upc === i.sku || v.sku === i.sku || v.sku === i.upc)
                                 if (variant) {
                                     item = await createItemVariant(variant, product, order)
                                     items.push(item)
@@ -357,6 +357,10 @@ export async function pullOrders(){
                                         item = await createItem(i, order, sb, variant.color, variant.threadColor, variant.size, product.design, variant.sku ? variant.sku : i.sku, isBlank)
                                         items.push(item)
                                     }
+                                }else{
+                                    console.log("no product found by upc or sku")
+                                    item = await createItem(i, order, null, null, null, null, null, i.sku, true)
+                                    items.push(item)
                                 }
                             }else{
 
@@ -364,6 +368,10 @@ export async function pullOrders(){
                                 item = await createItem(i, order, null, null, null, null, null, i.sku, true)
                                 items.push(item)
                             }
+                        }else{
+                            console.log("no product found by upc or sku")
+                            item = await createItem(i, order, null, null, null, null, null, i.sku, true)
+                            items.push(item)
                         }
                     }
                 }
