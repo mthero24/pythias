@@ -56,9 +56,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             if(d.images == undefined) d.images = {};
             d.blanks= d.blanks.map(bl=>{
                 let blank = blanks.filter(b=> b._id.toString() == (bl.blank?._id? bl.blank?._id.toString(): bl.blank?.toString()))[0]                
-                bl.colors = bl.colors.map(c=> {return blank.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
-                bl.defaultColor = bl.colors.filter(c=> (c?._id?c?._id.toString(): c?.toString()) == (bl.defaultColor?._id? bl.defaultColor._id.toString(): bl.defaultColor?.toString()))[0]
-                bl.colors = bl.colors.filter(c=> c != undefined)
+                bl.colors = bl?.colors.map(c=> {return blank?.colors.filter(bc=> bc._id.toString() == (c._id? c._id.toString(): c.toString()))[0]})
+                bl.defaultColor = bl?.colors.filter(c=> (c?._id?c?._id.toString(): c?.toString()) == (bl.defaultColor?._id? bl.defaultColor._id.toString(): bl.defaultColor?.toString()))[0]
+                bl.colors = bl?.colors.filter(c=> c != undefined)
                 bl.blank = blank
                 return bl
             })
