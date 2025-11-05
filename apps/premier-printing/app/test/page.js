@@ -112,7 +112,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-    //await pullOrders();
+    await pullOrders();
     
     // let order = await Order.findOne({ poNumber: "912002978411370-8319663017"});
     // let items = await Items.find({ order: order._id }).lean();

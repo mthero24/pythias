@@ -275,7 +275,7 @@ export async function pullOrders(){
                             console.log("no product found")
                             console.log(blank?.code, color?.name, size?.name, design?.sku, "found items")
                             i.sku = newSku? newSku: i.sku
-                            let isBlank = design || (designSku && !designSku === "") ? false : true
+                            let isBlank = design || (designSku && !designSku !== "") ? false : true
                             if (blank && blank.code.includes("PPSET")) {
                                 let sb = await Blank.findOne({code: blank.code.split("_")[1]})
                                 //console.log(item)
@@ -310,7 +310,7 @@ export async function pullOrders(){
                         let shirt = i.sku.split("_")[3]
                         let shirtColor = i.sku.split("_")[4]
                         let designSku = i.sku.split("_").slice(5, i.sku.split("_").length).join("_")
-                        console.log(pant, pantColor, pantSize, shirt, shirtColor, shirtSize, designSku, "broken pp set sku")
+                        console.log(pant, pantColor, pantSize, shirt, shirtColor, designSku, "broken pp set sku")
                         let design = await Design.findOne({sku: designSku})
                         let blankPant = await Blank.findOne({ code: pant }).populate("colors")
                         let colorPant = blankPant.colors.find(c => c.sku === pantColor.toLowerCase())
@@ -321,7 +321,7 @@ export async function pullOrders(){
                         let colorShirt = blankShirt.colors.find(c => c.sku === shirtColor.toLowerCase())
                         if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === shirtColor.toLowerCase())
                         if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === colorFixer[shirtColor]?.toLowerCase())
-                        let sizeShirt = blankShirt.sizes.find(s => s.name === shirtSize || s.name === sizeFixer[shirtSize])
+                        let sizeShirt = blankShirt.sizes.find(s => s.name === pantSize || s.name === sizeFixer[pantSize])
                         console.log(blankPant.code, colorPant?.name, sizePant?.name, "pant info")
                         console.log(blankShirt.code, colorShirt?.name, sizeShirt?.name, "shirt info")
                         item = await createItem(i, order, blankPant, colorPant, null, sizePant, null, i.sku, true)
