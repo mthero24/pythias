@@ -3,7 +3,7 @@ import {Box, Grid2, Typography, Button, Modal, TextField, FormControlLabel, Chec
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { CircularProgress } from '@mui/material'
 import axios from "axios";
-import { set } from "mongoose";
+import CloseIcon from '@mui/icons-material/Close';
 export function OrderModal({open, setOpen, type, items, setBlanks, setItems, defaultLocation,}){
     const [needsOrdered, setNeedsOrdered] = useState([])
     const [order, setOrder] = useState({poNumber: "", company: "", dateOrdered: "", dateExpected: ""})
@@ -113,6 +113,9 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
+            <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center"}}>
+                    <CloseIcon sx={{ color: "red", cursor: "pointer" }} onClick={()=>{setOpen(false)}}/>
+            </Box>
             <Typography id="modal-modal-title" variant="h6" component="h2">
                 Order {type}
             </Typography>
@@ -247,7 +250,7 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                 <Button onClick={()=>{sub()}} fullWidth>Submit</Button>
                 <AddModal open={addModal} setOpen={setAddModal} setNeedsOrdered={setNeedsOrdered} needsOrdered={needsOrdered} blanks={blanks} setBlanks={setBlan} colors={colors} setColors={setColors} setBlankCodes={setBlankCodes} blankCodes={blankCodes} defaultLocation={defaultLocation}/>
             </Box>}
-            {loading && <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}><CircularProgress color="#e2e2e2" size={100} />
+                {loading && <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: "20%" }}><CircularProgress color="#e2e2e2" size={50} sx={{ marginRight: "10px", marginTop: "20px", }} />
                   <Typography variant="h6" sx={{ display: "block", color: "#e2e2e2", marginTop: "20px", fontSize: "2.6rem", fontWeight: "bold" }}>
                     Loading...</Typography></Box>}
         </Box>
@@ -272,19 +275,20 @@ const AddModal = ({ open, setOpen, setNeedsOrdered, needsOrdered, colors, setCol
         border: '2px solid #000',
         boxShadow: 24,
         p: 4,
-        height: "28%",
+        height: "30%",
         overflow: "auto"
     };
     useEffect(()=>{
         const getBlanks = async()=>{
             let res = await axios.get("/api/admin/blanks")
             console.log(res.data)
-            setBlanks(res.data.blanks)
+            setBlanks(res.data.blanks.sort((a,b)=> a.code.localeCompare(b.code)))
             setLoading(false)
         }
         if(open &&  (!blanks || blanks.length <= 0)){
             getBlanks()
-        }else setLoading(false)
+            setLoading(true)
+        }
 
     }, [open])
 
@@ -313,6 +317,9 @@ const AddModal = ({ open, setOpen, setNeedsOrdered, needsOrdered, colors, setCol
         open={open}
         onClose={()=>{setOpen(false)}}>
             <Box sx={style}>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
+                    <CloseIcon sx={{ color: "red", cursor: "pointer" }} onClick={() => { setOpen(false) }} />
+                </Box>
                 <Typography variant="h6" component="h2">
                     Add Items To Order
                 </Typography>
@@ -320,17 +327,17 @@ const AddModal = ({ open, setOpen, setNeedsOrdered, needsOrdered, colors, setCol
                     <Grid2 container spacing={1}>
                         <Grid2 size={3}>
                             <TextField select fullWidth label="Blank Code" value={blank? blank.code: ""} onChange={(e) => setBlank(blanks.find(b => b.code.toString() === e.target.value))}>
-                                {blanks?.map(b => <MenuItem value={b.code}>{b.code}</MenuItem>)}
+                                {blanks?.map(b => <MenuItem key={b.code} value={b.code}>{b.code}</MenuItem>)}
                             </TextField>
                         </Grid2>
                         {blank && <Grid2 size={3}>
                             <TextField select fullWidth label="Color" value={color} onChange={(e) => setColor(e.target.value)}>
-                                {blank?.colors.map(c => <MenuItem value={c.name}>{c.name}</MenuItem>)}
+                                {blank?.colors.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
                             </TextField>
                         </Grid2>}
                         {blank && <Grid2 size={3}>
                             <TextField select fullWidth label="Size" value={size} onChange={(e) => setSize(e.target.value)}>
-                                {blank?.sizes.map(s => <MenuItem value={s.name}>{s.name}</MenuItem>)}
+                                {blank?.sizes.map(s => <MenuItem key={s.name} value={s.name}>{s.name}</MenuItem>)}
                             </TextField>
                         </Grid2>}
                         {blank && <Grid2 size={3}>
@@ -338,13 +345,15 @@ const AddModal = ({ open, setOpen, setNeedsOrdered, needsOrdered, colors, setCol
                         </Grid2>}
                     </Grid2>
                 </Box>}
+                {loading && <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
+                    <CircularProgress color="#e2e2e2" sx={{marginTop: "20px", marginRight: "10px"}} size={25} />
+                    <Typography variant="h6" sx={{ display: "block", color: "#e2e2e2", marginTop: "20px", fontSize: "1.6rem", fontWeight: "bold" }}>
+                        Loading...</Typography>
+                    </Box>}
                 <Divider sx={{marginTop: "2%", marginBottom: "2%"}}/>
                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignContent: "center", alignItems: "center"}}>
                     <Button onClick={()=>{add()}}>Add Items To Order</Button>
                 </Box>
-                {loading && <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }}><CircularProgress color="#e2e2e2" size={100} />
-                    <Typography variant="h6" sx={{ display: "block", color: "#e2e2e2", marginTop: "20px", fontSize: "2.6rem", fontWeight: "bold" }}>
-                        Loading...</Typography></Box>}
             </Box>
         </Modal>
     )
