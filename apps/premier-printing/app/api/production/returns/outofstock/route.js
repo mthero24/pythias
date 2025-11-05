@@ -28,6 +28,9 @@ export async function PUT(req = NextApiRequest) {
         if(!item.inventory.inventory && item.inventory.inventory.quantity > 0 && item.inventory.inventory.quantity > item.inventory.inStock.length){
             item.inventory.inventory.inStock.push(item._id.toString())
             await item.inventory.inventory.save()
+        }else if(item.inventory.inventory){
+            item.inventory.attached.push(item._id.toString())
+            await item.inventory.inventory.save()
         }
         item.labelPrinted = false
         item.steps.push({ status: "sent to production", date: new Date() })

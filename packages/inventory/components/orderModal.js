@@ -1,8 +1,9 @@
 import {useState, useEffect} from "react"
-import {Box, Grid2, Typography, Button, Modal, TextField, FormControlLabel, Checkbox, Divider, Accordion, AccordionActions,AccordionSummary,AccordionDetails  } from '@mui/material';
+import {Box, Grid2, Typography, Button, Modal, TextField, FormControlLabel, Checkbox, Divider, Accordion, AccordionActions,AccordionSummary,AccordionDetails, MenuItem  } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { CircularProgress } from '@mui/material'
 import axios from "axios";
+import { set } from "mongoose";
 export function OrderModal({open, setOpen, type, items, setBlanks, setItems, defaultLocation,}){
     const [needsOrdered, setNeedsOrdered] = useState([])
     const [order, setOrder] = useState({poNumber: "", company: "", dateOrdered: "", dateExpected: ""})
@@ -12,6 +13,7 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
     const [loading, setLoading] = useState(false)
     const [blanksExcluded, setBlanksExcluded] = useState([])
     const [blankColorsExcluded, setBlankColorsExcluded] = useState({})
+    const [addModal, setAddModal] = useState(false)
     useEffect(()=>{
         console.log(open)
         const getBlanks = async()=>{
@@ -133,7 +135,10 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                             <TextField type="date" fullWidth placeholder="Date Expected" onChange={()=>{updateOrder("dateExpected")}} value={order.dateExpected}/>
                         </Grid2>
                     </Grid2>
-                    <Divider sx={{marginTop: "3%"}}/>
+                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignContent: "center", alignItems: "center"}}>
+                        <Button onClick={()=> setAddModal(!addModal)}>Add Items To Order</Button>
+                    </Box>
+                    <Divider sx={{marginTop: "2%"}}/>
                 </Box>
                 {blankCodes.map(code=>(
                     <Accordion key={code}>
@@ -240,11 +245,107 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                 <Typography sx={{ marginTop: "2%" }}>Total Item To Order: {needsOrdered.map(no => no.order).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}</Typography> 
                 <Divider sx={{marginTop: "3%"}}/>
                 <Button onClick={()=>{sub()}} fullWidth>Submit</Button>
+                <AddModal open={addModal} setOpen={setAddModal} setNeedsOrdered={setNeedsOrdered} needsOrdered={needsOrdered} blanks={blanks} setBlanks={setBlan} colors={colors} setColors={setColors} setBlankCodes={setBlankCodes} blankCodes={blankCodes} defaultLocation={defaultLocation}/>
             </Box>}
             {loading && <Box sx={{display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center"}}><CircularProgress color="#e2e2e2" size={100} />
                   <Typography variant="h6" sx={{ display: "block", color: "#e2e2e2", marginTop: "20px", fontSize: "2.6rem", fontWeight: "bold" }}>
                     Loading...</Typography></Box>}
         </Box>
       </Modal>
+    )
+}
+
+const AddModal = ({ open, setOpen, setNeedsOrdered, needsOrdered, colors, setColors, setBlankCodes, blankCodes, defaultLocation })=>{
+    const [blank, setBlank] = useState(null)
+    const [blanks, setBlanks] = useState(null)
+    const [color, setColor] = useState("")
+    const [size, setSize] = useState("")
+    const [quantity, setQuantity] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: "50%",
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+        height: "28%",
+        overflow: "auto"
+    };
+    useEffect(()=>{
+        const getBlanks = async()=>{
+            let res = await axios.get("/api/admin/blanks")
+            console.log(res.data)
+            setBlanks(res.data.blanks)
+            setLoading(false)
+        }
+        if(open &&  (!blanks || blanks.length <= 0)){
+            getBlanks()
+        }else setLoading(false)
+
+    }, [open])
+
+    const add = async()=>{
+        if(blank && color && size && quantity > 0){
+            let res = await axios.post("/api/admin/inventory/create-order/add", {blank, color: blank.colors.find(c => c.name === color), size: blank.sizes.find(s => s.name === size)})
+            console.log(res.data)
+            let no = [...needsOrdered]
+            no.push({inv: res.data.inventory, order: quantity, included: true, location: defaultLocation})
+            setNeedsOrdered(no)
+            let bC = [...blankCodes]
+            let cL = [...colors]
+            if(!bC.includes(blank.code)) bC.push(blank.code)
+            if(!cL.includes(color)) cL.push(color)
+            setBlankCodes(bC)
+            setColors(cL)
+            setOpen(false)
+            setBlank(null)
+            setColor("")
+            setSize("")
+            setQuantity(0)
+        }
+    }
+    return(
+        <Modal
+        open={open}
+        onClose={()=>{setOpen(false)}}>
+            <Box sx={style}>
+                <Typography variant="h6" component="h2">
+                    Add Items To Order
+                </Typography>
+               {!loading && blanks && <Box sx={{marginTop: "5%"}}>
+                    <Grid2 container spacing={1}>
+                        <Grid2 size={3}>
+                            <TextField select fullWidth label="Blank Code" value={blank? blank.code: ""} onChange={(e) => setBlank(blanks.find(b => b.code.toString() === e.target.value))}>
+                                {blanks?.map(b => <MenuItem value={b.code}>{b.code}</MenuItem>)}
+                            </TextField>
+                        </Grid2>
+                        {blank && <Grid2 size={3}>
+                            <TextField select fullWidth label="Color" value={color} onChange={(e) => setColor(e.target.value)}>
+                                {blank?.colors.map(c => <MenuItem value={c.name}>{c.name}</MenuItem>)}
+                            </TextField>
+                        </Grid2>}
+                        {blank && <Grid2 size={3}>
+                            <TextField select fullWidth label="Size" value={size} onChange={(e) => setSize(e.target.value)}>
+                                {blank?.sizes.map(s => <MenuItem value={s.name}>{s.name}</MenuItem>)}
+                            </TextField>
+                        </Grid2>}
+                        {blank && <Grid2 size={3}>
+                            <TextField type="number" value={quantity} fullWidth label="Quantity" onChange={(e) => setQuantity(parseInt(e.target.value))} />
+                        </Grid2>}
+                    </Grid2>
+                </Box>}
+                <Divider sx={{marginTop: "2%", marginBottom: "2%"}}/>
+                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignContent: "center", alignItems: "center"}}>
+                    <Button onClick={()=>{add()}}>Add Items To Order</Button>
+                </Box>
+                {loading && <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }}><CircularProgress color="#e2e2e2" size={100} />
+                    <Typography variant="h6" sx={{ display: "block", color: "#e2e2e2", marginTop: "20px", fontSize: "2.6rem", fontWeight: "bold" }}>
+                        Loading...</Typography></Box>}
+            </Box>
+        </Modal>
     )
 }

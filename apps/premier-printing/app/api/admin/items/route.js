@@ -30,6 +30,9 @@ export async function PUT(req = NextApiRequest) {
             if (inv.quantity > 0 && inv.quantity > inv.inStock.length) {
                 inv.inStock.push(item._id.toString())
                 await inv.save()
+            }else{
+                inv.attached.push(item._id.toString())
+                await inv.save()
             }
             item = await item.save()
             await inv.save()
