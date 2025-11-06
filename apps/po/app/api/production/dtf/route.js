@@ -1,5 +1,6 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Items from "../../../../models/Items";
+import Items from "@/models/Items";
+import Style from "@/models/StyleV2";
 import {setConfig, createImage} from "@pythias/dtf"
 const getImages = async (front, back, style, item)=>{
     let styleImage = style.images.filter(
@@ -99,57 +100,66 @@ export async function POST(req = NextApiRequest) {
     console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
-    }).populate("styleV2", "code envelopes box sizes images")
+    })
     console.log(item?.design, "item",)
     if(!item){
-        let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()}).populate("styleV2", "code envelopes box sizes images")
-        for(let item of items){
-            item.dtfScan = true
-            let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
-            Object.keys(item.design).map(async im => {
-                //console.log(item.styleV2.envelopes)
-                if (im && im != "") {
-                    console.log(item.design[im], item.size, im, "im")
+        let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()})
+        let style = await Style.findOne({_id: items[0].styleV2._id}).select("code envelopes box sizes images")
+        console.log(items.length, "bulk items")
+        if(items && items.length > 0){
+            for(let item of items){
+                console.log("sending item to dtf")
+                item.dtfScan = true
+                item.styleV2 = style
+                let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
+                Object.keys(item.design).map(async im => {
                     //console.log(item.styleV2.envelopes)
-                    let envelope = item.styleV2.envelopes.filter(ev => (ev.sizeName == item.sizeName || ev.size?.toString() == item.size?.toString()) && im == ev.placement)[0]
-                    if (!envelope) envelope = item.styleV2.envelopes.filter(ev => im == ev.placement)[0]
-                    console.log(envelope)
-                    await createImage({
-                        url: item.design[im],
-                        pieceID: `${item.pieceId}-${im}`,
-                        horizontal: false,
-                        size: `${envelope.width}x${envelope.height}`,
-                        offset: envelope.vertoffset,
-                        style: item.styleV2.code,
-                        styleSize: item.sizeName,
-                        color: item.color.name,
-                        sku: item.sku,
-                        shouldFitDesign: shouldFitDesign,
-                        printer: data.printer
-                    })
-                }
-            })
-            //console.log(imageres)
+                    if (im && im != "") {
+                        console.log(item.design[im], item.size, im, "im")
+                        //console.log(item.styleV2.envelopes)
+                        let envelope = item.styleV2.envelopes.filter(ev => (ev.sizeName == item.sizeName || ev.size?.toString() == item.size?.toString()) && im == ev.placement)[0]
+                        if (!envelope) envelope = item.styleV2.envelopes.filter(ev => im == ev.placement)[0]
+                        console.log(envelope)
+                        await createImage({
+                            url: item.design[im],
+                            pieceID: `${item.pieceId}-${im}`,
+                            horizontal: false,
+                            size: `${envelope.width}x${envelope.height}`,
+                            offset: envelope.vertoffset,
+                            style: item.styleV2.code,
+                            styleSize: item.sizeName,
+                            color: item.color.name,
+                            sku: item.sku,
+                            shouldFitDesign: shouldFitDesign,
+                            printer: data.printer
+                        })
+                    }
+                })
+                //console.log(imageres)
 
-            item.status = "DTF Load";
-            if (!item.steps) item.steps = [];
-            item.steps.push({
-                status: "DTF Load",
-                date: new Date(),
-            });
-            item.lastScan = {
-                station: "DTF Load",
-                date: new Date(Date.now()),
-                //user: user._id,
-            };
-            await item.save();
+                item.status = "DTF Load";
+                if (!item.steps) item.steps = [];
+                item.steps.push({
+                    status: "DTF Load",
+                    date: new Date(),
+                });
+                item.lastScan = {
+                    station: "DTF Load",
+                    date: new Date(Date.now()),
+                    //user: user._id,
+                };
+                await item.save();
+            }
             const { styleImage, frontDesign, backDesign, styleCode, colorName } = await getImages(items[0].design.front, items[0].design.back, items[0].styleV2, items[0])
             console.log(frontDesign, backDesign,)
-            return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: item.design, type: "new" });
+            return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: items[0].design, type: "new" });
+        } else {
+            return NextResponse.json({ error: true, msg: "item not found" });
         }
-    }
-    if (item && !item.canceled && !item.shipped && !item.dtfScan) {
+    }else if (item && !item.canceled && !item.shipped && !item.dtfScan) {
         item.dtfScan = true
+        let style = await Style.findOne({ _id: item.styleV2._id }).select("code envelopes box sizes images")
+        item.styleV2 = style
         let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
         Object.keys(item.design).map(async im=>{
             //console.log(item.styleV2.envelopes)
