@@ -149,6 +149,7 @@ export async function POST(req = NextApiRequest) {
                     //user: user._id,
                 };
                 await item.save();
+                await new Promise(r => setTimeout(r, 1000));
             }
             const { styleImage, frontDesign, backDesign, styleCode, colorName } = await getImages(items[0].design.front, items[0].design.back, items[0].styleV2, items[0])
             console.log(frontDesign, backDesign,)
