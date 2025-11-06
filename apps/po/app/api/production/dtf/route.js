@@ -103,7 +103,7 @@ export async function POST(req = NextApiRequest) {
     console.log(item?.design, "item",)
     if(!item){
         let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()}).populate("styleV2", "code envelopes box sizes images")
-        for(let it of items){
+        for(let item of items){
             item.dtfScan = true
             let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
             Object.keys(item.design).map(async im => {
