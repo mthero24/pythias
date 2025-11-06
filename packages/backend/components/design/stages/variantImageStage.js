@@ -17,7 +17,7 @@ export const VariantImageStage = ({products, setProducts, design, source, setSta
                         let prods = [...products]
                         for(let p of prods) {
                             p.title = p.title ? p.title : `${design.name} - ${p.blanks.map(b => b.name).join(" and ")}`
-                            p.description = p.description && !p.description.includes("undefined") ? p.description : `${design.description} - ${p.blanks.map(b => b.description).join(" ")}`
+                            p.description = p.description && !p.description.includes("undefined") ? p.description : `${design.description} ${p.blanks.map(b => b.description).join(" ")}`
                             p.tags = design.tags ? design.tags : []
                         }
                         setProducts([...prods])
