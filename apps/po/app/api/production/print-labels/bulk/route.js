@@ -1,5 +1,6 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import Items from "@/models/Items";
+import Order from "@/models/Order";
 import Batches from "@/models/batches";
 import btoa from "btoa";
 import axios from "axios";
@@ -75,6 +76,9 @@ export async function POST(req=NextApiRequest){
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
     await batch.save()
     await Items.updateMany({bulkId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
+    let order = await Order.findOne({_id: data.items[0].order._id})
+    order.bulkPrinted = true
+    await order.save()
     //console.log(giftMessages)
     return NextResponse.json({error: false})
 }
