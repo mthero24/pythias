@@ -104,6 +104,7 @@ export async function POST(req = NextApiRequest) {
     console.log(item?.design, "item",)
     if(!item){
         let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()}).limit(1)
+        let quantity = await Items.find({ bulkId: data.pieceId.toUpperCase().trim() }).countDocuments()
         let style = await Style.findOne({_id: items[0].styleV2._id}).select("code envelopes box sizes images")
         console.log(items.length, "bulk items")
         if(items && items.length > 0){
@@ -131,7 +132,8 @@ export async function POST(req = NextApiRequest) {
                             color: item.color.name,
                             sku: item.sku,
                             shouldFitDesign: shouldFitDesign,
-                            printer: data.printer
+                            printer: data.printer,
+                            quantity: quantity
                         })
                     }
                 })
@@ -180,7 +182,8 @@ export async function POST(req = NextApiRequest) {
                     color: item.color.name,
                     sku: item.sku,
                     shouldFitDesign: shouldFitDesign,
-                    printer: data.printer
+                    printer: data.printer,
+                    quantity: 1
                 })
             }
         })

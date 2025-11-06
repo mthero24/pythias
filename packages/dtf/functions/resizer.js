@@ -131,7 +131,8 @@ export const createImage = async (
     pieceID,
     shouldFitDesign = false,
     printer,
-    localKey
+    localKey,
+    quantity = 1
   }
   ) => {
     console.log("create Image");
@@ -219,7 +220,10 @@ export const createImage = async (
       }
   }
   console.log(Config, printer)
-    let res = await axios.post(`http://${Config.internalIP}/api/dtf`, {files: [{buffer: finalBuffer, type: "png"}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response?.data})
+  let res
+  for(let i =0; i< quantity; i++){
+    res = await axios.post(`http://${Config.internalIP}/api/dtf`, {files: [{buffer: finalBuffer, type: "png"}], printer, sku: pieceID}, headers).catch(e=>{resData = e.response?.data})
+  }
     console.log(resData, "resdata")
     console.log(res?.data, "res data")
     if(res?.data) return res.data
