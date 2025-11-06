@@ -44,7 +44,7 @@ export async function POST(req= NextApiRequest){
         order.markModified("shippingInfo.labels")
         await order.save()
     }
-    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false, undefined]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, "selectedShipping.provider": "usps"}).select("shippingInfo date poNumber").sort({date: 1}).skip(1 * 50 - 50).limit(50)
+    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, "selectedShipping.provider": "usps", status: {$ne: "Delivered"}}).sort({date: 1}).select("shippingInfo date poNumber status").limit(50)
     return NextResponse.json({error: false, orders})
 }
 
@@ -62,6 +62,6 @@ export async function PUT(req= NextApiRequest){
         order.markModified("shippingInfo.labels")
         await order.save()
     }
-    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false, undefined]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, "selectedShipping.provider": "usps"}).select("shippingInfo date poNumber").sort({date: 1}).skip(1* 50 - 50).limit(50)
+    let orders = await Order.find({ "shippingInfo.labels.delivered": { $in: [false] }, date: { $gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000)) }, "selectedShipping.provider": "usps", status: { $ne: "Delivered" } }).sort({ date: 1 }).select("shippingInfo date poNumber status").limit(50)
     return NextResponse.json({error: false, orders})
 }

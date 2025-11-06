@@ -27,9 +27,12 @@ export function Refund({ords, pa}){
                         <Typography>PO Number</Typography>
                     </Grid2>
                     <Grid2 size={2}>
+                        <Typography>Status</Typography>
+                    </Grid2>
+                    <Grid2 size={2}>
                         <Typography>Tracking Number</Typography>
                     </Grid2>
-                    <Grid2 size={4}>
+                    <Grid2 size={2}>
                         <Typography>Last Scan</Typography>
                     </Grid2>
                     <Grid2 size={1}>
@@ -48,10 +51,13 @@ export function Refund({ords, pa}){
                                 <Grid2 size={2}>
                                     <Typography>{o.poNumber}</Typography>
                                 </Grid2>
-                                <Grid2 size={3}>
+                                <Grid2 size={2}>
+                                    <Typography>{o.status}</Typography>
+                                </Grid2>
+                                <Grid2 size={2}>
                                     <Typography>{l.trackingNumber}</Typography>
                                 </Grid2>
-                                <Grid2 size={3}>
+                                <Grid2 size={2}>
                                     <Typography>{l.trackingInfo[0]} {l.trackingInfo.length}</Typography>
                                 </Grid2>
                                 <Grid2 size={1}>

@@ -25,14 +25,14 @@ export function TrackLabels({items, source}){
                                         if(key != "back" && item.design[key]){
                                             return (
                                                 <Box key={key} sx={{ display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", borderRight: "1px solid black" }}>
-                                                    <Image src={`https://${source}.pythiastechnologies.com/api/renderImages?colorName=${item.colorName}&blank=${item.styleCode}&design=${item.design[key]}&side=${key}&threadColor=${item.threadColorName}&width=200&v=${Date.now()}`} alt={item.sku} width={200} height={200} style={{ width: "100%", height: "auto" }} />
+                                                    <Image src={source == "PO" ? `https://images4.tshirtpalace.com/images/productImages/SKU--${item.colorName?.replace(/\//g, "")?.toLowerCase()}-${item.styleCode}-${key}.webp?url=${item.design[key]}&width=200` : `https://${source}.pythiastechnologies.com/api/renderImages?colorName=${item.colorName}&blank=${item.styleCode}&design=${item.design[key]}&side=${key}&threadColor=${item.threadColorName}&width=200&v=${Date.now()}`} alt={item.sku} width={200} height={200} style={{ width: "100%", height: "auto" }} />
                                                 </Box>
                                             )
                                         }
                                         else if(key == "back" && item.design[key]){
                                             return (
                                                 <Box key={key} sx={{ display: "flex", flexDirection: "column", justifyItems: "center", padding: "3%", width: "85px", borderRadius: "20px", position: "relative", bottom: 100, left: 15, marginBottom: -12, }}>
-                                                    <Image src={`https://${source}.pythiastechnologies.com/api/renderImages?colorName=${item.colorName}&blank=${item.styleCode}&design=${item.design[key]}&side=${key}&threadColor=${item.threadColorName}&width=100&v=${Date.now()}`} alt={item.sku} width={200} height={200} style={{ width: "100%", height: "auto", borderRadius: "20px" }} />
+                                                    <Image src={source == "PO" ? `https://images4.tshirtpalace.com/images/productImages/SKU--${item.colorName?.replace(/\//g, "")?.toLowerCase()}-${item.styleCode}-${key}.webp?url=${item.design[key]}&width=200` : `https://${source}.pythiastechnologies.com/api/renderImages?colorName=${item.colorName}&blank=${item.styleCode}&design=${item.design[key]}&side=${key}&threadColor=${item.threadColorName}&width=100&v=${Date.now()}`} alt={item.sku} width={200} height={200} style={{ width: "100%", height: "auto", borderRadius: "20px" }} />
                                                 </Box>
                                             )
                                         }   
@@ -42,17 +42,18 @@ export function TrackLabels({items, source}){
                                     <Typography variant="h6">Piece ID: {item.pieceId}</Typography>
                                     <Typography variant="body2">{new Date(item.date).toLocaleString()}</Typography>
                                     <Typography variant="body2">{item.styleCode}, {item.colorName}, {item.sizeName}, {item.threadColorName ? item.threadColorName : ""} {item.type}</Typography>
-                                    {item.rePulled && <Typography variant="body2" color="red">RePulled: {item.rePulled} - {item.rePulledReasons[0]}</Typography>}
+                                    {item.rePulled && <Typography variant="body2" color="red">RePulled: {item.rePulled} - {item.rePulledReasons? item.rePulledReasons[0]: ""}</Typography>}
                                 </Box>
                                 <Box>
                                     <Typography variant="h6"><Link href={`/orders/${item.order?._id}`} target="_blank">PoNumber: {item.order?.poNumber}</Link></Typography>
                                     <Typography variant="body2">status: {item.order?.status}</Typography>
                                     <Typography variant="body2">Preshipped: {item.order?.preShipped ? "Yes" : "No"}</Typography>
+                                    <Typography variant="body2">Shipping Type: {item.order?.shippingType}</Typography>
                                     <Typography variant="body2">{new Date(item.order?.date).toLocaleString()}</Typography>
                                 </Box>
                                 <Box>
-                                    <Typography variant="body2">last Step: {item.steps[item.steps.length - 1]?.status}</Typography>
-                                    <Typography variant="body2">{new Date(item.steps[item.steps.length - 1]?.date).toLocaleString()}</Typography>
+                                    <Typography variant="body2">last Step: {item.steps? item.steps[item.steps?.length - 1]?.status: ""}</Typography>
+                                    <Typography variant="body2">{item.steps ? new Date(item.steps[item.steps?.length - 1]?.date).toLocaleString(): ""}</Typography>
                                 </Box>
                                 <Box onClick={() => setOpened(opened == item._id ? "" : item._id)} sx={{cursor: "pointer"}}>
                                     {opened == item._id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
