@@ -1,6 +1,7 @@
 import Items from "../models/Items";
 import Order from "../models/Order";
 import Batches from "../models/batches";
+import { Inventory } from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 import { generatePieceID } from "@pythias/integrations";
 import "@/functions/addItemsToInventory";
@@ -63,6 +64,31 @@ export async function LabelsData(){
         labels[k] = labels[k].filter(l=> l.order != undefined)
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k])
+        let missingInventory = labels[k].filter(l=> l.inventory == null || l.inventory.inventory == null)
+        let inventories = await Inventory.find({ inventory_id: { $in: missingInventory.map(m=> encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)) } }) 
+        labels[k] = labels[k].map(async l=> {
+            if((l.inventory == null || l.inventory.inventory == null)){
+                let inv = inventories.filter(i=> i.inventory_id == encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`))[0]
+                if(inv){
+                    l.inventory = {
+                        inventoryType: "inventory",
+                        inventory: inv,
+                        productInventory: null,
+                    }
+                    if(inv.quantity - inv.inStock.length > 0){
+                        inv.inStock.push(l._id.toString())
+                    }else{
+                        inv.attached.push(l._id.toString())
+                    }
+                    await inv.save()
+                    let item = await Items.findById(l._id)
+                    item.inventory = l.inventory
+                    await item.save()
+                }
+            }
+            return l
+        })
+        labels[k] = await Promise.all(labels[k])
     }
     //console.log(labels.Standard[0], "standard labels")
     let giftMessages = await Items.find({
