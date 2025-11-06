@@ -13,6 +13,7 @@ const schema = new mongoose.Schema({
     default: new Date(),
   },
   bulk: { type: Boolean, default: false },
+  bulkPrinted: { type: Boolean, default: false },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

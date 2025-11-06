@@ -101,6 +101,53 @@ export async function POST(req = NextApiRequest) {
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("styleV2", "code envelopes box sizes images")
     console.log(item?.design, "item",)
+    if(!item){
+        let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()}).populate("styleV2", "code envelopes box sizes images")
+        for(let it of items){
+            item.dtfScan = true
+            let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
+            Object.keys(item.design).map(async im => {
+                //console.log(item.styleV2.envelopes)
+                if (im && im != "") {
+                    console.log(item.design[im], item.size, im, "im")
+                    //console.log(item.styleV2.envelopes)
+                    let envelope = item.styleV2.envelopes.filter(ev => (ev.sizeName == item.sizeName || ev.size?.toString() == item.size?.toString()) && im == ev.placement)[0]
+                    if (!envelope) envelope = item.styleV2.envelopes.filter(ev => im == ev.placement)[0]
+                    console.log(envelope)
+                    await createImage({
+                        url: item.design[im],
+                        pieceID: `${item.pieceId}-${im}`,
+                        horizontal: false,
+                        size: `${envelope.width}x${envelope.height}`,
+                        offset: envelope.vertoffset,
+                        style: item.styleV2.code,
+                        styleSize: item.sizeName,
+                        color: item.color.name,
+                        sku: item.sku,
+                        shouldFitDesign: shouldFitDesign,
+                        printer: data.printer
+                    })
+                }
+            })
+            //console.log(imageres)
+
+            item.status = "DTF Load";
+            if (!item.steps) item.steps = [];
+            item.steps.push({
+                status: "DTF Load",
+                date: new Date(),
+            });
+            item.lastScan = {
+                station: "DTF Load",
+                date: new Date(Date.now()),
+                //user: user._id,
+            };
+            await item.save();
+            const { styleImage, frontDesign, backDesign, styleCode, colorName } = await getImages(items[0].design.front, items[0].design.back, items[0].styleV2, items[0])
+            console.log(frontDesign, backDesign,)
+            return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: item.design, type: "new" });
+        }
+    }
     if (item && !item.canceled && !item.shipped && !item.dtfScan) {
         item.dtfScan = true
         let shouldFitDesign = item?.styleV2?.box?.default?.front?.autoFit;
