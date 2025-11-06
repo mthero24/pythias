@@ -103,7 +103,7 @@ export async function POST(req = NextApiRequest) {
     })
     console.log(item?.design, "item",)
     if(!item){
-        let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()})
+        let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()}).limit(1)
         let style = await Style.findOne({_id: items[0].styleV2._id}).select("code envelopes box sizes images")
         console.log(items.length, "bulk items")
         if(items && items.length > 0){
@@ -149,7 +149,6 @@ export async function POST(req = NextApiRequest) {
                     //user: user._id,
                 };
                 await item.save();
-                await new Promise(r => setTimeout(r, 1000));
             }
             const { styleImage, frontDesign, backDesign, styleCode, colorName } = await getImages(items[0].design.front, items[0].design.back, items[0].styleV2, items[0])
             console.log(frontDesign, backDesign,)
