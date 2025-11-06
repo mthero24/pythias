@@ -23,7 +23,7 @@ export async function PUT(req=NextApiRequest){
                     let o = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
                     if (o && o.items) {
                         let items = await Items.find({ _id: { $in: o.items } }).populate("design inventory.inventory").populate("order", "poNumber items").sort({ _id: 1 })
-                        itemsToPrint.push(...items)
+                        itemsToPrint.push(...items.filter(it => it.labelPrinted == false && it.bulkId == null).slice(0, i.quantity))
                     }
                 }
                 inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())

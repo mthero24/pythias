@@ -13,6 +13,7 @@ const schema = new mongoose.Schema(
     },
     orderItemId: {type: String},
     pieceId: { type: String, required: true, unique: true },
+    bulkId: {type: String },
     upc: {type: String},
     poNumber: String,
     shippingType: { type: String, default: "Standard" },

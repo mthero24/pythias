@@ -1,6 +1,7 @@
 import {Inventory} from "@pythias/mongo";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
+import { style } from "@mui/system";
 const updateInventory = async () => {
     let inventories = await Inventory.find({ })
     inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
@@ -60,6 +61,7 @@ const updateInventory = async () => {
 }
 
 export async function addItemsToInventory(){
+    console.log("Adding items to inventory...")
     let items = await Items.find({ labelPrinted: false, "inventory.inventory": {$eq: null}, order: { $ne: null }, canceled: false, shipped: false, paid: true })
     items = await Promise.all(items.map(async i=> {
         i.order = await Order.findOne({ _id: i.order });

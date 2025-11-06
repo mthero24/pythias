@@ -12,6 +12,7 @@ const schema = new mongoose.Schema({
     type: Date,
     default: new Date(),
   },
+  bulk: { type: Boolean, default: false },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",

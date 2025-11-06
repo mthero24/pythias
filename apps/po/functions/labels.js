@@ -1,25 +1,55 @@
 import Items from "../models/Items";
 import Order from "../models/Order";
-import {Inventory} from "@pythias/mongo";
 import Batches from "../models/batches";
 import {Sort} from "@pythias/labels";
-import { style } from "@mui/system";
+import { generatePieceID } from "@pythias/integrations";
 import "@/functions/addItemsToInventory";
+import Size from "@/models/Size";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
+    let orders = await Order.find({
+        $expr: {
+            $gt: [{
+                $size: "$items"
+            }, 50]
+        },
+        status: {$nin: ["canceled", "returned", "shipped", "Shipped", "delivered"]},
+        date: {$gte: new Date("2025-10-31")},
+        bulk: { $in: [null, false] }
+    }).populate("items");
+    console.log(orders.length, "orders with more than 50 items")
+    for(let o of orders){
+        o.bulk = true
+        await o.save()
+        let bulkId = generatePieceID()
+        let skus = [] 
+        for(let i of o.items){
+           if(!skus.includes(i.sku)) skus.push(i.sku)
+        }
+        for(let s of skus){
+            let bulkId = generatePieceID()
+            let items = o.items.filter(it=> it.sku == s)
+            for(let it of items){
+                it.bulkId = bulkId
+                await it.save()
+            }
+        }
+    }
     let labels = {
             Standard: await Items.find({
             styleV2: { $ne: undefined },
             labelPrinted: false,
             canceled: false,
             paid: true,
+            bulkId: { $eq: null },
             shippingType: "Standard",
             order: { $ne: null },
             type: { $nin: ["sublimation", "gift"] },
             }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean(),
             Expedited: await Items.find({
             styleV2: { $ne: undefined },
+            bulkId: { $eq: null },
             labelPrinted: false,
             canceled: false,
             order: { $ne: null },

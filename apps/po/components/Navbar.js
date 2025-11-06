@@ -98,6 +98,11 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
             <ListItemText primary={`Print Labels`} />
           </ListItemButton>
         </Link>
+        <Link href="/bulk">
+          <ListItemButton>
+            <ListItemText primary={`Bulk Orders`} />
+          </ListItemButton>
+        </Link>
         <Link href="/dtf-send">
           <ListItemButton>
             <ListItemText primary={`Load DTF`} />

@@ -6,6 +6,7 @@ import { getCarriers } from "@pythias/shipping"
 import { Inventory, InventoryOrders } from "@pythias/mongo";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
+import { addItemsToInventory } from "@/functions/addItemsToInventory";
 const updateInventory = async (invIds) => {
     let inventories = await Inventory.find({ })
     inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
@@ -70,6 +71,7 @@ const updateInventory = async (invIds) => {
     console.log("total: ", total)
 }
 export default async function Test(){
+    //updateInventory();
     // let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
     // items = await Promise.all(items.map(async i=> {
     //     i.order = await Order.findOne({ _id: i.order });

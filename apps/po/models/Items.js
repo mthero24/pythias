@@ -31,6 +31,7 @@ const schema = new mongoose.Schema(
       type: Number,
     },
     pieceId: { type: String, required: true, unique: true },
+    bulkId: {type: String },
     shippingType: { type: String, default: "Standard" },
     user: {
       type: mongoose.Schema.Types.ObjectId,

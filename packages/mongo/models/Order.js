@@ -7,6 +7,7 @@ const schema = new mongoose.Schema({
     type: Date,
     default: new Date(),
   },
+  bulk: { type: Boolean, default: false },
   total: Number,
   status: {
     type: String,
