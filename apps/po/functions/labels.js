@@ -64,11 +64,9 @@ export async function LabelsData(){
         labels[k] = labels[k].filter(l=> l.order != undefined)
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k])
-        let missingInventory = labels[k].filter(l=> l.inventory == null || l.inventory.inventory == null)
-        let inventories = await Inventory.find({ inventory_id: { $in: missingInventory.map(m=> encodeURIComponent(`${m.colorName}-${m.sizeName}-${m.styleCode}`)) } }) 
         labels[k] = labels[k].map(async l=> {
             if((l.inventory == null || l.inventory.inventory == null)){
-                let inv = inventories.filter(i=> i.inventory_id == encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`))[0]
+                let inv = await Inventory.findOne({ inventory_id: encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`) })
                 if(inv){
                     l.inventory = {
                         inventoryType: "inventory",
