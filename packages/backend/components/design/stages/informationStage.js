@@ -22,7 +22,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                         }} />
                     </Grid2>
                     <Grid2 size={12}>
-                        <TextField fullWidth label="Description" multiline variant="outlined" value={product.description && !product.description.includes("undefined") ? product.description : `${design.description}${product.blanks[0].description? `- ${product.blanks[0].description}` : ""}`} onChange={(e) => {
+                        <TextField fullWidth label="Description" multiline variant="outlined" value={product.description && !product.description.includes("undefined") ? product.description : `${design.description}${product.blanks[0].description && product.blanks[0].description != ""? `${product.blanks[0].description}` : ""}`} onChange={(e) => {
                             let prods = [...products]
                             let p = prods.filter(p => p.id == product.id)[0]
                             p.description = e.target.value
