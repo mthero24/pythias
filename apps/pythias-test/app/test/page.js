@@ -3,7 +3,6 @@ import {Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, MarketPlace
 import axios from "axios";
 import { pullOrders } from "@/functions/pullOrders"
 import {refreshToken} from "@pythias/integrations"
-import { image } from "pdfkit";
 let converter = {
     YL: "L",
     YS: "S",
@@ -11,38 +10,73 @@ let converter = {
     YXL: "XL",
     YXXL: "2XL",
 }
+var xml2js = require("xml2js");
+let options = {
+    object: true,
+    reversible: false,
+    coerce: false,
+    sanitize: true,
+    trim: true,
+    arrayNotation: false,
+    alternateTextNode: true,
+};
 export default async function Test(){
-    // let items = await Item.find()
-    // console.log(items.length)
-    // for(let item of items){
-    //     item.inventory = {
-    //         inventoryType: "inventory",
-    //         inventory: await Inventory.findOne({blank: item.blank, color: item.color, sizeId: item.size})
-    //     }
-    //     if(!item.inventory) item.inventory = await Inventory.findOne({styleCode: item.styleCode, colorName: item.colorName, size: item.sizeName})
-    //         if(!item.inventory) item.inventory = await Inventory.findOne({inventory_id: `${item.colorName}-${item.sizeName}-${item.styleCode}`})
-    //     console.log(item.inventory)
-    //     await item.save()
+    let size = "S"
+    let color = "Red"
+    let style = "1717"
+    let xml = `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:impl="http://impl.webservice.integration.sanmar.com/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <impl:getProductInfoByStyleColorSize>
+         <!--Zero or more repetitions:-->
+         <arg0>
+            <!--Optional:-->
+            <size>${size}</size>
+
+            <!--Optional:-->
+            <color>${color}</color>
+            <!--Optional:-->
+            <style>${style}</style>
+         </arg0>
+         <!--Optional:-->
+         <arg1>
+            <!--Optional:-->
+            <sanMarCustomerNumber>${process.env.sanmarAccount}</sanMarCustomerNumber>
+            <!--Optional:-->
+            <sanMarUserName>${process.env.sanmarUserName}</sanMarUserName>
+            <!--Optional:-->
+            <sanMarUserPassword>${process.env.sanmarPassword}</sanMarUserPassword>
+            <!--Optional:-->
+            <senderId>?</senderId>
+            <!--Optional:-->
+            <senderPassword>?</senderPassword>
+         </arg1>
+      </impl:getProductInfoByStyleColorSize>
+   </soapenv:Body>
+</soapenv:Envelope>`
+    console.log(xml)
+    let res = await axios.post("https://ws.sanmar.com:8080/SanMarWebService/SanMarProductInfoServicePort", xml, {
+        headers: {
+            "Content-Type": "text/xml"
+        }
+    })
+    //console.log(res.data)
+    var parser = new xml2js.Parser(options);
+    let data = await parser.parseStringPromise(res.data);
+    console.log(data["S:Envelope"]["S:Body"][0]["ns2:getProductInfoByStyleColorSizeResponse"][0]["return"][0])
+    let error = data["S:Envelope"]["S:Body"][0]["ns2:getProductInfoByStyleColorSizeResponse"][0]["return"][0]["errorOccured"][0] == "false"? false: true
+    let products = data["S:Envelope"]["S:Body"][0]["ns2:getProductInfoByStyleColorSizeResponse"][0]["return"][0]["listResponse"]
+    let jsonProducts = []
+    for(let p of products){
+        let prod = {}
+        for(let key in p){
+            prod[key] = p[key][0]
+        }
+        jsonProducts.push(prod)
+    }
+    console.log(jsonProducts)
+    // for(let msg of data["wsdl:definitions"]["wsdl:message"]){
+    //     console.log(msg["wsdl:part"])
     // }
-    // let blanks = await Blank.find({}).populate("colors")
-    // for(let b of blanks){
-    //     console.log(b.multiImages, "multi images")
-    //     b.images = []
-    //     for(let key of Object.keys(b.multiImages)){
-    //         for(let img of b.multiImages[key]){
-    //             console.log(img.box[0])
-    //             b.images.push({image: img.image, color: img.color, boxes: {[key.toLowerCase().includes("model")? key.toLowerCase().replace("model", "") : key]: {x: img.box[0]?.x, y: img.box[0]?.y, width: img.box[0]?.boxWidth, height: img.box[0]?.boxHeight, rotation: img.box[0]?.rotation}}})
-    //         }
-    //     }
-    //     console.log(b.images, "images")
-    //     await b.save()
-    // }
-    // let res = await axios.get("https://openapi.etsy.com/v3/application/users/me", {
-    //     headers: {
-    //         Authorization: `Bearer 1116836678.U_7_oQDnmAGwtGkH3vRP3BUBrE3IEP0Z59WGtbRDCMzea2SjSTM2RvuQ1YhJKfk8H9pPcgFKHH4T5fiQTcl1GOD7j`,
-    //         "x-api-key": "480pxuspxi5wz93puk47snye:16xlth05x7",
-    //     }
-    // }).catch(e => console.log(e.response.data, "error"));
-    // console.log(res.data, "res")
     return <h1>test</h1>
 }
