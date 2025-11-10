@@ -44,7 +44,7 @@ export async function POST(req= NextApiRequest){
         order.markModified("shippingInfo.labels")
         await order.save()
     }
-    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, "selectedShipping.provider": "usps", status: {$ne: "Delivered"}}).sort({date: 1}).select("shippingInfo date poNumber status").limit(50)
+    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, "selectedShipping.provider": "usps", status: {$ne: "Delivered"}}).sort({date: 1}).select("shippingInfo date poNumber status").limit(400).lean()
     return NextResponse.json({error: false, orders})
 }
 
