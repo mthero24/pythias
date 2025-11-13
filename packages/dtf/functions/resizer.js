@@ -171,7 +171,7 @@ export const createImage = async (
     trimmedBase64 = `data:image/png;base64,${trimmedBase64.toString("base64")}`;
     let metadata = await getMetaData(trimmedBase64);
     // Get metadata to calculate PPI
-    const widthInches = parseInt(size.split("x")[0]);
+    const widthInches = parseFloat(size.split("x")[0]);
     const heightInches = parseFloat(size.split("x")[1]);
     console.log(
       metadata.width,
