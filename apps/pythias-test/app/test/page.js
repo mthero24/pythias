@@ -53,6 +53,14 @@ const createSide = async ({boxes, baseImage, subImage}) => {
             background: { r: 0, g: 0, b: 0, alpha: 1 }
         }
     }).png();
+    let neg = sharp({
+        create: {
+            width: 400,
+            height: 400,
+            channels: 4,
+            background: { r: 0, g: 0, b: 0, alpha: 1 }
+        }
+    }).png();
     let colorImage = sharp({
         create: {
             width: 400,
@@ -62,9 +70,12 @@ const createSide = async ({boxes, baseImage, subImage}) => {
         }
     }).png();
     newImage = await newImage.composite(extractions).trim().sharpen({ sigma: 10, flat: 1, jagged: 2 });
+    neg = await neg.composite(extractions).trim().sharpen({ sigma: 10, flat: 1, jagged: 2 });
    newImage = await newImage.composite([{ input: await newImage.toBuffer(), blend: 'lighten' }]).sharpen({ sigma: 10, flat: 1, jagged: 2 }).toBuffer();
     newImage = sharp(newImage)
     newImage = newImage.greyscale();
+    let negative = await neg.greyscale().threshold(255, {greyscale: true}).sharpen({ sigma: 10, flat: 1, jagged: 2 });
+    await negative.toFile("./negative.png");
     await newImage.toFile("./output.png")
     let color = await sharp(subImage);
     color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
@@ -72,7 +83,8 @@ const createSide = async ({boxes, baseImage, subImage}) => {
     let imageMeta = await newImage.metadata();
     console.log(imageMeta);
 
-    let final = await newImage.composite([{ input: await colorImage.toBuffer(), blend: 'color-burn' }, { input: await colorImage.toBuffer(), blend: 'color-burn' }, { input: await colorImage.toBuffer(), blend: 'overlay' }]);
+    let final = await newImage.composite([{ input: await colorImage.toBuffer(), blend: 'color-burn' }, { input: await negative.toBuffer(), blend: 'color-burn' }, { input: await colorImage.toBuffer(), blend: 'color-burn' },]);
+    final = final.clahe({width: 50, height: 50, maxSlope: 5}).normalize({lower: 0, upper: 100});
     //final = await final.composite([{ input: await colorImage, blend: 'overlay' }])
     await final.toFile("./final.png")
     final = await final.toBuffer()
@@ -109,9 +121,10 @@ export default async function Test(){
     let image = blank.images.find(img=> img.sublimationBoxes && Object.keys(img.sublimationBoxes).length > 0 && img.sublimationBoxes["front"] && img.sublimationBoxes["front"].length > 0);
     console.log(image);
     console.log(image.sublimationBoxes["front"][0])
+    
     let frontImage = await createSide({ boxes: image.sublimationBoxes["front"], baseImage: image.image, subImage: "./abstract.jpg" });
-    let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftSleeve"], baseImage: image.image, subImage: "./soccer.jpg" });
-    let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightSleeve"], baseImage: image.image, subImage: "./soccer.jpg" });
+    let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftSleeve"], baseImage: image.image, subImage: "./abstract.jpg" });
+    let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightSleeve"], baseImage: image.image, subImage: "./abstract.jpg" });
     let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
     img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     let imageMeta2 = await img.metadata();

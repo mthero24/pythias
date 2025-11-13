@@ -61,5 +61,11 @@ export async function getProductInfoByBrand(brand) {
             jsonProducts.push(prod)
         }
     }
-    return { error, products: jsonProducts }
+    let products = {}
+    for(let p of jsonProducts){
+        if(!products[p.productBasicInfo.style]) products[p.productBasicInfo.style]=[]
+        products[p.productBasicInfo.style].push(p)
+    }
+    console.log("products by brand fetched", products)
+    return { error, products }
 }

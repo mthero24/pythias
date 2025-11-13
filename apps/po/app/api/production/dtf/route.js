@@ -103,12 +103,34 @@ export async function POST(req = NextApiRequest) {
     })
     console.log(item?.design, "item",)
     if(!item){
-        let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()}).limit(1)
+        let items = await Items.find({bulkId: data.pieceId.toUpperCase().trim()})
         let quantity = await Items.find({ bulkId: data.pieceId.toUpperCase().trim() }).countDocuments()
         let style = await Style.findOne({_id: items[0].styleV2._id}).select("code envelopes box sizes images")
         console.log(items.length, "bulk items")
-        if(items && items.length > 0){
+        let designs = []
+        for(let it of items){
+            for(let key of Object.keys(it.design)){
+                if(!designs.includes(it.design[key])){
+                    designs.push(it.design[key])
+                }
+            }
+        }
+        let itemsToSend = []
+        for(let d of designs){
             for(let item of items){
+                let found = false
+                for(let key of Object.keys(item.design)){
+                    if(item.design[key] == d){
+                        itemsToSend.push(item)
+                        found = true
+                        break;
+                    }
+                }
+                if(found) break;
+            }
+        }
+        if(designs.length > 0){
+            for(let item of itemsToSend){
                 console.log("sending item to dtf")
                 item.dtfScan = true
                 item.styleV2 = style
@@ -133,7 +155,7 @@ export async function POST(req = NextApiRequest) {
                             sku: item.sku,
                             shouldFitDesign: shouldFitDesign,
                             printer: data.printer,
-                            quantity: quantity
+                            quantity: 1
                         })
                     }
                 })
@@ -156,7 +178,7 @@ export async function POST(req = NextApiRequest) {
             console.log(frontDesign, backDesign,)
             return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: items[0].design, type: "new" });
         } else {
-            return NextResponse.json({ error: true, msg: "item not found" });
+            return NextResponse.json({ error: true, msg: "no designs found" });
         }
     }else if (item && !item.canceled && !item.shipped && !item.dtfScan) {
         item.dtfScan = true

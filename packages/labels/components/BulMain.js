@@ -88,8 +88,7 @@ export function BulkMain({orders}){
                                 <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => !item.inventory.inventory.inStock.includes(item._id.toString())).length}</Typography>
                             </Grid2>
                             <Grid2 item size={1}>
-                                {order.items.filter(item => !item.inventory.inventory.inStock.includes(item._id.toString()) || item.labelPrinted == true).length == 0 && <Button variant="contained" color="success" onClick={() => print(order)}>Print</Button>}
-                               
+                                {<Button variant="contained" color="success" onClick={() => print(order)}>Print</Button>}
                             </Grid2>
                             <Grid2 item size={12}>
                                 <Box sx={{ display: "flex", flexDirection: "row", gap: 1, justifyContent: 'flex-end', transition: "all 0.3s ease", cursor: "pointer", borderTop: open == order._id.toString() ? "1px solid #ccc" : "none", paddingTop: open == order._id.toString() ? 2 : 0 }}>
