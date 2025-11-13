@@ -25,6 +25,13 @@ export function FromSanmarBlank() {
                             <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", mb: 1, alignItems: "center", alignContent: "center"}}>
                                 <Image src={products[style][0].productImageInfo.productImage} alt={style} width={600} height={600} style={{width: "100%", height: "auto"}} />
                             </Box>
+                            <Box sx={{display: "flex", flexDirection: "column", gap: 1}}>
+                                <Typography variant="h6" textAlign={"center"} title={products[style][0].productBasicInfo.productTitle} sx={{ width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{products[style][0].productBasicInfo.productTitle}</Typography>
+                                <Typography variant="body2" textAlign={"center"}>Brand: {products[style][0].productBasicInfo.brandName}, Style: {style}</Typography>
+                                <Typography variant="body2" textAlign={"center"} sx={{ width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} onClick={() => {}}>Colors: {Array.from(new Set(products[style].map(p=>p.productBasicInfo.color))).join(", ")}</Typography>
+                                <Typography variant="body2" textAlign={"center"}>Available Sizes: {Array.from(new Set(products[style].map(p=>p.productBasicInfo.availableSizes))).join(", ")}</Typography>
+                                <Typography variant="body2" textAlign={"center"}>Prices: {Math.min(...(Array.from(new Set(products[style].map(p=>parseFloat(p.productPriceInfo.piecePrice))))))} - {Math.max(...(Array.from(new Set(products[style].map(p=>parseFloat(p.productPriceInfo.piecePrice))))))}</Typography>
+                            </Box>
                         </Box>
                     </Grid2>
                 )}
