@@ -177,7 +177,7 @@ const createImage = async (data) => {
             }
             let offset = (originalSize.width - (box.boxWidth * multiplier)) / 2
             console.log(x, y, offset, "x y offset")
-            composits.push({
+            composits.push( {
                 input: designBase64,
                 blend: 'atop',
                 top: parseInt(y),
