@@ -68,10 +68,11 @@ const createSide = async ({boxes, baseImage, subImage}) => {
     await newImage.toFile("./output.png")
     let color = await sharp(subImage);
     color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
-    colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]).toBuffer();
+    colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]);
     let imageMeta = await newImage.metadata();
     console.log(imageMeta);
-    let final = await newImage.composite([{ input: await colorImage, blend: 'color-burn' }, { input: await colorImage, blend: 'color-burn' },]);
+
+    let final = await newImage.composite([{ input: await colorImage.toBuffer(), blend: 'color-burn' }, { input: await colorImage.toBuffer(), blend: 'color-burn' }, { input: await colorImage.toBuffer(), blend: 'overlay' }]);
     //final = await final.composite([{ input: await colorImage, blend: 'overlay' }])
     await final.toFile("./final.png")
     final = await final.toBuffer()
@@ -108,7 +109,7 @@ export default async function Test(){
     let image = blank.images.find(img=> img.sublimationBoxes && Object.keys(img.sublimationBoxes).length > 0 && img.sublimationBoxes["front"] && img.sublimationBoxes["front"].length > 0);
     console.log(image);
     console.log(image.sublimationBoxes["front"][0])
-    let frontImage = await createSide({ boxes: image.sublimationBoxes["front"], baseImage: image.image, subImage: "./soccer.jpg" });
+    let frontImage = await createSide({ boxes: image.sublimationBoxes["front"], baseImage: image.image, subImage: "./abstract.jpg" });
     let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftSleeve"], baseImage: image.image, subImage: "./soccer.jpg" });
     let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightSleeve"], baseImage: image.image, subImage: "./soccer.jpg" });
     let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
