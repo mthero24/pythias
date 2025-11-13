@@ -61,7 +61,8 @@ const createSide = async ({boxes, baseImage, subImage}) => {
             background: { r: 0, g: 0, b: 0, alpha: 0 }
         }
     }).png();
-    newImage = await newImage.composite(extractions).trim().sharpen({ sigma: 10, flat: 1, jagged: 2 }).toBuffer();
+    newImage = await newImage.composite(extractions).trim().sharpen({ sigma: 10, flat: 1, jagged: 2 });
+   newImage = await newImage.composite([{ input: await newImage.toBuffer(), blend: 'lighten' }]).sharpen({ sigma: 10, flat: 1, jagged: 2 }).toBuffer();
     newImage = sharp(newImage)
     newImage = newImage.greyscale();
     await newImage.toFile("./output.png")
@@ -70,7 +71,7 @@ const createSide = async ({boxes, baseImage, subImage}) => {
     colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]).toBuffer();
     let imageMeta = await newImage.metadata();
     console.log(imageMeta);
-    let final = await newImage.composite([ { input: await colorImage, blend: 'color-burn' }, { input: await colorImage, blend: 'color-burn' }]);
+    let final = await newImage.composite([{ input: await colorImage, blend: 'color-burn' }, { input: await colorImage, blend: 'color-burn' },]);
     //final = await final.composite([{ input: await colorImage, blend: 'overlay' }])
     await final.toFile("./final.png")
     final = await final.toBuffer()
@@ -107,17 +108,17 @@ export default async function Test(){
     let image = blank.images.find(img=> img.sublimationBoxes && Object.keys(img.sublimationBoxes).length > 0 && img.sublimationBoxes["front"] && img.sublimationBoxes["front"].length > 0);
     console.log(image);
     console.log(image.sublimationBoxes["front"][0])
-    let frontImage = await createSide({ boxes: image.sublimationBoxes["front"], baseImage: image.image, subImage: "./abstract.jpg" });
-    let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftSleeve"], baseImage: image.image, subImage: "./bird.jpg" });
-    let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightSleeve"], baseImage: image.image, subImage: "./bird.jpg" });
+    let frontImage = await createSide({ boxes: image.sublimationBoxes["front"], baseImage: image.image, subImage: "./soccer.jpg" });
+    let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftSleeve"], baseImage: image.image, subImage: "./soccer.jpg" });
+    let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightSleeve"], baseImage: image.image, subImage: "./soccer.jpg" });
     let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
     img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     let imageMeta2 = await img.metadata();
     console.log(imageMeta2);
-    img = await img.composite([{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await leftSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).sharpen({ sigma: 10, flat: 1, jagged: 2 }).toBuffer();
+    img = await img.composite([{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await leftSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).toBuffer();
     img = sharp(img);
     img.resize(1200,1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-    await img.toFile("./combined.png");
+    await img.toFile("./combined2.png");
     return <FromSanmarBlank />
     //("https://images1.pythiastechnologies.com/styles/1742087292890.png")
 }
