@@ -17,6 +17,99 @@ const readImage = async (url)=>{
     }
     return null
 }
+const createSide = async ({boxes, baseImage, subImage}) => {
+    boxes = boxes.filter(box => box.x > 0 && box.y > 0);
+    let img = await readImage(`${baseImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
+    img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+    let extractions = []
+    let minx = parseInt(boxes.reduce((min, box) => box.x < min ? box.x : min, Infinity));
+    let miny = parseInt(boxes.reduce((min, box) => box.y < min ? box.y : min, Infinity));
+    let maxx = parseInt(boxes.reduce((max, box) => (box.x + box.width) > max ? (box.x + box.width) : max, -Infinity));
+    let maxy = parseInt(boxes.reduce((max, box) => (box.y + box.height) > max ? (box.y + box.height) : max, -Infinity)) > 400 ? 400 : parseInt(boxes.reduce((max, box) => (box.y + box.height) > max ? (box.y + box.height) : max, -Infinity));
+    console.log({ minx, miny, maxx, maxy })
+    for (let box of boxes) {
+       // console.log(parseInt(box.height), parseInt(box.width), parseInt(box.x), parseInt(box.y))
+        try {
+            let extractor = img.extract({ left: parseInt(box.x), top: parseInt(box.y), width: parseInt(box.width), height: parseInt(box.height > 400 ? 400 : box.height) })
+            extractions.push({
+                input: await extractor.toBuffer(),
+                top: parseInt(box.y),
+                left: parseInt(box.x),
+                width: parseInt(box.width),
+                height: parseInt(box.height),
+            })
+        } catch (e) {
+            console.log("extraction error", e)
+        }
+    }
+    let newImage = sharp({
+        create: {
+            width: 400,
+            height: 400,
+            channels: 4,
+            background: { r: 0, g: 0, b: 0, alpha: 1 }
+        }
+    }).png();
+    let colorImage = sharp({
+        create: {
+            width: 400,
+            height: 400,
+            channels: 4,
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+        }
+    }).png();
+    newImage = await newImage.composite(extractions).toBuffer();
+    newImage = sharp(newImage)
+    newImage = newImage.greyscale();
+    await newImage.toFile("./output.png")
+    let color = await sharp(subImage);
+    color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
+    colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]).toBuffer();
+    let imageMeta = await newImage.metadata();
+    console.log(imageMeta);
+    let final = await newImage.composite([{ input: await colorImage, blend: 'overlay' }, { input: await colorImage, blend: 'color-burn' }]);
+    //final = await final.composite([{ input: await colorImage, blend: 'overlay' }])
+    await final.toFile("./final.png")
+    final = await final.toBuffer()
+    final = sharp(final)
+    final.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+    extractions = []
+    for (let box of boxes) {
+        try {
+            let extractor = final.extract({ left: parseInt(box.x), top: parseInt(box.y), width: parseInt(box.width), height: parseInt(box.height) })
+            extractions.push({
+                input: await extractor.toBuffer(),
+                top: parseInt(box.y),
+                left: parseInt(box.x),
+                width: parseInt(box.width),
+                height: parseInt(box.height),
+            })
+        } catch (e) {
+            console.log("extraction error", e)
+        }
+    }
+    let transparentImage = sharp({
+        create: {
+            width: 400,
+            height: 400,
+            channels: 4,
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+        }
+    }).png();
+    transparentImage = await transparentImage.composite(extractions).toBuffer();
+    return transparentImage = sharp(transparentImage)
+}
+const createSublimationImage = async (boxs, styleImage, designImage, width) => {
+    let frontImage = await createSide({ boxes: boxs["front"], baseImage: styleImage, subImage: "./abstract.jpg" });
+    let leftSleeveImage = await createSide({ boxes: boxs["leftSleeve"], baseImage: styleImage, subImage: "./soccer.jpg" });
+    let rightSleeveImage = await createSide({ boxes: boxs["rightSleeve"], baseImage: styleImage, subImage: "./soccer.jpg" });
+    let img = await readImage(`${styleImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
+    img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+    let imageMeta2 = await img.metadata();
+    console.log(imageMeta2);
+    img = await img.composite([{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await leftSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }])
+    return img
+}
 const createImage = async (data) => {
     console.log(data, "data")
     let multiplier = 1

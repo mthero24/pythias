@@ -80,6 +80,7 @@ const SchemaObj = new Schema(
     slug: String,
     images: [{
       boxes: Object,
+      sublimationBoxes: Object,
       url: String,
       color: String,
     }],
