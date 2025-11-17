@@ -9,6 +9,7 @@ export async function GET(req = NextApiRequest) {
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
   let { color } = data;
+  console.log(color)
   let exists = await Color.findOne({ _id: color?._id });
   if (exists) {
     for (let key in color) {

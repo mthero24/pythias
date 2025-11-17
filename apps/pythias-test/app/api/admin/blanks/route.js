@@ -102,6 +102,7 @@ export async function POST(req = NextApiRequest) {
   let newBlank
   try {
     if (blank._id) {
+      console.log(blank.printLocations?.length > 0 && blank.sizes.length > 0)
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
       if (blank.sizes.length > 0) blank = updateFold(blank)
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)

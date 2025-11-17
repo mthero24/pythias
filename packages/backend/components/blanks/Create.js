@@ -214,8 +214,18 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                         {sizesOpen && blank.sizes && blank.sizes.length > 0 && blank.sizes.map((s, i) => (
                                             <Grid2 item xs={12} sm={6} md={4} key={i}>
                                                 <Box gap={2} sx={{ border: "1px solid #ccc", padding: "2%", borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                                    <TextField label="Size" fullWidth value={s.name} onChange={(e) => { }} />
-                                                    <TextField label="Retail Price" fullWidth value={s.retailPrice} onChange={(e) => { }} />
+                                                    <TextField label="Size" fullWidth value={s.name} onChange={(e) => { 
+                                                        let bla = {...blank};
+                                                        bla.sizes[i].name = e.target.value;
+                                                        setBlank(bla);
+                                                        update({blank: bla});
+                                                       
+                                                    }} />
+                                                    <TextField label="Retail Price" fullWidth value={s.retailPrice} onChange={(e) => {
+                                                        let bla = {...blank};
+                                                        bla.sizes[i].retailPrice = e.target.value;
+                                                        setBlank(bla);
+                                                    }} />
                                                     <TextField label="Weight (lbs)" fullWidth value={s.weight} onChange={(e) => { }} />
                                                     <Button variant="outlined" fullWidth color="error" onClick={() => { 
                                                         let bla = {...blank};
@@ -355,9 +365,23 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                             <Box sx={{ width: 20, height: 20, backgroundColor: color.hexcode, border: "1px solid #000", marginRight: 1 }}></Box>
                                             <Typography variant="subtitle1">{color.name}</Typography>
                                             <EyeDropper
-                                                onColorChange={(hex) =>
-                                                    console.log(hex)
-                                                }
+                                                onColorChange={async (hex) => {
+                                                    console.log(hex, "hex from eyedropper")
+                                                    let bla = { ...blank };
+                                                    console.log(bla.colors, "before color update")
+                                                    let colors = bla.colors
+                                                    for(let c of colors){
+                                                        if(c._id === color._id){
+                                                            let res = await axios.post("/api/admin/colors",{color: {...c, hexcode: hex}})
+                                                            console.log(res)
+                                                            setAllColors(allColors.map(ac=> ac._id === c._id ? res.data.color : ac))
+                                                            c.hexcode = hex;
+                                                        }
+                                                    }
+                                                    bla.colors = colors;
+                                                    setBlank(bla);
+                                                    update({ blank: bla });
+                                                }}
                                             />
                                         </Box>
                                         <Grid2 container spacing={1}>

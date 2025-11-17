@@ -21,11 +21,16 @@ export function FromSanmarBlank() {
             <Grid2 container spacing={2}>
                 {Object.keys(products).map(style=>
                     <Grid2 size={{xs: 6, md: 4}} key={style} sx={{display: "flex", flexDirection: "column", gap: 1, alignItems: "center"}}>
-                        <Box sx={{p: 2, width: "100%", backgroundColor: "#f5f5f5", borderRadius: 2, boxShadow: 1}}>
+                        <Box sx={{p: 2, width: "100%", backgroundColor: "#f5f5f5", borderRadius: 2, boxShadow: 1, cursor: "pointer", display: "flex", flexDirection: "column",}} onClick={async ()=>{
+                            let res = await axios.put("/api/admin/integrations/sanmar", {product: products[style]});
+                            if(res && res.data && !res.data.error){
+                                location.href = `/admin/blanks/create?id=${res.data.blankId}`;
+                            }
+                        }}>
                             <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", mb: 1, alignItems: "center", alignContent: "center"}}>
-                                <Image src={products[style][0].productImageInfo.productImage} alt={style} width={600} height={600} style={{width: "100%", height: "auto"}} />
+                                <Image src={`http://localhost:3011/resize?url=${products[style][0].productImageInfo.productImage}&width=400&height=400`} alt={style} width={300} height={300} style={{ width: "100%", height: "auto", maxHeight: "300px", minHeight: "300px", background: "white" }} />
                             </Box>
-                            <Box sx={{display: "flex", flexDirection: "column", gap: 1}}>
+                            <Box sx={{display: "flex", flexDirection: "column", gap: .5}}>
                                 <Typography variant="h6" textAlign={"center"} title={products[style][0].productBasicInfo.productTitle} sx={{ width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{products[style][0].productBasicInfo.productTitle}</Typography>
                                 <Typography variant="body2" textAlign={"center"}>Brand: {products[style][0].productBasicInfo.brandName}, Style: {style}</Typography>
                                 <Typography variant="body2" textAlign={"center"} sx={{ width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} onClick={() => {}}>Colors: {Array.from(new Set(products[style].map(p=>p.productBasicInfo.color))).join(", ")}</Typography>
