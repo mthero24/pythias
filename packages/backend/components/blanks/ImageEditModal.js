@@ -78,7 +78,9 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const [count, setCount] = useState(0)
     const [tool, setTool] = useState('erraser');
     const [lines, setLines] = useState([]);
-    let [points, setPoints] = useState([]);
+    const [showArea, setShowArea] = useState(false);
+    const [points, setPoints] = useState([]);
+    const [pan, setPan] = useState(false);
     const isDrawing = useRef(false);
     useEffect(() => {
         console.log(color, "color");
@@ -165,6 +167,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         // }
     };
     const sublimationHandleMouseDown = (e) => {
+        if(pan) return;
         isDrawing.current = true;
         const stage = e.target.getStage();
         const pointerPos = stage.getPointerPosition();
@@ -172,6 +175,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         const absolutePointerPos = stageTransform.invert().point(pointerPos);
         setLines([...lines, { tool, points: [absolutePointerPos.x, absolutePointerPos.y] }]);
     };
+
     const sublimationHandleMouseMove = (e) => {
         // no drawing - skipping
         if (!isDrawing.current) {
@@ -184,11 +188,6 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         let lastLine = lines[lines.length - 1];
         // add point
         lastLine.points = lastLine.points.concat([absolutePointerPos.x, absolutePointerPos.y]);
-        let poi = [...points]
-        if(tool == "pen") poi.push([absolutePointerPos.x, absolutePointerPos.y])
-        else if(tool == "eraser") poi = poi.filter(p=> p[0] != absolutePointerPos.x && p[1] != absolutePointerPos.y)
-        setPoints(poi);
-        console.log(poi.length)
         // replace last
         lines.splice(lines.length - 1, 1, lastLine);
         setLines(lines.concat());
@@ -459,9 +458,11 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 setTool(e.target.value)
                             }}
                             label="Tool">
-                                <MenuItem key="eraser" value="eraser">Eraser</MenuItem>
-                                <MenuItem key="pen" value="pen">Pen</MenuItem>
-                            </TextField>
+                            <MenuItem key="eraser" value="eraser">Eraser</MenuItem>
+                            <MenuItem key="pen" value="pen">Pen</MenuItem>
+                        </TextField>
+                        <Button sx={{ ml: 2 }} onClick={() => { setLines([]); setPoints([]); }}>Clear</Button>
+                        <Button sx={{ ml: 2 }} onClick={() => { setPan(!pan) }}>{pan ? "Stop Pan" : "Start Pan"}</Button>
                     </Box>}
                 </Box>
                 {!reload && <Uploader2 afterFunction={async (data) => {   
@@ -481,6 +482,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                 }} />}
                 {image.image && step !== "addImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflow: 'hidden', position: "relative", top: -415, marginBottom: "-400px" }}>
                     <Stage  width={400} height={400}
+                         style={{background: "#f0f0f0", border: '1px solid #ccc', cursor: pan ? "grab" : "default" }}
+                        draggable={pan}
                         onMouseDown={hasSublimation ? sublimationHandleMouseDown : handleMouseDown}
                         onMousemove={hasSublimation ? sublimationHandleMouseMove : handleMouseMove}
                         onMouseup={hasSublimation ? sublimationHandleMouseUp : handleMouseUp}
@@ -529,7 +532,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                         <Layer>
                             <URLImage src={image.image} x={0} y={0} width={400} height={400} />
                         </Layer>
-                        {[...rectangles].map((rect, i) => (
+                        {!hasSublimation &&[...rectangles].map((rect, i) => (
                             <Layer key={i}>
                                 {console.log("rect render", rect.width, rect.height)}
                                 <Rect
@@ -622,13 +625,24 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                     key={i}
                                     points={line.points}
                                     stroke="#df4b26"
-                                    strokeWidth={2}
-                                    tension={0.5}
+                                    strokeWidth={.2}
+                                    tension={0.1}
                                     lineCap="round"
                                     lineJoin="round"
                                     globalCompositeOperation={
                                         line.tool === 'eraser' ? 'destination-out' : 'source-over'
                                     }
+                                />
+                            ))}
+                            {rectangles.map((rect, i) => (
+                                <Rect
+                                    key={i}
+                                    x={rect.x}
+                                    y={rect.y}
+                                    width={rect.width}
+                                    height={rect.height}
+                                    fill={rect.fill}
+                                    rotation={rect.rotation}
                                 />
                             ))}
                         </Layer>}
@@ -672,31 +686,42 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                 </Box>}
                 {hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                     <Button variant="contained" color="primary" onClick={async () => {
+                        setShowArea(!showArea)
                         console.log("saving all sublimation boxes")
                         //console.log(points)
+                        let points = []
                         let rectangles = []
-                        let boxes = {}
-                        let xValues = []
-                        for(let line of points){
-                            if(xValues.includes(line[0])) continue;
-                            xValues.push(line[0])
+                        for(let line of lines){
+                            console.log("line", line)
+                            let points = []
+                            for(let i = 0; i < line.points.length; i+=2){
+                                let x = parseInt(line.points[i])
+                                let y = line.points[i+1]
+                                points.push([x, y])
+                            }
+                            let xValues = []
+                            for(let line of points){
+                                if(xValues.includes(line[0])) continue;
+                                xValues.push(line[0])
+                            }
+                            xValues.sort((a,b) => a - b)
+                            for(let x of xValues){
+                                let minY = Math.min(...points.filter(p => p[0] === x).map(p => p[1]))
+                                let maxY = Math.max(...points.filter(p => p[0] === x).map(p => p[1]))
+                                let height = maxY - minY
+                                console.log("x", x, "minY", minY, "maxY", maxY, height)
+                                rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
+                            }
                         }
-                        xValues.sort((a,b) => a - b)
-                        for(let x of xValues){
-                            let minY = points.filter(p => p[0] === x).sort((a,b) => a[1] - b[1])[0][1]
-                            let maxY = points.filter(p => p[0] === x).sort((a,b) => b[1] - a[1])[0][1]
-                            let maxX = Math.max(xValues)
-                            let height = maxY - minY
-                            if(xValues.includes(x + 1)) rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
-                        }
-                        console.log("xValues", xValues)
+                        //console.log("rectangles", rectangles)
                         // for(let line of poi){
                         //     rectangles.push({ x: line[0], y: line[1], width: 1, height: .5, id: `sublimation-${line[0]}-${line[1]}`, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
                         //     rotation: 0, })
                         // }
-                        setRectangles(rectangles)
+                        if(showArea) setRectangles([...rectangles])
+                        else setRectangles([])
                     }}>
-                        save Boxs
+                        Show Area
                     </Button>
                 </Box>}
                 {step === "setImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
