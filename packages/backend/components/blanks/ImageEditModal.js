@@ -1,12 +1,11 @@
-import { Stage, Layer, Transformer, Rect, Image as KonvaImage } from "react-konva";
-import {Box, Modal, Button, Typography, TextField, Grid2, Checkbox} from "@mui/material";
+import { Stage, Layer, Transformer, Rect, Image as KonvaImage, Line } from "react-konva";
+import {Box, Modal, Button, Typography, TextField, Grid2, Checkbox, MenuItem} from "@mui/material";
 import React, { use, useEffect, useRef, useState } from "react";
 import { Uploader2 } from "../reusable/uploader2";
 import useImage from 'use-image';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
 import { Check } from "@mui/icons-material";
-import { set } from "mongoose";
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
@@ -77,6 +76,10 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const sublimationBoxes = [{name:"front"}, {name:"back"}, {name:"leftSleeve"}, {name:"rightSleeve"}, {name:"collar"}];
     const [subSelected, setSubSelected] = useState("")
     const [count, setCount] = useState(0)
+    const [tool, setTool] = useState('erraser');
+    const [lines, setLines] = useState([]);
+    let [points, setPoints] = useState([]);
+    const isDrawing = useRef(false);
     useEffect(() => {
         console.log(color, "color");
         let img = {...image}
@@ -161,7 +164,39 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         //     setSelectedIds([...selectedIds, clickedId]);
         // }
     };
+    const sublimationHandleMouseDown = (e) => {
+        isDrawing.current = true;
+        const stage = e.target.getStage();
+        const pointerPos = stage.getPointerPosition();
+        const stageTransform = stage.getAbsoluteTransform().copy();
+        const absolutePointerPos = stageTransform.invert().point(pointerPos);
+        setLines([...lines, { tool, points: [absolutePointerPos.x, absolutePointerPos.y] }]);
+    };
+    const sublimationHandleMouseMove = (e) => {
+        // no drawing - skipping
+        if (!isDrawing.current) {
+            return;
+        }
+        const stage = e.target.getStage();
+        const pointerPos = stage.getPointerPosition();
+        const stageTransform = stage.getAbsoluteTransform().copy();
+        const absolutePointerPos = stageTransform.invert().point(pointerPos);
+        let lastLine = lines[lines.length - 1];
+        // add point
+        lastLine.points = lastLine.points.concat([absolutePointerPos.x, absolutePointerPos.y]);
+        let poi = [...points]
+        if(tool == "pen") poi.push([absolutePointerPos.x, absolutePointerPos.y])
+        else if(tool == "eraser") poi = poi.filter(p=> p[0] != absolutePointerPos.x && p[1] != absolutePointerPos.y)
+        setPoints(poi);
+        console.log(poi.length)
+        // replace last
+        lines.splice(lines.length - 1, 1, lastLine);
+        setLines(lines.concat());
+    };
 
+    const sublimationHandleMouseUp = () => {
+        isDrawing.current = false;
+    };
     const handleMouseDown = (e) => {
         // Do nothing if we mousedown on any shape
         if (e.target !== e.target.getStage()) {
@@ -417,137 +452,16 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                 </Box>
                 <Box sx={{ mt: 2, mb: 2 }}>
                     {hasSublimation && <Box sx={{ display: hasSublimation ? "flex" : "none", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2, height: "25px" }}>
-                        {sublimationBoxes.map((loc, idx) => (
-                            <Button onClick={() => {
-                                setSubSelected(loc.name == subSelected ? "" : loc.name)
-                                let rects = [...rectangles]
-                                image.sublimationBoxes = image.sublimationBoxes || {}
-                                if(!image.sublimationBoxes[loc.name]) image.sublimationBoxes[loc.name] = []
-                                for(let box of image.sublimationBoxes[loc.name]){
-                                    console.log("box", box)
-                                    rects.push({
-                                        x: box.x, y: box.y, width: box.width, height: box.height, rotation: box.rotation, id: box.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                    })
-                                }
-                                setRectangles([...rects])
-                                setCount(image.sublimationBoxes[loc.name] ? image.sublimationBoxes[loc.name].length : 0)
-                            }}>{loc.name}</Button>
-                        ))}
-                    </Box>}
-                    {hasSublimation && <Box sx={{ display: hasSublimation ? "flex" : "none", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2, height: "180px" }}>
-                        {subSelected != "" && <Box width={120} height={150} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, cursor: "pointer" }} onClick={() => {
-                            let img = {...image}
-                            let rects = [...rectangles]
-                            if(!img.sublimationBoxes) img.sublimationBoxes = {}
-                            if(!img.sublimationBoxes[subSelected] || typeof img.sublimationBoxes[subSelected] !== "array") img.sublimationBoxes[subSelected] = []
-                            img.sublimationBoxes[subSelected].push({
-                                x: 0,
-                                y:0,
-                                width: 10,
-                                height: 10,
-                                rotation: 0,
-                                name: `${subSelected}${count}`
-                            })
-                            rects.push({
-                                x: 0, y: 0, width: 10, height: 10, rotation: 0, id: `${subSelected}${count}`, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                            })
-                            let c = count
-                            c++
-                            setCount(c)
-                            setImage({...img})
-                            setRectangles([...rects])
-                        }}>
-                            <Button>Add</Button>
-                        </Box>}
-                        {image.sublimationBoxes && subSelected != "" && typeof image.sublimationBoxes[subSelected] ==="array" && image.sublimationBoxes[subSelected].map((loc, idx) => (
-                            <Box key={idx} width={120} height={150} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, backgroundColor: image.sublimationBoxes && image.sublimationBoxes[loc.name] != undefined ? '#959da5ff' : 'transparent' }} onClick={() => {
-                                let rects = [...rectangles]
-                                if (!rects.find(r => r.id === loc.name)) {
-                                    if (image.sublimationBoxes && image.sublimationBoxes[subSelected]) {
-                                        let box = image.sublimationBoxes[subSelected].filter(b => b.name === loc.name)[0]
-                                        console.log("using saved box", box)
-                                        rects = [{
-                                            x: box.x, y: box.y, width: box.width, height: box.height, rotation: box.rotation, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                        }]
-                                        setRectangles([...rects])
-                                        setStep("location")
-                                        return;
-                                    }
-                                    rects = [{
-                                        x: 10, y: 10, width: 300, height: 300, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                        rotation: 0,
-                                    }]
-                                }
-                                setActive(loc.name)
-                                setRectangles([...rects])
-                                setStep("location")
-                            }}>
-                                <Button>{loc.name}</Button>
-                                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                    <input ref={active == loc.name ? xRef : null} placeholder="X" id={`x-${loc.name}`} defaultValue={image.sublimationBoxes ? image.sublimationBoxes[loc.name]?.x : 0} style={{ width: "50px" }} onChange={(e) => {
-                                        let rects = [...rectangles];
-                                        let index = rects.findIndex(r => r.id === loc.name);
-                                        if (index !== -1) {
-                                            rects[index] = {
-                                                ...rects[index],
-                                                x: parseInt(e.target.value) || rects[index].x
-                                            };
-                                            xRef.current = e.target;
-                                            setRectangles(rects);
-                                        }
-                                    }} />
-                                    <input ref={active == loc.name ? yRef : null} placeholder="Y" id={`y-${loc.name}`} defaultValue={image.sublimationBoxes ? image.sublimationBoxes[loc.name]?.y : 0} style={{ width: "50px" }} onChange={(e) => {
-                                        let rects = [...rectangles];
-                                        let index = rects.findIndex(r => r.id === loc.name);
-                                        if (index !== -1) {
-                                            rects[index] = {
-                                                ...rects[index],
-                                                y: parseInt(e.target.value) || rects[index].y
-                                            };
-                                            yRef.current = e.target;
-                                            setRectangles(rects);
-                                        }
-                                    }} />
-                                </Box>
-                                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                    <input ref={active == loc.name ? widthRef : null} placeholder="Width" id={`width-${loc.name}`} defaultValue={image.sublimationBoxes ? image.sublimationBoxes[loc.name]?.width : 0} style={{ width: "50px" }} onChange={(e) => {
-                                        let rects = [...rectangles];
-                                        let index = rects.findIndex(r => r.id === loc.name);
-                                        if (index !== -1) {
-                                            rects[index] = {
-                                                ...rects[index],
-                                                width: parseInt(e.target.value) || rects[index].width
-                                            };
-                                            widthRef.current = e.target;
-                                            setRectangles(rects);
-                                        }
-                                    }} />
-                                    <input ref={active == loc.name ? heightRef : null} placeholder="Height" id={`height-${loc.name}`} defaultValue={image.sublimationBoxes ? image.sublimationBoxes[loc.name]?.height : 0} style={{ width: "50px" }} onChange={(e) => {
-                                        let rects = [...rectangles];
-                                        let index = rects.findIndex(r => r.id === loc.name);
-                                        if (index !== -1) {
-                                            rects[index] = {
-                                                ...rects[index],
-                                                height: parseInt(e.target.value) || rects[index].height
-                                            };
-                                            heightRef.current = e.target;
-                                            setRectangles(rects);
-                                        }
-                                    }} />
-                                </Box>
-                                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                    <Button variant="contained" size="small" color="primary" onClick={() => {
-                                        let img = { ...image }
-                                        let newBoxes = {}
-                                        for (let b in Object.keys(img.boxes)) {
-                                            if (b !== loc.name) newBoxes[b] = img.boxes[b]
-                                        }
-                                        img.boxes = newBoxes
-                                        setImage({ ...img });
-                                    }} >Remove</Button>
-                                </Box>
-                            </Box>
-                        ))}
+                        <TextField
+                            select
+                            onChange={(e)=>{
+                                console.log(e.target.value)
+                                setTool(e.target.value)
+                            }}
+                            label="Tool">
+                                <MenuItem key="eraser" value="eraser">Eraser</MenuItem>
+                                <MenuItem key="pen" value="pen">Pen</MenuItem>
+                            </TextField>
                     </Box>}
                 </Box>
                 {!reload && <Uploader2 afterFunction={async (data) => {   
@@ -566,10 +480,10 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                     }
                 }} />}
                 {image.image && step !== "addImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflow: 'hidden', position: "relative", top: -415, marginBottom: "-400px" }}>
-                    <Stage  width={400} height={400} draggable
-                        onMouseDown={handleMouseDown}
-                        onMousemove={handleMouseMove}
-                        onMouseup={handleMouseUp}
+                    <Stage  width={400} height={400}
+                        onMouseDown={hasSublimation ? sublimationHandleMouseDown : handleMouseDown}
+                        onMousemove={hasSublimation ? sublimationHandleMouseMove : handleMouseMove}
+                        onMouseup={hasSublimation ? sublimationHandleMouseUp : handleMouseUp}
                         onContextMenu={(e) => {
                             // stop default scrolling
                             console.log("wheel down")
@@ -702,6 +616,22 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 )}
                             </Layer>
                         ))}
+                        {hasSublimation && <Layer>
+                            {lines.map((line, i) => (
+                                <Line
+                                    key={i}
+                                    points={line.points}
+                                    stroke="#df4b26"
+                                    strokeWidth={2}
+                                    tension={0.5}
+                                    lineCap="round"
+                                    lineJoin="round"
+                                    globalCompositeOperation={
+                                        line.tool === 'eraser' ? 'destination-out' : 'source-over'
+                                    }
+                                />
+                            ))}
+                        </Layer>}
                     </Stage>
                 </Box>}
                 {step === "crop" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
@@ -742,26 +672,29 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                 </Box>}
                 {hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                     <Button variant="contained" color="primary" onClick={async () => {
-
-                        let rects = [...rectangles];
-                        let img = { ...image }
-                        for(let rect of rects){
-                            console.log("saving sublimation box", img.sublimationBoxes[subSelected])
-                            let box = img.sublimationBoxes[subSelected].find(b=> b.name == rect.id)
-                            if(box){
-                                box.x = rect.x
-                                box.y = rect.y
-                                box.width = rect.width
-                                box.height = rect.height
-                                box.rotation = rect.rotation
-                            }else{
-                                img.sublimationBoxes[subSelected].push({ x: rect.x, y: rect.y, width: rect.width, height: rect.height, rotation: rect.rotation, name: rect.id })
-                            }
+                        console.log("saving all sublimation boxes")
+                        //console.log(points)
+                        let rectangles = []
+                        let boxes = {}
+                        let xValues = []
+                        for(let line of points){
+                            if(xValues.includes(line[0])) continue;
+                            xValues.push(line[0])
                         }
-                        setImage({...img})
-                        setSubSelected("")
-                        setCount(0)
-                        setRectangles([])
+                        xValues.sort((a,b) => a - b)
+                        for(let x of xValues){
+                            let minY = points.filter(p => p[0] === x).sort((a,b) => a[1] - b[1])[0][1]
+                            let maxY = points.filter(p => p[0] === x).sort((a,b) => b[1] - a[1])[0][1]
+                            let maxX = Math.max(xValues)
+                            let height = maxY - minY
+                            if(xValues.includes(x + 1)) rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
+                        }
+                        console.log("xValues", xValues)
+                        // for(let line of poi){
+                        //     rectangles.push({ x: line[0], y: line[1], width: 1, height: .5, id: `sublimation-${line[0]}-${line[1]}`, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
+                        //     rotation: 0, })
+                        // }
+                        setRectangles(rectangles)
                     }}>
                         save Boxs
                     </Button>

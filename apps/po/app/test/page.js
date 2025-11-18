@@ -71,6 +71,14 @@ const updateInventory = async (invIds) => {
     console.log("total: ", total)
 }
 export default async function Test(){
+    let style = await Styles.findOne({code: "LPCPH"})
+    console.log("style", style.sizes)
+    for(let fold of style.fold){
+        if(!fold.sleeves) fold.sleeves = 0;
+        if(!fold.body) fold.body = 0;
+    }
+    style.markModified("fold")
+    await style.save();
     //updateInventory();
     // let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
     // items = await Promise.all(items.map(async i=> {

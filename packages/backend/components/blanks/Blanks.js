@@ -46,6 +46,7 @@ export function BlanksComponent({blanks, mPs, source}){
                                 }
                             }
                         }
+                        console.log(frontImage, "front image for blank")
                         return (
                             <Grid2 item size={{xs: 6, sm: 4, md: 3}} key={blank.id}>
                             <Card sx={{padding: "2%", display: "flex", flexDirection: "column"}}>
