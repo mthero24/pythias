@@ -28,7 +28,7 @@ export function FromSanmarBlank() {
                             }
                         }}>
                             <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", mb: 1, alignItems: "center", alignContent: "center"}}>
-                                <Image src={`http://localhost:3011/resize?url=${products[style][0].productImageInfo.productImage}&width=400&height=400`} alt={style} width={300} height={300} style={{ width: "100%", height: "auto", maxHeight: "300px", minHeight: "300px", background: "white" }} />
+                                <Image src={`https://images2.pythiastechnologies.com/resize?url=${products[style][0].productImageInfo.productImage}&width=400&height=400`} alt={style} width={300} height={300} style={{ width: "100%", height: "auto", maxHeight: "300px", minHeight: "300px", background: "white" }} />
                             </Box>
                             <Box sx={{display: "flex", flexDirection: "column", gap: .5}}>
                                 <Typography variant="h6" textAlign={"center"} title={products[style][0].productBasicInfo.productTitle} sx={{ width: "100%", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{products[style][0].productBasicInfo.productTitle}</Typography>

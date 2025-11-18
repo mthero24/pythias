@@ -13,7 +13,7 @@ const s3 = new S3Client({
 }); // for S3
 const readImage = async (url) => {
     const response = await axios.get(
-        `https://images2.pythiastechnologies.com/resize?url=${url}`,
+        `http://localhost:3011/resize?url=${url}`,
         { responseType: "arraybuffer" }
     ).catch(e => { });
     if (response) {
