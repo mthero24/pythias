@@ -70,15 +70,16 @@ const createSide = async ({boxes, baseImage, subImage}) => {
         }
     }).png();
     newImage = await newImage.composite(extractions).trim().sharpen({ sigma: 10, flat: 1, jagged: 2 });
+    await newImage.toFile("./newImage.png")
     neg = await neg.composite(extractions).trim().sharpen({ sigma: 10, flat: 1, jagged: 2 });
-   newImage = await newImage.composite([{ input: await newImage.toBuffer(), blend: 'lighten' }]).sharpen({ sigma: 10, flat: 1, jagged: 2 }).toBuffer();
+    newImage = await newImage.composite([{ input: await newImage.toBuffer(), blend: 'lighten' }]).sharpen({ sigma: 10, flat: 1, jagged: 2 }).toBuffer();
     newImage = sharp(newImage)
     newImage = newImage.greyscale();
     let negative = await neg.greyscale().threshold(255, {greyscale: true}).sharpen({ sigma: 10, flat: 1, jagged: 2 });
     await negative.toFile("./negative.png");
     await newImage.toFile("./output.png")
     let color = await sharp(subImage);
-    color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
+    color = await color.resize(400, 400, { fit: 'cover' });
     colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]);
     let imageMeta = await newImage.metadata();
     console.log(imageMeta);
@@ -117,21 +118,24 @@ const createSide = async ({boxes, baseImage, subImage}) => {
     return transparentImage = sharp(transparentImage)
 }
 export default async function Test(){
-    let blank =  await Blank.findOne({code: "C"}).lean();
-    let image = blank.images.find(img=> img.sublimationBoxes && Object.keys(img.sublimationBoxes).length > 0 && img.sublimationBoxes["front"] && img.sublimationBoxes["front"].length > 0);
-    console.log(image);
-    console.log(image.sublimationBoxes["front"][0])
+    let blank =  await Blank.findOne({code: "SWT"}).lean();
     
-    let frontImage = await createSide({ boxes: image.sublimationBoxes["front"], baseImage: image.image, subImage: "./abstract.jpg" });
-    let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftSleeve"], baseImage: image.image, subImage: "./abstract.jpg" });
-    let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightSleeve"], baseImage: image.image, subImage: "./abstract.jpg" });
+    let image = blank.images.find(img => img.sublimationBoxes);
+    console.log(image);
+    console.log(Object.keys(image.sublimationBoxes));
+    console.log(image.sublimationBoxes.rightUperSleeve.layers[0].boxes);
+    let backgroundImage = await createSide({ boxes: image.sublimationBoxes["background"].layers[0].boxes, baseImage: image.image, subImage: "./abstract.jpg" });
+    let frontImage = await createSide({ boxes: image.sublimationBoxes["front"].layers[0].boxes, baseImage: image.image, subImage: "./bird.jpg" });
+    //let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftUperSleeve"].layers[0].boxes, baseImage: image.image, subImage: "./bird.jpg" });
+    let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightUperSleeve"].layers[0].boxes, baseImage: image.image, subImage: "./bird.jpg" });
     let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
     img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     let imageMeta2 = await img.metadata();
     console.log(imageMeta2);
-    img = await img.composite([{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await leftSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).toBuffer();
+    img = await img.composite([{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).toBuffer();
     img = sharp(img);
-    img.resize(1200,1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+    img.sharpen({ sigma: 10, m1: 0, m2: 0, x1: 0, y2: 0, y3: 0 });
+    //img.resize(1200,1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     await img.toFile("./combined2.png");
     return <FromSanmarBlank />
     //("https://images1.pythiastechnologies.com/styles/1742087292890.png")

@@ -6,6 +6,7 @@ import useImage from 'use-image';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
 import { Check } from "@mui/icons-material";
+import { set } from "mongoose";
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
@@ -81,7 +82,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const [showArea, setShowArea] = useState(false);
     const [pan, setPan] = useState(false);
     const isDrawing = useRef(false);
-    const [fetures, setFeatures] = useState({
+    const [layerSelected, setLayerSelected] = useState(null);
+    const [features, setFeatures] = useState({
         front: {layers: []},
         back: {layers: []},
         leftUperSleeve: {layers: []},
@@ -353,7 +355,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     };
     return (
         <Modal open={open} onClose={()=>{onClose(); setSelectedImageSrc(null)}} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: hasSublimation? 800: 600, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: hasSublimation? 1000: 600, height: 800, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
                 <Grid2 container spacing={2}>
                     <Grid2 size={hasSublimation? 8 : 12} sx={{ display: 'flex', flexDirection: 'column',  }}>
                         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -467,7 +469,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                         <Box sx={{ mt: 2, mb: 2 }}>
                             <Box sx={{width: "100%"}}>
                                 {hasSublimation && <Box sx={{ mt: 2, display: 'flex', width: "100%", alignContent: "center", overflow: 'auto', flexDirection: 'row', gap: 2 }}>
-                                    {Object.keys(fetures).map((key, index) => (
+                                    {Object.keys(features).map((key, index) => (
                                         <Box key={index}>
                                             <Button key={index} variant={featureSelected == key ? "contained" : "outlined"} onClick={()=> {
                                                 setFeatureSelected(key)
@@ -711,7 +713,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 save Box
                             </Button>
                         </Box>}
-                        {hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                        {hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
                             <Button variant="contained" color="primary" onClick={async () => {
                                 setShowArea(!showArea)
                                 console.log("saving all sublimation boxes")
@@ -749,6 +751,48 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 else setRectangles([])
                             }}>
                                 Show Area
+                            </Button>
+                            <Button variant="contained" color="primary" onClick={async () => {
+                                console.log("saving sublimation layer")
+                                let fea = {...features}
+                                let feature = fea[featureSelected];
+                                console.log("layerSelected", layerSelected)
+                                console.log(feature.layers)
+                                let layer = feature.layers.find(layer => layer.name === layerSelected);
+                                layer.lines = [...lines]
+                                let rectangles = []
+                                for(let line of layer.lines){
+                                    console.log("line", line)
+                                    let points = []
+                                    for(let i = 0; i < line.points.length; i+=2){
+                                        let x = parseInt(line.points[i])
+                                        let y = line.points[i+1]
+                                        points.push([x, y])
+                                    }
+                                    let xValues = []
+                                    for(let line of points){
+                                        if(xValues.includes(line[0])) continue;
+                                        xValues.push(line[0])
+                                    }
+                                    xValues.sort((a,b) => a - b)
+                                    for(let x of xValues){
+                                        let minY = Math.min(...points.filter(p => p[0] === x).map(p => p[1]))
+                                        let maxY = Math.max(...points.filter(p => p[0] === x).map(p => p[1]))
+                                        let height = maxY - minY
+                                        console.log("x", x, "minY", minY, "maxY", maxY, height)
+                                        rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
+                                    }
+                                }
+                                layer.boxes = rectangles;
+                                fea[featureSelected] = feature;
+                                let img = {...image}
+                                img.sublimationBoxes = features;
+                                setImage({...img});
+                                setLines([]);
+                                setRectangles([]);
+                                setFeatures(fea);
+                            }}>
+                                Save Layer
                             </Button>
                         </Box>}
                         {step === "setImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
@@ -871,7 +915,44 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                     </Grid2>
                     <Grid2 size={hasSublimation? 4 : 0} sx={{ display: hasSublimation ? "flex" : "none", flexDirection: 'column', borderLeft: '1px solid #ccc', pl: 2 }}>
                         <Typography variant="h6" textAlign={"center"}>Feature {featureSelected}</Typography>
-                        <Button>Add Layer</Button>
+                        <Button onClick={() => {
+                            let fea = {...features}
+                            let feature = fea[featureSelected];
+                            feature.layers.push({ type: 'layer', name: `Layer ${feature.layers.length + 1}`, lines: [], sublimated: true });
+                            fea[featureSelected] = feature;
+                            setLines(feature.layers[feature.layers.length - 1].lines);
+                            setFeatures({ ...fea});
+                            setLayerSelected(`Layer ${feature.layers.length + 1}`);
+                        }}>Add Layer</Button>
+                        <Box sx={{ mt: 2, mb: 2, maxHeight: '650px', overflow: 'auto' }}>
+                            {features[featureSelected].layers.map((layer, idx) => (
+                                <Box key={idx} sx={{ border: '1px solid #ccc', p: 1, mb: 1, backgroundColor: layerSelected == layer.name ? '#e0e0e0' : 'transparent', cursor: 'pointer', maxHeight: '100%', gap: 2 }}>
+                                    <Typography variant="body1" onClick={() => {
+                                        setLayerSelected(layer.name)
+                                        setLines(layer.lines);
+                                    }}>{layer.name}</Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 1 }}>
+                                        <Button onClick={() => {
+                                            let fea = {...features}
+                                            let feature = fea[featureSelected];
+                                            feature.layers.splice(idx, 1);
+                                            fea[featureSelected] = feature;
+                                            setFeatures({ ...fea});
+                                        }}>Delete Layer</Button>
+                                        <TextField label="Sublimated" select defaultValue={layer.sublimated} sx={{width: '120px'}} onChange={(e) => {
+                                            let fea = {...features}
+                                            let feature = fea[featureSelected];
+                                            feature.layers[idx].sublimated = e.target.value;
+                                            fea[featureSelected] = feature;
+                                            setFeatures({ ...fea});
+                                        }} >
+                                            <MenuItem value={true}>Yes</MenuItem>
+                                            <MenuItem value={false}>No</MenuItem>
+                                        </TextField>
+                                    </Box>
+                                </Box>
+                            ))}
+                        </Box>
                     </Grid2>
                 </Grid2>
                 <CopyBoxesModal open={copyBoxesOpen} onClose={() => setCopyBoxesOpen(false)} blank={blank} image={image} setImage={setImage}/>
