@@ -79,9 +79,22 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const [tool, setTool] = useState('erraser');
     const [lines, setLines] = useState([]);
     const [showArea, setShowArea] = useState(false);
-    const [points, setPoints] = useState([]);
     const [pan, setPan] = useState(false);
     const isDrawing = useRef(false);
+    const [fetures, setFeatures] = useState({
+        front: {layers: []},
+        back: {layers: []},
+        leftUperSleeve: {layers: []},
+        rightUperSleeve: {layers: []},
+        collar: {layers: []},
+        background: {layers: []},
+        leftLowerSleeve: {layers: []},
+        rightLowerSleeve: {layers: []},
+        outsideHood: {layers: []},
+        insideHood: {layers: []},
+        inside: {layers: []}
+    })
+    const [featureSelected, setFeatureSelected] = useState("front");
     useEffect(() => {
         console.log(color, "color");
         let img = {...image}
@@ -340,507 +353,527 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     };
     return (
         <Modal open={open} onClose={()=>{onClose(); setSelectedImageSrc(null)}} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Button variant="contained" color="primary" onClick={async () => {setCopyBoxesOpen(true)}}>
-                        Copy Boxes from Another Image
-                    </Button>
-                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                        <Checkbox checked={hasSublimation} onChange={(e) => { setHasSublimation(e.target.checked) }} />Sublimation
-                    </Box>
-                </Box>
-                <Box sx={{display: hasSublimation ? "none" : "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2, height: "180px"}}>
-                    { <Box width={120} height={150} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, cursor: "pointer" }} onClick={() => { 
-                        let rects = [...rectangles]
-                        if (!rects.find(r => r.id === "crop")) rects = [{
-                            x: 10, y: 10, width: 350, height: 350, id: "crop", name: 'rect', fill: 'transparent', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                            rotation: 0, }]
-                        setRectangles(rects)
-                        setStep("crop")
-                     }}>
-                        <Button>Crop</Button>
-                    </Box>}
-                    {printLocations && printLocations.length > 0 && printLocations.map((loc, idx) => (
-                        <Box key={idx} width={120} height={150} padding={1} sx={{display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, backgroundColor: image.boxes && image.boxes[loc.name] != undefined ? '#959da5ff' : 'transparent'}} onClick={() => {
-                            let rects = [...rectangles]
-                            if (!rects.find(r => r.id === loc.name)){
-                                if(image.boxes && image.boxes[loc.name]){
-                                    let box = image.boxes[loc.name]
-                                    console.log("using saved box", box)
-                                    rects=[{
-                                        x: box.x, y: box.y, width: box.width, height: box.height, rotation: box.rotation, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                    }]
-                                    setRectangles([...rects])
-                                    setStep("location")
-                                    return;
-                                }
-                                rects=[{
-                                    x: 10, y: 10, width: 300, height: 300, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                    rotation: 0, }]
-                            }
-                            setActive(loc.name)
-                            setRectangles([...rects])
-                            setStep("location")
-                        }}>
-                            <Button>{loc.name}</Button>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                <input ref={active == loc.name ? xRef : null} placeholder="X" id={`x-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.x : 0} style={{ width: "50px" }} onChange={(e) => {
-                                    let rects = [...rectangles];
-                                    let index = rects.findIndex(r => r.id === loc.name);
-                                    if (index !== -1) {
-                                        rects[index] = {
-                                            ...rects[index],
-                                            x: parseInt(e.target.value) || rects[index].x
-                                        };
-                                        xRef.current = e.target;
-                                        setRectangles(rects);
-                                    }
-                                }} />
-                                <input ref={active == loc.name ? yRef : null} placeholder="Y" id={`y-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.y : 0} style={{ width: "50px" }} onChange={(e) => {
-                                    let rects = [...rectangles];
-                                    let index = rects.findIndex(r => r.id === loc.name);
-                                    if (index !== -1) {
-                                        rects[index] = {
-                                            ...rects[index],
-                                            y: parseInt(e.target.value) || rects[index].y
-                                        };
-                                        yRef.current = e.target;
-                                        setRectangles(rects);
-                                    }
-                                }} />
-                            </Box>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                <input ref={active == loc.name ? widthRef : null} placeholder="Width" id={`width-${loc.name}`} defaultValue={image.boxes? image.boxes[loc.name]?.width:  0} style={{ width: "50px" }} onChange={(e)=>{
-                                    let rects = [...rectangles];
-                                    let index = rects.findIndex(r => r.id === loc.name);
-                                    if (index !== -1) {
-                                        rects[index] = {
-                                            ...rects[index],
-                                            width: parseInt(e.target.value) || rects[index].width
-                                        };
-                                        widthRef.current = e.target;
-                                        setRectangles(rects);
-                                    }
-                                }} />
-                                <input ref={active == loc.name ? heightRef : null} placeholder="Height" id={`height-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.height : 0} style={{ width: "50px" }} onChange={(e)=>{
-                                    let rects = [...rectangles];
-                                    let index = rects.findIndex(r => r.id === loc.name);
-                                    if (index !== -1) {
-                                        rects[index] = {
-                                            ...rects[index],
-                                            height: parseInt(e.target.value) || rects[index].height
-                                        };
-                                        heightRef.current = e.target;
-                                        setRectangles(rects);
-                                    }
-                                }} />
-                            </Box>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                <Button variant="contained" size="small" color="primary" onClick={()=>{
-                                    let img = { ...image }
-                                    let newBoxes = {}
-                                    for(let b in Object.keys(img.boxes)){
-                                        if(b !== loc.name)newBoxes[b] = img.boxes[b]
-                                    }
-                                    img.boxes = newBoxes
-                                    setImage({...img});
-                                }} >Remove</Button>
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: hasSublimation? 800: 600, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
+                <Grid2 container spacing={2}>
+                    <Grid2 size={hasSublimation? 8 : 12} sx={{ display: 'flex', flexDirection: 'column',  }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Button variant="contained" color="primary" onClick={async () => {setCopyBoxesOpen(true)}}>
+                                Copy Boxes from Another Image
+                            </Button>
+                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                <Checkbox checked={hasSublimation} onChange={(e) => { setHasSublimation(e.target.checked) }} />Sublimation
                             </Box>
                         </Box>
-                    ))}
-                </Box>
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    {hasSublimation && <Box sx={{ display: hasSublimation ? "flex" : "none", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2, height: "25px" }}>
-                        <TextField
-                            select
-                            onChange={(e)=>{
-                                console.log(e.target.value)
-                                setTool(e.target.value)
-                            }}
-                            label="Tool">
-                            <MenuItem key="eraser" value="eraser">Eraser</MenuItem>
-                            <MenuItem key="pen" value="pen">Pen</MenuItem>
-                        </TextField>
-                        <Button sx={{ ml: 2 }} onClick={() => { setLines([]); setPoints([]); }}>Clear</Button>
-                        <Button sx={{ ml: 2 }} onClick={() => { setPan(!pan) }}>{pan ? "Stop Pan" : "Start Pan"}</Button>
-                    </Box>}
-                </Box>
-                {!reload && <Uploader2 afterFunction={async (data) => {   
-                    if(step == "addImage") {
-                        const img = new window.Image();
-                        img.src = data.url; // Replace with your image URL
-                        img.onload = () => {
-                            setAddImage(img);
-                        };
-                        return;
-                    }else {
-                        let img = {...image}
-                        img.image = data.url
-                        setImage({...img});
-                        setOriginalImage(data.url);
-                    }
-                }} />}
-                {image.image && step !== "addImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflow: 'hidden', position: "relative", top: -415, marginBottom: "-400px" }}>
-                    <Stage  width={400} height={400}
-                         style={{background: "#f0f0f0", border: '1px solid #ccc', cursor: pan ? "grab" : "default" }}
-                        draggable={pan}
-                        onMouseDown={hasSublimation ? sublimationHandleMouseDown : handleMouseDown}
-                        onMousemove={hasSublimation ? sublimationHandleMouseMove : handleMouseMove}
-                        onMouseup={hasSublimation ? sublimationHandleMouseUp : handleMouseUp}
-                        onContextMenu={(e) => {
-                            // stop default scrolling
-                            console.log("wheel down")
-                            e.evt.preventDefault();
-                            console.log(e.target)
-                            let rects = [...rectangles];
-                            rects = rects.filter(r => r.id !== e.target.id())
-                            setRectangles([...rects]);
-                        }}
-                        onWheel={(e) => {
-                            // stop default scrolling
-                            const scaleBy = 1.01;
-                            e.evt.preventDefault();
-                            console.log(stageRef.current)
-                            const oldScale = stageRef.current.scaleX();
-                            const pointer = stageRef.current.getPointerPosition();
-
-                            const mousePointTo = {
-                                x: (pointer.x - stageRef.current.x()) / oldScale,
-                                y: (pointer.y - stageRef.current.y()) / oldScale,
-                            };
-
-                            // how to scale? Zoom in? Or zoom out?
-                            let direction = e.evt.deltaY > 0 ? 1 : -1;
-
-                            // when we zoom on trackpad, e.evt.ctrlKey is true
-                            // in that case lets revert direction
-                            if (e.evt.ctrlKey) {
-                                direction = -direction;
-                            }
-
-                            const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-
-                            stageRef.current.scale({ x: newScale, y: newScale });
-
-                            const newPos = {
-                                x: pointer.x - mousePointTo.x * newScale,
-                                y: pointer.y - mousePointTo.y * newScale,
-                            };
-                            stageRef.current.position(newPos);
-                        }}
-                        onClick={handleStageClick} ref={stageRef}>
-                        <Layer>
-                            <URLImage src={image.image} x={0} y={0} width={400} height={400} />
-                        </Layer>
-                        {!hasSublimation &&[...rectangles].map((rect, i) => (
-                            <Layer key={i}>
-                                {console.log("rect render", rect.width, rect.height)}
-                                <Rect
-                                    key={rect.id}
-                                    id={rect.id}
-                                    name={rect.name}
-                                    x={rect.x}
-                                    y={rect.y}
-                                    width={rect.width}
-                                    height={rect.height}
-                                    rotation={rect.rotation}
-                                    fill={rect.fill}
-                                    fillPatternImage={rect.fillPatternImage}
-                                    fillPatternScaleX={rect.fillPatternScaleX} // Optional: Adjust image scale
-                                    fillPatternScaleY={rect.fillPatternScaleY} // Optional: Adjust image scale
-                                    stroke={rect.stroke}
-                                    dash={[10, 10]}
-                                    strokeWidth={2}
-                                    draggable
-                                    ref={node => {
-                                        if (node) {
-                                            rectRefs.current.set(rect.id, node);
+                        <Box sx={{display: hasSublimation ? "none" : "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2, height: "180px"}}>
+                            { <Box width={120} height={150} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, cursor: "pointer" }} onClick={() => { 
+                                let rects = [...rectangles]
+                                if (!rects.find(r => r.id === "crop")) rects = [{
+                                    x: 10, y: 10, width: 350, height: 350, id: "crop", name: 'rect', fill: 'transparent', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
+                                    rotation: 0, }]
+                                setRectangles(rects)
+                                setStep("crop")
+                            }}>
+                                <Button>Crop</Button>
+                            </Box>}
+                            {printLocations && printLocations.length > 0 && printLocations.map((loc, idx) => (
+                                <Box key={idx} width={120} height={150} padding={1} sx={{display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, backgroundColor: image.boxes && image.boxes[loc.name] != undefined ? '#959da5ff' : 'transparent'}} onClick={() => {
+                                    let rects = [...rectangles]
+                                    if (!rects.find(r => r.id === loc.name)){
+                                        if(image.boxes && image.boxes[loc.name]){
+                                            let box = image.boxes[loc.name]
+                                            console.log("using saved box", box)
+                                            rects=[{
+                                                x: box.x, y: box.y, width: box.width, height: box.height, rotation: box.rotation, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
+                                            }]
+                                            setRectangles([...rects])
+                                            setStep("location")
+                                            return;
                                         }
-                                    }}
-                                    onDragMove={handleDragMove}
-                                    onDragEnd={handleDragEnd}
-                                    onTransformEnd={(e) => {
-                                        // Get the transformed node
-                                        const node = transformerRef.current;
-                                        // Get the scale and rotation
-                                        const scaleX = stageRef.current.scaleX();
-                                        const scaleY = stageRef.current.scaleY();
-                                        // Reset the scale to 1 and update the new dimensions
-                                        let index = 0;
-                                        if (cropAdd) index = 1;
-                                        if (widthRef.current) widthRef.current.value = parseInt(Math.max(5, node.width() * scaleX));
-                                        if (heightRef.current) heightRef.current.value = parseInt(Math.max(5, node.height() * scaleY));
-                                        // Get the scale and rotation
-                                      }}
-                                />
-                                {!reloadTransformers && <Transformer
-                                    ref={transformerRef}
-                                    flipEnabled={false}
-                                    boundBoxFunc={(oldBox, newBox) => {
-                                        console.log("boundBoxFunc", oldBox, newBox)
-                                        const newRects = [...rectangles];
-                                        let newRect = newRects.find(b => b.id === boxRef.current.id())
-                                        if (addImage) {
-                                            newRect.fillPatternImage = addImage;
-                                            newRect.fillPatternScaleX = addImage.width / newBox.width;
-                                            newRect.fillPatternScaleY = addImage.height / newBox.height;
-                                        }
-                                        // limit resize
-                                        if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
-                                            newRect.width = oldBox.width;
-                                            newRect.height = oldBox.height;
-                                            newRect.rotation = oldBox.rotation;
-                                            setRectangles([...newRects])
-                                            return oldBox;
-                                        }
-                                        if (Math.abs(newBox.width) > stageRef.current.width() || Math.abs(newBox.height) > stageRef.current.height()) {
-                                            newRect.width = oldBox.width;
-                                            newRect.height = oldBox.height;
-                                            newRect.rotation = oldBox.rotation;
-                                            setRectangles([...newRects])
-                                            return oldBox;
-                                        }
-                                        newRect.width = newBox.width;
-                                        newRect.height = newBox.height;
-                                        newRect.rotation = newBox.rotation;
-                                        setRectangles([...newRects]);
-                                        return newBox;
-                                    }}
-                                    
-                                />}
-                                {selectionRectangle.visible && (
-                                    <Rect
-                                        x={Math.min(selectionRectangle.x1, selectionRectangle.x2)}
-                                        y={Math.min(selectionRectangle.y1, selectionRectangle.y2)}
-                                        width={Math.abs(selectionRectangle.x2 - selectionRectangle.x1)}
-                                        height={Math.abs(selectionRectangle.y2 - selectionRectangle.y1)}
-                                        fill="rgba(0,0,255,0.5)"
-                                    />
-                                )}
-                            </Layer>
-                        ))}
-                        {hasSublimation && <Layer>
-                            {lines.map((line, i) => (
-                                <Line
-                                    key={i}
-                                    points={line.points}
-                                    stroke="#df4b26"
-                                    strokeWidth={.2}
-                                    tension={0.1}
-                                    lineCap="round"
-                                    lineJoin="round"
-                                    globalCompositeOperation={
-                                        line.tool === 'eraser' ? 'destination-out' : 'source-over'
+                                        rects=[{
+                                            x: 10, y: 10, width: 300, height: 300, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
+                                            rotation: 0, }]
                                     }
-                                />
+                                    setActive(loc.name)
+                                    setRectangles([...rects])
+                                    setStep("location")
+                                }}>
+                                    <Button>{loc.name}</Button>
+                                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
+                                        <input ref={active == loc.name ? xRef : null} placeholder="X" id={`x-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.x : 0} style={{ width: "50px" }} onChange={(e) => {
+                                            let rects = [...rectangles];
+                                            let index = rects.findIndex(r => r.id === loc.name);
+                                            if (index !== -1) {
+                                                rects[index] = {
+                                                    ...rects[index],
+                                                    x: parseInt(e.target.value) || rects[index].x
+                                                };
+                                                xRef.current = e.target;
+                                                setRectangles(rects);
+                                            }
+                                        }} />
+                                        <input ref={active == loc.name ? yRef : null} placeholder="Y" id={`y-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.y : 0} style={{ width: "50px" }} onChange={(e) => {
+                                            let rects = [...rectangles];
+                                            let index = rects.findIndex(r => r.id === loc.name);
+                                            if (index !== -1) {
+                                                rects[index] = {
+                                                    ...rects[index],
+                                                    y: parseInt(e.target.value) || rects[index].y
+                                                };
+                                                yRef.current = e.target;
+                                                setRectangles(rects);
+                                            }
+                                        }} />
+                                    </Box>
+                                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
+                                        <input ref={active == loc.name ? widthRef : null} placeholder="Width" id={`width-${loc.name}`} defaultValue={image.boxes? image.boxes[loc.name]?.width:  0} style={{ width: "50px" }} onChange={(e)=>{
+                                            let rects = [...rectangles];
+                                            let index = rects.findIndex(r => r.id === loc.name);
+                                            if (index !== -1) {
+                                                rects[index] = {
+                                                    ...rects[index],
+                                                    width: parseInt(e.target.value) || rects[index].width
+                                                };
+                                                widthRef.current = e.target;
+                                                setRectangles(rects);
+                                            }
+                                        }} />
+                                        <input ref={active == loc.name ? heightRef : null} placeholder="Height" id={`height-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.height : 0} style={{ width: "50px" }} onChange={(e)=>{
+                                            let rects = [...rectangles];
+                                            let index = rects.findIndex(r => r.id === loc.name);
+                                            if (index !== -1) {
+                                                rects[index] = {
+                                                    ...rects[index],
+                                                    height: parseInt(e.target.value) || rects[index].height
+                                                };
+                                                heightRef.current = e.target;
+                                                setRectangles(rects);
+                                            }
+                                        }} />
+                                    </Box>
+                                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
+                                        <Button variant="contained" size="small" color="primary" onClick={()=>{
+                                            let img = { ...image }
+                                            let newBoxes = {}
+                                            for(let b in Object.keys(img.boxes)){
+                                                if(b !== loc.name)newBoxes[b] = img.boxes[b]
+                                            }
+                                            img.boxes = newBoxes
+                                            setImage({...img});
+                                        }} >Remove</Button>
+                                    </Box>
+                                </Box>
                             ))}
-                            {rectangles.map((rect, i) => (
-                                <Rect
-                                    key={i}
-                                    x={rect.x}
-                                    y={rect.y}
-                                    width={rect.width}
-                                    height={rect.height}
-                                    fill={rect.fill}
-                                    rotation={rect.rotation}
-                                />
-                            ))}
-                        </Layer>}
-                    </Stage>
-                </Box>}
-                {step === "crop" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                    <Button variant="contained" color="primary" onClick={async() => {
-                        handleExportPartial();
-                    }}>
-                        Crop
-                    </Button>
-                    <Button variant="contained" color="primary" onClick={async () => {
-                        let img = {...image}
-                        img.image = originalImage
-                        setImage({...img});
-                    }}>
-                        Reset
-                    </Button>
-                </Box>}
-                {step === "location" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                    <Button variant="contained" color="primary" onClick={async() => {
-                        
-                        let rect = rectangles[0];
-                        let img = {...image}
-                        if(hasSublimation){
-                            if(!img.sublimationBoxes) img.sublimationBoxes = {}
-                            console.log("saving sublimation box", rect)
-                            img.sublimationBoxes[rect.id] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, rotation: rect.rotation }
-                            setImage({...img});
-                            setRectangles([]);
-                        }else{
-                            if(!img.boxes) img.boxes = {}
-                            console.log("saving box", rect)
-                            img.boxes[rect.id] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, rotation: rect.rotation }
-                            setImage({...img});
-                            setRectangles([]);
-                        }
-                    }}>
-                        save Box
-                    </Button>
-                </Box>}
-                {hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                    <Button variant="contained" color="primary" onClick={async () => {
-                        setShowArea(!showArea)
-                        console.log("saving all sublimation boxes")
-                        //console.log(points)
-                        let points = []
-                        let rectangles = []
-                        for(let line of lines){
-                            console.log("line", line)
-                            let points = []
-                            for(let i = 0; i < line.points.length; i+=2){
-                                let x = parseInt(line.points[i])
-                                let y = line.points[i+1]
-                                points.push([x, y])
+                        </Box>
+                        <Box sx={{ mt: 2, mb: 2 }}>
+                            <Box sx={{width: "100%"}}>
+                                {hasSublimation && <Box sx={{ mt: 2, display: 'flex', width: "100%", alignContent: "center", overflow: 'auto', flexDirection: 'row', gap: 2 }}>
+                                    {Object.keys(fetures).map((key, index) => (
+                                        <Box key={index}>
+                                            <Button key={index} variant={featureSelected == key ? "contained" : "outlined"} onClick={()=> {
+                                                setFeatureSelected(key)
+                                            }}>{key}</Button>
+                                        </Box>
+                                    ))}
+                                </Box>}
+                            </Box>
+                            {hasSublimation && <Box sx={{ display: hasSublimation ? "flex" : "none", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", mt: 2, height: "25px" }}>
+                                <TextField
+                                    select
+                                    onChange={(e)=>{
+                                        console.log(e.target.value)
+                                        setTool(e.target.value)
+                                    }}
+                                    sx={{width: "15%"}}
+                                    label="Tool">
+                                    <MenuItem key="eraser" value="eraser">Eraser</MenuItem>
+                                    <MenuItem key="pen" value="pen">Pen</MenuItem>
+                                </TextField>
+                                <Button sx={{ ml: 2 }} onClick={() => { setLines([]); setPoints([]); }}>Clear</Button>
+                                <Button sx={{ ml: 2 }} onClick={() => { setPan(!pan) }}>{pan ? "Stop Pan" : "Start Pan"}</Button>
+                            </Box>}
+                        </Box>
+                        {!reload && <Uploader2 afterFunction={async (data) => {   
+                            if(step == "addImage") {
+                                const img = new window.Image();
+                                img.src = data.url; // Replace with your image URL
+                                img.onload = () => {
+                                    setAddImage(img);
+                                };
+                                return;
+                            }else {
+                                let img = {...image}
+                                img.image = data.url
+                                setImage({...img});
+                                setOriginalImage(data.url);
                             }
-                            let xValues = []
-                            for(let line of points){
-                                if(xValues.includes(line[0])) continue;
-                                xValues.push(line[0])
-                            }
-                            xValues.sort((a,b) => a - b)
-                            for(let x of xValues){
-                                let minY = Math.min(...points.filter(p => p[0] === x).map(p => p[1]))
-                                let maxY = Math.max(...points.filter(p => p[0] === x).map(p => p[1]))
-                                let height = maxY - minY
-                                console.log("x", x, "minY", minY, "maxY", maxY, height)
-                                rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
-                            }
-                        }
-                        //console.log("rectangles", rectangles)
-                        // for(let line of poi){
-                        //     rectangles.push({ x: line[0], y: line[1], width: 1, height: .5, id: `sublimation-${line[0]}-${line[1]}`, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                        //     rotation: 0, })
-                        // }
-                        if(showArea) setRectangles([...rectangles])
-                        else setRectangles([])
-                    }}>
-                        Show Area
-                    </Button>
-                </Box>}
-                {step === "setImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                    <Button variant="contained" color="primary" onClick={async() => {
-                        transformerRef.current.nodes([])
-                        let region = {
-                            x: 0,
-                            y: 0,
-                            width: 400,
-                            height: 400,
-                            pixelRatio: 2
-                        }
-                        if (stageRef.current) {
-                            const dataURL = stageRef.current.toDataURL({
-                                ...region
-                            });
-                            let img = { ...image }
-                            img.image = dataURL
-                            setImage({ ...img });
-                            setAddImage(null);
-                            setRectangles([]);
-                            setStep("")
-                        }
-                    }}>
-                        save Image Position
-                    </Button>
-                    <Button variant="contained" color="primary" onClick={async () => {
-                        transformerRef.current.nodes([])
-                        let rects = [...rectangles]
-                        rects.push({ x: 10, y: 10, width: 100, height: 100, id: "crop", name: 'rect', fill: 'transparent', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,})
-                        setRectangles(rects)
-                        setCropAdd(true)
-                        setStep("cropAdd")
-                    }}>
-                        crop Rectangle
-                    </Button>
-                </Box>}
-                {cropAdd && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                    <Button variant="contained" color="primary" onClick={async() => {
-                        transformerRef.current.nodes([])
-                        let crop = rectangles.find(r => r.id === "crop");
-                        setRectangles(rectangles.filter(r => r.id !== "crop"));
-                        await new Promise(r => setTimeout(r, 100))
-                        let region = {
-                            x: crop.x,
-                            y: crop.y,
-                            width: crop.width,
-                            height: crop.height,
-                            pixelRatio: 2
-                        }
-                        if (stageRef.current) {
-                            const dataURL = stageRef.current.toDataURL({
-                                ...region
-                            });
-                            const img = new window.Image();
-                            img.src = dataURL; // Replace with your image URL
-                            img.onload = () => {
-                                setAddImage(img);
-                            };
-                            setCropAdd(false);
-                            setStep("setImage")
-                        }
-                    }}>
-                        save crop
-                    </Button>
-                </Box>}
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                    <Button variant="contained" color="primary" onClick={async ()=>{
-                        setStep("addImage")
-                        setReload(true)
-                        await new Promise(r => setTimeout(r, 1000))
-                        setReload(false)
-                    }}>
-                        Add Image
-                    </Button>
-                    <Button variant="contained" color="primary" onClick={async ()=>{
-                        console.log("image to save", image, selectedImageSrc)
-                        if(selectedImageSrc.image){
-                            console.log("updating existing image")
-                            let b = { ...blank }
-                            if (!b.images) b.images = []
-                            b.images = b.images.filter(img => img.image !== selectedImageSrc.image)
-                            let img = { ...image }
-                            b.images.push(img)
-                            setBlank(b)
-                            setImage({ color: color?._id, image: null, boxes: {} })
-                            setRectangles([])
-                            setSelectedImageSrc(null);
-                            update({ blank: b });
-                        }else{
-                            console.log("saving new image")
-                            let url = `blanks/${Date.now()}.jpg`
-                            let params = {
-                                Bucket: "images1.pythiastechnologies.com",
-                                Key: url,
-                                Body: Buffer.from(image.image.split(",")[1], "base64"),
-                                ACL: "public-read",
-                                ContentEncoding: "base64",
-                                ContentDisposition: "inline",
-                                ContentType: "image/jpeg",
-                            };
-                            const data = await s3.send(new PutObjectCommand(params));
-                            await new Promise(r => setTimeout(r, 1000))
-                            image.image = `https://images1.pythiastechnologies.com/${url}`
-                            image.color = color?._id
-                            console.log("uploaded image", data, image)
-                            let b = {...blank}
-                            if(!b.images) b.images = []
-                            let img = {...image}
-                            b.images.push(img)
-                            setBlank(b)
-                            setImage({color: color?._id, image: null, boxes: {}})
-                            setRectangles([])
-                            update({blank: b});
-                        }
-                    }}>
-                        Save Image
-                    </Button>
-                </Box>
+                        }} />}
+                        {image.image && step !== "addImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflow: 'hidden', position: "relative", top: -415, marginBottom: "-400px", alignItems: 'center', alignContent: 'center' }}>
+                            <Stage  width={400} height={400}
+                                style={{background: "#f0f0f0", border: '1px solid #ccc', cursor: pan ? "grab" : "default" }}
+                                draggable={pan}
+                                onMouseDown={hasSublimation ? sublimationHandleMouseDown : handleMouseDown}
+                                onMousemove={hasSublimation ? sublimationHandleMouseMove : handleMouseMove}
+                                onMouseup={hasSublimation ? sublimationHandleMouseUp : handleMouseUp}
+                                onContextMenu={(e) => {
+                                    // stop default scrolling
+                                    console.log("wheel down")
+                                    e.evt.preventDefault();
+                                    console.log(e.target)
+                                    let rects = [...rectangles];
+                                    rects = rects.filter(r => r.id !== e.target.id())
+                                    setRectangles([...rects]);
+                                }}
+                                onWheel={(e) => {
+                                    // stop default scrolling
+                                    const scaleBy = 1.01;
+                                    e.evt.preventDefault();
+                                    console.log(stageRef.current)
+                                    const oldScale = stageRef.current.scaleX();
+                                    const pointer = stageRef.current.getPointerPosition();
+
+                                    const mousePointTo = {
+                                        x: (pointer.x - stageRef.current.x()) / oldScale,
+                                        y: (pointer.y - stageRef.current.y()) / oldScale,
+                                    };
+
+                                    // how to scale? Zoom in? Or zoom out?
+                                    let direction = e.evt.deltaY > 0 ? 1 : -1;
+
+                                    // when we zoom on trackpad, e.evt.ctrlKey is true
+                                    // in that case lets revert direction
+                                    if (e.evt.ctrlKey) {
+                                        direction = -direction;
+                                    }
+
+                                    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+                                    stageRef.current.scale({ x: newScale, y: newScale });
+
+                                    const newPos = {
+                                        x: pointer.x - mousePointTo.x * newScale,
+                                        y: pointer.y - mousePointTo.y * newScale,
+                                    };
+                                    stageRef.current.position(newPos);
+                                }}
+                                onClick={handleStageClick} ref={stageRef}>
+                                <Layer>
+                                    <URLImage src={image.image} x={0} y={0} width={400} height={400} />
+                                </Layer>
+                                {!hasSublimation &&[...rectangles].map((rect, i) => (
+                                    <Layer key={i}>
+                                        {console.log("rect render", rect.width, rect.height)}
+                                        <Rect
+                                            key={rect.id}
+                                            id={rect.id}
+                                            name={rect.name}
+                                            x={rect.x}
+                                            y={rect.y}
+                                            width={rect.width}
+                                            height={rect.height}
+                                            rotation={rect.rotation}
+                                            fill={rect.fill}
+                                            fillPatternImage={rect.fillPatternImage}
+                                            fillPatternScaleX={rect.fillPatternScaleX} // Optional: Adjust image scale
+                                            fillPatternScaleY={rect.fillPatternScaleY} // Optional: Adjust image scale
+                                            stroke={rect.stroke}
+                                            dash={[10, 10]}
+                                            strokeWidth={2}
+                                            draggable
+                                            ref={node => {
+                                                if (node) {
+                                                    rectRefs.current.set(rect.id, node);
+                                                }
+                                            }}
+                                            onDragMove={handleDragMove}
+                                            onDragEnd={handleDragEnd}
+                                            onTransformEnd={(e) => {
+                                                // Get the transformed node
+                                                const node = transformerRef.current;
+                                                // Get the scale and rotation
+                                                const scaleX = stageRef.current.scaleX();
+                                                const scaleY = stageRef.current.scaleY();
+                                                // Reset the scale to 1 and update the new dimensions
+                                                let index = 0;
+                                                if (cropAdd) index = 1;
+                                                if (widthRef.current) widthRef.current.value = parseInt(Math.max(5, node.width() * scaleX));
+                                                if (heightRef.current) heightRef.current.value = parseInt(Math.max(5, node.height() * scaleY));
+                                                // Get the scale and rotation
+                                            }}
+                                        />
+                                        {!reloadTransformers && <Transformer
+                                            ref={transformerRef}
+                                            flipEnabled={false}
+                                            boundBoxFunc={(oldBox, newBox) => {
+                                                console.log("boundBoxFunc", oldBox, newBox)
+                                                const newRects = [...rectangles];
+                                                let newRect = newRects.find(b => b.id === boxRef.current.id())
+                                                if (addImage) {
+                                                    newRect.fillPatternImage = addImage;
+                                                    newRect.fillPatternScaleX = addImage.width / newBox.width;
+                                                    newRect.fillPatternScaleY = addImage.height / newBox.height;
+                                                }
+                                                // limit resize
+                                                if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
+                                                    newRect.width = oldBox.width;
+                                                    newRect.height = oldBox.height;
+                                                    newRect.rotation = oldBox.rotation;
+                                                    setRectangles([...newRects])
+                                                    return oldBox;
+                                                }
+                                                if (Math.abs(newBox.width) > stageRef.current.width() || Math.abs(newBox.height) > stageRef.current.height()) {
+                                                    newRect.width = oldBox.width;
+                                                    newRect.height = oldBox.height;
+                                                    newRect.rotation = oldBox.rotation;
+                                                    setRectangles([...newRects])
+                                                    return oldBox;
+                                                }
+                                                newRect.width = newBox.width;
+                                                newRect.height = newBox.height;
+                                                newRect.rotation = newBox.rotation;
+                                                setRectangles([...newRects]);
+                                                return newBox;
+                                            }}
+                                            
+                                        />}
+                                        {selectionRectangle.visible && (
+                                            <Rect
+                                                x={Math.min(selectionRectangle.x1, selectionRectangle.x2)}
+                                                y={Math.min(selectionRectangle.y1, selectionRectangle.y2)}
+                                                width={Math.abs(selectionRectangle.x2 - selectionRectangle.x1)}
+                                                height={Math.abs(selectionRectangle.y2 - selectionRectangle.y1)}
+                                                fill="rgba(0,0,255,0.5)"
+                                            />
+                                        )}
+                                    </Layer>
+                                ))}
+                                {hasSublimation && <Layer>
+                                    {lines.map((line, i) => (
+                                        <Line
+                                            key={i}
+                                            points={line.points}
+                                            stroke="#df4b26"
+                                            strokeWidth={.2}
+                                            tension={0.1}
+                                            lineCap="round"
+                                            lineJoin="round"
+                                            globalCompositeOperation={
+                                                line.tool === 'eraser' ? 'destination-out' : 'source-over'
+                                            }
+                                        />
+                                    ))}
+                                    {rectangles.map((rect, i) => (
+                                        <Rect
+                                            key={i}
+                                            x={rect.x}
+                                            y={rect.y}
+                                            width={rect.width}
+                                            height={rect.height}
+                                            fill={rect.fill}
+                                            rotation={rect.rotation}
+                                        />
+                                    ))}
+                                </Layer>}
+                            </Stage>
+                        </Box>}
+                        {step === "crop" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button variant="contained" color="primary" onClick={async() => {
+                                handleExportPartial();
+                            }}>
+                                Crop
+                            </Button>
+                            <Button variant="contained" color="primary" onClick={async () => {
+                                let img = {...image}
+                                img.image = originalImage
+                                setImage({...img});
+                            }}>
+                                Reset
+                            </Button>
+                        </Box>}
+                        {step === "location" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button variant="contained" color="primary" onClick={async() => {
+                                
+                                let rect = rectangles[0];
+                                let img = {...image}
+                                if(hasSublimation){
+                                    if(!img.sublimationBoxes) img.sublimationBoxes = {}
+                                    console.log("saving sublimation box", rect)
+                                    img.sublimationBoxes[rect.id] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, rotation: rect.rotation }
+                                    setImage({...img});
+                                    setRectangles([]);
+                                }else{
+                                    if(!img.boxes) img.boxes = {}
+                                    console.log("saving box", rect)
+                                    img.boxes[rect.id] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, rotation: rect.rotation }
+                                    setImage({...img});
+                                    setRectangles([]);
+                                }
+                            }}>
+                                save Box
+                            </Button>
+                        </Box>}
+                        {hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button variant="contained" color="primary" onClick={async () => {
+                                setShowArea(!showArea)
+                                console.log("saving all sublimation boxes")
+                                //console.log(points)
+                                let points = []
+                                let rectangles = []
+                                for(let line of lines){
+                                    console.log("line", line)
+                                    let points = []
+                                    for(let i = 0; i < line.points.length; i+=2){
+                                        let x = parseInt(line.points[i])
+                                        let y = line.points[i+1]
+                                        points.push([x, y])
+                                    }
+                                    let xValues = []
+                                    for(let line of points){
+                                        if(xValues.includes(line[0])) continue;
+                                        xValues.push(line[0])
+                                    }
+                                    xValues.sort((a,b) => a - b)
+                                    for(let x of xValues){
+                                        let minY = Math.min(...points.filter(p => p[0] === x).map(p => p[1]))
+                                        let maxY = Math.max(...points.filter(p => p[0] === x).map(p => p[1]))
+                                        let height = maxY - minY
+                                        console.log("x", x, "minY", minY, "maxY", maxY, height)
+                                        rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
+                                    }
+                                }
+                                //console.log("rectangles", rectangles)
+                                // for(let line of poi){
+                                //     rectangles.push({ x: line[0], y: line[1], width: 1, height: .5, id: `sublimation-${line[0]}-${line[1]}`, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
+                                //     rotation: 0, })
+                                // }
+                                if(showArea) setRectangles([...rectangles])
+                                else setRectangles([])
+                            }}>
+                                Show Area
+                            </Button>
+                        </Box>}
+                        {step === "setImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button variant="contained" color="primary" onClick={async() => {
+                                transformerRef.current.nodes([])
+                                let region = {
+                                    x: 0,
+                                    y: 0,
+                                    width: 400,
+                                    height: 400,
+                                    pixelRatio: 2
+                                }
+                                if (stageRef.current) {
+                                    const dataURL = stageRef.current.toDataURL({
+                                        ...region
+                                    });
+                                    let img = { ...image }
+                                    img.image = dataURL
+                                    setImage({ ...img });
+                                    setAddImage(null);
+                                    setRectangles([]);
+                                    setStep("")
+                                }
+                            }}>
+                                save Image Position
+                            </Button>
+                            <Button variant="contained" color="primary" onClick={async () => {
+                                transformerRef.current.nodes([])
+                                let rects = [...rectangles]
+                                rects.push({ x: 10, y: 10, width: 100, height: 100, id: "crop", name: 'rect', fill: 'transparent', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,})
+                                setRectangles(rects)
+                                setCropAdd(true)
+                                setStep("cropAdd")
+                            }}>
+                                crop Rectangle
+                            </Button>
+                        </Box>}
+                        {cropAdd && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                            <Button variant="contained" color="primary" onClick={async() => {
+                                transformerRef.current.nodes([])
+                                let crop = rectangles.find(r => r.id === "crop");
+                                setRectangles(rectangles.filter(r => r.id !== "crop"));
+                                await new Promise(r => setTimeout(r, 100))
+                                let region = {
+                                    x: crop.x,
+                                    y: crop.y,
+                                    width: crop.width,
+                                    height: crop.height,
+                                    pixelRatio: 2
+                                }
+                                if (stageRef.current) {
+                                    const dataURL = stageRef.current.toDataURL({
+                                        ...region
+                                    });
+                                    const img = new window.Image();
+                                    img.src = dataURL; // Replace with your image URL
+                                    img.onload = () => {
+                                        setAddImage(img);
+                                    };
+                                    setCropAdd(false);
+                                    setStep("setImage")
+                                }
+                            }}>
+                                save crop
+                            </Button>
+                        </Box>}
+                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+                            <Button variant="contained" color="primary" onClick={async ()=>{
+                                setStep("addImage")
+                                setReload(true)
+                                await new Promise(r => setTimeout(r, 1000))
+                                setReload(false)
+                            }}>
+                                Add Image
+                            </Button>
+                            <Button variant="contained" color="primary" onClick={async ()=>{
+                                console.log("image to save", image, selectedImageSrc)
+                                if(selectedImageSrc.image){
+                                    console.log("updating existing image")
+                                    let b = { ...blank }
+                                    if (!b.images) b.images = []
+                                    b.images = b.images.filter(img => img.image !== selectedImageSrc.image)
+                                    let img = { ...image }
+                                    b.images.push(img)
+                                    setBlank(b)
+                                    setImage({ color: color?._id, image: null, boxes: {} })
+                                    setRectangles([])
+                                    setSelectedImageSrc(null);
+                                    update({ blank: b });
+                                }else{
+                                    console.log("saving new image")
+                                    let url = `blanks/${Date.now()}.jpg`
+                                    let params = {
+                                        Bucket: "images1.pythiastechnologies.com",
+                                        Key: url,
+                                        Body: Buffer.from(image.image.split(",")[1], "base64"),
+                                        ACL: "public-read",
+                                        ContentEncoding: "base64",
+                                        ContentDisposition: "inline",
+                                        ContentType: "image/jpeg",
+                                    };
+                                    const data = await s3.send(new PutObjectCommand(params));
+                                    await new Promise(r => setTimeout(r, 1000))
+                                    image.image = `https://images1.pythiastechnologies.com/${url}`
+                                    image.color = color?._id
+                                    console.log("uploaded image", data, image)
+                                    let b = {...blank}
+                                    if(!b.images) b.images = []
+                                    let img = {...image}
+                                    b.images.push(img)
+                                    setBlank(b)
+                                    setImage({color: color?._id, image: null, boxes: {}})
+                                    setRectangles([])
+                                    update({blank: b});
+                                }
+                            }}>
+                                Save Image
+                            </Button>
+                        </Box>
+                    </Grid2>
+                    <Grid2 size={hasSublimation? 4 : 0} sx={{ display: hasSublimation ? "flex" : "none", flexDirection: 'column', borderLeft: '1px solid #ccc', pl: 2 }}>
+                        <Typography variant="h6" textAlign={"center"}>Feature {featureSelected}</Typography>
+                        <Button>Add Layer</Button>
+                    </Grid2>
+                </Grid2>
                 <CopyBoxesModal open={copyBoxesOpen} onClose={() => setCopyBoxesOpen(false)} blank={blank} image={image} setImage={setImage}/>
             </Box>
         </Modal>
