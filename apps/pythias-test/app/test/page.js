@@ -132,7 +132,7 @@ export default async function Test(){
     img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     let imageMeta2 = await img.metadata();
     console.log(imageMeta2);
-    img = await img.composite([{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).toBuffer();
+    img = await img.composite([{ input: await backgroundImage.toBuffer(), blend: 'atop', x: 0, y: 0 },{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).toBuffer();
     img = sharp(img);
     img.sharpen({ sigma: 10, m1: 0, m2: 0, x1: 0, y2: 0, y3: 0 });
     //img.resize(1200,1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
