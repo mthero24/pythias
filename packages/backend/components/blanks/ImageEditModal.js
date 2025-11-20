@@ -101,7 +101,23 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         console.log(color, "color");
         let img = {...image}
         if(img){
-            if(!img.sublimationBoxes) img.sublimationBoxes = {}
+            console.log(img);
+            if(!img.sublimationBoxes) img.sublimationBoxes = {
+                front: {layers: []},
+                back: {layers: []},
+                leftUperSleeve: {layers: []},
+                rightUperSleeve: {layers: []},
+                collar: {layers: []},
+                background: {layers: []},
+                leftLowerSleeve: {layers: []},
+                rightLowerSleeve: {layers: []},
+                outsideHood: {layers: []},
+                insideHood: {layers: []},
+                inside: {layers: []}
+            };
+            //console.log("img.sublimationBoxes", img.sublimationBoxes);
+            //console.log(img.sublimationBoxes.front);
+            ///setFeatures(img.sublimationBoxes);
             for(let sub of sublimationBoxes){
                 img.sublimationBoxes[sub.name]= []
             }
@@ -113,6 +129,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     useEffect(() => {
         let img
         console.log(color, selectedImageSrc)
+        if(selectedImageSrc.sublimationBoxes) setFeatures({...selectedImageSrc.sublimationBoxes});
         if(selectedImageSrc) img = {...selectedImageSrc}
         else img = {color: color?._id, image: null, boxes: {}}
         setImage(img);
@@ -353,6 +370,36 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         const [image] = useImage(src, 'anonymous'); // 'anonymous' for cross-origin images
         return <KonvaImage image={image} {...rest} />;
     };
+    function findBreakpointsByAngle(points, angleThreshold) {
+        const breakpoints = [];
+        let xValues = points.map(p => p.x);
+        xValues = Array.from(new Set(xValues)).sort((a, b) => {
+            if(a < b) return -1;
+            if(a > b) return 1;
+            return 0;
+        });
+        console.log(xValues)
+        for(let x of xValues){
+            const columnPoints = points.filter(p => p.x === x).sort((a, b) => a.y - b.y);
+            console.log("columnPoints", columnPoints)
+            if(columnPoints.length < 2) continue;
+            if(columnPoints.length == 2){
+                breakpoints.push({ x: x, y: columnPoints[0].y, width: 1, height: columnPoints[1].y - columnPoints[0].y, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
+            }else{
+                let yPoints = columnPoints.map(p => p.y);
+                let lastBreak = yPoints[0];
+                for(let i = 0; i < columnPoints.length - 1; i+=2){
+                    let p1 = columnPoints[i];
+                    let p2 = columnPoints[i + 1];
+                    if(!p2) break;
+                    breakpoints.push({ x: x, y: p1.y, width: 1, height: p2.y - p1.y, id: `sublimation-${x}-${lastBreak}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
+                    lastBreak = p2.y;
+                }
+            }
+        }
+
+        return breakpoints;
+    }
     return (
         <Modal open={open} onClose={()=>{onClose(); setSelectedImageSrc(null)}} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: hasSublimation? 1000: 600, height: 800, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
@@ -724,7 +771,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                     console.log("line", line)
                                     let points = []
                                     for(let i = 0; i < line.points.length; i+=2){
-                                        let x = parseInt(line.points[i])
+                                        let x = Math.round(line.points[i] * 100) / 100
                                         let y = line.points[i+1]
                                         points.push([x, y])
                                     }
@@ -734,13 +781,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                         xValues.push(line[0])
                                     }
                                     xValues.sort((a,b) => a - b)
-                                    for(let x of xValues){
-                                        let minY = Math.min(...points.filter(p => p[0] === x).map(p => p[1]))
-                                        let maxY = Math.max(...points.filter(p => p[0] === x).map(p => p[1]))
-                                        let height = maxY - minY
-                                        console.log("x", x, "minY", minY, "maxY", maxY, height)
-                                        rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
-                                    }
+                                    let breakpoints = findBreakpointsByAngle(points.map(p => ({x: p[0], y: p[1]})), 10);
+                                    rectangles.push(...breakpoints);
                                 }
                                 //console.log("rectangles", rectangles)
                                 // for(let line of poi){

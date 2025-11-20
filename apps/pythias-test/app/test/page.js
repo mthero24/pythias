@@ -126,13 +126,13 @@ export default async function Test(){
     console.log(image.sublimationBoxes.rightUperSleeve.layers[0].boxes);
     let backgroundImage = await createSide({ boxes: image.sublimationBoxes["background"].layers[0].boxes, baseImage: image.image, subImage: "./abstract.jpg" });
     let frontImage = await createSide({ boxes: image.sublimationBoxes["front"].layers[0].boxes, baseImage: image.image, subImage: "./bird.jpg" });
-    //let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftUperSleeve"].layers[0].boxes, baseImage: image.image, subImage: "./bird.jpg" });
+    let leftSleeveImage = await createSide({ boxes: image.sublimationBoxes["leftUperSleeve"].layers[0].boxes, baseImage: image.image, subImage: "./abstract.jpg" });
     let rightSleeveImage = await createSide({ boxes: image.sublimationBoxes["rightUperSleeve"].layers[0].boxes, baseImage: image.image, subImage: "./bird.jpg" });
     let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
     img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     let imageMeta2 = await img.metadata();
     console.log(imageMeta2);
-    img = await img.composite([{ input: await backgroundImage.toBuffer(), blend: 'atop', x: 0, y: 0 },{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).toBuffer();
+    img = await img.composite([{ input: await backgroundImage.toBuffer(), blend: 'atop', x: 0, y: 0 },{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await leftSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 } ]).toBuffer();
     img = sharp(img);
     img.sharpen({ sigma: 10, m1: 0, m2: 0, x1: 0, y2: 0, y3: 0 });
     //img.resize(1200,1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
