@@ -386,12 +386,12 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
             if(columnPoints.length == 2){
                 breakpoints.push({ x: x, y: columnPoints[0].y, width: 1, height: columnPoints[1].y - columnPoints[0].y, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
             }else{
+                console.log("multiple points in column", columnPoints)
                 let yPoints = columnPoints.map(p => p.y);
                 let lastBreak = yPoints[0];
                 for(let i = 0; i < columnPoints.length - 1; i+=2){
                     let p1 = columnPoints[i];
                     let p2 = columnPoints[i + 1];
-                    if(!p2) break;
                     breakpoints.push({ x: x, y: p1.y, width: 1, height: p2.y - p1.y, id: `sublimation-${x}-${lastBreak}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
                     lastBreak = p2.y;
                 }
