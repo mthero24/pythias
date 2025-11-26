@@ -5,8 +5,8 @@ import { Uploader2 } from "../reusable/uploader2";
 import useImage from 'use-image';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
-import { Check } from "@mui/icons-material";
-import { set } from "mongoose";
+import polygonToBoxes from "../../functions/polygontoboxes";
+import { EditablePolygon } from "@pythias/backend"
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
@@ -75,11 +75,9 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const [copyBoxesOpen, setCopyBoxesOpen] = useState(false);
     const [hasSublimation, setHasSublimation] = useState(false);
     const sublimationBoxes = [{name:"front"}, {name:"back"}, {name:"leftSleeve"}, {name:"rightSleeve"}, {name:"collar"}];
-    const [subSelected, setSubSelected] = useState("")
-    const [count, setCount] = useState(0)
+    const [points, setPoints] = useState([]);
     const [tool, setTool] = useState('erraser');
     const [lines, setLines] = useState([]);
-    const [showArea, setShowArea] = useState(false);
     const [pan, setPan] = useState(false);
     const isDrawing = useRef(false);
     const [layerSelected, setLayerSelected] = useState(null);
@@ -96,6 +94,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         insideHood: {layers: []},
         inside: {layers: []}
     })
+    const [sublimationModalOpen, setSublimationModalOpen] = useState(false);
     const [featureSelected, setFeatureSelected] = useState("front");
     useEffect(() => {
         console.log(color, "color");
@@ -115,12 +114,13 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                 insideHood: {layers: []},
                 inside: {layers: []}
             };
-            //console.log("img.sublimationBoxes", img.sublimationBoxes);
-            //console.log(img.sublimationBoxes.front);
-            ///setFeatures(img.sublimationBoxes);
-            for(let sub of sublimationBoxes){
-                img.sublimationBoxes[sub.name]= []
+            let points = [];
+            for(let key of Object.keys(img.sublimationBoxes)){
+                img.sublimationBoxes[key].layers.forEach((layer, index) => {
+                    points.push(layer.points || []);
+                })
             }
+            setPoints(points);
             img.color = color?._id
             setImage(img);
 
@@ -128,7 +128,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     }, [color, open]);
     useEffect(() => {
         let img
-        console.log(color, selectedImageSrc)
+        //console.log(color, selectedImageSrc)
         if(selectedImageSrc.sublimationBoxes) setFeatures({...selectedImageSrc.sublimationBoxes});
         if(selectedImageSrc) img = {...selectedImageSrc}
         else img = {color: color?._id, image: null, boxes: {}}
@@ -185,48 +185,6 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
         const isSelected = selectedIds.includes(clickedId);
         setSelectedIds([clickedId]);
-        // if (!metaPressed && !isSelected) {
-        //     // If no key pressed and the node is not selected
-        //     // select just one
-        //     setSelectedIds([clickedId]);
-        // } else if (metaPressed && isSelected) {
-        //     // If we pressed keys and node was selected
-        //     // we need to remove it from selection
-        //     setSelectedIds(selectedIds.filter(id => id !== clickedId));
-        // } else if (metaPressed && !isSelected) {
-        //     // Add the node into selection
-        //     setSelectedIds([...selectedIds, clickedId]);
-        // }
-    };
-    const sublimationHandleMouseDown = (e) => {
-        if(pan) return;
-        isDrawing.current = true;
-        const stage = e.target.getStage();
-        const pointerPos = stage.getPointerPosition();
-        const stageTransform = stage.getAbsoluteTransform().copy();
-        const absolutePointerPos = stageTransform.invert().point(pointerPos);
-        setLines([...lines, { tool, points: [absolutePointerPos.x, absolutePointerPos.y] }]);
-    };
-
-    const sublimationHandleMouseMove = (e) => {
-        // no drawing - skipping
-        if (!isDrawing.current) {
-            return;
-        }
-        const stage = e.target.getStage();
-        const pointerPos = stage.getPointerPosition();
-        const stageTransform = stage.getAbsoluteTransform().copy();
-        const absolutePointerPos = stageTransform.invert().point(pointerPos);
-        let lastLine = lines[lines.length - 1];
-        // add point
-        lastLine.points = lastLine.points.concat([absolutePointerPos.x, absolutePointerPos.y]);
-        // replace last
-        lines.splice(lines.length - 1, 1, lastLine);
-        setLines(lines.concat());
-    };
-
-    const sublimationHandleMouseUp = () => {
-        isDrawing.current = false;
     };
     const handleMouseDown = (e) => {
         // Do nothing if we mousedown on any shape
@@ -370,36 +328,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         const [image] = useImage(src, 'anonymous'); // 'anonymous' for cross-origin images
         return <KonvaImage image={image} {...rest} />;
     };
-    function findBreakpointsByAngle(points, angleThreshold) {
-        const breakpoints = [];
-        let xValues = points.map(p => p.x);
-        xValues = Array.from(new Set(xValues)).sort((a, b) => {
-            if(a < b) return -1;
-            if(a > b) return 1;
-            return 0;
-        });
-        console.log(xValues)
-        for(let x of xValues){
-            const columnPoints = points.filter(p => p.x === x).sort((a, b) => a.y - b.y);
-            console.log("columnPoints", columnPoints)
-            if(columnPoints.length < 2) continue;
-            if(columnPoints.length == 2){
-                breakpoints.push({ x: x, y: columnPoints[0].y, width: 1, height: columnPoints[1].y - columnPoints[0].y, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
-            }else{
-                console.log("multiple points in column", columnPoints)
-                let yPoints = columnPoints.map(p => p.y);
-                let lastBreak = yPoints[0];
-                for(let i = 0; i < columnPoints.length - 1; i+=2){
-                    let p1 = columnPoints[i];
-                    let p2 = columnPoints[i + 1];
-                    breakpoints.push({ x: x, y: p1.y, width: 1, height: p2.y - p1.y, id: `sublimation-${x}-${lastBreak}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
-                    lastBreak = p2.y;
-                }
-            }
-        }
-
-        return breakpoints;
-    }
+   
     return (
         <Modal open={open} onClose={()=>{onClose(); setSelectedImageSrc(null)}} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: hasSublimation? 1000: 600, height: 800, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
@@ -513,31 +442,24 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 </Box>
                             ))}
                         </Box>
-                        <Box sx={{ mt: 2, mb: 2 }}>
-                            <Box sx={{width: "100%"}}>
+                        <Box sx={{ mt: 2, mb: 2, display: hasSublimation ? "block" : "none", }}>
+                            <Box sx={{width: "100%", display: hasSublimation ? "flex" : "none", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start" }}>
                                 {hasSublimation && <Box sx={{ mt: 2, display: 'flex', width: "100%", alignContent: "center", overflow: 'auto', flexDirection: 'row', gap: 2 }}>
                                     {Object.keys(features).map((key, index) => (
                                         <Box key={index}>
                                             <Button key={index} variant={featureSelected == key ? "contained" : "outlined"} onClick={()=> {
                                                 setFeatureSelected(key)
+                                                let points = []
+                                                image.sublimationBoxes[key].layers.forEach(layer => {
+                                                    points.push(layer.points || [])
+                                                })
+                                                setPoints(points)
                                             }}>{key}</Button>
                                         </Box>
                                     ))}
                                 </Box>}
                             </Box>
                             {hasSublimation && <Box sx={{ display: hasSublimation ? "flex" : "none", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", mt: 2, height: "25px" }}>
-                                <TextField
-                                    select
-                                    onChange={(e)=>{
-                                        console.log(e.target.value)
-                                        setTool(e.target.value)
-                                    }}
-                                    sx={{width: "15%"}}
-                                    label="Tool">
-                                    <MenuItem key="eraser" value="eraser">Eraser</MenuItem>
-                                    <MenuItem key="pen" value="pen">Pen</MenuItem>
-                                </TextField>
-                                <Button sx={{ ml: 2 }} onClick={() => { setLines([]); setPoints([]); }}>Clear</Button>
                                 <Button sx={{ ml: 2 }} onClick={() => { setPan(!pan) }}>{pan ? "Stop Pan" : "Start Pan"}</Button>
                             </Box>}
                         </Box>
@@ -560,9 +482,9 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             <Stage  width={400} height={400}
                                 style={{background: "#f0f0f0", border: '1px solid #ccc', cursor: pan ? "grab" : "default" }}
                                 draggable={pan}
-                                onMouseDown={hasSublimation ? sublimationHandleMouseDown : handleMouseDown}
-                                onMousemove={hasSublimation ? sublimationHandleMouseMove : handleMouseMove}
-                                onMouseup={hasSublimation ? sublimationHandleMouseUp : handleMouseUp}
+                                onMouseDown={handleMouseDown}
+                                onMousemove={handleMouseMove}
+                                onMouseup={handleMouseUp}
                                 onContextMenu={(e) => {
                                     // stop default scrolling
                                     console.log("wheel down")
@@ -610,7 +532,6 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 </Layer>
                                 {!hasSublimation &&[...rectangles].map((rect, i) => (
                                     <Layer key={i}>
-                                        {console.log("rect render", rect.width, rect.height)}
                                         <Rect
                                             key={rect.id}
                                             id={rect.id}
@@ -646,14 +567,19 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                                 if (cropAdd) index = 1;
                                                 if (widthRef.current) widthRef.current.value = parseInt(Math.max(5, node.width() * scaleX));
                                                 if (heightRef.current) heightRef.current.value = parseInt(Math.max(5, node.height() * scaleY));
+                                                console.log(node.rotation())
+                                                const newRects = [...rectangles];
+                                                let newRect = newRects.find(b => b.id === boxRef.current.id())
+                                                newRect.rotation = node.rotation();
+                                                setRectangles([...newRects]);
                                                 // Get the scale and rotation
                                             }}
                                         />
                                         {!reloadTransformers && <Transformer
                                             ref={transformerRef}
                                             flipEnabled={false}
+                                            rotateEnabled={true}
                                             boundBoxFunc={(oldBox, newBox) => {
-                                                console.log("boundBoxFunc", oldBox, newBox)
                                                 const newRects = [...rectangles];
                                                 let newRect = newRects.find(b => b.id === boxRef.current.id())
                                                 if (addImage) {
@@ -665,20 +591,17 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                                 if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
                                                     newRect.width = oldBox.width;
                                                     newRect.height = oldBox.height;
-                                                    newRect.rotation = oldBox.rotation;
                                                     setRectangles([...newRects])
                                                     return oldBox;
                                                 }
                                                 if (Math.abs(newBox.width) > stageRef.current.width() || Math.abs(newBox.height) > stageRef.current.height()) {
                                                     newRect.width = oldBox.width;
                                                     newRect.height = oldBox.height;
-                                                    newRect.rotation = oldBox.rotation;
                                                     setRectangles([...newRects])
                                                     return oldBox;
                                                 }
                                                 newRect.width = newBox.width;
                                                 newRect.height = newBox.height;
-                                                newRect.rotation = newBox.rotation;
                                                 setRectangles([...newRects]);
                                                 return newBox;
                                             }}
@@ -696,29 +619,14 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                     </Layer>
                                 ))}
                                 {hasSublimation && <Layer>
-                                    {lines.map((line, i) => (
+                                    {points.map((points, i) => (
                                         <Line
                                             key={i}
-                                            points={line.points}
-                                            stroke="#df4b26"
-                                            strokeWidth={.2}
-                                            tension={0.1}
-                                            lineCap="round"
+                                            points={points}
+                                            closed
+                                            stroke="rgba(255,0,0,0.7)"
+                                            strokeWidth={2}
                                             lineJoin="round"
-                                            globalCompositeOperation={
-                                                line.tool === 'eraser' ? 'destination-out' : 'source-over'
-                                            }
-                                        />
-                                    ))}
-                                    {rectangles.map((rect, i) => (
-                                        <Rect
-                                            key={i}
-                                            x={rect.x}
-                                            y={rect.y}
-                                            width={rect.width}
-                                            height={rect.height}
-                                            fill={rect.fill}
-                                            rotation={rect.rotation}
                                         />
                                     ))}
                                 </Layer>}
@@ -738,7 +646,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 Reset
                             </Button>
                         </Box>}
-                        {step === "location" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                        {step === "location" && !hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                             <Button variant="contained" color="primary" onClick={async() => {
                                 
                                 let rect = rectangles[0];
@@ -758,83 +666,6 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 }
                             }}>
                                 save Box
-                            </Button>
-                        </Box>}
-                        {hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
-                            <Button variant="contained" color="primary" onClick={async () => {
-                                setShowArea(!showArea)
-                                console.log("saving all sublimation boxes")
-                                //console.log(points)
-                                let points = []
-                                let rectangles = []
-                                for(let line of lines){
-                                    console.log("line", line)
-                                    let points = []
-                                    for(let i = 0; i < line.points.length; i+=2){
-                                        let x = Math.round(line.points[i] * 100) / 100
-                                        let y = line.points[i+1]
-                                        points.push([x, y])
-                                    }
-                                    let xValues = []
-                                    for(let line of points){
-                                        if(xValues.includes(line[0])) continue;
-                                        xValues.push(line[0])
-                                    }
-                                    xValues.sort((a,b) => a - b)
-                                    let breakpoints = findBreakpointsByAngle(points.map(p => ({x: p[0], y: p[1]})), 10);
-                                    rectangles.push(...breakpoints);
-                                }
-                                //console.log("rectangles", rectangles)
-                                // for(let line of poi){
-                                //     rectangles.push({ x: line[0], y: line[1], width: 1, height: .5, id: `sublimation-${line[0]}-${line[1]}`, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                //     rotation: 0, })
-                                // }
-                                if(showArea) setRectangles([...rectangles])
-                                else setRectangles([])
-                            }}>
-                                Show Area
-                            </Button>
-                            <Button variant="contained" color="primary" onClick={async () => {
-                                console.log("saving sublimation layer")
-                                let fea = {...features}
-                                let feature = fea[featureSelected];
-                                console.log("layerSelected", layerSelected)
-                                console.log(feature.layers)
-                                let layer = feature.layers.find(layer => layer.name === layerSelected);
-                                layer.lines = [...lines]
-                                let rectangles = []
-                                for(let line of layer.lines){
-                                    console.log("line", line)
-                                    let points = []
-                                    for(let i = 0; i < line.points.length; i+=2){
-                                        let x = parseInt(line.points[i])
-                                        let y = line.points[i+1]
-                                        points.push([x, y])
-                                    }
-                                    let xValues = []
-                                    for(let line of points){
-                                        if(xValues.includes(line[0])) continue;
-                                        xValues.push(line[0])
-                                    }
-                                    xValues.sort((a,b) => a - b)
-                                    for(let x of xValues){
-                                        let minY = Math.min(...points.filter(p => p[0] === x).map(p => p[1]))
-                                        let maxY = Math.max(...points.filter(p => p[0] === x).map(p => p[1]))
-                                        let height = maxY - minY
-                                        console.log("x", x, "minY", minY, "maxY", maxY, height)
-                                        rectangles.push({ x: x, y: minY, width: 1, height: height, id: `sublimation-${x}`, name: 'rect', fill: '#c58686ff', rotation: 0, })
-                                    }
-                                }
-                                layer.boxes = rectangles;
-                                fea[featureSelected] = feature;
-                                let img = {...image}
-                                img.sublimationBoxes = features;
-                                setImage({...img});
-                                setLines([]);
-                                setRectangles([]);
-                                setFeatures(fea);
-                            }}>
-                                Save Layer
                             </Button>
                         </Box>}
                         {step === "setImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
@@ -922,6 +753,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                     setBlank(b)
                                     setImage({ color: color?._id, image: null, boxes: {} })
                                     setRectangles([])
+                                    setHasSublimation(false);
                                     setSelectedImageSrc(null);
                                     update({ blank: b });
                                 }else{
@@ -949,6 +781,9 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                     setImage({color: color?._id, image: null, boxes: {}})
                                     setRectangles([])
                                     update({blank: b});
+                                    setHasSublimation(false);
+                                    setSelectedImageSrc(null);
+                                    setFeatureSelected("")
                                 }
                             }}>
                                 Save Image
@@ -967,11 +802,11 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             setLayerSelected(`Layer ${feature.layers.length + 1}`);
                         }}>Add Layer</Button>
                         <Box sx={{ mt: 2, mb: 2, maxHeight: '650px', overflow: 'auto' }}>
-                            {features[featureSelected].layers.map((layer, idx) => (
+                            {features[featureSelected].layers?.map((layer, idx) => (
                                 <Box key={idx} sx={{ border: '1px solid #ccc', p: 1, mb: 1, backgroundColor: layerSelected == layer.name ? '#e0e0e0' : 'transparent', cursor: 'pointer', maxHeight: '100%', gap: 2 }}>
                                     <Typography variant="body1" onClick={() => {
                                         setLayerSelected(layer.name)
-                                        setLines(layer.lines);
+                                        setSublimationModalOpen(true);
                                     }}>{layer.name}</Typography>
                                     <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 1 }}>
                                         <Button onClick={() => {
@@ -998,6 +833,16 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                     </Grid2>
                 </Grid2>
                 <CopyBoxesModal open={copyBoxesOpen} onClose={() => setCopyBoxesOpen(false)} blank={blank} image={image} setImage={setImage}/>
+                <EditablePolygon
+                    open={sublimationModalOpen}
+                    setOpen={setSublimationModalOpen} 
+                    blank={blank}
+                    setBlank={setBlank}
+                    image={image}
+                    setImage={setImage}
+                    area={featureSelected}
+                    layer={layerSelected}
+                />
             </Box>
         </Modal>
     );

@@ -1,3 +1,4 @@
+import EditablePolygon from "./components/blanks/test";
 import Footer from "./components/reusable/Footer";
 
 export {Main as UsersMain} from "./components/users/Main";
@@ -27,3 +28,5 @@ export {Main as OrderMain} from "./components/orders/id/Main";
 export { NoteSnackBar } from "./components/orders/id/NoteSnackBar"
 export { Converters } from "./components/converter/Main";
 export {FromSanmarBlank} from "./components/blanks/fromSanmar";
+export {EditablePolygon} from "./components/blanks/test";
+export {SublimationImages} from "./components/design/sublimationImages";
