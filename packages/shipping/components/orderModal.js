@@ -46,7 +46,7 @@ export function OrderModal({order, item, bin, setOrder, setShowNotes, setItem,se
       let countDown = async ()=>{
           setCloseTimer(true)
           setStopClose(false)
-          for(let i = 5; i >= 0; i--){
+          for(let i = 2; i >= 0; i--){
               setTimer(i)
               console.log(i, closeTimer, timer,  "close timer")
               await new Promise((resolve)=>{
@@ -71,7 +71,7 @@ export function OrderModal({order, item, bin, setOrder, setShowNotes, setItem,se
   }, [label])
     useEffect(()=>{
       let startTimer = async ()=>{
-        for(let i = 3; i >= 1; i--){
+        for(let i = 2; i >= 1; i--){
           setTimer(i)
           await new Promise((resolve)=>{
             setTimeout(()=>{
