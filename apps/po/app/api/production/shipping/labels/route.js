@@ -83,6 +83,7 @@ export async function POST(req= NextApiRequest){
                 clientID: process.env.UPSClientID,
                 clientSecret: process.env.UPSClientSecret,
             },
+            dpi: data.station == "station1" ? 300 : null,
         });
         if(!label ||label.error){
             return NextResponse.json(label? label: {error: true, msg: "No label returned"})
