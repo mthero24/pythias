@@ -3,7 +3,7 @@ import {useState, useRef, useEffect} from "react";
 import {Card,TextField,Box, Checkbox, FormControlLabel} from "@mui/material";
 import axios from "axios";
 import { NoteSnackBar } from "./NoteSnackBar";
-export function Scan({auto, setAuto, order, setOrder, showNotes, setShowNotes, setItem, setBin, setShow, setActivate, pieceId, setBins, source, station}){
+export function Scan({auto, setAuto, order, setOrder, showNotes, setShowNotes, setItem, setBin, setShow, setActivate, pieceId, setBins, source, station, weight, setWeight, dimensions, setDimensions}){
     const textFieldRef = useRef(null);
     const [scan, setScan] = useState(pieceId)
     const [reship, setReship] = useState(false)
@@ -63,6 +63,8 @@ export function Scan({auto, setAuto, order, setOrder, showNotes, setShowNotes, s
             setItem(res.data.item);
             setOrder(res.data.item.order);
             setBin(res.data.bin)
+            if(res.data.weight)setWeight(res.data.weight)
+            if(res.data.dimensions)setDimensions(res.data.dimensions)
           } else if (res.data.order) {
             if(res.data.order.notes?.length > 0)setShowNotes(true)
             setOrder(res.data.order);

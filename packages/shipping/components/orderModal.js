@@ -9,13 +9,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from "axios"
 import { createImage } from "../functions/image";
 import {useState, useEffect} from "react";
-export function OrderModal({order, item, bin, setOrder, setShowNotes, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source}){
+export function OrderModal({order, item, bin, setOrder, setShowNotes, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source, weight, setWeight, dimensions, setDimensions}) {
     console.log(createImage("red", "AT", {url: "https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75"}))
     const [shippingPrices, setShippingPrices] = useState()
-    const [weight, setWeight] = useState(0)
     const [getWeight, setGetWeight] = useState(false)
     const [timer, setTimer] = useState(0)
-    const [dimensions, setDimensions] = useState()
     const [label, setLabel] = useState()
     const [closeTimer, setCloseTimer] = useState(false)
     const [stopClose, setStopClose] = useState(false)
@@ -95,7 +93,7 @@ export function OrderModal({order, item, bin, setOrder, setShowNotes, setItem,se
         }
         return
       }
-      if(action == "ship"){
+      if(action == "ship" && weight == 0){
         startTimer()
       }
     }, [show, getWeight])

@@ -24,10 +24,10 @@ export async function POST(req= NextApiRequest){
             await i.save()
         }
         let bin = await Bin.findOneAndUpdate({ order: order._id }, { "items": [], "ready": false, "inUse": false, "order": null, "giftWrap": false, "readyToWrap": false, "wrapped": false, "wrapImage": null })
-        if (res.error) {
+        if (res && res.error && res.msg != `{"code":"ECONNRESET"}`) {
             return NextResponse.json({ error: true, msg: "error printing label" })
         } else {
-            console.log("retrun")
+            console.log("return")
             return NextResponse.json({
                 error: false, label: order.shippingInfo.label,
                 bins: {
@@ -123,11 +123,11 @@ export async function POST(req= NextApiRequest){
                 }
             }
             let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
-            console.log(res.data)
-            if(res.error){
+            console.log(res.data, "printer res")
+            if(res && res.error && res.msg != `{"code":"ECONNRESET"}`){
                 return NextResponse.json({error: true, msg: "error printing label"})
             }else{
-                console.log("retrun")
+                console.log("return")
                 return NextResponse.json({error: false, label: label.label, 
                     bins: {
                         readyToShip: await Bin.find({ ready: true })

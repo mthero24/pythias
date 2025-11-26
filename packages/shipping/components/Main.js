@@ -20,6 +20,8 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
     const [show, setShow] = useState(false)
     const [action, setAction] = useState()
     const [showNotes, setShowNotes] = useState(false)
+    const [weight, setWeight] = useState(0)
+    const [dimensions, setDimensions] = useState()
     //const { width, height } = useWindowSize();
     useEffect(()=>{
       if(typeof window != "undefined"){
@@ -56,7 +58,7 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
             setStation={setStation}
             setAuto={setAuto}
           />
-          <Scan auto={auto} order={order} showNotes={showNotes} setShowNotes={setShowNotes} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins} source={source} station={station}/>
+          <Scan auto={auto} order={order} showNotes={showNotes} setShowNotes={setShowNotes} setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin} setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins} source={source} station={station} weight={weight} setWeight={setWeight} dimensions={dimensions} setDimensions={setDimensions}/>
           <Bins
             bins={binss}
             setBins={setBins}
@@ -67,7 +69,7 @@ export function Main({stations, binCount, bins, pieceId, stat, source}){
             setAction={setAction}
             setShowNotes={setShowNotes}
           />
-          <OrderModal order={order} setOrder={setOrder} setShowNotes={setShowNotes} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source}/>
+          <OrderModal order={order} setOrder={setOrder} setShowNotes={setShowNotes} item={item} setItem={setItem} bin={bin} setBin={setBin} style={modalStyle} show={show} setShow={setShow} setAuto={setAuto} setBins={setBins} action={action} setAction={setAction} station={station} source={source} weight={weight} setWeight={setWeight} dimensions={dimensions} setDimensions={setDimensions}/>
           <Repull/>
         </Box>
         <Footer fixed={true} />

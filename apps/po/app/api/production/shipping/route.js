@@ -113,7 +113,7 @@ export async function POST(req= NextApiRequest){
         }
     }
     try{
-        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"}).populate("styleV2", "singleShippingDimensions sizes")
         let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
         let bin 
         try{
@@ -149,6 +149,7 @@ export async function POST(req= NextApiRequest){
         let res = {error: false, msg: "", item, order, bin, }
         if(item){
             res.order = item.order
+            console.log("item found", item)
             if(canceled(item, item.order)){
                 res.error = true
                 res.msg = "Item Canceled"
@@ -158,7 +159,11 @@ export async function POST(req= NextApiRequest){
                 res.msg = "Order already shipped"
                 console.log(res)
             }else{
-                if(isSingleItem(item)) res.activate = "ship"
+                if(isSingleItem(item)) {
+                    res.activate = "ship"
+                    res.weight = item.styleV2.sizes.filter(s=>s.name==item.sizeName)[0]?.weight || 8
+                    res.dimensions = item.styleV2.singleShippingDimensions || {length: 10, width: 13, height: 1}
+                }
                 else {
                     res.activate = "bin"
                     res.bin = await findBin(res.order._id)
