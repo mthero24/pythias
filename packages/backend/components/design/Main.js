@@ -15,6 +15,7 @@ import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import { ProductCard } from "../reusable/ProductCard";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useCSV } from "../reusable/CSVProvider";
+import { SublimationImages } from "./sublimationImages";
 export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport, printTypes}) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
@@ -43,6 +44,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [marketplaceModal, setMarketplaceModal] = useState(false)
     const [preview, setPreview] = useState(false)
     const [copied, setCopied] = useState(false);
+    const [sublimationOpen, setSublimationOpen] = useState(false);
     const { setShow } = useCSV();
     setShow(true);
     useEffect(()=>{
@@ -224,6 +226,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                     <Grid2 size={6}>
                             <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setAddDSTModal(true) }}>Add DSTs</Button>
                     </Grid2>
+                    <Grid2 size={12}>
+                        <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setSublimationOpen(true) }}>Add Sublimation Images</Button>
+                    </Grid2>
                 </Grid2>
                 <Grid2 container spacing={2} sx={{ background: "#fff", padding: "2%", margin: "2% 0%", boxShadow: "0px 0px 10px rgba(0,0,0,.1)", borderRadius: "5px", }}>
                     <Grid2 size={{xs: 7, sm: 8}}>
@@ -316,7 +321,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={themes} sportUsedFor={sportUsedFor} setThemes={setThemes} setSportUsedFor={setSportUsedFor} />
                 {loading && <LoaderOverlay/>}
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} source={source} />
-
+                <SublimationImages design={des} setDesign={setDesign} updateDesign={updateDesign} open={sublimationOpen} setOpen={setSublimationOpen} />
             </Container>
             <Footer/>
         </Box>

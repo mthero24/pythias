@@ -14,6 +14,7 @@ const schema = new mongoose.Schema({
     enum : ['EMB','VIN', 'SCN', 'DTF'],
     default: 'DTF'},
   images: Object,
+  sublimationImages: Object,
   embroideryFiles: Object,
   threadColors: [{
     type: mongoose.Schema.Types.ObjectId,

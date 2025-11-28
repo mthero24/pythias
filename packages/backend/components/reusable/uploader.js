@@ -4,7 +4,7 @@ import {useDropzone} from 'react-dropzone'
 import {useState, useCallback} from "react";
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import Image from "next/image";
-import {Grid2, Typography, Box, Card} from "@mui/material";
+import {Grid2, Typography, Box, Card, CircularProgress} from "@mui/material";
 import btoa from "btoa";
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
@@ -12,6 +12,7 @@ const s3 = new S3Client({ credentials:{
 }, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
 
 export function Uploader({afterFunction, location, image, productImage, primary, bl, color, vh, threadColor, type}){
+    const [loading, setLoading] = useState(false)
     const onDrop = useCallback(acceptedFiles => {
         // Do something with the files
         console.log(acceptedFiles)
@@ -23,6 +24,8 @@ export function Uploader({afterFunction, location, image, productImage, primary,
         var reader = new FileReader();
         reader.readAsArrayBuffer(file);
         reader.onload = async function () {
+            setLoading(true)
+            image= null;
             if (type === "order") {
                 console.log("order type", reader)
                 let base64 =reader.result;
@@ -45,7 +48,9 @@ export function Uploader({afterFunction, location, image, productImage, primary,
                 };
                 const data = await s3.send(new PutObjectCommand(params));
                 console.log("Success, object uploaded", data);
+                image = `https://images1.pythiastechnologies.com/${url}`
                 afterFunction({url: `https://images1.pythiastechnologies.com/${url}`, location, primary, bl, color, threadColor})
+                setLoading(false)
             }
         };
 
@@ -83,7 +88,8 @@ export function Uploader({afterFunction, location, image, productImage, primary,
                         <Typography>Drop Files Here</Typography>
                         <Typography sx={{fontSize: ".7rem"}}>Or Click To Select File</Typography>
                     </Box>): image? <Box sx={{padding: "1%", height: "100%"}}>
-                        <Image src={image} alt={location} width={200} height={200} style={{width: "100%", height: "auto"}}/>
+                        {loading && <Typography >Uploading... <CircularProgress /></Typography>}
+                       {!loading && <Image src={`${image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400`} alt={location} width={200} height={200} style={{width: "100%", height: "auto", borderRadius: "9px"}}/>}
                     </Box>
                         
                     :
@@ -91,10 +97,11 @@ export function Uploader({afterFunction, location, image, productImage, primary,
                         marginTop: {xs: "25%", sm: "35%", md: "20%"},
                     }}>
                         {location && <Typography textAlign="center" fontSize="1.1rem" sx={{padding: "2%", textTransform: "capitalize"}}>{location}</Typography>}
-                        <AttachFileIcon/>
+                        {loading && <Typography>Uploading... <CircularProgress /></Typography>}
+                       {!loading && <Box><AttachFileIcon/>
                         <Typography sx={{fontSize: ".7rem"}}>Drop New</Typography>
                         <Typography>Image</Typography>
-                        <Typography sx={{fontSize: ".7rem"}}>Or Click To Select File</Typography>
+                        <Typography sx={{fontSize: ".7rem"}}>Or Click To Select File</Typography></Box>}
                     </Box>)
                 }
             </div>

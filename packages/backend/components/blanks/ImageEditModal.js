@@ -5,7 +5,6 @@ import { Uploader2 } from "../reusable/uploader2";
 import useImage from 'use-image';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
-import polygonToBoxes from "../../functions/polygontoboxes";
 import { EditablePolygon } from "@pythias/backend"
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
@@ -82,17 +81,20 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     const isDrawing = useRef(false);
     const [layerSelected, setLayerSelected] = useState(null);
     const [features, setFeatures] = useState({
-        front: {layers: []},
-        back: {layers: []},
-        leftUperSleeve: {layers: []},
-        rightUperSleeve: {layers: []},
+        frontBody: {layers: []},
+        backBody: {layers: []},
+        sleeveLeftNoCuff: {layers: []},
+        sleeveLeftWithCuff: { layers: [] },
+        sleeveRightNoCuff: {layers: []},
+        sleeveRightWithCuff: { layers: [] },
         collar: {layers: []},
+        poloCollar: { layers: [] },
+        poloPocket: { layers: [] },
         background: {layers: []},
-        leftLowerSleeve: {layers: []},
-        rightLowerSleeve: {layers: []},
-        outsideHood: {layers: []},
-        insideHood: {layers: []},
-        inside: {layers: []}
+        hoodOutside: {layers: []},
+        hoodInside: {layers: []},
+        cuffLeft: {layers: []},
+        cuffRight: {layers: []},
     })
     const [sublimationModalOpen, setSublimationModalOpen] = useState(false);
     const [featureSelected, setFeatureSelected] = useState("front");
@@ -101,18 +103,21 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         let img = {...image}
         if(img){
             console.log(img);
-            if(!img.sublimationBoxes) img.sublimationBoxes = {
-                front: {layers: []},
-                back: {layers: []},
-                leftUperSleeve: {layers: []},
-                rightUperSleeve: {layers: []},
-                collar: {layers: []},
-                background: {layers: []},
-                leftLowerSleeve: {layers: []},
-                rightLowerSleeve: {layers: []},
-                outsideHood: {layers: []},
-                insideHood: {layers: []},
-                inside: {layers: []}
+            if (!img.sublimationBoxes) img.sublimationBoxes = {
+                frontBody: { layers: [] },
+                backBody: { layers: [] },
+                sleeveLeftNoCuff: { layers: [] },
+                sleeveLeftWithCuff: { layers: [] },
+                sleeveRightNoCuff: { layers: [] },
+                sleeveRightWithCuff: { layers: [] },
+                collar: { layers: [] },
+                poloCollar: { layers: [] },
+                poloPocket: { layers: [] },
+                background: { layers: [] },
+                hoodOutside: { layers: [] },
+                hoodInside: { layers: [] },
+                cuffLeft: { layers: [] },
+                cuffRight: { layers: [] },
             };
             let points = [];
             for(let key of Object.keys(img.sublimationBoxes)){
@@ -802,7 +807,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             setLayerSelected(`Layer ${feature.layers.length + 1}`);
                         }}>Add Layer</Button>
                         <Box sx={{ mt: 2, mb: 2, maxHeight: '650px', overflow: 'auto' }}>
-                            {features[featureSelected].layers?.map((layer, idx) => (
+                            {features[featureSelected]?.layers?.map((layer, idx) => (
                                 <Box key={idx} sx={{ border: '1px solid #ccc', p: 1, mb: 1, backgroundColor: layerSelected == layer.name ? '#e0e0e0' : 'transparent', cursor: 'pointer', maxHeight: '100%', gap: 2 }}>
                                     <Typography variant="body1" onClick={() => {
                                         setLayerSelected(layer.name)

@@ -8,7 +8,7 @@ import { FromSanmarBlank } from "@pythias/backend"
 import sharp from "sharp";
 import { layer } from "@fortawesome/fontawesome-svg-core";
 import { base } from "@/models/PrintPricing";
-import { SublimationImages } from "@pythias/backend"
+import { SublimationImages, serialize } from "@pythias/backend"
 const readImage = async (url) => {
     //console.log(url, "read image")
     const response = await axios.get(
@@ -86,7 +86,7 @@ const createSide = async ({points, baseImage, subImage, type, side, layers}) => 
     }).png();
     // img = await newImage.composite([{ input: await img.toBuffer(), left: 0, top: 0 }]).png();
      await img.toFile("./newImage.png")
-    let color = await sharp(subImage);
+    let color = await readImage(subImage);
     let colorMeta = await color.metadata();
     //console.log("colorMeta", colorMeta);
     if(type === "sleeve"){
@@ -151,7 +151,7 @@ const createSide = async ({points, baseImage, subImage, type, side, layers}) => 
     return {final, layerImages};
 }
 export default async function Test(){
-    let blank =  await Blank.findOne({code: "HOOD"}).lean();
+    let blank =  await Blank.findOne({code: "HOOD"});
     
     let image = blank.images.find(img => img.sublimationBoxes);
     //console.log(image);
@@ -159,19 +159,12 @@ export default async function Test(){
     // //console.log(image.sublimationBoxes.rightUperSleeve.layers[0].boxes);
     // //let backgroundImage = await createSide({ boxes: image.sublimationBoxes["background"].layers[0].boxes, baseImage: image.image, subImage: "./abstract.jpg" });
     let pieceies = []
-    let design = {
-        sublimationImages:{
-            front: "./front_OSG.png",
-            leftUperSleeve: "./left_OSG.png",
-            rightUperSleeve: "./right_OSG.png",
-            outsideHood: "./hood_OSG.png",
-            insideHood: "./hood_inside_OSG.png",
-        }
-    }
+    let design = await Design.findById("6925ce3df96c30667bdf6dab");
+    console.log(Object.keys(design.sublimationImages))
     for(let key of Object.keys(image.sublimationBoxes)){
         if (image.sublimationBoxes[key].layers.length > 0 && image.sublimationBoxes[key].layers[0].url){
             //console.log(key, image.sublimationBoxes[key].layers.length)
-            pieceies.push(await createSide({ points: image.sublimationBoxes[key].layers[0].points, baseImage: image.sublimationBoxes[key].layers[0].url, subImage: design.sublimationImages[key], type: key.includes("Sleeve") ? "sleeve" : key.includes("Hood") ? "hood" : "front", side: key.includes("left") ? "left" : key.includes("right") ? "right" : "center", layers: image.sublimationBoxes[key].layers.slice(1) }));
+            pieceies.push(await createSide({ points: image.sublimationBoxes[key].layers[0].points, baseImage: image.sublimationBoxes[key].layers[0].url, subImage: design.sublimationImages[key], type: key.includes("Sleeve") || key.includes("sleeve") ? "sleeve" : key.includes("Hood") ? "hood" : "front", side: key.includes("Left") ? "left" : key.includes("Right") ? "right" : "center", layers: image.sublimationBoxes[key].layers.slice(1) }));
         }
     }
     await Promise.all(pieceies)
@@ -191,7 +184,9 @@ export default async function Test(){
     img = await img.composite(images).toBuffer();
     img = sharp(img);
     img.resize(1200, 1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-    await img.toFile("./combined2.png");
-    return <SublimationImages />
+   // await img.toFile("./combined2.png");
+    // design = await Design.findById("6925ce3df96c30667bdf6dab").lean();
+    // console.log(design)
+    return <h1>test</h1>
     //("https://images1.pythiastechnologies.com/styles/1742087292890.png")
 }

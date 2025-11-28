@@ -17,98 +17,122 @@ const readImage = async (url)=>{
     }
     return null
 }
-const createSide = async ({boxes, baseImage, subImage}) => {
-    boxes = boxes.filter(box => box.x > 0 && box.y > 0);
+const createSide = async ({points, baseImage, subImage, type, side, layers}) => {
+    //console.log("Creating side:", type, side, subImage, baseImage)
     let img = await readImage(`${baseImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
     img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-    let extractions = []
-    let minx = parseInt(boxes.reduce((min, box) => box.x < min ? box.x : min, Infinity));
-    let miny = parseInt(boxes.reduce((min, box) => box.y < min ? box.y : min, Infinity));
-    let maxx = parseInt(boxes.reduce((max, box) => (box.x + box.width) > max ? (box.x + box.width) : max, -Infinity));
-    let maxy = parseInt(boxes.reduce((max, box) => (box.y + box.height) > max ? (box.y + box.height) : max, -Infinity)) > 400 ? 400 : parseInt(boxes.reduce((max, box) => (box.y + box.height) > max ? (box.y + box.height) : max, -Infinity));
-    console.log({ minx, miny, maxx, maxy })
-    for (let box of boxes) {
-       // console.log(parseInt(box.height), parseInt(box.width), parseInt(box.x), parseInt(box.y))
-        try {
-            let extractor = img.extract({ left: parseInt(box.x), top: parseInt(box.y), width: parseInt(box.width), height: parseInt(box.height > 400 ? 400 : box.height) })
-            extractions.push({
-                input: await extractor.toBuffer(),
-                top: parseInt(box.y),
-                left: parseInt(box.x),
-                width: parseInt(box.width),
-                height: parseInt(box.height),
-            })
-        } catch (e) {
-            console.log("extraction error", e)
-        }
+    await img.toFile("./baseImage.png")
+    let coords = []
+    for(let p = 0; p < points.length -1; p+=2){
+        coords.push({x: points[p], y: points[p + 1]})
     }
-    let newImage = sharp({
-        create: {
-            width: 400,
-            height: 400,
-            channels: 4,
-            background: { r: 0, g: 0, b: 0, alpha: 1 }
-        }
-    }).png();
+    //console.log(coords)
+    let minx = parseInt(coords.reduce((min, box) => box.x < min ? box.x : min, Infinity));
+    let miny = parseInt(coords.reduce((min, box) => box.y < min ? box.y : min, Infinity));
+    let maxx = parseInt(coords.reduce((max, box)=> box.x > max? box.x: max, 0))
+    let maxy = parseInt(coords.reduce((max, box) => box.y > max ? box.y : max, 0))
+   // console.log({ minx, miny, maxx, maxy })
     let colorImage = sharp({
         create: {
             width: 400,
             height: 400,
             channels: 4,
-            background: { r: 0, g: 0, b: 0, alpha: 0 }
+            background: { r: 2, g: 2, b: 2, alpha: 0 }
         }
     }).png();
-    newImage = await newImage.composite(extractions).toBuffer();
-    newImage = sharp(newImage)
-    newImage = newImage.greyscale();
-    await newImage.toFile("./output.png")
-    let color = await sharp(subImage);
-    color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
-    colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]).toBuffer();
-    let imageMeta = await newImage.metadata();
-    console.log(imageMeta);
-    let final = await newImage.composite([{ input: await colorImage, blend: 'overlay' }, { input: await colorImage, blend: 'color-burn' }]);
-    //final = await final.composite([{ input: await colorImage, blend: 'overlay' }])
+    // img = await newImage.composite([{ input: await img.toBuffer(), left: 0, top: 0 }]).png();
+     await img.toFile("./newImage.png")
+    let color = await readImage(subImage);
+    let colorMeta = await color.metadata();
+    //console.log("colorMeta", colorMeta);
+    if(type === "sleeve"){
+        let sleeveMeta = await color.metadata();
+        //console.log(sleeveMeta);
+        if(side === "right"){
+            color = color.extract({ left: 0, top: 0, width: parseInt(sleeveMeta.width / 2) + (parseInt(sleeveMeta.width / 2) /2) > sleeveMeta.width ? sleeveMeta.width : parseInt(sleeveMeta.width / 2) + (parseInt(sleeveMeta.width / 2) /2), height: sleeveMeta.height });
+        }else if(side === "left"){
+            color = color.extract({ left: parseInt((sleeveMeta.width / 2) - parseInt(sleeveMeta.width / 2) / 2) > 0 ? parseInt((sleeveMeta.width / 2) - parseInt(sleeveMeta.width / 2) / 2) : 0, top: 0, width: parseInt((sleeveMeta.width / 2) + (parseInt(sleeveMeta.width / 2) / 2)), height: sleeveMeta.height });
+        }
+        color = color.resize( maxx - minx , null, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+    }
+    color = await color.resize( maxx - minx , maxy - miny, { fit: 'cover' });
+    colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]).modulate({
+        brightness: 1.0,   // don't globally brighten
+        saturation: 1.1    // slight pop in color
+    });
+    await colorImage.toFile("./colorImage.png")
+    //let imageMeta = await newImage.metadata();
+    // //console.log(imageMeta);
+    let cutout = await img.composite([{
+        input: await colorImage.toBuffer(),
+        blend: 'in',
+        opacity: 1,
+    },]);
+    let final = await img.composite([{
+        input: await cutout.toBuffer(),
+        blend: 'darken',
+        opacity: 1,
+    } ]);
+    await final.toFile("./final.png")
+    let layerImages = []
+    if(layers && layers.length > 0){
+        for(let layer of layers){
+            if(layer.url){
+                let layerImage = await readImage(layer.url);
+                layerImage.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }})
+                await layerImage.toFile("./layerImage.png")
+                //console.log(layer)
+                if(layer.sublimated){
+                    let cutout = await layerImage.composite([{
+                        input: await colorImage.toBuffer(),
+                        blend: 'in',
+                        opacity: 1,
+                    },]);
+                    layerImage = await layerImage.composite([{
+                        input: await cutout.toBuffer(),
+                        blend: 'darken',
+                        opacity: 1,
+                    }]);
+                    await layerImage.toFile("./layerImage.png")
+                }
+                layerImages.push(layerImage)                
+            }
+        }
+    }
     await final.toFile("./final.png")
     final = await final.toBuffer()
     final = sharp(final)
     final.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-    extractions = []
-    for (let box of boxes) {
-        try {
-            let extractor = final.extract({ left: parseInt(box.x), top: parseInt(box.y), width: parseInt(box.width), height: parseInt(box.height) })
-            extractions.push({
-                input: await extractor.toBuffer(),
-                top: parseInt(box.y),
-                left: parseInt(box.x),
-                width: parseInt(box.width),
-                height: parseInt(box.height),
-            })
-        } catch (e) {
-            console.log("extraction error", e)
-        }
-    }
-    let transparentImage = sharp({
-        create: {
-            width: 400,
-            height: 400,
-            channels: 4,
-            background: { r: 0, g: 0, b: 0, alpha: 0 }
-        }
-    }).png();
-    transparentImage = await transparentImage.composite(extractions).toBuffer();
-    return transparentImage = sharp(transparentImage)
+    // //final = await makeBlackPixelsTransparent(await final.toBuffer())
+    return {final, layerImages};
 }
 const createSublimationImage = async (boxs, styleImage, designImage, width) => {
-    let frontImage = await createSide({ boxes: boxs["front"], baseImage: styleImage, subImage: "./abstract.jpg" });
-    let leftSleeveImage = await createSide({ boxes: boxs["leftSleeve"], baseImage: styleImage, subImage: "./soccer.jpg" });
-    let rightSleeveImage = await createSide({ boxes: boxs["rightSleeve"], baseImage: styleImage, subImage: "./soccer.jpg" });
-    let img = await readImage(`${styleImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
-    img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-    let imageMeta2 = await img.metadata();
-    console.log(imageMeta2);
-    img = await img.composite([{ input: await frontImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await leftSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }, { input: await rightSleeveImage.toBuffer(), blend: 'atop', x: 0, y: 0 }])
-    return img
+   let pieceies = []
+       let design = await Design.findById("6925ce3df96c30667bdf6dab");
+       console.log(Object.keys(design.sublimationImages))
+       for(let key of Object.keys(image.sublimationBoxes)){
+           if (image.sublimationBoxes[key].layers.length > 0 && image.sublimationBoxes[key].layers[0].url){
+               //console.log(key, image.sublimationBoxes[key].layers.length)
+               pieceies.push(await createSide({ points: image.sublimationBoxes[key].layers[0].points, baseImage: image.sublimationBoxes[key].layers[0].url, subImage: design.sublimationImages[key], type: key.includes("Sleeve") || key.includes("sleeve") ? "sleeve" : key.includes("Hood") ? "hood" : "front", side: key.includes("Left") ? "left" : key.includes("Right") ? "right" : "center", layers: image.sublimationBoxes[key].layers.slice(1) }));
+           }
+       }
+       await Promise.all(pieceies)
+       let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
+       img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+       let imageMeta2 = await img.metadata();
+       //console.log(imageMeta2);
+       let images = []
+       for (let piece of pieceies){
+           images.push({ input: await piece.final.toBuffer(), blend: 'atop', x: 0, y: 0 })
+           if(piece.layerImages && piece.layerImages.length > 0){
+               for(let im of piece.layerImages){
+                   images.push({ input: await im.toBuffer(), blend: 'atop', x: 0, y: 0 })
+               }
+           }
+       }
+       img = await img.composite(images).toBuffer();
+       img = sharp(img);
+       return img
 }
 const createImage = async (data) => {
     console.log(data, "data")
@@ -120,7 +144,7 @@ const createImage = async (data) => {
         data.width = 400
     }
     base64 = await readImage(`${data.styleImage?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
-    console.log(data.box, "box")
+    console.log(data.sublimationImages, "box")
     if (data.box && data.box.length > 0 && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64 != undefined) {
         let composits = []
         for(let box of data.box){
@@ -206,13 +230,14 @@ export async function GET(req){
     let blankImage
     let type
     let sides = params && params[4]? params[4].split("_") : []
+    let design
     console.log(params.length, "params")
     if (params.length == 5) {
-        let design = await Design.findOne({ sku: params[0] }).select("images").lean()
+        design = await Design.findOne({ sku: params[0] }).select("images sublimationImages").lean()
         designImage = design?.images
         let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
-        blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
-        if(blankImage == undefined) {
+        if(blank && blank.multiImages)blankImage = blank?.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+        if (blankImage == undefined && blank && blank.multiImages) {
             blankImage = blank?.multiImages[params[4] == "front"? "modelFront" : "modelBack"]?.filter(i => i.image.includes(params[2]))[0]
         }
         if(blankImage == undefined){
@@ -220,7 +245,7 @@ export async function GET(req){
             type = "images"
         }
     } else if (params.length == 6) {
-        let design = await Design.findOne({ sku: params[0] }).lean()
+        design = await Design.findOne({ sku: params[0] }).lean()
         designImage = design?.threadImages?.[params[5]]
         let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
         blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
@@ -261,7 +286,7 @@ export async function GET(req){
     }
     if(type == "images") console.log(blankImage.boxes["front"], "boxes")
     console.log(designImage[sides[0]], "images")
-    let data = {box: type == "images"? Object.keys(blankImage?.boxes? blankImage.boxes: {}).filter(key=> sides.includes(key)).map(key => {return {...blankImage.boxes[key], side: key}}):  blankImage?.box? [{...blankImage?.box[0], side: sides[0]}]: null, styleImage: blankImage?.image, designImage, width}
+    let data = {box: type == "images"? Object.keys(blankImage?.boxes? blankImage.boxes: {}).filter(key=> sides.includes(key)).map(key => {return {...blankImage.boxes[key], side: key}}):  blankImage?.box? [{...blankImage?.box[0], side: sides[0]}]: null, styleImage: blankImage?.image, designImage, sublimationImages: design.sublimationImages? design.sublimationImages: null, sublimationBoxes: blankImage.sublimationBoxes? blankImage.sublimationBoxes: null, width}
     let base64 = await createImage(data)
     if(base64){
         base64 = base64?.replace(/^data:image\/\w+;base64,/, "")
