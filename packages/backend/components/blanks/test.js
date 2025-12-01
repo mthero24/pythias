@@ -179,6 +179,8 @@ export function EditablePolygon({blank, image, setImage, setBlank, area, layer, 
         let wholeUrl = `https://images1.pythiastechnologies.com/${url}`;
         let bla = { ...blank };
         let img = bla.images.find(img=> img._id.toString() === image._id.toString())
+        img.sublimationBoxes = img.sublimationBoxes || {};
+        img.sublimationBoxes[area] = img.sublimationBoxes[area] || { layers: [] };
         let lay = img.sublimationBoxes[area].layers.find(lay=> lay.name === layer);
         if(!lay){
             lay = { name: layer, points, url: wholeUrl };

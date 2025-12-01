@@ -390,7 +390,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                     <Typography variant="caption"><AddIcon sx={{ color: "#1989df"}} /></Typography>
                                                 </Box>
                                             </Grid2>
-                                            {images.map((img, imgIdx) => (
+                                            {images?.map((img, imgIdx) => (
                                                 <Grid2 size={2.2} key={imgIdx} sx={{cursor: "pointer"}}>
                                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", position: "relative", top: 35, right: 2, zIndex: 1, marginTop: "-35px" }} onClick={() => {
                                                        setImageToDelete(img.image);

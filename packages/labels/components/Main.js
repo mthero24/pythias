@@ -114,9 +114,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
-                if(k.inventory.inventory.inStock){
-                  if(k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if(k.inventory?.inventory?.inStock){
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 }else return k.pieceId;
             })
           );
@@ -125,9 +125,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -136,9 +136,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.inventory?.inventory?.quantity > 0)
-                    if(k.inventory.inventory.inStock){
-                      if(k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                    if(k.inventory?.inventory?.inStock){
+                      if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                     }else return k.pieceId;
               })
             );
@@ -148,8 +148,8 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           sel.push(
             ...useLabels[l].map((k) => {
               if ((k.styleCode == styleCodeSelected) && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
-                if(k.inventory.inventory.inStock){
-                  if(k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if(k.inventory?.inventory?.inStock){
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 }else return k.pieceId;
             })
           );
@@ -158,9 +158,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
-                  if (k.inventory.inventory.inStock) {
-                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if ((k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                  if (k.inventory?.inventory?.inStock) {
+                    if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                   } else return k.pieceId;
               })
             );
@@ -169,9 +169,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              if ((k.order.marketplace == marketplaceSelected) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.order.marketplace == marketplaceSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -181,9 +181,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             sel.push(
               ...useLabels[l].map((k) => {
                 console.log(k.type?.toLowerCase() || k.designRef?.printType?.toLowerCase())
-                if (((k.type?.toLowerCase() || k.designRef?.printType?.toLowerCase()) == printType.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
-                  if (k.inventory.inventory.inStock) {
-                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if (((k.type?.toLowerCase() || k.designRef?.printType?.toLowerCase()) == printType.toLowerCase()) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                  if (k.inventory?.inventory?.inStock) {
+                    if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                   } else return k.pieceId;
               })
             );
@@ -193,9 +193,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
-                  if (k.inventory.inventory.inStock) {
-                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                  if (k.inventory?.inventory?.inStock) {
+                    if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                   } else return k.pieceId;
               })
             );
@@ -205,9 +205,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.inventory?.inventory?.quantity > 0)
-                  if (k.inventory.inventory.inStock) {
-                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if ((k.type == printTypeSelected) && k.styleCode == styleCode && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                  if (k.inventory?.inventory?.inStock) {
+                    if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                   } else return k.pieceId;
               })
             );
@@ -216,9 +216,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              if ( k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ( k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -227,9 +227,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -239,9 +239,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
          Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
-                  if (k.inventory.inventory.inStock) {
-                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                  if (k.inventory?.inventory?.inStock) {
+                    if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                   } else return k.pieceId;
               })
             );
@@ -250,9 +250,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              if ((k.order.marketplace == marketplaceSelected) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.order.marketplace == marketplaceSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -262,9 +262,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
             sel.push(
               ...useLabels[l].map((k) => {
-                if ((k.styleCode == styleCode) && k.inventory?.inventory?.quantity > 0)
-                  if (k.inventory.inventory.inStock) {
-                    if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+                if ((k.styleCode == styleCode) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                  if (k.inventory?.inventory?.inStock) {
+                    if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                   } else return k.pieceId;
               })
             );
@@ -276,9 +276,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           sel.push(
             ...useLabels[l].map((k) => {
               console.log(k.order.marketplace, marketplace,)
-              if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -288,9 +288,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           sel.push(
             ...useLabels[l].map((k) => {
               console.log(k.order.marketplace, marketplace,)
-              if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && ( k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -300,9 +300,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           sel.push(
             ...useLabels[l].map((k) => {
               console.log(k.order.marketplace, marketplace,)
-              if ((k.order.marketplace == marketplace && k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.order.marketplace == marketplace && k.styleCode == styleCodeSelected) && ( k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -313,9 +313,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           sel.push(
             ...useLabels[l].map((k) => {
               console.log(k.order.marketplace, marketplace,)
-              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -325,9 +325,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           sel.push(
             ...useLabels[l].map((k) => {
               console.log(k.order.marketplace, marketplace,)
-              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -337,9 +337,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           sel.push(
             ...useLabels[l].map((k) => {
               console.log(k.order.marketplace, marketplace,)
-              if ((k.styleCode == styleCodeSelected) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              if ((k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k.inventory?.inventory?.inStock) {
+                  if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );
@@ -348,10 +348,10 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         Object.keys(useLabels).map((l, i) => {
           sel.push(
             ...useLabels[l].map((k) => {
-              console.log(k.order.marketplace, marketplace,)
-              if ((k.order.marketplace == marketplace) && k.inventory?.inventory?.quantity > 0)
-                if (k.inventory.inventory.inStock) {
-                  if (k.inventory.inventory.inStock.includes(k._id)) return k.pieceId;
+              console.log(k.inventory, marketplace,)
+              if ((k.order.marketplace == marketplace) && (k.inventory?.inventory?.quantity > 0 || source == "PP"))
+                if (k?.inventory?.inventory?.inStock) {
+                  if (k?.inventory?.inventory?.inStock?.includes(k._id) || source == "PP") return k.pieceId;
                 } else return k.pieceId;
             })
           );

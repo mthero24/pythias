@@ -234,14 +234,14 @@ export async function pullOrders(){
                         console.log(blankCode, colorSku, sizeName, designSku, "broken sku")
                         let blank = await Blank.findOne({code: blankCode}).populate("colors")
                         if(!blank) blank = await Blank.findOne({code: blankConverter[blankCode]? blankConverter[blankCode]: blankCode}).populate("colors")
-                        let color = blank.colors.find(c => c.sku === colorSku.toLowerCase())
+                        let color = blank?.colors.find(c => c.sku === colorSku.toLowerCase())
                         if(!color) color = blank?.colors.find(c => c.name.toLowerCase() === colorSku.toLowerCase())
                         if (!color) color = blank?.colors.find(c => c.name === colorSku)
                         if(!color) color = blank?.colors.find(c => c.name.toLowerCase() === colorFixer[colorSku]?.toLowerCase())
                         let size = blank?.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName])
                         let design = await Design.findOne({sku: designSku})
                         if(!design) design = await Design.findOne({sku: designFixer[designSku]? designFixer[designSku]: designSku}) 
-                        console.log(blank.code, color?.name, size?.name, design?.sku, "found items")
+                        console.log(blank?.code, color?.name, size?.name, design?.sku, "found items")
                         let product
                         let newSku
                         if(blank && color && size){

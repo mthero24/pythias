@@ -17,33 +17,31 @@ const readImage = async (url)=>{
     }
     return null
 }
-const createSide = async ({points, baseImage, subImage, type, side, layers}) => {
+const createSide = async ({points, baseImage, subImage, type, side, layers, multiplier}) => {
     //console.log("Creating side:", type, side, subImage, baseImage)
-    let img = await readImage(`${baseImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
-    img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-    await img.toFile("./baseImage.png")
+    let img = await readImage(`${baseImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${400 * multiplier}&height=${400 * multiplier}`);
+    img = img.resize(400 * multiplier, 400 * multiplier, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     let coords = []
     for(let p = 0; p < points.length -1; p+=2){
         coords.push({x: points[p], y: points[p + 1]})
     }
     //console.log(coords)
-    let minx = parseInt(coords.reduce((min, box) => box.x < min ? box.x : min, Infinity));
-    let miny = parseInt(coords.reduce((min, box) => box.y < min ? box.y : min, Infinity));
-    let maxx = parseInt(coords.reduce((max, box)=> box.x > max? box.x: max, 0))
-    let maxy = parseInt(coords.reduce((max, box) => box.y > max ? box.y : max, 0))
+    let minx = parseInt(coords.reduce((min, box) => box.x * multiplier < min ? box.x * multiplier : min, Infinity));
+    let miny = parseInt(coords.reduce((min, box) => box.y * multiplier < min ? box.y * multiplier : min, Infinity));
+    let maxx = parseInt(coords.reduce((max, box)=> box.x * multiplier > max? box.x * multiplier: max, 0))
+    let maxy = parseInt(coords.reduce((max, box) => box.y * multiplier > max ? box.y * multiplier : max, 0))
    // console.log({ minx, miny, maxx, maxy })
     let colorImage = sharp({
         create: {
-            width: 400,
-            height: 400,
+            width: 400 * multiplier,
+            height: 400 * multiplier,
             channels: 4,
             background: { r: 2, g: 2, b: 2, alpha: 0 }
         }
     }).png();
     // img = await newImage.composite([{ input: await img.toBuffer(), left: 0, top: 0 }]).png();
-     await img.toFile("./newImage.png")
+    console.log(subImage, "sub image")
     let color = await readImage(subImage);
-    let colorMeta = await color.metadata();
     //console.log("colorMeta", colorMeta);
     if(type === "sleeve"){
         let sleeveMeta = await color.metadata();
@@ -55,84 +53,89 @@ const createSide = async ({points, baseImage, subImage, type, side, layers}) => 
         }
         color = color.resize( maxx - minx , null, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     }
-    color = await color.resize( maxx - minx , maxy - miny, { fit: 'cover' });
+    if(type === "collar"){
+        color = color.rotate(90)
+    }
+    color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
     colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]).modulate({
         brightness: 1.0,   // don't globally brighten
         saturation: 1.1    // slight pop in color
     });
-    await colorImage.toFile("./colorImage.png")
     //let imageMeta = await newImage.metadata();
     // //console.log(imageMeta);
-    let cutout = await img.composite([{
-        input: await colorImage.toBuffer(),
-        blend: 'in',
-        opacity: 1,
-    },]);
-    let final = await img.composite([{
-        input: await cutout.toBuffer(),
-        blend: 'darken',
-        opacity: 1,
-    } ]);
-    await final.toFile("./final.png")
+    let final
+    try{
+        let cutout = await img.composite([{
+            input: await colorImage.toBuffer(),
+            blend: 'in',
+            opacity: 1,
+        },]);
+        final = await img.composite([{
+            input: await cutout.toBuffer(),
+            blend: 'darken',
+            opacity: 1,
+        } ]);
+    }catch(e){
+        console.log(e, "error in creating side")
+    }
     let layerImages = []
     if(layers && layers.length > 0){
         for(let layer of layers){
             if(layer.url){
                 let layerImage = await readImage(layer.url);
-                layerImage.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }})
-                await layerImage.toFile("./layerImage.png")
+                layerImage.resize(400 * multiplier, 400 * multiplier, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 }});
                 //console.log(layer)
                 if(layer.sublimated){
-                    let cutout = await layerImage.composite([{
-                        input: await colorImage.toBuffer(),
-                        blend: 'in',
-                        opacity: 1,
-                    },]);
-                    layerImage = await layerImage.composite([{
-                        input: await cutout.toBuffer(),
-                        blend: 'darken',
-                        opacity: 1,
-                    }]);
-                    await layerImage.toFile("./layerImage.png")
+                    try{
+                        let cutout = await layerImage.composite([{
+                            input: await colorImage.toBuffer(),
+                            blend: 'in',
+                            opacity: 1,
+                        },]);
+                        layerImage = await layerImage.composite([{
+                            input: await cutout.toBuffer(),
+                            blend: 'darken',
+                            opacity: 1,
+                        }]);
+                    }catch(e){
+                        console.log(e, "error in layer")
+                    }
                 }
                 layerImages.push(layerImage)                
             }
         }
     }
-    await final.toFile("./final.png")
     final = await final.toBuffer()
     final = sharp(final)
-    final.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+    final.resize(400 * multiplier, 400 * multiplier, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
     // //final = await makeBlackPixelsTransparent(await final.toBuffer())
     return {final, layerImages};
 }
-const createSublimationImage = async (boxs, styleImage, designImage, width) => {
+const createSublimationImage = async (sumblimationBoxes, sublimationImages, multiplier, base64) => {
    let pieceies = []
-       let design = await Design.findById("6925ce3df96c30667bdf6dab");
-       console.log(Object.keys(design.sublimationImages))
-       for(let key of Object.keys(image.sublimationBoxes)){
-           if (image.sublimationBoxes[key].layers.length > 0 && image.sublimationBoxes[key].layers[0].url){
-               //console.log(key, image.sublimationBoxes[key].layers.length)
-               pieceies.push(await createSide({ points: image.sublimationBoxes[key].layers[0].points, baseImage: image.sublimationBoxes[key].layers[0].url, subImage: design.sublimationImages[key], type: key.includes("Sleeve") || key.includes("sleeve") ? "sleeve" : key.includes("Hood") ? "hood" : "front", side: key.includes("Left") ? "left" : key.includes("Right") ? "right" : "center", layers: image.sublimationBoxes[key].layers.slice(1) }));
-           }
-       }
-       await Promise.all(pieceies)
-       let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
-       img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-       let imageMeta2 = await img.metadata();
-       //console.log(imageMeta2);
-       let images = []
-       for (let piece of pieceies){
-           images.push({ input: await piece.final.toBuffer(), blend: 'atop', x: 0, y: 0 })
-           if(piece.layerImages && piece.layerImages.length > 0){
-               for(let im of piece.layerImages){
-                   images.push({ input: await im.toBuffer(), blend: 'atop', x: 0, y: 0 })
-               }
-           }
-       }
-       img = await img.composite(images).toBuffer();
-       img = sharp(img);
-       return img
+    for (let key of Object.keys(sumblimationBoxes)){
+        if (sumblimationBoxes[key].layers.length > 0 && sumblimationBoxes[key].layers[0].url){
+            //console.log(key, image.sublimationBoxes[key].layers.length)
+            pieceies.push(await createSide({ points: sumblimationBoxes[key].layers[0].points, baseImage: sumblimationBoxes[key].layers[0].url, subImage: sublimationImages[key], type: key.includes("Sleeve") || key.includes("sleeve") ? "sleeve" : key.includes("Hood") ? "hood": key.includes("Collar") ? "collar" : "front", side: key.includes("Left") ? "left" : key.includes("Right") ? "right" : "center", layers: sumblimationBoxes[key].layers.slice(1), multiplier }));
+        }
+    }
+    await Promise.all(pieceies)
+    let img = base64;
+    img = img.resize(400 * multiplier, 400 * multiplier, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+    let imageMeta2 = await img.metadata();
+    //console.log(imageMeta2);
+    let images = []
+    for (let piece of pieceies){
+        images.push({ input: await piece.final.toBuffer(), blend: 'atop', x: 0, y: 0 })
+        if(piece.layerImages && piece.layerImages.length > 0){
+            for(let im of piece.layerImages){
+                images.push({ input: await im.toBuffer(), blend: 'atop', x: 0, y: 0 })
+            }
+        }
+    }
+    img = await img.composite(images).toBuffer();
+    img = sharp(img);
+    return img
 }
 const createImage = async (data) => {
     console.log(data, "data")
@@ -144,7 +147,10 @@ const createImage = async (data) => {
         data.width = 400
     }
     base64 = await readImage(`${data.styleImage?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
-    console.log(data.sublimationImages, "box")
+    console.log(data.sublimationBoxes, data.sublimationImages, "box")
+    if(data.sublimationImages && data.sublimationBoxes){
+        base64 = await createSublimationImage(data.sublimationBoxes, data.sublimationImages, multiplier, base64)
+    }
     if (data.box && data.box.length > 0 && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64 != undefined) {
         let composits = []
         for(let box of data.box){

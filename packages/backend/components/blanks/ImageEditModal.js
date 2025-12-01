@@ -106,10 +106,10 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
             if (!img.sublimationBoxes) img.sublimationBoxes = {
                 frontBody: { layers: [] },
                 backBody: { layers: [] },
-                sleeveLeftNoCuff: { layers: [] },
-                sleeveLeftWithCuff: { layers: [] },
-                sleeveRightNoCuff: { layers: [] },
-                sleeveRightWithCuff: { layers: [] },
+                sleeveNoCuffLeft: { layers: [] },
+                sleeveWithCuffLeft: { layers: [] },
+                sleeveNoCuffRight: { layers: [] },
+                sleeveWithCuffRight: { layers: [] },
                 collar: { layers: [] },
                 poloCollar: { layers: [] },
                 poloPocket: { layers: [] },
@@ -119,6 +119,9 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                 cuffLeft: { layers: [] },
                 cuffRight: { layers: [] },
             };
+            for (let key of Object.keys(features)) {
+                if (!img?.sublimationBoxes[key]) img.sublimationBoxes[key] = { layers: [] };
+            }
             let points = [];
             for(let key of Object.keys(img.sublimationBoxes)){
                 img.sublimationBoxes[key].layers.forEach((layer, index) => {
@@ -135,6 +138,12 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         let img
         //console.log(color, selectedImageSrc)
         if(selectedImageSrc.sublimationBoxes) setFeatures({...selectedImageSrc.sublimationBoxes});
+        if(!selectedImageSrc.sublimationBoxes){
+            selectedImageSrc.sublimationBoxes = features;
+        }
+        for(let key of Object.keys(features)){
+            if (!selectedImageSrc?.sublimationBoxes[key]) selectedImageSrc.sublimationBoxes[key] = { layers: [] };
+        }
         if(selectedImageSrc) img = {...selectedImageSrc}
         else img = {color: color?._id, image: null, boxes: {}}
         setImage(img);
