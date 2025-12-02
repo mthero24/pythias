@@ -1,13 +1,26 @@
-import { Bin, Items, RepullReasons } from "@pythias/mongo";
+import { Bin, Items, RepullReasons, Blank, Inventory } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 export async function GET(){
     console.log("GET REASONS")
-    return NextResponse.json({ error: false, reasons: await RepullReasons.find()})
+    let blanks = await Blank.find().populate("colors").select("code colors sizes")
+    return NextResponse.json({ error: false, reasons: await RepullReasons.find(), blanks})
 }
 export async function POST(req=NextApiRequest){
     let data= await req.json()
     let item = await Items.findOne({pieceId: data.pieceId})
     if(item){
+        if (data.reason == "Pulling Error" && data.blankCode && data.color && data.size) {
+            let inv = await Inventory.findOne({ style_code: data.blankCode, "color_name": data.color, "size_name": data.size })
+            if (inv && inv.quantity > 0) {
+                inv.quantity -= 1
+                await inv.save()
+            }
+            let inv2 = await Inventory.findOne({_id: item.inventory.inventory})
+            if(inv2){
+                inv2.quantity += 1
+                await inv2.save()
+            }
+        }
         item.labelPrinted = false
         item.inBin = false
         item.printed = false

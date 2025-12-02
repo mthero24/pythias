@@ -10,6 +10,7 @@ export function Repull({}){
         pieceId: "",
         reason: ""
     })
+    let [blanks, setBlanks] = useState([])
     useEffect(()=>{
         //console.log(repull)
         const getReasons = async ()=>{
@@ -18,6 +19,7 @@ export function Repull({}){
             else{
                 console.log(res.data.reasons)
                 setReasons(res.data.reasons)
+                setBlanks(res.data.blanks)
             }
         }
         getReasons()
@@ -68,6 +70,36 @@ export function Repull({}){
                            setRepull({ ...repull, reason: selected.value })
                        }}
                    />
+                   {repull.reason == "Pulling Error" && <Box>
+                        <CreatableSelect
+                            isClearable
+                            placeholder="Select Blank"
+                            options={blanks.map(blank => ({ value: blank.code, label: blank.code }))}
+                            onChange={(selected) => {
+                                setRepull({ ...repull, blank: selected.value })
+                            }}
+                        />
+                        {repull.blank && 
+                            <Box sx={{marginTop: "2%", padding: "1%"}}>
+                                <CreatableSelect
+                                    isClearable
+                                    placeholder="Select Color"
+                                    options={blanks.find(b=> b.code === repull.blank).colors.map(color => ({ value: color.name, label: color.name }))}
+                                    onChange={(selected) => {
+                                        setRepull({ ...repull, color: selected.value })
+                                    }}
+                                />
+                                <CreatableSelect
+                                    isClearable
+                                    placeholder="Select Size"
+                                    options={blanks.find(b=> b.code === repull.blank).sizes.map(size => ({ value: size.name, label: size.name }))}
+                                    onChange={(selected) => {
+                                        setRepull({ ...repull, size: selected.value })
+                                    }}
+                                /> 
+                            </Box>
+                        }
+                    </Box>}
                    <Button fullWidth sx={{margin: "1%"}} onClick={submit} >Repull Item</Button>
                 </Box>
             </Modal>
