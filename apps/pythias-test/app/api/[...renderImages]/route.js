@@ -2,7 +2,6 @@ import sharp from "sharp"
 import {NextApiRequest, NextResponse} from "next/server"
 import axios from "axios"
 import { Blank, Design } from "@pythias/mongo";
-import "jimp"
 const readImage = async (url)=>{
     const response = await axios.get(
       url,
@@ -55,8 +54,9 @@ const createSide = async ({points, baseImage, subImage, type, side, layers, mult
     }
     if(type === "collar"){
         color = color.rotate(90)
+        color = await color.resize((parse((maxx - minx) / 2)), maxy - miny, { fit: 'cover' });
     }
-    color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
+    else color = await color.resize(maxx - minx, maxy - miny, { fit: 'cover' });
     colorImage = await colorImage.composite([{ input: await color.toBuffer(), left: minx, top: miny, width: maxx - minx, height: maxy - miny }]).modulate({
         brightness: 1.0,   // don't globally brighten
         saturation: 1.1    // slight pop in color

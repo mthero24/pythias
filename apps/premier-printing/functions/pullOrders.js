@@ -173,10 +173,12 @@ export async function pullOrders(){
     let blankConverterDoc = await Converters.findOne({type: "blank"});
     let colorConverterDoc = await Converters.findOne({type: "color"});
     let sizeConverterDoc = await Converters.findOne({type: "size"});
+    let skuConverterDoc = await Converters.findOne({type: "sku"});
     if(blankConverterDoc && blankConverterDoc.converter) blankConverter = blankConverterDoc.converter;
     if(colorConverterDoc && colorConverterDoc.converter) colorFixer = colorConverterDoc.converter;
     if(sizeConverterDoc && sizeConverterDoc.converter) sizeFixer = sizeConverterDoc.converter;
     if(designConverterDoc && designConverterDoc.converter) designFixer = designConverterDoc.converter;
+    if(skuConverterDoc && skuConverterDoc.converter) skuFixer = skuConverterDoc.converter;
     console.log("pulling orders")
     let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
@@ -225,7 +227,7 @@ export async function pullOrders(){
                 for(let j = 0; j < parseInt(i.quantity); j++){
                     if (i.sku != "" && i.sku.includes("_") && (!i.sku.includes("PPSET") || i.sku.includes("PPSET_C"))) {
                         let item
-                        let sku = i.sku;
+                        let sku = skuFixer[i.sku] ? skuFixer[i.sku] : i.sku;
                         let blankCode = sku.split("_")[0].trim();
                         let colorSku = sku.split("_")[1].trim();
                         let sizeName = sku.split("_")[2].trim();

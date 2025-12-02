@@ -362,6 +362,9 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
       console.log(sel)
       setSelected([...sel])
     }
+    const deselect = (type)=>{
+      setSelected(selected.filter(s => !useLabels[type].map(l => l.pieceId).includes(s)));
+    }
     const print = async (type)=>{
       setLoading(true)
         let items = [];
@@ -643,6 +646,17 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                         }}
                     >
                       Print All {l}
+                    </Button>
+                    <Button
+                      onClick={() => { deselect(l) }}
+                      sx={{
+                        background: "#f2f2f2",
+                        margin: ".2%",
+                        color: "#000",
+                        "&:hover": { background: "#0079DC", color: "#fff" },
+                      }}
+                    >
+                      Deselect All {l}
                     </Button>
                   </Box>
                   <Box sx={{ padding: ".5%" }}>

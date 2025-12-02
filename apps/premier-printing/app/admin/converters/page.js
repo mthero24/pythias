@@ -34,16 +34,26 @@ export default async function ConverterPage(){
         });
         await sizeConverter.save();
     }
+    let skuConverter = await Converters.findOne({ type: "sku" });
+    if (!skuConverter) {
+        skuConverter = new Converters({
+            type: "sku",
+            converter: {}
+        });
+        await skuConverter.save();
+    }
     designConverter = serialize(designConverter);
     blankConverter = serialize(blankConverter);
     colorConverter = serialize(colorConverter);
     sizeConverter = serialize(sizeConverter);
+    skuConverter = serialize(skuConverter);
     return(
         <ConvertersComponent 
             designConverter={designConverter} 
             blankConverter={blankConverter} 
             colorConverter={colorConverter} 
             sizeConverter={sizeConverter}
+            skuConverter={skuConverter}
         />
     )
 }
