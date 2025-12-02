@@ -13,6 +13,12 @@ export default function Admin(){
             <Grid2 size={12}>
                 <iframe style={{background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%"}} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=edb7219a-7377-4540-9d58-36c6dd7751e6&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
             </Grid2> 
+            <Grid2 size={12}>
+                <iframe style={{ background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%" }} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=928335c2-4a13-44c7-be2b-30a9707b474e&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
+            </Grid2> 
+            <Grid2 size={12}>
+                <iframe style={{background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%"}} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=c32f8343-b067-4583-957d-4133ff900ee4&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
+            </Grid2> 
         </Grid2> 
     </Box>)
 }

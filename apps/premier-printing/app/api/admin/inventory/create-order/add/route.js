@@ -5,6 +5,10 @@ export async function POST(req = NextApiRequest) {
     console.log("hit")
     let data = await req.json()
     console.log(data)
-    let inventory = await Inventory.findOne({ blank: data.blank._id, color: data.color._id, sizeId: data.size._id })
-    return NextResponse.json({inventory})
+    let inventories = []
+    for (let item of data.items) {
+        let inventory = await Inventory.findOne({ blank: item.blank._id, color: item.color._id, sizeId: item.size._id })
+        inventories.push({ inventory, order: item.quantity })
+    }
+    return NextResponse.json({inventories})
 }
