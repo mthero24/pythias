@@ -25,11 +25,19 @@ export async function PUT(req = NextApiRequest) {
         item.inventory.inventoryType = "inventory"
         item.inventory.productInventory = null
         item.inventory.inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
-        if(!item.inventory.inventory && item.inventory.inventory.quantity > 0 && item.inventory.inventory.quantity > item.inventory.inStock.length){
+        if(!item.inventory.inventory){
+            item.inventory.inventory = await Inventory.findOne({
+                style_code: item.blankCode,
+                color_name: item.colorName,
+                size_name: item.sizeName,
+            })
+        }    
+        console.log(item.inventory.inventory, "inventory assigned to item")      
+        if(item.inventory.inventory && item.inventory.inventory.quantity > 0 && item.inventory.inventory.quantity > item.inventory.inventory.inStock.length){
             item.inventory.inventory.inStock.push(item._id.toString())
             await item.inventory.inventory.save()
         }else if(item.inventory.inventory){
-            item.inventory.attached.push(item._id.toString())
+            item.inventory.inventory.attached.push(item._id.toString())
             await item.inventory.inventory.save()
         }
         item.labelPrinted = false
