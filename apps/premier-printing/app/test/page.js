@@ -112,7 +112,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-   await pullOrders();
+  // await pullOrders();
     
     
     return <h1>test</h1>
