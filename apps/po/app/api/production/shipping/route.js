@@ -104,7 +104,7 @@ export async function POST(req= NextApiRequest){
                 "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
             }
         }
-        let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: order.shippingInfo.label, station: data.station}, headers)
+        let res = await axios.post(`http://${process.env.localIP}/api/shipping/${data.station == "station5" ? "cpu" : "printers"}`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
         console.log(res.data)
         if(res.error){
             return NextResponse.json({error: true, msg: "error printing label"})

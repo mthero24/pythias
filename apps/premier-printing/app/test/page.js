@@ -112,8 +112,17 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-  // await pullOrders();
-    
+    //await pullOrders();
+    // let item = await Items.findOne({pieceId: "2DSCZKK3N"})
+    // item.inventory = {}
+    // item.inventory.inventoryType = "inventory"
+    // item.inventory.inventory = await Inventory.findOne({blank: item.blank, color: item.color, sizeId: item.size})
+    // if(item.inventory.inventory && item.inventory.inventory.quantity > 0 && item.inventory.inventory.inStock.length < item.inventory.inventory.quantity){
+    //     item.inventory.inventory.inStock.push(item._id.toString())
+    // }else{
+    //     item.inventory.inventory.attached.push(item._id.toString())
+    // }
+    // await item.save()
     
     return <h1>test</h1>
 }

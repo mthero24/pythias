@@ -121,8 +121,8 @@ export async function POST(req= NextApiRequest){
                     "Content-Type": "application/json",
                     "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
                 }
-            }
-            let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
+            }let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
+            
             console.log(res.data, "printer res")
             if(res && res.error && res.msg != `{"code":"ECONNRESET"}`){
                 return NextResponse.json({error: true, msg: "error printing label"})
