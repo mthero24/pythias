@@ -11,6 +11,21 @@ export default function Admin(){
                 <iframe style={{background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%"}} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=85e7b092-a230-42bc-8d85-07d4188cc23d&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
             </Grid2> 
             <Grid2 size={12}>
+                <iframe style={{ background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%" }} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=13ef924a-38fd-4006-81d6-92ffd84a1a42&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
+            </Grid2> 
+
+            <Grid2 size={12}>
+                <iframe style={{ background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%" }} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=1a1a29b8-0c22-4b93-aff2-e3af52f4abc9&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
+            </Grid2> 
+            <Grid2 size={12}>
+                <iframe style={{ background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%" }} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=2e172baf-4a8d-44c6-833e-17a134c6ce13&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
+            </Grid2> 
+
+
+            <Grid2 size={12}>
+                <iframe style={{ background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%" }} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=a9fc29f1-49e0-4cd8-aa47-d604a243c14f&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
+            </Grid2> 
+            <Grid2 size={12}>
                 <iframe style={{background: "#FFFFFF", border: "none", borderRadius: "2px", boxShadow: "0 2px 10px 0 rgba(70, 76, 79, .2)", width: "100%", marginTop: "2%"}} width="640" height="480" src="https://charts.mongodb.com/charts-pythias-tech-ckbsbme/embed/charts?id=edb7219a-7377-4540-9d58-36c6dd7751e6&maxDataAge=3600&theme=light&autoRefresh=true"></iframe>
             </Grid2> 
             <Grid2 size={12}>

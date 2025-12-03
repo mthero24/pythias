@@ -169,6 +169,7 @@ export async function pullOrders(){
     let sizeFixer
     let blankConverter 
     let designFixer
+    let skuFixer
     let designConverterDoc = await Converters.findOne({type: "design"});
     let blankConverterDoc = await Converters.findOne({type: "blank"});
     let colorConverterDoc = await Converters.findOne({type: "color"});
@@ -178,7 +179,7 @@ export async function pullOrders(){
     if(colorConverterDoc && colorConverterDoc.converter) colorFixer = colorConverterDoc.converter;
     if(sizeConverterDoc && sizeConverterDoc.converter) sizeFixer = sizeConverterDoc.converter;
     if(designConverterDoc && designConverterDoc.converter) designFixer = designConverterDoc.converter;
-    if(skuConverterDoc && skuConverterDoc.converter) skuFixer = skuConverterDoc.converter;
+    if(skuConverterDoc && skuConverterDoc.converter) skuFixer = skuConverterDoc.converter? skuConverterDoc.converter: {};
     console.log("pulling orders")
     let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
     for(let o of orders){
