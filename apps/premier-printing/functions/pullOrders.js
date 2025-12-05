@@ -226,7 +226,7 @@ export async function pullOrders(){
             let items = []
             for(let i of o.items){
                 for(let j = 0; j < parseInt(i.quantity); j++){
-                    if (i.sku != "" && i.sku.includes("_") && (!i.sku.includes("PPSET") || i.sku.includes("PPSET_C"))) {
+                    if (i.sku != "" && i.sku?.includes("_") && (!i.sku?.includes("PPSET") || i.sku?.includes("PPSET_C"))) {
                         let item
                         let sku = skuFixer[i.sku] ? skuFixer[i.sku] : i.sku;
                         let blankCode = sku.split("_")[0].trim();
@@ -304,7 +304,7 @@ export async function pullOrders(){
                                 items.push(item)
                             }
                         }
-                    } else if(i.sku.includes("PPSET")){
+                    } else if(i.sku?.includes("PPSET")){
                         let item
                         console.log(i.sku, "pp set sku")
                         let pant = i.sku.split("_")[0] + `_${i.sku.split("_")[3]}`
@@ -376,6 +376,10 @@ export async function pullOrders(){
                             item = await createItem(i, order, null, null, null, null, null, i.sku, true)
                             items.push(item)
                         }
+                    }
+                    if(!i.sku){
+                        console.log("no sku on item at all")
+                        console.log(i, "item without sku")
                     }
                 }
                 //console.log(items)
