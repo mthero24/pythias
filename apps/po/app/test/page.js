@@ -71,14 +71,14 @@ const updateInventory = async (invIds) => {
     console.log("total: ", total)
 }
 export default async function Test(){
-    let style = await Styles.findOne({code: "LPCPH"})
-    console.log("style", style.sizes)
-    for(let fold of style.fold){
-        if(!fold.sleeves) fold.sleeves = 0;
-        if(!fold.body) fold.body = 0;
-    }
-    style.markModified("fold")
-    await style.save();
+    // let style = await Styles.findOne({code: "LPCPH"})
+    // console.log("style", style.sizes)
+    // for(let fold of style.fold){
+    //     if(!fold.sleeves) fold.sleeves = 0;
+    //     if(!fold.body) fold.body = 0;
+    // }
+    // style.markModified("fold")
+    // await style.save();
     //updateInventory();
     // let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
     // items = await Promise.all(items.map(async i=> {
@@ -114,19 +114,21 @@ export default async function Test(){
     //         await item.inventory.save()
     //     }
     // }
-    // let order = await InventoryOrders.findOne({ _id: "68b1c2a4fcb2eb6cec918c4a"}).populate("locations.items.inventory")
-    console.log("test page called")
-    console.log("test page called")
+    // let order = await InventoryOrders.findOne({ _id: "693176ffe546d3970bcc1d5e"}).populate("locations.items.inventory")
+    // console.log("test page called")
+    // console.log("test page called")
     // for(let loc of order.locations){
-    //     for(let item of loc.items){
-            
-    //         let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
-    //         console.log(labels.length, item.quantity)
-    //         item.inventory.orders.push({
-    //             order: order._id.toString(),
-    //             items: labels.map(l=> l._id.toString())
-    //         })
-    //         await item.inventory.save()
+    //     if(loc.name == "Ohio"){
+    //         for(let item of loc.items){
+                
+    //             let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
+    //             console.log(labels.length, item.quantity)
+    //             item.inventory.orders.push({
+    //                 order: order._id.toString(),
+    //                 items: labels.map(l=> l._id.toString())
+    //             })
+    //             await item.inventory.save()
+    //         }
     //     }
     // }
     return <h1>Test</h1>

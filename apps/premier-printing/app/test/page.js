@@ -4,6 +4,7 @@ import axios from "axios";
 import { pullOrders, updateInventory} from "@/functions/pullOrders"
 import { getOrders, generatePieceID } from "@pythias/integrations";
 import { canceled } from "@/functions/itemFunctions";
+import { style } from "@mui/system";
 
 const CreateSku = async ({blank, color, size, design, threadColor}) => {
     let sku = `${blank.code}_${color.sku}_${size.name}${threadColor ? `_${threadColor}` : ""}${design? `_${design.sku}`: ""}`;
@@ -113,7 +114,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
 }
 export default async function Test(){
   // await pullOrders();
-    
+   
     
     return <h1>test</h1>
 }
