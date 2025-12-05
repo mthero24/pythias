@@ -1,7 +1,9 @@
 import Items from "../../../../models/Items";
 import Bin from "../../../../models/Bin";
+import {Inventory} from "@pythias/mongo";
 import {RepullReasons} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
+import inventory from "@/models/inventory";
 export async function GET(){
     console.log("GET REASONS")
     return NextResponse.json({ error: false, reasons: await RepullReasons.find()})
@@ -25,6 +27,16 @@ export async function POST(req=NextApiRequest){
             bin.items = bin.items.filter(i=> i.toString() != item._id.toString())
             bin.ready = false
             await bin.save()
+        }
+        let inv = await Inventory.findOne({ _id: item.inventory.inventory });
+        if (!inv) inv = await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) });
+        if (inv) {
+            if(inv.quantity > 0 && inv.inStock.length < inv.quantity){
+                inv.inStock.push(item._id.toString())
+            } else {
+                inv.attached.push(item._id.toString())
+            }
+            await inv.save()
         }
         await item.save()
         return NextResponse.json({error: false, msg: "Item Has Been Set To be Repulled!"})
