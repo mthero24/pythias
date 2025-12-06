@@ -113,7 +113,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-    await pullOrders();
+    //await pullOrders();
     let items = await Items.find({ pieceId: { $in: ["42KKT3R1P", "8RK9GESR1", "PRCJCEU96"]}})
     for(let item of items){
         let inv = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size });
