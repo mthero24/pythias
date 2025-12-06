@@ -80,27 +80,27 @@ export default async function Test(){
     // style.markModified("fold")
     // await style.save();
     //updateInventory();
-    // let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
-    // items = await Promise.all(items.map(async i=> {
-    //     i.order = await Order.findOne({ _id: i.order });
-    //     return i;
-    // }));
-    // console.log(items.length, "items to add to inventory")
-    // let cancel = items.filter(i=> i.order == null)
-    // for(let c of cancel){
-    //     c.canceled = true;
-    //     await c.save()
-    // }
-    // items = items.filter(i => i.order != null)
-    // for(let item of items){
-    //     item.inventory = {
-    //         inventoryType: "inventory",
-    //         inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
-    //         productInventory: null,
-    //     }
-    //     await item.save()
-    // }
-    //  await updateInventory();
+    let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
+    items = await Promise.all(items.map(async i=> {
+        i.order = await Order.findOne({ _id: i.order });
+        return i;
+    }));
+    console.log(items.length, "items to add to inventory")
+    let cancel = items.filter(i=> i.order == null)
+    for(let c of cancel){
+        c.canceled = true;
+        await c.save()
+    }
+    items = items.filter(i => i.order != null)
+    for(let item of items){
+        item.inventory = {
+            inventoryType: "inventory",
+            inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
+            productInventory: null,
+        }
+        await item.save()
+    }
+     await updateInventory();
     // let invOrder = await InventoryOrders.findOne({_id: "68af572573d1de811e6e3098"}).populate("locations.items.inventory")
     // for(let loc of invOrder.locations){
     //     for(let item of loc.items){

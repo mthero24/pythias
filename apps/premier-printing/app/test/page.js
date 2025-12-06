@@ -113,8 +113,19 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-  // await pullOrders();
-   
-    
+    await pullOrders();
+    let items = await Items.find({ pieceId: { $in: ["42KKT3R1P", "8RK9GESR1", "PRCJCEU96"]}})
+    for(let item of items){
+        let inv = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size });
+        console.log(inv, "inventory found for item")
+        if(inv){
+            if(inv.quantity > 0 && inv.inStock.length < inv.quantity){
+                inv.inStock.push(item._id.toString())
+            } else {
+                inv.attached.push(item._id.toString())
+            }
+            await inv.save();
+        }
+    }
     return <h1>test</h1>
 }
