@@ -376,7 +376,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
         }else if(type == "gift"){
             items = gift
         }else {
-          console.log()
+          console.log(source, "source")
           if(source == "PP"){
             items.push(...useLabels[type]);
           }else{

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /under-construction
+Disallow: /
