@@ -122,7 +122,7 @@ export async function getRatesFeOld({credentials, weight, packaging, dimensions,
     };
 }
 
-export async function purchaseLabel({credentials, weight, poNumber, selectedShipping, dimensions, businessAddress, address, saturdayDelivery, dpi}){
+export async function purchaseLabel({credentials, weight, poNumber, selectedShipping, dimensions, businessAddress, address, saturdayDelivery, imageFormat, dpi}){
     let service = weight < 16 ? "PRESORTED_STANDARD" : "PARCEL_SELECT"
     let xml =`
         <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v22="http://fedex.com/ws/ship/v22">
@@ -223,7 +223,7 @@ export async function purchaseLabel({credentials, weight, poNumber, selectedShip
                     ${address.country != "US"? `<v22:BlockInsightVisibility>true</v22:BlockInsightVisibility>` : ""}
                     <v22:LabelSpecification>
                         <v22:LabelFormatType>COMMON2D</v22:LabelFormatType>
-                        <v22:ImageType>ZPLII</v22:ImageType>
+                        <v22:ImageType>${imageFormat? "PDF": "ZPLII"}</v22:ImageType>
                         <v22:LabelStockType>STOCK_4X6</v22:LabelStockType>
                     </v22:LabelSpecification>
                     ${address.country != "US"? `<v22:ShippingDocumentSpecification>

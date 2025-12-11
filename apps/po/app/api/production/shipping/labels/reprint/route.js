@@ -8,12 +8,12 @@ export async function POST(req= NextApiRequest){
             "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
         }
     }
-    let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: data.label, station: data.station,}, headers)
+    let res = await axios.post(`http://${process.env.localIP}/api/shipping/${data.station == "station5"? "cpu": "printers"}`, {label: data.label, station: data.station, barcode: "po"}, headers)
     console.log(res.data)
     if(res.error){
         return NextResponse.json({error: true, msg: "error printing label"})
     }else{
-        console.log("retrun")
+        console.log("return")
         return NextResponse.json({error: false, label: res.label})
     }
 }

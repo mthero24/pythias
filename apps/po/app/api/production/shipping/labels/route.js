@@ -83,7 +83,8 @@ export async function POST(req= NextApiRequest){
                 clientID: process.env.UPSClientID,
                 clientSecret: process.env.UPSClientSecret,
             },
-            dpi: data.station == "station5"? 300: null
+            dpi: data.station == "station5"? 300: null,
+            imageFormat: data.station == "station5"? "PDF": null,
             
         });
         if(!label ||label.error){
@@ -123,8 +124,8 @@ export async function POST(req= NextApiRequest){
                     "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
                 }
             }
-            let res = await axios.post(`http://${process.env.localIP}/api/shipping/printers`, {label: label.label, station: data.station}, headers)
-            
+            let res = await axios.post(`http://${process.env.localIP}/api/shipping/${data.station == "station5"? "cpu": "printers"}`, {label: label.label, station: data.station, barcode: "po"}, headers)
+
             console.log(res.data, "printer res")
             if(res && res.error && res.msg != `{"code":"ECONNRESET"}`){
                 return NextResponse.json({error: true, msg: "error printing label"})
