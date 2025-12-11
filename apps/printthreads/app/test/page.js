@@ -151,42 +151,42 @@ const createSide = async ({points, baseImage, subImage, type, side, layers}) => 
     return {final, layerImages};
 }
 export default async function Test(){
-    let blank =  await Blank.findOne({code: "HOOD"});
+//     let blank =  await Blank.findOne({code: "HOOD"});
     
-    let image = blank.images.find(img => img.sublimationBoxes);
-    //console.log(image);
-    // //console.log(Object.keys(image.sublimationBoxes));
-    // //console.log(image.sublimationBoxes.rightUperSleeve.layers[0].boxes);
-    // //let backgroundImage = await createSide({ boxes: image.sublimationBoxes["background"].layers[0].boxes, baseImage: image.image, subImage: "./abstract.jpg" });
-    let pieceies = []
-    let design = await Design.findById("6925ce3df96c30667bdf6dab");
-    console.log(Object.keys(design.sublimationImages))
-    for(let key of Object.keys(image.sublimationBoxes)){
-        if (image.sublimationBoxes[key].layers.length > 0 && image.sublimationBoxes[key].layers[0].url){
-            //console.log(key, image.sublimationBoxes[key].layers.length)
-            pieceies.push(await createSide({ points: image.sublimationBoxes[key].layers[0].points, baseImage: image.sublimationBoxes[key].layers[0].url, subImage: design.sublimationImages[key], type: key.includes("Sleeve") || key.includes("sleeve") ? "sleeve" : key.includes("Hood") ? "hood" : "front", side: key.includes("Left") ? "left" : key.includes("Right") ? "right" : "center", layers: image.sublimationBoxes[key].layers.slice(1) }));
-        }
-    }
-    await Promise.all(pieceies)
-    let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
-    img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-    let imageMeta2 = await img.metadata();
-    //console.log(imageMeta2);
-    let images = []
-    for (let piece of pieceies){
-        images.push({ input: await piece.final.toBuffer(), blend: 'atop', x: 0, y: 0 })
-        if(piece.layerImages && piece.layerImages.length > 0){
-            for(let im of piece.layerImages){
-                images.push({ input: await im.toBuffer(), blend: 'atop', x: 0, y: 0 })
-            }
-        }
-    }
-    img = await img.composite(images).toBuffer();
-    img = sharp(img);
-    img.resize(1200, 1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
-   // await img.toFile("./combined2.png");
-    // design = await Design.findById("6925ce3df96c30667bdf6dab").lean();
-    // console.log(design)
+//     let image = blank.images.find(img => img.sublimationBoxes);
+//     //console.log(image);
+//     // //console.log(Object.keys(image.sublimationBoxes));
+//     // //console.log(image.sublimationBoxes.rightUperSleeve.layers[0].boxes);
+//     // //let backgroundImage = await createSide({ boxes: image.sublimationBoxes["background"].layers[0].boxes, baseImage: image.image, subImage: "./abstract.jpg" });
+//     let pieceies = []
+//     let design = await Design.findById("6925ce3df96c30667bdf6dab");
+//     console.log(Object.keys(design.sublimationImages))
+//     for(let key of Object.keys(image.sublimationBoxes)){
+//         if (image.sublimationBoxes[key].layers.length > 0 && image.sublimationBoxes[key].layers[0].url){
+//             //console.log(key, image.sublimationBoxes[key].layers.length)
+//             pieceies.push(await createSide({ points: image.sublimationBoxes[key].layers[0].points, baseImage: image.sublimationBoxes[key].layers[0].url, subImage: design.sublimationImages[key], type: key.includes("Sleeve") || key.includes("sleeve") ? "sleeve" : key.includes("Hood") ? "hood" : "front", side: key.includes("Left") ? "left" : key.includes("Right") ? "right" : "center", layers: image.sublimationBoxes[key].layers.slice(1) }));
+//         }
+//     }
+//     await Promise.all(pieceies)
+//     let img = await readImage(`${image.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=400&height=400`);
+//     img = img.resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+//     let imageMeta2 = await img.metadata();
+//     //console.log(imageMeta2);
+//     let images = []
+//     for (let piece of pieceies){
+//         images.push({ input: await piece.final.toBuffer(), blend: 'atop', x: 0, y: 0 })
+//         if(piece.layerImages && piece.layerImages.length > 0){
+//             for(let im of piece.layerImages){
+//                 images.push({ input: await im.toBuffer(), blend: 'atop', x: 0, y: 0 })
+//             }
+//         }
+//     }
+//     img = await img.composite(images).toBuffer();
+//     img = sharp(img);
+//     img.resize(1200, 1200, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
+//    // await img.toFile("./combined2.png");
+//     // design = await Design.findById("6925ce3df96c30667bdf6dab").lean();
+//     // console.log(design)
     return <h1>test</h1>
     //("https://images1.pythiastechnologies.com/styles/1742087292890.png")
 }
