@@ -27,7 +27,7 @@ let getAuth = async (credentials) => {
     },
   };
   let send = await axios
-    .post("https://apis-sandbox.fedex.com/oauth/token", body, options)
+    .post("https://apis.fedex.com/oauth/token", body, options)
     .catch((e) => {
       console.log(e.response.data);
     });
@@ -132,13 +132,13 @@ export async function getRatesFeNew({address, businessAddress, weight, service, 
         }
     }
     let resData
-    let send = await axios.post("https://apis-sandbox.fedex.com/rate/v1/rates/quotes", body, options).catch(e=>{console.log(e.response.data); resData = e.response.data;})
+    let send = await axios.post("https://apis.fedex.com/rate/v1/rates/quotes", body, options).catch(e=>{console.log(e.response.data); resData = e.response.data;})
     //console.log(send? send.data.output.rateReplyDetails[0].ratedShipmentDetails[0] : resData)
     if(resData) return {error:true, msg: `${resData.errors[0].message} ${resData.errors[0].code}`}
     return {error: false, rate: send.data.output.rateReplyDetails[0].ratedShipmentDetails[0].totalNetFedExCharge}
     
 }
-export async function purchaseFedexNew ({address, businessAddress,weight, service, serviceType, packaging, overnight, saturdayDelivery=false, credentials}){
+export async function purchaseFedexNew ({address, businessAddress,weight, service, serviceType, packaging, overnight, saturdayDelivery=false, credentials, imageFormat, dpi}){
     let token = await getAuth(credentials)
     token = token.token
     console.log(token)
@@ -198,9 +198,7 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
           "preferredCurrency": "USD",
           "totalPackageCount": 1,
           "shipmentSpecialServices": {
-            "specialServiceTypes": [
-            "FEDEX_ONE_RATE"
-            ]
+            "specialServiceTypes": []
             },
           "requestedPackageLineItems": [
             {
@@ -218,7 +216,8 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
           ],
           "labelSpecification": {
             "labelStockType": "STOCK_4X8",
-            "imageType": "ZPLII",
+            "imageType": imageFormat? "PDF": "ZPLII",
+            "resolution": dpi? 300: 203
           },
         },
         "labelResponseOptions": "LABEL",
@@ -238,12 +237,12 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
       //     }
       // }
       // if(!body.shipmentSpecialServices) body.shipmentSpecialServices = {}
-      // if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && saturdayDelivery){
-      //     body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE", "SATURDAY_DELIVERY"]
-      // }
-      // else if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && !saturdayDelivery){
-      //     body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE"]
-      // }else if(saturdayDelivery) body.shipmentSpecialServices.specialServiceTypes = ["SATURDAY_DELIVERY"]
+      if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && saturdayDelivery){
+          body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE", "SATURDAY_DELIVERY"]
+      }
+      else if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && !saturdayDelivery){
+          body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE"]
+      }else if(saturdayDelivery) body.shipmentSpecialServices.specialServiceTypes = ["SATURDAY_DELIVERY"]
       let options = {
         headers: {
             Authorization: `Bearer ${token}`,
@@ -251,7 +250,7 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
             "x-locale": "en_US"
         }
     }
-    let send = await axios.post("https://apis-sandbox.fedex.com/ship/v1/shipments", body, options).catch(e=>{console.log(e.response.data)})
+    let send = await axios.post("https://apis.fedex.com/ship/v1/shipments", body, options).catch(e=>{console.log(e.response.data)})
     console.log(send? send.data.output: "error")
     console.log(send? send.data.output.transactionShipments[0]: "error")
     console.log(send? send.data.output.transactionShipments[0].pieceResponses: "error")

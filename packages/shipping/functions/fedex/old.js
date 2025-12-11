@@ -9,7 +9,7 @@ let options = {
   arrayNotation: false,
   alternateTextNode: true,
 };
-export async function getRatesFeOld({credentials, weight, packaging, dimensions, serviceType, service, businessAddress, address, saturdayDelivery}){
+export async function getRatesFeOld({credentials, weight, packaging, dimensions, serviceType, service, businessAddress, address, saturdayDelivery, dpi}){
     console.log(dimensions, "dimensions")
     let xml = `<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAPENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://fedex.com/ws/rate/v28">
         <SOAP-ENV:Body>
@@ -122,7 +122,7 @@ export async function getRatesFeOld({credentials, weight, packaging, dimensions,
     };
 }
 
-export async function purchaseLabel({credentials, weight, poNumber, selectedShipping, dimensions, businessAddress, address, saturdayDelivery}){
+export async function purchaseLabel({credentials, weight, poNumber, selectedShipping, dimensions, businessAddress, address, saturdayDelivery, dpi}){
     let service = weight < 16 ? "PRESORTED_STANDARD" : "PARCEL_SELECT"
     let xml =`
         <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v22="http://fedex.com/ws/ship/v22">
