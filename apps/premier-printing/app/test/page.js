@@ -114,14 +114,7 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
 }
 export default async function Test(){
     //await pullOrders();
-    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id:"60308" })
-    console.log(orders, "orders")
-    console.log(orders[0].items, "items")
-    let ord = await Order.findOne({ poNumber: "60308" }).populate("items")
-    let item = ord.items[0]
-    item.sku = "PPSET_White_S_C_Red_16079B_F"
-    item.isBlank = true;
-    await item.save();
+    
     
     return <h1>test</h1>
 }

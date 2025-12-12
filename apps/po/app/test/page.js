@@ -73,7 +73,7 @@ const updateInventory = async (invIds) => {
     console.log("total: ", total)
 }
 export default async function Test(){
-    await updateInventory();
+    //await updateInventory();
     // let style = await Styles.findOne({code: "LPCPH"})
     // console.log("style", style.sizes)
     // for(let fold of style.fold){
