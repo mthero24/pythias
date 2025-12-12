@@ -16,7 +16,7 @@ export const metadata = {
   title: "Pythias - Test App",
   description: "Pythias - Test App",
   icons: {
-    icon: "/pythias-logo--new-gold-50.png",
+    icon: "/icon.png",
   },
 };
 

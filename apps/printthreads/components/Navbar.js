@@ -17,8 +17,9 @@ import {
 import Link from "next/link";
 import { theme, themeDark } from "./UI/Theme";
 import Image from "next/image";
-import * as Logo from '../public/pythias-logo--new-gold-50.png';
+
 import { useCSV } from "@pythias/backend";
+import * as logo from "../public/log.png";
 export default function ButtonAppBar() {
   const [drawerVisible, setDrawerVisible] = useState(false);
 
@@ -38,17 +39,17 @@ export default function ButtonAppBar() {
             sx={{ mr: 2 }}
             onClick={toggleDrawer}
           >
-            <MenuIcon sx={{ color: "#c2a167" }} />
+            <MenuIcon sx={{ color: "#000" }} />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
             <Link href="/admin">
               <Image
                 className="img-fluid"
-                width={75}
-                height={40}
+                width={100}
+                height={45}
                 alt="logo"
                 sx={{width: "100%", height: "auto"}}
-                src="https://www.pythiastechnologies.com/logo.png"
+                src={logo}
               />
             </Link>
           </Box>
@@ -90,14 +91,14 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => {
     >
       <Box sx={{ flexGrow: 1, }}>
           <Link href="/admin" onClick={() => handleClose(false)}>
-          <img className="img-fluid" width="170" src="https://www.pythiastechnologies.com/logo.png" />
+          <Image className="img-fluid" width={170} height={40} alt="logo" src={logo} />
         </Link>
       </Box>
       <Divider />
       <List sx={{ width: "100%" }} >
           <Link href="/admin" onClick={() => handleClose(false)}>
           <ListItemButton>
-            <ListItemText primary={`Premier Printing`} />
+            <ListItemText primary={`Print Threads`} />
           </ListItemButton>
         </Link>
           <Link href="/admin/users" onClick={() => handleClose(false)}>
