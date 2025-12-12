@@ -3,6 +3,7 @@ import {Blank as Blanks, Color, PrintPricing, Vendors, Departments, Categories, 
 import { serialize } from "@/functions/serialize";
 import {CreateBlank} from "@pythias/backend";
 import PrintLocations from "@/models/printLocations";
+import { redirect } from "next/navigation"
 export const dynamic = 'force-dynamic'; 
 export default async function Create(req,res) {
     let colors = await Color.find().sort({ _id: -1 }).lean();
@@ -23,6 +24,11 @@ export default async function Create(req,res) {
     let blank
     let params = await req.searchParams
     if(params && params.id) blank = await Blanks.findById(params.id).populate("printLocations colors");
+    else{
+      blank = new Blanks({name: "temp", code: "temp"});
+      blank = await blank.save();
+      return redirect(`/admin/blanks/create?id=${blank._id}`)
+    }
     colors = serialize(colors);
     blanks = serialize(blanks);
     blank = serialize(blank);

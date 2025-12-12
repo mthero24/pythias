@@ -2,6 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Blanks from "@/models/Blanks";
 import Inventory from "@/models/inventory";
 import Color from "@/models/Color";
+
 //#some note
 export async function GET(){
   try{
@@ -15,7 +16,8 @@ const updateFold = (blank)=>{
   let newFold = []
   if(!blank.fold) blank.fold = [];
   for(let s of blank.sizes){
-    let fold = blank.fold?.filter(f=> f.size.toString() == s._id)[0]
+    let fold = blank.fold?.filter(f=> f.size?.toString() == s._id || f.sizeName == s.name)[0]
+    if(!fold.size) fold.size = s._id
     if(fold) newFold.push(fold)
     else{
       newFold.push({
@@ -32,9 +34,9 @@ const updateFold = (blank)=>{
 }
 const updateEnvelopes = (blank)=>{
   let newEnvelopes = [];
-  console.log(blank.printLocations)
+  //console.log(blank.printLocations)
   let printLocations = blank.printLocations.map(l=> {return l.name})
-  console.log(printLocations)
+ // console.log(printLocations)
   if(!blank.envelopes) blank.envelopes = [];
   for(let e of blank.envelopes){
     if(printLocations.includes(e.placement)) newEnvelopes.push(e)
@@ -58,7 +60,7 @@ const updateEnvelopes = (blank)=>{
   }
   if(newEnvelopes.length > 0){
     blank.envelopes = newEnvelopes.sort((a,b)=>{
-      console.log(a)
+     // console.log(a)
       if(a.placement.length > b.placement.length) return -1
       if(a.placement.length < b.placement.length) return 1
       return 0
@@ -67,7 +69,7 @@ const updateEnvelopes = (blank)=>{
   return blank
 }
 let updateInventory = async (blank)=>{
-  console.log("update inventory", blank.colors.length)
+  //console.log("update inventory", blank.colors.length)
   for(let color of blank.colors){
     color = await Color.findById(color)
     for(let size of blank.sizes){
@@ -84,12 +86,12 @@ let updateInventory = async (blank)=>{
         inv = await inv.save()
         //console.log(inv)
       }else{
-        console.log("new")
+        //console.log("new")
         let inventory_id = encodeURIComponent(`${color.name}-${size.name}-${blank.code}`)
         let barcode_id= Math.floor(Math.random() * 999999)
-        console.log(inventory_id, barcode_id)
+       // console.log(inventory_id, barcode_id)
         inv = new Inventory({blank: blank._id, style_code: blank.code, inventory_id, barcode_id, color: color._id, color_name: color.name, sizeId: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,})
-        console.log(inv.inventory_id, inv.barcode_id)
+        //console.log(inv.inventory_id, inv.barcode_id)
         await inv.save()
       }
     }
@@ -97,7 +99,7 @@ let updateInventory = async (blank)=>{
 }
 export async function POST(req = NextApiRequest) {
   let data = await req.json();
-  console.log("data", data)
+ // console.log("data", data)
   let blank = data.blank
   let newBlank
   try {
@@ -105,8 +107,9 @@ export async function POST(req = NextApiRequest) {
       console.log(blank.printLocations?.length > 0 && blank.sizes.length > 0)
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
       if (blank.sizes.length > 0) blank = updateFold(blank)
-      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
-      newBlank = await Blanks.findById(blank._id).populate("printLocations") 
+      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank, { new: true }).populate("printLocations")
+      console.log(newBlank, "updated blank")
+      console.log("update inventory")
       updateInventory(blank)
     }
     else {
@@ -121,6 +124,7 @@ export async function POST(req = NextApiRequest) {
     }
     return NextResponse.json({error: false, blank: newBlank});
   } catch (err) {
+    console.log(err);
     return NextResponse.json(err.toString());
   }
 }

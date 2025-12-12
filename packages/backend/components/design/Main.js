@@ -185,6 +185,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                             <DeleteIcon sx={{ color: "#780606"}} />
                                         </Box>
                                         <Box sx={{padding: "3%", background: "#e2e2e2", height: { sm: "150px", md: "350px" }, minHeight: "150px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                            {console.log(des.images[i])}
                                             <img src={des.images && des.images[i] ? `${des.images[i]?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400` : "/missingImage.jpg"} alt={`${des.name} ${des.sku} design`} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%", background: "#e2e2e2" }} />
                                         </Box>
                                         <Box sx={{borderTop: "1px solid black",marginTop: "3%"}}>

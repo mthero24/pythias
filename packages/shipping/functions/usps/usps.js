@@ -154,7 +154,7 @@ export async function purchaseLabel({address, poNumber, weight, dimensions, busi
         for(let i of items){
             let newItem = {}
             for(let j of Object.keys(i)){
-                if(j == "itemDescription") newItem[j] = i[j].substring(0, 30)
+                if(j == "itemDescription") newItem[j] = i[j]?.substring(0, 30)
                 else if(j != "saterdayDelivery")newItem[j] = i[j]
             }
             newItems.push(newItem)

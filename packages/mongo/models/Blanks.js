@@ -63,7 +63,7 @@ const SchemaObj = new Schema(
         height: { type: Number, default: 15 },
         vertoffset: { type: Number, default: 0.4 },
         horizoffset: { type: Number, default: 0 },
-        placement: String,
+        placement: { type: String },
       },
     ],
 

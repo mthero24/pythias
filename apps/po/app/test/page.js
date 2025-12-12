@@ -8,11 +8,13 @@ import Items from "@/models/Items";
 import Order from "@/models/Order";
 import { addItemsToInventory } from "@/functions/addItemsToInventory";
 const updateInventory = async (invIds) => {
-    let inventories = await Inventory.find({ })
+    let inventories = await Inventory.find({ }).select("style_code _id")
     inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
     console.log(inventories.length, "inventories")
     let total = 0
-    for (let inv of inventories) {
+    for (let inv1 of inventories) {
+        let inv = await Inventory.findOne({ _id: inv1._id })
+        console.log(inv.inventory_id)
         let items = await Items.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
          items = await Promise.all(items.map(async i=> {
             i.order = await Order.findOne({ _id: i.order });
@@ -71,6 +73,7 @@ const updateInventory = async (invIds) => {
     console.log("total: ", total)
 }
 export default async function Test(){
+    await updateInventory();
     // let style = await Styles.findOne({code: "LPCPH"})
     // console.log("style", style.sizes)
     // for(let fold of style.fold){
