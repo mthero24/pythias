@@ -82,10 +82,10 @@ export function BulkMain({orders}){
                                 <Typography variant="h6" textAlign={"center"}>{order.items.length}</Typography>
                             </Grid2>
                             <Grid2 item size={2}>
-                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => item.inventory.inventory.inStock.includes(item._id.toString())).length}</Typography>
+                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
                             </Grid2>
                             <Grid2 item size={2}>
-                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => !item.inventory.inventory.inStock.includes(item._id.toString())).length}</Typography>
+                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => !item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
                             </Grid2>
                             <Grid2 item size={1}>
                                 {<Button variant="contained" color="success" onClick={() => print(order)}>Print</Button>}
