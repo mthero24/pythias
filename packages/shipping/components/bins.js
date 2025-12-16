@@ -41,12 +41,17 @@ export function Bins({bins, setOrder, setShowNotes, setBin, setShow, setAction})
                           Bin#
                         </Typography>
                       </Grid2>
-                      <Grid2 size={{ xs: 4, md: 3 }}>
+                      <Grid2 size={{ xs: 4, md: 2 }}>
                         <Typography textAlign={"center"} fontWeight="bold">
                           PO#
                         </Typography>
                       </Grid2>
-                      <Grid2 size={{ xs: 3, md: 2 }}>
+                      <Grid2 size={{ xs: 4, md: 2 }}>
+                        <Typography textAlign={"center"} fontWeight="bold">
+                          Type
+                        </Typography>
+                      </Grid2>
+                      <Grid2 size={{ xs: 3, md: 1 }}>
                         <Typography textAlign={"center"} fontWeight="bold">
                           In Bin{" "}
                         </Typography>
@@ -104,12 +109,17 @@ export function Bins({bins, setOrder, setShowNotes, setBin, setShow, setAction})
                               {b.number}
                             </Typography>
                           </Grid2>
-                          <Grid2 size={{ xs: 4, md: 3 }}>
+                          <Grid2 size={{ xs: 4, md: 2 }}>
                             <Typography textAlign={"center"} fontWeight="bold">
                               {b.order?.poNumber}
                             </Typography>
                           </Grid2>
-                          <Grid2 size={{ xs: 3, md: 2 }}>
+                            <Grid2 size={{ xs: 4, md: 2 }}>
+                              <Typography textAlign={"center"} fontWeight="bold">
+                                {b.order?.shippingType}
+                              </Typography>
+                            </Grid2>
+                          <Grid2 size={{ xs: 3, md: 1 }}>
                             <Typography textAlign={"center"} fontWeight="bold">
                               {b.items.length}
                             </Typography>

@@ -17,7 +17,7 @@ const updateFold = (blank)=>{
   if(!blank.fold) blank.fold = [];
   for(let s of blank.sizes){
     let fold = blank.fold?.filter(f=> f.size?.toString() == s._id || f.sizeName == s.name)[0]
-    if(!fold.size) fold.size = s._id
+    if(fold && !fold.size) fold.size = s._id
     if(fold) newFold.push(fold)
     else{
       newFold.push({

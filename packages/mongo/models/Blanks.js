@@ -44,6 +44,7 @@ const SchemaObj = new Schema(
         wholesaleCost: { default: 0, type: Number },
         retailPrice: { default: 0, type: Number },
         basePrice: { default: 0, type: Number },
+        cost: { default: 0, type: Number },
       },
     ],
     bulletPoints: [

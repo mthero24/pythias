@@ -226,6 +226,11 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                         bla.sizes[i].retailPrice = e.target.value;
                                                         setBlank(bla);
                                                     }} />
+                                                    <TextField label="Cost" fullWidth value={s.cost} onChange={(e) => {
+                                                        let bla = { ...blank };
+                                                        bla.sizes[i].cost = e.target.value;
+                                                        setBlank(bla);
+                                                    }} />
                                                     <TextField label="Weight (lbs)" fullWidth value={s.weight} onChange={(e) => { }} />
                                                     <Button variant="outlined" fullWidth color="error" onClick={() => { 
                                                         let bla = {...blank};
