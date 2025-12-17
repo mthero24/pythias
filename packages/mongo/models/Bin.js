@@ -10,6 +10,7 @@ let schema = new mongoose.Schema({
     giftWrap: {type: Boolean, default: false},
     wrapped: {type: Boolean, default: false},
     readyToWrap: {type: Boolean, default: false},
-    wrapImage: String
+    wrapImage: String, 
+    lastCleared: Date,
 })
 export default PremierPrinting.model("Bin", schema);

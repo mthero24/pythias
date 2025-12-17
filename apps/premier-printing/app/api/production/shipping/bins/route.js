@@ -95,7 +95,7 @@ export async function PUT(req = NextApiRequest) {
 export async function DELETE(req = NextApiRequest) {
   try{
     let binNumber = req.nextUrl.searchParams.get("number")
-    let bin = await Bins.findOneAndUpdate({number: binNumber}, {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
+    let bin = await Bins.findOneAndUpdate({number: binNumber}, {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null, lastCleared: Date.now()}, {new: true})
     return NextResponse.json({
       error: false,
       bins: {
