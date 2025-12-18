@@ -104,17 +104,19 @@ export default async function Test(){
     //     await item.save()
     // }
     //  await updateInventory();
-    // let invOrder = await InventoryOrders.findOne({_id: "68af572573d1de811e6e3098"}).populate("locations.items.inventory")
+    // let invOrder = await InventoryOrders.findOne({ _id: "6942c18530bbf275482b5b38"}).populate("locations.items.inventory")
     // for(let loc of invOrder.locations){
-    //     for(let item of loc.items){
-    //         //console.log(item)
-    //         let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
-    //         console.log(labels.length, item.quantity)
-    //         item.inventory.orders.push({
-    //             order: invOrder._id.toString(),
-    //             items: labels.map(l=> l._id.toString())
-    //         })
-    //         await item.inventory.save()
+    //     if(loc.name == "Ohio"){
+    //         for(let item of loc.items){
+    //             //console.log(item)
+    //             let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
+    //             console.log(labels.length, item.quantity)
+    //             item.inventory.orders.push({
+    //                 order: invOrder._id.toString(),
+    //                 items: labels.map(l=> l._id.toString())
+    //             })
+    //             await item.inventory.save()
+    //         }
     //     }
     // }
     // let order = await InventoryOrders.findOne({ _id: "693176ffe546d3970bcc1d5e"}).populate("locations.items.inventory")

@@ -1,6 +1,7 @@
 import Items from "../models/Items";
 
 export const buildLabelData = async (item, i, poNumber, opts={}) => {
+  if(item.order) {
     let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let frontBackString = "";
     //console.log(totalQuantity, "TQ");
@@ -16,7 +17,7 @@ export const buildLabelData = async (item, i, poNumber, opts={}) => {
     if (item?.type && item?.type?.toLowerCase() == "gift") printTypeAbbr = "GIFT";
     if (item?.type && item?.type?.toLowerCase() == "sublimation") printTypeAbbr = "SUB";
     if (item?.type && item?.type?.toLowerCase() == "embroidery") printTypeAbbr = "EMB";
-  let labelString;
+    let labelString;
     if(item.type == "gift"){
       labelString = `^XA
             ^FO50,80^BY2^BC,120,N,N,N,A^FD${item.pieceId}^FS
@@ -64,3 +65,4 @@ export const buildLabelData = async (item, i, poNumber, opts={}) => {
     return labelString;
     
   }
+}

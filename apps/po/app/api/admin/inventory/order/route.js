@@ -32,6 +32,7 @@ export async function PUT(req=NextApiRequest){
             }
             console.log(printItems.length)
             location.received = true
+            printItems = Sort(printItems, "PO")
             let printLabels = await axios.post("https://production.printoracle.com/api/production/print-labels", { items: Sort(printItems, "PO"), poNumber: order.poNumber, })
             console.log(printLabels?.data)
             if (order.locations.filter(l => l.received == false).length == 0) order.received = true
