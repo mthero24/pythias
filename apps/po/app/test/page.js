@@ -104,7 +104,7 @@ export default async function Test(){
     //     await item.save()
     // }
     //  await updateInventory();
-    // let invOrder = await InventoryOrders.findOne({ _id: "6942c18530bbf275482b5b38"}).populate("locations.items.inventory")
+    // let invOrder = await InventoryOrders.findOne({ _id: "694308843862415c09361560"}).populate("locations.items.inventory")
     // for(let loc of invOrder.locations){
     //     if(loc.name == "Ohio"){
     //         for(let item of loc.items){
