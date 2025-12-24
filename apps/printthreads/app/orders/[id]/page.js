@@ -13,5 +13,5 @@ export default async function OrderPage(req){
     
     order = serialize(order);
     blanks = serialize(blanks);
-    return <OrderMain ord={order} blanks={blanks}/>
+    return <OrderMain ord={order} blanks={blanks} source="printthreads" />
 }

@@ -11,7 +11,7 @@ import { NoteSnackBar } from "./NoteSnackBar";
 import {Footer} from "../../reusable/Footer"
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 const ups = ["TSC", "Zulily"]
-export function Main({ord, blanks}){
+export function Main({ord, blanks, source}){
     const [order, setOrder] = useState(ord);
     const [item, setItem] = useState(null);
     const [blank, setBlank] = useState(null)
@@ -138,6 +138,24 @@ export function Main({ord, blanks}){
                             <Box sx={{ margin: ".5%" }}>
                                 <Button sx={{ background: "blue", color: "#fff" }} onClick={() => { setShowNotes(true) }}>Show Notes</Button>
                             </Box>
+                        </Box>
+                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", padding: '.5%' }}>
+                            {source == "printthreads" &&
+                                <Box sx={{ margin: ".5%" }}>
+                                    <Button sx={{ background: "green", color: "#fff" }} onClick={async () => {
+                                        let res = await axios.post("/api/orders/printOracle", { orderId: order._id })
+                                        if (res && res.data) alert(res.data.msg)
+                                    }}>Send to Print Oracle</Button>
+                                </Box>
+                            }
+                            {source == "printthreads" &&
+                                <Box sx={{ margin: ".5%" }}>
+                                    <Button sx={{ background: "silver", color: "#fff" }} onClick={async () => {
+                                        let res = await axios.get(`/api/orders/printOracle?orderId=${order._id}`)
+                                        if (res && res.data) alert(res.data.msg)
+                                    }}>Update</Button>
+                                </Box>
+                            }
                         </Box>
                     </Grid2>
                 </Grid2>

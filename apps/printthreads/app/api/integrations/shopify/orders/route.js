@@ -126,7 +126,7 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
                         zip: data.order.shippingAddress?.zip,
                         country: data.order.shippingAddress?.countryCode,
                     },
-                    total: data.order.totalPrice,
+                    total: data.order.total,
                     status: data.order.status,
                     shippingType: "Standard",
                 });
@@ -166,7 +166,6 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
                 order = await order.save();
                 updateInventory();
             }else{
-                order.status = data.order.status;
                 if (data.order.paymentStatus == "PAID"){
                     order.paid = true;
                     for (let item of order.items) {
@@ -193,7 +192,7 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
                     zip: data.order.shippingAddress?.zip,
                     country: data.order.shippingAddress?.countryCode,
                 };
-                order.total = data.order.totalPrice;
+                order.total = data.order.total;
                 await order.save();
             }
             return NextResponse.json({error: false, orderId: order._id })
