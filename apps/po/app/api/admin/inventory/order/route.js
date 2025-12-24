@@ -17,13 +17,16 @@ export async function PUT(req=NextApiRequest){
             for (let i of location.items) {
                 let itemsToPrint = []
                 let inv = await Inventory.findById(i.inventory)
-                inv.quantity = inv.quantity + i.quantity
-                inv.pending_quantity = inv.pending_quantity - i.quantity
+                //inv.quantity = inv.quantity + i.quantity
+                //inv.pending_quantity = inv.pending_quantity - i.quantity
                 if (inv.orders) {
-                    let o = inv.orders.filter(o => o.order.toString() == order._id.toString())[0]
-                    if (o && o.items) {
-                        let items = await Items.find({ _id: { $in: o.items } }).populate("design inventory.inventory").populate("order", "poNumber items").sort({ _id: 1 })
-                        itemsToPrint.push(...items.filter(it => it.labelPrinted == false && it.bulkId == null).slice(0, i.quantity))
+                    let or = inv.orders.filter(o => o.order.toString() == order._id.toString())
+                    for(let o of or){
+                        if (o && o.items) {
+                            let items = await Items.find({ _id: { $in: o.items } }).populate("design inventory.inventory").populate("order", "poNumber items").sort({ _id: 1 })
+                            items = items.filter(it=> itemsToPrint.includes(it._id.toString()) == false)
+                            itemsToPrint.push(...items.filter(it => it.labelPrinted == false && it.bulkId == null).slice(0, i.quantity))
+                        }
                     }
                 }
                 inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString())

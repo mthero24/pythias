@@ -292,7 +292,7 @@ export async function GET(req){
     }
     if(type == "images") console.log(blankImage.boxes["front"], "boxes")
     console.log(designImage[sides[0]], "images")
-    let data = {box: type == "images"? Object.keys(blankImage?.boxes? blankImage.boxes: {}).filter(key=> sides.includes(key)).map(key => {return {...blankImage.boxes[key], side: key}}):  blankImage?.box? [{...blankImage?.box[0], side: sides[0]}]: null, styleImage: blankImage?.image, designImage, sublimationImages: design.sublimationImages? design.sublimationImages: null, sublimationBoxes: blankImage.sublimationBoxes? blankImage.sublimationBoxes: null, width}
+    let data = {box: type == "images"? Object.keys(blankImage?.boxes? blankImage.boxes: {}).filter(key=> sides.includes(key)).map(key => {return {...blankImage.boxes[key], side: key}}):  blankImage?.box? [{...blankImage?.box[0], side: sides[0]}]: null, styleImage: blankImage?.image, designImage, sublimationImages: design && design.sublimationImages? design.sublimationImages: null, sublimationBoxes: blankImage.sublimationBoxes? blankImage.sublimationBoxes: null, width}
     let base64 = await createImage(data)
     if(base64){
         base64 = base64?.replace(/^data:image\/\w+;base64,/, "")

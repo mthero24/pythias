@@ -96,12 +96,13 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
     let data = await req.json()
     const headersList = await headers();
     const authorizationHeader = headersList.get("authorization");
-    //console.log("Authorization:", authorizationHeader);
+    console.log("Authorization:", authorizationHeader);
     if(authorizationHeader){
         let password = authorizationHeader?.split(" ")[1]
-        //console.log(password)
+        console.log("recived order from shopify integration with password:")
+        console.log(password)
         let user = await User.findOne({password: password})
-        //console.log(user)
+        console.log(user)
         if(user){
             ///console.log(data, "data")
             let order = await Order.findOne({shopifyOrderId: data.order.shopifyOrderId }).populate("items");
@@ -177,7 +178,7 @@ export async function POST(req = NextApiRequest, res = NextResponse) {
                 }
                 if(data.order.status == "CANCELED"){
                     order.canceled = true;
-                    order.status = data.order.displayFinancialStatus
+                    order.status = data.order.status;
                     for(let item of order.items){
                         item.canceled = true;
                         item = await item.save();
