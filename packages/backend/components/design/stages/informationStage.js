@@ -3,7 +3,7 @@ import CreatableSelect from "react-select/creatable";
 import axios from "axios";
 import { set } from "mongoose";
 
-export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes }) => {
+export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes, licenses }) => {
     console.log(sportUsedFor, "Themes in InformationStage");
     return (
         <Grid2 size={12} sx={{ padding: "0% 4%" }}>
@@ -95,6 +95,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                             }
                             let variants = {};
                             let printType = printTypes.filter(pt => pt.name == product.design.printType)[0];
+                            let license = licenses.filter(l => l.name == design.license)[0];
                             if (product.threadColors?.length > 0) {
                                 for (let d of Object.keys(design.threadImages).filter(d => product.threadColors.find(t => t.name == d))) {
                                     for (let blank of product.blanks) {
@@ -121,7 +122,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                         if (!variants[blank.code]) variants[blank.code] = {}
                                                         if (!variants[blank.code][d]) variants[blank.code][d] = {}
                                                         if (!variants[blank.code][d][color.name]) variants[blank.code][d][color.name] = []
-                                                        variants[blank.code][d][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, threadColor: d }), threadColor: colors.filter(tc => tc.name == d)[0], blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0)})
+                                                        variants[blank.code][d][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, threadColor: d }), threadColor: colors.filter(tc => tc.name == d)[0], blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0) + (license && license.additionalFees ? license.additionalFees : 0)})
                                                     }
                                                 }
                                             }
@@ -158,7 +159,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                     let images = product.variantSecondaryImages && product.variantSecondaryImages[blank.code] && product.variantSecondaryImages[blank.code][color.name] && product.variantSecondaryImages[blank.code][color.name]
                                                     if (!variants[blank.code]) variants[blank.code] = {}
                                                     if (!variants[blank.code][color.name]) variants[blank.code][color.name] = []
-                                                    variants[blank.code][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0) })
+                                                    variants[blank.code][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0) + (license && license.additionalFees ? license.additionalFees : 0) })
                                                 }
                                             }
                                         }

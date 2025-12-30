@@ -10,7 +10,7 @@ import { VariantImageStage } from "./stages/variantImageStage";
 import { InformationStage } from "./stages/informationStage";
 import { PreviewStage } from "./stages/previewStage";
 
-export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading, preview, setPreview, themes, sportUsedFor , setThemes, setSportUsedFor, pageProducts, setPageProducts, printTypes }) => {
+export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading, preview, setPreview, themes, sportUsedFor , setThemes, setSportUsedFor, pageProducts, setPageProducts, printTypes, licenses }) => {
     const [cols, setColors] = useState({})
     const [sizes, setSizes] = useState({})
     const [images, setImages] = useState([])
@@ -133,7 +133,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                 }
                 {stage == "information" && 
                    <InformationStage
-                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} CreateSku={CreateSku} setLoading={setLoading} loading={loading} upcs={upcs} tempUpcs={tempUpcs} colors={colors} themes={themes} sportUsedFor={sportUsedFor} setPreview={setPreview} preview={preview} setOpen={setOpen} updateDesign={updateDesign} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} releaseHold={releaseHold} setTempUpcs={setTempUpcs} combined={combined} setCombined={setCombined} setThemes={setThemes} setSportUsedFor={setSportUsedFor} printTypes={printTypes}
+                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} CreateSku={CreateSku} setLoading={setLoading} loading={loading} upcs={upcs} tempUpcs={tempUpcs} colors={colors} themes={themes} sportUsedFor={sportUsedFor} setPreview={setPreview} preview={preview} setOpen={setOpen} updateDesign={updateDesign} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} releaseHold={releaseHold} setTempUpcs={setTempUpcs} combined={combined} setCombined={setCombined} setThemes={setThemes} setSportUsedFor={setSportUsedFor} printTypes={printTypes} licenses={licenses}
                    />
                 }
                 {stage == "preview" && 
