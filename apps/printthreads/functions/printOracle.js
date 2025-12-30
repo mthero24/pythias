@@ -8,7 +8,7 @@ let IS_DEV = process.env.NODE_ENV == "development" ? true : false;
 const BASE_URL =
   IS_DEV && false ? "http://localhost:3000" : `https://printoracle.com`;
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: "http://localhost:3000",
   headers: {
     Authorization: `Bearer ${process.env.printOracle}`, // Set your token here
   },

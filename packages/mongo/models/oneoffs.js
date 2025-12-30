@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 const SchemaObj = new Schema(
   {
     name: String,
+    price: {type:Number, default:0},
   },
   { strict: false }
 );
