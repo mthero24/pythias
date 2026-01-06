@@ -168,7 +168,7 @@ export async function GET(req) {
             if (!blankImage && side == "back") blankImage = blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color?._id.toString() && i.image == bm)[0]
         } else if (blank.images && blank.images.length > 0) {
             type = "images"
-            blankImage = blank.images.filter(i => i.color.toString() == color?._id.toString() && i.boxes[side])[0]
+            blankImage = blank.images.filter(i => i.color.toString() == color?._id.toString() && i.boxes && i.boxes[side])[0]
         } else blankImage = blank.multiImages[side]?.filter(i => i.color.toString() == color?._id.toString())[0]
         if (side == "back" && blankImage == undefined) {
             blankImage = blank.multiImages["modelBack"]?.filter(i => i.color.toString() == color?._id.toString())[0]
