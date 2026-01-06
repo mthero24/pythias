@@ -106,7 +106,7 @@ export async function POST(req = NextApiRequest) {
     if (blank._id) {
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
       //console.log(blank.envelopes.length, "before fold")
-      //if (blank.sizes.length > 0) blank = updateFold(blank)
+      if (blank.sizes.length > 0) blank = updateFold(blank)
       //console.log(blank.envelopes.length, "last", blank)
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
       newBlank = await Blanks.findById(blank._id).populate("printLocations") 
