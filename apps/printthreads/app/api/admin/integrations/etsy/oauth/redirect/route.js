@@ -2,7 +2,7 @@ import {NextApiRequest, NextResponse} from "next/server"
 import {ApiKeyIntegrations} from "@pythias/mongo";
 const clientID = '480pxuspxi5wz93puk47snye';
 const clientVerifier = 'catsaregreat';
-const redirectUri = 'http://localhost:3008/api/admin/integrations/etsy/oauth/redirect';
+const redirectUri = 'http://localhost:3009/api/admin/integrations/etsy/oauth/redirect';
 import axios from "axios";
 
 export async function GET(req=NextApiRequest) {
@@ -26,7 +26,7 @@ export async function GET(req=NextApiRequest) {
     try {
         const response = await fetch(tokenUrl, requestOptions);
         const data = await response.json();
-        console.log(process.env.etsyApiKey, "data");
+        console.log(data, "data");
         let res = await axios.get("https://openapi.etsy.com/v3/application/users/me", {
             headers: {
                 Authorization: `Bearer ${data.access_token}`,
@@ -39,7 +39,7 @@ export async function GET(req=NextApiRequest) {
             apiKey: data.access_token,
             apiSecret: clientVerifier,
             organization: "admin",
-            provider: "pythias-test",
+            provider: "printthreads",
             type: "etsy",
             refreshToken: data.refresh_token,
             tokenType: "bearer",
@@ -49,7 +49,7 @@ export async function GET(req=NextApiRequest) {
         })
         //console.log(conn, "conn +++++++")
         await conn.save()
-        return NextResponse.redirect("http://localhost:3008/admin/integrations");
+        return NextResponse.redirect("http://localhost:3009/admin/integrations");
     } catch (e) {
         console.log(e);
         return Response.json({ error: e.toString() }, { status: 500 });

@@ -435,9 +435,31 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                                 }else{
                                                                     setLoading(false)
                                                                 }
+                                                            } else if (c.displayName && c.displayName.toLowerCase().includes("etsy")){
+                                                                setLoading(true);
+                                                                let res = await axios.post("/api/admin/integrations/etsy", { product, connection: c }).catch(e => {
+                                                                    alert("Something Went Wrong Please Try Again Later")
+                                                                    setLoading(false);
+                                                                });
+                                                                console.log(res, "res from etsy")
+                                                                let p = { ...product };
+                                                                if (!p.ids) p.ids = {};
+                                                                p.ids[c?.displayName] = res.data.productId;
+                                                                let update = await axios.post("/api/admin/products", { products: [p] });
+                                                                setProduct({ ...p });
+                                                                if (products && products.length > 0) {
+                                                                    let updatedProducts = products.map(prod => {
+                                                                        if (p._id.toString() === prod._id.toString()) {
+                                                                            return { ...p };
+                                                                        }
+                                                                        return prod;
+                                                                    });
+                                                                    setProducts(updatedProducts);
+                                                                }
+                                                                setLoading(false);
                                                             }else if(c.seller_name){
                                                                 let res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c }).catch(e => {
-                                                                    alert("Something Went Wron Please Try Again Later")
+                                                                    alert("Something Went Wrong Please Try Again Later")
                                                                     setLoading(false);
                                                                 });
                                                                 let p = { ...product };
@@ -501,12 +523,16 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
                                                     </Box>
                                                     {marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0] && <Card sx={{display: "flex", flexDirection: "column", padding: "5%"}}>
-                                                        <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify") )[0].displayName}</Typography>
                                                         <Divider sx={{marginBottom: "2%"}} />
                                                         {product.ids && product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && <Typography>Shopify Id: {product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>}
-                                                        {product.ids && product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && product.variantsArray.map(v=>(
-                                                            <Typography>{v.sku}: {v.ids && v.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>
-                                                        ))}
+                                                    </Card>}
+                                                    {console.log("marketPlace.connections", marketPlace.connections)}
+                                                    {marketPlace.connections?.filter(c => c?.type == "etsy")[0] && <Card sx={{ display: "flex", flexDirection: "column", padding: "5%" }}>
+                                                        {console.log("marketPlace.connections", marketPlace.connections)}
+                                                        <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName}</Typography>
+                                                        <Divider sx={{ marginBottom: "2%" }} />
+                                                        {product.ids && product.ids[marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName] && <Typography>Etsy Id: {product.ids[marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName]}</Typography>}
                                                     </Card>}
                                                     {header.length > 0 && (
                                                         <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} connections={connections} />

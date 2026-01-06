@@ -28,4 +28,4 @@ export {
   getOrders as getOrdersTikTok,
 } from "./functions/tiktokpy";
 
-export {generateRedirectURI, getToken, refreshToken} from "./functions/etsy";
+export {generateRedirectURI, getToken, refreshToken, createDraftListing} from "./functions/etsy";

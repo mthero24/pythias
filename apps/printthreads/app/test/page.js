@@ -187,6 +187,25 @@ export default async function Test(){
 //    // await img.toFile("./combined2.png");
 //     // design = await Design.findById("6925ce3df96c30667bdf6dab").lean();
 //     // console.log(design)
+    const getTaxonomyId = async () => {
+        const requestOptions = {
+            headers: {
+                "x-api-key": `${process.env.etsyApiKey}`,
+            }
+        };
+        let url = `https://openapi.etsy.com/v3/application/seller-taxonomy/nodes`
+        let response = await axios.get(url, requestOptions);
+        console.log(response.data.results.filter(r => r.name.toLowerCase().includes("clothing"))[0], "taxonomy ids+++++++++");
+        let clothing = response.data.results.filter(r => r.name.toLowerCase().includes("clothing"))[0];
+        let children = clothing.children;
+        console.log(children);
+        let boys = children.filter(c => c.name.toLowerCase().includes("gender-neutral kids' clothing"))[0];
+        console.log(boys, "boys+++++++++");
+       let tops = boys.children.filter(c => c.name.toLowerCase().includes("hoodies"))[0];
+       console.log(tops, "tops+++++++++");
+
+    };
+    getTaxonomyId();
     return <h1>test</h1>
     //("https://images1.pythiastechnologies.com/styles/1742087292890.png")
 }

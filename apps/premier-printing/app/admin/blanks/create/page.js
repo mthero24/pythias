@@ -23,9 +23,10 @@ export default async function Create(req, res) {
   let blank
   let params = await req.searchParams
   if (params && params.id) blank = await Blanks.findById(params.id).populate("printLocations colors");
-  if (!blank) {
-    blank = new Blanks({name: "temp", code: "TEMP", description: "", sizes: [], colors: [], printLocations: []});
-    await blank.save()
+  else {
+    blank = new Blanks({ name: "temp", code: "temp" });
+    blank = await blank.save();
+    return redirect(`/admin/blanks/create?id=${blank._id}`)
   }
   colors = serialize(colors);
   blanks = serialize(blanks);
