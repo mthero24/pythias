@@ -1,5 +1,6 @@
 import {Item as Items, Order, Inventory, Batches} from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
+import { canceled } from "./itemFunctions";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
@@ -12,6 +13,7 @@ export async function LabelsData(){
             design: {$ne: null},
             labelPrinted: false,
             paid: true,
+            canceled: false,
             shippingType: {$in: ["Standard", "Economy shipping"]},
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("order", "poNumber").populate("inventory.inventory").lean(),
             Expedited: await Items.find({
@@ -22,6 +24,7 @@ export async function LabelsData(){
             design: {$ne: null},
             labelPrinted: false,
             paid: true,
+            canceled: false,
             shippingType: { $nin: ["Standard", "Economy shipping"] },
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("order", "poNumber").populate("inventory.inventory").lean()
     }

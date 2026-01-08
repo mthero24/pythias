@@ -15,3 +15,12 @@ export async function POST(req=NextApiRequest) {
     console.log(res, "res from etsy +++++++")
     return NextResponse.json({ success: true, productId:res });
 }
+export async function PUT(req = NextApiRequest) {
+    const body = await req.json();
+    console.log(body, "body+++++++")
+    let connection = await ApiKeyIntegrations.findOne({ _id: body.connection._id });
+    console.log(connection, "connection +++++++")
+    let res = await createDraftListing(body.product, connection);
+    console.log(res, "res from etsy +++++++")
+    return NextResponse.json({ success: true, productId: res });
+}

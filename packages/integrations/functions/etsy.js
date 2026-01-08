@@ -810,7 +810,7 @@ export const createDraftListing = async (product, credentials) => {
         );
         credentials = updatedCredentials2;
         console.log(getInventory, "getInventory+++++++");
-        await  updateListing(
+        updateListing(
             credentials,
             listing.listing_id,
             product,
