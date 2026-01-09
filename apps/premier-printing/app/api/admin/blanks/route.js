@@ -11,13 +11,14 @@ export async function GET(){
     return NextResponse.json({error: true, msg: JSON.stringify(e)})
   }
 }
-const updateFold = (blank)=>{
+const updateFold = (blank) => {
   let newFold = []
-  if(!blank.fold) blank.fold = [];
-  for(let s of blank.sizes){
-    let fold = blank.fold?.filter(f=> f.size.toString() == s._id)[0]
-    if(fold) newFold.push(fold)
-    else{
+  if (!blank.fold) blank.fold = [];
+  for (let s of blank.sizes) {
+    let fold = blank.fold?.filter(f => f.size?.toString() == s._id || f.sizeName == s.name)[0]
+    if (fold && !fold.size) fold.size = s._id
+    if (fold) newFold.push(fold)
+    else {
       newFold.push({
         size: s._id,
         sizeName: s.name,
@@ -28,7 +29,6 @@ const updateFold = (blank)=>{
     }
   }
   blank.fold = newFold
-  //console.log(blank.envelopes.length, "fold")
   return blank
 }
 const updateEnvelopes = (blank)=>{
@@ -103,11 +103,13 @@ export async function POST(req = NextApiRequest) {
   let blank = data.blank
   let newBlank
   try {
+    console.log(blank.sizes, "blank data++++++")
     if (blank._id) {
+      //console.log("update blank")
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
       //console.log(blank.envelopes.length, "before fold")
       if (blank.sizes.length > 0) blank = updateFold(blank)
-      //console.log(blank.envelopes.length, "last", blank)
+      //console.log(blank.sizes, "last",)
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
       newBlank = await Blanks.findById(blank._id).populate("printLocations") 
       updateInventory(blank)
