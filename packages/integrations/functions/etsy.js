@@ -509,9 +509,10 @@ const updateListing = async (
 ) => {
     let variants = product.variantsArray;
     for(let v of variants){
-        v.size = product.sizes.find(s => s._id.toString() === v.size.toString());
-        v.blank = product.blanks.find(b => b._id.toString() === v.blank.toString());
-        v.color = product.colors.find(c => c._id.toString() === v.color.toString());
+        let blank = product.blanks.find(b => b._id.toString() === v.blank.toString());
+        if(!v.size.name) v.size = blank.sizes.find(s => s._id.toString() === v.size.toString());
+        if(!v.blank.name) v.blank = blank;
+        if(!v.color.name) v.color = blank.colors.find(c => c._id.toString() === v.color.toString());
     }
     let { readinessStates, updatedCredentials } = await getRedinessStates(credentials);
     console.log(readinessStates, "readinessStates+++++++");
@@ -541,6 +542,7 @@ const updateListing = async (
             console.log("sku to long error", variant.sku, variant.sku.length);
             continue;
         }
+        console.log(variant.size, variant.color, "variant+++++++");
         let size_name = variant.size.name;
         size_name = variant.size.name.replace("SM", "S");
         size_name = variant.size.name.replace("LG", "L");
