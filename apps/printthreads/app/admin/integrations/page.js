@@ -4,7 +4,7 @@ import { serialize } from "@/functions/serialize";
 import { generateRedirectURI } from "@pythias/integrations";
 export const dynamic = 'force-dynamic';
 export default async function Integrations(){
-    let tiktokShops = await TikTokAuth.find({provider: "printthreads"})
+    let tiktokShops = await TikTokAuth.find({provider: "printthreads"}).catch(e=>{console.log(e)}) || []
     let apiKeyIntegrations = await ApiKeyIntegrations.find({provider: "printthreads"})
     console.log(tiktokShops)
     tiktokShops = serialize(tiktokShops)
