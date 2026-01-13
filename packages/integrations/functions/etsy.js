@@ -537,6 +537,7 @@ const updateListing = async (
     let inventory = [];
     let colorImageCompleted = [];
     let hasSeconarySize = variants[0]?.secondarySize ? true : false;
+    
     for (let variant of variants) {
         if (variant.sku.length > 32) {
             console.log("sku to long error", variant.sku, variant.sku.length);
@@ -577,14 +578,14 @@ const updateListing = async (
 
         if (size && color) {
             
-            let url = variant.image
+            let url = variant.image?.replace("400", "1200");
             //console.log(url, "url");
             if (!url) continue;
-            if (!colorImageCompleted.includes(url) && i < 20) {
+            if (!colorImageCompleted.includes(url) && i < 19) {
                 i++;
                 try {
                     // Get image buffer using axios
-                    const response = await axios.get(url.replace("400", "800"), {
+                    const response = await axios.get(url, {
                         responseType: "arraybuffer",
                         timeout: 30000, // 30 second timeout
                     });
@@ -632,7 +633,8 @@ const updateListing = async (
                 if(variant.images && variant.images.length > 0){
                     console.log("here+++++++", variant.images.length);
                     for(let url of variant.images){
-                        if (!colorImageCompleted.includes(url) && i < 20) {
+                        url = url.replace("400", "1200");
+                        if (!colorImageCompleted.includes(url) && i < 19) {
                             i++;
                             try {
                                 // Get image buffer using axios
@@ -685,7 +687,7 @@ const updateListing = async (
                     }
                 }
             }
-
+           
             let propertyValues = [
                 {
                     property_id: 513,
@@ -733,7 +735,57 @@ const updateListing = async (
             inventory.push(inventoryItem);
         }
     }
+    if (variants[0].blank.sizeGuide.images[0]) {
+        i++;
+        try {
+            // Get image buffer using axios
+            let url = variants[0].blank.sizeGuide.images[0];
+            const response = await axios.get(url, {
+                responseType: "arraybuffer",
+                timeout: 30000, // 30 second timeout
+            });
+            //console.log("Image fetched successfully", response.data, color.name);
+            let blob = await b64toBlob(response.data.toString('base64'), 'image/jpeg');
+            console.log("++++++++++++ ", i, "+++++++++++++++++++++")
+            // Create form data with the image buffer
+            let formData = new FormData();
+            formData.append("listing_id", listing_id);
+            formData.append("rank", i);
+            formData.append("alt_text", `size guide`);
+            formData.append("image", Buffer.from(await blob.arrayBuffer()), {
+                filename: "etsy.jpg",
+            });
 
+            // Add retry logic for the upload
+            let retries = 3;
+            while (retries > 0) {
+                retries--;
+                try {
+                    await new Promise((resolve) => setTimeout(resolve, 500));
+                    let image = await uploadListingImage(
+                        credentials,
+                        listing_id,
+                        formData,
+                    )
+                    colorImageCompleted.push(url);
+                    break;
+                } catch (e) {
+                    console.log(e)
+                    console.log(`Retrying image upload (${3 - retries}/3)`);
+                    if (retries === 0) {
+                        console.error(
+                            `Failed to upload image after 3 attempts: ${e.message}`,
+                            `size guide`
+                        );
+                    }
+                }
+            }
+        } catch (e) {
+            colorImageCompleted.push(url);
+            console.error(`Failed to process image: ${e.message}`, `size guide`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
     inventory.sort(
         (a, b) =>
             a.property_values[0].value_ids[0] - b.property_values[0].value_ids[0]

@@ -138,8 +138,8 @@ export async function GET(req) {
         let design = await Design.findOne({ sku: params[0] }).lean()
         designImage = design?.threadImages?.[params[5]]
         let blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
-        blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
-        if (blankImage == undefined) {
+        if (blank && blank.multiImages) blankImage = blank.multiImages[params[4]]?.filter(i => i.image.includes(params[2]))[0]
+        if (blank && blank.multiImages && blankImage == undefined) {
             blankImage = blank?.multiImages[params[4] == "front" ? "modelFront" : "modelBack"]?.filter(i => i.image.includes(params[2]))[0]
         }
         if (blankImage == undefined) {
