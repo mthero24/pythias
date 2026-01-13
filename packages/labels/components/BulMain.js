@@ -19,23 +19,25 @@ export function BulkMain({orders}){
         }
         for(let bulkId of bulkIds){
             let items = order.items.filter(it=> it.bulkId == bulkId)
-            bulkItems.push({
-                bulkId,
-                inventory: items[0].inventory.inventory,
-                quantity: items.length,
-                totalQuantity: order.items.length,
-                blankCode: items[0].styleCode,
-                colorName: items[0].colorName,
-                sizeName: items[0].sizeName,
-                designSku: items[0].designSku,
-                sku: items[0].sku,
-                type: items[0].type,
-                poNumber: order.poNumber,
-                order: order,
-                design: items[0].design,
-                shippingType: order.shippingType,
-                items: items,
-            })
+            if(items[0].type !== "sublimation"){
+                bulkItems.push({
+                    bulkId,
+                    inventory: items[0].inventory.inventory,
+                    quantity: items.length,
+                    totalQuantity: order.items.length,
+                    blankCode: items[0].styleCode,
+                    colorName: items[0].colorName,
+                    sizeName: items[0].sizeName,
+                    designSku: items[0].designSku,
+                    sku: items[0].sku,
+                    type: items[0].type,
+                    poNumber: order.poNumber,
+                    order: order,
+                    design: items[0].design,
+                    shippingType: order.shippingType,
+                    items: items,
+                })
+            }
         }
         console.log(bulkItems);
         let res = await axios.post("/api/production/print-labels/bulk", {items: bulkItems,  poNumber: order.poNumber});
@@ -82,10 +84,10 @@ export function BulkMain({orders}){
                                 <Typography variant="h6" textAlign={"center"}>{order.items.length}</Typography>
                             </Grid2>
                             <Grid2  size={2}>
-                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
+                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString()) || item.type == "sublimation").length}</Typography>
                             </Grid2>
                             <Grid2  size={2}>
-                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => !item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
+                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => !item.inventory?.inventory?.inStock.includes(item._id.toString()) && item.type != "sublimation").length}</Typography>
                             </Grid2>
                             <Grid2 size={1}>
                                 {<Button variant="contained" color="success" onClick={() => print(order)}>Print</Button>}
@@ -128,19 +130,19 @@ export function BulkMain({orders}){
                                                         <Typography variant="h6" textAlign={"center"}>{bulkId}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={3}>
-                                                        <Typography variant="h6" textAlign={"center"}>{items[0].inventory?.inventory?.inventory_id}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0].type == "sublimation" ? items[0].sku: items[0].inventory?.inventory?.inventory_id}`}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={1}>
                                                         <Typography variant="h6" textAlign={"center"}>{items.length}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={1}>
-                                                        <Typography variant="h6" textAlign={"center"}>{items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{items[0].type == "sublimation" ? items.length : items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={2}>
                                                         <Typography variant="h6" textAlign={"center"}>{items.filter(item => item.inventory?.inventory?.attached.includes(item._id.toString())).length}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={1}>
-                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0].inventory?.inventory?.orders.map(o => o.items.filter(i => items.map(item => item._id.toString()).includes(i.toString())).length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}`}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0].type == "sublimation" ? 0 : items[0].inventory?.inventory?.orders.map(o => o.items.filter(i => items.map(item => item._id.toString()).includes(i.toString())).length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}`}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={2}>
                                                         <Typography variant="h6" textAlign={"center"}>{items.filter(item=> item.labelPrinted == true).length}</Typography>
