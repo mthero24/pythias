@@ -550,7 +550,7 @@ const updateListing = async (
         size_name = variant.size.name.replace("MD", "M");
         size_name = variant.size.name.toLowerCase().replace("2xl", "xxl");
         size_name = variant.size.name.toLowerCase().replace("5t", "5").replace("5/6T", "5");
-        let size, color, secondarySize;
+        let size, color, secondarySize, threadColor;
         if (!size) {
             size = {
                 value_id: 513,
@@ -562,7 +562,7 @@ const updateListing = async (
         if (!color) {
             color = {
                 value_id: 513,
-                name: toTitleCase(variant.color.name),
+                name: toTitleCase(variant.color.name + (threadColor ? ` with ${threadColor.name} ${product.design.printType == "EMB" ? "Thread color" : "Print color"}` : "")),
                 equal_to: [],
                 order: 0,
             };
@@ -801,7 +801,7 @@ const updateListing = async (
     };
 
     await new Promise((resolve) => setTimeout(resolve, 500));
-    let response = await axios.put(url, updateInventory, requestOptions);
+    let response = await axios.put(url, updateInventory, requestOptions).catch(e=> console.log(e.response.data));
     //console.log(response.data, "response data+++++++");
     return response.data;
 };

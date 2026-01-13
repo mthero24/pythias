@@ -1,3 +1,4 @@
+
 import { serialize } from "./serialize";
 export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocations, Design, Products, Blank, MarketPlaces, Genders, Seasons, SportUsedFor, Themes, ProductImages, PrintTypes})=>{
     let colors = await Color.find({});
@@ -10,11 +11,16 @@ export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocati
             color = await color.save()
         }
     }
-    let printLocations = await PrintLocations.find({})
-    let design = await Design.findOne({ _id: id }).lean();
-    let products = await Products.find({ design: design._id }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" })
-    //console.log(products[0], "Products in designPage");
-    design.products = products;
+    let printLocations = await PrintLocations.find({}).lean()
+    let design 
+    let products = []
+    if(id && id !== undefined && id !== null && id !== "") {
+        console.log(id, "Design ID")
+        design = await Design.findOne({ _id: id }).lean();
+        products = await Products.find({ design: design._id }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" })
+        design.products = products;
+    }
+    //console.log(products[0], "Products in designPage")
     let blanks = await Blank.find({}).select("colors code name sizes multiImages images").populate("colors").lean();
     console.log(blanks, "Blanks in designPage");
     let licenses = await LicenseHolders.find({}).lean();

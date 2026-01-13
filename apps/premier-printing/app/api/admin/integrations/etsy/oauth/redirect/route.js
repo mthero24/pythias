@@ -49,7 +49,7 @@ export async function GET(req=NextApiRequest) {
         })
         //console.log(conn, "conn +++++++")
         await conn.save()
-        return NextResponse.redirect("http://localhost:3009/admin/integrations");
+        return NextResponse.redirect("http://localhost:3006/admin/integrations");
     } catch (e) {
         console.log(e);
         return Response.json({ error: e.toString() }, { status: 500 });
