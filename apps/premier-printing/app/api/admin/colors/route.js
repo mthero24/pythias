@@ -17,6 +17,7 @@ export async function POST(req = NextApiRequest) {
     await exists.save();
     return NextResponse.json({ color: exists });
   } else {
+    
     let newColor = new Color({ ...color });
     console.log(newColor);
     await newColor.save();

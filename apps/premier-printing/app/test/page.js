@@ -113,8 +113,41 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-    //await pullOrders();
-    
+    await pullOrders();
+    // let items = await Items.find({blank: { $ne: undefined },
+    //         colorName: {$ne: null},
+    //         sizeName: {$ne: null},
+    //         designRef: {$ne: null},
+    //         design: {$ne: null},
+    //         labelPrinted: false,
+    //         canceled: false,
+    //         paid: true,
+    //         shippingType: "Standard", inventory: null})
+    // console.log(items.length)
+    // for(let item of items){
+    //     let inventory = await Inventory.findOne({style_code: item.styleCode, color_name: item.colorName, size_name: item.sizeName})
+    //     if(inventory){
+    //         item.inventory = {
+    //             inventoryType: "inventory",
+    //             inventory: inventory
+    //         }
+    //         await item.save()
+    //     }
+    // }
+    // let blanks = await Blank.find({})
+    // for(let blank of blanks){
+    //     console.log(blank.code)
+    //     let inventories = await Inventory.find({style_code: blank.code})
+    //     for(let inv of inventories){
+    //         let size = blank.sizes.find(s=> s.name == inv.inventory_id.split("-")[1]?.replace("%2F", "/"))
+    //         console.log(size)
+    //         if(size){
+    //             inv.sizeId = size._id
+    //             inv.size_name = size.name
+    //             await inv.save()
+    //         }
+    //     }
+    // }
     
     return <h1>test</h1>
 }

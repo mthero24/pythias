@@ -1,3 +1,4 @@
+"use client"
 import {
   Box,
   Container,
@@ -42,6 +43,15 @@ const benefits = [
 ];
 
 export default function BenefitsSection() {
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
   return (
     <Box
       component="section"
@@ -142,7 +152,7 @@ export default function BenefitsSection() {
         </Grid>
 
         <Box sx={{ textAlign: "center" }}>
-          <Button variant="contained" size="large">
+          <Button variant="contained" size="large" onClick={() => scrollToSection("calendar-booking-section")}>
             See How It Works
           </Button>
         </Box>

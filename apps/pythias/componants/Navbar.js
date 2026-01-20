@@ -18,7 +18,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Logo from "../public/logo_vertical.png";
 
-const links = [];
+const links = [{label: "Login", href: "/login"}];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);

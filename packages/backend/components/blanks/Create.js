@@ -223,15 +223,23 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                     }} />
                                                     <TextField label="Retail Price" fullWidth value={s.retailPrice} onChange={(e) => {
                                                         let bla = {...blank};
+                                                        console.log(bla.sizes[i])
                                                         bla.sizes[i].retailPrice = e.target.value;
                                                         setBlank(bla);
+                                                        update({blank: bla});
                                                     }} />
                                                     <TextField label="Cost" fullWidth value={s.cost} onChange={(e) => {
                                                         let bla = { ...blank };
                                                         bla.sizes[i].cost = e.target.value;
                                                         setBlank(bla);
+                                                        update({blank: bla});
                                                     }} />
-                                                    <TextField label="Weight (lbs)" fullWidth value={s.weight} onChange={(e) => { }} />
+                                                    <TextField label="Weight (lbs)" fullWidth value={s.weight} onChange={(e) => { 
+                                                         let bla = { ...blank };
+                                                        bla.sizes[i].weight = e.target.value;
+                                                        setBlank(bla);
+                                                        update({blank: bla});
+                                                    }} />
                                                     <Button variant="outlined" fullWidth color="error" onClick={() => { 
                                                         let bla = {...blank};
                                                         bla.sizes = bla.sizes.filter((sz, index) => index !== i);

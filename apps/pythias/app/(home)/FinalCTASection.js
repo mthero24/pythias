@@ -1,7 +1,17 @@
+"use client";
 import { Theme } from "../../lib/theme";
 import { Box, Container, Typography, Button } from "@mui/material";
 
 export default function FinalCTASection() {
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
   return (
     <Box
       component="section"
@@ -56,6 +66,7 @@ export default function FinalCTASection() {
           <Button
             variant="contained"
             size="large"
+            onClick={() => scrollToSection("calendar-booking-section")}
             sx={{
               backgroundColor: Theme.colors.secondary,
               padding: "1rem 2.5rem",
@@ -70,6 +81,7 @@ export default function FinalCTASection() {
           <Button
             variant="outlined"
             size="large"
+            onClick={() => scrollToSection("calendar-booking-section")}
             sx={{
               borderColor: "white",
               color: "white",
