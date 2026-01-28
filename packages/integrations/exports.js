@@ -1,4 +1,4 @@
-export {getOrders, updateOrder} from "./functions/shipstation";
+export {getOrders, updateOrder, getPages, getPageOrders} from "./functions/shipstation";
 export {generatePieceID} from "./functions/createPiceId";
 export {getOrders as getOrderKohls} from "./functions/kohls"
 
@@ -28,4 +28,4 @@ export {
   getOrders as getOrdersTikTok,
 } from "./functions/tiktokpy";
 
-export {generateRedirectURI, getToken, refreshToken, createDraftListing, fetchOrders} from "./functions/etsy";
+export {generateRedirectURI, getToken, refreshToken, createDraftListing} from "./functions/etsy";

@@ -64,7 +64,7 @@ export const updateInventory = async ()=>{
         await inv.save()
     }
 }
-const createItemVariant = async (variant, product, order) => {
+const createItemVariant = async (variant, product, order, price) => {
     let item = new Item({
         pieceId: await generatePieceID(),
         paid: true,
@@ -89,6 +89,7 @@ const createItemVariant = async (variant, product, order) => {
         type: product.design?.printType,
         upc: variant.upc,
         isBlank: product.design ? false : true,
+        price: price
     })
     item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: item.sku })
@@ -138,7 +139,8 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
         type: design?.printType, 
         upc: i.upc, 
         options: i.options[0]?.value,
-        isBlank: isBlank == true? true: false
+        isBlank: isBlank == true? true: false,
+        price: i.unitPrice
     })
     item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: item.sku })
@@ -255,7 +257,7 @@ export async function pullOrders(){
                         if (product) {
                             let variant = product.variantsArray.find(v => v.sku === newSku)
                             if (variant) {
-                                item = await createItemVariant(variant, product, order)
+                                item = await createItemVariant(variant, product, order, i.unitPrice)
                                 items.push(item)
                                 let isBlank = product.design ? false : true
                                 if (blank && blank.code.includes("PPSET")) {

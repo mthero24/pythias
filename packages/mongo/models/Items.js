@@ -64,6 +64,7 @@ const schema = new mongoose.Schema(
     colorName: String,
     threadColorName: String,
     type: String,
+    price: Number,
     paid: { type: Boolean, default: false },
     labelPrinted: { type: Boolean, default: false },
     labelPrintedDates: [{ type: Date }],
