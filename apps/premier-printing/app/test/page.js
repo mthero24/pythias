@@ -197,6 +197,6 @@ const addPriceToItem = async ()=>{
 }
 export default async function Test(){
    //await pullOrders();
-    addPriceToItem();
+    //addPriceToItem();
     return <h1>test</h1>
 }
