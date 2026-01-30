@@ -969,7 +969,7 @@ const getShopReceipts = async (credentials) => {
 
 const createItemVariant = async (variant, product, order) => {
     let item = new Item({
-        pieceId: 123245,
+        pieceId: 123246,
         paid: true,
         sku: variant.sku,
         orderItemId: variant.orderItemId,

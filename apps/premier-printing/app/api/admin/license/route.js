@@ -14,7 +14,7 @@ export async function GET(){
             //console.log(i.blank.sizes, "blank sizes", i.sizeName)
             let size = await i.blank?.sizes.filter(s => s.name?.toString() == i.sizeName?.toString())[0]
             //console.log(size, "size")
-            let price = size ? size.retailPrice : 0
+            let price = i.price? i.price :size ? size.retailPrice : 0
             price = price + (l.additionalFees ? l.additionalFees : 0)
             let payment = price * (l.paymentType == "Percentage Per Unit" ? (l.amount / 100) : 1) + (l.paymentType == "Flat Per Unit" || l.paymentType == "One Time" ? l.amount : 0)
             //console.log(price, payment, month, "price")
