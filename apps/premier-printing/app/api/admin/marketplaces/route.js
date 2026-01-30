@@ -9,7 +9,8 @@ export async function GET(req= NextApiRequest){
 }
 export async function POST(req= NextApiRequest){
     const token = await getToken({ req });
-    if(token.permissions && token.permissions.marketplaces){
+    console.log(token, "token")
+    if(token.permissions && token.permissions.marketplaces !== true){
         return NextResponse.json({error: true, msg: "You do not have permission to perform this action."}, {status: 200})
     }
     let data = await req.json()
