@@ -143,9 +143,10 @@ export async function POST(req = NextApiRequest) {
                         //console.log(item.styleV2.envelopes)
                         let envelope = item.styleV2.envelopes.filter(ev => (ev.sizeName == item.sizeName || ev.size?.toString() == item.size?.toString()) && im == ev.placement)[0]
                         if (!envelope) envelope = item.styleV2.envelopes.filter(ev => im == ev.placement)[0]
-                        console.log(envelope)
+                        console.log(envelope,'envelope')
 
                         if(item?.customEnvelope && item?.design?.[im]){
+                            console.log('_____________________custom envelope_____________________')
                             const {x,y,scale} = await smartCrop(item.design[im]);
                             envelope.width = scale * envelope.width;
                             envelope.height = scale * envelope.height;
@@ -201,7 +202,15 @@ export async function POST(req = NextApiRequest) {
                 //console.log(item.styleV2.envelopes)
                 let envelope = item.styleV2.envelopes.filter(ev=> (ev.sizeName == item.sizeName || ev.size?.toString() == item.size?.toString()) && im == ev.placement)[0]
                 if(!envelope) envelope = item.styleV2.envelopes.filter(ev=> im == ev.placement)[0]
-                console.log(envelope)
+                console.log(envelope,'envelope')
+
+                if(item?.customEnvelope && item?.design?.[im]){
+                    console.log('_____________________custom envelope_____________________')
+                    const {x,y,scale} = await smartCrop(item.design[im]);
+                    envelope.width = scale * envelope.width;
+                    envelope.height = scale * envelope.height;
+                }
+
                 await createImage({
                     url: item.design[im],
                     pieceID: `${item.pieceId}-${im}`,
