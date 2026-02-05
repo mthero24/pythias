@@ -2,6 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Items from "@/models/Items";
 import Style from "@/models/StyleV2";
 import {setConfig, createImage} from "@pythias/dtf"
+import { smartCrop } from "@/functions/smartCrop";
 const getImages = async (front, back, style, item)=>{
     let styleImage = style.images.filter(
         (i) => i.color.toString() == item.color?._id.toString()
@@ -143,6 +144,14 @@ export async function POST(req = NextApiRequest) {
                         let envelope = item.styleV2.envelopes.filter(ev => (ev.sizeName == item.sizeName || ev.size?.toString() == item.size?.toString()) && im == ev.placement)[0]
                         if (!envelope) envelope = item.styleV2.envelopes.filter(ev => im == ev.placement)[0]
                         console.log(envelope)
+
+                        if(item?.customEnvelope && item?.design?.[im]){
+                            const {x,y,scale} = await smartCrop(item.design[im]);
+                            envelope.width = scale * envelope.width;
+                            envelope.height = scale * envelope.height;
+                        }
+
+
                         await createImage({
                             url: item.design[im],
                             pieceID: `${item.pieceId}-${im}`,
