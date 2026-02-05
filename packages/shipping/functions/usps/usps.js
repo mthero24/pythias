@@ -190,7 +190,7 @@ export async function purchaseLabel({address, poNumber, weight, dimensions, busi
           "firstName": businessAddress.name.split(" ")[0],
           "lastName": businessAddress.companyName? businessAddress.companyName: businessAddress.name.split(" ")[1],
           "streetAddress": businessAddress.address1? businessAddress.address1: businessAddress.addressLine1,
-          "secondaryAddress": businessAddress.address2? businessAddress.address2: businessAddress.addressLine2,
+          "secondaryAddress": businessAddress.address2? businessAddress.address2: "",
           "city": businessAddress.city,
           "state": businessAddress.state,
           "ZIPCode": businessAddress.zip? businessAddress.zip: businessAddress.postalCode

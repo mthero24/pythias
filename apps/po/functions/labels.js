@@ -59,6 +59,13 @@ export async function LabelsData(){
             shippingType: { $ne: "Standard" },
             }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean()
     }
+    let Marketplace = []
+    for(let k of Object.keys(labels)){
+        Marketplace = [...Marketplace, ...labels[k].filter(l=> l.order?.marketplace != null && l.order?.marketplace != undefined)]
+        labels[k] = labels[k].filter(l=> l.order?.marketplace == null || l.order?.marketplace == undefined)
+    }
+    console.log(Marketplace.length, "marketplace labels")
+    labels["Marketplace"] = Marketplace
     let rePulls = 0
     for(let k of Object.keys(labels)){
         labels[k] = labels[k].filter(l=> l.order != undefined)

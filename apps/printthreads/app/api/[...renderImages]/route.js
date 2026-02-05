@@ -221,8 +221,9 @@ const createImage = async (data) => {
     } else if (data.styleImage && base64) {
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
-    } else if (data.designImage && data.designImage != "undefined" && data.designImage != "null") {
-        base64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.width)}&height=${parseInt(data.width)}`)
+    } else if (data.designImage && data.designImage != "undefined" && data.designImage != null) {
+        console.log(data.designImage, "design only")
+        base64 = await readImage(`${data.designImage.front.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.width)}&height=${parseInt(data.width)}`)
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }
