@@ -1,4 +1,4 @@
-export {getOrders, updateOrder} from "./functions/shipstation";
+export {getOrders, updateOrder, getPages, getPageOrders} from "./functions/shipstation";
 export {generatePieceID} from "./functions/createPiceId";
 export {getOrders as getOrderKohls} from "./functions/kohls"
 

@@ -4,7 +4,7 @@ import crypto from "crypto";
 import axios from "axios";
 import FormData from "form-data";
 import {Order, Products, Item, Inventory, ProductInventory} from "@pythias/mongo"
-
+import { generatePieceID } from "./createPiceId.js";
 export const getToken = async (code, baseUrl) => {
     const authCode = code;
     const tokenUrl = "https://api.etsy.com/v3/public/oauth/token";
@@ -969,7 +969,7 @@ const getShopReceipts = async (credentials) => {
 
 const createItemVariant = async (variant, product, order) => {
     let item = new Item({
-        pieceId: 12323,
+        pieceId: await generatePieceID(),
         paid: true,
         sku: variant.sku,
         orderItemId: variant.orderItemId,
@@ -1050,15 +1050,15 @@ export const fetchOrders = async (credentials) => {
           if (order) {
             console.log("updating etsy shipping shipping_Info");
             console.log(etsy_order["name"]);
-            let trackingDetails = getOrderTrackingDetails(order);
-            if (order && trackingDetails?.trackingNumber) {
-              await etsyAPI.createReceiptShipment(
-                shop.shop_id,
-                etsy_order.receipt_id,
-                trackingDetails,
-                credentials.accessToken
-              );
-            }
+            // let trackingDetails = getOrderTrackingDetails(order);
+            // if (order && trackingDetails?.trackingNumber) {
+            //   await etsyAPI.createReceiptShipment(
+            //     shop.shop_id,
+            //     etsy_order.receipt_id,
+            //     trackingDetails,
+            //     credentials.accessToken
+            //   );
+            // }
           } else {
             console.log("creating etsy order");
             console.log(etsy_order.transactions)

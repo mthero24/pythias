@@ -153,7 +153,11 @@ const schema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: ProductInventory,
       },
-    }
+    },
+    customEnvelope: {
+      type: Boolean,
+      default: false,
+    },
   },
   { suppressWarning: true }
 );

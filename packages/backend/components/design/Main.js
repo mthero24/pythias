@@ -16,6 +16,7 @@ import { ProductCard } from "../reusable/ProductCard";
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useCSV } from "../reusable/CSVProvider";
 import { SublimationImages } from "./sublimationImages";
+import { release } from "os";
 export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport, printTypes}) {
     const router = useRouter()
     const [des, setDesign] = useState({...design})
@@ -164,7 +165,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             console.error('Failed to copy text: ', err);
         }
     }
-   
+    async function releaseUPCs() {
+        let res = await axios.post(`/api/admin/designs/releaseUPCs`, {  })
+    }
     return (
         <Box>
             <Container maxWidth="lg" sx={{overflowX: "hidden", padding: "2%"}}>
@@ -174,6 +177,11 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                         setDeleeFunction({onDelete: deleteDesign});
                         setDeleteModal(true);
                     }}>Delete</Button>
+                    <Button sx={{ margin: "1% 2%", background: "#3708df", color: "#ffffff" }} onClick={() => {
+                        setDeleteTitle("Are you sure you want to Release UPCs?");
+                        setDeleeFunction({ onDelete: releaseUPCs });
+                        setDeleteModal(true);
+                    }}>Release UPCs</Button>
                 </Box>
                 <Card sx={{margin: "1% 0%"}}>
                     <Box sx={{display: "flex", flexDirection:"row", overflowX: "auto"}}>
@@ -307,7 +315,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>
                     <Grid2 size={12}>
-                            <Button fullWidth sx={{ margin: "1% 1%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setProduct({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });setCreateProduct(true)}} >Create Product</Button>
+                            <Button fullWidth sx={{ margin: "1% 1%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setProduct({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} }); setCreateProduct(true)}} >Create Product</Button>
                     </Grid2>
                 </Grid2>
                 <Grid2 container spacing={3} sx={{ width: "98%", padding: ".5%" }}>

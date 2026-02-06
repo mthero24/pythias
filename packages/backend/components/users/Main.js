@@ -90,6 +90,9 @@ export function Main({user}){
                                             <FormControlLabel  control={<Checkbox checked={u.permissions?.users? u.permissions?.users: false} onChange={()=>{
                                                 updatePermissions({type: "users", user: u, permission: event.target.checked})
                                             }}/>} label="Users" />
+                                            <FormControlLabel control={<Checkbox checked={u.permissions?.marketplaces ? u.permissions?.marketplaces : false} onChange={() => {
+                                                updatePermissions({ type: "marketplaces", user: u, permission: event.target.checked })
+                                            }} />} label="Update Marketplaces" />
                                         </FormGroup>
                                     </Grid2>
                                     <Grid2 size={2}>

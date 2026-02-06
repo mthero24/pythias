@@ -3,6 +3,7 @@ import { NextApiRequest, NextResponse } from "next/server"
 import axios from "axios"
 import { Blank, Design } from "@pythias/mongo";
 import "jimp"
+import { Barlow_Semi_Condensed } from "next/font/google";
 const readImage = async (url) => {
     const response = await axios.get(
         url,
@@ -27,7 +28,7 @@ const createImage = async (data) => {
         data.width = 400
     }
     base64 = await readImage(`${data.styleImage?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${data.width}&height=${data.width}`)
-    console.log(data.box, "box")
+    console.log(data.box, "box", base64)
     if (data.box && data.box.length > 0 && data.designImage && data.designImage != "undefined" && data.designImage != "null" && base64 != undefined) {
         let composits = []
         console.log(data.box, "boxes")
@@ -100,7 +101,7 @@ const createImage = async (data) => {
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     } else if (data.designImage && data.designImage != "undefined" && data.designImage != "null") {
-        base64 = await readImage(`${data.designImage.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.width)}&height=${parseInt(data.width)}`)
+        base64 = await readImage(`${data.designImage.front.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=${parseInt(data.width)}&height=${parseInt(data.width)}`)
         base64 = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
         base64 = `data:image/jpeg;base64,${base64.toString("base64")}`
     }

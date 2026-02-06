@@ -1,4 +1,4 @@
-import {Modal, Typography, Box, TextField, Grid2, Grid} from "@mui/material"
+import {Modal, Typography, Box, TextField, Grid2, Button} from "@mui/material"
 import { BarChart } from '@mui/x-charts/BarChart';
 import {useState, useEffect} from "react"
 import axios from "axios"
@@ -8,9 +8,13 @@ export function ChartModal({open, setOpen,}){
     const [months, setMonths] = useState([])
     const [licenses, setLicenses] = useState([])
     const [loading, setLoading] = useState(true)
+    const [from, setFrom] = useState(null)
+    const [to, setTo] = useState(null)
+    const [csvLink, setCsvLink] = useState("/api/admin/license/csv")
     useEffect(()=>{
         let getData = async ()=>{
             let data = await axios.get("/api/admin/license")
+            console.log(data.data, "data")
             setMonths(data.data.months)
             setLicenses(data.data.licenses)
             setLoading(false)
@@ -95,6 +99,23 @@ export function ChartModal({open, setOpen,}){
                             </Box>
                         </Grid2>
                         <Grid2 item size={3}>
+                            <Grid2 container spacing={2} sx={{ marginBottom: "2%" }}>
+                                <Grid2 item size={6}>
+                                        <TextField label="From" type={"date"} variant="outlined" fullWidth onChange={(e) => {
+                                            setFrom(e.target.value)
+                                            setCsvLink(`/api/admin/license/csv?from=${e.target.value}&to=${to}`)
+                                        }} />
+                                </Grid2>
+                                <Grid2 item size={6}>
+                                        <TextField label="To" type={"date"} variant="outlined" fullWidth onChange={(e) => {
+                                            setTo(e.target.value)
+                                            setCsvLink(`/api/admin/license/csv?from=${from}&to=${e.target.value}`)
+                                        }} />
+                                </Grid2>
+                                <Button href={csvLink} variant="contained" color="primary" fullWidth>
+                                    Download CSV
+                                </Button>
+                            </Grid2>
                             <Grid2 container spacing={2}>
                                 {months.map((month) => (
                                     <Grid2 item size={12} key={month.number}>
@@ -112,16 +133,17 @@ export function ChartModal({open, setOpen,}){
                                         </Grid2>
                                         {licenses.map((license) => {
                                             let ml = month.licenses.filter((l) => l._id === license._id);
+                                            console.log(ml, "ml")
                                             return ml.length > 0 ? (
                                                 <Grid2 container spacing={1} key={license._id} sx={{background: "#f2f2f2", marginBottom: ".5%", borderBottom: "1px solid #ccc", padding: ".5% 0%"}}>
                                                     <Grid2 item size={4}>
                                                         <Typography variant="body2">{license.name}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={4}>
-                                                        <Typography variant="body2">${ml[0].sold.toFixed(2)}</Typography>
+                                                        <Typography variant="body2">${parseFloat(ml[0]?.sold).toFixed(2)}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={4}>
-                                                        <Typography variant="body2">${ml[0].totalOwed.toFixed(2)}</Typography>
+                                                        <Typography variant="body2">${parseFloat(ml[0]?.totalOwed).toFixed(2)}</Typography>
                                                     </Grid2>
                                                 </Grid2>
                                             ) : null;
@@ -131,10 +153,10 @@ export function ChartModal({open, setOpen,}){
                                                 <Typography variant="body2">{"Total"}</Typography>
                                             </Grid2>
                                             <Grid2 item size={4}>
-                                                <Typography variant="body2">${month.licenses.reduce((acc, l) => acc + l.sold, 0).toFixed(2)}</Typography>
+                                                <Typography variant="body2">${parseFloat(month.licenses.reduce((acc, l) => acc + l.sold, 0)).toFixed(2)}</Typography>
                                             </Grid2>
                                             <Grid2 item size={4}>
-                                                <Typography variant="body2">${month.licenses.reduce((acc, l) => acc + l.totalOwed, 0).toFixed(2)}</Typography>
+                                                <Typography variant="body2">${parseFloat(month.licenses.reduce((acc, l) => acc + l.totalOwed, 0)).toFixed(2)}</Typography>
                                             </Grid2>
                                         </Grid2>
                                     </Grid2>

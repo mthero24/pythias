@@ -627,7 +627,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           {useLabels &&
             Object.keys(useLabels).map((l, i) => (
               <Grid2 size={{ xs: 12, sm: source == "IM"? 12: 6, md:  source == "IM"? 12: 6, lg:  source == "IM"? 12: 6 }} key={i}>
-                <Card sx={{ width: "100%", minHeight: "100vh" }}>
+                <Card sx={{ width: "100%", minHeight: "60vh", maxHeight: "60vh", overflowY: "scroll" }}>
                   {source != "PO" && <Typography
                     sx={{ padding: "2%", fontSize: "2rem", fontWeight: 900 }}
                   >

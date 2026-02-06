@@ -761,7 +761,7 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
         }
         let res = await axios.post("/api/admin/marketplaces", {marketPlace, blank});
         if (res.data.error) {
-            return alert("Error creating marketplace");
+            return alert(res.data.msg);
         }else {
             setMarketPlaces([...res.data.marketPlaces]);
             setOpen(false);
