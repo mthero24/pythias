@@ -37,9 +37,9 @@ export async function POST(req= NextApiRequest){
             password: process.env.tpalfedexpassword,
             },
             credentialsFedExNew: {
-            accountNumber: process.env.AccountFedEx,
-            key: process.env.ApiKeyFedEx,
-            secret: process.env.SecretKeyFedEx,
+            accountNumber: process.env.AccountFedExTest,
+            key: process.env.ApiKeyTestFedEx,
+            secret: process.env.SecretKeyFedExTest,
             },
             credentialsUPS: {
             accountNumber: process.env.UPSAccountNumber,

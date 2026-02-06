@@ -113,41 +113,38 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 export default async function Test(){
-    await pullOrders();
-    // let items = await Items.find({blank: { $ne: undefined },
-    //         colorName: {$ne: null},
-    //         sizeName: {$ne: null},
-    //         designRef: {$ne: null},
-    //         design: {$ne: null},
-    //         labelPrinted: false,
-    //         canceled: false,
-    //         paid: true,
-    //         shippingType: "Standard", inventory: null})
-    // console.log(items.length)
-    // for(let item of items){
-    //     let inventory = await Inventory.findOne({style_code: item.styleCode, color_name: item.colorName, size_name: item.sizeName})
-    //     if(inventory){
-    //         item.inventory = {
-    //             inventoryType: "inventory",
-    //             inventory: inventory
-    //         }
-    //         await item.save()
-    //     }
-    // }
-    // let blanks = await Blank.find({})
-    // for(let blank of blanks){
-    //     console.log(blank.code)
-    //     let inventories = await Inventory.find({style_code: blank.code})
-    //     for(let inv of inventories){
-    //         let size = blank.sizes.find(s=> s.name == inv.inventory_id.split("-")[1]?.replace("%2F", "/"))
-    //         console.log(size)
-    //         if(size){
-    //             inv.sizeId = size._id
-    //             inv.size_name = size.name
-    //             await inv.save()
-    //         }
-    //     }
-    // }
-    
+    //await pullOrders();
+    let products = await Products.find({}).populate("variantsArray.blank").limit(500)
+    let skip = 0
+    while(products.length > 0){
+        console.log(products.length, "products.length", skip, "skip+++++++")
+        for(let p of products){
+            for(let v of p.variantsArray){
+                let sizeName = v.blank.code.includes("_")? v.sku.split("_")[3]:  v.sku.split("_")[2];
+                let size = v.blank.sizes.find(s => s.name == sizeName)
+                if(!size){
+                    console.log(sizeName)
+                    if(sizeName === "5T") sizeName = "5/6T"
+                    if(sizeName === "Adult") sizeName = "One Size Fits Most"
+                    if(sizeName.trim().toLowerCase() === "small") sizeName = "S"
+                    if(sizeName.trim().toLowerCase() === "medium") sizeName = "M"
+                    if(sizeName.trim().toLowerCase() === "large") sizeName = "L"
+                    if(sizeName.trim().toLowerCase() === "x large") sizeName = "XL"
+                    if(sizeName.trim().toLowerCase() === "xx large")sizeName = "2XL"
+                    if(sizeName.trim().toLowerCase() === "newborn") sizeName = "NB"
+                    size = v.blank.sizes.find(s => s.name == sizeName)
+                }
+                if(!size){
+                    console.log(sizeName, "sizeName not found ", v.blank.code)
+                }else{
+                    v.size = size._id
+                }
+            }
+            p.markModified("variantsArray")
+            await p.save()
+        }
+        skip += 500
+        products = await Products.find({}).populate("variantsArray.blank").skip(skip).limit(500)
+    }
     return <h1>test</h1>
 }

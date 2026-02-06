@@ -27,7 +27,7 @@ let getAuth = async (credentials) => {
     },
   };
   let send = await axios
-    .post("https://apis.fedex.com/oauth/token", body, options)
+    .post("https://apis-sandbox.fedex.com/oauth/token", body, options)
     .catch((e) => {
       console.log(e.response.data);
     });
@@ -132,13 +132,14 @@ export async function getRatesFeNew({address, businessAddress, weight, service, 
         }
     }
     let resData
-    let send = await axios.post("https://apis.fedex.com/rate/v1/rates/quotes", body, options).catch(e=>{console.log(e.response.data); resData = e.response.data;})
+    let send = await axios.post("https://apis-sandbox.fedex.com/rate/v1/rates/quotes", body, options).catch(e=>{console.log(e.response.data); resData = e.response.data;})
     //console.log(send? send.data.output.rateReplyDetails[0].ratedShipmentDetails[0] : resData)
-    if(resData) return {error:true, msg: `${resData.errors[0].message} ${resData.errors[0].code}`}
+    if(resData) return {error:true, msg: `${resData.errors && resData.errors[0].message} ${resData.errors && resData.errors
+      [0].code}`}
     return {error: false, rate: send.data.output.rateReplyDetails[0].ratedShipmentDetails[0].totalNetFedExCharge}
     
 }
-export async function purchaseFedexNew ({address, businessAddress,weight, service, serviceType, packaging, overnight, saturdayDelivery=false, credentials, imageFormat, dpi}){
+export async function purchaseFedexNew ({address, businessAddress,weight, selectedShipping, overnight, saturdayDelivery=false, credentials, imageFormat, dpi}){
     let token = await getAuth(credentials)
     token = token.token
     console.log(token)
@@ -164,7 +165,7 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
             "contact": {
               "personName": businessAddress.name,
               "emailAddress": businessAddress.email,
-              "phoneNumber": businessAddress.phoneNumber,
+              "phoneNumber": businessAddress.phoneNumber? businessAddress.phoneNumber: "0000000000",
               "companyName": businessAddress.name,
             },
           },
@@ -179,6 +180,7 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
                     stateOrProvinceCode: address.state,
                     postalCode: address.zip,
                     countryCode: address.country,
+                    "residential": selectedShipping.name == "GROUND_HOME_DELIVERY"? true: false
                 },
               "contact": {
                 "personName": address.name,
@@ -188,8 +190,8 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
             }
           ],
           "pickupType": "USE_SCHEDULED_PICKUP",
-          "serviceType": serviceType,
-          "packagingType": packaging,
+          "serviceType": selectedShipping.name,
+          "packagingType": selectedShipping.packaging,
           "totalWeight": weight,
           "shippingChargesPayment": {
             "paymentType": "SENDER",
@@ -215,7 +217,7 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
             }
           ],
           "labelSpecification": {
-            "labelStockType": "STOCK_4X8",
+            "labelStockType": "STOCK_4X6",
             "imageType": imageFormat? "PDF": "ZPLII",
             "resolution": dpi? 300: 203
           },
@@ -237,10 +239,10 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
       //     }
       // }
       // if(!body.shipmentSpecialServices) body.shipmentSpecialServices = {}
-      if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && saturdayDelivery){
+      if((selectedShipping.packaging == "FEDEX_PAK" || selectedShipping.packaging == "FEDEX_ENVELOPE") && selectedShipping.name == "FEDEX_2DAY" && saturdayDelivery){
           body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE", "SATURDAY_DELIVERY"]
       }
-      else if((packaging == "FEDEX_PAK" || packaging == "FEDEX_ENVELOPE") && serviceType == "FEDEX_2DAY" && !saturdayDelivery){
+      else if((selectedShipping.packaging == "FEDEX_PAK" || selectedShipping.packaging == "FEDEX_ENVELOPE") && selectedShipping.name == "FEDEX_2DAY" && !saturdayDelivery){
           body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE"]
       }else if(saturdayDelivery) body.shipmentSpecialServices.specialServiceTypes = ["SATURDAY_DELIVERY"]
       let options = {
@@ -250,12 +252,13 @@ export async function purchaseFedexNew ({address, businessAddress,weight, servic
             "x-locale": "en_US"
         }
     }
-    let send = await axios.post("https://apis.fedex.com/ship/v1/shipments", body, options).catch(e=>{console.log(e.response.data)})
+    let send = await axios.post("https://apis-sandbox.fedex.com/ship/v1/shipments", body, options).catch(e=>{console.log(e.response.data, e.response.data.errors, e.response.data.errors[0].parameterList)})
     console.log(send? send.data.output: "error")
     console.log(send? send.data.output.transactionShipments[0]: "error")
     console.log(send? send.data.output.transactionShipments[0].pieceResponses: "error")
-    console.log(send? send.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel: "error")
-    let result = {trackingNumber: send.data.output.transactionShipments[0].pieceResponses[0].masterTrackingNumber, label: new Buffer.from(send.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, "base64").toString('ascii'), cost: send.data.output.transactionShipments[0].pieceResponses[0].baseRateAmount}
+    console.log(send? send.data?.output?.transactionShipments[0]?.pieceResponses[0]?.packageDocuments[0]?.encodedLabel: "error")
+    console.log(send? send.data: "error")
+    let result = {trackingNumber: send.data.output.transactionShipments[0].pieceResponses[0].masterTrackingNumber, label: send.data.output.transactionShipments[0].pieceResponses[0].packageDocuments[0].encodedLabel, cost: send.data.output.transactionShipments[0].pieceResponses[0].baseRateAmount}
     console.log(result)
     return result
     //console.log(send.data.output.transactionShipments[0].completedShipmentDetail.completedPackageDetails)
