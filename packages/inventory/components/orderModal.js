@@ -4,6 +4,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { CircularProgress } from '@mui/material'
 import axios from "axios";
 import CloseIcon from '@mui/icons-material/Close';
+import { set } from "mongoose";
 export function OrderModal({open, setOpen, type, items, setBlanks, setItems, defaultLocation,}){
     const [needsOrdered, setNeedsOrdered] = useState([])
     const [order, setOrder] = useState({poNumber: "", company: "", dateOrdered: "", dateExpected: ""})
@@ -42,6 +43,15 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                     }
                 }
                 setBlankCodes([...bl])
+                setBlanksExcluded([...bl])
+                let colorExclude = {}
+                for(let b of bl){
+                    colorExclude[b] = []
+                    for(let c of cl){
+                        colorExclude[b].push(c)
+                    }
+                }
+                setBlankColorsExcluded(colorExclude)
                 setColors([...cl])
             }
             if(type == "Inventory Order"){
