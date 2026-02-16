@@ -77,7 +77,13 @@ export async function POST(req= NextApiRequest){
                 res.msg = "Order already shipped"
                 console.log(res)
             }else{
-                if(isSingleItem(item)) res.activate = "ship"
+                if(isSingleItem(item)) {
+                    res.activate = "ship"
+                    if(item.order.shippingType == "Standard" || item.order.shippingType == "Expedited"){
+                        res.weight = item.styleV2.sizes.filter(s=>s.name==item.sizeName)[0]?.weight || 8
+                        res.dimensions = item.styleV2.singleShippingDimensions || {length: 10, width: 13, height: 1}
+                    }
+                }
                 else {
                     res.activate = "bin"
                     res.bin = await findBin(res.order._id)

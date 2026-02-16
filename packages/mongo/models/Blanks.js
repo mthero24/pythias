@@ -130,7 +130,8 @@ const SchemaObj = new Schema(
         ref: printLocations,
       },
     ],
-    marketPlaceOverrides: {}
+    marketPlaceOverrides: {},
+    singleShippingDimensions: Object,
   },
   { strict: false }
 );

@@ -73,7 +73,7 @@ const updateInventory = async (invIds) => {
     console.log("total: ", total)
 }
 export default async function Test(){
-    updateInventory();
+    //updateInventory();
     // let style = await Styles.findOne({code: "LPCPH"})
     // console.log("style", style.sizes)
     // for(let fold of style.fold){
@@ -104,7 +104,13 @@ export default async function Test(){
     //     await item.save()
     // }
     //  await updateInventory();
-    // let invOrder = await InventoryOrders.findOne({ _id: "69493e81f241fe7c4e7c1ffb"}).populate("locations.items.inventory")
+    // let invOrder = await InventoryOrders.findOne({ _id: "698b705f27a7aeb67a67f1f5"}).populate("locations.items.inventory")
+    // for (let loc of invOrder.locations){
+    //     for (let item of loc.items) {
+    //         item.inventory.orders = item.inventory.orders.filter(o => o.order.toString() != invOrder._id.toString())
+    //         await item.inventory.save()
+    //     }
+    // }
     // for(let loc of invOrder.locations){
     //     if(loc.name.toLowerCase() == "ohio"){
     //         for(let item of loc.items){
@@ -119,22 +125,6 @@ export default async function Test(){
     //         }
     //     }
     // }
-    // let order = await InventoryOrders.findOne({ _id: "693176ffe546d3970bcc1d5e"}).populate("locations.items.inventory")
-    // console.log("test page called")
-    // console.log("test page called")
-    // for(let loc of order.locations){
-    //     if(loc.name == "Ohio"){
-    //         for(let item of loc.items){
-                
-    //             let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
-    //             console.log(labels.length, item.quantity)
-    //             item.inventory.orders.push({
-    //                 order: order._id.toString(),
-    //                 items: labels.map(l=> l._id.toString())
-    //             })
-    //             await item.inventory.save()
-    //         }
-    //     }
-    // }
+   
     return <h1>Test</h1>
 }

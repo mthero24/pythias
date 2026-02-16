@@ -19,9 +19,12 @@ import axios from "axios";
 import  Text  from "@/components/UI/Text";
 import  Row  from "@/components/UI/Row";
 import { useFieldArray, useForm } from "react-hook-form";
+import { Standard } from "./ShippingBags";
+import { ConnectingAirportsOutlined } from "@mui/icons-material";
 export function Main({ bla }) {
-  
+  console.log(bla)
   const [blank, setBlank] = useState(bla)
+  const [dimensions, setDimensions] = useState(blank.singleShippingDimensions || null);
   const save = async (blank)=>{
     let result = await axios.post("/api/admin/blanks", { blank });
   }
@@ -64,6 +67,8 @@ export function Main({ bla }) {
         <Divider sx={{ margin: "1%" }} />
 
         <FoldSettings blank={blank} setBlank={setBlank} save={save} />
+        <Divider sx={{ margin: "1%" }} />
+        <Standard blank={blank} setBlank={setBlank} save={save} dimensions={dimensions} setDimensions={setDimensions}/>
       </Box>
       
     </Container>
@@ -102,38 +107,6 @@ const FoldSettings = ({ blank, setBlank, save}) => {
       ))}
     </Box>
   )
-  // return (
-  //   <Box>
-  //     <Text>Fold Settings</Text>
-  //     <Divider sx={{ margin: "1%" }} />
-  //     {fields.map((p, i) => {
-  //       const hide = ["_id", "id", "size", "sizeName"];
-  //       let keys = Object.keys(p).filter((k) => !hide.includes(k));
-  //       console.log(p.size, p.sizeName);
-  //       let sizeName = blank.sizes.filter(
-  //         (s) =>
-  //           s?.name?.toLowerCase() == p?.size?.toLowerCase() ||
-  //           s?.name?.toLowerCase() == p?.sizeName?.toLowerCase()
-  //       )[0];
-  //       if (sizeName) {
-  //         sizeName = sizeName.name;
-  //       }
-  //       return (
-  //         <Box key={p._id}>
-  //           <Typography>Size - {sizeName}</Typography>
-  //           <Grid2 container spacing={1}>
-  //             {keys.map((key) => (
-  //               <Grid2 size={4} key={key}>
-  //                 <Typography>{key}</Typography>
-  //                 <TextField fullWidth {...register(`fold.${i}.${key}`, {})} />
-  //               </Grid2>
-  //             ))}
-  //           </Grid2>
-  //         </Box>
-  //       );
-  //     })}
-  //   </Box>
-  // );
 };
 
 

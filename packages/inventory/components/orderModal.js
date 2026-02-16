@@ -38,7 +38,7 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                         if(onOrder > 0) {
                             if(!bl.includes(inv.style_code))bl.push(inv.style_code)
                             if(!cl.includes(inv.color_name))cl.push(inv.color_name)
-                            no.push({inv, order: (onOrder), included: true, location: defaultLocation})
+                            no.push({inv, order: (onOrder), included: false, location: defaultLocation})
                         }
                     }
                 }
