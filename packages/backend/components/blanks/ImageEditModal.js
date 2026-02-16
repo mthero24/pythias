@@ -880,7 +880,7 @@ const CopyBoxesModal = ({ open, onClose, blank, image, setImage}) => {
                     Copy Boxes from Another Image
                 </Typography>
                 <Grid2 container spacing={2} sx={{ mt: 2, maxHeight: '70vh', overflowY: 'auto' }}>
-                    {blank.images && blank.images.length > 0 ? blank.images.sort((a, b) => a.color.localeCompare(b.color)).map((img, idx) => (
+                    {blank.images && blank.images.length > 0 ? blank.images.sort((a, b) => a?.color?.localeCompare(b.color)).map((img, idx) => (
                         <Grid2 size={2} key={idx} sx={{cursor: 'pointer', border: image._id == img._id ? '3px solid blue' : '1px solid #ccc', p: 1}} onClick={()=>{
                             let newImage = {...image}
                             if(!newImage.boxes) newImage.boxes = {}
