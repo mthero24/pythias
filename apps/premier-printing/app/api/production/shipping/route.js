@@ -9,12 +9,12 @@ export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
     if(data.reprint){
-        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+        let item = (await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})).populated("blank")
         let order
         if(item){
             order = item.order
         }else{
-            order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
+            order = await Order.findOne({poNumber: data.scan.trim()}).populate({path: "items", populate: "blank"})
         }
         let headers = {
             headers: {
@@ -32,8 +32,8 @@ export async function POST(req= NextApiRequest){
         }
     }
     try{
-        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
-        let order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
+        let item = await Item.findOne({ pieceId: data.scan.trim() }).populate({ path: "order", populate: "items" }).populate("blank")
+        let order = await Order.findOne({poNumber: data.scan.trim()}).populate({path: "items", populate: "blank"})
         let bin 
         try{
             if(!isNaN(data.scan.trim())){
@@ -78,10 +78,11 @@ export async function POST(req= NextApiRequest){
                 console.log(res)
             }else{
                 if(isSingleItem(item)) {
+                    console.log(item, "item")
                     res.activate = "ship"
                     if(item.order.shippingType == "Standard" || item.order.shippingType == "Expedited"){
-                        res.weight = item.styleV2.sizes.filter(s=>s.name==item.sizeName)[0]?.weight || 8
-                        res.dimensions = item.styleV2.singleShippingDimensions || {length: 10, width: 13, height: 1}
+                        res.weight = item.blank.sizes.filter(s=>s.name==item.sizeName)[0]?.weight || 8
+                        res.dimensions = item.blank.singleShippingDimensions || {length: 10, width: 13, height: 1}
                     }
                 }
                 else {
