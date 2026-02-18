@@ -53,7 +53,7 @@ export async function POST(req= NextApiRequest){
         console.log(data)
         let label = await buyLabel({
             ...data,
-            businessAddress: order.user.addresses[0]? order.user.addresses[0]: { name: "Print Oracle", addrss1: "21440 Melorose Ave", address2: "suit 300", city: "Southfield", STATES: "MI", zip: "48075", country: "US"},
+            businessAddress: order.user.addresses[0]? order.user.addresses[0]: { name: "Print Oracle", address1: "21440 Melorose Ave", address2: "suit 100", city: "Southfield", STATES: "MI", zip: "48075", country: "US"},
             providers: ["usps", "fedex"],
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
