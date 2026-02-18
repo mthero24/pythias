@@ -5,11 +5,12 @@ import Order from "../../../../../models/Order";
 import manifest from "../../../../../models/manifest";
 import axios from "axios"
 import Bin from "../../../../../models/Bin";
+import { STATES } from "mongoose";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     
     //return NextResponse.json({error: true})
-    let order = await Order.findOne({ _id: data.orderId }).populate("items")
+    let order = await Order.findOne({ _id: data.orderId }).populate("items user")
     if (order.preShipped) {
         let headers = {
             headers: {
@@ -52,7 +53,7 @@ export async function POST(req= NextApiRequest){
         console.log(data)
         let label = await buyLabel({
             ...data,
-            businessAddress: JSON.parse(process.env.businessAddress),
+            businessAddress: order.user.addresses[0]? order.user.addresses[0]: { name: "Print Oracle", addrss1: "21440 Melorose Ave", address2: "suit 300", city: "Southfield", STATES: "MI", zip: "48075", country: "US"},
             providers: ["usps", "fedex"],
             enSettings: {
             requesterID: process.env.endiciaRequesterID,
