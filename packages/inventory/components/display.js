@@ -1,5 +1,5 @@
 import {useState, useEffect} from "react"
-import { Box, Grid2, Typography, Button, Modal, Card, CardContent, CardActions, Divider, Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
+import { Box, Grid2, Typography, Button, Modal, Card, CardContent, CardActions, Divider, Accordion, AccordionDetails, AccordionSummary, TextField } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -7,6 +7,8 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
     const [orders, setOrders] = useState([])
     const [check,setCheck] = useState(false)
     const [showItems, setShowItems] = useState("")
+    const [edit, setEdit] = useState(false)
+    const [orderEdit, setOrderEdit] = useState(null)
     let [orderLocation, setOrderLocation] = useState({})
     useEffect(()=>{
        const getOrders = async ()=>{
@@ -57,10 +59,20 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                     <Grid2 size={{xs: 12, sm: 12}} key={o._id}>
                         <Card>
                             <CardContent>
-                                <Typography component="h2" sx={{width: "100%"}}>{o.poNumber}</Typography>
-                                <Typography>{o.vendor}</Typography>
-                                <Typography>{new Date(o.dateOrdered).toLocaleDateString("En-us")}</Typography>
-                                {o.dateExpected && <Typography>{new Date(o.dateExpected).toLocaleDateString("En-us")}</Typography>}
+                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+                                    <Box>
+                                        <Typography component="h2" sx={{width: "100%"}}>{o.poNumber}</Typography>
+                                        <Typography>{o.vendor}</Typography>
+                                        <Typography>{new Date(o.dateOrdered).toLocaleDateString("En-us")}</Typography>
+                                        {o.dateExpected && <Typography>{new Date(o.dateExpected).toLocaleDateString("En-us")}</Typography>}
+                                    </Box>
+                                    <Box>
+                                        <Button onClick={() => {
+                                            setEdit(!edit)
+                                            setOrderEdit(o._id.toString())
+                                            }}>Edit</Button>
+                                    </Box>
+                                </Box>
                             </CardContent>
                             <Divider/>
                             <CardContent>
@@ -86,7 +98,23 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                                             <Typography>{i.inventory?.style_code}-{i.inventory?.color_name}-{i.inventory?.size_name}</Typography>
                                                         </Grid2>
                                                         <Grid2 size={4}>
-                                                            <Typography>{i.quantity}</Typography>
+                                                            {edit && orderEdit == o._id.toString() ? <TextField type="number" value={i.quantity} onChange={async (e) => {
+                                                                let q = parseInt(e.target.value)
+                                                                let o = orders.filter(or => or._id.toString() == orderEdit)[0]
+                                                                let lo = o.locations.filter(loc => loc._id.toString() == l._id.toString())[0]
+                                                                let it = lo.items.filter(itm => itm._id.toString() == i._id.toString())[0]
+                                                                console.log(q, o, lo, it)
+                                                                it.quantity = q
+                                                                setOrders([...orders.filter(or => or._id.toString() != orderEdit), o])
+                                                                // Here you would also want to send this update to the server to persist the change
+                                                                let res = await axios.put("/api/admin/inventory/create-order/edit", { orderId: o._id, items: o.locations }).catch(e => { alert("something went wrong updating quantity, please refresh and try again") })
+                                                                if (res && res.data && res.data.error == false) {
+                                                                    console.log("quantity updated successfully")
+                                                                } else {
+                                                                    alert("something went wrong updating quantity, please refresh and try again")
+                                                                }
+                                                                // Update the quantity in your state or perform any necessary actions
+                                                            }} /> : <Typography>{i.quantity}</Typography>}
                                                         </Grid2>
                                                         <Grid2 size={3}>
                                                             <Typography>{l.name}</Typography>
@@ -101,6 +129,7 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                                                 ))}
                                                             </Grid2>
                                                         ))}
+                                                        
                                                     </Grid2>
                                                 ))}
 

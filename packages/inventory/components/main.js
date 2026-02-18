@@ -160,7 +160,8 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                                 <TextField fullWidth type="number"  value={i.quantity_to_order} onChange={()=>{updateInventory({inventory: i, param:"quantity_to_order"})}}/>
                                             </Grid2>
                                             <Grid2 size={1}>
-                                                <Typography>{i.pending_quantity}</Typography>
+                                                {console.log(i.orders)}
+                                                <Typography>{i.orders.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0)}</Typography>
                                             </Grid2>
                                             <Grid2 size={1}>
                                                 <Typography >{i.attached && i.attached.length > 0 ? i.attached.length : 0}</Typography>

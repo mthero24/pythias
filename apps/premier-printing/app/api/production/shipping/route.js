@@ -9,12 +9,12 @@ export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
     if(data.reprint){
-        let item = (await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})).populated("blank")
+        let item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
         let order
         if(item){
             order = item.order
         }else{
-            order = await Order.findOne({poNumber: data.scan.trim()}).populate({path: "items", populate: "blank"})
+            order = await Order.findOne({poNumber: data.scan.trim()})
         }
         let headers = {
             headers: {
@@ -38,7 +38,7 @@ export async function POST(req= NextApiRequest){
         try{
             if(!isNaN(data.scan.trim())){
                 bin = await Bins.findOne({ number: data.scan.trim() })
-                .populate({ path: "order", populate: "items" });
+                .populate({ path: "order", populate: { path: "items", populate: "blank" } });
             }
         }catch(e){
             //console.log(e)

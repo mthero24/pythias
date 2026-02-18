@@ -38,6 +38,7 @@ const SchemaObj = new Schema({
     orders: [
         {
             order: String,
+            quantity: Number,
             items:[
                 String
             ]

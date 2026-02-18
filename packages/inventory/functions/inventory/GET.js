@@ -1,5 +1,5 @@
 
-export async function getInv({Blanks, Inventory, term, page} ){
+export async function getInv({Blanks, Inventory, InventoryOrders, term, page} ){
     console.log(page, "page in getInv");
     let blanks, found = [], count;
     if(term){

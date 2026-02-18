@@ -72,6 +72,7 @@ export async function POST(req=NextApiRequest){
                 if(!inv.orders) inv.orders = []
                 inv.orders.push({
                     order: order._id,
+                    quantity: i.order,
                     items: it.map(i => i._id)
                 })
                 inv.attached = inv.attached.filter(a => !it.map(i => i._id.toString()).includes(a.toString()))
