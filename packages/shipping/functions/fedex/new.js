@@ -154,12 +154,12 @@ export async function purchaseFedexNew ({address, businessAddress,weight, dimens
           "shipper": {
             address: {
                 streetLines: [
-                    businessAddress.addressLine1,
-                    businessAddress.addressLine2
+                businessAddress.addressLine1 ? businessAddress.addressLine1 : businessAddress.address1,
+                businessAddress.addressLine2 ? businessAddress.addressLine2 : businessAddress.address2
                 ],
                 city: businessAddress.city,
                 stateOrProvinceCode: businessAddress.state,
-                postalCode: businessAddress.postalCode,
+                postalCode: businessAddress.postalCode? businessAddress.postalCode: businessAddress.zip,
                 countryCode: businessAddress.country,
                 residential: false
             },
@@ -239,7 +239,7 @@ export async function purchaseFedexNew ({address, businessAddress,weight, dimens
               specialServices: "USPS_DELIVERY_CONFIRMATION"
           }
       }
-      console.log(body.requestedShipment)
+      console.log(body.requestedShipment.shipper.address, "shipper")
       // if(!body.shipmentSpecialServices) body.shipmentSpecialServices = {}
       if((selectedShipping.packaging == "FEDEX_PAK" || selectedShipping.packaging == "FEDEX_ENVELOPE") && selectedShipping.name == "FEDEX_2DAY" && saturdayDelivery){
           body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE", "SATURDAY_DELIVERY"]
