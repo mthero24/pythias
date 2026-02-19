@@ -12,7 +12,6 @@ export async function POST(req = NextApiRequest){
     if(item){
         if(canceled(item, item.order) == true) return NextResponse.json({error: true, msg: "Item Canceled"})
         else if(isSingleItem(item) == true && item.order.shippingType == "Standard") {
-            //buy label ## address, poNumber, weight, selectedShipping, dimensions, businessAddress, providers, enSettings, credentials,
             let send = {
                 address: item.order.shippingAddress, 
                 poNumber: item.order.poNumber, 
