@@ -18,7 +18,7 @@ export async function POST(req = NextApiRequest){
                 poNumber: item.order.poNumber, 
                 weight: item.styleV2.sizes.filter(s=> s.name.toLowerCase() == item.sizeName.toLowerCase())[0].weight, 
                 selectedShipping: { provider: "usps", name: "USPS_GROUND_ADVANTAGE"}, dimensions: {width: 8, length: 11, height: 1}, 
-                businessAddress: JSON.parse(process.env.businessAddress),
+                businessAddress: order.user.addresses[0] ? order.user.addresses[0] : { name: "Print Oracle", address1: "21440 Melorose Ave", address2: "suit 100", city: "Southfield", state: "MI", zip: "48075", country: "US" }, ,
                 ignoreBadAddress: false,
                 providers: ["usps", "fedex"],
                 credentials: {
