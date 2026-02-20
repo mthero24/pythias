@@ -242,11 +242,11 @@ export async function purchaseFedexNew ({address, businessAddress,weight, dimens
       console.log(body.requestedShipment.shipper.address, "shipper")
       // if(!body.shipmentSpecialServices) body.shipmentSpecialServices = {}
       if((selectedShipping.packaging == "FEDEX_PAK" || selectedShipping.packaging == "FEDEX_ENVELOPE") && selectedShipping.name == "FEDEX_2DAY" && saturdayDelivery){
-          body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE", "SATURDAY_DELIVERY"]
+        body.requestedShipment.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE", "SATURDAY_DELIVERY"]
       }
       else if((selectedShipping.packaging == "FEDEX_PAK" || selectedShipping.packaging == "FEDEX_ENVELOPE") && selectedShipping.name == "FEDEX_2DAY" && !saturdayDelivery){
-          body.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE"]
-      }else if(saturdayDelivery) body.shipmentSpecialServices.specialServiceTypes = ["SATURDAY_DELIVERY"]
+        body.requestedShipment.shipmentSpecialServices.specialServiceTypes = ["FEDEX_ONE_RATE"]
+      } else if (saturdayDelivery) body.requestedShipment.shipmentSpecialServices.specialServiceTypes = ["SATURDAY_DELIVERY"]
       let options = {
         headers: {
             Authorization: `Bearer ${token}`,
