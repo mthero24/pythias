@@ -196,7 +196,7 @@ const addPriceToItem = async ()=>{
     console.log("done updating prices")
 }
 export default async function Test(){
-   //await pullOrders();
+   //pullOrders();
     //addPriceToItem();
     return <h1>test</h1>
 }
