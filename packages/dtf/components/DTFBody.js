@@ -244,6 +244,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                         {Object.keys(submitted.images).map(im=>(
                           <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%", margin: "2%"}}>
                             <Box sx={{display: "flex", flexDirection: "column",width: "50%", background: "#e2e2e2", padding: "1%", alignItems: "center", alignContent: "center", justifyContent: "center", borderRight: "1px solid #000"}}>
+                              <Typography variant="h6" sx={{display: "block", color: "#000", marginBottom: "10px", fontSize: "1.2rem", fontWeight: "bold"}}>{im}</Typography>
                               <img
                                   width={500}
                                   alt={`${im}`}
@@ -255,7 +256,7 @@ export function DTFBody({auto, setAuto, printer, type}){
                                     background: "#e2e2e2",
                                     height: "auto"
                                   }}
-                                src={createImage(submitted.colorName, submitted.styleCode ? submitted.styleCode : submitted.blankCode, {url: submitted.images[im], side: im == "back" || im == "namePlate"? "back": "front", printArea: im}, 400, submitted.source)}
+                                src={createImage(submitted.colorName, submitted.styleCode ? submitted.styleCode : submitted.blankCode, {sku: submitted.designSku, url: submitted.images[im], side: im == "back" || im == "namePlate"? "back": "front", printArea: im}, 400, submitted.source)}
                               />
                             </Box>
                             <Box sx={{ display: "flex", flexDirection: "column", width: "50%", background: "#e2e2e2", padding: "1%", alignItems: "center", alignContent: "center", justifyContent: "center" }}>
