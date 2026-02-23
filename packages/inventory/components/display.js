@@ -3,6 +3,7 @@ import { Box, Grid2, Typography, Button, Modal, Card, CardContent, CardActions, 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from "axios";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import DeleteIcon from '@mui/icons-material/Delete';
 export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, setItems}){
     const [orders, setOrders] = useState([])
     const [check,setCheck] = useState(false)
@@ -120,7 +121,20 @@ export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, set
                                                             <Typography>{l.name}</Typography>
                                                         </Grid2>
                                                         <Grid2 size={1}>
-                                                            <ArrowDropDownIcon sx={{ cursor: "pointer" }} onClick={() => {setOpen(i._id.toString()); console.log(i.inventory.orders, "orders")}} />
+                                                            {!edit && <ArrowDropDownIcon sx={{ cursor: "pointer" }} onClick={() => {setOpen(i._id.toString()); console.log(i.inventory.orders, "orders")}} />}
+                                                            {edit && orderEdit == o._id.toString() ? <DeleteIcon sx={{ cursor: "pointer" }} onClick={async () => {
+                                                                let o = orders.filter(or => or._id.toString() == orderEdit)[0]
+                                                                let lo = o.locations.filter(loc => loc._id.toString() == l._id.toString())[0]
+                                                                lo.items = lo.items.filter(itm => itm._id.toString() != i._id.toString())
+                                                                setOrders([...orders.filter(or => or._id.toString() != orderEdit), o])
+                                                                // Here you would also want to send this update to the server to persist the change
+                                                                let res = await axios.post("/api/admin/inventory/create-order/edit", { orderId: o._id, items: o.locations }).catch(e => { alert("something went wrong deleting item, please refresh and try again") })
+                                                                if (res && res.data && res.data.error == false) {
+                                                                    console.log("item deleted successfully")
+                                                                } else {
+                                                                    alert("something went wrong deleting item, please refresh and try again")
+                                                                }
+                                                            }} /> : null}
                                                         </Grid2>
                                                         {open == i._id.toString() && i.inventory.orders?.filter(or => or.order.toString() == o._id.toString()).map((or, index) => (
                                                             <Grid2 key={index} size={12}>
