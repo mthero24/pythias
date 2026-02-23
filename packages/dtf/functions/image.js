@@ -12,7 +12,7 @@ export const createImage = (colorName, styleCode, options, width=700, source) =>
         url = `https://imperial.pythiastechnologies.com/api/renderImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.jpg?blank=${styleCode}&colorName=${colorName}&design=${options.url}${options.printArea ? `&side=${options.printArea}` : ""}&width=${width}`;
         
     } else if (source == "PP") {
-        url = `https://simplysage.pythiastechnologies.com/api/renderImages/SKU--${colorName.toLowerCase()}-${styleCode.toLowerCase()}-${side}.jpg?blank=${styleCode}&colorName=${colorName}&design=${options.url}${options.printArea ? `&side=${options.printArea}` : ""}&width=${width}`;
+        url = `https://simplysage.pythiastechnologies.com/api/renderImages/${options.sku ? options.sku : "SKU"}-${styleCode.toLowerCase()}-${colorName.toLowerCase()}-${side}.jpg?blank=${styleCode}&colorName=${colorName}&design=${options.url}${options.printArea ? `&side=${options.printArea}` : ""}&width=${width}`;
 
     } else{
         if (options.url) {

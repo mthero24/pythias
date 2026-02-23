@@ -111,7 +111,7 @@ export async function GET(req) {
     let base = req.url.split("/")[req.url.split("/").length - 1].split(".")[0].replace(/%20/g, " ")
     let params = base.split("-")
     let width = parseInt(req.nextUrl.searchParams.get("width"))
-    let designImage
+    let designImage = req.nextUrl.searchParams.get("design")
     let blankImage
     let type
     let sides = params && params[4] ? params[4].split("_") : []
@@ -123,7 +123,7 @@ export async function GET(req) {
         console.log(designImage, "design image")
         let blank = await Blank.findOne({ code: params[1].replace(/_/g, "-") }).populate("colors").lean()
         if (!blank) blank = await Blank.findOne({ code: params[1] }).populate("colors").lean()
-        console.log(blank.images.filter(i => i.image.includes(params[2])), "blank")
+        //console.log(blank.images.filter(i => i.image.includes(params[2])), "blank")
         blankImage = blank?.images?.filter(i => i.image.includes(params[2]))[0]
         type = "images"
         if (blankImage == undefined) {
