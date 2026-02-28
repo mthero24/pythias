@@ -11,7 +11,7 @@ export function productMain({inventory, q, totalCount, p, blanks, fils}) {
     const [page, setPage] = useState(p || 1)
     const [editing, setEditing] = useState(null)
     console.log(fils, typeof fils)
-    const [filterOpen, setFilterOpen] = useState(typeof fils == "string" ? true : false)
+    const [filterOpen, setFilterOpen] = useState(typeof fils == "string" || typeof fils == "object" ? true : false)
     const [filters, setFilters] = useState(typeof fils == "string" ? JSON.parse(fils) : typeof fils == "object" ? fils : { })
     const [invs, setInventory] = useState(inventory || [])
     console.log(filters, typeof filters, "filters")
