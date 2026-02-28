@@ -1,4 +1,4 @@
-import { Nightlife } from "@mui/icons-material";
+
 import { Design, SkuToUpc, SkuToUpcOld, Blank, Color, Size, Products, marketPlaces, ApiKeyIntegrations, Inventory, ProductInventory, Items, Order, LicenseHolders, Converters } from "@pythias/mongo"
 import axios from "axios";
 import { pullOrders, updateInventory} from "@/functions/pullOrders"
@@ -195,8 +195,35 @@ const addPriceToItem = async ()=>{
     }
     console.log("done updating prices")
 }
+let inventoryFixer = async () => {
+    let inventories = await ProductInventory.find({}).populate("blank color").limit(1000)
+    let skip = 1000
+    while (inventories.length > 0) {
+        for (let inventory of inventories) {
+            console.log(inventory.sku, "fixing inventory")
+            let design = await Design.findOne({ sku: inventory.sku.split("_").slice(3, inventory.sku.split("_").length).join("_") })
+            if (design) {
+                inventory.design = design._id
+                inventory.designSku = design.sku
+            }
+            let size = inventory.blank?.sizes.find(s => s._id.toString() === inventory.size.toString() || s.name == inventory.sku.split("_")[2])
+            if (size) {
+                inventory.size = size._id
+                inventory.sizeName = size.name
+            }
+            inventory.colorName = inventory.color.name
+            inventory.blankCode = inventory.blank?.code
+            inventory.quantity = inventory.quantity || 0
+            await inventory.save()
+        }
+        inventories = await ProductInventory.find({}).populate("blank color").skip(skip).limit(1000)
+        console.log(skip, "skipped")
+        skip += 1000
+    }
+}
 export default async function Test(){
    //pullOrders();
     //addPriceToItem();
+    //inventoryFixer();
     return <h1>test</h1>
 }

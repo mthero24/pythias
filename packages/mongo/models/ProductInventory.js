@@ -3,6 +3,7 @@ import { PremierPrinting } from "../lib/connection";
 const Schema = mongoose.Schema;
 import Color from "./Color";
 import Blank from "./Blanks"
+import Design from "./Design"
 const SchemaObj = new Schema({
     quantity: { type: Number, required: true, default: 0 },
     order_at_quantity: { type: Number, required: true, default: 0 },
@@ -13,6 +14,11 @@ const SchemaObj = new Schema({
     color: { type: mongoose.Schema.Types.ObjectId, ref: Color, },
     blank: { type: mongoose.Schema.Types.ObjectId, ref: Blank,},
     size: { type: mongoose.Schema.Types.ObjectId, },
+    design: { type: mongoose.Schema.Types.ObjectId, ref: Design,},
+    sizeName: String,
+    colorName: String,
+    blankCode: String,
+    designSku: String,
     unit_cost: {type: Number, default: 0},
     location: String,
     sku: {type: String},

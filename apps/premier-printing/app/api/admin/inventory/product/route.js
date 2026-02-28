@@ -5,7 +5,7 @@ import { ProductInventory, Products as Product } from "@pythias/mongo";
 export async function POST(req = NextApiRequest,) {
     try {
         let body = await req.json();
-        let product = await Product.findById(body.productId).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" });
+        let product = await Product.findById(body.productId).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory variantsArray.color variantsArray.threadColor variantsArray.blank").populate({ path: "blanks", populate: "colors" });
         if (!product) {
             return NextResponse.json({ error: true, message: "Product not found" });
         }
@@ -21,6 +21,11 @@ export async function POST(req = NextApiRequest,) {
                     color: variant.color,
                     blank: variant.blank,
                     size: variant.size,
+                    design: product.design,
+                    sizeName: variant.blank.sizes.find(s => s._id.toString() === variant.size.toString())?.name || "",
+                    colorName: variant.color.name,
+                    blankCode: variant.blank.code,
+                    designSku: product.design.sku,
                     unit_cost: variant.unit_cost,
                     location: variant.location,
                     sku: variant.sku

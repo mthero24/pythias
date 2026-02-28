@@ -3,12 +3,12 @@ import {Item as Items} from "@pythias/mongo";
 import Color from "@/models/Color"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
-const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, style, item, source)=>{
-    let styleImage = style.multiImages.front?.filter(i=> i.color == item.color.toString())[0]
+const getImages = async (item, source)=>{
+    let styleImage = item.blank.blankImages.front?.filter(i=> i.color == item.color.toString())[0]
     if(!styleImage){
         let color = await Color.findOne({name: item.colorName, _id: {$ne: item.color}})
         if(color){
-            styleImage = style.multiImages.front.filter(i=> i.color == color._id.toString())[0]
+            styleImage = item.blank.multiImages.front.filter(i=> i.color == color._id.toString())[0]
             if(styleImage) {
                 item.color = color
                 item = await item.save()
@@ -41,7 +41,7 @@ export async function GET(req) {
     let pieceID
     let item
     if( req.nextUrl.searchParams.get("pieceID")) pieceID = req.nextUrl.searchParams.get("pieceID")
-    if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("blank", "code sizes multiImages")
+    if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("blank", "code sizes multiImages").populate("designRef", "sku")
     console.log(item)
     if(item){
         console.log(item)
@@ -60,13 +60,14 @@ export async function GET(req) {
 
             console.log(item, "item");
             // console.log(style)
-            const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
+            const result = await getImages(item)
             return NextResponse.json( {error: false,
                 msg: "here is the design",
                 pieceID: item.pieceId,
                 ...result,
                 item,
                 images: item.design,
+                designSku: item.designRef?.sku,
                 type: "new",
                 source: "PP",
             })
@@ -86,7 +87,7 @@ export async function POST(req = NextApiRequest) {
     console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
-    }).populate("blank", "code envelopes box sizes multiImages")
+    }).populate("blank", "code envelopes box sizes multiImages images").populate("designRef", "sku")
     console.log(item, "item", item.color, "item color")
     if (item && !item.canceled && !item.dtfScan) {
         item.dtfScan = true
@@ -123,9 +124,9 @@ export async function POST(req = NextApiRequest) {
         await item.save()
         return NextResponse.json({
             error: false, msg: "added to que", ...result, item,
-            images: item.design, type: "new", source: "PP" });
+            images: item.design, designSku: item.designRef?.sku, type: "new", source: "PP" });
     }else if (item && item.canceled) {
-        return NextResponse.json({ error: true, msg: "item canceled", design: item.design });
+        return NextResponse.json({ error: true, msg: "item canceled", design: item.design, designSku: item.designRef?.sku });
     }else if (item && item.dtfScan) {
         item.dtfScan = false
         await item.save()
