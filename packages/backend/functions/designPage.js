@@ -3,11 +3,11 @@ import { serialize } from "./serialize";
 export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocations, Design, Products, Blank, MarketPlaces, Genders, Seasons, SportUsedFor, Themes, ProductImages, PrintTypes})=>{
     let colors = await Color.find({});
     for (let color of colors) {
-        if (!color.sku) {
-            if (color.name.includes("Plaid")) {
+        if (!color.sku && color.name) {
+            if (color.name?.includes("Plaid")) {
                 color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").replace("top", "").replace(/black/g, "bl").replace("plaid", "pl").replace(/white/g, "wh").replace("red", "re").substring(0, 7)
             }
-            else color.sku = color.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").substring(0, 7)
+            else color.sku = color.name?.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").substring(0, 7)
             color = await color.save()
         }
     }
