@@ -3,34 +3,6 @@ import {Item as Items} from "@pythias/mongo";
 import Color from "@/models/Color"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
-const getImages = async (item, source)=>{
-    let styleImage = item.blank.blankImages.front?.filter(i=> i.color == item.color.toString())[0]
-    if(!styleImage){
-        let color = await Color.findOne({name: item.colorName, _id: {$ne: item.color}})
-        if(color){
-            styleImage = item.blank.multiImages.front.filter(i=> i.color == color._id.toString())[0]
-            if(styleImage) {
-                item.color = color
-                item = await item.save()
-            }
-        }
-    }
-    console.log(styleImage)
-    let frontDesign = front 
-    let backDesign = back
-    let upperSleeveDesign = upperSleeve
-    let lowerSleeveDesign = lowerSleeve
-    let centerDesign = center
-    let pocketDesign = pocket
-    let frontCombo
-    let backCombo
-    let upperSleeveCombo
-    let lowerSleeveCombo
-    let centerCombo
-    let pocketCombo
-    styleImage=styleImage?.image
-    return  {frontDesign, backDesign, upperSleeveDesign, lowerSleeveDesign, pocketDesign, centerDesign, styleImage, styleCode: style.code, colorName: item.colorName, frontCombo, backCombo, upperSleeveCombo, lowerSleeveCombo, centerCombo, pocketCombo}
-}
 export async function GET(req) {
     let config = JSON.parse(process.env.dtf);
     console.log(config)
@@ -60,11 +32,11 @@ export async function GET(req) {
 
             console.log(item, "item");
             // console.log(style)
-            const result = await getImages(item)
             return NextResponse.json( {error: false,
                 msg: "here is the design",
                 pieceID: item.pieceId,
-                ...result,
+                styleCode: item.blank.code, 
+                colorName: item.colorName,
                 item,
                 images: item.design,
                 designSku: item.designRef?.sku,
@@ -120,10 +92,10 @@ export async function POST(req = NextApiRequest) {
             status: "DTF Load",
             date: new Date(),
           });
-        const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
         await item.save()
         return NextResponse.json({
-            error: false, msg: "added to que", ...result, item,
+            error: false, msg: "added to que", styleCode: item.blank.code,
+            colorName: item.colorName, item,
             images: item.design, designSku: item.designRef?.sku, type: "new", source: "PP" });
     }else if (item && item.canceled) {
         return NextResponse.json({ error: true, msg: "item canceled", design: item.design, designSku: item.designRef?.sku });
