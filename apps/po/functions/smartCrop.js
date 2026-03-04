@@ -45,7 +45,8 @@ export async function smartCrop(imageUrl) {
   const normalizedX = x / originalWidth;
   const normalizedY = y / originalHeight;
 
-  const scale = trimmedWidth / originalWidth;
+  const scaleX = trimmedWidth / originalWidth;
+  const scaleY = trimmedHeight / originalHeight;
 
   // Convert trimmed buffer to base64
   const base64 = `data:image/png;base64,${trimmedBuffer.toString('base64')}`;
@@ -53,7 +54,8 @@ export async function smartCrop(imageUrl) {
   return {
     x: normalizedX,
     y: normalizedY,
-    scale,
+    scaleX,
+    scaleY,
     trimmedWidth,
     trimmedHeight,
     originalWidth,
