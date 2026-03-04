@@ -87,6 +87,21 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             }
         }
     }
+    for(let key of Object.keys(imgs)){
+        for(let key2 of Object.keys(imgs[key])){
+            if(threadColors){
+                for(let key3 of Object.keys(imgs[key][key2])){
+                    if(product.variantSecondaryImages && product.variantSecondaryImages[key] && product.variantSecondaryImages[key][key2] && product.variantSecondaryImages[key][key2][key3]){
+                        product.variantSecondaryImages[key][key2][key3] = product.variantSecondaryImages[key][key2][key3].filter(i => imgs[key][key2][key3].find(si => si.image == i.image))
+                    }
+                }
+            }else{
+                if(product.variantSecondaryImages && product.variantSecondaryImages[key] && product.variantSecondaryImages[key][key2]){
+                    product.variantSecondaryImages[key][key2] = product.variantSecondaryImages[key][key2].filter(i => imgs[key][key2].find(si => si.image == i.image))
+                }
+            }
+        }
+    }
     return (
         <>
             {!threadColors && Object.keys(imgs).length > 0 && Object.keys(imgs).map((b, i) => (

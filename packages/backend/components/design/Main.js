@@ -107,8 +107,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
         //setLoading(false);
     };
     
-    let updateDesign = async (des)=>{
-        let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
+    let updateDesign = async (des, oldSku)=>{
+        let res = await axios.put("/api/admin/designs", {design: {...des}, oldSku}).catch(e=>{console.log(e.response.data); res = e.response})
         if(res?.data?.error) alert(res.data.msg)
     }
     const tagUpdate = (val)=>{
@@ -119,9 +119,13 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     }
     let updateTitleSku =(key)=>{
         let d = {...des};
+        let oldSku
+        console.log(key, "key", des[key])
+        if (key == "sku") oldSku = des[key]
         d[key] = event.target.value;
+        console.log(oldSku, "old sku", d.sku, "new sku")
         setDesign({...d})
-        updateDesign({...d})
+        updateDesign({...d}, oldSku)
     }
 
     const deleteDesignImage = ({location, threadColor})=>{

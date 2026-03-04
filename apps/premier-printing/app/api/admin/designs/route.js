@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import {Design} from "@pythias/mongo";
+import {Design, Products} from "@pythias/mongo";
 import { headers } from 'next/headers'
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
@@ -65,6 +65,58 @@ export async function PUT(req=NextApiRequest){
     let data = await req.json()
     console.log(data.design.sendToMarketplaces, "send to market places ++++++++++++++++++++++++")
     try{  
+        if(data.oldSku && data.oldSku != data.design.sku){
+            console.log("updating products with new sku", data.oldSku, data.design.sku)
+            let products = await Products.find({design: data.design._id})
+            if(products.length > 0){
+                console.log("products found with design, updating skus", products.length)
+                for(let product of products){
+                    for(let image of product.productImages){
+                        image.image = image.image.replace(data.oldSku, data.design.sku)
+                        image.sku = image.sku.replace(data.oldSku, data.design.sku)
+                    }
+                    let newVariantImages = {}
+                    for(let key of Object.keys(product.variantImages)){
+                        newVariantImages[key] = {}
+                        for(let key2 of Object.keys(product.variantImages[key])){
+                            newVariantImages[key][key2] = {}
+                            newVariantImages[key][key2].image = product.variantImages[key][key2].image.replace(data.oldSku, data.design.sku)
+                            newVariantImages[key][key2].sku = product.variantImages[key][key2].sku.replace(data.oldSku, data.design.sku)
+                        }
+                    }
+                    product.variantImages = newVariantImages
+                    let  newVariantSecondaryImages = {}
+                    for (let key of Object.keys(product.variantSecondaryImages)) {
+                        newVariantSecondaryImages[key] = {}
+                        for (let key2 of Object.keys(product.variantSecondaryImages[key])) {
+                            newVariantSecondaryImages[key][key2] = []
+                            for(let image of product.variantSecondaryImages[key][key2]){
+                                image.image = image.image.replace(data.oldSku, data.design.sku)
+                                image.sku = image.sku.replace(data.oldSku, data.design.sku)
+                                newVariantSecondaryImages[key][key2].push(image)
+                            }
+                        }
+                    }
+                    product.variantSecondaryImages = newVariantSecondaryImages
+                    product.sku = product.sku.replace(data.oldSku, data.design.sku)
+                    if(product.variantsArray.length > 0){
+                        for(let variant of product.variantsArray){
+                            variant.sku = variant.sku.replace(data.oldSku, data.design.sku)
+                            variant.image = variant.image.replace(data.oldSku, data.design.sku)
+                            let newImages = []
+                            for (let image of variant.images) {
+                                image = image.replace(data.oldSku, data.design.sku)
+                                newImages.push(image)
+                            }
+                            variant.images = newImages
+                        }
+                    }
+                    product.markModified("variantsArray variantsArray.images variantImages images sku variantSecondaryImages")
+                    await product.save()
+                }
+            }
+        }
+        else console.log("skus are the same, no need to update products")
         let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
         design = await Design.findOne({_id: design._id}).populate("blanks.blank blanks.colors blanks.defaultColor")
         return NextResponse.json({error: false, design})
