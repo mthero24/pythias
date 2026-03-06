@@ -407,6 +407,50 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
           setFilter()
         }
     }
+    const printBlanks = async (type) => {
+      setLoading(true)
+      let items = [];
+      console.log(source, "source")
+        
+      items.push(...useLabels[type].filter(l=> l.isBlank == true));
+      console.log(items.length, "items length")
+      items = Sort(items, source);
+      console.log(items.length, "items length")
+      let res = await axios.post("/api/production/print-labels", { items })
+      console.log(res.data)
+      if (res.data.error) alert(res.data.msg)
+      else {
+        setLoading(false)
+        setLabels(res.data.labels);
+        setBatches(res.data.batches);
+        setGiftLabels(res.data.giftMessages)
+        setRePulls(res.data.rePulls)
+        setSelected([])
+        setFilter()
+      }
+    }
+  const printReturns = async (type) => {
+    setLoading(true)
+    let items = [];
+    console.log(source, "source")
+
+    items.push(...useLabels[type].filter(l => l.inventory && l.inventory.inventoryType == "productInventory"));
+    console.log(items.length, "items length")
+    items = Sort(items, source);
+    console.log(items.length, "items length")
+    let res = await axios.post("/api/production/print-labels", { items })
+    console.log(res.data)
+    if (res.data.error) alert(res.data.msg)
+    else {
+      setLoading(false)
+      setLabels(res.data.labels);
+      setBatches(res.data.batches);
+      setGiftLabels(res.data.giftMessages)
+      setRePulls(res.data.rePulls)
+      setSelected([])
+      setFilter()
+    }
+  }
     const restorePrint = async (options)=>{
         let res = await axios.post("/api/production/print-labels/restore", options)
         console.log(res.data)
@@ -657,6 +701,28 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
                       }}
                     >
                       Deselect All {l}
+                    </Button>
+                    <Button
+                      onClick={() => { printBlanks(l) }}
+                      sx={{
+                        background: "#f2f2f2",
+                        margin: ".2%",
+                        color: "#000",
+                        "&:hover": { background: "#0079DC", color: "#fff" },
+                      }}
+                    >
+                      Print {l} Blanks
+                    </Button>
+                    <Button
+                      onClick={() => { printReturns(l) }}
+                      sx={{
+                        background: "#f2f2f2",
+                        margin: ".2%",
+                        color: "#000",
+                        "&:hover": { background: "#0079DC", color: "#fff" },
+                      }}
+                    >
+                      Print {l} Returns
                     </Button>
                   </Box>
                   <Box sx={{ padding: ".5%" }}>
