@@ -202,7 +202,6 @@ export const createImage = async (
 
     let finalBuffer = Buffer.from(data, "base64");
     let finalImage = sharp(finalBuffer);
-    await finalImage.toFile(`${size}.png`, (err, info) => { console.log(err, info) });
     let finalMetaData = await finalImage.metadata();
     console.log(finalMetaData.width / finalMetaData.density, "W inches");
     console.log(finalMetaData.height / finalMetaData.density, "H inches");
