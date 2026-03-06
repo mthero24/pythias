@@ -194,7 +194,7 @@ export async function GET(request, { params }) {
         whiteColorPause: false, // true or false
         whiteColorPauseSpan: 0, // 0-60
         highlight: 6, // 1-9
-        mask: 3, // 1-5
+        mask: 2, // 1-5
         transparent: false, // true or false
         LayerWhite2: false, // true or false
         inkVolume: 10, // 1-10
@@ -217,7 +217,7 @@ export async function GET(request, { params }) {
         Profile.brightness = 0;
         Profile.contrast = 5;
         Profile.highlight = 5;
-        Profile.mask = 3;
+        Profile.mask = 2;
     } else {
         //console.log(item.styleV2.profiles);
         if ((item.color ? item.color.color_type : "dark") == "dark") {
