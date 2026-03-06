@@ -3,6 +3,5 @@ import { NextApiRequest, NextResponse } from "next/server"
 
 export async function GET(req = NextApiRequest) {
     let blanks = await Style.find({}).populate("colors").populate("sizes")
-    console.log("blanks")
     return NextResponse.json({blanks})
 }
