@@ -82,7 +82,7 @@ export default async function Test(){
     // }
     // style.markModified("fold")
     // await style.save();
-    //updateInventory();
+    updateInventory();
     // let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
     // items = await Promise.all(items.map(async i=> {
     //     i.order = await Order.findOne({ _id: i.order });

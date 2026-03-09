@@ -3,7 +3,7 @@ import { getOrders, generatePieceID } from "@pythias/integrations";
 
 
 const CreateSku = async ({ blank, color, size, design, threadColor, designSku }) => {
-    let sku = `${blank.code}_${color.sku}_${size.name}${threadColor ? `_${threadColor}` : ""}${design ? `_${design.sku}` : ""}${!design && designSku ? `_${designSku}` : ""}`;
+    let sku = `${blank.code}_${color.sku}_${size.sku}${threadColor ? `_${threadColor}` : ""}${design ? `_${design.sku}` : ""}${!design && designSku ? `_${designSku}` : ""}`;
     return sku;
 }
 export const updateInventory = async ()=>{
@@ -243,7 +243,7 @@ export async function pullOrders(){
                         if(!color) color = blank?.colors.find(c => c.name.toLowerCase() === colorSku.toLowerCase())
                         if (!color) color = blank?.colors.find(c => c.name === colorSku)
                         if(!color) color = blank?.colors.find(c => c.name.toLowerCase() === colorFixer[colorSku]?.toLowerCase())
-                        let size = blank?.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName])
+                        let size = blank?.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName] || s.sku === sizeName || s.sku === sizeFixer[sizeName])
                         let design = await Design.findOne({sku: designSku})
                         if(!design) design = await Design.findOne({sku: designFixer[designSku]? designFixer[designSku]: designSku}) 
                         console.log(blank?.code, color?.name, size?.name, design?.sku, "found items")

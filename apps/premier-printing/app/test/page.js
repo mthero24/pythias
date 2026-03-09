@@ -8,7 +8,7 @@ import { style } from "@mui/system";
 import inventory from "@/models/inventory";
 
 const CreateSku = async ({blank, color, size, design, threadColor}) => {
-    let sku = `${blank.code}_${color.sku}_${size?.name}${threadColor ? `_${threadColor}` : ""}${design? `_${design.sku}`: ""}`;
+    let sku = `${blank.code}_${color.sku}_${size?.sku}${threadColor ? `_${threadColor}` : ""}${design && design.sku? `_${design.sku}`: ""}`;
     return sku;
 }
 
@@ -221,10 +221,45 @@ let inventoryFixer = async () => {
         skip += 1000
     }
 }
+const fixSkus = async () => {
+    console.log("fixing skus")
+    let products = await Products.find({}).populate("design").populate({ path: "blanks", populate: "colors" }).limit(1000)
+    let skip = 1000
+    while (products.length > 0) {
+        for (let product of products) {
+            for (let variant of product.variantsArray) {
+                console.log(variant.size)
+                let blank = product.blanks.find(b => b._id.toString() == variant.blank.toString())
+                let design = product.design
+                console.log(design?.sku, "design sku")
+                let color = blank?.colors.find(c => c._id.toString() == variant.color.toString())
+                if (!variant.size || !blank || !design || !design.sku || !color) continue;
+                let size = blank?.sizes.find(s => s._id.toString() == variant.size?.toString())
+                console.log(size)
+                let newSku = await CreateSku({ blank, color, size, design })
+                console.log(variant.sku, newSku)
+                variant.sku = newSku
+            }
+            product.markModified("variantsArray")
+            await product.save()
+        }
+        products = await Products.find({}).populate("design").populate({ path: "blanks", populate: "colors" }).skip(skip).limit(1000)
+        skip += 1000
+    }
+    console.log("done fixing skus")
+}
 export default async function Test(){
    //pullOrders();
     //addPriceToItem();
     //inventoryFixer();
-    
+    // let designs = await Design.find({sku: {$regex: "W_B"}})
+    // console.log(designs.length, "designs")
+    // for(let design of designs){
+    //    if(design.printType == "DTF"){
+    //         design.printType = "WDTF"
+    //         await design.save()
+    //    }
+    // }
+   //fixSkus();
     return <h1>test</h1>
 }

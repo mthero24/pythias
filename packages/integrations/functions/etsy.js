@@ -34,7 +34,6 @@ export const getToken = async (code, baseUrl) => {
             },
             { headers: requestOptions.headers }
         );
-        console.log(response.data);
         return response.data;
     } catch (e) {
 
@@ -44,7 +43,6 @@ export const getToken = async (code, baseUrl) => {
 };
 
 export const refreshToken = async (refreshToken) => {
-    console.log("refreshing token+++++++", refreshToken);
     const requestOptions = {
         headers: {
             "x-api-key": `${process.env.etsyApiKey}`,
@@ -86,10 +84,7 @@ export const generateRedirectURI = (baseURL) => {
     const codeChallenge = base64URLEncode(sha256(codeVerifier));
     const state = Math.random().toString(36).substring(7);
 
-    console.log(`State: ${state}`);
-    console.log(`Code challenge: ${codeChallenge}`);
-    console.log(`Code verifier: ${codeVerifier}`);
-    console.log(`Full URL: https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=http://localhost:3006/api/admin/integrations/etsy/oauth/redirect&scope=transactions_r%20email_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=480pxuspxi5wz93puk47snye&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`)
+    
     return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=http://localhost:3006/api/admin/integrations/etsy/oauth/redirect&scope=email_r%20transactions_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=480pxuspxi5wz93puk47snye&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
     //transactions_r%20email_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w
 };
@@ -128,7 +123,6 @@ const getShopShippingProfiles = async (credentials) => {
     let url = `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/shipping-profiles`;
     let errData
     let response = await axios.get(url, requestOptions).catch((err) => {
-        console.log(err.response.data)
         errData = err.response.data;
     });
     if(errData){
@@ -145,7 +139,6 @@ const getShopShippingProfiles = async (credentials) => {
                     },
                 };
                 let response = await axios.get(url, requestOptions).catch((err) => {
-                    console.log(err.response.data)
                     errData = err.response.data;
                 });
                 return {shippingProfiles: response.data, updatedCredentials: credentials};
@@ -204,7 +197,6 @@ const createShopShippingProfile = async (credentials) => {
             }
         }
     }
-    console.log(response.data);
     return {res: response.data, updatedCredentials2: credentials};
 };
 const getShopReturnPolicies = async (credentials) => {
@@ -218,7 +210,7 @@ const getShopReturnPolicies = async (credentials) => {
     let url = `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/policies/return`;
     let errData
     let response = await axios.get(url, requestOptions).catch((err) => {
-        console.log(err.response.data)
+        
         errData = err.response.data;
     });
     if (errData) {
@@ -251,7 +243,7 @@ const getRedinessStates = async (credentials) => {
     let url = `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/readiness-state-definitions`; 
     let errData
     let response = await axios.get(url, requestOptions).catch((err) => {
-        console.log(err.response.data)
+        
         errData = err.response.data;
     });
     if (errData) {
@@ -288,7 +280,6 @@ const createRedinessState = async (credentials) => {
         min_processing_time: 1,
         max_processing_time: 3,
     }, requestOptions).catch((err) => {
-        console.log(err.response.data)
         errData = err.response.data;
     });
     if (errData) {
@@ -309,7 +300,6 @@ const createRedinessState = async (credentials) => {
                     min_processing_time: 1,
                     max_processing_time: 3,
                 }, requestOptions).catch((err) => {
-                    console.log(err.response.data)
                     errData = err.response.data;
                 });
             }
@@ -319,18 +309,15 @@ const createRedinessState = async (credentials) => {
 }
 const createListing = async (product, returnPolicyId, shipping_profile_id, credentials) => {
     let {readinessStates, updatedCredentials} = await getRedinessStates(credentials);
-    console.log(readinessStates, "readinessStates+++++++");
     credentials = updatedCredentials;
     if (readinessStates.count == 0) {
         let {response, updatedCredentials2} = await createRedinessState(credentials);
         credentials = updatedCredentials2;
-        console.log(response, "response+++++++");
         let { readinessStates2, updatedCredentials } = await getRedinessStates(credentials);
         readinessStates = readinessStates2;
         credentials = updatedCredentials;
     }
     let taxonomy_id = 449; // default to mens tshirts
-    console.log(product.gender, product.blanks[0].department, product.blanks[0].category, "+++++++++++++");
     if (product.gender === "Male" && product.blanks[0].department == "Adult"){
         if(product.blanks[0].category == "T-Shirts")taxonomy_id = taxonomyIds.mensTshirts;
         if(product.blanks[0].category == "Tank Tops")taxonomy_id = taxonomyIds.mensTanks;
@@ -418,7 +405,6 @@ const createListing = async (product, returnPolicyId, shipping_profile_id, crede
     let url = `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/listings`;
     let errData
     let response = await axios.post(url, listing, requestOptions).catch((err) => {
-        console.log(err.response.data)
         errData = err.response.data;
     });
     if (errData) {
@@ -452,7 +438,6 @@ const getListingInventory = async (listing_id, credentials) => {
     let url = `https://openapi.etsy.com/v3/application/listings/${listing_id}/inventory?legacy=false`;
     let errData
     let response = await axios.get(url, requestOptions).catch((err) => {
-        console.log(err.response.data)
         errData = err.response.data;
     });
     if (errData) {
@@ -472,7 +457,6 @@ const getListingInventory = async (listing_id, credentials) => {
             }
         }
     }
-    console.log(response.data, response.data.products, "response data+++++++");
     return {getInventory: response.data, updatedCredentials2: credentials};
 };
 
@@ -516,17 +500,14 @@ const updateListing = async (
         if(!v.color.name) v.color = blank.colors.find(c => c._id.toString() === v.color.toString());
     }
     let { readinessStates, updatedCredentials } = await getRedinessStates(credentials);
-    console.log(readinessStates, "readinessStates+++++++");
     credentials = updatedCredentials;
     if (readinessStates.count == 0) {
         let { response, updatedCredentials2 } = await createRedinessState(credentials);
         credentials = updatedCredentials2;
-        console.log(response, "response+++++++");
         let { readinessStates2, updatedCredentials } = await getRedinessStates(credentials);
         readinessStates = readinessStates2;
         credentials = updatedCredentials;
     }
-    console.log("updateListing()", variants.length);
     const requestOptions = {
         headers: {
             "x-api-key": `${process.env.etsyApiKey}`,
@@ -541,10 +522,8 @@ const updateListing = async (
     
     for (let variant of variants) {
         if (variant.sku.length > 32) {
-            console.log("sku to long error", variant.sku, variant.sku.length);
             continue;
         }
-        console.log(variant.size, variant.color, "variant+++++++");
         let size_name = variant.size.name;
         size_name = variant.size.name.replace("SM", "S");
         size_name = variant.size.name.replace("LG", "L");
@@ -576,14 +555,14 @@ const updateListing = async (
                 order: 0,
             };
         }
-
+        //console.log(size, color, secondarySize, "size color secondarySize+++++++");
         if (size && color) {
             
-            let url = variant.image?.replace("400", "1200");
-            //console.log(url, "url");
+            let url = variant.image?.replace("width=400", "width=1200");
             if (!url) continue;
             if (!colorImageCompleted.includes(url) && i < 19) {
                 i++;
+                console.log(url, "url");
                 try {
                     // Get image buffer using axios
                     const response = await axios.get(url, {
@@ -592,7 +571,7 @@ const updateListing = async (
                     });
                     //console.log("Image fetched successfully", response.data, color.name);
                     let blob = await b64toBlob(response.data.toString('base64'), 'image/jpeg');
-                    console.log( "++++++++++++ ", i, "+++++++++++++++++++++" )
+                   // console.log( "++++++++++++ ", i, "+++++++++++++++++++++" )
                     // Create form data with the image buffer
                     let formData = new FormData();
                     formData.append("listing_id", listing_id);
@@ -617,7 +596,6 @@ const updateListing = async (
                             break;
                         } catch (e) {
                             console.log(e)
-                            console.log(`Retrying image upload (${3 - retries}/3)`);
                             if (retries === 0) {
                                 console.error(
                                     `Failed to upload image after 3 attempts: ${e.message}`,
@@ -632,9 +610,9 @@ const updateListing = async (
                     console.error(`Failed to process image: ${e.message}`, color.name);
                 }
                 if(variant.images && variant.images.length > 0){
-                    console.log("here+++++++", variant.images.length);
+                    //console.log("here+++++++", variant.images.length);
                     for(let url of variant.images){
-                        url = url.replace("400", "1200");
+                        url = url.replace("width=400", "width=1200");
                         if (!colorImageCompleted.includes(url) && i < 19) {
                             i++;
                             try {
@@ -719,7 +697,6 @@ const updateListing = async (
                     values: [`${color.name}`],
                 });
             }
-
             let inventoryItem = {
                 sku: variant.sku,
                 property_values: propertyValues,
@@ -747,7 +724,6 @@ const updateListing = async (
             });
             //console.log("Image fetched successfully", response.data, color.name);
             let blob = await b64toBlob(response.data.toString('base64'), 'image/jpeg');
-            console.log("++++++++++++ ", i, "+++++++++++++++++++++")
             // Create form data with the image buffer
             let formData = new FormData();
             formData.append("listing_id", listing_id);
@@ -813,7 +789,6 @@ export const updateListingFrom = async (listing_id, product, credentials)=> {
         credentials
     );
     credentials = updatedCredentials2;
-    console.log(getInventory, "getInventory+++++++");
     updateListing(
         credentials,
         listing_id,
@@ -875,13 +850,11 @@ export const createDraftListing = async (product, credentials) => {
         );
         let listing = response.listing;
         credentials = response.updatedCredentials;
-        console.log(listing, "listing created+++++++");
         let {getInventory, updatedCredentials2} = await getListingInventory(
             listing.listing_id,
             credentials
         );
         credentials = updatedCredentials2;
-        console.log(getInventory, "getInventory+++++++");
         updateListing(
             credentials,
             listing.listing_id,
@@ -900,13 +873,10 @@ const getTaxonomyId = async () => {
     };
     let url = `https://openapi.etsy.com/v3/application/seller-taxonomy/nodes`
     let response = await axios.get(url, requestOptions);
-    console.log(response.data.results.filter(r => r.name.toLowerCase().includes("clothing"))[0], "taxonomy ids+++++++++");
     let clothing = response.data.results.filter(r => r.name.toLowerCase().includes("clothing"))[0];
     let children = clothing.children;
     let mens = children.filter(c => c.name.toLowerCase().includes("women's clothing"))[0];
-    console.log(mens, "mens+++++++++");
     let womens = children.filter(c => c.name.toLowerCase().includes("women's clothing"))[0];
-    console.log(womens, "womens+++++++++");
 
 };
 const taxonomyIds ={
@@ -1011,7 +981,6 @@ const createItemVariant = async (variant, product, order) => {
             if (!item.inventory) item.inventory = {}
             item.inventory.inventoryType = "inventory"
             item.inventory.inventory = inventory._id
-            console.log(inventory.attached, "inventory to save")
         }
     }
     return item
@@ -1035,12 +1004,10 @@ export const fetchOrders = async (credentials) => {
         let refresh = await refreshToken(credentials.refreshToken);
         credentials.apiKey = refresh.access_token;
         credentials.refreshToken = refresh.refresh_token;
-        console.log(refresh);
         await credentials.save();
         let receipts = await getShopReceipts(
             credentials
         );
-        console.log(receipts.results)
     for (let etsy_order of receipts.results) {
         try {
           if (etsy_order.status == "Canceled") {
@@ -1048,8 +1015,6 @@ export const fetchOrders = async (credentials) => {
           }
           let order = await Order.findOne({poNumber: etsy_order["receipt_id"]})
           if (order) {
-            console.log("updating etsy shipping shipping_Info");
-            console.log(etsy_order["name"]);
             // let trackingDetails = getOrderTrackingDetails(order);
             // if (order && trackingDetails?.trackingNumber) {
             //   await etsyAPI.createReceiptShipment(
@@ -1060,8 +1025,6 @@ export const fetchOrders = async (credentials) => {
             //   );
             // }
           } else {
-            console.log("creating etsy order");
-            console.log(etsy_order.transactions)
             let items = []
             let order = await new Order({poNumber: etsy_order.receipt_id, shippingAddress: {
                     name: etsy_order["name"],
@@ -1077,7 +1040,6 @@ export const fetchOrders = async (credentials) => {
                 items = [...items, ...itms]
             }
             order.items = items
-            console.log(items.length, "items")
             await order.save()
           }
         } catch (err) {

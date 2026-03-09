@@ -105,6 +105,10 @@ export async function POST(req = NextApiRequest) {
   let newBlank
   try {
     console.log(blank.sizes, "blank data++++++")
+    for(let s of blank.sizes){
+      if(size.name.split(" ").length > 1)s.sku = s.name.split(" ").map(w => w[0]).join("")
+      else s.sku = s.name
+    }
     if (blank._id) {
       //console.log("update blank")
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)

@@ -45,6 +45,7 @@ const SchemaObj = new Schema(
         retailPrice: { default: 0, type: Number },
         basePrice: { default: 0, type: Number },
         cost: { default: 0, type: Number },
+        sku: String,
       },
     ],
     bulletPoints: [
