@@ -9,6 +9,7 @@ export function BlanksComponent({blanks, mPs, source}){
     const [blank, setBlank] = useState({})
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [marketplaceModal, setMarketplaceModal] = useState(false)
+    const [departments, setDepartments] = useState([...new Set(blanks.map(b => b.department).filter(d => d))])
     const handleSearch = ({ value }) => {
         //console.log(value);
         let filtered = blanks.filter(
@@ -33,6 +34,19 @@ export function BlanksComponent({blanks, mPs, source}){
                         sx={{background: "#ffffff"}}
                         onChange={(e) => handleSearch({ value: e.target.value })}
                     />
+                    <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
+                            {departments.map(d=>(
+                                <Grid2 item size={{ xs: 6, sm: 4, md: 3 }}>
+                                    <Card key={d} sx={{padding: "2%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",cursor: "pointer", background: "#f0f0f0"}} onClick={()=>{
+                                        if(blanks.filter(b => b.department == d).length > 0){
+                                            setVisibleBlanks(blanks.filter(b => b.department == d))
+                                        }
+                                    }}>
+                                        <Typography variant="h6">{d}</Typography>
+                                    </Card>
+                                </Grid2>
+                            ))}
+                    </Grid2>
                 </Box>
                 <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
                     {visibleBlanks.map((blank) => {

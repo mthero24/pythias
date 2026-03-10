@@ -106,11 +106,11 @@ export async function POST(req = NextApiRequest) {
   try {
     console.log(blank.sizes, "blank data++++++")
     for(let s of blank.sizes){
-      if(size.name.split(" ").length > 1)s.sku = s.name.split(" ").map(w => w[0]).join("")
+      if(s.name.split(" ").length > 1)s.sku = s.name.split(" ").map(w => w[0]).join("")
       else s.sku = s.name
     }
     if (blank._id) {
-      //console.log("update blank")
+      console.log("update blank")
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
       //console.log(blank.envelopes.length, "before fold")
       if (blank.sizes.length > 0) blank = updateFold(blank)
@@ -131,7 +131,8 @@ export async function POST(req = NextApiRequest) {
     }
     return NextResponse.json({error: false, blank: newBlank});
   } catch (err) {
-    return NextResponse.json(err.toString());
+    console.log(err);
+    return NextResponse.json({ error: true, message: err.toString() });
   }
 }
 export async function DELETE(req = NextApiRequest,) {
