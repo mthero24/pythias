@@ -15,6 +15,8 @@ const SchemaObj = new Schema(
   {
     name: { type: String, required: true },
     code: { type: String, unique: true, required: true },
+    type: { type: String, default: "single" },
+    blanks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blank" }],
     brand: String,
     active: { type: Boolean, default: true },
     suppliers: [{ type: String }],
