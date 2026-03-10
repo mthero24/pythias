@@ -10,6 +10,7 @@ export function BlanksComponent({blanks, mPs, source}){
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [marketplaceModal, setMarketplaceModal] = useState(false)
     const [departments, setDepartments] = useState([...new Set(blanks.map(b => b.department).filter(d => d))])
+    const [categories, setCategories] = useState([...new Set(blanks.map(b => b.category).flat().filter(c => c))])
     const handleSearch = ({ value }) => {
         //console.log(value);
         let filtered = blanks.filter(
@@ -34,10 +35,11 @@ export function BlanksComponent({blanks, mPs, source}){
                         sx={{background: "#ffffff"}}
                         onChange={(e) => handleSearch({ value: e.target.value })}
                     />
-                    <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
+                    <Box sx={{height: "13vh", overflow: "scroll"}} >
+                        <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
                             {departments.map(d=>(
-                                <Grid2 item size={{ xs: 6, sm: 4, md: 3 }}>
-                                    <Card key={d} sx={{padding: "2%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",cursor: "pointer", background: "#f0f0f0"}} onClick={()=>{
+                                <Grid2 item size={{ xs: 6, sm: 4, md: 2 }}>
+                                    <Card key={d} sx={{padding: "2%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",cursor: "pointer", background: "#ffffff", "&:hover":{background: "#e2e2e2"}}} onClick={()=>{
                                         if(blanks.filter(b => b.department == d).length > 0){
                                             setVisibleBlanks(blanks.filter(b => b.department == d))
                                         }
@@ -46,7 +48,20 @@ export function BlanksComponent({blanks, mPs, source}){
                                     </Card>
                                 </Grid2>
                             ))}
-                    </Grid2>
+                            {categories.map(c => (
+                                <Grid2 item size={{ xs: 6, sm: 4, md: 2 }}>
+                                    <Card key={c} sx={{ padding: "2%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", cursor: "pointer", background: "#ffffff", "&:hover":{background: "#e2e2e2"} }} onClick={() => {
+                                        if (blanks.filter(b => b.category.includes(c)).length > 0) {
+                                            setVisibleBlanks(blanks.filter(b => b.category.includes(c)))
+                                        }
+                                    }}>
+                                        <Typography variant="h6">{c}</Typography>
+                                    </Card>
+                                </Grid2>
+                            ))}
+                        </Grid2>
+                        
+                    </Box>
                 </Box>
                 <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
                     {visibleBlanks.map((blank) => {
