@@ -252,14 +252,7 @@ export default async function Test(){
    //pullOrders();
     //addPriceToItem();
     //inventoryFixer();
-    // let designs = await Design.find({sku: {$regex: "W_B"}})
-    // console.log(designs.length, "designs")
-    // for(let design of designs){
-    //    if(design.printType == "DTF"){
-    //         design.printType = "WDTF"
-    //         await design.save()
-    //    }
-    // }
+
    //fixSkus();
     return <h1>test</h1>
 }
