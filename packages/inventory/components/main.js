@@ -161,7 +161,7 @@ export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
                                             </Grid2>
                                             <Grid2 size={1}>
                                                 {console.log(i.orders)}
-                                                <Typography>{i.orders.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0)}</Typography>
+                                                <Typography>{i.orders?.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0)}</Typography>
                                             </Grid2>
                                             <Grid2 size={1}>
                                                 <Typography >{i.attached && i.attached.length > 0 ? i.attached.length : 0}</Typography>

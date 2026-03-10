@@ -92,7 +92,7 @@ let updateInventory = async (blank)=>{
         let inventory_id = encodeURIComponent(`${color.name}-${size.name}-${blank.code}`)
         let barcode_id= Math.floor(Math.random() * 999999)
         //console.log(inventory_id, barcode_id)
-        inv = new Inventory({blank: blank._id, style_code: blank.code, inventory_id, barcode_id, color: color._id, color_name: color.name, sizeId: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,})
+        inv = new Inventory({blank: blank._id, style_code: blank.code, inventory_id, barcode_id, color: color._id, color_name: color.name, sizeId: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1, orders: [], attached: [], inStock: []})
         //console.log(inv.inventory_id, inv.barcode_id)
         await inv.save()
       }
