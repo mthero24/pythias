@@ -26,11 +26,11 @@ export async function LabelsData(){
         let bulkId = generatePieceID()
         let skus = [] 
         for(let i of o.items){
-           if(!skus.includes(i.sku)) skus.push(i.sku)
+           if(!skus.includes(i.sku) && i.canceled == false) skus.push(i.sku)
         }
         for(let s of skus){
             let bulkId = generatePieceID()
-            let items = o.items.filter(it=> it.sku == s)
+            let items = o.items.filter(it=> it.sku == s && it.canceled == false)
             for(let it of items){
                 it.bulkId = bulkId
                 await it.save()
