@@ -94,8 +94,8 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                 product.description = `${design.description}-${product.blanks[0].description}`
                             }
                             let variants = {};
-                            let printType = printTypes.filter(pt => pt.name == product.design.printType)[0];
-                            let license = licenses.filter(l => l.name == design.license)[0];
+                            let printType = printTypes?.filter(pt => pt.name == product.design?.printType)[0];
+                            let license = licenses?.filter(l => l.name == design.license)[0];
                             if (product.threadColors?.length > 0) {
                                 for (let d of Object.keys(design.threadImages).filter(d => product.threadColors.find(t => t.name == d))) {
                                     for (let blank of product.blanks) {

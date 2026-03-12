@@ -8,7 +8,7 @@ import Items from "@/models/Items";
 import Order from "@/models/Order";
 import { addItemsToInventory } from "@/functions/addItemsToInventory";
 const updateInventory = async (invIds) => {
-    let inventories = await Inventory.find({ }).select("style_code _id")
+    let inventories = await Inventory.find({style_code: "AT" }).select("style_code _id")
     inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
     console.log(inventories.length, "inventories")
     let total = 0

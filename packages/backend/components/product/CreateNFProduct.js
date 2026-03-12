@@ -148,7 +148,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                             setStage("Select Images");
                                         }}>
                                            <Box>
-                                                <img src={`${blank.images[0].image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={blank.name} style={{ width: "100%", height: "200px", objectFit: "contain" }} />
+                                                <img src={`${blank.images[0]?.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={blank.name} style={{ width: "100%", height: "200px", objectFit: "contain" }} />
                                                 {/* {fontImages.length > 0 && (
                                                     <img src={`${fontImages[0].image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin")}?width=200`} alt={blank.name} style={{ width: "100%", height: "200px", objectFit: "contain" }} />
                                                 ) }

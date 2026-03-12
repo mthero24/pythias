@@ -12,19 +12,19 @@ export function BulkMain({orders}){
         console.log("printing order", order);
         let bulkItems = [];
         let bulkIds = [];
-        for(let i of order.items){
+        for(let i of order.items.filter(item => item.canceled == false)){
             if(i.bulkId && !bulkIds.includes(i.bulkId)){
                 bulkIds.push(i.bulkId)
             }
         }
         for(let bulkId of bulkIds){
-            let items = order.items.filter(it=> it.bulkId == bulkId)
-            if(items[0].type !== "sublimation"){
+            let items = order.items.filter(it=> it.bulkId == bulkId && it.canceled == false)
+            if(items.length > 0 && items[0].type !== "sublimation"){
                 bulkItems.push({
                     bulkId,
                     inventory: items[0].inventory.inventory,
                     quantity: items.length,
-                    totalQuantity: order.items.length,
+                    totalQuantity: order.items.filter(item => item.canceled == false).length,
                     blankCode: items[0].styleCode,
                     colorName: items[0].colorName,
                     sizeName: items[0].sizeName,
@@ -68,10 +68,12 @@ export function BulkMain({orders}){
                 {orders.map((order, index)=>{
                     let bulkIds = []
                     for(let i of order.items){
-                        if(i.bulkId && !bulkIds.includes(i.bulkId)){
+                        if(i.bulkId && !bulkIds.includes(i.bulkId) && i.canceled == false){
                             bulkIds.push(i.bulkId)
                         }
+                        else console.log("no bulk id", i.bulkId, i._id)
                     }
+                    console.log(bulkIds)
                     return (
                         <Grid2 container key={order._id} spacing={2} sx={{ borderBottom: "1px solid #eee", padding: 2, background: index % 2 == 0 ? "#efefef": "#fff" }}>
                             <Grid2  size={2}>
@@ -81,13 +83,13 @@ export function BulkMain({orders}){
                                 <Typography variant="h6" textAlign={"center"}>{order.poNumber}</Typography>
                             </Grid2>
                             <Grid2  size={2}>
-                                <Typography variant="h6" textAlign={"center"}>{order.items.length}</Typography>
+                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => item.canceled == false).length}</Typography>
                             </Grid2>
                             <Grid2  size={2}>
-                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString()) || item.type == "sublimation").length}</Typography>
+                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => (item.inventory?.inventory?.inStock.includes(item._id.toString()) || item.type == "sublimation") && item.canceled == false).length}</Typography>
                             </Grid2>
                             <Grid2  size={2}>
-                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => !item.inventory?.inventory?.inStock.includes(item._id.toString()) && item.type != "sublimation").length}</Typography>
+                                <Typography variant="h6" textAlign={"center"}>{order.items.filter(item => !item.inventory?.inventory?.inStock.includes(item._id.toString()) && item.type != "sublimation" && item.canceled == false).length}</Typography>
                             </Grid2>
                             <Grid2 size={1}>
                                 {<Button variant="contained" color="success" onClick={() => print(order)}>Print</Button>}
@@ -122,7 +124,7 @@ export function BulkMain({orders}){
                                             </Grid2>
                                         </Grid2>
                                         {bulkIds.map(bulkId=>{
-                                            let items = order.items.filter(i=> i.bulkId == bulkId)
+                                            let items = order.items.filter(i=> i.bulkId == bulkId && i.canceled == false)
                                             console.log(items[0]?.inventory?.inventory)
                                             return (
                                                 <Grid2 container key={bulkId} spacing={2} sx={{borderBottom: "1px solid #eee", padding: 1, marginBottom: 2}}>
@@ -130,19 +132,19 @@ export function BulkMain({orders}){
                                                         <Typography variant="h6" textAlign={"center"}>{bulkId}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={3}>
-                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0].type == "sublimation" ? items[0].sku: items[0].inventory?.inventory?.inventory_id}`}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0] && items[0].type && items[0].type == "sublimation" ? items[0].sku: items[0] && items[0].inventory?.inventory?.inventory_id}`}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={1}>
                                                         <Typography variant="h6" textAlign={"center"}>{items.length}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={1}>
-                                                        <Typography variant="h6" textAlign={"center"}>{items[0].type == "sublimation" ? items.length : items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{items[0] && items[0].type && items[0].type == "sublimation" ? items.length : items.filter(item => item.inventory?.inventory?.inStock.includes(item._id.toString())).length}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={2}>
                                                         <Typography variant="h6" textAlign={"center"}>{items.filter(item => item.inventory?.inventory?.attached.includes(item._id.toString())).length}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={1}>
-                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0].type == "sublimation" ? 0 : items[0].inventory?.inventory?.orders.map(o => o.items.filter(i => items.map(item => item._id.toString()).includes(i.toString())).length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}`}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0] && items[0].type && items[0].type == "sublimation" ? 0 : items[0] && items[0].inventory?.inventory?.orders.map(o => o.items.filter(i => items.map(item => item._id.toString()).includes(i.toString())).length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}`}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={2}>
                                                         <Typography variant="h6" textAlign={"center"}>{items.filter(item=> item.labelPrinted == true).length}</Typography>
