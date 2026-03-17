@@ -2,9 +2,18 @@ import { Grid2, TextField, Button, Typography, Divider } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 import axios from "axios";
 import { set } from "mongoose";
+import { useState, useEffect } from "react";
 
 export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes, licenses }) => {
     console.log(sportUsedFor, "Themes in InformationStage");
+    const [markets, setMarkets] = useState([]);
+    useEffect(() => {
+       const fetchMarkets = async () => {
+            let res = await axios.get("/api/marketplaces");
+            setMarkets(res.data.marketplaces);
+        };
+        fetchMarkets();
+    }, []);
     return (
         <Grid2 size={12} sx={{ padding: "0% 4%" }}>
             <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Product Information</Typography>
@@ -77,6 +86,32 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                             setProducts([...prods])
                         }} />
                     </Grid2>
+                    {markets.map((market, k) => {
+                        if(market.productDropDowns && Object.keys(market.productDropDowns).length > 0) {
+                            return (
+                                <Grid2 key={k} size={12}>
+                                    <Typography variant="h6">{market.name}</Typography>
+                                    <Divider sx={{ margin: "1% 0" }} />
+                                    <Grid2 container spacing={2}>
+                                        {market.productDropDowns && Object.keys(market.productDropDowns).map((category, l) =>{
+                                            return <Grid2 key={l} size={4}>
+                                                <CreatableSelect placeholder={`Select ${category}`} value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category] ? { value: product.marketplaceValues[market._id][category], label: product.marketplaceValues[market._id][category] } : null} options={[{value: null, label: `Select ${category}`}, ...(market.productDropDowns[category] || []).map(option => ({ value: option, label: option }))]} onChange={async (newValue) => {
+                                                    let prods = [...products]
+                                                    let p = prods.filter(p => p.id == product.id)[0]
+                                                    if(!p.marketplaceValues) p.marketplaceValues = {};
+                                                    if(!p.marketplaceValues[market._id]) p.marketplaceValues[market._id] = {};
+                                                    p.marketplaceValues[market._id].name = market.name;
+                                                    if((market.productDropDowns[category] || []).filter(o => o == newValue.value)[0] || newValue.value == null)p.marketplaceValues[market._id][category] = newValue.value
+                                                setProducts([...prods])
+                                            }} />
+                                        </Grid2>
+                                    })}
+
+                                    </Grid2>  
+                                </Grid2>
+                            )
+                        }
+                    })}
                     <Grid2 size={12}>
                         <Divider sx={{ margin: "1% 0" }} />
                     </Grid2>

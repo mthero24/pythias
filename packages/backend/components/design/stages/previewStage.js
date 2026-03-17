@@ -39,6 +39,28 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                         </List>
                     </Box>
                     <Box sx={{ padding: "2%" }}>
+                        {product.marketplaceValues && Object.keys(product.marketplaceValues).length > 0 && (
+                            <Box sx={{ marginBottom: "2%" }}>
+                                {Object.keys(product.marketplaceValues).map(marketplaceId => {
+                                    const marketplace = product.marketplaceValues[marketplaceId];
+                                    return (
+                                        <Box key={marketplaceId} sx={{ marginBottom: "1%" }}>
+                                            <Typography variant="subtitle1">{marketplace.name}</Typography>
+                                            {Object.keys(marketplace).map(category => {
+                                                if (category !== "name") {
+                                                    return (
+                                                        <Typography key={category} variant="body2">{`${category}: ${marketplace[category]}`}</Typography>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                        </Box>
+                                    );
+                                })}
+                            </Box>
+                        )}
+                    </Box>
+                    <Box sx={{ padding: "2%" }}>
                         <Typography variant="h6">Variants</Typography>
                         {!preview && Object.keys(product.variants).length > 0 && Object.keys(product.variants).map(blank => (
                             <Box key={blank} sx={{ marginBottom: "2%" }}>

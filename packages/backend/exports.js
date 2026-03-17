@@ -31,3 +31,4 @@ export {FromSanmarBlank} from "./components/blanks/fromSanmar";
 export {EditablePolygon} from "./components/blanks/test";
 export {SublimationImages} from "./components/design/sublimationImages";
 export { PricingMain } from "./components/pricing/main";
+export { Main as MarketplacesMain } from "./components/marketplaces/Main";

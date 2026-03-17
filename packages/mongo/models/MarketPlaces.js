@@ -10,6 +10,7 @@ const schema = new mongoose.Schema({
     credentials: Object,
     defaultValues: Object,
     productDefaultValues: Object,
+    productDropDowns: Object,
     hasProductLine: [{ type: Boolean, default: false }],
     connections: [String], // Array of connection IDs
 });
