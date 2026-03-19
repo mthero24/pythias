@@ -520,7 +520,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda")[0])) && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
                                                             let res = await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]?._id, productId: product._id } });
                                                         }}>Add Inventory</Button>}
-                                                        <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}`} target="_blank">Download</Button>
+                                                        <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}&disableDefault=${marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false}`} target="_blank">Download</Button>
                                                     </Box>
                                                     {marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0] && <Card sx={{display: "flex", flexDirection: "column", padding: "5%"}}>
                                                         <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify") )[0].displayName}</Typography>
@@ -535,7 +535,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         {product.ids && product.ids[marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName] && <Typography>Etsy Id: {product.ids[marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName]}</Typography>}
                                                     </Card>}
                                                     {header.length > 0 && (
-                                                        <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} connections={connections} />
+                                                        <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} disableDefault={marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false} connections={connections} />
                                                     )}
                                                 </Box>
                                             ))}
@@ -553,7 +553,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         </Modal>
     )
 }
-export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products, productLine, connections }) => {
+export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products, productLine, disableDefault, connections }) => {
     let headers = {}
     for(let h of header) {
         headers[h.Label] = []
@@ -606,7 +606,7 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
                 }
             }
         }
-        if (product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0){
+        if (!disableDefault && product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0){
             Object.keys(product.marketplaceValues[marketPlace._id]).map(key => {
                 console.log("key", key)
                 if (key != "titleGenerator" && key != "name") {
@@ -864,7 +864,7 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                             return(
                                 <Card key={index} sx={{padding: "2%", margin: "1% 0%",}}>
                                     <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: ".5%" }}>
-                                        <Box sx={{width: "50%" }}>
+                                        <Box sx={{width: "60%" }}>
                                             <TextField placeholder="New Header" id={"newHeader"} />
                                             <Button variant="outlined" size="large" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => {
                                                 let m = { ...marketPlace };
@@ -878,6 +878,13 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                                 m.hasProductLine[index] = event.target.checked;
                                                 setMarketPlace({ ...m });
                                             }} />} label="Add Product Line" />
+                                            <FormControlLabel control={<Checkbox checked={marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false} onChange={(event) => {
+                                                console.log("disableProductDefaults", marketPlace.disableProductDefaults, index, event.target.checked)
+                                                let m = { ...marketPlace };
+                                                if (!m.disableProductDefaults) m.disableProductDefaults = [];
+                                                m.disableProductDefaults[index] = event.target.checked;
+                                                setMarketPlace({ ...m });
+                                            }} />} label="Disable Product Defaults" />
                                         </Box>
                                          <IconButton onClick={() => {
                                             setDeleteImage(index);

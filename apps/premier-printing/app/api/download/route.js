@@ -9,7 +9,7 @@ export async function GET(req = NextApiResponse, ) {
     if(!marketPlace || !products) {
         return NextResponse.json({error: true, message: "MarketPlace or Product not found"});
     }
-    let buffer = await downloadProduct({products, marketPlace, header: data.header});
+    let buffer = await downloadProduct({products, marketPlace, header: data.header, disableDefault: req.nextUrl.searchParams.get("disableDefault") == "true" });
     return new NextResponse(buffer, {
         headers: {
             'Content-Type': 'text/csv',

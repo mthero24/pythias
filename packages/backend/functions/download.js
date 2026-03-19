@@ -179,7 +179,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
     return value
 }
 
-export const downloadProduct = async ({ products, marketPlace, header }) => {
+export const downloadProduct = async ({ products, marketPlace, header, disableDefault }) => {
     
     let headers = {}
     for (let header of marketPlace.headers) {
@@ -198,7 +198,7 @@ export const downloadProduct = async ({ products, marketPlace, header }) => {
                 console.log("Header value for", h, ":", val);
                 thisHead[h] = val != "N/A" ? val : "";
             }
-            if (product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0) {
+            if (!disableDefault && product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0) {
                 Object.keys(product.marketplaceValues[marketPlace._id]).map(key => {
                     console.log("key", key)
                     if (key != "titleGenerator" && key != "name") {
@@ -241,7 +241,7 @@ export const downloadProduct = async ({ products, marketPlace, header }) => {
                                     let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], threadColor: tc.name, numBlanks: product.blanks.length, blankName: b.name, index, sizeGuide: b.sizeGuide.images && b.sizeGuide.images.length > 0 ? b.sizeGuide.images : [] });
                                     thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string
                                 }
-                                if (product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0) {
+                                if (!disableDefault && product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0) {
                                     Object.keys(product.marketplaceValues[marketPlace._id]).map(key => {
                                         console.log("key", key)
                                         if (key != "titleGenerator" && key != "name") {
@@ -284,7 +284,7 @@ export const downloadProduct = async ({ products, marketPlace, header }) => {
                                 let val = HeaderList({ product, mp: marketPlace, variant: v, blankOverRides: b.marketPlaceOverrides ? b.marketPlaceOverrides[marketPlace.name] : {}, headerLabel: h, index: 0, color: c.name, blankCode: b.code, category: b.category[0], numBlanks: product.blanks.length, blankName: b.name, index, sizeGuide: b.sizeGuide.images && b.sizeGuide.images.length > 0 ? b.sizeGuide.images : [] });
                                 thisHead[h] = val != "N/A" ? val : ""; // If the value is "N/A", it will be replaced with an empty string                       
                             }
-                            if (product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0) {
+                            if (!disableDefault && product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0) {
                                 Object.keys(product.marketplaceValues[marketPlace._id]).map(key => {
                                     console.log("key", key)
                                     if (key != "titleGenerator" && key != "name") {
