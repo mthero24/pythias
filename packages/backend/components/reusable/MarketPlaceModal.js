@@ -606,7 +606,35 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
                 }
             }
         }
+        if (product.marketplaceValues && product.marketplaceValues[marketPlace._id] && Object.keys(product.marketplaceValues[marketPlace._id]).length > 0){
+            Object.keys(product.marketplaceValues[marketPlace._id]).map(key => {
+                console.log("key", key)
+                if (key != "titleGenerator" && key != "name") {
+                    headers[key] = [];
+                    if (productLine) {
+                        let val = product.marketplaceValues[marketPlace._id][key]
+                        headers[key].push(val);
+                    }
+                    for (let variant of product.variantsArray) {
+                        let val = product.marketplaceValues[marketPlace._id][key]
+                        headers[key].push(val);
+                    }
+                }else if (key == "titleGenerator") {
+                    headers[marketPlace.productDropDowns[key]["label"]] = [];
+                    if (productLine) {
+                        let val = product.marketplaceValues[marketPlace._id][key].replace("- {color} ", "").replace("- {blank} ", "").replace("- {size} ", "");
+                        headers[marketPlace.productDropDowns[key]["label"]].push(val);
+                    }
+                    for (let variant of product.variantsArray) {
+                        let val = product.marketplaceValues[marketPlace._id][key].replace("{color}", variant.color.name).replace("{blank}", variant.blank.name).replace("{size}", variant.size.name);
+                        headers[marketPlace.productDropDowns[key]["label"]].push(val);
+                    }
+                }
+
+            })
+        } 
     }
+    console.log("headers", headers)
     return (
         <Card sx={{ padding: "2%" }} >
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "0% 1%" }}>

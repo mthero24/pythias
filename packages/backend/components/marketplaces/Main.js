@@ -1,7 +1,7 @@
 "use client";
 import {Grid2, Box, Container, Typography, TextField, MenuItem, Button, Modal} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -10,6 +10,7 @@ export function Main({marketplaces}){
     let [markets, setMarkets] = useState(marketplaces); 
     let [categoryOpen, setCategoryOpen] = useState(false);
     let [marketplace, setMarketplace] = useState(null);
+    const [categoryEdit, setCategoryEdit] = useState("");
     let [activeValues, setActiveValues] = useState({});
     let [titleGeneratorValues, setTitleGeneratorValues] = useState({});
     let [editing, setEditing] = useState({marketplace: null, category: null, value: null});
@@ -72,6 +73,11 @@ export function Main({marketplaces}){
                         return <Grid2 item size={3} key={j}>
                             <Box sx={{border: "1px solid gray", borderRadius: "5px",}}>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center",  gap: 2, p: 1}}>
+                                    <EditIcon sx={{ fontSize: "1.1rem", color: "#8f88e9", cursor: "pointer" }} onClick={async () => {
+                                        setCategoryEdit(key);
+                                        setMarketplace(m);
+                                        setCategoryOpen(true);
+                                    }} />
                                     <DeleteIcon sx={{fontSize: "1rem", color: "#6e1717", cursor: "pointer"}} onClick={async () => {
                                         setCategoryToDelete(key);
                                         setMarketplace(m);
@@ -135,14 +141,18 @@ export function Main({marketplaces}){
                 </Grid2>
             </Box>
         })}
-        <AddCategoryModal marketplace={marketplace} setMarkets={setMarkets} open={categoryOpen} setOpen={setCategoryOpen} />
+        <AddCategoryModal marketplace={marketplace} setMarkets={setMarkets} open={categoryOpen} setOpen={setCategoryOpen} categoryEdit={categoryEdit} setCategoryEdit={setCategoryEdit} />
         <DeleteCategoryModal marketplace={marketplace} setMarkets={setMarkets} open={deleteCategory} setOpen={setDeleteCategory} category={categoryToDelete} setDeleteCategory={setDeleteCategory} setCategoryToDelete={setCategoryToDelete}  />
         <RemoveOptionModal marketplace={marketplace} setMarkets={setMarkets} open={removeOption} setOpen={setRemoveOption} category={categoryToDelete} option={optionToDelete} setCategoryToDelete={setCategoryToDelete} setOptionToDelete={setOptionToDelete}/>
     </Container>
 }
 
-function AddCategoryModal({marketplace, open, setOpen, setMarkets}){
-    let [category, setCategory] = useState("");
+function AddCategoryModal({marketplace, open, setOpen, setMarkets, categoryEdit, setCategoryEdit}){
+    console.log("categoryEdit", categoryEdit)
+    const [category, setCategory] = useState(categoryEdit);
+    useEffect(() => {
+        setCategory(categoryEdit);
+    }, [categoryEdit])
     let style = {
         position: 'absolute',
         top: '50%',
@@ -157,7 +167,7 @@ function AddCategoryModal({marketplace, open, setOpen, setMarkets}){
     return (
         <Modal open={open} onClose={() => setOpen(false)}>
             <Box sx={style}>
-                <Typography variant="h6">Add Category</Typography>
+                <Typography variant="h6">{categoryEdit && categoryEdit !== "" ? "Edit Category" : "Add Category"}</Typography>
                 <Box sx={{ mt: 2 }}>
                     <TextField label="Category Name" fullWidth value={category} onChange={(e) => setCategory(e.target.value)} />
                 </Box>
@@ -166,16 +176,17 @@ function AddCategoryModal({marketplace, open, setOpen, setMarkets}){
                         // Handle add category action
                         console.log("Adding category")
 
-                        let res = await axios.put(`/api/marketplaces`, { marketplace: marketplace._id, category })
+                        let res = await axios.put(`/api/marketplaces`, { marketplace: marketplace._id, category, oldCategory: categoryEdit })
                         console.log(res)
                         if (res.status === 200) {
                             // Handle successful addition
                             setCategory("");
+                            setCategoryEdit("");
                             setOpen(false);
                             setMarkets(res.data.marketplaces);
 
                         }
-                    }}>ADD</Button>
+                    }}>{categoryEdit && categoryEdit !== "" ? "Edit" : "Add"}</Button>
                     <Button variant="outlined" color="secondary" onClick={() => setOpen(false)}>Cancel</Button>
                 </Box>
             </Box>

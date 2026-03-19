@@ -105,6 +105,13 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                 if (!product.marketplaceValues[market._id][category]){
                                                     product.marketplaceValues[market._id][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
                                                 }
+                                                for(let key of Object.keys(product.marketplaceValues[market._id])){
+                                                     if(key != "titleGenerator" && key != "name"){
+                                                        if(!market.productDropDowns[key] ){
+                                                            delete product.marketplaceValues[market._id][key];
+                                                        }
+                                                    }
+                                                }
                                                 return <Grid2 key={l} size={12} sx={{ display: "flex", alignItems: "center" }}>
                                                     <TextField fullWidth label={`Product Title`} variant="outlined" value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category]  ? product.marketplaceValues[market._id][category] : ""} onChange={async (e) => {
                                                         let prods = [...products]

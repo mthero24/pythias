@@ -15,6 +15,10 @@ export async function PUT(req = NextApiRequest) {
     if(!marketplace.productDropDowns){
         marketplace.productDropDowns = {};
     }
+    if(data.oldCategory && data.oldCategory !== data.category){
+        marketplace.productDropDowns[data.category] = marketplace.productDropDowns[data.oldCategory];
+        delete marketplace.productDropDowns[data.oldCategory];
+    }
     if(!marketplace.productDropDowns[data.category]){
         if(data.category == "titleGenerator"){
             marketplace.productDropDowns[data.category] = {
