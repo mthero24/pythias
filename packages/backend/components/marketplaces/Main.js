@@ -31,12 +31,12 @@ export function Main({marketplaces}){
                     <Grid2 item size={12}>
                         <Typography variant="subtitle1">Title Generator</Typography>
                         <Box sx={{display: "flex", flexDirection: "row", gap: 1, alignItems: "center"}}>
-                            <TextField fullWidth label="Label" value={m.productDropDowns && m.productDropDowns.titleGenerator && m.productDropDowns.titleGenerator.label} variant="outlined" size="small" onChange={async (e) => { 
+                            <TextField fullWidth label="Label" value={titleGeneratorValues[m.name]?.label || (m.productDropDowns && m.productDropDowns.titleGenerator ? m.productDropDowns.titleGenerator.label : "")} variant="outlined" size="small" onChange={async (e) => { 
                                 let t = {...titleGeneratorValues};
                                 t[m.name] = t[m.name] || {};
                                 t[m.name].label = e.target.value;
                                 setTitleGeneratorValues({...t});
-                            }} />
+                            }} />   
                             <CheckIcon sx={{ color: "#4caf50", fontSize: "1.3rem", cursor: "pointer", display: "reletive", marginLeft: "-50px", zIndex: 9 }} onClick={async () => {
                                 console.log(titleGeneratorValues)
                                 let value = titleGeneratorValues[m.name]?.label
