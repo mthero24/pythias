@@ -11,6 +11,7 @@ export function Main({marketplaces}){
     let [categoryOpen, setCategoryOpen] = useState(false);
     let [marketplace, setMarketplace] = useState(null);
     let [activeValues, setActiveValues] = useState({});
+    let [titleGeneratorValues, setTitleGeneratorValues] = useState({});
     let [editing, setEditing] = useState({marketplace: null, category: null, value: null});
     const [deleteCategory, setDeleteCategory] = useState(false);
     const [removeOption, setRemoveOption] = useState(false);
@@ -26,7 +27,48 @@ export function Main({marketplaces}){
                     </Box>
                 </Box>
                 <Grid2 container spacing={2}>
+                    <Grid2 item size={12}>
+                        <Typography variant="subtitle1">Title Generator</Typography>
+                        <Box sx={{display: "flex", flexDirection: "row", gap: 1, alignItems: "center"}}>
+                            <TextField fullWidth label="Label" value={m.productDropDowns && m.productDropDowns.titleGenerator && m.productDropDowns.titleGenerator.label} variant="outlined" size="small" onChange={async (e) => { 
+                                let t = {...titleGeneratorValues};
+                                t[m.name] = t[m.name] || {};
+                                t[m.name].label = e.target.value;
+                                setTitleGeneratorValues({...t});
+                            }} />
+                            <CheckIcon sx={{ color: "#4caf50", fontSize: "1.3rem", cursor: "pointer", display: "reletive", marginLeft: "-50px", zIndex: 9 }} onClick={async () => {
+                                console.log(titleGeneratorValues)
+                                let value = titleGeneratorValues[m.name]?.label
+                                if (!value) return;
+                                let res = await axios.put(`/api/marketplaces`, { marketplace: m._id, category: "titleGenerator", value })
+                                if (res.status === 200) {
+                                    setMarkets(res.data.marketplaces);
+                                }
+                            }} />
+                        </Box>
+                        <Box sx={{display: "flex", flexDirection: "row", gap: 1, alignItems: "center", marginTop: 1}}>
+                            <TextField fullWidth label="Prompt" value={titleGeneratorValues[m.name] ? titleGeneratorValues[m.name].titleGeneratorPrompt :m.productDropDowns && m.productDropDowns.titleGenerator && m.productDropDowns.titleGenerator.prompt} variant="outlined" size="small" onChange={async (e)=>{
+                                console.log(titleGeneratorValues)
+                                titleGeneratorValues[m.name] = titleGeneratorValues[m.name] || {};
+                                titleGeneratorValues[m.name].titleGeneratorPrompt = e.target.value;
+                                setTitleGeneratorValues({...titleGeneratorValues});
+                            }}/>
+                            <CheckIcon sx={{ color: "#4caf50", fontSize: "1.3rem", cursor: "pointer", display: "reletive", marginLeft: "-50px", zIndex: 9}} onClick={async() => {
+                                console.log(titleGeneratorValues)
+                                let value = titleGeneratorValues[m.name]?.titleGeneratorPrompt
+                                if(!value) return;
+                                let res = await axios.put(`/api/marketplaces`, { marketplace: m._id, category: "titleGenerator", value, isPrompt: true })
+                                if (res.status === 200) {
+                                    setMarkets(res.data.marketplaces);
+                                }
+                            }} />
+                        </Box>
+                    </Grid2>
+                    <Grid2 item size={12}>
+                        <hr />
+                    </Grid2>
                     {Object.keys(m.productDropDowns || {}).map((key, j) => {
+                        if(key === "titleGenerator") return null;
                         return <Grid2 item size={3} key={j}>
                             <Box sx={{border: "1px solid gray", borderRadius: "5px",}}>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center",  gap: 2, p: 1}}>

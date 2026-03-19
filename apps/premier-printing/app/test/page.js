@@ -196,7 +196,7 @@ const addPriceToItem = async ()=>{
     console.log("done updating prices")
 }
 let inventoryFixer = async () => {
-    let inventories = await ProductInventory.find({}).populate("blank color").limit(1000)
+    let inventories = await ProductInventory.find({designSku: null}).populate("blank color").limit(1000)
     let skip = 1000
     while (inventories.length > 0) {
         for (let inventory of inventories) {
@@ -216,7 +216,7 @@ let inventoryFixer = async () => {
             inventory.quantity = inventory.quantity || 0
             await inventory.save()
         }
-        inventories = await ProductInventory.find({}).populate("blank color").skip(skip).limit(1000)
+        inventories = await ProductInventory.find({designSku: null}).populate("blank color").skip(skip).limit(1000)
         console.log(skip, "skipped")
         skip += 1000
     }
@@ -249,7 +249,7 @@ const fixSkus = async () => {
     console.log("done fixing skus")
 }
 export default async function Test(){
-   //pullOrders();
+    //pullOrders();
     //addPriceToItem();
     //inventoryFixer();
 

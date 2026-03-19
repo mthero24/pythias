@@ -92,8 +92,33 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                 <Grid2 key={k} size={12}>
                                     <Typography variant="h6">{market.name}</Typography>
                                     <Divider sx={{ margin: "1% 0" }} />
+
                                     <Grid2 container spacing={2}>
                                         {market.productDropDowns && Object.keys(market.productDropDowns).map((category, l) =>{
+                                            if(category == "titleGenerator") {
+                                                if(!product.marketplaceValues ){
+                                                    product.marketplaceValues = {};
+                                                }
+                                                if(!product.marketplaceValues[market._id]){
+                                                    product.marketplaceValues[market._id] = {};
+                                                }
+                                                if (!product.marketplaceValues[market._id][category]){
+                                                    product.marketplaceValues[market._id][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
+                                                }
+                                                return <Grid2 key={l} size={12} sx={{ display: "flex", alignItems: "center" }}>
+                                                    <TextField fullWidth label={`Product Title`} variant="outlined" value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category]  ? product.marketplaceValues[market._id][category] : ""} onChange={async (e) => {
+                                                        let prods = [...products]
+                                                        let p = prods.filter(p => p.id == product.id)[0]
+                                                        if(!p.marketplaceValues) p.marketplaceValues = {};
+                                                        if(!p.marketplaceValues[market._id]) p.marketplaceValues[market._id] = {};
+                                                        p.marketplaceValues[market._id][category] = e.target.value
+                                                        setProducts([...prods])
+                                                     }} />
+                                                </Grid2>
+                                            }else return null;
+                                        })}
+                                        {market.productDropDowns && Object.keys(market.productDropDowns).map((category, l) =>{
+                                            if(category == "titleGenerator") return null;
                                             return <Grid2 key={l} size={4}>
                                                 <CreatableSelect placeholder={`Select ${category}`} value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category] ? { value: product.marketplaceValues[market._id][category], label: product.marketplaceValues[market._id][category] } : null} options={[{value: null, label: `Select ${category}`}, ...(market.productDropDowns[category] || []).map(option => ({ value: option, label: option }))]} onChange={async (newValue) => {
                                                     let prods = [...products]

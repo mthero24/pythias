@@ -16,14 +16,28 @@ export async function PUT(req = NextApiRequest) {
         marketplace.productDropDowns = {};
     }
     if(!marketplace.productDropDowns[data.category]){
-        marketplace.productDropDowns[data.category] = [];
+        if(data.category == "titleGenerator"){
+            marketplace.productDropDowns[data.category] = {
+                label: "",
+                prompt: ""
+            };
+        } else {
+            marketplace.productDropDowns[data.category] = [];
+        }
     }
     if (data.oldValue) {
         marketplace.productDropDowns[data.category] = marketplace.productDropDowns[data.category].filter(v => v !== data.oldValue);
     }
-    if(data.value){
+    if(data.value && data.category != "titleGenerator"){
         marketplace.productDropDowns[data.category].push(data.value);
         marketplace.productDropDowns[data.category] = marketplace.productDropDowns[data.category].sort((a, b) => a.localeCompare(b));
+    }else if(data.value && data.category == "titleGenerator"){
+        if(data.isPrompt){
+            marketplace.productDropDowns[data.category].prompt = data.value;
+        }
+        else{
+            marketplace.productDropDowns[data.category].label = data.value;
+        }
     }
     console.log(marketplace.productDropDowns)
     marketplace.markModified("productDropDowns");
