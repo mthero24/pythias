@@ -7,6 +7,7 @@ export async function GET(req = NextApiRequest) {
 }
 export async function PUT(req = NextApiRequest) {
     let data = await req.json();
+    console.log("data", data)   
     let marketplace = await MarketPlaces.findById(data.marketplace);
     if (!marketplace) {
         return NextResponse.json({ error: true, message: "Marketplace not found" });
