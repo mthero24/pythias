@@ -620,6 +620,9 @@ export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products,
                         headers[key].push(val);
                     }
                 }else if (key == "titleGenerator") {
+                    if(!marketPlace.productDropDowns || !marketPlace.productDropDowns[key] || !marketPlace.productDropDowns[key]["label"]) {
+                        return;
+                    }
                     headers[marketPlace.productDropDowns[key]["label"]] = [];
                     if (productLine) {
                         let val = product.marketplaceValues[marketPlace._id][key].replace("- {color} ", "").replace("- {blank} ", "").replace("- {size} ", "");
