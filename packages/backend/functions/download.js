@@ -305,7 +305,9 @@ export const downloadProduct = async ({ products, marketPlace, header, disableDe
                                             let val = product.marketplaceValues[marketPlace._id][key].replace("- {color} ", "").replace("- {blank} ", "").replace("- {size} ", "");
                                             thisHead[marketPlace.productDropDowns[key]["label"]] = val;
                                         }
-                                        
+                                        if(!marketPlace.productDropDowns || !marketPlace.productDropDowns[key] || !marketPlace.productDropDowns[key]["label"]) {
+                                            return;
+                                        }
                                         let val = product.marketplaceValues[marketPlace._id][key].replace("{color}", v.color.name).replace("{blank}", v.blank.name).replace("{size}", v.size.name);
                                         thisHead[marketPlace.productDropDowns[key]["label"]] = val;
                                         
