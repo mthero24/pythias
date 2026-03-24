@@ -64,7 +64,7 @@ export async function POST(req = NextApiRequest) {
     let newCategories = {};
     for (let key in marketplace.productDropDowns) {
         if (key !== data.category) {
-            newCategories[key] = marketplace.productDropDowns[key].filter(v => v !== data.oldValue);
+            newCategories[key] = marketplace.productDropDowns[key];
         }
     }
     marketplace.productDropDowns = newCategories;
