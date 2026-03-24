@@ -318,46 +318,51 @@ const createListing = async (product, returnPolicyId, shipping_profile_id, crede
         credentials = updatedCredentials;
     }
     let taxonomy_id = 449; // default to mens tshirts
-    if (product.gender === "Male" && product.blanks[0].department == "Adult"){
-        if(product.blanks[0].category == "T-Shirts")taxonomy_id = taxonomyIds.mensTshirts;
-        if(product.blanks[0].category == "Tank Tops")taxonomy_id = taxonomyIds.mensTanks;
-        if(product.blanks[0].category == "Long Sleeve Shirts")taxonomy_id = taxonomyIds.mensLongSleeveShirts;
-        if(product.blanks[0].category == "Hoodies")taxonomy_id = taxonomyIds.mensHoodies;
-        if(product.blanks[0].category == "Sweatshirts")taxonomy_id = taxonomyIds.mensSweatshirts;
-    }else if(product.gender === "Female" && product.blanks[0].department == "Adult"){
-        if(product.blanks[0].category == "T-Shirts")taxonomy_id = taxonomyIds.womensTshirts;
-        if(product.blanks[0].category == "Tank Tops")taxonomy_id = taxonomyIds.womensTanks;
-        if(product.blanks[0].category == "Long Sleeve Shirts")taxonomy_id = taxonomyIds.womensLongSleeveShirts;
-        if(product.blanks[0].category == "Hoodies")taxonomy_id = taxonomyIds.womensHoodies;
-        if(product.blanks[0].category == "Sweatshirts")taxonomy_id = taxonomyIds.womensSweatshirts;
-    } else if (product.gender === "Unisex" && product.blanks[0].department == "Adult"){
-        if(product.blanks[0].category == "T-Shirts")taxonomy_id = taxonomyIds.unisexTshirts;
-        if(product.blanks[0].category == "Tank Tops")taxonomy_id = taxonomyIds.unisexTanks;
-        if(product.blanks[0].category == "Long Sleeve Shirts")taxonomy_id = taxonomyIds.unisexLongSleeveShirts;
-        if(product.blanks[0].category == "Hoodies")taxonomy_id = taxonomyIds.unisexHoodies;
-        if(product.blanks[0].category == "Sweatshirts")taxonomy_id = taxonomyIds.unisexSweatshirts;
-    }else if(product.gender == "Male" && product.blanks[0].department == "Kids"){
-        if(product.blanks[0].category == "T-Shirts")taxonomy_id = taxonomyIds.boysTshirts;
-        if(product.blanks[0].category == "Tank Tops")taxonomy_id = taxonomyIds.boysTanks;
-        if(product.blanks[0].category == "Long Sleeve Shirts")taxonomy_id = taxonomyIds.boysLongSleeveShirts;
-        if(product.blanks[0].category == "Hoodies")taxonomy_id = taxonomyIds.boysHoodies;
-        if(product.blanks[0].category == "Sweatshirts")taxonomy_id = taxonomyIds.boysSweatshirts;
-        if(product.blanks[0].category == "Bodysuits")taxonomy_id = taxonomyIds.boysBodiesuits;
-    }else if(product.gender == "Female" && product.blanks[0].department == "Kids"){
-        if(product.blanks[0].category == "T-Shirts")taxonomy_id = taxonomyIds.girlsTshirts;
-        if(product.blanks[0].category == "Tank Tops")taxonomy_id = taxonomyIds.girlsTanks;
-        if(product.blanks[0].category == "Long Sleeve Shirts")taxonomy_id = taxonomyIds.girlsLongSleeveShirts;
-        if(product.blanks[0].category == "Hoodies")taxonomy_id = taxonomyIds.girlsHoodies;
-        if(product.blanks[0].category == "Sweatshirts")taxonomy_id = taxonomyIds.girlsSweatshirts;
-        if(product.blanks[0].category == "Bodysuits")taxonomy_id = taxonomyIds.girlsBodiesuits;
-    }else if(product.gender == "Unisex" && product.blanks[0].department == "Kids"){ 
-        if(product.blanks[0].category == "T-Shirts")taxonomy_id = taxonomyIds.unisexKidsTshirts;
-        if(product.blanks[0].category == "Tank Tops")taxonomy_id = taxonomyIds.unisexKidsTanks;
-        if(product.blanks[0].category == "Long Sleeve Shirts")taxonomy_id = taxonomyIds.unisexKidsLongSleeveShirts;
-        if(product.blanks[0].category == "Hoodies")taxonomy_id = taxonomyIds.unisexKidsHoodies;
-        if(product.blanks[0].category == "Sweatshirts")taxonomy_id = taxonomyIds.unisexKidsSweatshirts;
-        if(product.blanks[0].category == "Bodysuits")taxonomy_id = taxonomyIds.unisexKidsBodiesuits;
+    //console.log(product.gender, product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender, product.blanks[0].department, "+++++++");
+    //console.log((product.gender.toLowerCase() == "female" || (product.marketplaceValues && product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender.toLowerCase() == "female")) && product.blanks[0].department == "Kids")
+    if ((product.gender.toLowerCase() === "male" || (product.marketplaceValues && product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender.toLowerCase() == "male")) && product.blanks[0].department == "Adult"){
+        if(product.blanks[0].category[0].includes("T-Shirts"))taxonomy_id = taxonomyIds.mensTshirts;
+        if(product.blanks[0].category[0].includes("Tank Tops"))taxonomy_id = taxonomyIds.mensTanks;
+        if(product.blanks[0].category[0].includes("Long Sleeve Shirts"))taxonomy_id = taxonomyIds.mensLongSleeveShirts;
+        if(product.blanks[0].category[0].includes("Hoodies"))taxonomy_id = taxonomyIds.mensHoodies;
+        if(product.blanks[0].category[0].includes("Sweatshirts"))taxonomy_id = taxonomyIds.mensSweatshirts;
+    } else if ((product.gender.toLowerCase() === "female" || (product.marketplaceValues && product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender.toLowerCase() == "female")) && product.blanks[0].department == "Adult"){
+        if(product.blanks[0].category[0].includes("T-Shirts"))taxonomy_id = taxonomyIds.womensTshirts;
+        if(product.blanks[0].category[0].includes("Tank Top"))taxonomy_id = taxonomyIds.womensTanks;
+        if(product.blanks[0].category[0].includes("Long Sleeve Shirt"))taxonomy_id = taxonomyIds.womensLongSleeveShirts;
+        if(product.blanks[0].category[0].includes("Hoodie"))taxonomy_id = taxonomyIds.womensHoodies;
+        if(product.blanks[0].category[0].includes("Sweatshirt"))taxonomy_id = taxonomyIds.womensSweatshirts;
+    } else if ((product.gender.toLowerCase() === "unisex" || (product.marketplaceValues && product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender.toLowerCase() == "unisex")) && product.blanks[0].department == "Adult"){
+        if(product.blanks[0].category[0].includes("T-Shirts"))taxonomy_id = taxonomyIds.unisexTshirts;
+        if(product.blanks[0].category[0].includes("Tank Tops"))taxonomy_id = taxonomyIds.unisexTanks;
+        if(product.blanks[0].category[0].includes("Long Sleeve Shirt"))taxonomy_id = taxonomyIds.unisexLongSleeveShirts;
+        if(product.blanks[0].category[0].includes("Hoodie"))taxonomy_id = taxonomyIds.unisexHoodies;
+        if(product.blanks[0].category[0].includes("Sweatshirt"))taxonomy_id = taxonomyIds.unisexSweatshirts;
+    } else if ((product.gender.toLowerCase() == "male" || (product.marketplaceValues && product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender.toLowerCase() == "male")) && product.blanks[0].department == "Kids"){
+        if(product.blanks[0].category[0].includes("T-Shirt"))taxonomy_id = taxonomyIds.boysTshirts;
+        if(product.blanks[0].category[0].includes("Tank Top"))taxonomy_id = taxonomyIds.boysTanks;
+        if(product.blanks[0].category[0].includes("Long Sleeve Shirt"))taxonomy_id = taxonomyIds.boysLongSleeveShirts;
+        if(product.blanks[0].category[0].includes("Hoodie"))taxonomy_id = taxonomyIds.boysHoodies;
+        if(product.blanks[0].category[0].includes("Sweatshirt"))taxonomy_id = taxonomyIds.boysSweatshirts;
+        if(product.blanks[0].category[0].includes("Bodysuit"))taxonomy_id = taxonomyIds.boysBodiesuits;
+    } else if ((product.gender.toLowerCase() == "female" || (product.marketplaceValues && product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender.toLowerCase() == "female")) && product.blanks[0].department == "Kids"){
+        //console.log("here++++++++++++++", product.blanks[0].category.includes("Hoodie"), product.blanks[0].category[0])
+        if (product.blanks[0].category[0].includes("T-Shirt"))taxonomy_id = taxonomyIds.girlsTshirts;
+        if (product.blanks[0].category[0].includes("Tank Top"))taxonomy_id = taxonomyIds.girlsTanks;
+        if(product.blanks[0].category[0].includes("Long Sleeve Shirt"))taxonomy_id = taxonomyIds.girlsLongSleeveShirts;
+        if (product.blanks[0].category[0].includes("Hoodie"))taxonomy_id = taxonomyIds.girlsHoodies;
+        if (product.blanks[0].category[0].includes("Sweatshirt"))taxonomy_id = taxonomyIds.girlsSweatshirts;
+        if(product.blanks[0].category[0].includes("Bodysuit"))taxonomy_id = taxonomyIds.girlsBodiesuits;
+        //console.log(taxonomy_id, "taxonomy_id");
+    } else if ((product.gender.toLowerCase() == "unisex" || (product.marketplaceValues && product.marketplaceValues["6962a83c1ef040caf90d95cb"]?.gender.toLowerCase() == "unisex")) && product.blanks[0].department == "Kids"){ 
+        if(product.blanks[0].category[0].includes("T-Shirt"))taxonomy_id = taxonomyIds.unisexKidsTshirts;
+        if(product.blanks[0].category[0].includes("Tank Top"))taxonomy_id = taxonomyIds.unisexKidsTanks;
+        if(product.blanks[0].category[0].includes("Long Sleeve Shirt"))taxonomy_id = taxonomyIds.unisexKidsLongSleeveShirts;
+        if(product.blanks[0].category[0].includes("Hoodie"))taxonomy_id = taxonomyIds.unisexKidsHoodies;
+        if(product.blanks[0].category[0].includes("Sweatshirt"))taxonomy_id = taxonomyIds.unisexKidsSweatshirts;
+        if(product.blanks[0].category[0].includes("Bodysuit"))taxonomy_id = taxonomyIds.unisexKidsBodiesuits;
     }
+    console.log(taxonomy_id, "taxonomy_id");
     let listing = {
         quantity: 999,
         title: product.title,
