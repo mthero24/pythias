@@ -79,9 +79,9 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                 if(!product.marketplaceValues[market._id]){
                                                     product.marketplaceValues[market._id] = {};
                                                 }
-                                                if (product.marketplaceValues[market._id][category]){
-                                                    product.marketplaceValues[market._id][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
-                                                }
+                                                
+                                                product.marketplaceValues[market._id][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
+                                                
                                                 for(let key of Object.keys(product.marketplaceValues[market._id])){
                                                      if(key != "titleGenerator" && key != "name"){
                                                         if(!market.productDropDowns[key] ){
@@ -89,7 +89,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                         }
                                                     }
                                                 }
-                                                console.log(product.brand)
+                                                console.log(product.brand, product.marketplaceValues[market._id][category], "titleGenerator value in InformationStage")
                                                 return <Grid2 key={l} size={12} sx={{ display: "flex", alignItems: "center" }}>
                                                     <TextField fullWidth label={`Product Title`} variant="outlined" value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category]  ? product.marketplaceValues[market._id][category] : ""} onChange={async (e) => {
                                                         let prods = [...products]
