@@ -62,30 +62,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                             setProducts([...prods])
                         }} />
                     </Grid2>
-                    <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Season" options={[{value: null, label: "Select Season"}, ...seasons.map(season => ({ value: season.name, label: season.name }))]} value={product.season ? { value: product.season, label: product.season } : null} onChange={async (newValue) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            if(seasons.filter(s => s.name == newValue.value)[0] || newValue.value == null)p.season = newValue.value
-                            setProducts([...prods])
-                        }} />
-                    </Grid2>
-                    <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Theme" options={[{value: null, label: "Select Theme"}, ...themes.map(theme => ({ value: theme.name, label: theme.name }))]} value={product.theme ? { value: product.theme, label: product.theme } : null} onChange={async (newValue) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            if(themes.filter(t => t.name == newValue.value)[0] || newValue.value == null)p.theme = newValue.value
-                            setProducts([...prods])
-                        }} />
-                    </Grid2>
-                    <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Sport Used For" options={[{value: null, label: "Select Sport Used For"}, ...sportUsedFor.map(sport => ({ value: sport.name, label: sport.name }))]} value={product.sportUsedFor ? { value: product.sportUsedFor, label: product.sportUsedFor } : null} onChange={async (newValue) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            if(sportUsedFor.filter(s => s.name == newValue.value)[0] || newValue.value == null)p.sportUsedFor = newValue.value
-                            setProducts([...prods])
-                        }} />
-                    </Grid2>
+                    
                     {markets.map((market, k) => {
                         if(market.productDropDowns && Object.keys(market.productDropDowns).length > 0) {
                             return (
@@ -102,7 +79,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                 if(!product.marketplaceValues[market._id]){
                                                     product.marketplaceValues[market._id] = {};
                                                 }
-                                                if (!product.marketplaceValues[market._id][category]){
+                                                if (product.marketplaceValues[market._id][category]){
                                                     product.marketplaceValues[market._id][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
                                                 }
                                                 for(let key of Object.keys(product.marketplaceValues[market._id])){
@@ -112,6 +89,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                         }
                                                     }
                                                 }
+                                                console.log(product.brand)
                                                 return <Grid2 key={l} size={12} sx={{ display: "flex", alignItems: "center" }}>
                                                     <TextField fullWidth label={`Product Title`} variant="outlined" value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category]  ? product.marketplaceValues[market._id][category] : ""} onChange={async (e) => {
                                                         let prods = [...products]
