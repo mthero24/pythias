@@ -6,6 +6,7 @@ import Color from "./Color";
 import MarketPlaces from "./MarketPlaces";
 import Inventory from "./inventory"
 import ProductInventory from "./ProductInventory"
+//products will be created when a design is uploaded, and then when the user goes to add products to a marketplace, it will create the variants and link them to the marketplaces. This way we can have marketplace specific values for each product if needed, and we can also have marketplace specific inventory and pricing if needed.
 const schema = new mongoose.Schema({
     design: {
         type: mongoose.Schema.Types.ObjectId,
