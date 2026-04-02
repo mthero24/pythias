@@ -39,6 +39,7 @@ const SchemaObj = new Schema(
     ],
     vendor: String,
     colors: [{ type: mongoose.Schema.Types.ObjectId, ref: Color }],
+    aliasColors: [Object],
     sizes: [
       {
         name: { required: true, type: String },
@@ -48,6 +49,7 @@ const SchemaObj = new Schema(
         basePrice: { default: 0, type: Number },
         cost: { default: 0, type: Number },
         sku: String,
+        blankSizes: Object
       },
     ],
     bulletPoints: [
