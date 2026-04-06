@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{background: "#f2f2f2", color: "#000", margin: "0px"}}
+        style={{background: "#f2f2f2", color: "#000", margin: "0px", padding: "0px"}}
       >
         <CSVProvider>
           <Navbar/>
