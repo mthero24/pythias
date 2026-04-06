@@ -49,7 +49,8 @@ const SchemaObj = new Schema(
         basePrice: { default: 0, type: Number },
         cost: { default: 0, type: Number },
         sku: String,
-        blankSizes: Object
+        blankSizes: Object,
+        hidden: {type: Boolean, default: false}
       },
     ],
     bulletPoints: [
