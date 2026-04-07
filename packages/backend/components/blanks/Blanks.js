@@ -86,7 +86,7 @@ export function BlanksComponent({blanks, mPs, source}){
                             <Grid2 item size={{xs: 6, sm: 4, md: 3}} key={blank.id}>
                             <Card sx={{padding: "2%", display: "flex", flexDirection: "column"}}>
                                 <Box sx={{display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", }}>
-                                    <Image src={frontImage ? `${frontImage?.image.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`: ""} alt={blank.name} width={300} height={200} />
+                                    <Image src={frontImage ? `${frontImage?.image.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`: ""} alt={blank.name} width={300} height={200} style={{width: "100%", height: "auto", }} />
                                 </Box>
                                 <Box>
                                     <Divider sx={{margin: "2% 0%"}} />

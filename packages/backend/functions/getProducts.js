@@ -126,7 +126,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
     return products;
 }
 
-export const getProducts = async ({ Products, Blanks, page, query, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, filters }) => {
+export const getProducts = async ({ Products, Blanks, page, query, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, PrintTypes, LicenseHolders, filters }) => {
     let products
     let count
     products = await search({ Products, q: query, page, filters, productsPerPage: 24, skip: (page - 1) * 24 });
@@ -142,6 +142,8 @@ export const getProducts = async ({ Products, Blanks, page, query, Seasons, Gend
     const marketplaces = await MarketPlaces.find();
     const themes = await Themes.find();
     const colors = await Color.find();
+    const licenses = await LicenseHolders.find();
+    const printTypes = await PrintTypes.find();
     const totalProducts = await Products.countDocuments();
-    return { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts };
+    return { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts, printTypes, licenses };
 }

@@ -13,6 +13,7 @@ import {
     Card,
     CardMedia,
     Divider,
+    FormControlLabel
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import "cropperjs/dist/cropper.css";
@@ -214,6 +215,12 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                         {sizesOpen && blank.sizes && blank.sizes.length > 0 && blank.sizes.map((s, i) => (
                                             <Grid2 item xs={12} sm={6} md={4} key={i}>
                                                 <Box gap={2} sx={{ border: "1px solid #ccc", padding: "2%", borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                                    <FormControlLabel control={<Checkbox checked={s.hidden} onChange={(e) => {
+                                                        let bla = {...blank};
+                                                        bla.sizes[i].hidden = e.target.checked;
+                                                        setBlank(bla);
+                                                        update({blank: bla});
+                                                    }} />} label="Hidden" />
                                                     <TextField label="Size" fullWidth value={s.name} onChange={(e) => { 
                                                         let bla = {...blank};
                                                         bla.sizes[i].name = e.target.value;
@@ -234,7 +241,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                         setBlank(bla);
                                                         update({blank: bla});
                                                     }} />
-                                                    <TextField label="Weight (lbs)" fullWidth value={s.weight} onChange={(e) => { 
+                                                    <TextField label="Weight (oz)" fullWidth value={s.weight} onChange={(e) => { 
                                                          let bla = { ...blank };
                                                         bla.sizes[i].weight = e.target.value;
                                                         setBlank(bla);

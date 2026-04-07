@@ -40,12 +40,12 @@ export default function ButtonAppBar() {
           >
             <MenuIcon />
           </IconButton>
-          <Box sx={{ flexGrow: 1 }}>
+          <Box sx={{ flexGrow: 2 }}>
             <Link href="/admin">
               <Image
                 className="img-fluid"
-                width={75}
-                height={40}
+                width={100}
+                height={75}
                 alt="logo"
                 sx={{width: "100%", height: "auto"}}
                 src={Logo}
@@ -81,7 +81,7 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => {
         width:"auto",
         p: 3,
         background: theme.palette.primary.main,
-        color: "#fff",
+        color: "#000",
         height: "150%",
       }}
       role="presentation"
@@ -95,121 +95,121 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => {
       </Box>
       <Divider />
       <List sx={{ width: "100%" }} >
-          <Link href="/admin" onClick={() => handleClose(false)}>
+          <Link href="/admin" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Premier Printing`} />
+              <ListItemText primary={`Premier Printing`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-          <Link href="/admin/users" onClick={() => handleClose(false)}>
+          <Link href="/admin/users" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Users`} />
+            <ListItemText primary={`Users`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/license" onClick={() => handleClose(false)}>
+        <Link href="/admin/license" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Licenses`} />
+            <ListItemText primary={`Licenses`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/colors" onClick={() => handleClose(false)}>
+        <Link href="/admin/colors" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Colors`} />
+            <ListItemText primary={`Colors`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/edit-data" onClick={() => handleClose(false)}>
+        <Link href="/admin/edit-data" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Edit Data`} />
+            <ListItemText primary={`Edit Data`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/converters" onClick={() => handleClose(false)}>
+        <Link href="/admin/converters" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Converters`} />
+            <ListItemText primary={`Converters`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-          <Link href="/marketplaces" onClick={() => handleClose(false)}>
+          <Link href="/marketplaces" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
             <ListItemButton>
-              <ListItemText primary={`Marketplace Data`} />
+              <ListItemText primary={`Marketplace Data`} sx={{ color: "#000", textDecoration: "none" }} />
             </ListItemButton>
           </Link>
-          <Link href="/admin/pricing" onClick={() => handleClose(false)}>
+          <Link href="/admin/pricing" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
             <ListItemButton>
-              <ListItemText primary={`Pricing`} />
+              <ListItemText primary={`Pricing`} sx={{ color: "#000", textDecoration: "none" }} />
             </ListItemButton>
           </Link>
-        <Link href="/admin/blanks" onClick={() => handleClose(false)}>
+        <Link href="/admin/blanks" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Blanks`} />
+            <ListItemText primary={`Blanks`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/designs" onClick={() => handleClose(false)}>
+        <Link href="/admin/designs" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Designs`} />
+            <ListItemText primary={`Designs`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/admin/products" onClick={() => handleClose(true)}>
+        <Link href="/admin/products" onClick={() => handleClose(true)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Products`} />
+            <ListItemText primary={`Products`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-          <Link href="/admin/fix-upc" onClick={() => handleClose(false)}>
+          <Link href="/admin/fix-upc" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Fix Upc`} />
+            <ListItemText primary={`Fix Upc`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/orders" onClick={() => handleClose(false)}>
+        <Link href="/orders" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Orders`} />
+            <ListItemText primary={`Orders`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-          <Link href="/admin/track-labels" onClick={() => handleClose(false)} >
+          <Link href="/admin/track-labels" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
             <ListItemButton>
-              <ListItemText primary={`Track Labels`} />
+              <ListItemText primary={`Track Labels`} sx={{ color: "#000", textDecoration: "none" }} />
             </ListItemButton>
           </Link>
-          <Link href="/production/print-labels" onClick={() => handleClose(false)}>
+          <Link href="/production/print-labels" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Print Labels`} />
+            <ListItemText primary={`Print Labels`} sx={{ color: "#000", textDecoration: "none" }}  />
           </ListItemButton>
         </Link>
-        <Link href="/production/dtf-send">
+        <Link href="/production/dtf-send" underline="none" sx={{color: "#000", textDecoration: "none"}} onClick={() => handleClose(false)}>
           <ListItemButton>
-            <ListItemText primary={`Load DTF`} />
+            <ListItemText primary={`Load DTF`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
 
-          <Link href="/production/dtf-find" onClick={() => handleClose(false)}>
+          <Link href="/production/dtf-find" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Find DTF`} />
+            <ListItemText primary={`Find DTF`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-          <Link href="/production/embroidery" onClick={() => handleClose(false)}>
+          <Link href="/production/embroidery" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Embroidery`} />
+            <ListItemText primary={`Embroidery`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-          <Link href="/production/roq-folder" onClick={() => handleClose(false)}>
+          <Link href="/production/roq-folder" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Folder`} />
+            <ListItemText primary={`Folder`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
 
-          <Link href="/production/shipping" onClick={() => handleClose(false)}>
+          <Link href="/production/shipping" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Ship Orders`} />
+            <ListItemText primary={`Ship Orders`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-        <Link href="/inventory">
+        <Link href="/inventory" underline="none" sx={{color: "#000", textDecoration: "none"}} onClick={() => handleClose(false)}>
           <ListItemButton>
-            <ListItemText primary={`Inventory`} />
+            <ListItemText primary={`Inventory`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
-          <Link href="/inventory/product">
+          <Link href="/inventory/product" underline="none" sx={{color: "#000", textDecoration: "none"}} onClick={() => handleClose(false)}>
             <ListItemButton>
-              <ListItemText primary={`Product Inventory`} />
+              <ListItemText primary={`Product Inventory`} sx={{ color: "#000", textDecoration: "none" }} />
             </ListItemButton>
           </Link>
-          <Link href="/production/returns" onClick={() => handleClose(false)}>
+          <Link href="/production/returns" onClick={() => handleClose(false)} underline="none" sx={{color: "#000", textDecoration: "none"}}>
           <ListItemButton>
-            <ListItemText primary={`Returns`} />
+            <ListItemText primary={`Returns`} sx={{ color: "#000", textDecoration: "none" }} />
           </ListItemButton>
         </Link>
       </List>

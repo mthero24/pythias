@@ -126,7 +126,10 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                                         }
                                     }
                                     for (let s of b.sizes) {
-                                        if (!siz.filter(si => s.name == si.name)[0]) siz.push(s)
+                                        console.log(s.hidden, "checking if size is hidden")
+                                        if (!s.hidden) {
+                                            if (!siz.filter(si => s.name == si.name)[0]) siz.push(s)
+                                        }
                                     }
                                 }
                                 colorsByProduct[p.id] = colors
@@ -139,6 +142,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                                 }
                                 p.sizes = siz
                                 p.colors = newProductColors
+                                console.log(p.sizes, "sizes for product", p.id)
                             }
                         }
                         setColors({...colorsByProduct})
