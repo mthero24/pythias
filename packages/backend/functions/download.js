@@ -36,10 +36,10 @@ const csvFunctions = {
         return variant.sku ? variant.sku : ""
     },
     variantPrice: (variant) => {
-        return variant.size ? `${variant.size.retailPrice.toFixed(2)}` : 0;
+        return variant.size ? `${variant.size.retailPrice?.toFixed(2)}` : 0;
     },
     variantWeight: (variant) => {
-        return variant.size ? `${variant.size.weight.toFixed(2)}` : 0;
+        return variant.size ? `${variant.size.weight?.toFixed(2)}` : 0;
     },
     variantUpc: (variant) => {
         return variant.upc ? variant.upc : "N/A";

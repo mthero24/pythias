@@ -2,7 +2,6 @@
 import Styles from "@/models/StyleV2"
 import Design from "@/models/Design"
 import Colors from "@/models/Color"
-import { getCarriers } from "@pythias/shipping"
 import { Inventory, InventoryOrders } from "@pythias/mongo";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
@@ -20,6 +19,7 @@ const updateInventory = async (invIds) => {
             i.order = await Order.findOne({ _id: i.order });
             return i;
         }));
+        if(!inv.quantity) inv.quantity = 0
         if (inv.quantity < 0) {
             inv.quantity = 0;
         }
@@ -48,7 +48,7 @@ const updateInventory = async (invIds) => {
                 }
             }
             inv.attached = newAttached;
-            console.log(inv.style_code, inv.color_name, inv.size_name, inv.quantity, inv.attached.length, inv.inStock.length, items.length, inv.orders.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
+            
             if (inv.quantity > 0) {
                 for (let item of items) {
                     if (inv.quantity - inv.inStock.length > 0 && !inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
@@ -66,6 +66,7 @@ const updateInventory = async (invIds) => {
                     }
                 }
             }
+            console.log(inv.style_code, inv.color_name, inv.size_name, inv.quantity, inv.attached.length, inv.inStock.length, items.length, inv.orders.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
         }
         total += inv.attached.length
         inv = await inv.save()
@@ -82,7 +83,7 @@ export default async function Test(){
     // }
     // style.markModified("fold")
     // await style.save();
-    updateInventory();
+    //updateInventory();
     // let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
     // items = await Promise.all(items.map(async i=> {
     //     i.order = await Order.findOne({ _id: i.order });
