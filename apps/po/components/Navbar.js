@@ -83,82 +83,82 @@ const NavDrawer = ({ visible, toggleDrawer, anchor = "left" }) => (
       </Box>
       <Divider />
       <List sx={{ width: "100%" }}>
-        <Link href="/">
+        <Link href="/" sx={{color: "#fff" }}>
           <ListItemButton>
-            <ListItemText primary={`Production`} />
+            <ListItemText primary={`Production`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/edit-data">
           <ListItemButton>
-            <ListItemText primary={`Edit Data`} />
+            <ListItemText primary={`Edit Data`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/print-labels">
           <ListItemButton>
-            <ListItemText primary={`Print Labels`} />
+            <ListItemText primary={`Print Labels`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/bulk">
           <ListItemButton>
-            <ListItemText primary={`Bulk Orders`} />
+            <ListItemText primary={`Bulk Orders`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/dtf-send">
           <ListItemButton>
-            <ListItemText primary={`Load DTF`} />
+            <ListItemText primary={`Load DTF`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
 
         <Link href="/dtf-find">
           <ListItemButton>
-            <ListItemText primary={`Find DTF`} />
+            <ListItemText primary={`Find DTF`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
 
         <Link href="/roq-folder">
           <ListItemButton>
-            <ListItemText primary={`Folder`} />
+            <ListItemText primary={`Folder`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
 
         <Link href="/shipping">
           <ListItemButton>
-            <ListItemText primary={`Ship Orders`} />
+            <ListItemText primary={`Ship Orders`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/shipping-labels">
           <ListItemButton>
-            <ListItemText primary={`Track Shipping`} />
+            <ListItemText primary={`Track Shipping`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/track-labels">
           <ListItemButton>
-            <ListItemText primary={`Track Production`} />
+            <ListItemText primary={`Track Production`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/embroidery">
           <ListItemButton>
-            <ListItemText primary={`Embroidery`} />
+            <ListItemText primary={`Embroidery`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/sublimation">
           <ListItemButton>
-            <ListItemText primary={`Sublimation`} />
+            <ListItemText primary={`Sublimation`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/inventory">
           <ListItemButton>
-            <ListItemText primary={`Inventory`} />
+            <ListItemText primary={`Inventory`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/inventory-original">
           <ListItemButton>
-            <ListItemText primary={`Inventory (Original)`} />
+            <ListItemText primary={`Inventory (Original)`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
         <Link href="/clockwise">
           <ListItemButton>
-            <ListItemText primary={`Clockwise`} />
+            <ListItemText primary={`Clockwise`} sx={{ color: "#fff" }} />
           </ListItemButton>
         </Link>
       </List>
