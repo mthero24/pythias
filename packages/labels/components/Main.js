@@ -600,7 +600,7 @@ export function Main({labels, rePulls, giftLabels=[], batches, source}){
             </Card>
         )}
 
-        <Card sx={{display: "flex", width: "100%", padding: "2%", flexDirection: "column", margin: ".5%", justifyContent: "space-between"}}>
+        <Card sx={{display: "flex", width: "95%", padding: "2%", flexDirection: "column", margin: ".5%", justifyContent: "space-between"}}>
           <Box sx={{display: "flex", width: "100%", flexDirection: "row", justifyContent: "space-between"}}>
             <Box sx={{width: "30%"}}>
               <InputLabel id="demo-simple-select-label">Print Type</InputLabel>
