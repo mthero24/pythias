@@ -40,7 +40,7 @@ export function Main({designs, ct, query, pa}){
                 <Search setSearch={setSearch} setDesigns={setDesigns} setCount={setCount} setPage={setPage} search={search}/>
                 <Card sx={{width: "100%", height: "auto", padding: "1%", margin: "1% 0%"}}>
                     <Box sx={{ minHeight: "80vh",}}>
-                        <Grid2 container spacing={2}>
+                        <Grid2 container spacing={3}>
                             {designss && designss.map(d=>{
                                 let imageUrl
                                 let others = []

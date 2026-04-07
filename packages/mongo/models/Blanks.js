@@ -138,6 +138,7 @@ const SchemaObj = new Schema(
     ],
     marketPlaceOverrides: {},
     singleShippingDimensions: Object,
+    hiddenColors: [String],
   },
   { strict: false }
 );

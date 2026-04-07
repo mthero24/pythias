@@ -13,7 +13,8 @@ import {
     Card,
     CardMedia,
     Divider,
-    FormControlLabel
+    FormControlLabel,
+    Switch,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import "cropperjs/dist/cropper.css";
@@ -77,8 +78,17 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     return (
         <Box>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: "2%" }}>
-                    <Button variant="outlined" color="warning" onClick={()=> setDeleteBlankModalOpen(true)}>Delete</Button>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: "2%" }}>
+                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2, width: "50%" }}>
+                        <Typography variant="h6" sx={{ marginRight: "2%" }}>Status: {blank.active ? "Active" : "Inactive"}</Typography>
+                        <Switch defaultChecked={blank.active} onChange={(e) => {
+                            let bla = {...blank};
+                            bla.active = e.target.checked;
+                            setBlank(bla);
+                            update({blank: bla});
+                        }} />
+                    </Box>
+                    <Button variant="outlined" color="warning" onClick={() => setDeleteBlankModalOpen(true)}>Delete</Button>
                 </Box>
                 <Box sx={{ p: 2, mb: 2, alignContent: "center", backgroundColor: "#fff", borderRadius: 2, boxShadow: 3 }}>
                     <Grid2 container spacing={2} sx={{width: "100%"}}>
@@ -403,6 +413,16 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                     update({ blank: bla });
                                                 }}
                                             />
+                                            <Switch inputProps={{ 'aria-label': 'Color Hidden' }} defaultChecked={!blank.hiddenColors.includes(color._id.toString())} onChange={(e) => {
+                                                let bla = { ...blank };
+                                                if(!e.target.checked){
+                                                    bla.hiddenColors.push(color._id.toString());
+                                                } else {
+                                                    bla.hiddenColors = bla.hiddenColors.filter(id => id !== color._id.toString());
+                                                }
+                                                setBlank(bla);
+                                                update({ blank: bla });
+                                            }} />
                                         </Box>
                                         <Grid2 container spacing={1}>
                                             <Grid2 size={2}>

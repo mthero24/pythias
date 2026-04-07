@@ -1,8 +1,13 @@
-import { Box, Grid2, Button, Typography, Divider, FormControlLabel, Checkbox } from "@mui/material";
+import { Box, Grid2, Button, Typography, Divider, FormControlLabel, Checkbox, Grid } from "@mui/material";
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import { set } from "mongoose";
+import { useState } from "react";
 
 export const BlankStage = ({products, setProducts, setStage, blanks, design, source, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs})=>{
+    const [department, setDepartment] = useState(null)
+    const [category, setCategory] = useState(null)
+    const [departments, setDepartments] = useState(blanks.map(b => b.department).filter((value, index, self) => value && self.indexOf(value) === index))
+    const [categories, setCategories] = useState(blanks.map(b => b.category[0]).filter((value, index, self) => value && self.indexOf(value) === index))
+    console.log(blanks.map(b => b.active), "Blanks in BlankStage")
     return (
         <Grid2 container spacing={2} sx={{ marginBottom: "2%" }}>
             <Grid2 size={12}>
@@ -13,7 +18,27 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                 </Box>
                 <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select the blanks you want to use for this product. You can select multiple blanks.</Typography>
             </Grid2>
-            {blanks.map(b => {
+            <Grid2 size={12}>
+                <Grid2 container spacing={1} sx={{ marginBottom: "2%" }}>
+                    {departments.map((d, i) => (
+                        <Grid2 key={i} size="auto">
+                            <Button key={i} variant="outlined" sx={{ background: department == d ? "#e2e2e2" : "#fff" }} onClick={() => {
+                                if(department == d) setDepartment(null)
+                                else setDepartment(d)
+                            }}>{d}</Button>
+                        </Grid2>
+                    ))}
+                    {categories.map((c, i) => (
+                        <Grid2 key={i} size="auto">
+                            <Button key={i} variant="outlined" sx={{ background: category == c ? "#e2e2e2" : "#fff" }} onClick={() => {
+                                if(category == c) setCategory(null)
+                                else setCategory(c)
+                            }}>{c}</Button>
+                        </Grid2>
+                    ))}
+                </Grid2>
+            </Grid2>
+            {blanks.filter(b => b.active && (department ? b.department === department : true) && (category ? b.category[0] === category : true)).map(b => {
                 let designImages = Object.keys(design.images ? design.images : {})
                 let styleImages = []
                 let color;
@@ -120,13 +145,17 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                                 let colors = []
                                 let siz = []
                                 for (let b of p.blanks) {
+                                    console.log(b.hiddenColors, "checking hidden colors for blank", b.code)
                                     for (let color of b.colors) {
-                                        if (!colors.filter(c => c._id.toString() == color._id.toString())[0]) {
+                                        if(b.hiddenColors && b.hiddenColors.includes(color._id.toString())){
+                                            continue;
+                                        }
+                                        else if (!colors.filter(c => c._id.toString() == color._id.toString())[0]) {
                                             colors.push(color)
                                         }
                                     }
                                     for (let s of b.sizes) {
-                                        console.log(s.hidden, "checking if size is hidden")
+                                       //console.log(s.hidden, "checking if size is hidden")
                                         if (!s.hidden) {
                                             if (!siz.filter(si => s.name == si.name)[0]) siz.push(s)
                                         }

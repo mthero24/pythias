@@ -15,14 +15,14 @@ export const designPage = async ({id, Brands, LicenseHolders, Color, PrintLocati
     let design 
     let products = []
     if(id && id !== undefined && id !== null && id !== "") {
-        console.log(id, "Design ID")
+       // console.log(id, "Design ID")
         design = await Design.findOne({ _id: id }).lean();
         products = await Products.find({ design: design._id }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" })
         design.products = products;
     }
     //console.log(products[0], "Products in designPage")
-    let blanks = await Blank.find({}).select("colors code name sizes multiImages images").populate("colors").lean();
-    console.log(blanks, "Blanks in designPage");
+    let blanks = await Blank.find({}).select("colors code name sizes multiImages images active department category hiddenColors").populate("colors").lean();
+   // console.log(blanks, "Blanks in designPage");
     let licenses = await LicenseHolders.find({}).lean();
     let brands = await Brands.find({}).lean();
     let marketPlaces = await MarketPlaces.find({}).lean();
