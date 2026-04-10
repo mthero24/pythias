@@ -36,6 +36,7 @@ export async function PUT(req = NextApiRequest) {
 }
 export async function DELETE(req = NextApiRequest) {
   let id = await req.nextUrl.searchParams.get("id")
+  console.log(id, "Color ID to delete")
   await Color.findOneAndDelete({_id: id})
   let colors = await Color.find({})
   return NextResponse.json({error: false, colors});

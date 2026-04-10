@@ -1,21 +1,13 @@
 "use client";
-import {Box, Card, Grid2, Typography, TextField} from "@mui/material";
+import {Box, Card, Grid2, Typography, TextField, Modal, Button} from "@mui/material";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CreatableSelect from "react-select/creatable";
 import {useState, useEffect} from "react";
 import axios from "axios";
 export function Main({colors}){
     const [cols, setColors] = useState(colors)
-    const [del, setDel] = useState(false)
-    useEffect(()=>{
-        const checkDel = ()=>{
-            console.log(del)
-            if(del) setDel(!del)
-        }
-        setTimeout(()=>{
-            checkDel()
-        }, 2000)
-    }, [del])
+    const [open, setOpen] = useState(false)
+    const [color, setColor] = useState(null)
     const updateColor = async (color)=>{
         console.log(color)
         let res = await axios.put("/api/admin/colors", {color})
@@ -79,18 +71,39 @@ export function Main({colors}){
                             </Box>
                             {<Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end"}}>
                                     <DeleteForeverIcon sx={{color: "red", cursor: "pointer"}} onClick={async ()=>{
-                                        if(del){
-                                            let res = await axios.delete(`/api/colors?id=${c._id}`)
-                                            if(res.data.error) alert(res.data.msg)
-                                            else setColors(res.data.colors)
-                                        }
-                                        setDel(!del)
+                                            setColor(c)
+                                            setOpen(true)
+                                       
                                     }} />
                             </Box>}
                         </Box>
                     </Grid2>
                 ))}
             </Grid2>
+            <DeleteModal open={open} setOpen={setOpen} color={color} setColors={setColors} />
         </Box>
+    )
+}
+
+
+export function DeleteModal({ open, setOpen, color, setColors }) {
+    const handleDelete = async () => {
+        let res = await axios.delete(`/api/admin/colors?id=${color._id}`).catch(e => {
+            console.log(e.response.data)
+        });
+        setColors(res.data.colors)
+        setOpen(false)
+    };
+    return (
+        <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 400, bgcolor: 'background.paper', border: '2px solid #000', boxShadow: 24, p: 4, }}>
+                <Typography id="modal-modal-title" variant="h6" component="h2">Delete Color</Typography>
+                <Typography id="modal-modal-description" sx={{ mt: 2 }}>Are you sure you want to delete {color.name}?</Typography>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 3 }}>
+                    <Button variant="contained" color="error" onClick={handleDelete} sx={{ marginRight: 2 }}>Delete</Button>
+                    <Button variant="outlined" onClick={() => setOpen(false)}>Cancel</Button>
+                </Box>
+            </Box>
+        </Modal>
     )
 }

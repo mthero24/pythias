@@ -254,6 +254,7 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                                 setBlankSizesToUse({...newSizeSelect})
                                 let ops = options
                                 ops.sizes = blankSizesToUse[newSelected[0]._id]
+                                
                                 if(sizesToUse == "combined"){
                                     let sizes = []
                                     let blanks = Object.keys(newSizeSelect).map(b=> newSizeSelect[b])
