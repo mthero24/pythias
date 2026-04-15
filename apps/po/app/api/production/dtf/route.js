@@ -189,10 +189,10 @@ export async function POST(req = NextApiRequest) {
               console.log(
                 "_____________________custom envelope_____________________",
               );
-              const { x, y, scaleX, scaleY } = await smartCrop(item.design[im]);
-              console.log(scaleX, scaleY, "scaleX scaleY");
-              envelope.width = scaleX * envelope.width;
-              envelope.height = scaleY * envelope.height;
+              const { scale, trimmedWidth, trimmedHeight } = await smartCrop(item.design[im]);
+              console.log(scale, "scale");
+              envelope.width = scale * envelope.width;
+              envelope.height = envelope.width * (trimmedHeight / trimmedWidth);
             }
 
             console.log(
@@ -281,10 +281,10 @@ export async function POST(req = NextApiRequest) {
           console.log(
             "_____________________custom envelope_____________________",
           );
-          const { x, y, scaleX, scaleY } = await smartCrop(item.design[im]);
-          console.log(scaleX, scaleY, "scaleX scaleY");
-          envelope.width = scaleX * envelope.width;
-          envelope.height = scaleY * envelope.height;
+          const { scale, trimmedWidth, trimmedHeight } = await smartCrop(item.design[im]);
+          console.log(scale, "scale");
+          envelope.width = scale * envelope.width;
+          envelope.height = envelope.width * (trimmedHeight / trimmedWidth);
         }
 
         console.log(
