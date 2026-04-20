@@ -264,7 +264,6 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                                     let i = 0
                                     for(let s of si){
                                         let size = {
-                                            _id: s.map(si=> si._id).join("-"),
                                             name: s.map(si=> {return si.name}).join("/"),
                                             weight: s.map(si=> si.weight).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
                                             retailPrice: s.map(si=> si.retailPrice).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
@@ -272,13 +271,18 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                                             cost: s.map(si=> si.cost).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
                                             sku: i,
                                             wholeSaleCost: s.map(si=> si.wholeSaleCost).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
-                                            
+                                            blankSizes: s
                                         }
                                         i++
                                         sizes.push(size)
                                     }
                                     console.log(sizes)
                                     ops.sizes = sizes
+                                }else{
+                                    for(let s of ops.sizes){
+                                        s.blankSizes = [s]
+                                        console.log(s, "size")
+                                    }
                                 }
                                 setOptions({...ops})
                             }}/>
@@ -357,7 +361,6 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                                     let i = 0
                                     for(let s of si){
                                         let size = {
-                                            _id: s.map(si=> si._id).join("-"),
                                             name: s.map(si=> {return si.name}).join("/"),
                                             weight: s.map(si=> si.weight).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
                                             retailPrice: s.map(si=> si.retailPrice).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
@@ -365,12 +368,18 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                                             cost: s.map(si=> si.cost).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
                                             sku: i,
                                             wholeSaleCost: s.map(si=> si.wholeSaleCost).reduce((accumulator, currentValue) => accumulator + currentValue, 0),
+                                            blankSizes: s
                                         }
                                         i++
                                         sizes.push(size)
                                     }
                                     console.log(sizes)
                                     ops.sizes = sizes
+                                } else {
+                                    for (let s of ops.sizes) {
+                                        s.blankSizes = [s]
+                                        console.log(s, "size")
+                                    }
                                 }
                                 setOptions({...ops})
                             }}>
@@ -448,7 +457,6 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                                     let i = 0
                                     for(let s of si){
                                         let color = {
-                                            _id: s.map(si=> si._id).join("-"),
                                             name: s.map(si=> {return si.name}).join("/"),
                                             hexcode: s[0].hexcode,
                                             sku: i

@@ -1,6 +1,6 @@
 import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories, PrintLocations } from "@pythias/mongo";
 import { serialize, Edit } from "@pythias/backend";
-
+export const dynamic = 'force-dynamic';
 export default async function EditPage() {
     try {
         let seasons = await Seasons.find().lean();
