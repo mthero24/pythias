@@ -26,8 +26,8 @@ export function BlanksComponent({blanks, mPs, source}){
         setVisibleBlanks([...filtered]);
     };
     return (
-        <Box>
-            <Container maxWidth="lg" sx={{minHeight: "80vh", paddingTop: "2%"}}>
+        <Box >
+            <Container maxWidth="lg" sx={{minHeight: "80vh", padding: "6%"}}>
                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginBottom: "2%"}}>
                     <Button variant="contained" href="/admin/blanks/create">Create New Blank</Button>
                     <Button variant="outlined" sx={{marginLeft: "2%"}} onClick={()=>{setAliasOpen(!aliasOpen)}} >Create Alias/Combined Blank</Button>
@@ -71,17 +71,7 @@ export function BlanksComponent({blanks, mPs, source}){
                 <Grid2 container spacing={2} sx={{margin: "2% 0%"}}>
                     {visibleBlanks.map((blank) => {
                         console.log(blank.images, "blank images")
-                        let frontImage = blank.images && blank.images.length > 0 ? blank.images[0] : (blank.multiImages && blank.multiImages["front"] ? blank.multiImages["front"][0] : null);
-                        if(!frontImage && blank.multiImages){
-                            let keys = Object.keys(blank.multiImages);
-                            for(let k of keys){
-                                if(blank.multiImages[k] && blank.multiImages[k].length > 0){
-                                    frontImage = blank.multiImages[k][0];
-                                    break;
-                                }
-                            }
-                        }
-                        console.log(frontImage, "front image for blank")
+                        let frontImage = blank.images && blank.images.length > 0 ? blank.images[0] : null;
                         return (
                             <Grid2 item size={{xs: 6, sm: 4, md: 3}} key={blank.id}>
                             <Card sx={{padding: "2%", display: "flex", flexDirection: "column"}}>

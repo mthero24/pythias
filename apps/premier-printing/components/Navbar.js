@@ -28,7 +28,7 @@ export default function ButtonAppBar() {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar >
         <Toolbar sx={{ backgroundColor: theme.palette.primary.main }}>
           <IconButton
             size="large"
