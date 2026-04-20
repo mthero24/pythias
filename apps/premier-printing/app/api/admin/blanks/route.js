@@ -111,23 +111,23 @@ export async function POST(req = NextApiRequest) {
     }
     if (blank._id) {
       console.log("update blank")
-      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
+      if (blank.printLocations?.length > 0 && blank.sizes.length > 0 && blank.type !== "alias") blank = updateEnvelopes(blank)
       //console.log(blank.envelopes.length, "before fold")
-      if (blank.sizes.length > 0) blank = updateFold(blank)
+      if (blank.sizes.length > 0 && blank.type !== "alias") blank = updateFold(blank)
       //console.log(blank.sizes, "last",)
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
       newBlank = await Blanks.findById(blank._id).populate("printLocations") 
-      updateInventory(blank)
+      if (blank.type !== "alias")updateInventory(blank)
     }
     else {
       console.log("new blank")
       let newBlank = new Blanks({ ...blank });
       blank = await newBlank.save();
       console.log("new blank", blank)
-      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
-      if (blank.sizes.length > 0) blank = updateFold(blank)
+      if (blank.printLocations?.length > 0 && blank.sizes.length > 0 && blank.type !== "alias") blank = updateEnvelopes(blank)
+      if (blank.sizes.length > 0 && blank.type !== "alias") blank = updateFold(blank)
       await blank.save()
-      await generateInventory(newBlank);
+      if(blank.type !== "alias")await generateInventory(newBlank);
     }
     return NextResponse.json({error: false, blank: newBlank});
   } catch (err) {
