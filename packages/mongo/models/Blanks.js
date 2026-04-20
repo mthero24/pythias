@@ -49,7 +49,7 @@ const SchemaObj = new Schema(
         basePrice: { default: 0, type: Number },
         cost: { default: 0, type: Number },
         sku: String,
-        blankSizes: Object,
+        blankSizes: Array,
         hidden: {type: Boolean, default: false}
       },
     ],
