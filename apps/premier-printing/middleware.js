@@ -128,6 +128,7 @@ const protectedRoutes = [
 ];
 
 export async function middleware(req=NextRequest, res) {
+  console.log("Middleware running for path:", req.nextUrl.pathname)
   const protectedRoute = protectedRoutes.find((route) =>
       req.nextUrl.pathname.startsWith(route.path)
     );
