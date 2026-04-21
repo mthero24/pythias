@@ -237,8 +237,8 @@ export async function pullOrders(){
                         let skuBroken = sku.split("_");
                         let designSku = skuBroken.slice(3, skuBroken.length).join("_");
                         console.log(blankCode, colorSku, sizeName, designSku, "broken sku")
-                        let blank = await Blank.findOne({code: blankCode}).populate("colors")
-                        if(!blank) blank = await Blank.findOne({code: blankConverter[blankCode]? blankConverter[blankCode]: blankCode}).populate("colors")
+                        let blank = await Blank.findOne({code: blankCode}).populate("colors").populate("blanks")
+                        if(!blank) blank = await Blank.findOne({code: blankConverter[blankCode]? blankConverter[blankCode]: blankCode}).populate("colors").populate("blanks")
                         let color = blank?.colors.find(c => c.sku === colorSku.toLowerCase())
                         if(!color) color = blank?.colors.find(c => c.name.toLowerCase() === colorSku.toLowerCase())
                         if (!color) color = blank?.colors.find(c => c.name === colorSku)
@@ -254,7 +254,20 @@ export async function pullOrders(){
                             product = await Products.findOne({ variantsArray: { $elemMatch: { sku: newSku } } }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
                             console.log(product, "found product")
                         }
-                        if (product) {
+                        if(blank.type == "alias" && blank.blanks.length > 0 && product){
+                            if(blank.blamks.length > 1){
+
+                            }else{
+                                let variant = product.variantsArray.find(v => v.sku === newSku)
+                                let aliasBlank = blank.blanks[0]
+                                let aliasSize = aliasBlank.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName] || s.sku === sizeName || s.sku === sizeFixer[sizeName])
+                                variant.blank = aliasBlank
+                                variant.size = aliasSize
+                                item = await createItemVariant(variant, product, order, i.unitPrice)
+                                items.push(item)
+                            }
+
+                        }else if (product) {
                             let variant = product.variantsArray.find(v => v.sku === newSku)
                             if (variant) {
                                 item = await createItemVariant(variant, product, order, i.unitPrice)
@@ -302,8 +315,15 @@ export async function pullOrders(){
                                 item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
                                 items.push(item)
                             }else{
-                                item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
-                                items.push(item)
+                                if(blank.blanks.length > 0){
+                                    let aliasBlank = blank.blanks[0]
+                                    let aliasSize = aliasBlank.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName] || s.sku === sizeName || s.sku === sizeFixer[sizeName])
+                                    item = await createItem(i, order, aliasBlank, color, null, aliasSize, design, sku ? sku.sku : i.sku, isBlank)
+                                    items.push(item)
+                                }else{
+                                    item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
+                                    items.push(item)
+                                }
                             }
                         }
                     } else if(i.sku?.includes("PPSET")){

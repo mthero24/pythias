@@ -249,10 +249,18 @@ const fixSkus = async () => {
     console.log("done fixing skus")
 }
 export default async function Test(){
-    //pullOrders();
+    pullOrders();
     //addPriceToItem();
     //inventoryFixer();
 
    //fixSkus();
+    // let item = await Items.findOne({ pieceId: "7HAATF5FP" }).populate("inventory.inventory").populate("designRef").populate("color").populate("size").populate("blank")
+    // let blank = await Blank.findById(item.blank._id).populate("blanks").populate("colors").populate("sizes")
+    // let inventory = await Inventory.findOne({ blank: blank.blanks[0]._id, color: item.color._id, sizeId: item.size._id })
+    // item.inventory.inventory = inventory._id
+    // item.blank = blank.blanks[0]._id
+    // item.blankCode = blank.blanks[0].code
+    // await item.save()
+    // console.log(item, "item")
     return <h1>test</h1>
 }
