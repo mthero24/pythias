@@ -35,7 +35,7 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                 let cl = []
                 for(let blank of blanks){
                     for(let inv of blank.inventories){
-                        let onOrder = (inv.attached ? inv.attached.length : 0) - inv.orders.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0) 
+                        let onOrder = (inv.attached ? inv.attached.length : 0) - inv.orders?.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0) 
                         //console.log(inStock - onOrder)
                         if(onOrder > 0) {
                             if(!bl.includes(inv.style_code))bl.push(inv.style_code)
