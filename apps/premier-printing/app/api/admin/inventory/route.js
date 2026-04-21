@@ -1,6 +1,7 @@
 import {Inventory, Blank as Blanks, Items }from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import {getInv} from "@pythias/inventory"
+import { getToken } from "next-auth/jwt";
 export async function GET(req=NextApiRequest){
     let term = req.nextUrl.searchParams.get("q");
     let res = await getInv({ Blanks, Inventory, term, page: 1})
@@ -8,6 +9,11 @@ export async function GET(req=NextApiRequest){
 }
 
 export async function POST(req=NextApiRequest){
+    const token = await getToken({ req });
+    console.log(token, "token")
+    if(token.permissions && token.permissions.inventory !== true){
+        return NextResponse.json({error: true, msg: "You do not have permission to perform this action."}, {status: 200})
+    }
     let data = await req.json()
     let updateItems = []
     if(!data.inventory.attached) data.inventory.attached = [];
@@ -49,6 +55,8 @@ export async function POST(req=NextApiRequest){
     return NextResponse.json({ error: false, inventory: data.inventory })
 }
 export async function PUT(req=NextApiRequest){
+    const token = await getToken({ req });
+    console.log(token, "token")
     console.log("here")
     let data = await req.json()
     let inventory = await Inventory.findOneAndDelete({inventory_id: data.inventory_id});
@@ -56,6 +64,8 @@ export async function PUT(req=NextApiRequest){
 }
 
 export async function DELETE(req=NextApiRequest){
+    const token = await getToken({ req });
+    console.log(token, "token")
     let id = req.nextUrl.searchParams.get("id");
     console.log("Deleting inventory with id:", id);
     let inventory = await Inventory.findOneAndDelete({_id: id});

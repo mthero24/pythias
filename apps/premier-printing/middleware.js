@@ -134,9 +134,12 @@ export async function middleware(req=NextRequest, res) {
   const requestHeaders = new Headers(req.headers)
   const token = await getToken({ req });
   if (protectedRoute) {
-    const permissions = token && token.permissions? token.permissions: {}
-    if(token) permissions.account = true
-    if (!permissions[protectedRoute.permission]) {
+    let permissions = token && token.permissions? token.permissions: {}
+    if(token) {
+      permissions.account = true
+      permissions.inventory = true
+    }
+    if (!permissions[protectedRoute.permission ]) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
   }
