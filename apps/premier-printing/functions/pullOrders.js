@@ -260,7 +260,7 @@ export async function pullOrders(){
                             }else{
                                 let variant = product.variantsArray.find(v => v.sku === newSku)
                                 let aliasBlank = blank.blanks[0]
-                                let aliasSize = aliasBlank.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName] || s.sku === sizeName || s.sku === sizeFixer[sizeName])
+                                let aliasSize = aliasBlank.sizes.find(s => s._id.toString() == blank.sizes.find(si => si.name === sizeName || si.name === sizeFixer[sizeName] || si.sku === sizeName || si.sku === sizeFixer[sizeName]).blankSizes[0]._id.toString())
                                 variant.blank = aliasBlank
                                 variant.size = aliasSize
                                 item = await createItemVariant(variant, product, order, i.unitPrice)
@@ -317,7 +317,7 @@ export async function pullOrders(){
                             }else{
                                 if(blank.blanks.length > 0){
                                     let aliasBlank = blank.blanks[0]
-                                    let aliasSize = aliasBlank.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName] || s.sku === sizeName || s.sku === sizeFixer[sizeName])
+                                    let aliasSize = aliasBlank.sizes.find(s => s._id.toString() == blank.sizes.find(si => si.name === sizeName || si.name === sizeFixer[sizeName] || si.sku === sizeName || si.sku === sizeFixer[sizeName]).blankSizes[0]._id.toString())
                                     item = await createItem(i, order, aliasBlank, color, null, aliasSize, design, sku ? sku.sku : i.sku, isBlank)
                                     items.push(item)
                                 }else{
