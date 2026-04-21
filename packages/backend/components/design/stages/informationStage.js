@@ -10,6 +10,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
     useEffect(() => {
        const fetchMarkets = async () => {
             let res = await axios.get("/api/marketplaces");
+            console.log(res.data.marketplaces, "marketplaces in InformationStage")
             setMarkets(res.data.marketplaces);
         };
         fetchMarkets();
@@ -103,7 +104,10 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                             }else return null;
                                         })}
                                         {market.productDropDowns && Object.keys(market.productDropDowns).map((category, l) =>{
-                                            if(category == "titleGenerator") return null;
+                                            if(market.required ){
+                                                console.log(market.required[category] == true? "Required" : "Recommended", "market.required[category] in InformationStage")
+                                            }
+                                            if(category == "titleGenerator" || category == "required") return null;
                                             return <Grid2 key={l} size={4}>
                                                 <CreatableSelect placeholder={`Select ${category}`} value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category] ? { value: product.marketplaceValues[market._id][category], label: product.marketplaceValues[market._id][category] } : null} options={[{value: null, label: `Select ${category}`}, ...(market.productDropDowns[category] || []).map(option => ({ value: option, label: option }))]} onChange={async (newValue) => {
                                                     let prods = [...products]
@@ -114,6 +118,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                                     if((market.productDropDowns[category] || []).filter(o => o == newValue.value)[0] || newValue.value == null)p.marketplaceValues[market._id][category] = newValue.value
                                                 setProducts([...prods])
                                             }} />
+                                            <Typography variant="caption" color="#c73333">{market.required && market.required[category] == true ? "Required" : "Recommended"}</Typography>
                                         </Grid2>
                                     })}
 

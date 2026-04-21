@@ -11,6 +11,7 @@ const schema = new mongoose.Schema({
     defaultValues: Object,
     productDefaultValues: Object,
     productDropDowns: Object,
+    required: Object,
     hasProductLine: [{ type: Boolean, default: false }],
     disableProductDefaults: [{ type: Boolean, default: false }],
     connections: [String], // Array of connection IDs

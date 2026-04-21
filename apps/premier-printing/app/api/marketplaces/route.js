@@ -2,7 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import { MarketPlaces } from "@pythias/mongo";
 
 export async function GET(req = NextApiRequest) {
-    let marketplaces = await MarketPlaces.find().select("_id name productDropDowns").lean();
+    let marketplaces = await MarketPlaces.find().select("_id name productDropDowns required").lean();
     return NextResponse.json({ error: false, marketplaces });
 }
 export async function PUT(req = NextApiRequest) {
@@ -15,9 +15,10 @@ export async function PUT(req = NextApiRequest) {
     if(!marketplace.productDropDowns){
         marketplace.productDropDowns = {};
     }
-    if(data.oldCategory && data.oldCategory !== data.category){
+    if(data.oldCategory && data.oldCategory !== data.category && data.category != "required"){
         marketplace.productDropDowns[data.category] = marketplace.productDropDowns[data.oldCategory];
         delete marketplace.productDropDowns[data.oldCategory];
+        console.log(marketplace.required, "marketplace.required in route.js before delete")
     }
     if(!marketplace.productDropDowns[data.category]){
         if(data.category == "titleGenerator"){
@@ -25,6 +26,10 @@ export async function PUT(req = NextApiRequest) {
                 label: "",
                 prompt: ""
             };
+        }else if(data.category == "required"){
+            if(!marketplace.required) marketplace.required = {};
+            console.log(marketplace.required, "marketplace.required in route.js before update")
+            marketplace.required[data.oldCategory] = data.value
         } else {
             marketplace.productDropDowns[data.category] = [];
         }
@@ -32,7 +37,7 @@ export async function PUT(req = NextApiRequest) {
     if (data.oldValue) {
         marketplace.productDropDowns[data.category] = marketplace.productDropDowns[data.category].filter(v => v !== data.oldValue);
     }
-    if(data.value && data.category != "titleGenerator"){
+    if(data.value && data.category != "titleGenerator" && data.category != "required"){
         marketplace.productDropDowns[data.category].push(data.value);
         marketplace.productDropDowns[data.category] = marketplace.productDropDowns[data.category].sort((a, b) => a.localeCompare(b));
     }else if(data.value && data.category == "titleGenerator"){
@@ -43,8 +48,9 @@ export async function PUT(req = NextApiRequest) {
             marketplace.productDropDowns[data.category].label = data.value;
         }
     }
-    console.log(marketplace.productDropDowns)
+    console.log(marketplace.required, "marketplace.required in route.js")
     marketplace.markModified("productDropDowns");
+    marketplace.markModified("required");
     await marketplace.save();
     let marketplaces = await MarketPlaces.find().lean();
     return NextResponse.json({ error: false, marketplaces, message: "Category added successfully" });

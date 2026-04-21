@@ -1,5 +1,5 @@
 "use client";
-import { Grid2, Box, Container, Typography, TextField, MenuItem, Button, Modal, FormControl, FormControlLabel, FormGroup, Checkbox} from '@mui/material';
+import { Grid2, Box, Container, Typography, TextField, MenuItem, Button, Modal, FormControl, FormLabel, FormControlLabel, FormGroup, Radio, RadioGroup } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -73,10 +73,26 @@ export function Main({marketplaces}){
                         return <Grid2 item size={3} key={j}>
                             <Box sx={{border: "1px solid gray", borderRadius: "5px",}}>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center",  gap: 2, p: 1}}>
-                                    <FormGroup>
-                                        <FormControlLabel control={<Checkbox defaultChecked />} label="Recommended" />
-                                        <FormControlLabel required control={<Checkbox />} label="Required" />
-                                    </FormGroup>
+                                    <FormControl>
+                                        <RadioGroup
+                                            aria-labelledby="demo-radio-buttons-group-label"
+                                            value={m.required && m.required[key] && m.required[key].required ? "Required" : "Recommended"}
+                                            name="radio-buttons-group"
+                                        onChange={async (e)=>{
+                                            console.log(e.target.value)
+                                            let res = await axios.put(`/api/marketplaces`, { marketplace: m._id, category: "required", oldCategory: key, value: e.target.value == "Required"? true: false })
+                                            if (res.status === 200) {
+                                                setMarkets(res.data.marketplaces);
+                                                let a = activeValues
+                                                if (a[m.name]) delete a[m.name][key]
+                                                setActiveValues({ ...a })
+                                            }
+
+                                        }}>
+                                            <FormControlLabel value="Recommended" control={<Radio />} label="Recommended" />
+                                            <FormControlLabel value="Required" control={<Radio />} label="Required" />
+                                        </RadioGroup>
+                                    </FormControl>
                                     <EditIcon sx={{ fontSize: "1.1rem", color: "#8f88e9", cursor: "pointer" }} onClick={async () => {
                                         setCategoryEdit(key);
                                         setMarketplace(m);
