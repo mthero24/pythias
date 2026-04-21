@@ -38,7 +38,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             for (let blank of product.blanks) {
                 for (let color of product.colors) {
                     if(blank.images && blank.images.length > 0){
-                        for (let img of blank.images?.filter(i => i.color.toString() == color._id.toString() && Object.keys(i.boxes ? i.boxes : {}).includes(side))) {
+                        for (let img of blank.images?.filter(i => i.color.toString() == color._id.toString() && (Object.keys(i.boxes ? i.boxes : {}).includes(side) || Object.keys(i.boxes ? i.boxes : {}).includes("back")))) {
                             if (!imgs[blank.code]) imgs[blank.code] = {}
                             if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
                             if(imgs[blank.code][color.name].filter(i => i.sku == `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}`).length == 0){
