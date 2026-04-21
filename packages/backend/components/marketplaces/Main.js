@@ -1,5 +1,5 @@
 "use client";
-import {Grid2, Box, Container, Typography, TextField, MenuItem, Button, Modal} from '@mui/material';
+import { Grid2, Box, Container, Typography, TextField, MenuItem, Button, Modal, FormControl, FormControlLabel, FormGroup, Checkbox} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -73,6 +73,10 @@ export function Main({marketplaces}){
                         return <Grid2 item size={3} key={j}>
                             <Box sx={{border: "1px solid gray", borderRadius: "5px",}}>
                                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center",  gap: 2, p: 1}}>
+                                    <FormGroup>
+                                        <FormControlLabel control={<Checkbox defaultChecked />} label="Recommended" />
+                                        <FormControlLabel required control={<Checkbox />} label="Required" />
+                                    </FormGroup>
                                     <EditIcon sx={{ fontSize: "1.1rem", color: "#8f88e9", cursor: "pointer" }} onClick={async () => {
                                         setCategoryEdit(key);
                                         setMarketplace(m);

@@ -8,5 +8,6 @@ export default async function Bulk(){
         order.items = order.items.filter(item => item.canceled == false)
     }
     orders = serialize(orders)
+    console.log("bulk orders found", orders.length)
     return <BulkMain orders={orders}/>
 }
