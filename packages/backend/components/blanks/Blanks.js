@@ -486,6 +486,7 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                 </Grid2>
                 <hr/>
                 <Button variant="outlined" color="error" sx={{width: "50%", padding: "1%"}} onClick={async ()=>{
+                    if(!options.code) options.code = selectedBlanks.map(b=> b?.code).join("-")
                     let res = await axios.post("/api/admin/blanks/alias", {options, selectedBlanks, sizesToUse, colorsToUse})
                     if(res && res.data && !res.data.error){
                         location.href = `/admin/blanks/create?id=${res.data.blank._id}`
