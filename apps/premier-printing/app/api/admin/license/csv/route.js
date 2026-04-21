@@ -20,19 +20,22 @@ export async function GET(req = NextApiRequest) {
     let itemsToSend = []
     for (let l of licenses) {
         console.log(l.name, "license")
-        let designs = await Design.find({ licenseHolder: l._id }).select("_id").lean()
+        let designs = await Design.find({ licenseHolder: l._id }).select("_id name").lean()
         //console.log(designs.length, "designs length")
-        let items = await Items.find({ designRef: { $in: designs.map(d => d._id) }, date: range }).populate("order").lean()
+        let items = await Items.find({ designRef: { $in: designs.map(d => d._id) }, date: range }).populate({path: "order", select: "poNumber marketplace"}).lean()
         console.log(items.length, "items length")
         for (let i of items) {
             let item = {}
             item.license = l.name
             item.date = new Date(i.date).toLocaleDateString()
             item.itemSKU = i.sku
-            item.itemName = i.name
+            item.itemName = i.name? i.name : designs.find(des => des._id.toString() === i.designRef.toString())?.name
             item.itemPrice = i.price? i.price : 0
             item.marketplace = i.order?.marketplace
+            item.marketplaceOrderId = i.order?.poNumber
             item.payment = (i.price ? i.price : 0) * (l.paymentType == "Percentage Per Unit" ? (l.amount / 100) : 1) + (l.paymentType == "Flat Per Unit" || l.paymentType == "One Time" ? l.amount : 0)
+            item.pieceId = i.pieceId
+            item.status = i.status == "cancelled"? "Canceled": ""
             itemsToSend.push(item)
         }
     }
@@ -41,7 +44,10 @@ export async function GET(req = NextApiRequest) {
     { id: 'itemSKU', title: 'Item SKU' }, { id: 'itemName', title: 'Item Name' },
     { id: 'itemPrice', title: 'Item Price' },
     { id: 'marketplace', title: 'Marketplace' },
-    { id: 'payment', title: 'Payment Amount' }]
+    {id: "marketplaceOrderId", title: "Marketplace/Order ID"},
+    { id: 'payment', title: 'Payment Amount' },
+    {id: "pieceId", title: "Piece ID"},
+{id: "status", title: "Canceled"}]
     const csvStringifier = createObjectCsvStringifier({
         header: newHeaders
     });
