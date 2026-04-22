@@ -76,7 +76,7 @@ export function Main({marketplaces}){
                                     <FormControl>
                                         <RadioGroup
                                             aria-labelledby="demo-radio-buttons-group-label"
-                                            value={m.required && m.required[key] && m.required[key].required ? "Required" : "Recommended"}
+                                            value={m.required && m.required[key] && m.required[key] ? "Required" : "Recommended"}
                                             name="radio-buttons-group"
                                         onChange={async (e)=>{
                                             console.log(e.target.value)

@@ -39,7 +39,8 @@ const schema = new mongoose.Schema({
       "Complete",
       "Canceled",
       "Payment Failed",
-      "Out For Delivery"
+      "Out For Delivery",
+      "Pending Payment"
     ],
   },
   poNumber: {
