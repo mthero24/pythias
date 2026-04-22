@@ -11,6 +11,8 @@ const SchemaObj = new Schema(
     color_type: String,
     colorFamily: String,
     sku: String,
+    colors: [{type: Schema.Types.ObjectId, ref: "Color"}],
+    combined: {type: Boolean, default: false}
   },
   { strict: false }
 );

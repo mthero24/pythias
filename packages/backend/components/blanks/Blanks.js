@@ -449,8 +449,10 @@ const AliasModal = ({blanks, open, setOpen}) =>{
                                         let color = {
                                             name: s.map(si=> {return si.name}).join("/"),
                                             hexcode: s[0].hexcode,
-                                            sku: i
+                                            sku: i,
+                                            combinedColors: s.map(si=> si._id.toString())
                                         }
+                                        console.log(color, "color")
                                         i++
                                         colors.push(color)
                                     }

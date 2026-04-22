@@ -15,7 +15,7 @@ export async function LabelsData(){
                 $size: "$items"
             }, 50]
         },
-        status: {$nin: ["canceled", "returned", "shipped", "Shipped", "delivered"]},
+        status: {$nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment"]},
         date: {$gte: new Date("2025-10-31")},
         bulk: { $in: [null, false] }
     }).populate("items");
