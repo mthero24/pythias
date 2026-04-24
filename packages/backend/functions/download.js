@@ -49,7 +49,7 @@ const csvFunctions = {
     },
     productImage: (product, index) => {
         if (product.productImages && product.productImages.length > index && product.productImages[index] && product.productImages[index].image) {
-            return product.productImages[index].image.replace("=400", "=2400");
+            return product.productImages[index].image.replace("width=400", "=2400&height=3000");
         }
         return "N/A";
     },
@@ -81,11 +81,11 @@ const csvFunctions = {
         return product.season ? product.season : "N/A";
     },
     variantImage: (variant, color, blankCode) => {
-        return variant.image ? variant.image.replace("=400", "=2400") : "N/A";
+        return variant.image ? variant.image.replace("width=400", "=2400&height=3000") : "N/A";
     },
     variantImages: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter, sizeGuide) => {
         //console.log(sizeGuide, "sizeGuid from variantImages");
-        return variant.images && variant.images.length > index ? variant.images[index].replace("=400", "=2400") : sizeGuide && sizeGuide.length > 0 && sizeGuide[index - variant.images.length] ? sizeGuide[index - variant.images.length] : "N/A";
+        return variant.images && variant.images.length > index ? variant.images[index].replace("width=400", "=2400&height=3000") : sizeGuide && sizeGuide.length > 0 && sizeGuide[index - variant.images.length] ? sizeGuide[index - variant.images.length] : "N/A";
     },
     variantColorFamily: (variant, sizeConverter, numBlanks, blankName, index, connection, colorFamilyConverter) => {
         return variant.color && variant.color.colorFamily ? colorFamilyConverter && colorFamilyConverter[variant.color.colorFamily] ? colorFamilyConverter[variant.color.colorFamily] : variant.color.colorFamily : "N/A";
@@ -96,17 +96,17 @@ export const preCacheImages = async (product) => {
         if (image.image) {
             try {
                 //console.log(image.image.replace("=400", "=2400"))
-                await axios.get(image.image.replace("=400", "=2400"), { responseType: 'arraybuffer' }).catch(e=>{e.status});
+                await axios.get(image.image.replace("width=400", "=2400&height=3000"), { responseType: 'arraybuffer' }).catch(e=>{e.status});
             } catch (error) {
                 //console.error(`Failed to pre-cache image ${image.image}:`, error);
             }
         }
     }
     for(let variant of product.variantsArray) {
-        if (variant.image) await axios.get(variant.image.replace("=400", "=2400"), { responseType: 'arraybuffer' }).catch(e => { e.status });
+        if (variant.image) await axios.get(variant.image.replace("width=400", "=2400&height=3000"), { responseType: 'arraybuffer' }).catch(e => { e.status });
         if (variant.images && variant.images.length > 0) {
             for(let img of variant.images) {
-                console.log(img.replace("=400", "=2400"))
+                console.log(img.replace("width=400", "=2400&height=3000"), "pre-caching variant image")
                 try {
                     await axios.get(img.replace("=400", "=2400"), { responseType: 'arraybuffer' }).catch(e => { e.status });
                 } catch (error) {
