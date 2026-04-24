@@ -256,7 +256,7 @@ export async function pullOrders(){
                         }
                         if(blank.type == "alias" && blank.blanks.length > 0 && product){
                             if(blank.blanks.length > 1){
-
+                                throw new Error("Multiple blanks on alias, cannot determine which to use for item creation")
                             }else{
                                 let variant = product.variantsArray.find(v => v.sku === newSku)
                                 let aliasBlank = blank.blanks[0]
