@@ -262,15 +262,17 @@ export default async function Test(){
     // item.blankCode = blank.blanks[0].code
     // await item.save()
     // console.log(item, "item")
-    let blanks = await Blank.find({})
-    console.log(blanks.length, "blanks")
-    for(let blank of blanks){
-        if(blank.marketPlaceOverrides && blank.marketPlaceOverrides["kohl's"]){
-            blank.marketPlaceOverrides["kohl's Women's"] = blank.marketPlaceOverrides["kohl's"]
-            blank.markModified("marketPlaceOverrides")
-            await blank.save()
-            console.log(blank.code, "updated blank")
-        }
-    }
+    // let blanks = await Blank.find().select("marketPlaceOverrides code")
+    // console.log(blanks.length, "blanks")
+    // for(let blank of blanks){
+    //     console.log(blank.marketPlaceOverrides, "blank.marketPlaceOverrides")
+    //     if(blank.marketPlaceOverrides && blank.marketPlaceOverrides["Kohl's"]){
+    //         console.log(blank.marketPlaceOverrides["Kohl's"], "updating blank")
+    //         blank.marketPlaceOverrides["Kohl's Women's"] = blank.marketPlaceOverrides["Kohl's"]
+    //         blank.markModified("marketPlaceOverrides")
+    //         await blank.save()
+    //         console.log(blank.code, "updated blank")
+    //     }
+    // }
     return <h1>test</h1>
 }

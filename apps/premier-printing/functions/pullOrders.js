@@ -255,15 +255,17 @@ export async function pullOrders(){
                             console.log(product, "found product")
                         }
                         if(blank.type == "alias" && blank.blanks.length > 0 && product){
-                            if(blank.blamks.length > 1){
+                            if(blank.blanks.length > 1){
 
                             }else{
                                 let variant = product.variantsArray.find(v => v.sku === newSku)
                                 let aliasBlank = blank.blanks[0]
                                 let aliasSize = aliasBlank.sizes.find(s => s._id.toString() == blank.sizes.find(si => si.name === sizeName || si.name === sizeFixer[sizeName] || si.sku === sizeName || si.sku === sizeFixer[sizeName]).blankSizes[0]._id.toString())
+                                console.log(aliasBlank.code, aliasSize.name, aliasSize, "alias blank and size")
                                 variant.blank = aliasBlank
                                 variant.size = aliasSize
-                                item = await createItemVariant(variant, product, order, i.unitPrice)
+                                console.log(variant.size, "variant size after alias")
+                                item = await createItemVariant({...variant}, product, order, i.unitPrice)
                                 items.push(item)
                             }
 
