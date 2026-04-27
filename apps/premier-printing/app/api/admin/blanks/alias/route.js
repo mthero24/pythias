@@ -1,7 +1,7 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import {Blank, Color } from "@pythias/mongo";
 
-
+//console.log("route loaded")
 export async function POST(req=NextApiRequest){
     let data = await req.json();
     console.log(data, data.options.colors, "data in alias route")
