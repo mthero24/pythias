@@ -15,7 +15,7 @@ export async function LabelsData(){
                 $size: "$items"
             }, 50]
         },
-        status: {$nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment"]},
+        status: { $nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment", "Pending Artwork Approval"]},
         date: {$gte: new Date("2025-10-31")},
         bulk: { $in: [null, false] }
     }).populate("items");
@@ -46,6 +46,7 @@ export async function LabelsData(){
             bulkId: { $eq: null },
             shippingType: "Standard",
             order: { $ne: null },
+            status: { $nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment", "Pending Artwork Approval"] },
             type: { $nin: ["sublimation", "gift"] },
             }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean(),
             Expedited: await Items.find({
@@ -56,6 +57,7 @@ export async function LabelsData(){
             order: { $ne: null },
             paid: true,
             type: { $nin: ["sublimation", "gift"] },
+            status: { $nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment", "Pending Artwork Approval"] },
             shippingType: { $ne: "Standard" },
             }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean()
     }
