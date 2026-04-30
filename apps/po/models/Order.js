@@ -40,7 +40,8 @@ const schema = new mongoose.Schema({
       "Canceled",
       "Payment Failed",
       "Out For Delivery",
-      "Pending Payment"
+      "Pending Payment",
+      "Pending Artwork Approval",
     ],
   },
   poNumber: {

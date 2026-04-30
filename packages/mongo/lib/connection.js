@@ -2,16 +2,16 @@ import mongoose from "mongoose"
 function makeNewConnection(uri) {
     const db = mongoose.createConnection(uri, {
     })
-
+    console.log(`MongoDB :: connecting ${uri}`);
     db.on('error', function (error) {
         //console.log(`MongoDB :: connection ${this.name} ${JSON.stringify(error)}`);
-        db.close().catch(() => console.log(`MongoDB :: failed to close connection ${this.name}`));
+        db.close().catch(() => console.log(`MongoDB :: failed to close connection ${this.name} ${uri}`));
     });
 
     db.on('connected', function () {
         mongoose.set('debug', function (col, method, query, doc) {
             var label = `MongoDB :: ${this.conn.name} ${col}.${method}(${JSON.stringify(query)},${JSON.stringify(doc)})`;
-            // console.time(label); // start timer
+             console.time(label); // start timer
     
             // Execute the query and measure the time it took to run.
             this.conn.db.collection(col).find(query).toArray(function(err, result) {
@@ -20,11 +20,11 @@ function makeNewConnection(uri) {
                 // console.timeEnd(label); // end timer
             });
         });
-        console.log(`MongoDB :: connected ${this.name}`);
+        console.log(`MongoDB :: connected ${this.name} ${uri}`);
     });
 
     db.on('disconnected', function () {
-        console.log(`MongoDB :: disconnected ${this.name}`);
+        console.log(`MongoDB :: disconnected ${this.name} ${uri}`);
     });
 
     return db;

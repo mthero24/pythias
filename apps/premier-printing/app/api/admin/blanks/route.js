@@ -74,10 +74,10 @@ let updateInventory = async (blank)=>{
   for(let color of blank.colors){
     color = await Color.findById(color)
     for(let size of blank.sizes){
-      //console.log(color, size.name, size._id)
+      console.log(color, size.name, size._id)
       let inv = await Inventory.findOne({blank: blank._id, color: color._id, $or: [{sizeId: size._id}, {size_name: size.name}]})
-      if(!inv) inv = await Inventory.findOne({inventory_id: encodeURIComponent(`${color.name}-${size.name}-${blank.code}`)})
-      //console.log(inv, blank._id)
+      // if(!inv) inv = await Inventory.findOne({inventory_id: encodeURIComponent(`${color.name}-${size.name}-${blank.code}`)})
+      // //console.log(inv, blank._id)
       if(inv){
         inv.color_name = color.name
         inv.size_name = size.name
