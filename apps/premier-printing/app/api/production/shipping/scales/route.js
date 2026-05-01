@@ -1,7 +1,8 @@
 import { NextApiRequest, NextResponse } from "next/server";
+import {Order} from "@pythias/mongo";
 import axios from "axios";
 export async function GET(req = NextApiRequest){
-    console.log(process.env.localIP)
+    console.log(req.nextUrl.searchParams.get("station"), req.nextUrl.searchParams.get("id"))
     let headers = {
         headers: {
             "Content-Type": "application/json",
@@ -10,5 +11,16 @@ export async function GET(req = NextApiRequest){
     }
     let res = await axios.get(`http://${process.env.localIP}/api/shipping/scales?station=${req.nextUrl.searchParams.get("station")}`, headers)
     console.log(res.data)
-    return NextResponse.json({...res.data})
+    console.log(res.data.error, "res error", req.nextUrl.searchParams.get("id"), res.data.error && req.nextUrl.searchParams.get("id"))
+    if (res.data.error && req.nextUrl.searchParams.get("id")){
+        console.log("getting weight for order")
+        let order = await Order.findById(req.nextUrl.searchParams.get("id")).populate({path: "items", populate: "blank"})
+        let weight = 0
+        for(let i of order.items){
+            weight += i.blank.sizes.find(s => s._id.toString() == i.size.toString()).weight || 8
+        }
+        return NextResponse.json({ error: false, value: weight })
+    }else{
+        return NextResponse.json({...res.data})
+    }
 }

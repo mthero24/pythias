@@ -232,8 +232,8 @@ export async function pullOrders(){
                         let item
                         let sku = skuFixer[i.sku] ? skuFixer[i.sku] : i.sku;
                         let blankCode = sku.split("_")[0].trim();
-                        let colorSku = sku.split("_")[1].trim();
-                        let sizeName = sku.split("_")[2].trim();
+                        let colorSku = sku.split("_")[1]?.trim();
+                        let sizeName = sku.split("_")[2]?.trim();
                         let skuBroken = sku.split("_");
                         let designSku = skuBroken.slice(3, skuBroken.length).join("_");
                         console.log(blankCode, colorSku, sizeName, designSku, "broken sku")
@@ -254,8 +254,8 @@ export async function pullOrders(){
                             product = await Products.findOne({ variantsArray: { $elemMatch: { sku: newSku } } }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
                             console.log(product, "found product")
                         }
-                        if(blank.type == "alias" && blank.blanks.length > 0 && product){
-                            if(blank.blanks.length > 1){
+                        if(blank && blank.type == "alias" && blank?.blanks.length > 0 && product){
+                            if(blank?.blanks.length > 1){
                                 throw new Error("Multiple blanks on alias, cannot determine which to use for item creation")
                             }else{
                                 let variant = product.variantsArray.find(v => v.sku === newSku)
@@ -317,7 +317,7 @@ export async function pullOrders(){
                                 item = await createItem(i, order, blank, color, null, size, design, sku ? sku.sku : i.sku, isBlank)
                                 items.push(item)
                             }else{
-                                if(blank.blanks.length > 0){
+                                if(blank?.blanks.length > 0){
                                     let aliasBlank = blank.blanks[0]
                                     let aliasSize = aliasBlank.sizes.find(s => s._id.toString() == blank.sizes.find(si => si.name === sizeName || si.name === sizeFixer[sizeName] || si.sku === sizeName || si.sku === sizeFixer[sizeName]).blankSizes[0]._id.toString())
                                     item = await createItem(i, order, aliasBlank, color, null, aliasSize, design, sku ? sku.sku : i.sku, isBlank)
