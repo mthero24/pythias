@@ -13,13 +13,18 @@ export async function GET(req = NextApiRequest){
     console.log(res.data)
     console.log(res.data.error, "res error", req.nextUrl.searchParams.get("id"), res.data.error && req.nextUrl.searchParams.get("id"))
     if (res.data.error && req.nextUrl.searchParams.get("id")){
-        console.log("getting weight for order")
-        let order = await Order.findById(req.nextUrl.searchParams.get("id")).populate({path: "items", populate: "blank"})
-        let weight = 0
-        for(let i of order.items){
-            weight += i.blank.sizes.find(s => s._id.toString() == i.size.toString()).weight || 8
+        try{
+            console.log("getting weight for order")
+            let order = await Order.findById(req.nextUrl.searchParams.get("id")).populate({path: "items", populate: "blank"})
+            let weight = 0
+            for(let i of order.items){
+                weight += i.blank.sizes.find(s => s._id.toString() == i.size.toString()).weight || 8
+            }
+            return NextResponse.json({ error: false, value: weight })
+        }catch(e){
+            console.log(e)
+            return NextResponse.json({ ...res.data })
         }
-        return NextResponse.json({ error: false, value: weight })
     }else{
         return NextResponse.json({...res.data})
     }
