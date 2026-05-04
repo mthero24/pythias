@@ -249,7 +249,7 @@ const fixSkus = async () => {
     console.log("done fixing skus")
 }
 export default async function Test(){
-    pullOrders();
+    //pullOrders();
     //addPriceToItem();
     //inventoryFixer();
 
