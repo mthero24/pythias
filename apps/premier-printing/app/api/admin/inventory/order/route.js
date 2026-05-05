@@ -72,11 +72,13 @@ export async function POST(req=NextApiRequest){
             }
         }
         //console.log(items)
-        order.locations.push({
-            name: loc,
-            received: false,
-            items
-        })
+        if(items.length > 0){
+            order.locations.push({
+                name: loc,
+                received: false,
+                items
+            })
+        }
     }
     console.log(order)
     await order.save()

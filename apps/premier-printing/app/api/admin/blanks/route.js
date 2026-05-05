@@ -110,9 +110,11 @@ export async function POST(req = NextApiRequest) {
       else s.sku = s.name
     }
     let colorIds = blank.colors.map(c=> c._id)
+    let newImages = []
     for(let i of blank.images){
-      if(i.color && !colorIds.includes(i.color)) blank.images.delete(i)
+      if(i.color && colorIds.includes(i.color)) newImages.push(i)
     }
+    blank.images = newImages;
     if (blank._id) {
       console.log("update blank")
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0 && blank.type !== "alias") blank = updateEnvelopes(blank)
