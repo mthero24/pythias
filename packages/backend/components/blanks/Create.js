@@ -175,7 +175,12 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             }} />
                         </Grid2>
                         <Grid2 size={12}>
-                            <TextField placeholder="Description" multiline rows={4} fullWidth value={blank.description ? blank.description : ""} onChange={(e) => setBlank({ ...blank, description: e.target.value })} />
+                            <TextField placeholder="Description" multiline rows={4} fullWidth value={blank.description ? blank.description : ""} onChange={(e) => {
+                                let bla = {...blank};
+                                bla.description = e.target.value;
+                                setBlank(bla);
+                                update({blank: bla});
+                            }} />
                             <Button onClick={generateDescription}>Generate Description</Button>
                         </Grid2>
                         <Grid2 size={12}>
