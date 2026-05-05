@@ -359,7 +359,14 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                     onChange={async (newValue) => {
                                         let bla = {...blank};
                                         bla.colors = newValue ? newValue.map(nv => nv.value) : [];
-                                        
+                                        bla.colors = bla.colors.filter((color, index, self) => index === self.findIndex(c => c._id === color._id));
+                                        let newColors = []
+                                        for(let color of bla.colors){
+                                            if(color._id){
+                                                newColors.push(color)
+                                            }
+                                        }
+                                        bla.colors = newColors;
                                         for(let v of newValue){
                                             console.log(v.value)
                                             if(!v.value._id){
@@ -374,7 +381,11 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                 }
                                                 else newColor.sku = newColor.name.toLocaleLowerCase().replace(/ /g, "").replace(/light/g, "l").replace(/heather/g, "h").replace("vintage", "v").replace("and", "").substring(0, 7)
                                                 let res = await axios.post("/api/admin/colors",{color: newColor})
-                                                colors.push(setAllColors([...allColors, res.data.color]))
+                                                console.log(res.data.color, "new color")
+                                                let all = [...allColors]
+                                                all.push(res.data.color)
+                                                setAllColors(all);
+                                                bla.colors.push({...res.data.color})
                                             }
                                         }
                                        setBlank(bla);
@@ -418,7 +429,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                     update({ blank: bla });
                                                 }}
                                             />
-                                            <Switch inputProps={{ 'aria-label': 'Color Hidden' }} defaultChecked={!blank.hiddenColors.includes(color._id.toString())} onChange={(e) => {
+                                            <Switch inputProps={{ 'aria-label': 'Color Hidden' }} defaultChecked={!blank.hiddenColors.includes(color._id?.toString())} onChange={(e) => {
                                                 let bla = { ...blank };
                                                 if(!e.target.checked){
                                                     bla.hiddenColors.push(color._id.toString());

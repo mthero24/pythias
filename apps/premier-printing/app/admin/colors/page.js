@@ -3,7 +3,7 @@ import { serialize } from "@/functions/serialize";
 import { Main } from "./Main";
 export const dynamic = 'force-dynamic';
 export default async function Colors(){
-    let colors = await Color.find({}).lean()
+    let colors = await Color.find({combined: { $in: [false, null] }}).lean()
     colors = serialize(colors)
     return (<Main colors={colors} />)
 }
