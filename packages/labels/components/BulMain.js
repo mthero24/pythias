@@ -144,7 +144,7 @@ export function BulkMain({orders}){
                                                         <Typography variant="h6" textAlign={"center"}>{items.filter(item => item.inventory?.inventory?.attached.includes(item._id.toString())).length}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={1}>
-                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0] && items[0].type && items[0].type == "sublimation" ? 0 : items[0] && items[0].inventory?.inventory?.orders.map(o => o.items.filter(i => items.map(item => item._id.toString()).includes(i.toString())).length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}`}</Typography>
+                                                        <Typography variant="h6" textAlign={"center"}>{`${items[0] && items[0].type && items[0].type == "sublimation" ? 0 : items[0] && items[0].inventory?.inventory?.orders?.map(o => o.items.filter(i => items.map(item => item._id.toString()).includes(i.toString())).length).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}`}</Typography>
                                                     </Grid2>
                                                     <Grid2 item size={2}>
                                                         <Typography variant="h6" textAlign={"center"}>{items.filter(item=> item.labelPrinted == true).length}</Typography>

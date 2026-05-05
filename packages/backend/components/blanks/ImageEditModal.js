@@ -6,6 +6,7 @@ import useImage from 'use-image';
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
 import { EditablePolygon } from "@pythias/backend"
+import { set } from "mongoose";
 const s3 = new S3Client({ credentials:{
     accessKeyId:'XWHXU4FP7MT2V842ITN9',
    secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
@@ -169,10 +170,10 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     }, [selectedIds]);
     useEffect(() => {
         if (addImage) {
-            let scaleX = 100 / addImage.width;
-            let scaleY = 100 / addImage.height;
+            let scaleX = 200 / addImage.width;
+            let scaleY = 200 / addImage.height;
             let rects = [...rectangles]
-            rects = [{ x: 50, y: 50, width: 100, height: 100, id: "addImage", name: 'rect', fillPatternImage: addImage, fillPatternScaleX: scaleX, fillPatternScaleY: scaleY, draggable: true, }]
+            rects = [{ x: 50, y: 50, width: 200, height: 200, id: "addImage", name: 'rect', fillPatternImage: addImage, fillPatternScaleX: scaleX, fillPatternScaleY: scaleY, draggable: true, }]
             setRectangles(rects);
             setStep("setImage")
         }
@@ -481,6 +482,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             if(step == "addImage") {
                                 const img = new window.Image();
                                 img.src = data.url; // Replace with your image URL
+                                img.crossOrigin = 'anonymous'; // This is important for CORS-enabled images
+                                img.objectFit= 'fit'
                                 img.onload = () => {
                                     setAddImage(img);
                                 };
@@ -559,6 +562,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                             fillPatternImage={rect.fillPatternImage}
                                             fillPatternScaleX={rect.fillPatternScaleX} // Optional: Adjust image scale
                                             fillPatternScaleY={rect.fillPatternScaleY} // Optional: Adjust image scale
+                                            fillPatternRepeat='no-repeat'
                                             stroke={rect.stroke}
                                             dash={[10, 10]}
                                             strokeWidth={2}
@@ -593,13 +597,24 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                             ref={transformerRef}
                                             flipEnabled={false}
                                             rotateEnabled={true}
+                                            keepRatio={true} 
                                             boundBoxFunc={(oldBox, newBox) => {
                                                 const newRects = [...rectangles];
                                                 let newRect = newRects.find(b => b.id === boxRef.current.id())
                                                 if (addImage) {
+                                                    const scale = Math.min(newBox.width / addImage.width, newBox.height / addImage.height);
+                                                    // Calculate offsets to center the image
+                                                    const scaledWidth = addImage.width * scale;
+                                                    const scaledHeight = addImage.height * scale;
+                                                    const offsetX = (newBox.width - scaledWidth) / 2;
+                                                    const offsetY = (newBox.height - scaledHeight) / 2;
+                                                    const centeredX = (newBox.width - addImage.width * scale) / 2;
+                                                    const centeredY = (newBox.height - addImage.height * scale) / 2;
                                                     newRect.fillPatternImage = addImage;
-                                                    newRect.fillPatternScaleX = addImage.width / newBox.width;
-                                                    newRect.fillPatternScaleY = addImage.height / newBox.height;
+                                                    newRect.fillPatternScaleX = scale;
+                                                    newRect.fillPatternScaleY = scale;
+                                                    newRect.fillPatternX = centeredX;           // Shift pattern start point
+                                                    newRect.fillPatternY = centeredY;
                                                 }
                                                 // limit resize
                                                 if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {

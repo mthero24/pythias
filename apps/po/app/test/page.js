@@ -75,6 +75,24 @@ const updateInventory = async (invIds) => {
 }
 export default async function Test(){
     //updateInventory();
+    // let items = await Items.find({ bulkId: "XLFPWXHUW"})
+    // console.log(items.length, "items")
+    // for(let i of items){
+    //     console.log("no inventory", i._id)
+    //     let inv = await Inventory.findOne({ inventory_id: encodeURIComponent(`${i.colorName}-${i.sizeName}-${i.styleCode}`) })
+    //     if(inv){
+    //         console.log("found inventory", inv._id)
+    //         i.inventory = {
+    //             inventoryType: "inventory",
+    //             inventory: inv._id,
+    //             productInventory: null,
+    //         }
+    //         i.markModified("inventory")
+    //         i = await i.save()
+    //         console.log(i.inventory)
+    //     }
+        
+    // }
     // let style = await Styles.findOne({code: "LPCPH"})
     // console.log("style", style.sizes)
     // for(let fold of style.fold){
