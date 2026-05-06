@@ -13,7 +13,7 @@ const CreateSku = async ({blank, color, size, design, threadColor}) => {
 }
 
 const createItemVariant = async (variant, product, order) => {
-    let item = new Item({
+    let item = new Items({
         pieceId: await generatePieceID(),
         paid: true,
         sku: variant.sku,
@@ -31,12 +31,12 @@ const createItemVariant = async (variant, product, order) => {
         order: order._id,
         shippingType: order.shippingType,
         quantity: 1,
-        status: order.status,
+        status: order?.status || "awaiting_shipment",
         name: variant.name,
         date: order.date,
         type: product.design?.printType,
         upc: variant.upc,
-        options: variant.options[0]?.value,
+        options: variant.options? variant.options[0]?.value : undefined,
         isBlank: product.design ? false : true,
     })
     item = await item.save();
@@ -249,6 +249,7 @@ const fixSkus = async () => {
     console.log("done fixing skus")
 }
 export default async function Test(){
+   
     //pullOrders();
     //addPriceToItem();
     //inventoryFixer();

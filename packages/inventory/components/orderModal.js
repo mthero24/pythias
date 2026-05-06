@@ -65,11 +65,20 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                         if(inStock - inv.order_at_quantity < 0) {
                             if(!bl.includes(inv.style_code))bl.push(inv.style_code)
                             if(!cl.includes(inv.color_name))cl.push(inv.color_name)
-                            no.push({ inv, order: inv.quantity_to_order + (inv.order_at_quantity - inStock) , included: true, location: defaultLocation})
+                            no.push({ inv, order: inv.quantity_to_order + (inv.order_at_quantity - inStock) , included: false, location: defaultLocation})
                         }
                     }
                 }
                 setBlankCodes([...bl])
+                setBlanksExcluded([...bl])
+                let colorExclude = {}
+                for (let b of bl) {
+                    colorExclude[b] = []
+                    for (let c of cl) {
+                        colorExclude[b].push(c)
+                    }
+                }
+                setBlankColorsExcluded(colorExclude)
                 setColors([...cl])
             }
             setNeedsOrdered([...no])
@@ -257,6 +266,7 @@ export function OrderModal({open, setOpen, type, items, setBlanks, setItems, def
                     </Accordion>
                 ))}
                 <Typography sx={{ marginTop: "2%" }}>Total Item To Order: {needsOrdered.map(no => no.order).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}</Typography> 
+                    <Typography sx={{ marginTop: "2%" }}>Total Items In Order: {needsOrdered.map(no => no.included ? no.order : 0).reduce((accumulator, currentValue) => accumulator + currentValue, 0)}</Typography>
                 <Divider sx={{marginTop: "3%"}}/>
                 <Button onClick={()=>{sub()}} fullWidth>Submit</Button>
                 <AddModal open={addModal} setOpen={setAddModal} setNeedsOrdered={setNeedsOrdered} needsOrdered={needsOrdered} blanks={blanks} setBlanks={setBlan} colors={colors} setColors={setColors} setBlankCodes={setBlankCodes} blankCodes={blankCodes} defaultLocation={defaultLocation}/>
