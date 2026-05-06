@@ -109,12 +109,12 @@ export async function POST(req = NextApiRequest) {
       if(s.name.split(" ").length > 1)s.sku = s.name.split(" ").map(w => w[0]).join("")
       else s.sku = s.name
     }
-    let colorIds = blank.colors.map(c=> c._id)
-    let newImages = []
-    for(let i of blank.images){
-      if(i.color && colorIds.includes(i.color)) newImages.push(i)
-    }
-    blank.images = newImages;
+    // let colorIds = blank.colors.map(c=> c._id)
+    // let newImages = []
+    // for(let i of blank.images){
+    //   if(i.color && colorIds.includes(i.color)) newImages.push(i)
+    // }
+    // blank.images = newImages;
     if (blank._id) {
       console.log("update blank")
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0 && blank.type !== "alias") blank = updateEnvelopes(blank)
