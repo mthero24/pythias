@@ -8,15 +8,18 @@ export async function GET(){
 export async function POST(req=NextApiRequest){
     let data= await req.json()
     let item = await Items.findOne({pieceId: data.pieceId})
+    console.log(item, "item to repull", data.blank, data.color, data.size)
     if(item){
-        if (data.reason == "Pulling Error" && data.blankCode && data.color && data.size) {
-            let inv = await Inventory.findOne({ style_code: data.blankCode, "color_name": data.color, "size_name": data.size })
+        if (data.reason == "Pulling Error" && data.blank && data.color && data.size) {
+            let inv = await Inventory.findOne({ style_code: data.blank, "color_name": data.color, "size_name": data.size })
+            console.log(inv, "inventory for repull")
             if (inv && inv.quantity > 0) {
                 inv.quantity -= 1
                 await inv.save()
             }
             let inv2 = await Inventory.findOne({_id: item.inventory.inventory})
             if(inv2){
+                console.log(inv2, "inventory for repull 2")
                 inv2.quantity += 1
                 await inv2.save()
             }

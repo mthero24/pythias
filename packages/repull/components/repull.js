@@ -25,6 +25,7 @@ export function Repull({}){
         getReasons()
     }, [open])
     const submit = async ()=>{
+        console.log(repull)
         let res = await axios.post("/api/production/repull", repull)
         if(res.data.error) alert(res.data.msg)
         else{
