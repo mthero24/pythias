@@ -183,7 +183,7 @@ export async function pullOrders(){
     if(designConverterDoc && designConverterDoc.converter) designFixer = designConverterDoc.converter;
     if(skuConverterDoc && skuConverterDoc.converter) skuFixer = skuConverterDoc.converter? skuConverterDoc.converter: {};
     console.log("pulling orders")
-    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "6710167960_2-A" })
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({poNumber: o.orderNumber}).populate("items")
@@ -260,12 +260,11 @@ export async function pullOrders(){
                             }else{
                                 let variant = product.variantsArray.find(v => v.sku === newSku)
                                 let aliasBlank = blank.blanks[0]
-                                let aliasSize = aliasBlank.sizes.find(s => s._id.toString() == blank.sizes.find(si => si.name === sizeName || si.name === sizeFixer[sizeName] || si.sku === sizeName || si.sku === sizeFixer[sizeName]).blankSizes[0]._id.toString())
+                                let aliasSize = aliasBlank.sizes.find(si => si.name === sizeName || si.sku === sizeName)
                                 console.log(aliasBlank.code, aliasSize.name, aliasSize, "alias blank and size")
                                 variant.blank = aliasBlank
-                                variant.size = aliasSize
-                                console.log(variant.size, "variant size after alias")
-                                item = await createItemVariant({...variant}, product, order, i.unitPrice)
+                                variant.size = aliasSize._id 
+                                item = await createItemVariant(variant, product, order, i.unitPrice)
                                 items.push(item)
                             }
 
