@@ -183,7 +183,7 @@ export async function pullOrders(){
     if(designConverterDoc && designConverterDoc.converter) designFixer = designConverterDoc.converter;
     if(skuConverterDoc && skuConverterDoc.converter) skuFixer = skuConverterDoc.converter? skuConverterDoc.converter: {};
     console.log("pulling orders")
-    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "6710167960_2-A" })
+    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "6710208975_3-A"})
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({poNumber: o.orderNumber}).populate("items")
