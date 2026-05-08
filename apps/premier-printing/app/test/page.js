@@ -249,54 +249,7 @@ const fixSkus = async () => {
     console.log("done fixing skus")
 }
 export default async function Test(){
-    // let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: "6710167960_2-A" })
-    // console.log(orders, "orders")
-    // console.log(orders[0].items[0])
-    // let i = orders[0].items[0]
-    // let item
-    // let sku =  i.sku;
-    // let blankCode = sku.split("_")[0].trim();
-    // let colorSku = sku.split("_")[1]?.trim();
-    // let sizeName = sku.split("_")[2]?.trim();
-    // let skuBroken = sku.split("_");
-    // let designSku = skuBroken.slice(3, skuBroken.length).join("_");
-    // console.log(blankCode, colorSku, sizeName, designSku, "broken sku")
-    // let blank = await Blank.findOne({code: blankCode}).populate("colors").populate("blanks")
-    // if(!blank) blank = await Blank.findOne({code: blankConverter[blankCode]? blankConverter[blankCode]: blankCode}).populate("colors").populate("blanks")
-    // let color = blank?.colors.find(c => c.sku === colorSku.toLowerCase())
-    // if(!color) color = blank?.colors.find(c => c.name.toLowerCase() === colorSku.toLowerCase())
-    // if (!color) color = blank?.colors.find(c => c.name === colorSku)
-    // if(!color) color = blank?.colors.find(c => c.name.toLowerCase() === colorFixer[colorSku]?.toLowerCase())
-    // let size = blank?.sizes.find(s => s.name === sizeName || s.sku === sizeName)
-    // let design = await Design.findOne({sku: designSku})
-    // if(!design) design = await Design.findOne({sku: designFixer[designSku]? designFixer[designSku]: designSku}) 
-    // console.log(blank?.code, color?.name, size?.name, design?.sku, "found items")
-    // let product
-    // let newSku
-    // if(blank && color && size){
-    //     newSku = await CreateSku({blank, color, size, design, designSku})
-    //     product = await Products.findOne({ variantsArray: { $elemMatch: { sku: newSku } } }).populate("design", "sku images").populate("design variantsArray.blank variantsArray.color").populate("blanks colors threadColors design")
-    //     console.log(product, "found product")
-    // }
-    // if(blank && blank.type == "alias" && blank?.blanks.length > 0 && product){
-    //     if(blank?.blanks.length > 1){
-    //         throw new Error("Multiple blanks on alias, cannot determine which to use for item creation")
-    //     }else{
-    //         let variant = product.variantsArray.find(v => v.sku === newSku)
-    //         let aliasBlank = blank.blanks[0]
-    //         let aliasSize = aliasBlank.sizes.find(si => si.name === sizeName || si.sku === sizeName )
-    //         console.log(aliasBlank.code, aliasSize.name, aliasSize, "alias blank and size")
-    //         variant.blank = aliasBlank
-    //         variant.size = {
-    //             name: aliasSize.name,
-    //             _id: aliasSize._id
-    //         }
-    //         let item = await createItemVariant(variant, product, orders[0])
-    //         console.log(item, "created item with alias blank")
-    //     }
-
-    // }
-    //pullOrders();
+    pullOrders();
     //addPriceToItem();
     //inventoryFixer();
 
