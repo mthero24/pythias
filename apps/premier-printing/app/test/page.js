@@ -296,7 +296,7 @@ export default async function Test(){
     //     }
 
     // }
-    pullOrders();
+    //pullOrders();
     //addPriceToItem();
     //inventoryFixer();
 
