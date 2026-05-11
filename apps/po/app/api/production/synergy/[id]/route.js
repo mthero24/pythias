@@ -351,9 +351,9 @@ export async function GET(request, { params }) {
                                     INKCOMBO[Profile.inkCombination]
                                     }</InkCombination>
                                     <MaterialThicknessInt>${
-        item.styleV2.code == "AS" || item.styleV2.code == "YLT" || (item.styleV2.code == "TK" && (item.sizeName == "L" || item.sizeName == "M"))  || (item.styleV2.code == "YT" && (item.sizeName == "S"))
+        item.styleV2.code == "AS" || item.styleV2.code == "YLT" || (item.styleV2.code == "TK" && (item.sizeName == "L" || item.sizeName == "M"))  || (item.styleV2.code == "YT" && (item.sizeName == "S")) || (item.styleV2.code == "WT" && item.sizeName == "M") || (item.styleV2.code == "WVT" && (item.sizeName == "XL" || item.sizeName == "2XL" || item.sizeName == "3XL"))
                                         ? 2
-        : item.styleV2.code == "AFTH" || (item.styleV2.code == "WVT" && (item.sizeName == "XL" || item.sizeName == "2XL" || item.sizeName == "3XL")) || (item.styleV2.code == "WT" && item.sizeName == "M")
+        : item.styleV2.code == "AFTH"
                                         ? 3
                                         : 1
                                     }</MaterialThicknessInt>
