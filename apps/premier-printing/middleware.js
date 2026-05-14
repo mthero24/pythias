@@ -24,7 +24,7 @@ const protectedRoutes = [
   {
     path: "/admin/designs",
     roles: ["admin", "production"],
-    permission: "designs"
+    permission: "designsView"
   },
   {
     path: "/orders",
@@ -34,7 +34,7 @@ const protectedRoutes = [
   {
     path: "/admin/design",
     roles: ["admin", "production"],
-    permission: "designs"
+    permission: "designsView"
   },
   {
     path: "/account",
@@ -139,6 +139,7 @@ export async function middleware(req=NextRequest, res) {
     if(token) {
       permissions.account = true
       permissions.inventory = true
+      permissions.designsView = true
     }
     if (!permissions[protectedRoute.permission ]) {
       return NextResponse.redirect(new URL("/login", req.url));

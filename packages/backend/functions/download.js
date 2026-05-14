@@ -1,13 +1,24 @@
 "use server";
 import { createObjectCsvStringifier } from 'csv-writer';
 import axios from 'axios';
+
+const sanitizeColorForKohls = (name) => {
+    if (!name) return "";
+    return name.replace(/[^a-zA-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim().slice(0, 22).trim();
+};
+
+const isKohlsMarketplace = (mpName) => {
+    if (!mpName || typeof mpName !== "string") return false;
+    return mpName.toLowerCase().replace(/['']/g, "").includes("kohls");
+};
+
 // //note: This code is used to generate a CSV file for product data based on the selected market place and product.
 const csvFunctions = {
     productSku: (product) => {
         return product.sku ? product.sku : product.name.replace(/ /g, "-").toLowerCase();
     },
     productTitle: (product,index, mp) => {
-        if(mp?.name.toLowerCase().includes("kohl's") && product.title && product.title.length > 100){
+        if(isKohlsMarketplace(mp?.name) && product.title && product.title.length > 100){
             return product.title ? product.title.slice(0, 100) : product.sku;
         } else return product.title ? product.title : product.sku;
     },
@@ -23,8 +34,12 @@ const csvFunctions = {
     productVendor: (product) => {
         return product.brand ? product.brand : "No Value";
     },
-    variantColor: (variant, sizeConverer, numBlanks, blankName) => {
-        return variant.color ? numBlanks > 1 ? `${variant.color.name}` : variant.color.name : "";
+    variantColor: (variant, sizeConverer, numBlanks, blankName, _arg, mpName) => {
+        if (!variant.color) return "";
+        if (isKohlsMarketplace(mpName)) {
+            return sanitizeColorForKohls(variant.color.name);
+        }
+        return variant.color.name;
     },
     variantSize: (variant, sizeCoverter) => {
         return variant.size ? sizeCoverter && sizeCoverter[variant.size.name] ? sizeCoverter[variant.size.name] : variant.size.name : "";
@@ -131,7 +146,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
             else value = csvFunctions[mp.productDefaultValues[headerLabel]](product, index);
         }
         else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] && mp.productDefaultValues[headerLabel].includes("variant") && csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]]) {
-            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1], sizeGuide);
+            value = csvFunctions[mp.productDefaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.productDefaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter, sizeGuide);
         } else if (mp.productDefaultValues && mp.productDefaultValues[headerLabel] == "index") {
             if (index < product.productImages.length) {
                 value = index + 1;
@@ -163,7 +178,7 @@ const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, index, 
         }
         else if (blankOverRides && blankOverRides[headerLabel]) {
             if (blankOverRides[headerLabel].includes("variant") && csvFunctions[blankOverRides[headerLabel].split(",")[0]]) {
-                value = csvFunctions[blankOverRides[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, blankOverRides[headerLabel].split(",")[1], mp.colorFamilyConverter);
+                value = csvFunctions[blankOverRides[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, blankOverRides[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter);
             } else {
                 value = blankOverRides[headerLabel];
             }

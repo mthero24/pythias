@@ -1,93 +1,218 @@
 "use client";
-import {Box, Grid2, Typography, Card, Button, Container, Pagination, Stack, Divider} from "@mui/material";
-import {useState} from "react";
+import {
+    Box, Grid2, Typography, Card, CardContent, CardActionArea, Button,
+    Container, Pagination, Stack, InputAdornment, TextField, Chip, Divider, Tooltip
+} from "@mui/material";
+import { useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import {Search} from "./Search";
-import {Footer} from "../reusable/Footer";
-export function Main({designs, ct, query, pa}){
-    const [designss, setDesigns] = useState(designs)
-    const [search, setSearch] = useState(query)
-    const [page, setPage] = useState(pa? parseInt(pa): 1)
-    const [checked, setChecked] = useState([])
-    const [count, setCount] = useState(ct)
-    let updateDesign = async (des)=>{
-        let res = await axios.put("/api/admin/designs", {design: {...des}}).catch(e=>{console.log(e.response.data); res = e.response})
-        if(res?.data?.error) alert(res.data.msg)
-    }
-    const createDesign = async()=>{
-        let res = await axios.post("/api/admin/designs", {})
-        if(res.data.error) alert(res.data.msg)
-        else{
-            location.href=`/admin/design/${res.data.design._id}`
-        }
-    }
-    console.log(page)
-    const handlePageChange = (event, value) => {
-        console.log(value)
-        location.href = `/admin/designs?page=${value}${search ? `&q=${search}` : ''}`;
-        // You would typically fetch new data for the selected page here
-        // based on the 'value' (new page number)
-        console.log(`Navigating to page: ${value}`);
-    };
-    return (
-        <Box>
-            <Container maxWidth="lg">
-                <Box sx={{display: "flex",justifyContent: "space-between", padding: "1%"}}>
-                    <Typography>There are total of {count} Designs</Typography>
-                    <Button onClick={() => { createDesign() }} sx={{ background: "#645D5B", color: "#ffffff", width: "100px", height: "30px", marginTop: ".8%", "&:hover": { background: "#000" }}}>Create</Button>
-                </Box>
-                <Search setSearch={setSearch} setDesigns={setDesigns} setCount={setCount} setPage={setPage} search={search}/>
-                <Card sx={{width: "100%", height: "auto", padding: "1%", margin: "1% 0%"}}>
-                    <Box sx={{ minHeight: "80vh",}}>
-                        <Grid2 container spacing={3}>
-                            {designss && designss.map(d=>{
-                                let imageUrl
-                                let others = []
-                                for(let image of Object.keys(d.images? d.images: {})){
-                                    console.log(image, d.images[image])
-                                    if(d.images[image]){
-                                        d.images[image] = d.images[image].replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")
-                                        if(!imageUrl) imageUrl = d.images[image]
-                                        else if (d.images[image] != null) others.push(d.images[image])
-                                    }
-                                }
-                                console.log(imageUrl, others)
-                                return (
-                                    <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
-                                        <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
-                                            <Link href={`/admin/design/${d._id}`} target="_blank">
-                                                <Box sx={{ padding: "3%", background: "#e2e2e2", height: { sm: "250px", md: "232px", lg: "350px" }, minHeight: "250px", display: "flex", alignItems: "center", justifyContent: "center"}}>
-                                                    <img src={imageUrl ? `${imageUrl}?width=400` : "/missingImage.jpg"} width={400} height={400} alt={`${d.name} ${d.sku} design`} style={{ width: "auto", height: "auto", maxWidth: others.length > 0 ? "60%" : "100%", maxHeight: others.length > 0 ? "45%" : "100%", background: "#e2e2e2"}}/>
-                                                </Box>
-                                                {others.length > 0 && <Box sx={{ position: "relative", bottom: "68px", right: "0px", background: "#fff", padding: "5px",  marginBottom: "-50px", maxHeight: "80px", background: "#e2e2e2", borderTop: "1px solid #fff"}}>
+import { Footer } from "../reusable/Footer";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 
-                                                    <Box sx={{ display: "flex", flexWrap: "wrap", overflow: "auto", }}>
-                                                        {others.map((img, index) => (
-                                                            <Box key={index} sx={{ margin: "2px", width: "55px", height: "55px", maxHeight: "55px", maxWidth: "55px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden"}}>
-                                                                <img src={`${img}?width=100`} width={50} height={50} alt={`Other image ${index}`} style={{ margin: "2px", width: "auto", height: "auto", maxHeight: "50px", maxWidth: "50px",}} />
-                                                            </Box>
-                                                        ))}
+const MAX_THUMBS = 5;
+
+export function Main({ designs, ct, query, pa, canEdit = true }) {
+    const [designss, setDesigns] = useState(designs);
+    const [search, setSearch] = useState(query ?? "");
+    const [page, setPage] = useState(pa ? parseInt(pa) : 1);
+    const [count, setCount] = useState(ct);
+    const [searching, setSearching] = useState(false);
+
+    const createDesign = async () => {
+        let res = await axios.post("/api/admin/designs", {});
+        if (res.data.error) alert(res.data.msg);
+        else location.href = `/admin/design/${res.data.design._id}`;
+    };
+
+    const handlePageChange = (_, value) => {
+        location.href = `/admin/designs?page=${value}${search ? `&q=${search}` : ""}`;
+    };
+
+    const runSearch = async () => {
+        setSearching(true);
+        try {
+            const res = await axios.get(`/api/admin/designs?${search ? `q=${search}&` : ""}page=1`);
+            if (res.data.error) { alert(res.data.msg); return; }
+            const newCount = res.data.designs[0]?.meta?.count?.total ?? res.data.count;
+            if (newCount != null) setCount(newCount);
+            setDesigns(res.data.designs);
+            setPage(1);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    return (
+        <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}>
+            <Container maxWidth="lg" sx={{ minHeight: "90vh" }}>
+
+                {/* Header */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Designs{" "}
+                        <Typography component="span" variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
+                            ({count})
+                        </Typography>
+                    </Typography>
+                    {canEdit && (
+                        <Button variant="contained" startIcon={<AddIcon />} onClick={createDesign}>
+                            Create Design
+                        </Button>
+                    )}
+                </Box>
+
+                {/* Search */}
+                <Box sx={{ mb: 2, p: 2, borderRadius: 2, background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        placeholder="Search by SKU or name…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }}
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end" sx={{ cursor: "pointer" }} onClick={runSearch}>
+                                    <SearchIcon />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                </Box>
+
+                {/* Grid */}
+                <Grid2 container spacing={2}>
+                    {designss.length === 0 && (
+                        <Typography sx={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem", py: 8 }}>
+                            No designs found
+                        </Typography>
+                    )}
+                    {designss.map((d) => {
+                        // Collect image URLs
+                        const imageEntries = Object.values(d.images ?? {})
+                            .filter(Boolean)
+                            .map(url => url.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin"));
+                        const [primaryUrl, ...others] = imageEntries;
+
+                        return (
+                            <Grid2 key={d._id} size={{ xs: 6, sm: 4, md: 3 }}>
+                                <Card
+                                    variant="outlined"
+                                    sx={{
+                                        height: "100%", display: "flex", flexDirection: "column",
+                                        borderRadius: 2,
+                                        transition: "box-shadow 150ms",
+                                        "&:hover": { boxShadow: 4 },
+                                    }}
+                                >
+                                    <Link href={`/admin/design/${d._id}`} target="_blank" style={{ textDecoration: "none", display: "flex", flexDirection: "column", flex: 1 }}>
+                                        {/* Primary image */}
+                                        <Box sx={{
+                                            position: "relative",
+                                            aspectRatio: "1 / 1",
+                                            backgroundColor: "background.default",
+                                            overflow: "hidden",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                        }}>
+                                            <img
+                                                src={primaryUrl ? `${primaryUrl}?width=400` : "/missingImage.jpg"}
+                                                alt={d.name}
+                                                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                                            />
+                                            <Box sx={{
+                                                position: "absolute", top: 6, right: 6,
+                                                opacity: 0, transition: "opacity 150ms",
+                                                ".MuiCard-root:hover &": { opacity: 1 },
+                                            }}>
+                                                <Tooltip title="Open design" placement="top">
+                                                    <Box sx={{ backgroundColor: "rgba(255,255,255,0.9)", borderRadius: 1, p: 0.4, display: "flex" }}>
+                                                        <OpenInNewIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                                                     </Box>
-                                                </Box>}
-                                                <hr/>
-                                                <Box sx={{padding: "3%"}}>
-                                                    <Typography sx={{fontSize: '0.8rem', color: "black", whiteSpace: "nowrap", overflow: "hidden", display: "block", textOverflow: "ellipsis"}}>SKU: {d.sku}</Typography>
-                                                    <Typography sx={{ fontSize: '0.8rem', color: "black", whiteSpace: "nowrap", overflow: "hidden", display: "block", textOverflow: "ellipsis" }}>{d.name}</Typography>
+                                                </Tooltip>
+                                            </Box>
+                                        </Box>
+
+                                        {/* Thumbnail strip */}
+                                        {others.length > 0 && (
+                                            <>
+                                                <Divider />
+                                                <Box sx={{ display: "flex", gap: 0.5, px: 1, py: 0.75, flexWrap: "nowrap", overflowX: "auto" }}>
+                                                    {others.slice(0, MAX_THUMBS).map((img, i) => (
+                                                        <Box
+                                                            key={i}
+                                                            sx={{
+                                                                width: 40, height: 40, flexShrink: 0,
+                                                                border: "1px solid", borderColor: "divider",
+                                                                borderRadius: 0.75, overflow: "hidden",
+                                                                backgroundColor: "background.default",
+                                                                display: "flex", alignItems: "center", justifyContent: "center",
+                                                            }}
+                                                        >
+                                                            <img src={`${img}?width=100`} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                                                        </Box>
+                                                    ))}
+                                                    {others.length > MAX_THUMBS && (
+                                                        <Box sx={{
+                                                            width: 40, height: 40, flexShrink: 0,
+                                                            border: "1px solid", borderColor: "divider",
+                                                            borderRadius: 0.75, backgroundColor: "background.default",
+                                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                                        }}>
+                                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: "0.65rem" }}>
+                                                                +{others.length - MAX_THUMBS}
+                                                            </Typography>
+                                                        </Box>
+                                                    )}
                                                 </Box>
-                                            </Link>
-                                        </Card>                                
-                                    </Grid2>
-                                )
-                            })}
-                        </Grid2>
-                        <Stack spacing={2} sx={{marginTop: "1%", display: "flex", alignItems: "center"}}>
-                            <Pagination count={Math.ceil(count / 50)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
-                        </Stack>
-                    </Box>
-                </Card>
+                                            </>
+                                        )}
+
+                                        <Divider />
+
+                                        {/* Info */}
+                                        <CardContent sx={{ p: "10px !important" }}>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "text.primary" }}
+                                                title={d.name}
+                                            >
+                                                {d.name || "—"}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {d.sku}
+                                            </Typography>
+                                            {d.products?.length > 0 && (
+                                                <Chip
+                                                    size="small"
+                                                    label={`${d.products.length} product${d.products.length === 1 ? "" : "s"}`}
+                                                    sx={{ mt: 0.75, fontSize: "0.62rem", height: 18 }}
+                                                    variant="outlined"
+                                                />
+                                            )}
+                                        </CardContent>
+                                    </Link>
+                                </Card>
+                            </Grid2>
+                        );
+                    })}
+                </Grid2>
+
+                {/* Pagination */}
+                <Stack spacing={2} sx={{ mt: 3, mb: 2, display: "flex", alignItems: "center" }}>
+                    <Pagination
+                        count={Math.ceil(count / 50)}
+                        page={page}
+                        onChange={handlePageChange}
+                        shape="rounded"
+                        showFirstButton
+                        showLastButton
+                    />
+                </Stack>
+
             </Container>
-            <Footer/>
+            <Footer />
         </Box>
-    )
+    );
 }

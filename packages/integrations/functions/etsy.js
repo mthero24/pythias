@@ -1,5 +1,3 @@
-const etsyKeyString="480pxuspxi5wz93puk47snye"
-const etsySharedSecret="16xlth05x7"
 import crypto from "crypto";
 import axios from "axios";
 import FormData from "form-data";
@@ -8,12 +6,13 @@ import { generatePieceID } from "./createPiceId.js";
 export const getToken = async (code, baseUrl) => {
     const authCode = code;
     const tokenUrl = "https://api.etsy.com/v3/public/oauth/token";
+    const clientId = process.env.etsyApiKey?.split(":")[0];
     const requestOptions = {
         method: "POST",
         body: JSON.stringify({
             grant_type: "authorization_code",
-            client_id: etsyKeyString,
-            redirect_uri: `${BASE_URL}/api/integrations/etsy/redirect`,
+            client_id: clientId,
+            redirect_uri: `${baseUrl}/api/integrations/etsy/redirect`,
             code: authCode,
             code_verifier: base64URLEncode("nicepajamas"),
         }),
@@ -27,7 +26,7 @@ export const getToken = async (code, baseUrl) => {
             tokenUrl,
             {
                 grant_type: "authorization_code",
-                client_id: etsyKeyString,
+                client_id: clientId,
                 redirect_uri: `${baseUrl}/api/integrations/etsy/redirect`,
                 code: authCode,
                 code_verifier: base64URLEncode("nicepajamas"),
@@ -85,7 +84,8 @@ export const generateRedirectURI = (baseURL) => {
     const state = Math.random().toString(36).substring(7);
 
     
-    return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=http://localhost:3006/api/admin/integrations/etsy/oauth/redirect&scope=email_r%20transactions_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=480pxuspxi5wz93puk47snye&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+    const clientId = process.env.etsyApiKey?.split(":")[0];
+    return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=http://localhost:3006/api/admin/integrations/etsy/oauth/redirect&scope=email_r%20transactions_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=${clientId}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
     //transactions_r%20email_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w
 };
 const base64URLEncode = (str) =>

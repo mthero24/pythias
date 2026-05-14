@@ -1,5 +1,6 @@
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Divider, FormControlLabel, Checkbox, List, CircularProgress, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, CardContent, Chip, Stack, IconButton, Paper, Divider, FormControlLabel, Checkbox, List, CircularProgress, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import axios from "axios";
 import { useState, useEffect, useRef } from "react";
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
@@ -7,61 +8,85 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { set } from "mongoose";
+import { RetryImage } from "./RetryImage";
+
+const InfoRow = ({ label, value }) => (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{label}</Typography>
+        <Typography variant="body2" sx={{ color: "text.primary", wordBreak: "break-word" }}>{value || "—"}</Typography>
+    </Box>
+);
 
 
-export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen, preview, setPreview, pageProducts, setPageProducts }) => {
+export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen, preview, setPreview, pageProducts, setPageProducts, showToast }) => {
     return (
-        <Box sx={{ padding: "2%" }}>
+        <Box sx={{ padding: { xs: 2, sm: 3 }, maxWidth: 1200, margin: "0 auto" }}>
+            <Typography variant="h5" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 3 }}>Preview</Typography>
+            <Stack spacing={4}>
             {products.map((product, index) => (
-                <Box key={index}>
-                    <Typography variant="h6" textAlign={"center"}>Preview</Typography>
-                    <ProductImageCarosel productImages={product.productImages} defaultColor={product.defaultColor} />
-                    <Box sx={{ padding: "2%" }}>
-                        <List>
-                            <ListItem>
-                                <ListItemText primary={product.title} secondary={`SKU: ${product.sku} Brand: ${product.brand} ${product.gender ? `Gender: ${product.gender}` : ""} ${product.season ? `Season: ${product.season}` : ""}`} />
-                            </ListItem>
-                        </List>
-                        <List>
-                            <ListItem>
-                                <ListItemText primary={`Default Color: ${product.defaultColor?.name}`} />
-                            </ListItem>
-                        </List>
-                        <List>
-                            <ListItem>
-                                <ListItemText primary={"Description"} secondary={product.description} />
-                            </ListItem>
-                        </List>
-                        <List>
-                            <ListItem>
-                                <ListItemText primary={"Tags"} secondary={product.tags.join(", ")} />
-                            </ListItem>
-                        </List>
-                    </Box>
-                    <Box sx={{ padding: "2%" }}>
-                        {product.marketplaceValues && Object.keys(product.marketplaceValues).length > 0 && (
-                            <Box sx={{ marginBottom: "2%" }}>
-                                {Object.keys(product.marketplaceValues).map(marketplaceId => {
-                                    const marketplace = product.marketplaceValues[marketplaceId];
-                                    return (
-                                        <Box key={marketplaceId} sx={{ marginBottom: "1%" }}>
-                                            <Typography variant="subtitle1">{marketplace.name}</Typography>
-                                            {Object.keys(marketplace).map(category => {
-                                                if (category !== "name") {
-                                                    return (
-                                                        <Typography key={category} variant="body2">{`${category}: ${marketplace[category]}`}</Typography>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
+                <Card key={index} variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
+                    <CardContent sx={{ padding: { xs: 2, sm: 3 } }}>
+                        <Typography variant="h5" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 2 }}>{product.title}</Typography>
+                        <ProductImageCarosel productImages={product.productImages} defaultColor={product.defaultColor} />
+
+                        <Card variant="outlined" sx={{ marginTop: 3, backgroundColor: "background.default" }}>
+                            <CardContent>
+                                <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Details</Typography>
+                                <Grid2 container spacing={2}>
+                                    <Grid2 size={{ xs: 12, sm: 6, md: 3 }}><InfoRow label="SKU" value={product.sku} /></Grid2>
+                                    <Grid2 size={{ xs: 12, sm: 6, md: 3 }}><InfoRow label="Brand" value={product.brand} /></Grid2>
+                                    {product.gender && <Grid2 size={{ xs: 12, sm: 6, md: 3 }}><InfoRow label="Gender" value={product.gender} /></Grid2>}
+                                    {product.season && <Grid2 size={{ xs: 12, sm: 6, md: 3 }}><InfoRow label="Season" value={product.season} /></Grid2>}
+                                    <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600, display: "block", marginBottom: 0.5 }}>Default Color</Typography>
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                            {product.defaultColor?.hex && <Box sx={{ width: 16, height: 16, borderRadius: "50%", backgroundColor: product.defaultColor.hex, border: "1px solid rgba(0,0,0,0.2)" }} />}
+                                            <Typography variant="body2">{product.defaultColor?.name || "—"}</Typography>
                                         </Box>
-                                    );
-                                })}
-                            </Box>
+                                    </Grid2>
+                                    <Grid2 size={12}>
+                                        <InfoRow label="Description" value={product.description} />
+                                    </Grid2>
+                                    <Grid2 size={12}>
+                                        <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600, display: "block", marginBottom: 0.75 }}>Tags</Typography>
+                                        {product.tags && product.tags.length > 0 ? (
+                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                                                {product.tags.map((tag, i) => <Chip key={i} label={tag} size="small" />)}
+                                            </Box>
+                                        ) : <Typography variant="body2" color="text.secondary">—</Typography>}
+                                    </Grid2>
+                                </Grid2>
+                            </CardContent>
+                        </Card>
+
+                        {product.marketplaceValues && Object.keys(product.marketplaceValues).length > 0 && (
+                            <Card variant="outlined" sx={{ marginTop: 2, backgroundColor: "background.default" }}>
+                                <CardContent>
+                                    <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Marketplaces</Typography>
+                                    <Stack spacing={2} divider={<Divider flexItem />}>
+                                        {Object.keys(product.marketplaceValues).map(marketplaceId => {
+                                            const marketplace = product.marketplaceValues[marketplaceId];
+                                            const entries = Object.keys(marketplace).filter(k => k !== "name");
+                                            return (
+                                                <Box key={marketplaceId}>
+                                                    <Chip label={marketplace.name} size="small" color="primary" sx={{ marginBottom: 1.5, fontWeight: 600 }} />
+                                                    <Grid2 container spacing={1.5}>
+                                                        {entries.map(category => (
+                                                            <Grid2 key={category} size={{ xs: 12, sm: 6, md: 4 }}>
+                                                                <InfoRow label={category} value={marketplace[category]} />
+                                                            </Grid2>
+                                                        ))}
+                                                    </Grid2>
+                                                </Box>
+                                            );
+                                        })}
+                                    </Stack>
+                                </CardContent>
+                            </Card>
                         )}
-                    </Box>
-                    <Box sx={{ padding: "2%" }}>
-                        <Typography variant="h6">Variants</Typography>
+
+                        <Box sx={{ marginTop: 3 }}>
+                            <Typography variant="subtitle1" sx={{ marginBottom: 1.5, fontWeight: 600 }}>Variants</Typography>
                         {!preview && Object.keys(product.variants).length > 0 && Object.keys(product.variants).map(blank => (
                             <Box key={blank} sx={{ marginBottom: "2%" }}>
                                 {!product.hasThreadColors && Object.keys(product.variants[blank]).map(color => (
@@ -113,7 +138,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                                 console.log(newProds, "new products after update")
                                                 setPageProducts([...newProds])
                                             }
-                                        }}>Add Product Inventory</Button>}
+                                        }} variant="contained" size="small" startIcon={<AddIcon />} sx={{ textTransform: "none" }}>Add Product Inventory</Button>}
                                     </Box>
                                     {product.threadColors && product.threadColors.length > 0 && product.threadColors.map(threadColor => (
                                         <Box key={threadColor.name} sx={{ marginLeft: "2%" }}>
@@ -162,7 +187,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                                 }
                                                 setPageProducts([...newProds])
                                             }
-                                        }}>Add Product Inventory</Button>}
+                                        }} variant="contained" size="small" startIcon={<AddIcon />} sx={{ textTransform: "none" }}>Add Product Inventory</Button>}
                                     </Box>
                                     {product.colors.map(color => {
                                         const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank?._id.toString() : v.blank?.toString()) === blank._id.toString() && (v.color?._id? v.color._id.toString(): v.color?.toString()) === color._id.toString());
@@ -173,26 +198,29 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                 </Box>
                             );
                         })}
-                    </Box>
-                </Box>
+                        </Box>
+                    </CardContent>
+                </Card>
             ))}
-            {!preview && <Grid2 container spacing={2} sx={{ padding: "2%" }}>
-                <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("information") }}>Back</Button>
+            </Stack>
+            {!preview && <Grid2 container spacing={2} sx={{ padding: "2%", justifyContent: "space-between", marginTop: 2 }}>
+                <Grid2 size="auto">
+                    <Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("information") }}>Back</Button>
                 </Grid2>
-                <Grid2 size={6}>
-                    <Button disabled={loading} fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={async () => {
+                <Grid2 size="auto">
+                    <Button variant="contained" color="primary" size="large" disabled={loading} sx={{ minWidth: 160 }} onClick={async () => {
                         setLoading(true)
                         let res = await axios.post("/api/admin/products", { products: products }).catch(err => {
                             console.log(err.response.data)
                             setLoading(false)
-                            return { data: { error: true, msg: err.response.data.msg } };
+                            return { data: { error: true, msg: err.response.data?.msg || "Failed to save product" } };
                         });
                         if (res.data.error) {
-                            alert(res.data.msg)
+                            showToast?.(res.data.msg || "Failed to save product", "error")
                             setLoading(false)
                         }
                         else {
+                            showToast?.("Product saved", "success")
                             let prods = []
                             for (let p of res.data.products) {
                                 if(design.products && design.products.length > 0) {
@@ -230,7 +258,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                     }}>{loading ? <Box sx={{ display: "flex", alignItems: "center", gap: "2" }}><CircularProgress color="inherit" size={24} /> <Typography variant="body2">Saving ...  </Typography></Box> : "Create"}</Button>
                 </Grid2>
             </Grid2>}
-            {preview && <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setPreview(false); setStage("blanks"); setProducts([]); setUpcs([]); setImages([]); setSizes([]); setColors([]); setOpen(false) }}>Back</Button>}
+            {preview && <Box sx={{ display: "flex", justifyContent: "flex-end", padding: "2%" }}><Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setPreview(false); setStage("blanks"); setProducts([]); setUpcs([]); setImages([]); setSizes([]); setColors([]); setOpen(false) }}>Close</Button></Box>}
         </Box>
     )
 }
@@ -351,17 +379,23 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
         console.log(removeOpen, "remove open after close");
     }
     return (
-        <Card sx={{ margin: "1% 0%", padding: "1%", background: "#f0f0f0", borderRadius: "10px", boxShadow: "2px 2px 2px #ccc" }}>
-            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", cursor: "pointer" }} >
-                <DeleteIcon sx={{ color: "#780606" }} onClick={() => {
-                    console.log("Remove Variants Clicked", removeOpen)
-                    setRemoveOpen(true)
-                }} />
-            </Box>
-            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "2%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => setOpen(!open)}>
-                <img src={variants && `${variants[0].image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
-                <Typography variant="body2">{blank}_{threadColor}_{color}</Typography>
-                {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+        <Card variant="outlined" sx={{ marginY: 1, borderRadius: 2, overflow: "hidden", transition: "box-shadow 150ms", "&:hover": { boxShadow: 2 } }}>
+            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 1.5, cursor: "pointer", "&:hover": { backgroundColor: "action.hover" } }} onClick={() => setOpen(!open)}>
+                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1.5, flex: 1, minWidth: 0 }}>
+                    <Box sx={{ width: 56, height: 56, borderRadius: 1, overflow: "hidden", flexShrink: 0, backgroundColor: "background.default", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <RetryImage src={variants && `${variants[0].image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{[blank, threadColor, color].filter(Boolean).join(" · ")}</Typography>
+                        <Typography variant="caption" color="text.secondary">{variants.length} variant{variants.length === 1 ? "" : "s"}</Typography>
+                    </Box>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); setRemoveOpen(true); }} sx={{ color: "#780606" }}>
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small">{open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}</IconButton>
+                </Box>
             </Box>
             {open && (
                 <Box sx={{ padding: "2%" }}>
@@ -370,13 +404,13 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                             <ListItem key={i}>
                                 <ListItemAvatar>
                                     <Avatar>
-                                        <img src={`${variant.image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                        <RetryImage src={`${variant.image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                     </Avatar>
                                 </ListItemAvatar>
                                 {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
                                     <ListItemAvatar>
                                         <Avatar key={i}>
-                                            <img src={img.image ? `${img.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75` : `${img.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                            <RetryImage src={img.image ? `${img.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75` : `${img.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                         </Avatar>
                                     </ListItemAvatar>
                                 ))}
@@ -552,7 +586,7 @@ const InventoryModal = ({ open, setOpen, variant, setVariant, product, setProduc
                         console.log("Updating inventory for variant:", variant, product);
                         let res = await axios.put("/api/admin/inventory/product", { productId: product._id, variant: variant });
                         console.log(res.data, "response from inventory update");
-                        if(res.data.error) alert(res.data.msg);
+                        if(res.data.error) showToast?.(res.data.msg, "error"); else showToast?.("Inventory updated", "success");
                         setProducts([res.data.product]);
                         let prods = []
                         
@@ -595,37 +629,29 @@ export const ProductImageCarosel = ({ productImages, defaultColor }) => {
     order = [...order, ...productImages.filter(img => img.color?.name !== defaultColor?.name)]
     productImages = order;
     return (
-        <Grid2 container spacing={2} sx={{ padding: "2%" }}>
-            <Grid2 size={{ xs: 2, lg: 3 }}></Grid2>
-            <Grid2 size={1}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", padding: "2%", minHeight: "100%", "&:hover": { cursor: "pointer", background: "#f0f0f0" } }} onClick={() => { setLoading(true); setImage(image - 1 < 0 ? productImages.length - 1 : image - 1) }}>
-                    <KeyboardArrowLeftIcon sx={{ fontSize: "2rem", color: "#645D5B", marginTop: "50%" }} />
-                </Box>
-            </Grid2>
-            <Grid2 size={{ xs: 6, lg: 4 }}>
-                <img onLoad={() => setLoading(false)} src={productImages[image]?.image} alt={productImages[image]?.sku} style={{ width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%" }} />
-                {loading && <Box sx={{ display: 'flex', position: "relative", top: "-50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 999, background: "rgba(255, 255, 255, 0.8)", padding: "2%", borderRadius: "10px", alignItems: "center", justifyContent: "center", marginBottom: "-15%" }}>
-                    <CircularProgress color="secondary" /> <Typography color={"#000"}>Loading ...</Typography>
-                </Box>}
-            </Grid2>
-            <Grid2 size={1}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", padding: "2%", minHeight: "100%", "&:hover": { cursor: "pointer", background: "#f0f0f0" } }} onClick={() => { setLoading(true); setImage(image + 1 >= productImages.length ? 0 : image + 1) }}>
-                    <KeyboardArrowRightIcon sx={{ fontSize: "2rem", color: "#645D5B", marginTop: "50%" }} />
-                </Box>
-            </Grid2>
-            <Grid2 size={{ xs: 2, lg: 3 }}></Grid2>
-            <Grid2 size={1}></Grid2>
-            <Grid2 size={10}>
-                <ImageList cols={12} gap={1}>
-                    {productImages.map((variant, i) => (
-                        <ImageListItem key={i} sx={{ width: "100%", height: "auto", cursor: "pointer", border: image == i ? "2px solid rgb(41, 6, 240)" : "none", opacity: image == i ? 0.6 : 1 }} onClick={() => { setLoading(true); setImage(i) }}>
-                            <img src={variant.image} alt={variant.sku} />
-
-                        </ImageListItem>
-                    ))}
-                </ImageList>
-            </Grid2>
-            <Grid2 size={1}></Grid2>
-        </Grid2>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+            <Box sx={{ position: "relative", width: "100%", maxWidth: 480, aspectRatio: "1 / 1", backgroundColor: "background.default", borderRadius: 2, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <RetryImage onLoad={() => setLoading(false)} src={productImages[image]?.image} alt={productImages[image]?.sku} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                {loading && (
+                    <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 1, background: "rgba(255,255,255,0.7)" }}>
+                        <CircularProgress color="secondary" size={28} />
+                        <Typography color="text.primary">Loading…</Typography>
+                    </Box>
+                )}
+                <IconButton onClick={() => { setLoading(true); setImage(image - 1 < 0 ? productImages.length - 1 : image - 1) }} sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", backgroundColor: "rgba(255,255,255,0.85)", "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }}>
+                    <KeyboardArrowLeftIcon />
+                </IconButton>
+                <IconButton onClick={() => { setLoading(true); setImage(image + 1 >= productImages.length ? 0 : image + 1) }} sx={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", backgroundColor: "rgba(255,255,255,0.85)", "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }}>
+                    <KeyboardArrowRightIcon />
+                </IconButton>
+            </Box>
+            <Box sx={{ width: "100%", maxWidth: 720, display: "flex", flexWrap: "wrap", gap: 1, justifyContent: "center" }}>
+                {productImages.map((variant, i) => (
+                    <Box key={i} onClick={() => { setLoading(true); setImage(i) }} sx={{ width: 56, height: 56, borderRadius: 1, overflow: "hidden", cursor: "pointer", border: image === i ? "2px solid" : "1px solid", borderColor: image === i ? "primary.main" : "divider", opacity: image === i ? 1 : 0.7, backgroundColor: "background.default", display: "flex", alignItems: "center", justifyContent: "center", transition: "opacity 150ms", "&:hover": { opacity: 1 } }}>
+                        <RetryImage src={variant.image} alt={variant.sku} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                    </Box>
+                ))}
+            </Box>
+        </Box>
     )
 }

@@ -1,128 +1,148 @@
-import { Box, Grid2, Button, Typography, Checkbox, Modal } from "@mui/material";
+import { Box, Grid2, Button, Typography, Checkbox, Modal, Card, CardContent, Chip, Stack, IconButton, Tooltip } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 import { Uploader } from "../../reusable/premier/uploader";
 import { useState, useEffect } from "react";
 import CloseIcon from '@mui/icons-material/Close';
-export const ProductImageStage = ({ products, setProducts, setStage, design, source, images,  setImages, imageGroups }) => {
-    console.log(design, "design in ProductImageStage");
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import { RetryImage } from "./RetryImage";
+
+const tileBackground = "radial-gradient(ellipse at center, #ffffff 0%, #eef0f3 100%)";
+
+const ImageTile = ({ image, selected, onClick, onZoom }) => (
+    <Box onClick={onClick} sx={{ position: "relative", aspectRatio: "1 / 1", border: selected ? "2px solid" : "1px solid", borderColor: selected ? "primary.main" : "divider", borderRadius: 1, overflow: "hidden", cursor: "pointer", background: tileBackground, display: "flex", alignItems: "center", justifyContent: "center", transition: "border-color 150ms, box-shadow 150ms", "&:hover": { boxShadow: 2, "& .tile-zoom": { opacity: 1 } } }}>
+        <RetryImage src={image.image} alt={image.sku || ""} loading="lazy" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+        <Box sx={{ position: "absolute", top: 2, right: 2 }}>
+            <Checkbox size="small" checked={selected} sx={{ padding: 0.25, backgroundColor: "rgba(255,255,255,0.85)", borderRadius: 1, "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }} />
+        </Box>
+        <Tooltip title="Zoom" placement="top" arrow>
+            <IconButton size="small" className="tile-zoom" onClick={(e) => { e.stopPropagation(); onZoom(image); }} sx={{ position: "absolute", top: 2, left: 2, padding: 0.25, backgroundColor: "rgba(255,255,255,0.85)", opacity: { xs: 1, md: 0 }, transition: "opacity 150ms", "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }}>
+                <ZoomInIcon fontSize="small" />
+            </IconButton>
+        </Tooltip>
+        {image.side && (
+            <Chip size="small" label={image.side} sx={{ position: "absolute", bottom: 2, left: 2, height: 16, fontSize: ".6rem", backgroundColor: "rgba(255,255,255,0.85)", "& .MuiChip-label": { paddingX: 0.75 } }} />
+        )}
+        {image.threadColor?.name && (
+            <Chip size="small" label={image.threadColor.name} sx={{ position: "absolute", bottom: 2, right: 2, height: 16, fontSize: ".6rem", backgroundColor: "rgba(255,255,255,0.85)", "& .MuiChip-label": { paddingX: 0.75 } }} />
+        )}
+    </Box>
+);
+
+const ZoomModal = ({ image, onClose }) => (
+    <Modal open={!!image} onClose={onClose} sx={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 2 }}>
+        <Box sx={{ position: "relative", outline: "none", maxWidth: "92vw", maxHeight: "92vh", display: "flex", alignItems: "center", justifyContent: "center", background: tileBackground, borderRadius: 2, boxShadow: 24, padding: 1 }}>
+            <IconButton onClick={onClose} sx={{ position: "absolute", top: 4, right: 4, zIndex: 2, backgroundColor: "rgba(255,255,255,0.9)", "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }}>
+                <CloseIcon />
+            </IconButton>
+            {image && (
+                <RetryImage src={image.image?.replace("?width=400", "?width=1200")} alt={image.sku || ""} style={{ maxWidth: "88vw", maxHeight: "88vh", objectFit: "contain", display: "block" }} />
+            )}
+            {image?.sku && (
+                <Box sx={{ position: "absolute", bottom: 8, left: 8, right: 8, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+                    <Chip size="small" label={image.sku} sx={{ backgroundColor: "rgba(0,0,0,0.65)", color: "#fff", maxWidth: "100%", "& .MuiChip-label": { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }} />
+                </Box>
+            )}
+        </Box>
+    </Modal>
+);
+
+export const ProductImageStage = ({ products, setProducts, setStage, design, source, images, setImages, imageGroups }) => {
     const [imageOpen, setImageOpen] = useState(false)
     const [reload, setReload] = useState(false)
     const [prod, setProd] = useState(null)
-    useEffect(()=>{
-        if(!reload) setReload(!reload)
+    const [zoomImage, setZoomImage] = useState(null)
+    useEffect(() => {
+        if (!reload) setReload(!reload)
     }, [reload])
     return (
-        <Grid2 size={12} sx={{ padding: "0% 4%" }}>
-            {products.map((product, i) => (
-                <Box key={i} sx={{ marginBottom: "2%", padding: "2%", border: "1px solid #ccc", borderRadius: "8px" }}>
-                    <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: "2%"}}>
-                        {/* <Box sx={{width: "80%"}}>
-                        <CreatableSelect
-                            placeholder="Image Group"
-                            options={imageGroups.map(g => { return { value: g, label: g } })}
-                            value={product.imageGroup ? { value: product.imageGroup, label: product.imageGroup } : { value: "default", label: "default" }}
-                            onChange={(val) => {
-                                let prods = [...products]
-                                let p = prods.filter(p => p.id == product.id)[0]
-                                p.imageGroup = val.value
-                                setProducts(prods)
-                                let imgs = []
-                                product.blanks.map(b => {
-                                    if (product.threadColors.length > 0) {
-                                        for (let tc of product.threadColors) {
-                                            for (let col of product.colors) {
-                                                for (let ti of Object.keys(design.threadImages[tc.name] ? design.threadImages[tc.name] : {})) {
-                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
-                                                        imgs.push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg}?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        for (let col of product.colors) {
-                                            for (let ti of Object.keys(design.images ? design.images : {})) {
-                                                for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes(val.value)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup.includes("default"))) {
-                                                    imgs.push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}.jpg}?width=400`), color: col, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
-                                                }
-                                            }
-                                        }
-                                    }
-                                })
-                                let ims = {...images }
-                                ims[product.id] = imgs
-                                    setImages(ims)
-                                }}
-                            />
-                        </Box> */}
-                        <Box>
-                            <Button variant="outlined" onClick={()=> { setImageOpen(true); setProd(product); }}>Add Image</Button>
-                            <AddImageModal open={imageOpen} setOpen={setImageOpen} des={design} setDesign={()=>{}} updateDesign={()=>{}} colors={prod?.colors} reload={reload} setReload={setReload} threadColors={prod?.threadColors} product={prod} products={products} setProducts={setProducts} />
+        <Box sx={{ padding: { xs: 1, sm: 1.5 }, background: "linear-gradient(180deg, #f4f6fa 0%, #eceff5 100%)", minHeight: "100%", borderRadius: 2 }}>
+            <Typography variant="subtitle1" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 1.5, color: "text.primary" }}>Select Product Images</Typography>
+            {products.map((product, i) => {
+                const allImages = [...(images[product.id] || []), ...(product.tempImages || [])];
+                const groups = {};
+                const noColor = [];
+                for (const img of allImages) {
+                    const colorKey = img.color?._id?.toString() || img.color?.name;
+                    if (colorKey) {
+                        if (!groups[colorKey]) groups[colorKey] = { color: img.color, images: [] };
+                        groups[colorKey].images.push(img);
+                    } else {
+                        noColor.push(img);
+                    }
+                }
+                const totalSelected = product.productImages.length;
+                const totalAvailable = allImages.length;
+                const toggleImage = (i) => {
+                    let prods = [...products];
+                    let p = prods.filter(p => p.id == product.id)[0];
+                    if (!p.productImages.find(img => img.image == i.image)) p.productImages.push(i);
+                    else p.productImages = p.productImages.filter(img => img.image != i.image);
+                    setProducts([...prods]);
+                };
+                const setGroupSelection = (groupImages, select) => {
+                    let prods = [...products];
+                    let p = prods.filter(p => p.id == product.id)[0];
+                    const urls = new Set(groupImages.map(g => g.image));
+                    if (select) {
+                        const existing = new Set(p.productImages.map(im => im.image));
+                        for (const g of groupImages) if (!existing.has(g.image)) p.productImages.push(g);
+                    } else {
+                        p.productImages = p.productImages.filter(im => !urls.has(im.image));
+                    }
+                    setProducts([...prods]);
+                };
+                const renderGroup = (key, label, color, groupImages) => {
+                    const selectedInGroup = groupImages.filter(g => product.productImages.find(im => im.image == g.image)).length;
+                    const allSelected = selectedInGroup === groupImages.length;
+                    return (
+                        <Box key={key} sx={{ marginBottom: 1.5 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, marginBottom: 0.75, flexWrap: "wrap" }}>
+                                {color?.hexcode && <Box sx={{ width: 14, height: 14, borderRadius: "50%", backgroundColor: color.hexcode, border: "1px solid rgba(0,0,0,0.2)", flexShrink: 0 }} />}
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1 }}>{label}</Typography>
+                                <Chip size="small" label={`${selectedInGroup}/${groupImages.length}`} sx={{ height: 18, fontSize: ".65rem" }} />
+                                <Button size="small" sx={{ textTransform: "none", padding: "0 6px", minHeight: 22, fontSize: ".75rem" }} onClick={() => setGroupSelection(groupImages, !allSelected)}>
+                                    {allSelected ? "Clear" : "Select all"}
+                                </Button>
+                            </Box>
+                            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 0.5 }}>
+                                {groupImages.map((img, j) => (
+                                    <ImageTile key={`${img.sku || img.image}-${j}`} image={img} selected={!!product.productImages.find(im => im.image == img.image)} onClick={() => toggleImage(img)} onZoom={setZoomImage} />
+                                ))}
+                            </Box>
                         </Box>
-                    </Box>
-                    <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Product Images</Typography>
-                    <Grid2 container spacing={1} sx={{ marginBottom: "2%" }}>
-                        {images[product.id].map((i, j) => (
-                            <Grid2 key={j} size={{ xs: 6, sm: 3, md: 3 }} sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => {
-                                let prods = [...products]
-                                let p = prods.filter(p => p.id == product.id)[0]
-                                if (!p.productImages.filter(img => img.image == i.image)[0]) p.productImages.push(i)
-                                else {
-                                    let imgs = [];
-                                    for (let img of p.productImages) {
-                                        if (img.image != i.image) imgs.push(img)
-                                    }
-                                    p.productImages = imgs
-                                }
-                                setProducts([...prods])
-                            }}>
-                                <img src={i.image} alt={`${i.blank.code} image`} width={300} height={300} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%", }} />
-                                {product.productImages.filter(img => img.image == i.image)[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", top: "-20%", position: "relative" }}>
-                                    <Checkbox checked={true} />
-                                </Box>}
-                                {!product.productImages.filter(img => img.image == i.image)[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", top: "-20%", position: "relative" }}>
-                                    <Checkbox checked={false} />
-                                </Box>}
-                            </Grid2>
-                            
-                        ))}
-                        {product.tempImages?.map((i, j) => (
-                            <Grid2 key={j} size={{ xs: 6, sm: 3, md: 3 }} sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .7 } }} onClick={() => {
-                                let prods = [...products]
-                                let p = prods.filter(p => p.id == product.id)[0]
-                                if (!p.productImages.filter(img => img.image == i.image)[0]) p.productImages.push(i)
-                                else {
-                                    let imgs = [];
-                                    for (let img of p.productImages) {
-                                        if (img.image != i.image) imgs.push(img)
-                                    }
-                                    p.productImages = imgs
-                                }
-                                setProducts([...prods])
-                            }}>
-                                <img src={i.image} alt={`${i.color} ${i.threadColor} image`} width={300} height={300} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%", }} />
-                                {product.productImages.filter(img => img.image == i.image)[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", top: "-20%", position: "relative" }}>
-                                    <Checkbox checked={true} />
-                                </Box>}
-                                {!product.productImages.filter(img => img.image == i.image)[0] && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", top: "-20%", position: "relative" }}>
-                                    <Checkbox checked={false} />
-                                </Box>}
-                            </Grid2>
-                        ))}
-                    </Grid2>
-                    
-                </Box>
-            ))}
-            <Grid2 container spacing={2} sx={{ padding: "2%" }}>
-                <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("colors") }}>Back</Button>
+                    );
+                };
+                return (
+                    <Card key={i} variant="outlined" sx={{ marginBottom: 1.5, borderRadius: 2, backgroundColor: "#ffffff", borderColor: "rgba(15,23,42,0.08)", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}>
+                        <CardContent sx={{ padding: { xs: 1.25, sm: 1.5 }, "&:last-child": { paddingBottom: { xs: 1.25, sm: 1.5 } } }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, marginBottom: 1.5 }}>
+                                <Box>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>{product.design?.sku}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{product.blanks.map(b => b.code).join(" · ")}</Typography>
+                                </Box>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    <Chip label={`${totalSelected}/${totalAvailable} selected`} color={totalSelected > 0 ? "primary" : "default"} variant="outlined" size="small" />
+                                    <Button variant="contained" size="small" startIcon={<AddPhotoAlternateIcon />} sx={{ textTransform: "none" }} onClick={() => { setImageOpen(true); setProd(product); }}>Add Image</Button>
+                                </Box>
+                            </Box>
+                            {Object.entries(groups).map(([key, { color, images: groupImages }]) => renderGroup(key, color.name, color, groupImages))}
+                            {noColor.length > 0 && renderGroup("__no_color__", "Other", null, noColor)}
+                        </CardContent>
+                    </Card>
+                );
+            })}
+            <AddImageModal open={imageOpen} setOpen={setImageOpen} des={design} setDesign={() => {}} updateDesign={() => {}} colors={prod?.colors} reload={reload} setReload={setReload} threadColors={prod?.threadColors} product={prod} products={products} setProducts={setProducts} />
+            <ZoomModal image={zoomImage} onClose={() => setZoomImage(null)} />
+            <Grid2 container spacing={2} sx={{ justifyContent: "space-between", marginTop: 1.5 }}>
+                <Grid2 size="auto">
+                    <Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("colors") }}>Back</Button>
                 </Grid2>
-                <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
-                        setStage("variant_images")
-                    }}>Next</Button>
+                <Grid2 size="auto">
+                    <Button variant="contained" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("variant_images") }}>Next</Button>
                 </Grid2>
             </Grid2>
-        </Grid2>
+        </Box>
     )
 }
 

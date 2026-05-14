@@ -1,7 +1,7 @@
-import { Box, Modal, Typography,  } from "@mui/material";
+import { Box, Modal, Typography, Stepper, Step, StepLabel, StepButton, Snackbar, Alert, IconButton, useTheme, useMediaQuery } from "@mui/material";
 
 import axios from "axios";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import CloseIcon from '@mui/icons-material/Close';
 import { BlankStage } from "./stages/blankStage";
 import { ColorStage } from "./stages/colorStage";
@@ -9,6 +9,15 @@ import { ProductImageStage } from "./stages/productImageStage";
 import { VariantImageStage } from "./stages/variantImageStage";
 import { InformationStage } from "./stages/informationStage";
 import { PreviewStage } from "./stages/previewStage";
+
+const STAGES = [
+    { key: "blanks", label: "Blanks" },
+    { key: "colors", label: "Colors & Sizes" },
+    { key: "product_images", label: "Product Images" },
+    { key: "variant_images", label: "Variant Images" },
+    { key: "information", label: "Information" },
+    { key: "preview", label: "Preview" },
+];
 
 export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading, preview, setPreview, themes, sportUsedFor , setThemes, setSportUsedFor, pageProducts, setPageProducts, printTypes, licenses }) => {
     const [cols, setColors] = useState({})
@@ -19,20 +28,27 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
     const [tempUpcs, setTempUpcs] = useState([])
     const [combined, setCombined] = useState(false);
     const [products, setProducts] = useState([]);
+    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
     const targetRef = useRef(null);
+    const theme = useTheme();
+    const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
+    const showToast = useCallback((message, severity = "success") => {
+        setToast({ open: true, message, severity });
+    }, []);
+    const currentStepIndex = STAGES.findIndex(s => s.key === stage);
     const style = {
         position: 'absolute',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: "90%",
-        height: "90%",
+        width: isSmall ? "98%" : "90%",
+        height: isSmall ? "98%" : "90%",
         bgcolor: 'background.paper',
-        border: '2px solid #000',
+        borderRadius: 2,
         boxShadow: 24,
-        p: 4,
+        p: { xs: 2, sm: 3, md: 4 },
         overflowX: "auto",
-        overflowY: "none",
+        overflowY: "auto",
     };
     useEffect(() => {
         if(product) {
@@ -115,32 +131,48 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
             id="create-product-modal"
         >
             <Box sx={style} ref={targetRef}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => { setOpen(false); setUpcs([]); releaseHold(); setTempUpcs([]); setStage("blanks"); setProduct({ blanks: [], colors: [], threadColors: [], sizes: [], productImages: { blank: [], color: [], threadColor: [] } }); setProducts([]); setPreview(false); }}>
-                    <CloseIcon sx={{ color: "#780606" }} />
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 1 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 500 }}>Create Product</Typography>
+                    <IconButton onClick={() => { setOpen(false); setUpcs([]); releaseHold(); setTempUpcs([]); setStage("blanks"); setProduct({ blanks: [], colors: [], threadColors: [], sizes: [], productImages: { blank: [], color: [], threadColor: [] } }); setProducts([]); setPreview(false); }} aria-label="close" size="small">
+                        <CloseIcon />
+                    </IconButton>
                 </Box>
-                <Typography variant="h4" sx={{ marginBottom: "2%", color: "#000", textAlign: "center" }} >Create Product</Typography>
-                {stage == "blanks" && 
-                    <BlankStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} blanks={blanks} design={design} source={source} combined={combined} colors={colors} cols={cols} setColors={setColors} sizes={sizes} setSizes={setSizes} setCombined={setCombined} getUpcs={getUpcs}scrollToTarget={scrollToTarget} />
+                <Stepper activeStep={currentStepIndex} alternativeLabel sx={{ marginBottom: 3 }} nonLinear>
+                    {STAGES.map((s, idx) => (
+                        <Step key={s.key} completed={idx < currentStepIndex}>
+                            <StepButton onClick={() => { if (idx <= currentStepIndex) setStage(s.key); }} disabled={idx > currentStepIndex}>
+                                <StepLabel>{s.label}</StepLabel>
+                            </StepButton>
+                        </Step>
+                    ))}
+                </Stepper>
+                {stage == "blanks" &&
+                    <BlankStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} blanks={blanks} design={design} source={source} combined={combined} colors={colors} cols={cols} setColors={setColors} sizes={sizes} setSizes={setSizes} setCombined={setCombined} getUpcs={getUpcs} scrollToTarget={scrollToTarget} showToast={showToast} />
                 }
-                {stage == "colors" && 
-                    <ColorStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setCombined={setCombined} getUpcs={getUpcs} setImages={setImages} upcs={upcs} getTempUpcs={getTempUpcs} />
+                {stage == "colors" &&
+                    <ColorStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setCombined={setCombined} getUpcs={getUpcs} setImages={setImages} upcs={upcs} getTempUpcs={getTempUpcs} showToast={showToast} />
                 }
-                {stage == "product_images" && 
-                    <ProductImageStage products={products} setProducts={setProducts} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setImages={setImages} images={images} imageGroups={imageGroups} />
+                {stage == "product_images" &&
+                    <ProductImageStage products={products} setProducts={setProducts} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setImages={setImages} images={images} imageGroups={imageGroups} showToast={showToast} />
                 }
                 {stage == "variant_images" &&
-                    <VariantImageStage products={products} setProducts={setProducts} design={design} source={source} setStage={setStage} />
+                    <VariantImageStage products={products} setProducts={setProducts} design={design} source={source} setStage={setStage} showToast={showToast} />
                 }
-                {stage == "information" && 
+                {stage == "information" &&
                    <InformationStage
-                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} CreateSku={CreateSku} setLoading={setLoading} loading={loading} upcs={upcs} tempUpcs={tempUpcs} colors={colors} themes={themes} sportUsedFor={sportUsedFor} setPreview={setPreview} preview={preview} setOpen={setOpen} updateDesign={updateDesign} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} releaseHold={releaseHold} setTempUpcs={setTempUpcs} combined={combined} setCombined={setCombined} setThemes={setThemes} setSportUsedFor={setSportUsedFor} printTypes={printTypes} licenses={licenses}
+                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} CreateSku={CreateSku} setLoading={setLoading} loading={loading} upcs={upcs} tempUpcs={tempUpcs} colors={colors} themes={themes} sportUsedFor={sportUsedFor} setPreview={setPreview} preview={preview} setOpen={setOpen} updateDesign={updateDesign} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} releaseHold={releaseHold} setTempUpcs={setTempUpcs} combined={combined} setCombined={setCombined} setThemes={setThemes} setSportUsedFor={setSportUsedFor} printTypes={printTypes} licenses={licenses} showToast={showToast}
                    />
                 }
-                {stage == "preview" && 
+                {stage == "preview" &&
                     <PreviewStage
-                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} upcs={upcs} setUpcs={setUpcs} releaseHold={releaseHold} setLoading={setLoading} loading={loading} images={images} setImages={setImages} imageGroups={imageGroups} updateDesign={updateDesign} setOpen={setOpen} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} preview={preview} setPreview={setPreview} tempUpcs={tempUpcs} setTempUpcs={setTempUpcs} setCombined={setCombined} combined={combined} colors={colors} setDesign={setDesign} pageProducts={pageProducts} setPageProducts={setPageProducts}
+                    products={products} setProducts={setProducts} product={product} setProduct={setProduct} design={design} source={source} setStage={setStage} brands={brands} seasons={seasons} setSeasons={setSeasons} setBrands={setBrands} setGenders={setGenders} genders={genders} upcs={upcs} setUpcs={setUpcs} releaseHold={releaseHold} setLoading={setLoading} loading={loading} images={images} setImages={setImages} imageGroups={imageGroups} updateDesign={updateDesign} setOpen={setOpen} setSizes={setSizes} setColors={setColors} cols={cols} sizes={sizes} preview={preview} setPreview={setPreview} tempUpcs={tempUpcs} setTempUpcs={setTempUpcs} setCombined={setCombined} combined={combined} colors={colors} setDesign={setDesign} pageProducts={pageProducts} setPageProducts={setPageProducts} showToast={showToast}
                     />
                 }
+                <Snackbar open={toast.open} autoHideDuration={4000} onClose={() => setToast(t => ({ ...t, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+                    <Alert onClose={() => setToast(t => ({ ...t, open: false }))} severity={toast.severity} variant="filled" sx={{ width: "100%" }}>
+                        {toast.message}
+                    </Alert>
+                </Snackbar>
             </Box>
         </Modal>
     )

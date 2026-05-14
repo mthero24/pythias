@@ -1,21 +1,69 @@
-import { Box, Grid2, Button, Typography, Checkbox } from "@mui/material";
-import { useState, } from "react";
+import { Box, Grid2, Button, Typography, Card, CardContent, Chip, IconButton, Tooltip, Modal, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { useState } from "react";
+import CloseIcon from '@mui/icons-material/Close';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import { RetryImage } from "./RetryImage";
 
-export const VariantImageStage = ({products, setProducts, design, source, setStage }) => {
+const tileBackground = "radial-gradient(ellipse at center, #ffffff 0%, #eef0f3 100%)";
+
+const VariantTile = ({ image, isMain, isSecondary, secondaryIndex, onClick, onZoom }) => (
+    <Box onClick={onClick} sx={{ position: "relative", aspectRatio: "1 / 1", border: isMain ? "2px solid" : isSecondary ? "2px dashed" : "1px solid", borderColor: isMain ? "primary.main" : isSecondary ? "warning.main" : "divider", borderRadius: 1, overflow: "hidden", cursor: "pointer", background: tileBackground, display: "flex", alignItems: "center", justifyContent: "center", transition: "border-color 150ms, box-shadow 150ms", "&:hover": { boxShadow: 2, "& .tile-zoom": { opacity: 1 } } }}>
+        <RetryImage src={image.image} alt={image.sku || ""} loading="lazy" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+        {isMain && (
+            <Chip size="small" label="MAIN" color="primary" sx={{ position: "absolute", top: 2, right: 2, height: 18, fontSize: ".6rem", fontWeight: 700, "& .MuiChip-label": { paddingX: 0.75 } }} />
+        )}
+        {isSecondary && !isMain && (
+            <Chip size="small" label={`#${secondaryIndex + 1}`} color="warning" sx={{ position: "absolute", top: 2, right: 2, height: 18, fontSize: ".6rem", fontWeight: 700, "& .MuiChip-label": { paddingX: 0.75 } }} />
+        )}
+        <Tooltip title="Zoom" placement="top" arrow>
+            <IconButton size="small" className="tile-zoom" onClick={(e) => { e.stopPropagation(); onZoom(image); }} sx={{ position: "absolute", top: 2, left: 2, padding: 0.25, backgroundColor: "rgba(255,255,255,0.85)", opacity: { xs: 1, md: 0 }, transition: "opacity 150ms", "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }}>
+                <ZoomInIcon fontSize="small" />
+            </IconButton>
+        </Tooltip>
+    </Box>
+);
+
+const ZoomModal = ({ image, onClose }) => (
+    <Modal open={!!image} onClose={onClose} sx={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 2 }}>
+        <Box sx={{ position: "relative", outline: "none", maxWidth: "92vw", maxHeight: "92vh", display: "flex", alignItems: "center", justifyContent: "center", background: tileBackground, borderRadius: 2, boxShadow: 24, padding: 1 }}>
+            <IconButton onClick={onClose} sx={{ position: "absolute", top: 4, right: 4, zIndex: 2, backgroundColor: "rgba(255,255,255,0.9)", "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }}>
+                <CloseIcon />
+            </IconButton>
+            {image && (
+                <RetryImage src={image.image?.replace("?width=400", "?width=1200")} alt={image.sku || ""} style={{ maxWidth: "88vw", maxHeight: "88vh", objectFit: "contain", display: "block" }} />
+            )}
+            {image?.sku && (
+                <Box sx={{ position: "absolute", bottom: 8, left: 8, right: 8, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+                    <Chip size="small" label={image.sku} sx={{ backgroundColor: "rgba(0,0,0,0.65)", color: "#fff", maxWidth: "100%", "& .MuiChip-label": { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }} />
+                </Box>
+            )}
+        </Box>
+    </Modal>
+);
+
+const ColorHeader = ({ color, name, mainCount, extraCount }) => (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, marginBottom: 0.75, flexWrap: "wrap" }}>
+        {color?.hexcode && <Box sx={{ width: 14, height: 14, borderRadius: "50%", backgroundColor: color.hexcode, border: "1px solid rgba(0,0,0,0.2)", flexShrink: 0 }} />}
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1 }}>{name}</Typography>
+        <Chip size="small" label={mainCount > 0 ? "main set" : "no main"} color={mainCount > 0 ? "primary" : "default"} variant={mainCount > 0 ? "filled" : "outlined"} sx={{ height: 18, fontSize: ".6rem" }} />
+        {extraCount > 0 && <Chip size="small" label={`+${extraCount} extra${extraCount === 1 ? "" : "s"}`} color="warning" variant="outlined" sx={{ height: 18, fontSize: ".6rem" }} />}
+    </Box>
+);
+
+export const VariantImageStage = ({ products, setProducts, design, source, setStage }) => {
     return (
-        <Grid2 size={12} sx={{padding: "0% 4%"}}>
-            <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Variant Images</Typography>
-            <Box>
-                {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors?.length > 0 ? design.threadImages : design.images} setProducts={setProducts} threadColors={design.threadColors?.length > 0? true: false} source={source}/>)}
-            </Box>
-            <Grid2 container spacing={2} sx={{ padding: "2%" }}>
-                <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("product_images") }}>Back</Button>
+        <Box sx={{ padding: { xs: 1, sm: 1.5 }, background: "linear-gradient(180deg, #f4f6fa 0%, #eceff5 100%)", minHeight: "100%", borderRadius: 2 }}>
+            <Typography variant="subtitle1" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 0.5, color: "text.primary" }}>Select Variant Images</Typography>
+            <Typography variant="caption" sx={{ display: "block", textAlign: "center", marginBottom: 1.5, color: "text.secondary" }}>Pick one <b>main</b> image per color, plus any <b>extras</b> for the gallery.</Typography>
+            {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors?.length > 0 ? design.threadImages : design.images} setProducts={setProducts} threadColors={design.threadColors?.length > 0 ? true : false} source={source} />)}
+            <Grid2 container spacing={2} sx={{ justifyContent: "space-between", marginTop: 1.5 }}>
+                <Grid2 size="auto">
+                    <Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("product_images") }}>Back</Button>
                 </Grid2>
-                <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
+                <Grid2 size="auto">
+                    <Button variant="contained" size="large" sx={{ minWidth: 160 }} onClick={() => {
                         let prods = [...products]
-                        for(let p of prods) {
+                        for (let p of prods) {
                             p.title = p.title ? p.title : `${design.name} - ${p.blanks.map(b => b.name).join(" and ")}`
                             p.description = p.description && !p.description.includes("undefined") ? p.description : `${design.description} ${p.blanks.map(b => b.description).join(" ")}`
                             p.tags = design.tags ? design.tags : []
@@ -24,16 +72,35 @@ export const VariantImageStage = ({products, setProducts, design, source, setSta
                         setStage("information")
                     }}>Next</Button>
                 </Grid2>
-            </Grid2>  
-        </Grid2>
+            </Grid2>
+        </Box>
     )
 }
 
+
 const CreateVariantImages = ({ product, products, setProducts, design, threadColors, source }) => {
     const [mainImage, setMainImage] = useState(true);
+    const [zoomImage, setZoomImage] = useState(null);
     console.log(design, "design in CreateVariantImages");
+    const cdn = (url) => url.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");
     let imgs = {}
     if (!threadColors) {
+        // images without boxes — plain product photos, no design overlay
+        for (let blank of product.blanks) {
+            if (!(blank.images && blank.images.length > 0)) continue;
+            for (let color of product.colors) {
+                for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length)) {
+                    if (!imgs[blank.code]) imgs[blank.code] = {};
+                    if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = [];
+                    const rawUrl = `${cdn(img.image)}?width=400`;
+                    const fileBase = img.image.split("/").pop().split(".")[0];
+                    const sku = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${fileBase}-${color.name.replace(/\//g, "_")}-other`;
+                    if (!imgs[blank.code][color.name].find(i => i.sku === sku)) {
+                        imgs[blank.code][color.name].push({ image: rawUrl, sku });
+                    }
+                }
+            }
+        }
         for (let side of Object.keys(design ? design : {})) {
             for (let blank of product.blanks) {
                 for (let color of product.colors) {
@@ -58,6 +125,25 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             }
         }
     } else {
+        // images without boxes — plain product photos, no design overlay
+        for (let threadColor of Object.keys(design ? design : {}).filter(tc => product.threadColors.find(t => t.name == tc))) {
+            for (let blank of product.blanks) {
+                if (!(blank.images && blank.images.length > 0)) continue;
+                for (let color of product.colors) {
+                    for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length)) {
+                        if (!imgs[blank.code]) imgs[blank.code] = {};
+                        if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {};
+                        if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
+                        const rawUrl = `${cdn(img.image)}?width=400`;
+                        const fileBase = img.image.split("/").pop().split(".")[0];
+                        const sku = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${fileBase}-${color.name.replace(/\//g, "_")}-other-${threadColor}`;
+                        if (!imgs[blank.code][threadColor][color.name].find(i => i.sku === sku)) {
+                            imgs[blank.code][threadColor][color.name].push({ image: rawUrl, sku });
+                        }
+                    }
+                }
+            }
+        }
         for (let threadColor of Object.keys(design? design : {}).filter(tc=> product.threadColors.find(t => t.name == tc))) {
             for (let side of Object.keys(design[threadColor])) {
                 for (let blank of product.blanks) {
@@ -102,143 +188,147 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             }
         }
     }
+    const blankKeys = Object.keys(imgs);
+    if (blankKeys.length === 0) return null;
+
+    const ModeToggle = (
+        <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={mainImage ? "main" : "extras"}
+            onChange={(_, v) => { if (v) setMainImage(v === "main"); }}
+            sx={{ "& .MuiToggleButton-root": { textTransform: "none", paddingX: 1.25, paddingY: 0.25, fontSize: ".75rem", lineHeight: 1.2 } }}
+        >
+            <ToggleButton value="main" color="primary">Set Main</ToggleButton>
+            <ToggleButton value="extras" color="warning">Add Extras</ToggleButton>
+        </ToggleButtonGroup>
+    );
+
+    const pickFlat = (b, c, img) => {
+        const prods = [...products];
+        const p = prods.find(pr => pr.id == product.id);
+        if (!p.variantImages) p.variantImages = {};
+        if (!p.variantImages[b]) p.variantImages[b] = {};
+        if (!p.variantSecondaryImages) p.variantSecondaryImages = {};
+        if (!p.variantSecondaryImages[b]) p.variantSecondaryImages[b] = {};
+        if (!p.variantSecondaryImages[b][c]) p.variantSecondaryImages[b][c] = [];
+        if (mainImage) {
+            const currentMain = p.variantImages[b][c];
+            if (currentMain && currentMain.image === img.image) {
+                delete p.variantImages[b][c];
+            } else {
+                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image);
+                p.variantImages[b][c] = img;
+            }
+        } else {
+            if (!p.variantSecondaryImages[b][c].find(i => i.image == img.image)) {
+                p.variantSecondaryImages[b][c].push(img);
+            } else {
+                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image);
+            }
+        }
+        setProducts([...prods]);
+    };
+
+    const pickThread = (b, tc, c, img) => {
+        const prods = [...products];
+        const p = prods.find(pr => pr.id == product.id);
+        if (!p.variantImages) p.variantImages = {};
+        if (!p.variantImages[b]) p.variantImages[b] = {};
+        if (!p.variantImages[b][tc]) p.variantImages[b][tc] = {};
+        if (!p.variantSecondaryImages) p.variantSecondaryImages = {};
+        if (!p.variantSecondaryImages[b]) p.variantSecondaryImages[b] = {};
+        if (!p.variantSecondaryImages[b][tc]) p.variantSecondaryImages[b][tc] = {};
+        if (!p.variantSecondaryImages[b][tc][c]) p.variantSecondaryImages[b][tc][c] = [];
+        if (mainImage) {
+            const currentMain = p.variantImages[b][tc][c];
+            if (currentMain && currentMain.image === img.image) {
+                delete p.variantImages[b][tc][c];
+            } else {
+                p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => i.image != img.image);
+                p.variantImages[b][tc][c] = img;
+            }
+        } else {
+            if (!p.variantSecondaryImages[b][tc][c].find(i => i.image == img.image)) {
+                p.variantSecondaryImages[b][tc][c].push(img);
+            } else {
+                p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => i.image != img.image);
+            }
+        }
+        setProducts([...prods]);
+    };
+
+    const renderColorGroup = ({ b, tc, c, tiles, onPick }) => {
+        const colorObj = product.colors?.find(co => co.name === c);
+        const mainImg = tc
+            ? product.variantImages?.[b]?.[tc]?.[c]
+            : product.variantImages?.[b]?.[c];
+        const extras = (tc
+            ? product.variantSecondaryImages?.[b]?.[tc]?.[c]
+            : product.variantSecondaryImages?.[b]?.[c]) || [];
+        return (
+            <Box key={`${b}-${tc || ""}-${c}`} sx={{ marginBottom: 1 }}>
+                <ColorHeader color={colorObj} name={c} mainCount={mainImg ? 1 : 0} extraCount={extras.length} />
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 0.5 }}>
+                    {tiles.map((img, k) => {
+                        const isMain = mainImg && mainImg.image === img.image;
+                        const extraIdx = extras.findIndex(e => e.image === img.image);
+                        return (
+                            <VariantTile
+                                key={`${img.sku || img.image}-${k}`}
+                                image={img}
+                                isMain={isMain}
+                                isSecondary={extraIdx >= 0}
+                                secondaryIndex={extraIdx}
+                                onClick={() => onPick(img)}
+                                onZoom={setZoomImage}
+                            />
+                        );
+                    })}
+                </Box>
+            </Box>
+        );
+    };
+
     return (
-        <>
-            {!threadColors && Object.keys(imgs).length > 0 && Object.keys(imgs).map((b, i) => (
-                <Box key={i} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
-                    <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{b}</Typography>
-                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: 3, alignItems: "center", marginBottom: "1%" }}>
-                        <Button variant="outlined" sx={{width: "50%", background: mainImage ? "#e2e2e2" : "#fff"}} onClick={() => setMainImage(true)}>Main Variant Image</Button>
-                        <Button variant="outlined" sx={{width: "50%", background: !mainImage ? "#e2e2e2" : "#fff"}} onClick={() => setMainImage(false)}>Secondary Variant Images</Button>
+        <Card variant="outlined" sx={{ marginBottom: 1.5, borderRadius: 2, backgroundColor: "#ffffff", borderColor: "rgba(15,23,42,0.08)", boxShadow: "0 1px 2px rgba(15,23,42,0.04)" }}>
+            <CardContent sx={{ padding: { xs: 1.25, sm: 1.5 }, "&:last-child": { paddingBottom: { xs: 1.25, sm: 1.5 } } }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, marginBottom: 1.25, position: "sticky", top: 0, zIndex: 1, backgroundColor: "#fff", paddingY: 0.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{product.design?.sku}</Typography>
+                        <Typography variant="caption" color="text.secondary">{blankKeys.join(" · ")}</Typography>
                     </Box>
-                    <Grid2 container spacing={2}>
-                        {imgs[b] && Object.keys(imgs[b]).map((c, j) => (
-                            <Grid2 key={j} size={6}>
-                                <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{c}</Typography>
-                                <Grid2 container spacing={2} sx={{ "&:hover": { cursor: "pointer", opacity: .7 } }}>
-                                    {imgs[b][c].map((img, k) => (
-                                        <Grid2 key={k} size={4} onClick={() => {
-                                            let prods = [...products]
-                                            let p = prods.filter(p => p.id == product.id)[0]
-                                            if (!p.variantImages) p.variantImages = {}
-                                            if (p.variantImages && !p.variantImages[b]) p.variantImages[b] = {}
-                                            if (!p.variantSecondaryImages) p.variantSecondaryImages = {}
-                                            if (p.variantSecondaryImages && !p.variantSecondaryImages[b]) p.variantSecondaryImages[b] = {}
-                                            if (!p.variantSecondaryImages[b][c]) p.variantSecondaryImages[b][c] = []
-                                            if( mainImage) {
-                                                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image)
-                                                p.variantImages[b][c] = img
-                                            } else {
-                                                if (!p.variantSecondaryImages[b][c].find(i => i.image == img.image)) {
-                                                    p.variantSecondaryImages[b][c].push(img)
-                                                } else {
-                                                    p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image)
-                                                }
-                                            }
-                                            setProducts([...prods])
-                                        }}>
-                                            <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
-                                            {product.variantImages && product.variantImages[b] && product.variantImages[b][c] && product.variantImages[b][c]?.image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
-                                                <Checkbox checked={true} />
-                                            </Box>}
-                                            {product.variantSecondaryImages && product.variantSecondaryImages[b] && product.variantSecondaryImages[b][c] && product.variantSecondaryImages[b][c].find(i => i.image == img.image) && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
-                                                <Checkbox checked={true} color="error" />
-                                            </Box>}
-                                        </Grid2>
-                                    ))}
-                                </Grid2>
-                                <Grid2 container spacing={2} sx={{ "&:hover": { cursor: "pointer", opacity: .7 } }}>
-                                    {product.tempImages && product.tempImages.filter(img=> img.color.name == c).map((img, k) => (
-                                        <Grid2 key={k} size={4} onClick={() => {
-                                            let prods = [...products]
-                                            let p = prods.filter(p => p.id == product.id)[0]
-                                            if (!p.variantImages) p.variantImages = {}
-                                            if (p.variantImages && !p.variantImages[b]) p.variantImages[b] = {}
-                                            if (!p.variantSecondaryImages) p.variantSecondaryImages = {}
-                                            if (p.variantSecondaryImages && !p.variantSecondaryImages[b]) p.variantSecondaryImages[b] = {}
-                                            if (!p.variantSecondaryImages[b][c]) p.variantSecondaryImages[b][c] = []
-                                            if (mainImage) {
-                                                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image)
-                                                p.variantImages[b][c] = img
-                                            } else {
-                                                if (!p.variantSecondaryImages[b][c].find(i => i.image == img.image)) {
-                                                    p.variantSecondaryImages[b][c].push(img)
-                                                } else {
-                                                    p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image)
-                                                }
-                                            }
-                                            setProducts([...prods])
-                                        }}>
-                                            <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
-                                            {product.variantImages && product.variantImages[b] && product.variantImages[b][c] && product.variantImages[b][c]?.image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
-                                                <Checkbox checked={true} />
-                                            </Box>}
-                                            {product.variantSecondaryImages && product.variantSecondaryImages[b] && product.variantSecondaryImages[b][c] && product.variantSecondaryImages[b][c].find(i => i.image == img.image) && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
-                                                <Checkbox checked={true} color="error" />
-                                            </Box>}
-                                        </Grid2>
-                                    ))}
-                                </Grid2>
-                            </Grid2>
+                    {ModeToggle}
+                </Box>
+
+                {!threadColors && blankKeys.map((b) => (
+                    <Box key={b} sx={{ marginBottom: 1.25 }}>
+                        {blankKeys.length > 1 && (
+                            <Chip size="small" label={b} sx={{ height: 20, fontSize: ".7rem", marginBottom: 0.75, fontWeight: 600 }} />
+                        )}
+                        {Object.keys(imgs[b]).map((c) => {
+                            const tempForColor = (product.tempImages || []).filter(t => t.color?.name === c);
+                            const tiles = [...imgs[b][c], ...tempForColor];
+                            return renderColorGroup({ b, c, tiles, onPick: (img) => pickFlat(b, c, img) });
+                        })}
+                    </Box>
+                ))}
+
+                {threadColors && blankKeys.map((b) => (
+                    <Box key={b} sx={{ marginBottom: 1.25 }}>
+                        {blankKeys.length > 1 && (
+                            <Chip size="small" label={b} sx={{ height: 20, fontSize: ".7rem", marginBottom: 0.75, fontWeight: 600 }} />
+                        )}
+                        {Object.keys(imgs[b]).map((tc) => (
+                            <Box key={tc} sx={{ marginBottom: 1, paddingLeft: 1, borderLeft: "3px solid", borderColor: "primary.light" }}>
+                                <Typography variant="caption" sx={{ display: "block", fontWeight: 600, color: "text.secondary", marginBottom: 0.5, textTransform: "uppercase", letterSpacing: ".5px" }}>Thread: {tc}</Typography>
+                                {Object.keys(imgs[b][tc]).map((c) => renderColorGroup({ b, tc, c, tiles: imgs[b][tc][c], onPick: (img) => pickThread(b, tc, c, img) }))}
+                            </Box>
                         ))}
-                    </Grid2>
-                </Box>
-            ))}
-            {threadColors && Object.keys(imgs).length > 0 && Object.keys(imgs).map((b, i) => (
-                <Box key={i} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
-                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", gap: 3, alignItems: "center", marginBottom: "1%" }}>
-                        <Button variant="outlined" sx={{ width: "50%", background: mainImage ? "#e2e2e2" : "#fff" }} onClick={() => setMainImage(true)}>Main Variant Image</Button>
-                        <Button variant="outlined" sx={{ width: "50%", background: !mainImage ? "#e2e2e2" : "#fff" }} onClick={() => setMainImage(false)}>Secondary Variant Images</Button>
                     </Box>
-                    <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{b}</Typography>
-                    {Object.keys(imgs[b]).map((tc, j) => (
-                        <Box key={j} sx={{ margin: "2%", padding: "2%", border: "1px solid #000", borderRadius: "5px" }}>
-                            <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{tc}</Typography>
-                            <Grid2 container spacing={2}>
-                                {imgs[b][tc] && Object.keys(imgs[b][tc]).map((c, k) => (
-                                    <Grid2 key={k} size={6}>
-                                        <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{c}</Typography>
-                                        <Grid2 container spacing={2} sx={{ "&:hover": { cursor: "pointer", opacity: .7 } }}>
-                                            {imgs[b][tc][c].map((img, l) => (
-                                                <Grid2 key={l} size={4} onClick={() => {
-                                                    let prods = [...products]
-                                                    let p = prods.filter(p => p.id == product.id)[0]
-                                                    if (!p.variantImages) p.variantImages = {}
-                                                    if (!p.variantImages[b]) p.variantImages[b] = {}
-                                                    if (!p.variantImages[b][tc]) p.variantImages[b][tc] = {}
-                                                    if (!p.variantSecondaryImages) p.variantSecondaryImages = {}
-                                                    if (!p.variantSecondaryImages[b]) p.variantSecondaryImages[b] = {}
-                                                    if (!p.variantSecondaryImages[b][tc]) p.variantSecondaryImages[b][tc] = {}
-                                                    if (!p.variantSecondaryImages[b][tc][c]) p.variantSecondaryImages[b][tc][c] = []
-                                                    if(mainImage){
-                                                        p.variantImages[b][tc][c] = img
-                                                        p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => i.image != img.image)
-                                                    }else {
-                                                        if (!p.variantSecondaryImages[b][tc][c].find(i => i.image == img.image)) {
-                                                            p.variantSecondaryImages[b][tc][c].push(img)
-                                                        } else {
-                                                            p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => i.image != img.image)
-                                                        }
-                                                    }
-                                                    setProducts([...prods])
-                                                }}>
-                                                    <img src={img.image} alt={img.sku} style={{ width: "100%", height: "auto" }} />
-                                                    {product.variantImages && product.variantImages[b] && product.variantImages[b][tc] && product.variantImages[b][tc][c] && product.variantImages[b][tc][c].image == img.image && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
-                                                        <Checkbox checked={true} />
-                                                    </Box>}
-                                                    {product.variantSecondaryImages && product.variantSecondaryImages[b] && product.variantSecondaryImages[b][tc] && product.variantSecondaryImages[b][tc][c] && product.variantSecondaryImages[b][tc][c].find(i => i.image == img.image) && <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", zIndex: 999, top: "-23%", position: "relative" }}>
-                                                        <Checkbox checked={true} color="error" />
-                                                    </Box>}
-                                                </Grid2>
-                                            ))}
-                                        </Grid2>
-                                    </Grid2>
-                                ))}
-                            </Grid2>
-                        </Box>
-                    ))}
-                </Box>
-            ))}
-        </>
-    )
+                ))}
+            </CardContent>
+            <ZoomModal image={zoomImage} onClose={() => setZoomImage(null)} />
+        </Card>
+    );
 }

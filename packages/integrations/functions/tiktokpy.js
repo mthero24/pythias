@@ -8,7 +8,7 @@ const baseUrl = "https://open-api.tiktokglobalshop.com"
 const getConfig = async ()=>{
     let headers = {
         headers: {
-            Authorization: `Basic ${btoa("mthero:BadaBing@12")}`
+            Authorization: `Basic ${btoa(process.env.pythiasTiktokConfigAuth)}`
         }
     }
     let res = await axios.get("http://www.pythiastechnologies.com/api/tiktok/config", headers)

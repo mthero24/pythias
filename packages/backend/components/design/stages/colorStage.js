@@ -1,171 +1,190 @@
-import { Box, Grid2, Button, Typography, Card, Divider, } from "@mui/material";
-import CreatableSelect from "react-select/creatable";
+import { Box, Grid2, Button, Typography, Card, CardContent, Chip, Stack, Tooltip, Divider } from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import { set } from "mongoose";
 
+const SectionLabel = ({ children, count }) => (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, marginBottom: 1.25 }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{children}</Typography>
+        {count != null && <Chip size="small" label={count} sx={{ height: 18, fontSize: ".7rem" }} />}
+    </Box>
+);
+
+const ColorSwatch = ({ color, selected, premium, onClick, size = 48 }) => (
+    <Tooltip title={color.name} placement="top" arrow>
+        <Box onClick={onClick} sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5, cursor: "pointer", width: size + 8 }}>
+            <Box sx={{ position: "relative", width: size, height: size, borderRadius: "50%", backgroundColor: color.hexcode, border: selected ? "3px solid" : "1px solid", borderColor: selected ? "primary.main" : "rgba(0,0,0,0.15)", boxShadow: selected ? 2 : 0, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 100ms, box-shadow 150ms", "&:hover": { transform: "scale(1.06)" } }}>
+                {selected && <CheckIcon sx={{ color: color.color_type == "dark" ? "#fff" : "#000", fontSize: "1.4rem" }} />}
+                {premium && (
+                    <Box sx={{ position: "absolute", top: -4, right: -4, backgroundColor: "background.paper", borderRadius: "50%", display: "flex", padding: "1px" }}>
+                        <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "1rem" }} />
+                    </Box>
+                )}
+            </Box>
+            <Typography variant="caption" sx={{ fontSize: ".7rem", textAlign: "center", lineHeight: 1.1, maxWidth: size + 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{color.name}</Typography>
+        </Box>
+    </Tooltip>
+);
 
 export const ColorStage = ({ products, setProducts, setStage, design, source, combined, colors, cols, sizes, setImages, upcs, getTempUpcs }) => {
+    const hasThreadColors = design.threadColors?.length > 0;
     return (
-        <Grid2 container spacing={2} sx={{ marginBottom: "2%" }}>
-            <Grid2 size={12}>
-                {products.map((product, i) => {
-                return (<Box key={i}>
-                    <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Colors {product.design?.sku}_{[product.blanks.map(b => b.code).join("_")]}</Typography>
-                    <Grid2 container spacing={3}>
-                        <Grid2 size={{ xs: 12, sm: 3, md: 3 }}>
-                            <Card sx={{ padding: "2%", marginBottom: "2%", height: "100%" }}>
-                                <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Thread colors </Typography>
-                                <Box>
-                                    <hr />
-                                    <Grid2 container spacing={2} sx={{ marginTop: "2%" }}>
-                                        {
-                                            design.threadColors?.map(tc => { return colors.filter(c => c._id.toString() == tc.toString())[0] }).map(c => (
-                                                <Grid2 key={c._id.toString()} size={3} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
-                                                    let produs = [...products]
-                                                    let p = produs.filter(p => p.id == product.id)[0] 
-                                                    if (!p.threadColors.filter(co => co._id.toString() == c._id.toString())[0]) p.threadColors.push(c)
-                                                    else {
-                                                        let colors = [];
-                                                        for (let co of p.threadColors) {
-                                                            if (co._id.toString() != c._id.toString()) colors.push(co)
-                                                        }
-                                                        p.threadColors = colors
-                                                    }
-                                                    setProducts([...produs])
-                                                }}>
-                                                    <Box sx={{ background: c.hexcode, padding: "10%", width: "100%", height: "45px", borderRadius: "10px", boxShadow: `2px 2px 2px ${c.hexcode}` }}>
-                                                        {product.threadColors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}
-                                                    </Box>
-                                                    <Typography sx={{ fontSize: ".6rem", textAlign: "center" }}>{c.name}</Typography>
-                                                </Grid2>
-                                            ))
-                                        }
-                                    </Grid2>
-                                </Box>
-                            </Card>
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 9, md: 8 }}>
-                            <Card sx={{ padding: "2%", marginBottom: "2%", height: "100%" }}>
-                                <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select the colors you want to use for this product. You can select multiple colors.</Typography>
-                                <Box>
-                                    <hr />
-                                    <Grid2 container spacing={2} sx={{ marginTop: "2%" }}>
-                                        {
-                                            cols[product.id].map(c => (
-                                                <Grid2 key={c._id} size={{ xs: 2, sm: 1.5, md: 1 }} sx={{ "&:hover": { cursor: 'pointer', opacity: .6 } }} onClick={() => {
-                                                    let produs = [...products]
-                                                    let p = produs.filter(p => p.id == product.id)[0] 
-                                                    if (!p.colors.filter(co => co._id.toString() == c._id.toString())[0]) p.colors.push(c)
-                                                    else {
-                                                        let colors = [];
-                                                        for (let co of p.colors) {
-                                                            if (co._id.toString() != c._id.toString()) colors.push(co)
-                                                        }
-                                                        p.colors = colors
-                                                    }
-                                                    setProducts([...produs])
-                                                }}>
-                                                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", background: c.hexcode, padding: "3%", width: "100%", height: "45px", borderRadius: "10px", boxShadow: `2px 2px 2px ${c.hexcode}` }}>
-                                                        {product.colors.filter(co => co._id.toString() == c._id.toString())[0] && <CheckIcon sx={{ color: c.color_type == "dark" ? "#fff" : "#000", marginLeft: "10px", marginTop: "10px" }} />}
-                                                    </Box>
-                                                    <Typography sx={{ fontSize: ".6rem", textAlign: "center" }}>{c.name}</Typography>
-                                                    {design.blanks?.filter(d => product.blanks.filter(pb => pb?._id?.toString() == (d.blank._id ? d.blank._id.toString() : d.blank.toString()))[0]) && design.blanks?.filter(d => product.blanks.filter(pb => pb?._id?.toString() == (d.blank._id ? d.blank._id.toString() : d.blank.toString()))[0])[0] && design.blanks?.filter(d => product.blanks.filter(pb => pb._id?.toString() == (d.blank._id ? d.blank._id.toString() : d.blank.toString()) )[0])[0].colors?.filter(cl => cl._id?.toString() == c._id?.toString())[0] && <Box sx={{display: "flex", alignItems: "center", justifyContent: "center"}}><WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} /></Box>}
-                                                </Grid2>
-                                            ))
-                                        }
-                                    </Grid2>
-                                </Box>
-                            </Card>
-                        </Grid2>
-                        <Grid2 size={{ xs: 0, sm: 0, md: 1 }}></Grid2>
-                        <Grid2 size={{ xs: 0, sm: 3, md: 3 }}></Grid2>
-                        <Grid2 size={{ xs: 12, sm: 9, md: 8 }}>
-                            <CreatableSelect
-                                placeholder="Default Color"
-                                options={product.colors.map(c => { return { value: c, label: <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "1% 15%" }}><Box sx={{ background: c.hexcode, padding: "1% 3%", width: { xs: "2%", md: "1%" }, height: "35px", borderRadius: "10px" }}></Box>{design.blanks.filter(d => product.blanks.filter(pb => pb._id.toString() == (d.blank._id ? d.blank._id : d.blank).toString())[0]) && design.blanks.filter(d => product.blanks.filter(pb => pb._id.toString() == (d.blank._id ? d.blank._id : d.blank).toString())[0])[0] && design.blanks.filter(d => product.blanks.filter(pb => pb._id.toString() == (d.blank._id ? d.blank._id : d.blank).toString())[0])[0].defaultColor && design.blanks.filter(d => product.blanks.filter(pb => pb._id.toString() == (d.blank._id ? d.blank._id : d.blank).toString())[0])[0].defaultColor.toString() == c._id.toString() && <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem" }} />}<Box sx={{ padding: "2%" }}><Typography>{c.name}</Typography></Box></Box> } })}
-                                value={product.defaultColor && {
-                                    value: product.defaultColor, label: <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "1% 15%" }}><Box sx={{ background: product.defaultColor.hexcode, padding: { xs: "10%", md: "5%" }, width: "1%", height: "35px", borderRadius: "10px" }}></Box><Box sx={{ padding: "2%" }}><Typography>{product.defaultColor.name}</Typography></Box></Box>
-                                }}
-                                onChange={(val) => {
-                                    let produs = [...products]
-                                    let p = produs.filter(p => p.id == product.id)[0]
-                                    p.defaultColor = val.value,
-                                    setProducts([...produs])
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={{ xs: 0, sm: 0, md: 1 }}></Grid2>
-                        <Grid2 size={{ xs: 0, sm: 3, md: 3 }}>
-
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 9, md: 8 }}>
-                            <Card sx={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "2% 8%" }}>
-                                <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Sizes</Typography>
-                                <Grid2 container spacing={2}>
-                                    {sizes[product.id.toString()].map(s => (
-                                        <Grid2 size={{ xs: 3, md: 2 }} key={s._id}>
-
-                                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-                                                <Box sx={{ width: "100%", padding: "5%", border: "1px solid #ccc", borderRadius: "5px", textAlign: "center", marginBottom: "5%", background: product.sizes.filter(si => si.name == s.name)[0] ? "#eee" : "#fff" }} onClick={() => {
-                                                    let produs = [...products]
-                                                    let p = produs.filter(p => p.id == product.id)[0] 
-                                                    if (!p.sizes.filter(si => si.name == s.name)[0]) p.sizes.push(s)
-                                                    else {
-                                                        let sizes = []
-                                                        for (let si of p.sizes) {
-                                                            if (si.name != s.name) {
-                                                                sizes.push(si)
-                                                            }
-                                                        }
-                                                        p.sizes = sizes
-                                                    }
-                                                    setProducts([...produs])
-                                                }}>
-                                                    <Typography variant="body1">{s.name}</Typography>
-                                                </Box>
-                                            </Box>
-
-                                        </Grid2>
-                                    ))}
-                                </Grid2>
-                            </Card>
-                        </Grid2>
-                        <Grid2 size={{ xs: 0, sm: 0, md: 1 }}></Grid2>
-                        <Grid2 size={12}>
+        <Box sx={{ padding: { xs: 1.5, sm: 2 } }}>
+            {products.map((product, i) => {
+                const isPremiumColor = (c) => {
+                    const match = design.blanks?.filter(d => product.blanks.filter(pb => pb?._id?.toString() == (d.blank._id ? d.blank._id.toString() : d.blank.toString()))[0])[0];
+                    return !!match?.colors?.filter(cl => cl._id?.toString() == c._id?.toString())[0];
+                };
+                const totalVariants = combined
+                    ? product.blanks.map(b => product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())[0]).length).reduce((a, b) => a + b, 0)
+                    : product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length : 1);
+                return (
+                <Card key={i} variant="outlined" sx={{ marginBottom: 3, borderRadius: 2 }}>
+                    <CardContent sx={{ padding: { xs: 2, sm: 3 } }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, marginBottom: 2 }}>
                             <Box>
-                                {combined && (
-                                    <>
-                                        <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Combined Product</Typography>
-                                        {product.blanks.map((b, j) => (
-                                            <Typography key={j} textAlign={"center"}>
-                                                {b.code}: {product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si.name.toString() == s.name.toString())[0]).length} Variants
-                                            </Typography>
-                                            
-                                        ))}
-                                        <Typography textAlign={"center"}>Total Variants: {product.blanks.map((b, j) => {
-                                            return product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si._id.toString() == s._id.toString())[0]).length
-                                        }).reduce((a, b) => a + b, 0)}</Typography>
-                                    </>
-                                )}
-                                {!combined && <Typography textAlign={"center"}>Number of Variants: {product.blanks.length * product.colors.length * product.sizes.length * (product.threadColor && product.threadColors.length > 0 ? product.threadColors.length: 1)}</Typography>}
+                                <Typography variant="h6" sx={{ fontWeight: 600, lineHeight: 1.2 }}>{product.design?.sku}</Typography>
+                                <Typography variant="caption" color="text.secondary">{product.blanks.map(b => b.code).join(" · ")}</Typography>
                             </Box>
+                            <Chip label={`${totalVariants} variant${totalVariants === 1 ? "" : "s"}`} color="primary" variant="outlined" />
+                        </Box>
+
+                        <Grid2 container spacing={3}>
+                            {hasThreadColors && (
+                                <Grid2 size={{ xs: 12, md: 4 }}>
+                                    <SectionLabel count={product.threadColors.length}>Thread Colors</SectionLabel>
+                                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+                                        {design.threadColors.map(tc => colors.filter(c => c._id.toString() == tc.toString())[0]).filter(Boolean).map(c => (
+                                            <ColorSwatch
+                                                key={c._id.toString()}
+                                                color={c}
+                                                selected={!!product.threadColors.filter(co => co._id.toString() == c._id.toString())[0]}
+                                                onClick={() => {
+                                                    let produs = [...products]
+                                                    let p = produs.filter(p => p.id == product.id)[0]
+                                                    if (!p.threadColors.filter(co => co._id.toString() == c._id.toString())[0]) p.threadColors.push(c)
+                                                    else p.threadColors = p.threadColors.filter(co => co._id.toString() != c._id.toString())
+                                                    setProducts([...produs])
+                                                }}
+                                            />
+                                        ))}
+                                    </Box>
+                                </Grid2>
+                            )}
+
+                            <Grid2 size={{ xs: 12, md: hasThreadColors ? 8 : 12 }}>
+                                <SectionLabel count={product.colors.length}>Colors</SectionLabel>
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+                                    {cols[product.id].map(c => (
+                                        <ColorSwatch
+                                            key={c._id}
+                                            color={c}
+                                            selected={!!product.colors.filter(co => co._id.toString() == c._id.toString())[0]}
+                                            premium={isPremiumColor(c)}
+                                            onClick={() => {
+                                                let produs = [...products]
+                                                let p = produs.filter(p => p.id == product.id)[0]
+                                                if (!p.colors.filter(co => co._id.toString() == c._id.toString())[0]) p.colors.push(c)
+                                                else {
+                                                    p.colors = p.colors.filter(co => co._id.toString() != c._id.toString())
+                                                    if (p.defaultColor && p.defaultColor._id.toString() == c._id.toString()) p.defaultColor = null
+                                                }
+                                                setProducts([...produs])
+                                            }}
+                                        />
+                                    ))}
+                                </Box>
+                            </Grid2>
+
+                            {product.colors.length > 0 && (
+                                <Grid2 size={12}>
+                                    <SectionLabel>Default Color</SectionLabel>
+                                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+                                        {product.colors.map(c => (
+                                            <ColorSwatch
+                                                key={c._id}
+                                                color={c}
+                                                selected={!!(product.defaultColor && product.defaultColor._id.toString() == c._id.toString())}
+                                                onClick={() => {
+                                                    let produs = [...products]
+                                                    let p = produs.filter(p => p.id == product.id)[0]
+                                                    p.defaultColor = c
+                                                    setProducts([...produs])
+                                                }}
+                                            />
+                                        ))}
+                                    </Box>
+                                </Grid2>
+                            )}
+
+                            <Grid2 size={12}>
+                                <SectionLabel count={product.sizes.length}>Sizes</SectionLabel>
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                                    {sizes[product.id.toString()].map(s => {
+                                        const sel = !!product.sizes.filter(si => si.name == s.name)[0];
+                                        return (
+                                            <Chip
+                                                key={s._id}
+                                                label={s.name}
+                                                color={sel ? "primary" : "default"}
+                                                variant={sel ? "filled" : "outlined"}
+                                                clickable
+                                                onClick={() => {
+                                                    let produs = [...products]
+                                                    let p = produs.filter(p => p.id == product.id)[0]
+                                                    if (!p.sizes.filter(si => si.name == s.name)[0]) p.sizes.push(s)
+                                                    else p.sizes = p.sizes.filter(si => si.name != s.name)
+                                                    setProducts([...produs])
+                                                }}
+                                                sx={{ minWidth: 56, fontWeight: 500 }}
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            </Grid2>
+
+                            {combined && product.blanks.length > 1 && (
+                                <Grid2 size={12}>
+                                    <Divider sx={{ marginBottom: 1.5 }} />
+                                    <SectionLabel>Combined Breakdown</SectionLabel>
+                                    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.75 }}>
+                                        {product.blanks.map((b, j) => {
+                                            const count = product.colors.filter(c => product.blanks.filter(bl => bl.code == b.code)[0].colors.filter(co => co._id.toString() == c._id.toString())[0]).length * product.sizes.filter(s => product.blanks.filter(bl => bl.code == b.code)[0].sizes.filter(si => si.name.toString() == s.name.toString())[0]).length;
+                                            return <Chip key={j} size="small" variant="outlined" label={`${b.code}: ${count}`} />;
+                                        })}
+                                    </Stack>
+                                </Grid2>
+                            )}
                         </Grid2>
-                    </Grid2>
-                    <Divider sx={{ margin: "2% 0" }} />
-                </Box>)
-                })}
-                <Grid2 container spacing={2} sx={{ padding: "2%" }}>
-                    <Grid2 size={6}>
-                        <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("blanks") }}>Back</Button>
-                    </Grid2>
-                    <Grid2 size={6}>
-                        <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
+                    </CardContent>
+                </Card>
+                );
+            })}
+            <Grid2 container spacing={2} sx={{ justifyContent: "space-between", marginTop: 2 }}>
+                <Grid2 size="auto">
+                    <Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("blanks") }}>Back</Button>
+                </Grid2>
+                <Grid2 size="auto">
+                        <Button variant="contained" size="large" sx={{ minWidth: 160 }} onClick={() => {
+                            const cdn = (url) => url.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");
                             let imgs = {}
                             for (let product of products) {
                                 let im = []
                                 product.blanks.map(b => {
                                     if (product.threadColors.length > 0) {
+                                        // images without boxes — plain product photos, no design overlay
+                                        if (b.images && b.images.length > 0) {
+                                            for (let tc of product.threadColors) {
+                                                for (let col of product.colors) {
+                                                    for (let bm of b.images.filter(m => m.color?.toString() == col._id?.toString() && !Object.keys(m.boxes ? m.boxes : {}).length)) {
+                                                        const rawUrl = `${cdn(bm.image)}?width=400`;
+                                                        if (!im.find(i => i.image === rawUrl)) {
+                                                            const fileBase = bm.image.split("/").pop().split(".")[0];
+                                                            im.push({ image: rawUrl, color: col, threadColor: tc, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${fileBase}-${col.name.replace(/\//g, "_")}-other-${tc.name}` });
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                         for (let tc of product.threadColors) {
                                             for (let ti of Object.keys(design.threadImages[tc.name] ? design.threadImages[tc.name] : {})) {
                                                 for (let col of product.colors) {
@@ -185,6 +204,18 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                             }
                                         }
                                     } else {
+                                        // images without boxes — plain product photos, no design overlay
+                                        if (b.images && b.images.length > 0) {
+                                            for (let col of product.colors) {
+                                                for (let bm of b.images.filter(m => m.color?.toString() == col._id?.toString() && !Object.keys(m.boxes ? m.boxes : {}).length)) {
+                                                    const rawUrl = `${cdn(bm.image)}?width=400`;
+                                                    if (!im.find(i => i.image === rawUrl)) {
+                                                        const fileBase = bm.image.split("/").pop().split(".")[0];
+                                                        im.push({ image: rawUrl, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${fileBase}-${col.name.replace(/\//g, "_")}-other` });
+                                                    }
+                                                }
+                                            }
+                                        }
                                         for (let ti of Object.keys(design.images ? design.images : {})) {
                                             for (let col of product.colors) {
                                                 if (b.images && b.images.length > 0) {
@@ -203,6 +234,48 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+
+                                    // Ensure a back-side render exists for every blank, even when the design has no back image.
+                                    const host = source == "pythias-test" ? "test" : source;
+                                    const codeKey = b.code.replace(/-/g, "_");
+                                    const pushBackFromImages = (col, urlSideSuffix, extra) => {
+                                        if (!b.images || b.images.length === 0) return;
+                                        for (const bm of b.images.filter(m => m.color?.toString() == col._id?.toString() && Object.keys(m.boxes ? m.boxes : {}).includes("back"))) {
+                                            const fileBase = bm.image.split("/").pop().split(".")[0];
+                                            const url = encodeURI(`https://${host}.pythiastechnologies.com/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400`);
+                                            if (!im.find(i => i.image === url)) {
+                                                im.push({ image: url, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${codeKey}_${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}`, ...extra });
+                                            }
+                                        }
+                                    };
+                                    const pushBackFromMultiImages = (col, urlSideSuffix, extra) => {
+                                        const backList = b.multiImages?.back;
+                                        if (!backList || backList.length === 0) return;
+                                        const matches = backList.filter(m => m.color?.toString() == col._id?.toString() && m.imageGroup?.includes(product.imageGroup));
+                                        const pool = matches.length > 0 ? matches : backList.filter(m => m.color?.toString() == col._id?.toString() && m.imageGroup?.includes("default"));
+                                        for (const bm of pool) {
+                                            const fileBase = bm.image.split("/").pop().split(".")[0];
+                                            const url = encodeURI(`https://${host}.pythiastechnologies.com/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400`);
+                                            if (!im.find(i => i.image === url)) {
+                                                im.push({ image: url, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${codeKey}_${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}`, ...extra });
+                                            }
+                                        }
+                                    };
+
+                                    if (product.threadColors.length > 0) {
+                                        for (const tc of product.threadColors) {
+                                            if (Object.keys(design.threadImages?.[tc.name] || {}).includes("back")) continue;
+                                            for (const col of product.colors) {
+                                                pushBackFromImages(col, `back-${tc.name}`, { threadColor: tc, side: "back" });
+                                                pushBackFromMultiImages(col, `back-${tc.name}`, { threadColor: tc, side: "back" });
+                                            }
+                                        }
+                                    } else if (!Object.keys(design.images || {}).includes("back")) {
+                                        for (const col of product.colors) {
+                                            pushBackFromImages(col, "back", { sides: "back" });
+                                            pushBackFromMultiImages(col, "back", { sides: "back" });
                                         }
                                     }
                                 })
@@ -250,9 +323,8 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                             setImages(imgs)
                             setStage("product_images")
                         }}>Next</Button>
-                    </Grid2>
                 </Grid2>
             </Grid2>
-        </Grid2>
+        </Box>
     )
 }

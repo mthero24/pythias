@@ -19,4 +19,5 @@ export const Suppliers = PremierPrinting.model("Suppliers", SchemaObj, "Supplier
 export const Vendors = PremierPrinting.model("Vendors", SchemaObj, "Vendors");
 export const PrintTypes = PremierPrinting.model("PrintTypes", SchemaObj, "PrintTypes");
 export const RepullReasons = PremierPrinting.model("RepullReasons", SchemaObj, "RepullReasons");
+export const AiBlacklist = PremierPrinting.model("AiBlacklist", SchemaObj, "AiBlacklist");
 

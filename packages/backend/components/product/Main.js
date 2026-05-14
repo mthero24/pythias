@@ -1,11 +1,11 @@
 "use client";
-import {Box, Grid2, Typography, Button, Divider, List, ListItem, ListItemText, InputAdornment, TextField, Card, Container, Stack, Pagination, Grid} from "@mui/material";
+import {Box, Grid2, Typography, Button, InputAdornment, TextField, Container, Stack, Pagination, Badge, Chip} from "@mui/material";
 import {useState, useEffect} from "react";
 import { ProductCard } from "../reusable/ProductCard";
 import {Footer} from "../reusable/Footer";
 import SearchIcon from '@mui/icons-material/Search';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import AddIcon from '@mui/icons-material/Add';
 import CreatableSelect from "react-select/creatable";
 import { CreateProductModal } from "../design/CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
@@ -88,11 +88,11 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
     return (
         <Box sx={{width: "100%", maxWidth: "100%", overflowX: "hidden"}}>
             <Container maxWidth="lg" sx={{minHeight: "90vh"}}>
-                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: "2%"}}>
-                    <Typography variant="h6" sx={{ marginBottom: "2%", padding: "1%" }}>Products {totalProducts}</Typography>
-                    <Button variant="contained" color="primary" onClick={() => setNFProduct(true)}>Create Product</Button>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2, flexWrap: "wrap", gap: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>Products <Typography component="span" variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>({totalProducts})</Typography></Typography>
+                    <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => setNFProduct(true)}>Create Product</Button>
                 </Box>
-                <Box sx={{ marginBottom: "2%", padding: "2%", backgroundColor: "#f5f5f5", borderRadius: "5px", background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
+                <Box sx={{ marginBottom: 2, padding: 2, borderRadius: 2, background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
                     <TextField
                         fullWidth
                         variant="outlined"
@@ -105,223 +105,140 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                             ),
                         }}
                         value={search}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                handlePageChange(null, 1);
-                            }
-                        }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handlePageChange(null, 1); }}
                         onChange={(e) => setSearch(e.target.value)}
                     />
-                    <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginTop: "1%" }}>
-                        <Typography variant="body2" sx={{ marginRight: "1%", cursor: "pointer", color: filtersOpen ? "primary.main" : "text.secondary" }} onClick={() => setFiltersOpen(!filtersOpen)}> Filters {filtersOpen ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />} </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 1 }}>
+                        <Badge badgeContent={Object.keys(filters).length} color="primary">
+                            <Button size="small" variant={filtersOpen ? "contained" : "outlined"} startIcon={<FilterListIcon />} onClick={() => setFiltersOpen(!filtersOpen)}>
+                                Filters
+                            </Button>
+                        </Badge>
+                        {Object.keys(filters).length > 0 && (
+                            <Button size="small" color="error" onClick={() => { setFilters({}); location.href = `/admin/products?page=1${search ? `&q=${search}` : ''}`; }}>
+                                Clear All Filters
+                            </Button>
+                        )}
                     </Box>
-                {filtersOpen && (
-                    <Grid2 container spacing={2} sx={{ marginTop: "1%" }}>
-                        <Grid2 size={{ xs: 12, sm: 3 }}>
-                            <CreatableSelect
-                                placeholder="Filter By Blank ..."
-                                isClearable
-                                isMulti
-                                options={blanks.map(b => ({ value: b._id, label: b.code }))}
-                                value={filters.blanks && filters.blanks.$in ? filters.blanks.$in.map(b => ({ value: b, label: blanks.filter(bl => bl._id.toString() === b.toString())[0]?.code })) : []}
-                                onChange={(selected) => {
-                                    console.log("Filter BY Blank:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.blanks = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'blanks') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
+                    {filtersOpen && (
+                        <Grid2 container spacing={2} sx={{ marginTop: 1.5 }}>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Blank ..."
+                                    isClearable isMulti
+                                    options={blanks.map(b => ({ value: b._id, label: b.code }))}
+                                    value={filters.blanks?.$in ? filters.blanks.$in.map(b => ({ value: b, label: blanks.find(bl => bl._id.toString() === b.toString())?.code })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.blanks = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'blanks')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Department ..."
+                                    isClearable isMulti
+                                    options={departments.map(d => ({ value: d, label: d }))}
+                                    value={filters.department?.$in ? filters.department.$in.map(d => ({ value: d, label: d })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.department = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'department')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Category ..."
+                                    isClearable isMulti
+                                    options={categories.map(c => ({ value: c, label: c }))}
+                                    value={filters.category?.$in ? filters.category.$in.map(c => ({ value: c, label: c })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.category = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'category')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Brand ..."
+                                    isClearable isMulti
+                                    options={bran.map(b => ({ value: b.name, label: b.name }))}
+                                    value={filters.brand?.$in ? filters.brand.$in.map(b => ({ value: b, label: b })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.brand = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'brand')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Season ..."
+                                    isClearable isMulti
+                                    options={seas.map(s => ({ value: s.name, label: s.name }))}
+                                    value={filters.season?.$in ? filters.season.$in.map(s => ({ value: s, label: s })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.season = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'season')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Gender ..."
+                                    isClearable isMulti
+                                    options={gen.map(g => ({ value: g.name, label: g.name }))}
+                                    value={filters.gender?.$in ? filters.gender.$in.map(g => ({ value: g, label: g })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.gender = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'gender')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Sport ..."
+                                    isClearable isMulti
+                                    options={sport.map(s => ({ value: s.name, label: s.name }))}
+                                    value={filters.sportUsedFor?.$in ? filters.sportUsedFor.$in.map(s => ({ value: s, label: s })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.sportUsedFor = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'sportUsedFor')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <CreatableSelect
+                                    placeholder="Filter By Marketplace ..."
+                                    isClearable isMulti
+                                    options={marketplaces?.map(m => ({ value: m._id, label: m.name }))}
+                                    value={filters.marketPlacesArray?.$in ? filters.marketPlacesArray.$in.map(m => ({ value: m, label: marketplaces.find(mkt => mkt._id.toString() === m.toString())?.name })) : []}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected?.length) fil.marketPlacesArray = { $in: selected.map(s => s.value) };
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'marketPlacesArray')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={12}>
+                                <Button fullWidth variant="contained" onClick={() => applyFilters()}>Apply Filters</Button>
+                            </Grid2>
                         </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 3 }} sx={{ zIndex: 999 }}>
-                            <CreatableSelect
-                                placeholder="Filter By Department ..."
-                                isClearable
-                                isMulti
-                                options={departments.map(d => ({ value: d, label: d }))}
-                                value={filters.department && filters.department.$in ? filters.department.$in.map(d => ({ value: d, label: departments.filter(dep => dep === d)[0] })) : []}
-                                onChange={(selected) => {
-                                    console.log("Filter BY Department:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.department = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'department') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 3 }}>
-                            <CreatableSelect
-                                placeholder="Filter By Category ..."
-                                isClearable
-                                isMulti
-                                value={filters.category && filters.category.$in ? filters.category.$in.map(c => ({ value: c, label: categories.filter(cat => cat === c)[0] })) : []}
-                                options={categories.map(c => ({ value: c, label: c }))}
-                                onChange={(selected) => {
-                                    console.log("Filter BY Category:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.category = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'category') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 3 }}>
-                            <CreatableSelect
-                                placeholder="Filter By Brand ..."
-                                isClearable
-                                isMulti
-                                options={bran.map(b => ({ value: b.name, label: b.name }))}
-                                value={filters.brand && filters.brand.$in ? filters.brand.$in.map(b => ({ value: b, label: bran.filter(brand => brand.name === b)[0].name })) : []}
-                                onChange={(selected) => {
-                                    console.log("Filter by brand:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.brand = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'brand') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 3 }}>
-                            <CreatableSelect
-                                placeholder="Filter By Season ..."
-                                isClearable
-                                isMulti
-                                options={seas.map(s => ({ value: s.name, label: s.name }))}
-                                value={filters.season && filters.season.$in ? filters.season.$in.map(s => ({ value: s, label: s })) : []}
-                                onChange={(selected) => {
-                                    console.log("Filter by season:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.season = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'season') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 3 }}>
-                            <CreatableSelect
-                                placeholder="Filter By Gender ..."
-                                isClearable
-                                isMulti
-                                options={gen.map(g => ({ value: g.name, label: g.name }))}
-                                value={filters.gender && filters.gender.$in ? filters.gender.$in.map(g => ({ value: g, label: g })) : []}
-                                onChange={(selected) => {
-                                    console.log("Filter by gender:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.gender = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'gender') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 3 }}>
-                            <CreatableSelect
-                                placeholder="Filter By Sport ..."
-                                isClearable
-                                isMulti
-                                options={sport.map(s => ({ value: s.name, label: s.name }))}
-                                value={filters.sportUsedFor && filters.sportUsedFor.$in ? filters.sportUsedFor.$in.map(s => ({ value: s, label: s })) : []}
-                                onChange={(selected) => {
-                                    console.log("Filter by sport:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.sportUsedFor = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'sportUsedFor') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 3 }}>
-                            <CreatableSelect
-                                placeholder="Filter By marketplace ..."
-                                isClearable
-                                isMulti
-                                options={marketplaces?.map(m => ({ value: m._id, label: m.name }))}
-                                value={filters.marketPlacesArray && filters.marketPlacesArray.$in ? filters.marketPlacesArray.$in.map(m => ({ value: m, label: marketplaces.find(mkt => mkt._id.toString() === m.toString())?.name })) : []}
-                                onChange={(selected) => {
-                                    console.log("Filter by marketplace:", selected);
-                                    let fil = { ...filters };
-                                    if (selected && selected.length > 0) {
-                                        fil.marketPlacesArray = { $in: selected.map(s => s.value) };
-                                    } else {
-                                        let newFil = {}
-                                        for (let key in filters) {
-                                            if (key !== 'marketPlacesArray') {
-                                                newFil[key] = filters[key];
-                                            }
-                                        }
-                                        fil = newFil;
-                                    }
-                                    setFilters({ ...fil });
-                                }}
-                            />
-                        </Grid2>
-                        <Grid2 size={12}>
-                            <Button fullWidth onClick={() => { applyFilters() }}>Apply Filters</Button>
-                        </Grid2>
-                    </Grid2>
-                )}
+                    )}
                 </Box>
                 
                 <Grid2 container spacing={2}>

@@ -1,10 +1,15 @@
-import { Grid2, TextField, Button, Typography, Divider } from "@mui/material";
+import { Grid2, TextField, Button, Typography, Divider, Card, CardContent } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 import axios from "axios";
-import { set } from "mongoose";
 import { useState, useEffect } from "react";
 
-export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes, licenses }) => {
+const selectMenuPortalProps = {
+    menuPortalTarget: typeof document !== "undefined" ? document.body : null,
+    menuPosition: "fixed",
+    styles: { menuPortal: (base) => ({ ...base, zIndex: 9999 }) },
+};
+
+export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes, licenses, showToast }) => {
     console.log(sportUsedFor, "Themes in InformationStage");
     const [markets, setMarkets] = useState([]);
     useEffect(() => {
@@ -16,60 +21,82 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
         fetchMarkets();
     }, []);
     return (
-        <Grid2 size={12} sx={{ padding: "0% 4%" }}>
-            <Typography variant="h6" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Product Information</Typography>
-            {products.map((product, i) => ( 
-                <Grid2 key={i} container spacing={2} sx={{ padding: "2%" }}>
+        <Grid2 size={12} sx={{ padding: { xs: 1, sm: 3 } }}>
+            <Typography variant="h6" sx={{ textAlign: "center", marginBottom: 2 }}>Product Information</Typography>
+            {products.map((product, i) => (
+                <Grid2 key={i} container spacing={3} sx={{ marginBottom: 3 }}>
                     <Grid2 size={12}>
-                        <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>{product.title}</Typography>
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <TextField fullWidth label="Title" variant="outlined" value={product.title} onChange={(e) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            p.title = e.target.value
-                            setProducts([...prods])
-                        }} />
+                        <Typography variant="h5" sx={{ textAlign: "center", marginBottom: 1 }}>{product.title}</Typography>
                     </Grid2>
                     <Grid2 size={12}>
-                        <TextField fullWidth label="Description" multiline variant="outlined" value={product.description && !product.description.includes("undefined") ? product.description : `${design.description} ${product.blanks[0].description && product.blanks[0].description != ""? `${product.blanks[0].description}` : ""}`} onChange={(e) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            p.description = e.target.value
-                            setProducts([...prods])
-                        }} />
+                        <Card variant="outlined">
+                            <CardContent>
+                                <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Identity</Typography>
+                                <Grid2 container spacing={2}>
+                                    <Grid2 size={12}>
+                                        <TextField fullWidth label="Title" variant="outlined" value={product.title} onChange={(e) => {
+                                            let prods = [...products]
+                                            let p = prods.filter(p => p.id == product.id)[0]
+                                            p.title = e.target.value
+                                            setProducts([...prods])
+                                        }} />
+                                    </Grid2>
+                                    <Grid2 size={12}>
+                                        <TextField fullWidth label="Description" multiline minRows={3} variant="outlined" value={product.description && !product.description.includes("undefined") ? product.description : `${design.description} ${product.blanks[0].description && product.blanks[0].description != ""? `${product.blanks[0].description}` : ""}`} onChange={(e) => {
+                                            let prods = [...products]
+                                            let p = prods.filter(p => p.id == product.id)[0]
+                                            p.description = e.target.value
+                                            setProducts([...prods])
+                                        }} />
+                                    </Grid2>
+                                    <Grid2 size={12}>
+                                        <Typography variant="caption" sx={{ display: "block", marginBottom: .5 }}>Tags</Typography>
+                                        <CreatableSelect {...selectMenuPortalProps} isMulti placeholder="Tags" options={design.tags.map(tag => { return { value: tag, label: tag } })} value={design.tags.map(tag => { return { value: tag, label: tag } })} onChange={async (newValue) => {
+                                            let prods = [...products]
+                                            let p = prods.filter(p => p.id == product.id)[0]
+                                            p.tags.push(newValue.value)
+                                            setProducts([...prods])
+                                        }} />
+                                    </Grid2>
+                                </Grid2>
+                            </CardContent>
+                        </Card>
                     </Grid2>
                     <Grid2 size={12}>
-                        <CreatableSelect isMulti placeholder="Tags" options={design.tags.map(tag => { return { value: tag, label: tag } })} value={design.tags.map(tag => { return { value: tag, label: tag } })} onChange={async (newValue) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            p.tags.push(newValue.value)
-                            setProducts([...prods])
-                        }} />
+                        <Card variant="outlined">
+                            <CardContent>
+                                <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Categorization</Typography>
+                                <Grid2 container spacing={2}>
+                                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                                        <Typography variant="caption" sx={{ display: "block", marginBottom: .5 }}>Brand</Typography>
+                                        <CreatableSelect {...selectMenuPortalProps} placeholder="Select Brand" options={[{value: null, label: "Select Brand"}, ...brands.map(brand => ({ value: brand.name, label: brand.name }))]} value={product.brand ? { value: product.brand, label: product.brand } : null} onChange={async (newValue) => {
+                                            let prods = [...products]
+                                            let p = prods.filter(p => p.id == product.id)[0]
+                                            if (brands.filter(b => b.name == newValue.value)[0] || newValue.value == null) p.brand = newValue.value
+                                            setProducts([...prods])
+                                        }} />
+                                    </Grid2>
+                                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                                        <Typography variant="caption" sx={{ display: "block", marginBottom: .5 }}>Gender</Typography>
+                                        <CreatableSelect {...selectMenuPortalProps} placeholder="Select Gender" options={[{value: null, label: "Select Gender"}, ...genders.map(gender => ({ value: gender.name, label: gender.name }))]} value={product.gender ? { value: product.gender, label: product.gender } : null} onChange={async (newValue) => {
+                                            let prods = [...products]
+                                            let p = prods.filter(p => p.id == product.id)[0]
+                                            if(genders.filter(s => s.name == newValue.value)[0] || newValue.value == null) p.gender = newValue.value
+                                            setProducts([...prods])
+                                        }} />
+                                    </Grid2>
+                                </Grid2>
+                            </CardContent>
+                        </Card>
                     </Grid2>
-                    <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Brand" options={[{value: null, label: "Select Brand"}, ...brands.map(brand => ({ value: brand.name, label: brand.name }))]} value={product.brand ? { value: product.brand, label: product.brand } : null} onChange={async (newValue) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            if (brands.filter(b => b.name == newValue.value)[0] || newValue.value == null) p.brand = newValue.value
-                            setProducts([...prods])
-                        }} />
-                    </Grid2>
-                    <Grid2 size={4}>
-                        <CreatableSelect placeholder="Select Gender" options={[{value: null, label: "Select Gender"}, ...genders.map(gender => ({ value: gender.name, label: gender.name }))]} value={product.gender ? { value: product.gender, label: product.gender } : null} onChange={async (newValue) => {
-                            let prods = [...products]
-                            let p = prods.filter(p => p.id == product.id)[0]
-                            if(genders.filter(s => s.name == newValue.value)[0] || newValue.value == null) p.gender = newValue.value
-                            setProducts([...prods])
-                        }} />
-                    </Grid2>
-                    
+
                     {markets.map((market, k) => {
                         if(market.productDropDowns && Object.keys(market.productDropDowns).length > 0) {
                             return (
                                 <Grid2 key={k} size={12}>
-                                    <Typography variant="h6">{market.name}</Typography>
-                                    <Divider sx={{ margin: "1% 0" }} />
+                                    <Card variant="outlined">
+                                        <CardContent>
+                                            <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Marketplace · {market.name}</Typography>
 
                                     <Grid2 container spacing={2}>
                                         {market.productDropDowns && Object.keys(market.productDropDowns).map((category, l) =>{
@@ -109,7 +136,7 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                             }
                                             if(category == "titleGenerator" || category == "required") return null;
                                             return <Grid2 key={l} size={4}>
-                                                <CreatableSelect placeholder={`Select ${category}`} value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category] ? { value: product.marketplaceValues[market._id][category], label: product.marketplaceValues[market._id][category] } : null} options={[{value: null, label: `Select ${category}`}, ...(market.productDropDowns[category] || []).map(option => ({ value: option, label: option }))]} onChange={async (newValue) => {
+                                                <CreatableSelect {...selectMenuPortalProps} placeholder={`Select ${category}`} value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category] ? { value: product.marketplaceValues[market._id][category], label: product.marketplaceValues[market._id][category] } : null} options={[{value: null, label: `Select ${category}`}, ...(market.productDropDowns[category] || []).map(option => ({ value: option, label: option }))]} onChange={async (newValue) => {
                                                     let prods = [...products]
                                                     let p = prods.filter(p => p.id == product.id)[0]
                                                     if(!p.marketplaceValues) p.marketplaceValues = {};
@@ -122,22 +149,21 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                         </Grid2>
                                     })}
 
-                                    </Grid2>  
+                                    </Grid2>
+                                        </CardContent>
+                                    </Card>
                                 </Grid2>
                             )
                         }
                     })}
-                    <Grid2 size={12}>
-                        <Divider sx={{ margin: "1% 0" }} />
-                    </Grid2>
                 </Grid2>
             ))}
-            <Grid2 container spacing={2} sx={{ padding: "2%" }}>
-                <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => { setStage("variant_images") }}>Back</Button>
+            <Grid2 container spacing={2} sx={{ padding: "2%", justifyContent: "space-between" }}>
+                <Grid2 size="auto">
+                    <Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("variant_images") }}>Back</Button>
                 </Grid2>
-                <Grid2 size={6}>
-                    <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={async () => {
+                <Grid2 size="auto">
+                    <Button variant="contained" size="large" sx={{ minWidth: 160 }} onClick={async () => {
                         let prods = [...products]
                         for(let product of prods){
                             if(!product.description || product.description.includes("undefined")){

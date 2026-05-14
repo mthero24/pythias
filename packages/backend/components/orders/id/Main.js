@@ -1,462 +1,670 @@
-"use client"
-import {Card, Box, Typography, Accordion, Button, AccordionSummary, AccordionDetails, Grid2, Modal, Link, TextField, Snackbar, IconButton, Container} from "@mui/material"
-import CloseIcon from '@mui/icons-material/Close';
-import {useState, Fragment} from "react"
+"use client";
+import {
+    Box, Typography, Button, Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
+    Link, TextField, IconButton, Container, Stack, Card, CardContent, Chip,
+    Divider, Collapse, Tooltip, Avatar,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { useState } from "react";
 import CreatableSelect from "react-select/creatable";
-import axios from "axios"
-import {Search} from "@pythias/backend";
+import axios from "axios";
+import { Search } from "@pythias/backend";
 import Image from "next/image";
-import {Repull} from "@pythias/repull"
-import { NoteSnackBar } from "./NoteSnackBar";
-import {Footer} from "../../reusable/Footer"
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-const ups = ["TSC", "Zulily"]
-export function Main({ord, blanks, source}){
+import { Repull } from "@pythias/repull";
+import { Footer } from "../../reusable/Footer";
+import { RetryImage } from "../../reusable/RetryImage";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import NoteAddIcon from "@mui/icons-material/NoteAdd";
+import EditIcon from "@mui/icons-material/Edit";
+import BrushIcon from "@mui/icons-material/Brush";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import StickyNote2Icon from "@mui/icons-material/StickyNote2";
+
+const selectMenuPortalProps = {
+    menuPortalTarget: typeof document !== "undefined" ? document.body : null,
+    menuPosition: "fixed",
+    styles: { menuPortal: (base) => ({ ...base, zIndex: 9999 }) },
+};
+
+const UPS_CARRIERS = ["TSC", "Zulily"];
+
+const STATUS_META = {
+    awaiting_shipment: { color: "warning", label: "Awaiting Shipment" },
+    shipped: { color: "success", label: "Shipped" },
+    cancelled: { color: "error", label: "Cancelled" },
+    on_hold: { color: "default", label: "On Hold" },
+};
+
+const SectionCard = ({ icon, title, subtitle, children, action }) => (
+    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+            <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 1.5 }}>
+                <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                    <Box sx={{ color: "primary.main", mt: 0.25 }}>{icon}</Box>
+                    <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>{title}</Typography>
+                        {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
+                    </Box>
+                </Stack>
+                {action}
+            </Stack>
+            <Divider sx={{ mb: 2 }} />
+            {children}
+        </CardContent>
+    </Card>
+);
+
+const isItemMissing = (i) =>
+    (i.design == undefined && !i.isBlank) ||
+    (Object.keys(i.design ?? {}).length === 0 && !i.isBlank) ||
+    i.size == undefined ||
+    i.color == undefined ||
+    i.blank == undefined;
+
+export function Main({ ord, blanks, source }) {
     const [order, setOrder] = useState(ord);
     const [item, setItem] = useState(null);
-    const [blank, setBlank] = useState(null)
-    const [size, setSize] = useState(null)
-    const [color, setColor] = useState(null)
-    const [openUpdate, setOpenUpdate] = useState(false)
-    const [openDesign, setOpenDesign] =useState(false)
-    const [shipped, setShipped] = useState(false)
-    const [note, setNote] = useState(false)
-    const [showNotes, setShowNotes] = useState(order.notes.length > 0?true: false)
-    const handleItemUpdate = (i)=>{
-        console.log("handleItemUpdate")
-        let b
-        let s
-        let c
-        if(i.blank) b= blanks.filter(bl=> bl._id.toString() == i.blank.toString())[0]
-        console.log(b)
-        if(b && i.size) s = b.sizes.filter(si=> si._id.toString() == i.size.toString())[0]
-        if(b && i.color) c = b.colors.filter(co=> co._id.toString() == i.color.toString())[0]
-        setItem(i)
-        setBlank(b)
-        setSize(s)
-        setColor(c)
-        setOpenUpdate(true)
-    }
+    const [blank, setBlank] = useState(null);
+    const [size, setSize] = useState(null);
+    const [color, setColor] = useState(null);
+    const [openUpdate, setOpenUpdate] = useState(false);
+    const [openDesign, setOpenDesign] = useState(false);
+    const [shipped, setShipped] = useState(false);
+    const [note, setNote] = useState(false);
+    const [expandedItems, setExpandedItems] = useState({});
+
+    const handleItemUpdate = (i) => {
+        let b, s, c;
+        if (i.blank) b = blanks.filter(bl => bl._id.toString() === i.blank.toString())[0];
+        if (b && i.size) s = b.sizes.filter(si => si._id.toString() === i.size.toString())[0];
+        if (b && i.color) c = b.colors.filter(co => co._id.toString() === i.color.toString())[0];
+        setItem(i);
+        setBlank(b);
+        setSize(s);
+        setColor(c);
+        setOpenUpdate(true);
+    };
+
+    const toggleItem = (id) =>
+        setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
+
+    const statusMeta = STATUS_META[order.status] ?? { color: "default", label: order.status };
+    const canMarkShipped = order.status?.toLowerCase() !== "shipped";
+    const missingCount = order.items.filter(isItemMissing).length;
+
     return (
-        <Box>
-        <Container maxWidth="lg" sx={{ marginTop: "2%",}}>
-            
-            <Card sx={{minHeight: "100vh", padding: "3%"}}>
-                <Typography sx={{textAlign: "center", fontWeight: 900, fontSize: "2rem", padding: "2%", "&:hover": {cursor: order.status.toLowerCase() != "shipped"? "pointer": "", opacity: order.status.toLowerCase() != "shipped"? 0.6: 1}}} onClick={()=>{
-                    if(order.status.toLowerCase() != "shipped"){
-                        setShipped(true)
-                    }
-                }}>{order.status}</Typography>
-                <Grid2 container spacing={2}>
-                    <Grid2 size={{xs: 12, sm:8, md: 8}}>
-                        <Card sx={{padding: "2%", minHeight: "100%"}}>
-                            <Grid2 container>
-                                <Grid2 size={6}>
-                                    <Typography>Order Id: {order.orderId}</Typography>
-                                    <Typography>Order Key: {order.orderKey}</Typography>
-                                    <Typography>PO Number: {order.poNumber}</Typography>
+        <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}>
+            {/* Sticky header */}
+            <Box sx={{
+                position: "sticky", top: 0, zIndex: 100,
+                backgroundColor: "background.paper",
+                borderBottom: "1px solid", borderColor: "divider",
+                px: { xs: 2, sm: 3 }, py: 1.25,
+            }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Button variant="text" size="small" startIcon={<ArrowBackIcon />} href="/orders" sx={{ color: "text.secondary", px: 1 }}>
+                            Orders
+                        </Button>
+                        <Typography variant="caption" color="text.disabled">/</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{order.poNumber}</Typography>
+                        <Chip
+                            label={statusMeta.label}
+                            color={statusMeta.color}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontSize: "0.65rem", height: 20 }}
+                        />
+                        {missingCount > 0 && (
+                            <Chip
+                                icon={<WarningAmberIcon sx={{ fontSize: "14px !important" }} />}
+                                label={`${missingCount} missing`}
+                                color="warning"
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontSize: "0.65rem", height: 20 }}
+                            />
+                        )}
+                    </Stack>
+                    <Stack direction="row" spacing={1}>
+                        <Button size="small" variant="outlined" startIcon={<NoteAddIcon />} onClick={() => setNote(true)} sx={{ fontSize: "0.75rem" }}>
+                            Add Note
+                        </Button>
+                        {canMarkShipped && (
+                            <Button size="small" variant="contained" startIcon={<LocalShippingIcon />} onClick={() => setShipped(true)} sx={{ fontSize: "0.75rem" }}>
+                                Mark Shipped
+                            </Button>
+                        )}
+                    </Stack>
+                </Stack>
+            </Box>
+
+            <Container maxWidth="lg" sx={{ py: 3 }}>
+                <Grid2 container spacing={3}>
+
+                    {/* Left column */}
+                    <Grid2 size={{ xs: 12, md: 8 }}>
+                        <Stack spacing={3}>
+
+                            {/* Order details */}
+                            <SectionCard icon={<LocalShippingIcon />} title="Order Details">
+                                <Grid2 container spacing={2}>
+                                    {[
+                                        { label: "PO Number", value: order.poNumber },
+                                        { label: "Order ID", value: order.orderId },
+                                        { label: "Order Key", value: order.orderKey },
+                                        { label: "Marketplace", value: order.marketplace },
+                                        { label: "Shipping Type", value: order.shippingType },
+                                        { label: "Date", value: order.date ? new Date(order.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—" },
+                                    ].map(({ label, value }) => (
+                                        <Grid2 key={label} size={{ xs: 6, sm: 4 }}>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.25, textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{label}</Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{value || "—"}</Typography>
+                                        </Grid2>
+                                    ))}
                                 </Grid2>
-                                <Grid2 size={6}>
-                                    <Typography>Marketplace: {order.marketplace}</Typography>
-                                    <Typography>ShippingType: {order.shippingType}</Typography>
-                                </Grid2>
-                            </Grid2>
-                        </Card>
+                            </SectionCard>
+
+                            {/* Items */}
+                            <SectionCard
+                                icon={<BrushIcon />}
+                                title="Items"
+                                subtitle={`${order.items.length} item${order.items.length === 1 ? "" : "s"}${missingCount > 0 ? ` · ${missingCount} missing info` : ""}`}
+                            >
+                                <Stack spacing={1.5}>
+                                    {order.items.map((i) => {
+                                        const missing = isItemMissing(i);
+                                        const isExpanded = !!expandedItems[i._id];
+                                        const imageKeys = Object.keys(i.design ?? {}).filter(k => i.design[k] != undefined);
+                                        const blankObj = blanks.filter(b => b._id === i.blank)[0];
+                                        const blankImage = i.isBlank && i.blank && i.color
+                                            ? blankObj?.images?.filter(im => im.color === i.color)[0]?.image?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")
+                                            : null;
+
+                                        return (
+                                            <Card
+                                                key={i._id}
+                                                variant="outlined"
+                                                sx={{
+                                                    borderRadius: 1.5,
+                                                    borderColor: missing ? "warning.light" : "divider",
+                                                    backgroundColor: missing ? "rgba(255,167,38,0.03)" : "#fff",
+                                                }}
+                                            >
+                                                {/* Item row */}
+                                                <Box sx={{ display: "flex", gap: 1.5, p: 1.5, alignItems: "flex-start" }}>
+                                                    {/* Image */}
+                                                    <Box sx={{
+                                                        width: 72, height: 72, flexShrink: 0, borderRadius: 1,
+                                                        border: "1px solid", borderColor: "divider",
+                                                        backgroundColor: "background.default",
+                                                        display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+                                                    }}>
+                                                        {blankImage ? (
+                                                            <Image src={`${blankImage}?width=150`} alt={i.sku} width={72} height={72} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                                                        ) : imageKeys.length > 0 ? (
+                                                            <RetryImage
+                                                                src={`/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}`}
+                                                                alt={i.sku}
+                                                                width={72}
+                                                                height={72}
+                                                                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                                                            />
+                                                        ) : (
+                                                            <Box sx={{ width: "100%", height: "100%", backgroundColor: "background.default" }} />
+                                                        )}
+                                                    </Box>
+
+                                                    {/* Info */}
+                                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                                        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
+                                                            <Box sx={{ minWidth: 0 }}>
+                                                                <Typography variant="body2" sx={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={i.name}>
+                                                                    {i.name || "—"}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>{i.sku}</Typography>
+                                                                {i.upc && <Typography variant="caption" color="text.disabled" sx={{ display: "block" }}>UPC: {i.upc}</Typography>}
+                                                            </Box>
+                                                            <Stack direction="row" spacing={0.5} flexShrink={0}>
+                                                                {missing && (
+                                                                    <Tooltip title="Missing item information">
+                                                                        <WarningAmberIcon sx={{ fontSize: 18, color: "warning.main" }} />
+                                                                    </Tooltip>
+                                                                )}
+                                                                <Tooltip title="Edit blank / size / color">
+                                                                    <IconButton size="small" onClick={() => handleItemUpdate(i)}>
+                                                                        <EditIcon sx={{ fontSize: 16 }} />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                                <Tooltip title="Change design">
+                                                                    <IconButton size="small" onClick={() => { setItem(i); setOpenDesign(true); }}>
+                                                                        <BrushIcon sx={{ fontSize: 16 }} />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                                {i.designRef && (
+                                                                    <Tooltip title="Open design">
+                                                                        <IconButton size="small" component="a" href={`/admin/design/${i.designRef}`} target="_blank">
+                                                                            <OpenInNewIcon sx={{ fontSize: 16 }} />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                )}
+                                                                <IconButton size="small" onClick={() => toggleItem(i._id)}>
+                                                                    {isExpanded ? <ExpandLessIcon sx={{ fontSize: 16 }} /> : <ExpandMoreIcon sx={{ fontSize: 16 }} />}
+                                                                </IconButton>
+                                                            </Stack>
+                                                        </Stack>
+
+                                                        <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap", gap: 0.5 }}>
+                                                            {[
+                                                                { label: i.colorName, prefix: "Color" },
+                                                                { label: i.sizeName, prefix: "Size" },
+                                                                { label: i.styleCode, prefix: "Blank" },
+                                                            ].map(({ label, prefix }) => (
+                                                                <Chip
+                                                                    key={prefix}
+                                                                    label={label ? `${prefix}: ${label}` : `${prefix}: —`}
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    color={label ? "default" : "warning"}
+                                                                    sx={{ fontSize: "0.65rem", height: 20 }}
+                                                                />
+                                                            ))}
+                                                        </Stack>
+                                                    </Box>
+                                                </Box>
+
+                                                {/* Steps */}
+                                                <Collapse in={isExpanded} unmountOnExit>
+                                                    <Divider />
+                                                    <Box sx={{ px: 2, py: 1.5, backgroundColor: "background.default" }}>
+                                                        {i.pieceId && (
+                                                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                                                                Piece ID: {i.pieceId}
+                                                            </Typography>
+                                                        )}
+                                                        {i.steps?.length > 0 ? (
+                                                            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 0.75 }}>
+                                                                {i.steps.map((s) => (
+                                                                    <Box key={s._id} sx={{
+                                                                        px: 1.25, py: 0.5,
+                                                                        borderRadius: 1,
+                                                                        border: "1px solid", borderColor: "divider",
+                                                                        backgroundColor: "#fff",
+                                                                        textAlign: "center",
+                                                                    }}>
+                                                                        <Typography variant="caption" sx={{ fontWeight: 600, display: "block" }}>{s.status}</Typography>
+                                                                        <Typography variant="caption" color="text.secondary">{new Date(s.date).toLocaleDateString("en-US")}</Typography>
+                                                                    </Box>
+                                                                ))}
+                                                            </Stack>
+                                                        ) : (
+                                                            <Typography variant="caption" color="text.secondary">No steps recorded.</Typography>
+                                                        )}
+                                                    </Box>
+                                                </Collapse>
+                                            </Card>
+                                        );
+                                    })}
+                                </Stack>
+                            </SectionCard>
+
+                        </Stack>
                     </Grid2>
-                    <Grid2 size={{xs: 12, sm:4, md: 4}}>
-                        <Card sx={{textAlign: "center", minHeight: "100%"}}>
-                            <Typography>Shipping Address</Typography>
-                            <Typography>{order.shippingAddress.name}</Typography>
-                            <Typography>{order.shippingAddress.address1}</Typography>
-                            <Typography>{order.shippingAddress.address2}</Typography>
-                            <Typography>{order.shippingAddress.city}, {order.shippingAddress.state}, {order.shippingAddress.zip.split("-")[0]}</Typography>
-                            <Typography>{order.shippingAddress.country}</Typography>
-                        </Card>
+
+                    {/* Right column */}
+                    <Grid2 size={{ xs: 12, md: 4 }}>
+                        <Stack spacing={2} sx={{ position: { md: "sticky" }, top: { md: 72 } }}>
+
+                            {/* Shipping address */}
+                            <SectionCard icon={<LocalShippingIcon />} title="Ship To">
+                                <Stack spacing={0.25}>
+                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{order.shippingAddress?.name}</Typography>
+                                    <Typography variant="body2" color="text.secondary">{order.shippingAddress?.address1}</Typography>
+                                    {order.shippingAddress?.address2 && (
+                                        <Typography variant="body2" color="text.secondary">{order.shippingAddress.address2}</Typography>
+                                    )}
+                                    <Typography variant="body2" color="text.secondary">
+                                        {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.zip?.split("-")[0]}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">{order.shippingAddress?.country}</Typography>
+                                </Stack>
+                            </SectionCard>
+
+                            {/* Tracking */}
+                            {order.shippingInfo?.labels?.length > 0 && (
+                                <SectionCard icon={<CheckCircleIcon />} title="Tracking">
+                                    <Stack spacing={1}>
+                                        {order.shippingInfo.labels.map(l => {
+                                            const isUPS = UPS_CARRIERS.includes(order.marketplace);
+                                            const trackUrl = isUPS
+                                                ? `https://www.ups.com/track?track=yes&trackNums=${l.trackingNumber}&loc=en_US&requester=ST/`
+                                                : `https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=${l.trackingNumber}`;
+                                            return (
+                                                <Stack key={l._id} direction="row" alignItems="center" spacing={1}>
+                                                    <LocalShippingIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                                                    <Link href={trackUrl} target="_blank" variant="body2" underline="hover">
+                                                        {l.trackingNumber}
+                                                    </Link>
+                                                </Stack>
+                                            );
+                                        })}
+                                    </Stack>
+                                </SectionCard>
+                            )}
+
+                            {/* Notes */}
+                            {order.notes?.length > 0 && (
+                                <SectionCard icon={<StickyNote2Icon />} title="Notes">
+                                    <Stack spacing={1}>
+                                        {order.notes.map(n => (
+                                            <Box key={n._id} sx={{ p: 1.25, borderRadius: 1, border: "1px solid", borderColor: "divider", backgroundColor: "background.default" }}>
+                                                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                                                    <Avatar sx={{ width: 20, height: 20, fontSize: "0.6rem", backgroundColor: "primary.main" }}>
+                                                        {n.userName?.[0]?.toUpperCase() ?? "?"}
+                                                    </Avatar>
+                                                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{n.userName}</Typography>
+                                                    <Typography variant="caption" color="text.disabled">
+                                                        {new Date(n.date).toLocaleDateString("en-US")}
+                                                    </Typography>
+                                                </Stack>
+                                                <Typography variant="body2" color="text.secondary">{n.note}</Typography>
+                                            </Box>
+                                        ))}
+                                    </Stack>
+                                </SectionCard>
+                            )}
+
+                            {/* Actions */}
+                            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                                <CardContent sx={{ p: 2 }}>
+                                    <Stack spacing={1}>
+                                        <Button fullWidth variant="outlined" startIcon={<NoteAddIcon />} onClick={() => setNote(true)}>
+                                            Add Note
+                                        </Button>
+                                        {canMarkShipped && (
+                                            <Button fullWidth variant="contained" startIcon={<LocalShippingIcon />} onClick={() => setShipped(true)}>
+                                                Mark Shipped
+                                            </Button>
+                                        )}
+                                        {source === "printthreads" && (
+                                            <>
+                                                <Button fullWidth variant="outlined" color="success" onClick={async () => {
+                                                    const res = await axios.post("/api/orders/printOracle", { orderId: order._id });
+                                                    if (res?.data) alert(res.data.msg);
+                                                }}>
+                                                    Send to Print Oracle
+                                                </Button>
+                                                <Button fullWidth variant="outlined" color="inherit" onClick={async () => {
+                                                    const res = await axios.get(`/api/orders/printOracle?orderId=${order._id}`);
+                                                    if (res?.data) alert(res.data.msg);
+                                                }}>
+                                                    Update
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Stack>
+                                </CardContent>
+                            </Card>
+
+                        </Stack>
                     </Grid2>
                 </Grid2>
-                <Grid2 container spacing={2} sx={{marginTop: "2%"}}>
-                    <Grid2 size={{ xs: 12, sm: 8, md: 8 }}>
-                        {order.items.map(i=>(
-                            <Accordion key={i._id} sx={{margin: "0% 1%"}}>
-                                <AccordionSummary sx={{ textAlign: "center", background: (i.design == undefined && !i.isBlank) || (Object.keys(i.design ? i.design : {}).length == 0 && !i.isBlank) || i.size == undefined || i.color == undefined || i.blank == undefined ? "red" : "", color: (i.design == undefined && !i.isBlank) || (Object.keys(i.design ? i.design : {}).length == 0 && !i.isBlank) || i.size == undefined || i.color == undefined || i.blank == undefined ? "#fff" : "#000" }} >
-                                    <Grid2 container>
-                                        <Grid2 size={2}>
-                                            {i.isBlank && i.blank && i.color ? <Image key={i._id} src={`${blanks.filter(b => b._id == i.blank)[0]?.images.filter(im => im.color == i.color)[0]?.image?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`} alt={i.sku} width={400} height={400} style={{ width: "100%", height: "auto" }} /> : null}
-                                            {Object.keys(i.design ? i.design : {}).filter(k => i.design[k] != undefined).map(key => (
-                                                <Image key={key} src={`/api/renderImages/${i.styleCode}-${i.colorName}-${key}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[key]}&width=400&side=${key}`} alt={i.sku} width={400} height={400} style={{ width: "100%", height: "auto" }} />
-                                            ))}
-                                        </Grid2>
-                                        <Grid2 size={1}>
+            </Container>
 
-                                        </Grid2>
-                                        <Grid2 size={8}>
-                                            <Box sx={{display: "flex", flexDirection: "column", alignContent: "center", alignItems: "center", textAlign: "center", width: "100%", "&:hover": {opacity: 0.5}}}>
-                                                <Typography onClick={()=>{handleItemUpdate(i)}}>{i.name}</Typography>
-                                                <Typography onClick={()=>{handleItemUpdate(i)}}>{i.sku}</Typography>
-                                                <Typography onClick={()=>{handleItemUpdate(i)}}>{i.upc}</Typography>
-                                                <Typography onClick={()=>{handleItemUpdate(i)}}>Color: {i.colorName}, Size: {i.sizeName}, Blank: {i.styleCode}</Typography>
-                                                { <Button onClick={()=>{setItem(i); setOpenDesign(true)}}>Missing/Change Design!!</Button>}
-                                                {i.design == undefined && <Button sx={{color: "#e2e2e2"}} href={`/admin/design/${i.designRef}`}>Missing Design Images!!</Button>}
-                                            </Box>
-                                        </Grid2>
-                                        <Grid2 size={1}>
-                                            <Box sx={{display: "flex", height: "100%", justifyContent: "flex-end"}} >
-                                                <ArrowDropDownIcon />
-                                            </Box>
-                                        </Grid2>
-                                    </Grid2>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Box sx={{display: "flex", flexDirection: "column"}} >
-                                        <Typography textAlign={"center"}>Piece Id: {i.pieceId}</Typography>
-                                        <Grid2 container>
-                                            {i.steps.map(s=>(
-                                                <Grid2 size={2} key={s._id}>
-                                                    <Typography>{s.status}</Typography>
-                                                    <Typography>{new Date(s.date).toLocaleDateString("En-us")}</Typography>
-                                                </Grid2>
-                                            ))}
-                                        </Grid2>
-                                    </Box>
-                                </AccordionDetails>
-                            </Accordion>
-                        ))}
-                    </Grid2>
-                    <Grid2 size={{xs:12, sm: 4}}>
-                        <Card sx={{padding: "2%", textAlign: "center", margin: "1% 0%"}}>
-                            <Typography>Shipping Info</Typography>
-                            {order.shippingInfo.labels.map(l=>(
-                                <Typography key={l._id}>Tracking: <Link target="_blank" href={ups.includes(order.marketplace)? `https://www.ups.com/track?track=yes&trackNums=${l.trackingNumber}&loc=en_US&requester=ST/`: `https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=${l.trackingNumber}`}>{l.trackingNumber}</Link></Typography>
-                            ))}
-                        </Card>
-                        <NoteSnackBar notes={order.notes} open={showNotes} setOpen={setShowNotes} />
-
-                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", padding: '.5%' }}>
-                            <Box sx={{ margin: ".5%" }}>
-                                <Button sx={{ background: "red", color: "#fff" }} onClick={() => { setNote(true) }}>Create Note</Button>
-                            </Box>
-                            <Box sx={{ margin: ".5%" }}>
-                                <Button sx={{ background: "blue", color: "#fff" }} onClick={() => { setShowNotes(true) }}>Show Notes</Button>
-                            </Box>
-                        </Box>
-                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", padding: '.5%' }}>
-                            {source == "printthreads" &&
-                                <Box sx={{ margin: ".5%" }}>
-                                    <Button sx={{ background: "green", color: "#fff" }} onClick={async () => {
-                                        let res = await axios.post("/api/orders/printOracle", { orderId: order._id })
-                                        if (res && res.data) alert(res.data.msg)
-                                    }}>Send to Print Oracle</Button>
-                                </Box>
-                            }
-                            {source == "printthreads" &&
-                                <Box sx={{ margin: ".5%" }}>
-                                    <Button sx={{ background: "silver", color: "#fff" }} onClick={async () => {
-                                        let res = await axios.get(`/api/orders/printOracle?orderId=${order._id}`)
-                                        if (res && res.data) alert(res.data.msg)
-                                    }}>Update</Button>
-                                </Box>
-                            }
-                        </Box>
-                    </Grid2>
-                </Grid2>
-            </Card>
-            <UpdateModal open={openUpdate} setOpen={setOpenUpdate} item={item} setItem={setItem} blank={blank} setBlank={setBlank} size={size} setSize={setSize} color={color} setColor={setColor} blanks={blanks} setOrder={setOrder}/>
-            <AddDesignModal open={openDesign} setOpen={setOpenDesign} item={item} setItem={setItem} setOrder={setOrder}/>
-            <ShippedModal open={shipped} setOpen={setShipped} order={order} setOrder={setOrder}/>
-            <NoteModal open={note} setOpen={setNote} order={order} setOrder={setOrder} setNotesOpen={setShowNotes}/>
+            <UpdateModal open={openUpdate} setOpen={setOpenUpdate} item={item} setItem={setItem} blank={blank} setBlank={setBlank} size={size} setSize={setSize} color={color} setColor={setColor} blanks={blanks} setOrder={setOrder} />
+            <AddDesignModal open={openDesign} setOpen={setOpenDesign} item={item} setItem={setItem} setOrder={setOrder} />
+            <ShippedModal open={shipped} setOpen={setShipped} order={order} setOrder={setOrder} />
+            <NoteModal open={note} setOpen={setNote} order={order} setOrder={setOrder} />
             <Repull />
-        </Container>
-        <Footer/>
+
+            <Footer />
         </Box>
-    )
+    );
 }
 
-const NoteModal = ({open, setOpen, order, setOrder, setNotesOpen})=>{
-    const [note, setNote] = useState("")
-     const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "50%",
-        height: "40%",
-        overflow: "auto",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-    };
-    const addNote = async ()=>{
-        let res = await axios.post("/api/orders/notes", {note, order})
-        if(res && res.data.error) alert(res.data.msg)
-        else{
-            setNote("")
-            setOrder(res.data.order)
-            setOpen(false)
-            setNotesOpen(true)
-        }
-    }
-    return (
-        <Modal
-        open={open}
-        onClose={()=>{
-            setOpen(false)
-            setItem(null)
-        }}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-               Add Note
-            </Typography>
-            <Box sx={{padding: ".5%"}}>
-                <TextField fullWidth multiline label="Note..." value={note} rows={6} onChange={()=>{
-                    setNote(event.target.value)
-                }} />
-            </Box>
-            <Box sx={{padding: ".5%"}}>
-                <Button fullWidth onClick={addNote}>Add Note</Button>
-            </Box>
-        </Box>
-      </Modal>
-    )
-}
-const ShippedModal = ({open, setOpen, order, setOrder})=>{
-    const [trackingNumber, setTrackingNumber] = useState("");
-    const [provider, setProvider] = useState("") 
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "50%",
-        height: "50%",
-        overflow: "auto",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-    };
-    const setShipped = async ()=>{
-        let res = await axios.post("/api/orders/shipped", {order, trackingNumber, provider})
-        if(res && res.data.error) alert(res.data.msg)
-        else{
-            setTrackingNumber(null)
-            setProvider("")
-            setOrder(res.data.order)
-            setOpen(false)
-        }
-    }
-     return (
-        <Modal
-        open={open}
-        onClose={()=>{
-            setOpen(false)
-            setItem(null)
-        }}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-               Mark Shipped
-            </Typography>
-            <Box sx={{padding: ".5%"}}>
-                <TextField fullWidth label="Tracking Number" value={trackingNumber} onChange={()=>{
-                    setTrackingNumber(event.target.value)
-                }} />
-            </Box>
-            <Box sx={{padding: ".5%"}}>
-                <TextField fullWidth label="Shipping Provider" value={provider} onChange={()=>{
-                    setProvider(event.target.value)
-                }} />
-            </Box>
-            <Box sx={{padding: ".5%"}}>
-                <Button fullWidth onClick={setShipped}>Mark Shipped</Button>
-            </Box>
-        </Box>
-      </Modal>
-    )
-}
-const AddDesignModal = ({open, setOpen, item, setItem, setOrder})=>{
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "90%",
-        height: "90%",
-        overflow: "auto",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-      };
-      const [designs, setDesigns] = useState([])
-      const [search, setSearch] = useState("")
-      const [page, setPage] = useState(1)
-      const [hasMore, setHasMore] = useState(true)
-      const [design, setDesign] = useState()
-      const updateItem = async ()=>{
+const NoteModal = ({ open, setOpen, order, setOrder }) => {
+    const [note, setNote] = useState("");
 
-        let res = await axios.put("/api/admin/items", {item})
-        if(res.data.error) alert(res.data.msg)
+    const addNote = async () => {
+        const res = await axios.post("/api/orders/notes", { note, order });
+        if (res?.data?.error) alert(res.data.msg);
         else {
-            setOrder(res.data.order)
-            setItem(null)
-            setOpen(false)
+            setNote("");
+            setOrder(res.data.order);
+            setOpen(false);
         }
-    }
-    return (
-        <Modal
-        open={open}
-        onClose={()=>{
-            setOpen(false)
-            setItem(null)
-        }}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-                Update Item: {item?.sku}
-            </Typography>
-            <Search setDesigns={setDesigns} search={search} setSearch={setSearch} setPage={setPage} setHasMore={setHasMore}/>
-            <Grid2 container spacing={2} sx={{marginTop: "1%"}}>
-                {designs && designs.map(d=>(
-                    <Grid2 key={d._id} size={{xs: 6, sm: 4, md: 3}}>
-                        <Box sx={{opacity: design == d._id? .5: 1,}} onClick={()=>
-                            {
-                                let i = {...item}
-                                i.designRef = d._id
-                                i.design =d.images
-                                setItem({...i})
-                                setDesign(d._id) 
+    };
 
-                            }}>
-                            <Card sx={{width: "100%", padding: "3%", borderRadius: "9px", cursor: "pointer", height: "100%"}}>
-                                <Box sx={{padding: "1% 3%", maxHeight: "250px", minHeight: "250px", height: "250px", background: "#e2e2e2"}}>
-                                    <Image src={d.images?.front? d.images.front: d.images?.back? d.images?.back: d.images?.leftSleeve? d.images?.leftSleeve: d.images?.rightSleeve? d.images?.rightSleeve: d.images?.pocket? d.images?.pocket: "/missingImage.jpg"} width={150} height={150} alt={`${d.name} ${d.sku} design`} style={{width: "100%", height: "auto", maxHeight: "250px", background: "#e2e2e2"}}/>
+    return (
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                Add Note
+                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+                <TextField
+                    fullWidth multiline rows={5} label="Note"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="contained" onClick={addNote} disabled={!note.trim()}>Save Note</Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
+
+const ShippedModal = ({ open, setOpen, order, setOrder }) => {
+    const [trackingNumber, setTrackingNumber] = useState("");
+    const [provider, setProvider] = useState("");
+
+    const markShipped = async () => {
+        const res = await axios.post("/api/orders/shipped", { order, trackingNumber, provider });
+        if (res?.data?.error) alert(res.data.msg);
+        else {
+            setTrackingNumber("");
+            setProvider("");
+            setOrder(res.data.order);
+            setOpen(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                Mark as Shipped
+                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+                <Stack spacing={2} sx={{ pt: 0.5 }}>
+                    <TextField fullWidth label="Tracking Number" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
+                    <TextField fullWidth label="Shipping Provider" value={provider} onChange={(e) => setProvider(e.target.value)} />
+                </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="contained" startIcon={<LocalShippingIcon />} onClick={markShipped}>Mark Shipped</Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
+
+const AddDesignModal = ({ open, setOpen, item, setItem, setOrder }) => {
+    const [designs, setDesigns] = useState([]);
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [design, setDesign] = useState(null);
+
+    const updateItem = async () => {
+        const res = await axios.put("/api/admin/items", { item });
+        if (res.data.error) alert(res.data.msg);
+        else {
+            setOrder(res.data.order);
+            setItem(null);
+            setOpen(false);
+        }
+    };
+
+    const firstImageUrl = (d) => {
+        const url = d.images?.front ?? d.images?.back ?? d.images?.leftSleeve ?? d.images?.rightSleeve ?? d.images?.pocket;
+        return url ? url.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin") : "/missingImage.jpg";
+    };
+
+    return (
+        <Dialog open={open} onClose={() => { setOpen(false); setItem(null); }} maxWidth="lg" fullWidth PaperProps={{ sx: { height: "90vh" } }}>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                Change Design — {item?.sku}
+                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Search setDesigns={setDesigns} search={search} setSearch={setSearch} setPage={setPage} setHasMore={setHasMore} />
+                <Grid2 container spacing={1.5}>
+                    {designs.map(d => (
+                        <Grid2 key={d._id} size={{ xs: 6, sm: 4, md: 3 }}>
+                            <Card
+                                variant="outlined"
+                                onClick={() => {
+                                    let i = { ...item };
+                                    i.designRef = d._id;
+                                    i.design = d.images;
+                                    setItem({ ...i });
+                                    setDesign(d._id);
+                                }}
+                                sx={{
+                                    borderRadius: 1.5, cursor: "pointer",
+                                    borderColor: design === d._id ? "primary.main" : "divider",
+                                    borderWidth: design === d._id ? 2 : 1,
+                                    transition: "box-shadow 150ms, border-color 150ms",
+                                    "&:hover": { boxShadow: 3 },
+                                }}
+                            >
+                                <Box sx={{ aspectRatio: "1/1", backgroundColor: "background.default", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                                    <RetryImage
+                                        src={`${firstImageUrl(d)}?width=300`}
+                                        alt={d.name}
+                                        style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                                    />
                                 </Box>
-                                <hr/>
-                                <Box sx={{padding: "3%"}}>
-                                    <Typography sx={{fontSize: '0.8rem', color: "black"}}>SKU: {d.sku}</Typography>
-                                    <Typography sx={{fontSize: '0.8rem', color: "black"}}>{d.name}</Typography>
+                                <Divider />
+                                <Box sx={{ px: 1.5, py: 1 }}>
+                                    <Typography variant="caption" sx={{ fontWeight: 600, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name || "—"}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{d.sku}</Typography>
                                 </Box>
                             </Card>
-                        </Box>
-                    </Grid2>
-                ))}
-            </Grid2>
-            {hasMore && <Button onClick={()=>{setPage(page + 1)}} fullWidth>Next Page</Button>}
-            <Button fullWidth onClick={()=>{updateItem()}}>Update Item</Button>
-        </Box>
-      </Modal>
-    )
-}
+                        </Grid2>
+                    ))}
+                </Grid2>
+                {hasMore && (
+                    <Button variant="outlined" onClick={() => setPage(p => p + 1)} fullWidth>Load more</Button>
+                )}
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="contained" onClick={updateItem} disabled={!design}>Apply Design</Button>
+            </DialogActions>
+        </Dialog>
+    );
+};
 
-const UpdateModal = ({open, setOpen, blanks, item, blank, color, size, setItem, setBlank, setSize, setColor, setOrder})=>{
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "90%",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-      };
-    const handleBlankChange = (val)=>{
-        let i = {...item}
-        i.blank = blanks.filter(b=> b._id.toString() == val)[0]
-        i.styleCode = i.blank.code
-        setBlank(i.blank)
-        console.log(i.blank)
-        setItem({...i})
-    }
-    const handleSizeChange = (val)=>{
-        let i = {...item}
-        i.size = val.value
-        i.sizeName = val.label
-        console.log(i.size, i.sizeName)
-        setItem({...i})
-    }
-    const handleColorChange = (val)=>{
-        let i = {...item}
-        i.color = val.value
-        i.colorName = val.label
-        console.log(i.color, i.colorName)
-        setItem({...i})
-    }
-    const updateItem = async ()=>{
-        let res = await axios.put("/api/admin/items", {item})
-        if(res.data.error) alert(res.data.msg)
+const UpdateModal = ({ open, setOpen, blanks, item, blank, color, size, setItem, setBlank, setSize, setColor, setOrder }) => {
+    const handleBlankChange = (val) => {
+        let i = { ...item };
+        i.blank = blanks.filter(b => b._id.toString() === val)[0];
+        i.styleCode = i.blank.code;
+        setBlank(i.blank);
+        setItem({ ...i });
+    };
+
+    const handleSizeChange = (val) => {
+        let i = { ...item };
+        i.size = val.value;
+        i.sizeName = val.label;
+        setItem({ ...i });
+    };
+
+    const handleColorChange = (val) => {
+        let i = { ...item };
+        i.color = val.value;
+        i.colorName = val.label;
+        setItem({ ...i });
+    };
+
+    const updateItem = async () => {
+        const res = await axios.put("/api/admin/items", { item });
+        if (res.data.error) alert(res.data.msg);
         else {
-            setOrder(res.data.order)
-            setItem(null)
-            setBlank(null)
-            setSize(null)
-            setColor(null)
-            setOpen(false)
+            setOrder(res.data.order);
+            setItem(null);
+            setBlank(null);
+            setSize(null);
+            setColor(null);
+            setOpen(false);
         }
-    }
+    };
+
+    const close = () => {
+        setOpen(false);
+        setItem(null);
+        setBlank(null);
+        setSize(null);
+        setColor(null);
+    };
+
     return (
-        <Modal
-        open={open}
-        onClose={()=>{
-            setOpen(false)
-            setItem(null)
-            setBlank(null)
-            setSize(null)
-            setColor(null)
-        }}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-                Update Item: {item?.sku} {item?.upc}
-            </Typography>
-            <Box sx={{margin: "1% 0%"}}>
-                <CreatableSelect
-                    placeholder="Blank"
-                    value={item?.blank? {label: item.blank?.code, value: item.blank?._id}: null}
-                    options={blanks.map(b=>{
-                        return {label: b.code, value: b._id}
-                    })}
-                    onChange={(val)=>{
-                        handleBlankChange(val.value)
-                    }}
-                />
-            </Box>
-            <Box sx={{margin: "1% 0%"}}>
-                <CreatableSelect
-                    placeholder="Size"
-                    value={item?.size? {label: item?.sizeName, value: item?.size}: null}
-                    options={blank?.sizes.map(b=>{
-                        return {label: b.name, value: b._id}
-                    })}
-                    onChange={(val)=>{
-                        handleSizeChange(val)
-                    }}
-                />
-            </Box>
-            <Box sx={{margin: "1% 0%"}}>
-                <CreatableSelect
-                    placeholder="Color"
-                    value={item?.color? {label: item?.colorName, value: item?.color}: null}
-                    options={blank?.colors.map(b=>{
-                        return {label: b.name, value: b._id}
-                    })}
-                    onChange={(val)=>{
-                        handleColorChange(val)
-                    }}
-                />
-            </Box>
-            <Button fullWidth onClick={()=>{updateItem()}}>Update Item</Button>
-        </Box>
-      </Modal>
-    )
-}
+        <Dialog open={open} onClose={close} maxWidth="sm" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                Edit Item — {item?.sku}
+                <IconButton size="small" onClick={close}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+                <Stack spacing={2} sx={{ pt: 0.5 }}>
+                    <Box>
+                        <Typography variant="caption" sx={{ display: "block", mb: 0.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>Blank</Typography>
+                        <CreatableSelect
+                            {...selectMenuPortalProps}
+                            placeholder="Select blank"
+                            value={item?.blank ? { label: item.blank?.code, value: item.blank?._id } : null}
+                            options={blanks.map(b => ({ label: b.code, value: b._id }))}
+                            onChange={(val) => handleBlankChange(val.value)}
+                        />
+                    </Box>
+                    <Box>
+                        <Typography variant="caption" sx={{ display: "block", mb: 0.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>Size</Typography>
+                        <CreatableSelect
+                            {...selectMenuPortalProps}
+                            placeholder="Select size"
+                            value={item?.size ? { label: item.sizeName, value: item.size } : null}
+                            options={blank?.sizes.map(b => ({ label: b.name, value: b._id })) ?? []}
+                            onChange={handleSizeChange}
+                        />
+                    </Box>
+                    <Box>
+                        <Typography variant="caption" sx={{ display: "block", mb: 0.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>Color</Typography>
+                        <CreatableSelect
+                            {...selectMenuPortalProps}
+                            placeholder="Select color"
+                            value={item?.color ? { label: item.colorName, value: item.color } : null}
+                            options={blank?.colors.map(b => ({ label: b.name, value: b._id })) ?? []}
+                            onChange={handleColorChange}
+                        />
+                    </Box>
+                    {item?.upc && (
+                        <Typography variant="caption" color="text.secondary">UPC: {item.upc}</Typography>
+                    )}
+                </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={close}>Cancel</Button>
+                <Button variant="contained" onClick={updateItem}>Save Changes</Button>
+            </DialogActions>
+        </Dialog>
+    );
+};

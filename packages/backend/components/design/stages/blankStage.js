@@ -1,43 +1,55 @@
-import { Box, Grid2, Button, Typography, Divider, FormControlLabel, Checkbox, Grid } from "@mui/material";
+import { Box, Grid2, Button, Typography, Divider, FormControlLabel, Checkbox, Chip, ToggleButton, ToggleButtonGroup, Stack, Card, CardActionArea } from "@mui/material";
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useState } from "react";
+import { RetryImage } from "./RetryImage";
 
-export const BlankStage = ({products, setProducts, setStage, blanks, design, source, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs})=>{
+export const BlankStage = ({products, setProducts, setStage, blanks, design, source, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs, showToast})=>{
     const [department, setDepartment] = useState(null)
     const [category, setCategory] = useState(null)
-    const [departments, setDepartments] = useState(blanks.map(b => b.department).filter((value, index, self) => value && self.indexOf(value) === index))
-    const [categories, setCategories] = useState(blanks.map(b => b.category[0]).filter((value, index, self) => value && self.indexOf(value) === index))
-    console.log(blanks.map(b => b.active), "Blanks in BlankStage")
+    const [departments] = useState(blanks.map(b => b.department).filter((value, index, self) => value && self.indexOf(value) === index))
+    const [categories] = useState(blanks.map(b => b.category[0]).filter((value, index, self) => value && self.indexOf(value) === index))
     return (
-        <Grid2 container spacing={2} sx={{ marginBottom: "2%" }}>
-            <Grid2 size={12}>
-                <Typography variant="h5" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select Blanks</Typography>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: "1%" }}>
-                    <Button variant="outlined" sx={{ width: "50%", background: !combined ? "#e2e2e2" : "#fff" }} onClick={() => { setCombined(false); setProducts([]); }}>Single Products</Button>
-                    <Button variant="outlined" sx={{ width: "50%", background: combined ? "#e2e2e2" : "#fff" }} onClick={() => { setCombined(true); setProducts([]); }}>Combined Product</Button>
+        <Box sx={{ padding: { xs: 1.5, sm: 2 } }}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "stretch", md: "center" }} justifyContent="space-between" sx={{ marginBottom: 2 }}>
+                <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600, lineHeight: 1.2 }}>Select Blanks</Typography>
+                    <Typography variant="caption" color="text.secondary">Pick one or more blanks for this product.</Typography>
                 </Box>
-                <Typography variant="body1" sx={{ color: "#000", textAlign: "center", marginBottom: "1%" }}>Select the blanks you want to use for this product. You can select multiple blanks.</Typography>
-            </Grid2>
-            <Grid2 size={12}>
-                <Grid2 container spacing={1} sx={{ marginBottom: "2%" }}>
-                    {departments.map((d, i) => (
-                        <Grid2 key={i} size="auto">
-                            <Button key={i} variant="outlined" sx={{ background: department == d ? "#e2e2e2" : "#fff" }} onClick={() => {
-                                if(department == d) setDepartment(null)
-                                else setDepartment(d)
-                            }}>{d}</Button>
-                        </Grid2>
-                    ))}
-                    {categories.map((c, i) => (
-                        <Grid2 key={i} size="auto">
-                            <Button key={i} variant="outlined" sx={{ background: category == c ? "#e2e2e2" : "#fff" }} onClick={() => {
-                                if(category == c) setCategory(null)
-                                else setCategory(c)
-                            }}>{c}</Button>
-                        </Grid2>
-                    ))}
-                </Grid2>
-            </Grid2>
+                <ToggleButtonGroup
+                    exclusive
+                    size="small"
+                    value={combined ? "combined" : "single"}
+                    onChange={(_, val) => { if (val !== null) { setCombined(val === "combined"); setProducts([]); } }}
+                >
+                    <ToggleButton value="single" sx={{ textTransform: "none", paddingX: 2 }}>Single Products</ToggleButton>
+                    <ToggleButton value="combined" sx={{ textTransform: "none", paddingX: 2 }}>Combined Product</ToggleButton>
+                </ToggleButtonGroup>
+            </Stack>
+
+            <Stack spacing={1} sx={{ marginBottom: 2 }}>
+                {departments.length > 0 && (
+                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: "wrap", rowGap: 0.75 }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600, minWidth: 80 }}>Department</Typography>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                            {departments.map((d, i) => (
+                                <Chip key={i} label={d} size="small" clickable color={department === d ? "primary" : "default"} variant={department === d ? "filled" : "outlined"} onClick={() => setDepartment(department === d ? null : d)} />
+                            ))}
+                        </Box>
+                    </Stack>
+                )}
+                {categories.length > 0 && (
+                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: "wrap", rowGap: 0.75 }}>
+                        <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600, minWidth: 80 }}>Category</Typography>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                            {categories.map((c, i) => (
+                                <Chip key={i} label={c} size="small" clickable color={category === c ? "primary" : "default"} variant={category === c ? "filled" : "outlined"} onClick={() => setCategory(category === c ? null : c)} />
+                            ))}
+                        </Box>
+                    </Stack>
+                )}
+            </Stack>
+
+            <Grid2 container spacing={1.5}>
             {blanks.filter(b => b.active && (department ? b.department === department : true) && (category ? b.category[0] === category : true)).map(b => {
                 let designImages = Object.keys(design.images ? design.images : {})
                 let styleImages = []
@@ -76,7 +88,13 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                     return null;
                 }
                 return (
-                    <Grid2 size={{ sm: 6 * styleImages.length, md: 3 * styleImages.length }} key={b._id} onClick={() => {
+                    <Grid2 size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={b._id}>
+                        {(() => {
+                            const selected = products.filter(p => p.blanks.filter(blank => blank._id.toString() == b?._id?.toString())[0] != undefined).length > 0;
+                            const premium = !!(design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0]?.colors?.length);
+                            return (
+                        <Card variant="outlined" sx={{ borderRadius: 2, borderColor: selected ? "primary.main" : "divider", borderWidth: selected ? 2 : 1, position: "relative", transition: "border-color 150ms, box-shadow 150ms", "&:hover": { boxShadow: 2 } }}>
+                            <CardActionArea onClick={() => {
                         if(combined){
                             let p = {...products[0]}
                             if(!p.blanks) p.blanks = []
@@ -105,30 +123,37 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                             }
                             setProducts(newProducts)
                         }
-                       
-                    }}>
-                        <Box sx={{ border: "1px solid #000", borderRadius: "5px", padding: "1%", margin: ".5%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", "&:hover": { background: "#f0f0f0", opacity: .7 } }}>
-                            <Box sx={{ position: "relative", zIndex: 999, display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", width: "100%", marginBottom: "1%", }}>
-                                {design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0] && design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0].colors && design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0].colors.length > 0 && <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "2rem"}} />}
-                                <FormControlLabel control={<Checkbox checked={products.filter(p => p.blanks.filter(blank => blank._id.toString() == b?._id?.toString())[0] != undefined).length > 0} />} />
-                            </Box>
-                            <Box sx={{ marginTop: "-45px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1%" }}>
-                                {styleImages.length > 0 && styleImages.map((si, i) => (
-                                    <img key={i} src={`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side? si.side: si.sides}.jpg}?width=400`} alt={`${b.code} image`} width={400} height={400} style={{ width: "auto", height: "auto", maxHeight: styleImages.length > 1 ? "50%" : "100%", maxWidth: styleImages.length > 2 ? "33%" : styleImages.length > 1 ? "50%" : "100%" }} />
-                                ))}
-                            </Box>
-                            <Divider />
-                            <Box sx={{ width: "100%", textAlign: "center" }}>
-                                <Typography sx={{ fontSize: '1rem', color: "black", whiteSpace: "nowrap", overflow: "hidden", display: "block", textOverflow: "ellipsis" }}>{b.name} - {b.code}</Typography>
-                            </Box>
-                        </Box>
+                            }}>
+                                <Box sx={{ position: "absolute", top: 4, right: 4, zIndex: 2 }}>
+                                    <Checkbox size="small" checked={selected} sx={{ padding: 0.5, backgroundColor: "rgba(255,255,255,0.7)", borderRadius: 1, "&:hover": { backgroundColor: "rgba(255,255,255,0.9)" } }} />
+                                </Box>
+                                {premium && (
+                                    <Box sx={{ position: "absolute", top: 4, left: 4, zIndex: 2 }}>
+                                        <WorkspacePremiumIcon sx={{ color: "#FFD700", fontSize: "1.5rem", filter: "drop-shadow(0 0 2px rgba(0,0,0,0.4))" }} />
+                                    </Box>
+                                )}
+                                <Box sx={{ aspectRatio: "1 / 1", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "background.default", padding: 1 }}>
+                                    {styleImages.map((si, i) => (
+                                        <RetryImage key={i} src={`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side? si.side: si.sides}.jpg}?width=400`} alt={`${b.code} image`} style={{ maxWidth: `${100 / styleImages.length}%`, maxHeight: "100%", objectFit: "contain" }} />
+                                    ))}
+                                </Box>
+                                <Divider />
+                                <Box sx={{ padding: 1 }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={`${b.name} - ${b.code}`}>{b.name}</Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>{b.code}</Typography>
+                                </Box>
+                            </CardActionArea>
+                        </Card>
+                            );
+                        })()}
                     </Grid2>
                 )
             })}
-            <Grid2 size={12}>
-                <Button fullWidth sx={{ margin: "1% 2%", background: "#645D5B", color: "#ffffff" }} onClick={() => {
+            </Grid2>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}>
+                <Button variant="contained" size="large" sx={{ minWidth: 160 }} onClick={() => {
                     if(products.length == 0) {
-                        alert("Please select at least one blank to continue.");
+                        showToast?.("Please select at least one blank to continue.", "warning");
                         return;
                     }else{
                         let prods = [...products]
@@ -137,7 +162,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                         for (let p of prods){
                             p.id = p._id? p._id.toString() : p.id || Math.random().toString(36).substring(2, 15);
                             if(p.blanks.length == 0) {
-                                alert("no blanks");
+                                showToast?.("Please select at least one blank.", "warning");
                                 return;
                             }else{
                                 let col = { ...cols }
@@ -202,7 +227,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                         setStage("colors")
                     }
                 }}>Next</Button>
-            </Grid2>
-        </Grid2>
+            </Box>
+        </Box>
     )
 }

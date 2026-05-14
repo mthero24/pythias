@@ -1,10 +1,14 @@
-import {Design} from "@pythias/mongo";
+import {Design, User} from "@pythias/mongo";
 import { DesignsMain as Main } from "@pythias/backend";
 import { DesignSearch } from "@/functions/designSearch";
+import { headers } from "next/headers";
 export const dynamic = 'force-dynamic';
 export default async function Designs(req) {
     let query = await req.searchParams
     let page = parseInt(query.page ? query.page : 1)
+    const headersList = await headers()
+    const user = await User.findOne({ userName: headersList.get("user") }).select("permissions").lean()
+    const canEdit = Boolean(user?.permissions?.designs)
     let designs
     if (!query.q) {
         if (page == undefined || page == 1) {
@@ -22,5 +26,5 @@ export default async function Designs(req) {
         }
     }
     let count = designs[0]?.meta?.count?.total ? designs[0]?.meta?.count?.total : await Design.find({}).countDocuments()
-    return <Main designs={JSON.parse(JSON.stringify(designs))} ct={count} pa={page} query={query.q} />
+    return <Main designs={JSON.parse(JSON.stringify(designs))} ct={count} pa={page} query={query.q} canEdit={canEdit} />
 }   

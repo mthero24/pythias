@@ -1,6 +1,6 @@
 import {NextApiRequest, NextResponse} from "next/server"
 import {ApiKeyIntegrations} from "@pythias/mongo";
-const clientID = '480pxuspxi5wz93puk47snye';
+const clientID = process.env.etsyApiKey?.split(':')[0];
 const clientVerifier = 'catsaregreat';
 const redirectUri = 'http://localhost:3006/api/admin/integrations/etsy/oauth/redirect';
 import axios from "axios";

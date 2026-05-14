@@ -1,13 +1,16 @@
-import { Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations, Products, Seasons, Genders, Themes, SportUsedFor, PrintTypes } from "@pythias/mongo";
+import { Design, Blank, Color, Brands, LicenseHolders, MarketPlaces, ProductImages, PrintLocations, Products, Seasons, Genders, Themes, SportUsedFor, PrintTypes, User } from "@pythias/mongo";
 import { CreateSku } from "@/functions/CreateSku";
 import { DesignMain, serialize } from "@pythias/backend";
 import { notFound } from "next/navigation";
 import {designPage} from "@pythias/backend";
+import { headers } from "next/headers";
 export const dynamic = 'force-dynamic';
 export default async function DesignPage({ params }) {
     let { id } = await params;
+    const headersList = await headers()
+    const user = await User.findOne({ userName: headersList.get("user") }).select("permissions").lean()
+    const canEdit = Boolean(user?.permissions?.designs)
 
-    ///some orhter change
     if (id) {
         try {
             let {design, blanks, brands, marketPlaces, productImages, licenses, colors, printLocations, genders, seasons, sportUsedFor, themes, printTypes} = await designPage({
@@ -31,7 +34,7 @@ export default async function DesignPage({ params }) {
             });
             //console.log(themes, "Themes in DesignPage");
             return (
-                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"simplysage"} them={themes} sport={sportUsedFor} printTypes={printTypes} />
+                <DesignMain design={design} bls={blanks} brands={brands} mPs={marketPlaces} pI={productImages} licenses={licenses} colors={colors} printLocations={printLocations} CreateSku={CreateSku} seas={seasons} gen={genders} source={"simplysage"} them={themes} sport={sportUsedFor} printTypes={printTypes} canEdit={canEdit} />
             )
         } catch (e) {
             console.log(e)

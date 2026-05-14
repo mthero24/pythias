@@ -330,29 +330,29 @@ export async function pullOrders(){
                     } else if(i.sku?.includes("PPSET")){
                         let item
                         console.log(i.sku, "pp set sku")
-                        let pant = i.sku.split("_")[0] + `_${i.sku.split("_")[3]}`
-                        let pantColor = i.sku.split("_")[1]
-                        let pantSize = i.sku.split("_")[2]
-                        let shirt = i.sku.split("_")[3]
-                        let shirtColor = i.sku.split("_")[4]
-                        let designSku = i.sku.split("_").slice(5, i.sku.split("_").length).join("_")
+                        const parts = i.sku.split("_")
+                        const [pantBase, pantColor, pantSize, shirt, shirtColor] = parts
+                        const pant = `${pantBase}_${shirt}`
+                        const designSku = parts.slice(5).join("_")
                         console.log(pant, pantColor, pantSize, shirt, shirtColor, designSku, "broken pp set sku")
-                        let design = await Design.findOne({sku: designSku})
-                        let blankPant = await Blank.findOne({ code: pant }).populate("colors")
-                        let colorPant = blankPant?.colors.find(c => c.sku === pantColor.toLowerCase())
-                        if (!colorPant) colorPant = blankPant?.colors.find(c => c.name.toLowerCase() === pantColor.toLowerCase())
-                        if (!colorPant) colorPant = blankPant?.colors.find(c => c.name.toLowerCase() === colorFixer[pantColor]?.toLowerCase())
-                        let sizePant = blankPant.sizes.find(s => s.name === pantSize || s.name === sizeFixer[pantSize])
-                        let blankShirt = await Blank.findOne({ code: shirt }).populate("colors")
-                        let colorShirt = blankShirt.colors.find(c => c.sku === shirtColor.toLowerCase())
-                        if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === shirtColor.toLowerCase())
-                        if (!colorShirt) colorShirt = blankShirt.colors.find(c => c.name.toLowerCase() === colorFixer[shirtColor]?.toLowerCase())
-                        let sizeShirt = blankShirt.sizes.find(s => s.name === pantSize || s.name === sizeFixer[pantSize])
-                        console.log(blankPant.code, colorPant?.name, sizePant?.name, "pant info")
-                        console.log(blankShirt.code, colorShirt?.name, sizeShirt?.name, "shirt info")
+                        const findColor = (blank, colorSku) =>
+                            blank?.colors.find(c => c.sku === colorSku.toLowerCase())
+                            ?? blank?.colors.find(c => c.name.toLowerCase() === colorSku.toLowerCase())
+                            ?? blank?.colors.find(c => c.name.toLowerCase() === colorFixer[colorSku]?.toLowerCase())
+                        const findSize = (blank, sizeName) =>
+                            blank?.sizes.find(s => s.name === sizeName || s.name === sizeFixer[sizeName])
+                        const design = await Design.findOne({sku: designSku})
+                        const blankPant = await Blank.findOne({ code: pant }).populate("colors")
+                        const colorPant = findColor(blankPant, pantColor)
+                        const sizePant = findSize(blankPant, pantSize)
+                        const blankShirt = await Blank.findOne({ code: shirt }).populate("colors")
+                        const colorShirt = findColor(blankShirt, shirtColor)
+                        const sizeShirt = findSize(blankShirt, pantSize)
+                        console.log(blankPant?.code, colorPant?.name, sizePant?.name, "pant info")
+                        console.log(blankShirt?.code, colorShirt?.name, sizeShirt?.name, "shirt info")
                         item = await createItem(i, order, blankPant, colorPant, null, sizePant, null, i.sku, true)
                         items.push(item)
-                        item = await createItem(i, order, blankShirt, colorShirt, null, sizePant, design, i.sku, (design || (designSku && !designSku === "") ? false : true))
+                        item = await createItem(i, order, blankShirt, colorShirt, null, sizePant, design, i.sku, !(design || designSku))
                         items.push(item)
                     } else if(i.sku !== ""){
                         let item

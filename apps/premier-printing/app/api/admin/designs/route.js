@@ -1,6 +1,7 @@
 import {NextApiRequest, NextResponse} from "next/server";
 import {Design, Products} from "@pythias/mongo";
 import { headers } from 'next/headers'
+import { getToken } from "next-auth/jwt";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
 const createSku = ()=>{
@@ -38,6 +39,10 @@ export async function GET(req){
     }
 }
 export async function POST(req=NextApiRequest){
+    const token = await getToken({ req });
+    if(!token?.permissions?.designs){
+        return NextResponse.json({error: true, msg: "You do not have permission to edit designs."}, {status: 403})
+    }
     let data = await req.json()
     console.log(data)
     let head = await headers()
@@ -62,6 +67,10 @@ export async function POST(req=NextApiRequest){
     }
 }
 export async function PUT(req=NextApiRequest){
+    const token = await getToken({ req });
+    if(!token?.permissions?.designs){
+        return NextResponse.json({error: true, msg: "You do not have permission to edit designs."}, {status: 403})
+    }
     let data = await req.json()
     console.log(data.design.sendToMarketplaces, "send to market places ++++++++++++++++++++++++")
     try{  
@@ -127,6 +136,10 @@ export async function PUT(req=NextApiRequest){
 }
 
 export async function DELETE(req, res){
+    const token = await getToken({ req });
+    if(!token?.permissions?.designs){
+        return NextResponse.json({error: true, msg: "You do not have permission to edit designs."}, {status: 403})
+    }
     console.log(await req.nextUrl.searchParams.get("design"))
     let design = await Design.findByIdAndDelete(req.nextUrl.searchParams.get("design"))
     return NextResponse.json({error: false})

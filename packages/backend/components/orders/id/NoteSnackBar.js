@@ -25,7 +25,6 @@ export const NoteSnackBar = ({notes, open, setOpen})=>{
       </IconButton>
     </Fragment>
   );
-  console.log(notes)
   return (
     <Box sx={{ width: "50%" }}>
       <Snackbar
