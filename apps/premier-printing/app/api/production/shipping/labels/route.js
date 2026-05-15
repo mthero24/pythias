@@ -5,7 +5,8 @@ import Order from "../../../../../models/Order";
 import manifest from "../../../../../models/manifest";
 import axios from "axios"
 import Bin from "../../../../../models/Bin";
-import {updateOrder} from "@pythias/integrations";
+import {updateOrder, createReceiptShipment} from "@pythias/integrations";
+import {ApiKeyIntegrations} from "@pythias/mongo";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
@@ -90,6 +91,16 @@ export async function POST(req= NextApiRequest){
                 await item.save();
             }
             order = await order.save();
+            if (order.marketplace?.toLowerCase() === "etsy") {
+                try {
+                    let etsyConn = await ApiKeyIntegrations.findOne({ type: "etsy" });
+                    if (etsyConn) {
+                        await createReceiptShipment(etsyConn, order.orderId, label.trackingNumber, data.selectedShipping.provider);
+                    }
+                } catch (e) {
+                    console.error("Failed to update Etsy shipment:", e.message);
+                }
+            }
             // print label
             let bin = await Bin.findOneAndUpdate({order: order._id},  {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
             let headers = {

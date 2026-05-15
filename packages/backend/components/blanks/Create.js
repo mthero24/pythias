@@ -250,9 +250,9 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                         setBlank(bla);
                                                         update({blank: bla});
                                                     }} />
-                                                    <TextField label="Cost" fullWidth value={s.cost} onChange={(e) => {
+                                                    <TextField label="Wholesale Cost" fullWidth value={s.wholesaleCost} onChange={(e) => {
                                                         let bla = { ...blank };
-                                                        bla.sizes[i].cost = e.target.value;
+                                                        bla.sizes[i].wholesaleCost = e.target.value;
                                                         setBlank(bla);
                                                         update({blank: bla});
                                                     }} />

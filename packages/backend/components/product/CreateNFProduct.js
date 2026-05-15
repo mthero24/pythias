@@ -1,6 +1,7 @@
-import { Modal, Box, Typography, Button, Card, CardContent, TextField, Divider, Grid2, Checkbox, CircularProgress, Chip, Tooltip, Stack, CardActionArea, Stepper, Step, StepLabel, StepButton, IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Modal, Box, Typography, Button, Card, CardContent, TextField, Divider, Grid2, Checkbox, Chip, Tooltip, Stack, CardActionArea, Stepper, Step, StepLabel, StepButton, IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import CreatableSelect from 'react-select/creatable';
 import {useState, useEffect, useRef} from 'react';
+import LoaderOverlay from "../reusable/LoaderOverlay";
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
@@ -160,6 +161,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
         window.dataLayer = [];
     }
     return (
+        <>
         <Modal
             open={open}
             onClose={() => { setProduct({blanks: [], colors: [], productImages: [], variantsArray: []}); releaseHold(); setLoading(false); setStage("Select Blank"); setOpen(false)}}
@@ -993,7 +995,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                     setStage("Select Blank");
                                     setLoading(false);
                                 }
-                            }}>{loading ? <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}><CircularProgress color="inherit" size={24} /><Typography variant="body2">Saving...</Typography></Box> : "Create"}</Button>
+                            }}>{loading ? "Saving..." : "Create"}</Button>
                         </Box>
                     </Box>
                 )}
@@ -1006,5 +1008,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                 )}
             </Box>
         </Modal>
+        {loading && <LoaderOverlay />}
+        </>
     );
 }

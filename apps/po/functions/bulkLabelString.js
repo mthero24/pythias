@@ -1,7 +1,4 @@
-import Items from "../models/Items";
-
 export const buildBulkLabelData = async (item, i, poNumber, opts={}) => {
-    let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
     let frontBackString = "";
     //console.log(totalQuantity, "TQ");
     for(let loc of Object.keys(item.design)){

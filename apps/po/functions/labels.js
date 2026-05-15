@@ -37,8 +37,8 @@ export async function LabelsData(){
             }
         }
     }
-    let labels = {
-            Standard: await Items.find({
+    const [standardItems, expeditedItems] = await Promise.all([
+        Items.find({
             styleV2: { $ne: undefined },
             labelPrinted: false,
             canceled: false,
@@ -47,8 +47,8 @@ export async function LabelsData(){
             shippingType: "Standard",
             order: { $ne: null },
             type: { $nin: ["sublimation", "gift"] },
-            }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean(),
-            Expedited: await Items.find({
+        }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean(),
+        Items.find({
             styleV2: { $ne: undefined },
             bulkId: { $eq: null },
             labelPrinted: false,
@@ -57,8 +57,9 @@ export async function LabelsData(){
             paid: true,
             type: { $nin: ["sublimation", "gift"] },
             shippingType: { $ne: "Standard" },
-            }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean()
-    }
+        }).populate("order", "poNumber items marketplace").populate("inventory.inventory").lean(),
+    ]);
+    let labels = { Standard: standardItems, Expedited: expeditedItems };
     let Marketplace = []
     for(let k of Object.keys(labels)){
         Marketplace = [...Marketplace, ...labels[k].filter(l=> l.order?.marketplace != null && l.order?.marketplace != undefined)]
@@ -100,12 +101,12 @@ export async function LabelsData(){
         labelPrinted: false, paid: true, canceled: false, type: "gift", sku: {
             $in: ["gift-bag", "gift-message"]}
         }).lean()
-    let giftOrders = giftMessages.map(s=> s.order)
-    giftOrders = await Order.find({_id: {$in: giftOrders}}).select("poNumber items marketplace").lean()
-    //console.log(giftOrders)
-    giftMessages = giftMessages.map(s=> { 
-        s.order = giftOrders.filter(o=> o._id.toString() == s.order.toString())[0]; 
-        s.styleCode = "GIFT";  
+    let giftOrderIds = giftMessages.map(s=> s.order)
+    const giftOrderList = await Order.find({_id: {$in: giftOrderIds}}).select("poNumber items marketplace").lean()
+    const giftOrderMap = Object.fromEntries(giftOrderList.map(o => [o._id.toString(), o]))
+    giftMessages = giftMessages.map(s=> {
+        s.order = giftOrderMap[s.order.toString()];
+        s.styleCode = "GIFT";
         return {...s}
     })
     //console.log(giftMessages)

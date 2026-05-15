@@ -3,8 +3,8 @@ import {Sort} from "@pythias/labels";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
     // console.log("inv count", (await inv).length, "+++++++++++++++++++")
-    let labels = {
-            Standard: await Items.find({
+    const [standardItems, expeditedItems, blankItems] = await Promise.all([
+        Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
             sizeName: {$ne: null},
@@ -15,7 +15,7 @@ export async function LabelsData(){
             paid: true,
             shippingType: "Standard",
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
-            Expedited: await Items.find({
+        Items.find({
             blank: { $ne: undefined },
             colorName: {$ne: null},
             sizeName: {$ne: null},
@@ -25,25 +25,25 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             shippingType: { $ne: "Standard" },
-            }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean()
-    }
-    //console.log(labels)
+        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
+        Items.find({
+            blank: { $ne: undefined },
+            colorName: { $ne: null },
+            sizeName: { $ne: null },
+            isBlank: true,
+            labelPrinted: false,
+            canceled: false,
+            paid: true,
+        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
+    ]);
+    let labels = { Standard: [...standardItems, ...blankItems], Expedited: expeditedItems };
     let rePulls = 0
-    let blankItems = await Items.find({
-        blank: { $ne: undefined },
-        colorName: { $ne: null },
-        sizeName: { $ne: null },
-        isBlank: true,
-        labelPrinted: false,
-        canceled: false,
-        paid: true,
-    }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean()
-    labels.Standard = labels.Standard.concat(blankItems)
     for(let k of Object.keys(labels)){
-        let standardOrders = labels[k].map(s=> s.order)
-        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace date")
-        labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order._id.toString())[0];  return {...s}})
+        const orderIds = labels[k].map(s=> s.order)
+        const orderList = await Order.find({_id: {$in: orderIds}}).select("poNumber items marketplace date").lean()
+        const orderId = (s) => s.order?._id?.toString() ?? s.order?.toString()
         labels[k] = labels[k].map(s=> {
+            s.order = orderList.filter(o=> o._id.toString() === orderId(s))[0];
             if(s.type == undefined) s.type = s.designRef && s.designRef.printType ? s.designRef.printType : "DTF"
             return {...s}
         })
@@ -58,12 +58,11 @@ export async function LabelsData(){
         type: "gift",
         sku: { $in: ["gift-bag"] },
         }).lean()
-    let giftOrders = giftMessages.map(s=> s.order)
-    giftOrders = await Order.find({_id: {$in: giftOrders}}).select("poNumber items")
-    //console.log(giftOrders)
-    giftMessages = giftMessages.map(s=> { 
-        s.order = giftOrders.filter(o=> o._id.toString() == s.order.toString())[0]; 
-        s.styleCode = "GIFT";  
+    const giftOrderIds = giftMessages.map(s=> s.order)
+    const giftOrderList = await Order.find({_id: {$in: giftOrderIds}}).select("poNumber items").lean()
+    giftMessages = giftMessages.map(s=> {
+        s.order = giftOrderList.filter(o=> o._id.toString() === s.order?.toString())[0];
+        s.styleCode = "GIFT";
         return {...s}
     })
     //console.log(giftMessages)

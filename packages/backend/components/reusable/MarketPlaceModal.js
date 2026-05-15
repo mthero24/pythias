@@ -1,8 +1,9 @@
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider, Checkbox, FormControlLabel, CircularProgress } from "@mui/material";
+﻿import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider, Checkbox, FormControlLabel, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import LoaderOverlay from "./LoaderOverlay";
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModel from "../reusable/DeleteModal";
 import axios from "axios";
-import {useState, useEffect, use} from "react";
+import {useState, useEffect} from "react";
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -148,7 +149,7 @@ const RemoveMarketPlaceModal = ({ open, setOpen, mp, removeMarketplaceConnection
     )
 }
 
-export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source, products, setProducts }) => {
+export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source, products, setProducts, canManage }) => {
     const [size, setSize] = useState([]);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteTitle, setDeleteTitle] = useState();
@@ -159,6 +160,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const [tiktokAuth, setTiktokAuth] = useState([]);
     const [loading, setLoading] = useState(false);
     const [openRemoveModal, setOpenRemoveModal] = useState(false);
+    const [confirmDeleteMp, setConfirmDeleteMp] = useState(null);
     useEffect(() => {
         let sizeArray = [];
         for(let sizeArr of sizes? sizes : []) {
@@ -245,21 +247,6 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         }
         preCacheImages();
     },[product]);
-    const [addMarketPlace, setAddMarketPlace] = useState(false);
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "90%",
-        height: "90%",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-        overflowX: "auto",
-        overflowY: "none",
-    };
     const checkForIds = async ({ product }) => {
         setLoading(true);
         if (product) {
@@ -335,223 +322,246 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         setOpenRemoveModal(false);
         setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} })
     }
+    const deleteMarketplace = async (mp) => {
+        try {
+            await axios.delete("/api/admin/marketplaces", { data: { id: mp._id } });
+            setMarketPlaces(prev => prev.filter(m => m._id.toString() !== mp._id.toString()));
+            setConfirmDeleteMp(null);
+        } catch {
+            alert("Failed to delete marketplace. Please try again.");
+        }
+    };
+    const [addMarketPlace, setAddMarketPlace] = useState(false);
+    const sendToConnection = async (c) => {
+        if (c.displayName?.includes("shopify")) {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/shopify/send", { product, connection: c }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${c.apiKey}` } }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
+            if (res?.data) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.productId;
+                for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = res.data.variantIds?.find(vId => vId.sku === v.sku)?.id; }
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.displayName?.toLowerCase().includes("etsy")) {
+            setLoading(true);
+            const existingListingId = product.ids?.[c.displayName];
+            if (existingListingId) {
+                await axios.put("/api/admin/integrations/etsy", { product, connection: c, listingId: existingListingId }).catch(() => { alert("Something went wrong updating the Etsy listing. Please try again."); });
+            } else {
+                const res = await axios.post("/api/admin/integrations/etsy", { product, connection: c }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
+                if (res?.data) {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.productId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
+            }
+            setLoading(false);
+        } else if (c.type === "walmart") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/walmart/send", { product, connectionId: c._id }).catch(() => { alert("Something went wrong sending to Walmart."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.feedId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                alert(`Sent to Walmart. Feed ID: ${res.data.feedId}`);
+            }
+            setLoading(false);
+        } else if (c.seller_name) {
+            setLoading(true);
+            const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
+            if (res?.data) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.productId;
+                for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = res.data.variantIds?.find(vId => vId.sku === v.sku)?.id; }
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        }
+    };
+    const style = {
+        position: "absolute", top: "50%", left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: "92%", maxWidth: 1100, height: "90%",
+        bgcolor: "background.paper", borderRadius: 3, boxShadow: 24,
+        display: "flex", flexDirection: "column", overflow: "hidden",
+    };
     return (
-        <Modal
-            open={open}
-            onClose={() => setOpen(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
+        <Modal open={open} onClose={() => setOpen(false)}>
             <Box sx={style}>
-                { loading && <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}><CircularProgress /></Box>}
-                {!loading && (
-                    <Box>
-                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
-                            <CloseIcon sx={{ color: "#780606" }} />
-                        </Box>
-                        <Typography id="modal-modal-title" textAlign={"center"} variant="h6" component="h2">
-                            Add Product to Marketplace
-                        </Typography>
-                        <Box>
-                            <Box sx={{ maxHeight: "60vh", overflowY: "auto" }}>
-                                <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} }); setAddMarketPlace(true);}}>Create MarketPlace</Button>
+                {loading && <LoaderOverlay />}
+
+                <Box sx={{ display: "flex", flexDirection: "column", height: "100%", opacity: loading ? 0 : 1 }}>
+                    {/* Header */}
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider", flexShrink: 0 }}>
+                        <Typography variant="h6" fontWeight={700}>Marketplaces</Typography>
+                        <IconButton onClick={() => setOpen(false)} size="small"><CloseIcon /></IconButton>
+                    </Box>
+
+                    {/* Body */}
+                    <Box sx={{ flex: 1, overflowY: "auto", px: 3, py: 2 }}>
+                        {canManage && (
+                            <Box sx={{ mb: 2 }}>
+                                <Button variant="contained" size="small" onClick={() => { setMarketplace({ name: "", headers: [[]], defaultValues: {}, sizes: {} }); setAddMarketPlace(true); }}>
+                                    + Create Marketplace
+                                </Button>
                             </Box>
-                            <Box sx={{width: "100%", overflow: "auto", display: "flex", flexDirection: "row", justifyContent: "flex-start", gap: "2%", alignItems: "center", padding: "1%" }}>
-                                {marketPlaces && marketPlaces.map((mp, i) => {
-                                    if(connections && connections.length > 0){
-                                        mp.connections = mp.connections?.map(c=> {
-                                            let conn = connections?.filter(conn=> conn?._id.toString() == c.toString())[0]
-                                            if(!conn) conn = tiktokAuth?.filter(conn=> conn?._id.toString() == c.toString())[0]
-                                            if(conn)return conn
-                                            return c
-                                        })
-                                    }
-                                    return (
-                                        <Card key={`${mp._id}-i`} sx={{ padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "150px", width: "150px", minHeight: "150px" }} >
-                                            <Typography variant="p" sx={{ textAlign: "center", marginBottom: "1%", textAlign: "center" }}>{mp.name}</Typography>
-                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginBottom: "1%" }}>
-                                                <Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
-                                                {product &&<Button fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
+                        )}
+
+                        {/* Marketplace cards grid */}
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
+                            {marketPlaces && marketPlaces.map((mp) => {
+                                if (connections?.length > 0) {
+                                    mp.connections = mp.connections?.map(c => {
+                                        const conn = connections.find(conn => conn._id.toString() === c.toString())
+                                            ?? tiktokAuth.find(conn => conn._id.toString() === c.toString());
+                                        return conn ?? c;
+                                    });
+                                }
+                                const isSelected = product?.marketPlacesArray?.some(m => (m._id ? m._id.toString() : m.toString()) === mp._id.toString());
+                                return (
+                                    <Card key={`${mp._id}-i`} variant="outlined" sx={{
+                                        width: 160, height: 210, display: "flex", flexDirection: "column",
+                                        borderRadius: 2, flexShrink: 0,
+                                        borderColor: isSelected ? "primary.main" : "divider",
+                                        borderWidth: isSelected ? 2 : 1,
+                                        transition: "box-shadow 120ms",
+                                        "&:hover": { boxShadow: 3 },
+                                    }}>
+                                        <Box sx={{ px: 1.5, pt: 1.25, pb: 0.5 }}>
+                                            <Typography variant="subtitle2" fontWeight={700} noWrap title={mp.name}>{mp.name}</Typography>
+                                            {isSelected && <Chip label="Active" size="small" color="primary" sx={{ mt: 0.25, fontSize: "0.6rem", height: 16 }} />}
+                                        </Box>
+
+                                        <Box sx={{ flex: 1, overflowY: "auto", px: 1, py: 0.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
+                                            {product && mp.connections?.map((c) => (
+                                                <Button key={`${c?._id}`} fullWidth size="small"
+                                                    variant={product.ids?.[c?.displayName] ? "contained" : "outlined"}
+                                                    color={product.ids?.[c?.displayName] ? "success" : "primary"}
+                                                    sx={{ fontSize: "0.62rem", py: 0.4, textTransform: "none" }}
+                                                    onClick={() => sendToConnection(c)}>
+                                                    {product.ids?.[c?.displayName] ? "↺ Update — " : "→ Send — "}{c?.displayName || c?.seller_name || "Connection"}
+                                                </Button>
+                                            ))}
+                                        </Box>
+
+                                        <Divider />
+                                        <Box sx={{ px: 1, py: 0.75, display: "flex", flexDirection: "column", gap: 0.5 }}>
+                                            {product && !isSelected && (
+                                                <Button fullWidth size="small" variant="contained" sx={{ fontSize: "0.7rem", py: 0.4 }} onClick={async () => {
                                                     let p = { ...product };
                                                     if (!p.marketPlacesArray) p.marketPlacesArray = [];
                                                     if (!p.marketPlacesArray.map(m => m._id ? m._id.toString() : m.toString()).includes(mp._id.toString())) p.marketPlacesArray.push(mp);
-                                                    if(design){
-                                                        let d ={ ...design };
-                                                        d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString());
-                                                        d.products.push(p);
-                                                        setDesign({...d});
-                                                    }
+                                                    if (design) { let d = { ...design }; d.products = d.products.filter(pr => pr._id.toString() !== p._id.toString()); d.products.push(p); setDesign({ ...d }); }
                                                     checkForIds({ product: p });
-                                                   let res = await axios.post("/api/admin/products", { products: [p] }); 
+                                                    await axios.post("/api/admin/products", { products: [p] });
                                                     setProduct({ ...p });
-                                                    if (products && products.length > 0) {
-                                                        let updatedProducts = products.map(prod => {
-                                                            if (p._id.toString() === prod._id.toString()) {
-                                                                return { ...p };
-                                                            }
-                                                            return prod;
-                                                        });
-                                                        setProducts(updatedProducts);
-                                                    }
-                                                }}>Select</Button>}
-                                            </Box>
-                                            
-                                            {product && mp.connections && mp.connections.length > 0 && mp.connections.map((c, ci) => {
-                                                if (product.marketPlacesArray && product.marketPlacesArray.length > 0 && product.marketPlacesArray.filter(m=> m.toString() === mp._id.toString()[0])) {
-                                                    return (
-                                                        <Button key={`${c?._id}-ci`} fullWidth size="small" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{
-                                                            if (c.displayName && c.displayName.includes("shopify")){
-                                                                const headers = {
-                                                                    headers: {
-                                                                        "Content-Type": "application/json",
-                                                                        "Authorization": `Bearer ${c.apiKey}`,
-                                                                    }
-                                                                }
-                                                                setLoading(true);
-                                                                    let res = await axios.post("/api/integrations/shopify/send", {product, connection: c}, headers ).catch(e=> {
-                                                                    alert("Something Went Wron Please Try Again Later")
-                                                                    setLoading(false);
-                                                                });
-                                                                let p = { ...product };
-                                                                if(res && res.data){
-                                                                    if(!p.ids) p.ids = {};
-                                                                    p.ids[c?.displayName] = res.data.productId;
-                                                                    for(let v of p.variantsArray){
-                                                                        if(!v.ids) v.ids = {};
-                                                                        v.ids[c?.displayName] = res.data.variantIds?.filter(vId=> vId.sku === v.sku)[0]?.id;
-                                                                    }
-                                                                    let update = await axios.post("/api/admin/products", { products: [p] });
-                                                                    setProduct({...p});
-                                                                    if (products && products.length > 0) {
-                                                                        let updatedProducts = products.map(prod => {
-                                                                            if (p._id.toString() === prod._id.toString()) {
-                                                                                return { ...p };
-                                                                            }
-                                                                            return prod;
-                                                                        });
-                                                                        setProducts(updatedProducts);
-                                                                    }
-                                                                    setLoading(false);
-                                                                }else{
-                                                                    setLoading(false)
-                                                                }
-                                                            } else if (c.displayName && c.displayName.toLowerCase().includes("etsy")){
-                                                                setLoading(true);
-                                                                let res = await axios.post("/api/admin/integrations/etsy", { product, connection: c }).catch(e => {
-                                                                    alert("Something Went Wrong Please Try Again Later")
-                                                                    setLoading(false);
-                                                                });
-                                                                console.log(res, "res from etsy")
-                                                                let p = { ...product };
-                                                                if (!p.ids) p.ids = {};
-                                                                p.ids[c?.displayName] = res.data.productId;
-                                                                let update = await axios.post("/api/admin/products", { products: [p] });
-                                                                setProduct({ ...p });
-                                                                if (products && products.length > 0) {
-                                                                    let updatedProducts = products.map(prod => {
-                                                                        if (p._id.toString() === prod._id.toString()) {
-                                                                            return { ...p };
-                                                                        }
-                                                                        return prod;
-                                                                    });
-                                                                    setProducts(updatedProducts);
-                                                                }
-                                                                setLoading(false);
-                                                            }else if(c.seller_name){
-                                                                let res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c }).catch(e => {
-                                                                    alert("Something Went Wrong Please Try Again Later")
-                                                                    setLoading(false);
-                                                                });
-                                                                let p = { ...product };
-                                                                if (res && res.data) {
-                                                                    if (!p.ids) p.ids = {};
-                                                                    p.ids[c?.displayName] = res.data.productId;
-                                                                    for (let v of p.variantsArray) {
-                                                                        if (!v.ids) v.ids = {};
-                                                                        v.ids[c?.displayName] = res.data.variantIds?.filter(vId => vId.sku === v.sku)[0]?.id;
-                                                                    }
-                                                                    let update = await axios.post("/api/admin/products", { products: [p] });
-                                                                    setProduct({ ...p });
-                                                                    if (products && products.length > 0) {
-                                                                        let updatedProducts = products.map(prod => {
-                                                                            if (p._id.toString() === prod._id.toString()) {
-                                                                                return { ...p };
-                                                                            }
-                                                                            return prod;
-                                                                        });
-                                                                        setProducts(updatedProducts);
-                                                                    }
-                                                                    setLoading(false);
-                                                                } else {
-                                                                    setLoading(false)
-                                                                }
-                                                            }
-                                                    
-                                                        }}>{product && product.ids && product?.ids[c?.displayName]? "Update": "Send"}</Button>
-                                                    )
-                                                    
-                                                }
-                                            })}
-                                            {product && product.marketPlacesArray && product.marketPlacesArray.filter(m=> (m._id? m._id.toString() : m.toString()) === mp._id.toString())[0] &&
-                                                <Button key={mp._id} fullWidth size="small" color="warning" variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async ()=>{setMarketplace(mp); setOpenRemoveModal(true);}}>
-                                                    Remove
-                                                </Button>
-                                            }
-                                        </Card>
-                                    )
-                                }
-                            )}
-                            </Box>
-                            <Divider sx={{ margin: ".5% 0" }} />
-                            <Typography variant="h6" sx={{ marginBottom: "1%" }}>Selected Marketplaces</Typography>
-                            { product && product.marketPlacesArray && product.marketPlacesArray.length > 0 && marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id? mp._id.toString(): mp.toString())).includes(m._id.toString())).map((marketPlace) => {
-                                    if (connections && connections.length > 0) {
+                                                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                                                }}>Select</Button>
+                                            )}
+                                            {product && isSelected && (
+                                                <Button fullWidth size="small" variant="outlined" color="warning" sx={{ fontSize: "0.7rem", py: 0.4 }} onClick={() => { setMarketplace(mp); setOpenRemoveModal(true); }}>Remove</Button>
+                                            )}
+                                            {canManage && (
+                                                <Box sx={{ display: "flex", gap: 0.5 }}>
+                                                    <Button fullWidth size="small" variant="outlined" sx={{ fontSize: "0.7rem", py: 0.4 }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
+                                                    <IconButton size="small" color="error" sx={{ p: 0.5 }} onClick={() => setConfirmDeleteMp(mp)}>
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Box>
+                                            )}
+                                        </Box>
+                                    </Card>
+                                );
+                            })}
+                        </Box>
+
+                        {/* Selected Marketplaces */}
+                        {product?.marketPlacesArray?.length > 0 && (
+                            <>
+                                <Divider sx={{ mb: 2 }} />
+                                <Typography variant="h6" fontWeight={700} sx={{ mb: 1.5 }}>Selected Marketplaces</Typography>
+                                {marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id ? mp._id.toString() : mp.toString())).includes(m._id.toString())).map((marketPlace) => {
+                                    if (connections?.length > 0) {
                                         marketPlace.connections = marketPlace.connections?.map(c => {
-                                            let conn = connections?.filter(conn => conn?._id.toString() == c.toString())[0]
-                                            if (conn) return conn
-                                            return c
-                                        })
+                                            const conn = connections.find(conn => conn._id.toString() === c.toString());
+                                            return conn ?? c;
+                                        });
                                     }
                                     return (
-                                        <Box key={marketPlace._id}>
+                                        <Box key={marketPlace._id} sx={{ mb: 2, border: "1px solid", borderColor: "divider", borderRadius: 2, overflow: "hidden" }}>
                                             {marketPlace.headers.map((header, index) => (
-                                                <Box key={marketPlace._id + "-" + index} sx={{ display: "flex", flexDirection: "column", padding: "1%", borderBottom: "1px solid #eee", position: "relative", top: "-5%" }}>
-                                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", position: "relative", }}>
-                                                        {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda")[0])) && <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={async () => {
-                                                            let res = await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]?._id, productId: product._id } });
-                                                        }}>Add Inventory</Button>}
-                                                        <Button variant="outlined" size="small" sx={{ margin: "1% 2%", color: "#0f0f0f" }} href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}&disableDefault=${marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false}`} target="_blank">Download</Button>
+                                                <Box key={marketPlace._id + "-" + index} sx={{ p: 2, borderBottom: index < marketPlace.headers.length - 1 ? "1px solid" : "none", borderColor: "divider" }}>
+                                                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 1.5 }}>
+                                                        {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda")[0])) && (
+                                                            <Button variant="outlined" size="small" onClick={async () => { await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]?._id, productId: product._id } }); }}>Add Inventory</Button>
+                                                        )}
+                                                        <Button variant="outlined" size="small" href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}&disableDefault=${marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false}`} target="_blank">Download CSV</Button>
                                                     </Box>
-                                                    {marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0] && <Card sx={{display: "flex", flexDirection: "column", padding: "5%"}}>
-                                                        <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify") )[0].displayName}</Typography>
-                                                        <Divider sx={{marginBottom: "2%"}} />
-                                                        {product.ids && product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && <Typography>Shopify Id: {product.ids[marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>}
-                                                    </Card>}
-                                                    {console.log("marketPlace.connections", marketPlace.connections)}
-                                                    {marketPlace.connections?.filter(c => c?.type == "etsy")[0] && <Card sx={{ display: "flex", flexDirection: "column", padding: "5%" }}>
-                                                        {console.log("marketPlace.connections", marketPlace.connections)}
-                                                        <Typography variant="h6" textAlign={"center"}>{marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName}</Typography>
-                                                        <Divider sx={{ marginBottom: "2%" }} />
-                                                        {product.ids && product.ids[marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName] && <Typography>Etsy Id: {product.ids[marketPlace.connections?.filter(c => c?.type == "etsy")[0].displayName]}</Typography>}
-                                                    </Card>}
+                                                    {marketPlace.connections?.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0] && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName] && <Typography variant="body2" color="text.secondary">Shopify ID: {product.ids[marketPlace.connections.filter(c => c?.displayName?.toLowerCase().includes("shopify"))[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.filter(c => c?.type === "etsy")[0] && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "etsy")[0].displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.filter(c => c?.type === "etsy")[0].displayName] && <Typography variant="body2" color="text.secondary">Etsy ID: {product.ids[marketPlace.connections.filter(c => c?.type === "etsy")[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.filter(c => c?.type === "walmart")[0] && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "walmart")[0].displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.filter(c => c?.type === "walmart")[0].displayName] && <Typography variant="body2" color="text.secondary">Walmart Feed ID: {product.ids[marketPlace.connections.filter(c => c?.type === "walmart")[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
                                                     {header.length > 0 && (
                                                         <MarketPlaceList marketPlace={marketPlace} header={header} addMarketPlace={addMarketPlace} products={[product]} productLine={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} disableDefault={marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false} connections={connections} />
                                                     )}
                                                 </Box>
                                             ))}
                                         </Box>
-                                    )
-                                }
-                            )}
-                        </Box>
-                        <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} tiktokAuth={tiktokAuth} setTiktokAuth={setTiktokAuth} />
-                        <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
-                        <RemoveMarketPlaceModal open={openRemoveModal} setOpen={setOpenRemoveModal} mp={marketplace} removeMarketplaceConnection={removeMarketplaceConnection} />
+                                    );
+                                })}
+                            </>
+                        )}
                     </Box>
-                )}
+                </Box>
+
+                {/* Delete marketplace confirmation */}
+                <Dialog open={!!confirmDeleteMp} onClose={() => setConfirmDeleteMp(null)} maxWidth="xs" fullWidth>
+                    <DialogTitle sx={{ fontWeight: 700, color: "error.main" }}>Delete Marketplace</DialogTitle>
+                    <DialogContent>
+                        <Typography>Are you sure you want to permanently delete <strong>{confirmDeleteMp?.name}</strong>? This cannot be undone.</Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setConfirmDeleteMp(null)}>Cancel</Button>
+                        <Button variant="contained" color="error" onClick={() => deleteMarketplace(confirmDeleteMp)}>Delete</Button>
+                    </DialogActions>
+                </Dialog>
+
+                <AddMarketplaceModal open={addMarketPlace} setOpen={setAddMarketPlace} sizes={size} marketPlace={marketplace} setMarketPlace={setMarketplace} setDeleteModal={setDeleteModal} setDeleteTitle={setDeleteTitle} setDeleteImage={setDeleteImage} setOnDelete={setDeleteFunction} setMarketPlaces={setMarketPlaces} blank={blank} setBlank={setBlank} connections={connections} tiktokAuth={tiktokAuth} setTiktokAuth={setTiktokAuth} />
+                <DeleteModel open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} />
+                <RemoveMarketPlaceModal open={openRemoveModal} setOpen={setOpenRemoveModal} mp={marketplace} removeMarketplaceConnection={removeMarketplaceConnection} />
             </Box>
         </Modal>
-    )
+    );
 }
 export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products, productLine, disableDefault, connections }) => {
     let headers = {}
@@ -734,13 +744,15 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
     const [showSizeConverter, setShowSizeConverter] = useState(false);
     const [showColorFamily, setShowColorFamily] = useState(false);
     const [update, setUpdate] = useState(false);
-    const [header, setHeader] = useState("");
+    const [header, setHeader] = useState({});
+    const [newHeaderTexts, setNewHeaderTexts] = useState([]);
+
     useEffect(() => {
-        if (open ) {
+        if (open) {
             let sizeObj = {};
-            if(!marketPlace.sizeConverter) marketPlace.sizeConverter = {};
+            if (!marketPlace.sizeConverter) marketPlace.sizeConverter = {};
             for (let size of sizes) {
-                if(!marketPlace.sizeConverter[size]) sizeObj[size] = size;
+                if (!marketPlace.sizeConverter[size]) sizeObj[size] = size;
                 else sizeObj[size] = marketPlace.sizeConverter[size];
             }
             let m = { ...marketPlace };
@@ -757,264 +769,272 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                     m.colorFamilyConverter = colorConverter;
                     setMarketPlace({ ...m });
                 }
-            }
+            };
             getColors();
-            
+            setNewHeaderTexts((marketPlace.headers || []).map(() => ""));
         }
     }, [open]);
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "90%",
-        height: "90%",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-        overflowX: "auto",
-        overflowY: "none",
-    };
+
     const deleteCSV = (index) => {
         let m = { ...marketPlace };
         m.headers.splice(index, 1);
         setMarketPlace({ ...m });
     };
-    const removeHeader = ({index, hIndex}) => {
+
+    const removeHeader = ({ index, hIndex }) => {
         let m = { ...marketPlace };
         m.headers[index].splice(hIndex, 1);
         setMarketPlace({ ...m });
-    }
+    };
+
+    const addHeader = (index) => {
+        const text = (newHeaderTexts[index] || "").trim();
+        if (!text) return;
+        let m = { ...marketPlace };
+        m.headers[index].push({ id: text, Label: text });
+        setMarketPlace({ ...m });
+        setNewHeaderTexts(prev => { const t = [...prev]; t[index] = ""; return t; });
+    };
+
     const createMarketplace = async () => {
-        if (!marketPlace.name) {
-            return alert("Please enter a marketplace name");
-        }
-        let res = await axios.post("/api/admin/marketplaces", {marketPlace, blank});
-        if (res.data.error) {
-            return alert(res.data.msg);
-        }else {
-            setMarketPlaces([...res.data.marketPlaces]);
-            setOpen(false);
-        }
-    }
+        if (!marketPlace.name) return alert("Please enter a marketplace name");
+        let res = await axios.post("/api/admin/marketplaces", { marketPlace, blank });
+        if (res.data.error) return alert(res.data.msg);
+        setMarketPlaces([...res.data.marketPlaces]);
+        setOpen(false);
+    };
+
+    const toggleConnection = (id) => {
+        let m = { ...marketPlace };
+        const ids = (m.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
+        m.connections = ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id];
+        setMarketPlace({ ...m });
+    };
+
+    const connIds = (marketPlace.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
+
     return (
-        <Modal
-            open={open}
-            onClose={() => setOpen(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-        >
-            <Box sx={style}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
-                    <CloseIcon sx={{ color: "#780606" }} />
-                </Box>
-                <Container maxWidth="xl" sx={{ padding: "2%" }}>
-                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", padding: "1%" }}>
-                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", marginLeft: "auto", width: "50%" }}>
-                            <Typography id="modal-modal-title" variant="h4" component="h2">
-                                {marketPlace._id ? "Update Marketplace" : "Create Marketplace"}
-                            </Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", marginLeft: "auto", width: "50%" }}>
-                            <Button variant="outlined" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => {
-                                let m = { ...marketPlace };
-                                m.headers.push([]);
-                                setMarketPlace({ ...m });
-                            }}>Add CSV</Button>
-                        </Box>
-                    </Box>
-                    <Box sx={{ mt: 2 }}>
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, maxHeight: "92vh" } }}>
+            <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                <Typography variant="h6" fontWeight={700}>
+                    {marketPlace._id ? "Update Marketplace" : "Create Marketplace"}
+                </Typography>
+                <IconButton onClick={() => setOpen(false)} size="small">
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+            </DialogTitle>
+
+            <DialogContent sx={{ overflowY: "auto", py: 3 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+
+                    {/* Name */}
                     <TextField
-                            label="Marketplace Name"
-                            variant="outlined"
-                            fullWidth
-                            value={marketPlace.name}
-                            onChange={(e) => setMarketPlace({ ...marketPlace, name: e.target.value })}
-                        />
-                        <Typography variant="body1" sx={{ marginTop: "1%" }}>Select Connection:</Typography>
-                        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", overflowX: "auto", width: "100%" }}>
-                            {connections && connections.length > 0 && connections.map((connection) => {
-                                // connections may be strings or full objects depending on whether the parent mapped them
-                                const connIds = (marketPlace.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
-                                const selected = connIds.includes(connection._id.toString());
-                                return (
-                                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", border: "1px solid #ccc", background: selected ? "#1976d2" : "#fff", color: selected ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={connection._id} onClick={() => {
-                                        let m = { ...marketPlace };
-                                        const ids = (m.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
-                                        if (!ids.includes(connection._id.toString())) {
-                                            m.connections = [...ids, connection._id.toString()];
-                                        } else {
-                                            m.connections = ids.filter(id => id !== connection._id.toString());
-                                        }
-                                        setMarketPlace({ ...m });
-                                    }}>
-                                        <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{connection.displayName}</Typography>
-                                    </Box>
-                                );
-                            })}
-                            {tiktokAuth && tiktokAuth.map((auth) => {
-                                const connIds = (marketPlace.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
-                                const selected = connIds.includes(auth._id.toString());
-                                return (
-                                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", minHeight: "100%", border: "1px solid #ccc", background: selected ? "#1976d2" : "#fff", color: selected ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={auth._id} onClick={() => {
-                                        let m = { ...marketPlace };
-                                        const ids = (m.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
-                                        if (!ids.includes(auth._id.toString())) {
-                                            m.connections = [...ids, auth._id.toString()];
-                                        } else {
-                                            m.connections = ids.filter(id => id !== auth._id.toString());
-                                        }
-                                        setMarketPlace({ ...m });
-                                    }}>
-                                        <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{auth.seller_name}</Typography>
-                                    </Box>
-                                );
-                            })}
+                        label="Marketplace Name"
+                        fullWidth
+                        value={marketPlace.name || ""}
+                        onChange={(e) => setMarketPlace({ ...marketPlace, name: e.target.value })}
+                    />
+
+                    {/* Connections */}
+                    {((connections && connections.length > 0) || (tiktokAuth && tiktokAuth.length > 0)) && (
+                        <Box>
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, fontSize: "0.72rem" }}>
+                                Connections
+                            </Typography>
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                                {connections && connections.map((connection) => {
+                                    const selected = connIds.includes(connection._id.toString());
+                                    return (
+                                        <Chip
+                                            key={connection._id}
+                                            label={connection.displayName}
+                                            onClick={() => toggleConnection(connection._id.toString())}
+                                            color={selected ? "primary" : "default"}
+                                            variant={selected ? "filled" : "outlined"}
+                                            sx={{ fontWeight: selected ? 600 : 400 }}
+                                        />
+                                    );
+                                })}
+                                {tiktokAuth && tiktokAuth.map((auth) => {
+                                    const selected = connIds.includes(auth._id.toString());
+                                    return (
+                                        <Chip
+                                            key={auth._id}
+                                            label={auth.seller_name}
+                                            onClick={() => toggleConnection(auth._id.toString())}
+                                            color={selected ? "primary" : "default"}
+                                            variant={selected ? "filled" : "outlined"}
+                                            sx={{ fontWeight: selected ? 600 : 400 }}
+                                        />
+                                    );
+                                })}
+                            </Box>
                         </Box>
-                        {marketPlace.headers.map((header, index) => {
-                            return(
-                                <Card key={index} sx={{padding: "2%", margin: "1% 0%",}}>
-                                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: ".5%" }}>
-                                        <Box sx={{width: "60%" }}>
-                                            <TextField placeholder="New Header" id={"newHeader"} />
-                                            <Button variant="outlined" size="large" sx={{ margin: "1% 2%", color: "#0f0f0f" }} onClick={() => {
-                                                let m = { ...marketPlace };
-                                                m.headers[index].push({ id: document.getElementById("newHeader").value, Label: document.getElementById("newHeader").value });
-                                                setMarketPlace({ ...m });
-                                                document.getElementById("newHeader").value = "";
-                                            }}>Add Header</Button>
-                                            <FormControlLabel control={<Checkbox checked={marketPlace.hasProductLine ? marketPlace.hasProductLine[index] : false} onChange={(event)=>{
-                                                let m = { ...marketPlace };
-                                                if(!m.hasProductLine) m.hasProductLine = [];
-                                                m.hasProductLine[index] = event.target.checked;
-                                                setMarketPlace({ ...m });
-                                            }} />} label="Add Product Line" />
-                                            <FormControlLabel control={<Checkbox checked={marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false} onChange={(event) => {
-                                                console.log("disableProductDefaults", marketPlace.disableProductDefaults, index, event.target.checked)
-                                                let m = { ...marketPlace };
-                                                if (!m.disableProductDefaults) m.disableProductDefaults = [];
-                                                m.disableProductDefaults[index] = event.target.checked;
-                                                setMarketPlace({ ...m });
-                                            }} />} label="Disable Product Defaults" />
-                                        </Box>
-                                         <IconButton onClick={() => {
-                                            setDeleteImage(index);
-                                            setOnDelete({onDelete: deleteCSV});
-                                            setDeleteTitle("Are you sure you want to delete this CSV?");
-                                           setDeleteModal(true);
-                                        }}>
-                                            <DeleteIcon sx={{ color: "#780606" }} />
-                                        </IconButton>
-                                    </Box>
-                                    <Box sx={{ maxHeight: "60vh", overflowY: "auto", marginTop: "2%", display: "flex", flexDirection: "row", alignItems: "center" }}>
-                                        {header.map((header, hIndex) => (
-                                            <Box key={hIndex} sx={{ minWidth: "30%" }}>
-                                                <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", alignItems: "center", padding: "1%", border: "1px solid #eee" }}>
-                                                    <IconButton>
-                                                        <EditNoteIcon sx={{ color: "#0F0F0F" }}  onClick={() => {
-                                                            setUpdate(true);
-                                                            setHeader({ label: header.Label, index, hIndex});
-                                                        }}/>
+                    )}
+
+                    {/* CSV Groups */}
+                    {(marketPlace.headers || []).map((headerGroup, index) => (
+                        <Card key={index} variant="outlined" sx={{ borderRadius: 2 }}>
+                            {/* Card header */}
+                            <Box sx={{ px: 2, py: 1.5, background: "rgba(0,0,0,0.025)", borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+                                <Typography variant="subtitle1" fontWeight={600}>CSV Group {index + 1}</Typography>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                    <FormControlLabel
+                                        control={<Checkbox size="small" checked={marketPlace.hasProductLine ? Boolean(marketPlace.hasProductLine[index]) : false} onChange={(e) => {
+                                            let m = { ...marketPlace };
+                                            if (!m.hasProductLine) m.hasProductLine = [];
+                                            m.hasProductLine[index] = e.target.checked;
+                                            setMarketPlace({ ...m });
+                                        }} />}
+                                        label={<Typography variant="body2">Product Line</Typography>}
+                                        sx={{ mr: 0 }}
+                                    />
+                                    <FormControlLabel
+                                        control={<Checkbox size="small" checked={marketPlace.disableProductDefaults ? Boolean(marketPlace.disableProductDefaults[index]) : false} onChange={(e) => {
+                                            let m = { ...marketPlace };
+                                            if (!m.disableProductDefaults) m.disableProductDefaults = [];
+                                            m.disableProductDefaults[index] = e.target.checked;
+                                            setMarketPlace({ ...m });
+                                        }} />}
+                                        label={<Typography variant="body2">Disable Defaults</Typography>}
+                                        sx={{ mr: 0 }}
+                                    />
+                                    <IconButton size="small" color="error" onClick={() => {
+                                        setDeleteImage(index);
+                                        setOnDelete({ onDelete: deleteCSV });
+                                        setDeleteTitle("Are you sure you want to delete this CSV group?");
+                                        setDeleteModal(true);
+                                    }}>
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                </Box>
+                            </Box>
+
+                            <Box sx={{ p: 2 }}>
+                                {/* Add header input */}
+                                <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                                    <TextField
+                                        size="small"
+                                        placeholder="New header name..."
+                                        value={newHeaderTexts[index] || ""}
+                                        onChange={(e) => setNewHeaderTexts(prev => { const t = [...prev]; t[index] = e.target.value; return t; })}
+                                        onKeyDown={(e) => { if (e.key === "Enter") addHeader(index); }}
+                                        sx={{ flex: 1 }}
+                                    />
+                                    <Button variant="contained" size="small" onClick={() => addHeader(index)} sx={{ whiteSpace: "nowrap" }}>
+                                        Add Header
+                                    </Button>
+                                </Box>
+
+                                {headerGroup.length === 0 && (
+                                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
+                                        No headers yet. Add one above.
+                                    </Typography>
+                                )}
+
+                                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                                    {headerGroup.map((h, hIndex) => (
+                                        <Box key={hIndex} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1.5, overflow: "hidden" }}>
+                                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1.5, py: 0.75, background: "rgba(0,0,0,0.02)" }}>
+                                                <Typography variant="body2" fontWeight={600} sx={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={h.Label}>
+                                                    {h.Label}
+                                                </Typography>
+                                                <Box sx={{ display: "flex", flexShrink: 0 }}>
+                                                    <IconButton size="small" onClick={() => { setUpdate(true); setHeader({ label: h.Label, index, hIndex }); }}>
+                                                        <EditNoteIcon fontSize="small" />
                                                     </IconButton>
-                                                    <Typography variant="body1" sx={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={header.Label}>{header.Label}</Typography>
-                                                    <IconButton onClick={() => {
+                                                    <IconButton size="small" color="error" onClick={() => {
                                                         setDeleteImage({ index, hIndex });
                                                         setOnDelete({ onDelete: removeHeader });
                                                         setDeleteTitle("Are you sure you want to remove this header?");
                                                         setDeleteModal(true);
-                                                        
                                                     }}>
-                                                        <DeleteIcon sx={{ color: "#780606" }} />
+                                                        <DeleteIcon fontSize="small" />
                                                     </IconButton>
                                                 </Box>
+                                            </Box>
+                                            <Box sx={{ px: 1.5, py: 1, display: "flex", flexDirection: "column", gap: 1 }}>
                                                 {marketPlace.hasProductLine && marketPlace.hasProductLine[index] && (
-                                                    <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", alignItems: "center", padding: "1%", border: "1px solid #eee" }}>
-                                                        <TextField
-                                                            label="Default Value"
-                                                            variant="outlined"
-                                                            fullWidth
-                                                            value={blank && blank.marketPlaceOverrides && blank.marketPlaceOverrides[marketPlace.name] && blank.marketPlaceOverrides[marketPlace.name][header.id] ? blank.marketPlaceOverrides[marketPlace.name][header.id] : marketPlace.productDefaultValues ? marketPlace.productDefaultValues[header.id] : ""}
-                                                            onChange={(e) => {
-                                                                let m = { ...marketPlace };
-                                                                if (blank) {
-                                                                    let b = { ...blank };
-                                                                    if (!b.marketPlaceOverrides) {
-                                                                        b.marketPlaceOverrides = {};
-                                                                    }
-                                                                    if (!b.marketPlaceOverrides[marketPlace.name]) {
-                                                                        b.marketPlaceOverrides[marketPlace.name] = {};
-                                                                    }
-                                                                    b.marketPlaceOverrides[marketPlace.name][header.id] = e.target.value;
-                                                                    setBlank(b);
-                                                                } else {
-                                                                    if (!m.productDefaultValues) {
-                                                                        m.productDefaultValues = {};
-                                                                    }
-                                                                    m.productDefaultValues[header.id] = e.target.value;
-                                                                    setMarketPlace({ ...m });
-                                                                }
-                                                            }} />
-                                                    </Box>
-                                                )}
-                                                <Box sx={{ display: "flex", minWidth: "100%", justifyContent: "space-between", alignItems: "center", padding: "1%", border: "1px solid #eee" }}>
                                                     <TextField
-                                                        label="Default Value"
-                                                        variant="outlined"
+                                                        label="Product Line Default"
+                                                        size="small"
                                                         fullWidth
-                                                        value={blank && blank.marketPlaceOverrides && blank.marketPlaceOverrides[marketPlace.name] && blank.marketPlaceOverrides[marketPlace.name][header.id] ? blank.marketPlaceOverrides[marketPlace.name][header.id]: marketPlace.defaultValues ? marketPlace.defaultValues[header.id] : ""}
+                                                        value={blank?.marketPlaceOverrides?.[marketPlace.name]?.[h.id] ?? (marketPlace.productDefaultValues?.[h.id] ?? "")}
                                                         onChange={(e) => {
-                                                            let m = { ...marketPlace };
-                                                            if(blank) {
+                                                            if (blank) {
                                                                 let b = { ...blank };
-                                                                if(!b.marketPlaceOverrides) {
-                                                                    b.marketPlaceOverrides = {};
-                                                                }
-                                                                if(!b.marketPlaceOverrides[marketPlace.name]) {
-                                                                    b.marketPlaceOverrides[marketPlace.name] = {};
-                                                                }
-                                                                b.marketPlaceOverrides[marketPlace.name][header.id] = e.target.value;
+                                                                if (!b.marketPlaceOverrides) b.marketPlaceOverrides = {};
+                                                                if (!b.marketPlaceOverrides[marketPlace.name]) b.marketPlaceOverrides[marketPlace.name] = {};
+                                                                b.marketPlaceOverrides[marketPlace.name][h.id] = e.target.value;
                                                                 setBlank(b);
-                                                            }else {
-                                                                if(!m.defaultValues) {
-                                                                    m.defaultValues = {};
-                                                                }
-                                                                m.defaultValues[header.id] = e.target.value;
+                                                            } else {
+                                                                let m = { ...marketPlace };
+                                                                if (!m.productDefaultValues) m.productDefaultValues = {};
+                                                                m.productDefaultValues[h.id] = e.target.value;
                                                                 setMarketPlace({ ...m });
                                                             }
-                                                        }} />
-                                                </Box>
+                                                        }}
+                                                    />
+                                                )}
+                                                <TextField
+                                                    label="Default Value"
+                                                    size="small"
+                                                    fullWidth
+                                                    value={blank?.marketPlaceOverrides?.[marketPlace.name]?.[h.id] ?? (marketPlace.defaultValues?.[h.id] ?? "")}
+                                                    onChange={(e) => {
+                                                        if (blank) {
+                                                            let b = { ...blank };
+                                                            if (!b.marketPlaceOverrides) b.marketPlaceOverrides = {};
+                                                            if (!b.marketPlaceOverrides[marketPlace.name]) b.marketPlaceOverrides[marketPlace.name] = {};
+                                                            b.marketPlaceOverrides[marketPlace.name][h.id] = e.target.value;
+                                                            setBlank(b);
+                                                        } else {
+                                                            let m = { ...marketPlace };
+                                                            if (!m.defaultValues) m.defaultValues = {};
+                                                            m.defaultValues[h.id] = e.target.value;
+                                                            setMarketPlace({ ...m });
+                                                        }
+                                                    }}
+                                                />
                                             </Box>
-                                        ))}
-                                    </Box>
-                                </Card>
-                            )
-                        })}
-                        <Card sx={{ margin: "1% 0%" }}>
-                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: ".5%"}}>
-                                <Typography variant="h6" sx={{ marginBottom: "1%", padding: "2%" }}>Color Family Converter</Typography>
-                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", padding: ".5% 2%", cursor: "pointer", "&:hover": { opacity: .6 } }}>
-                                    {showColorFamily ? (
-                                        <KeyboardArrowUpIcon onClick={() => setShowColorFamily(false)} />
-                                    ) : (
-                                        <KeyboardArrowDownIcon onClick={() => setShowColorFamily(true)} />
-                                    )}
+                                        </Box>
+                                    ))}
                                 </Box>
                             </Box>
-                            {showColorFamily && (
-                                <Container sx={{ marginTop: "2%" }}>
-                                    <Box sx={{ display: "flex", flexDirection: "column", gap: "1%", justifyContent: "center", alignItems: "center", padding: "1%" }}>
-                                        {Object.keys(marketPlace.colorFamilyConverter ? marketPlace.colorFamilyConverter : {}).map((colorItem, index) => (
-                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                        </Card>
+                    ))}
+
+                    <Button
+                        variant="outlined"
+                        onClick={() => {
+                            let m = { ...marketPlace };
+                            m.headers.push([]);
+                            setMarketPlace({ ...m });
+                            setNewHeaderTexts(prev => [...prev, ""]);
+                        }}
+                        sx={{ alignSelf: "flex-start" }}
+                    >
+                        + Add CSV Group
+                    </Button>
+
+                    {/* Color Family Converter */}
+                    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                        <Box
+                            sx={{ px: 2, py: 1.5, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", userSelect: "none" }}
+                            onClick={() => setShowColorFamily(v => !v)}
+                        >
+                            <Typography variant="subtitle1" fontWeight={600}>Color Family Converter</Typography>
+                            {showColorFamily ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                        </Box>
+                        {showColorFamily && (
+                            <Box sx={{ px: 2, pb: 2 }}>
+                                <Grid2 container spacing={1.5}>
+                                    {Object.keys(marketPlace.colorFamilyConverter || {}).map((colorItem) => (
+                                        <Grid2 size={{ xs: 12, sm: 6 }} key={colorItem}>
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <TextField size="small" value={colorItem} disabled sx={{ flex: 1 }} />
+                                                <Typography color="text.secondary" sx={{ flexShrink: 0 }}>→</Typography>
                                                 <TextField
-                                                    variant="outlined"
-                                                    size="small"
-                                                    value={colorItem}
-                                                    disabled
-                                                />
-                                                <Box sx={{ padding: "0 10px", fontSize: "14px" }}>:</Box>
-                                                <TextField
-                                                    variant="outlined"
                                                     size="small"
                                                     value={marketPlace.colorFamilyConverter[colorItem]}
                                                     onChange={(e) => {
@@ -1022,39 +1042,34 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                                         m.colorFamilyConverter[colorItem] = e.target.value;
                                                         setMarketPlace({ ...m });
                                                     }}
+                                                    sx={{ flex: 1 }}
                                                 />
                                             </Box>
-                                        ))}
-                                    </Box>
-                                </Container>
-                            )}
-                            
-                        </Card>
-                        <Card>
-                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: ".5%" }}>
-                                <Typography variant="h6" sx={{ marginBottom: "1%", padding: "2%" }}>Size Name Converter</Typography>
-                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", padding: ".5% 2%", cursor: "pointer", "&:hover": { opacity: .6 } }}>
-                                    {showSizeConverter ? (
-                                        <KeyboardArrowUpIcon onClick={() => setShowSizeConverter(false)} />
-                                    ) : (
-                                        <KeyboardArrowDownIcon onClick={() => setShowSizeConverter(true)} />
-                                    )}
-                                </Box>
+                                        </Grid2>
+                                    ))}
+                                </Grid2>
                             </Box>
-                            {showSizeConverter && (
-                                <Container sx={{ marginTop: "2%" }}>
-                                    <Box sx={{ display: "flex", flexDirection: "column", gap: "1%", justifyContent: "center", alignItems: "center", padding: "1%" }}>
-                                        {Object.keys(marketPlace.sizeConverter ? marketPlace.sizeConverter : {}).map((sizeItem, index) => (
-                                            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                        )}
+                    </Card>
+
+                    {/* Size Name Converter */}
+                    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                        <Box
+                            sx={{ px: 2, py: 1.5, display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", userSelect: "none" }}
+                            onClick={() => setShowSizeConverter(v => !v)}
+                        >
+                            <Typography variant="subtitle1" fontWeight={600}>Size Name Converter</Typography>
+                            {showSizeConverter ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                        </Box>
+                        {showSizeConverter && (
+                            <Box sx={{ px: 2, pb: 2 }}>
+                                <Grid2 container spacing={1.5}>
+                                    {Object.keys(marketPlace.sizeConverter || {}).map((sizeItem) => (
+                                        <Grid2 size={{ xs: 12, sm: 6 }} key={sizeItem}>
+                                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                                <TextField size="small" value={sizeItem} disabled sx={{ flex: 1 }} />
+                                                <Typography color="text.secondary" sx={{ flexShrink: 0 }}>→</Typography>
                                                 <TextField
-                                                    variant="outlined"
-                                                    size="small"
-                                                    value={sizeItem}
-                                                    disabled
-                                                />
-                                                <Box sx={{ padding: "0 10px", fontSize: "14px" }}>:</Box>
-                                                <TextField
-                                                    variant="outlined"
                                                     size="small"
                                                     value={marketPlace.sizeConverter[sizeItem]}
                                                     onChange={(e) => {
@@ -1062,75 +1077,64 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                                         m.sizeConverter[sizeItem] = e.target.value;
                                                         setMarketPlace({ ...m });
                                                     }}
+                                                    sx={{ flex: 1 }}
                                                 />
                                             </Box>
-                                        ))}
-                                    </Box>
-                                </Container>
-                            )}
+                                        </Grid2>
+                                    ))}
+                                </Grid2>
+                            </Box>
+                        )}
+                    </Card>
 
-                        </Card>
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: "2%" }}>
-                            <Button variant="contained" color="primary" onClick={() => {
-                                createMarketplace();
-                            }}>
-                                {marketPlace._id ? "Update Marketplace" : "Create Marketplace"}
-                            </Button>
-                        </Box>
-                    </Box>
-                </Container>
-                <UpdateModal open={update} setOpen={setUpdate} ori={header} marketPlace={marketPlace} setMarketPlace={setMarketPlace} />
-            </Box>
-        </Modal>
-    )
-}
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 2, borderTop: "1px solid", borderColor: "divider", gap: 1 }}>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="contained" onClick={createMarketplace} sx={{ minWidth: 180 }}>
+                    {marketPlace._id ? "Update Marketplace" : "Create Marketplace"}
+                </Button>
+            </DialogActions>
+
+            <UpdateModal open={update} setOpen={setUpdate} ori={header} marketPlace={marketPlace} setMarketPlace={setMarketPlace} />
+        </Dialog>
+    );
+};
 
 function UpdateModal({ open, setOpen, ori, marketPlace, setMarketPlace }) {
-    const [loading, setLoading] = useState(false);
-    const [newHeader, setNewHeader] = useState(ori.label);
-    const updateHeader = async () => {
+    const [newHeader, setNewHeader] = useState("");
+
+    useEffect(() => {
+        if (open) setNewHeader(ori?.label || "");
+    }, [open, ori]);
+
+    const updateHeader = () => {
+        if (!newHeader.trim()) return;
         let m = { ...marketPlace };
-        m.headers[ori.index][ori.hIndex]= { id: newHeader, Label: newHeader };
+        m.headers[ori.index][ori.hIndex] = { id: newHeader.trim(), Label: newHeader.trim() };
         setMarketPlace({ ...m });
-        setNewHeader("");
-        setLoading(false);
         setOpen(false);
-        
-    }
+    };
 
     return (
-        <Modal open={open} onClose={() => setOpen(false)}>
-            <Box sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 500,
-                bgcolor: 'background.paper',
-                boxShadow: 24,
-                p: 4,
-                borderRadius: 2
-            }}>
-                <Typography variant="h6" component="h2" gutterBottom>
-                    Update Header Name
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    <TextField
-                        label="New Header Name"
-                        id="newHeader"
-                        value={newHeader}
-                        onChange={(e) => setNewHeader(e.target.value)}
-                    />
-                    <Box>
-                        <Button variant="contained" color="error" disabled={loading} onClick={() => updateHeader()}>
-                            {loading ? "Updating..." : "Update"}
-                        </Button>
-                        <Button variant="outlined" onClick={() => setOpen(false)} startIcon={<CloseIcon />}>
-                            Cancel
-                        </Button>
-                    </Box>
-                </Box>
-            </Box>
-        </Modal>
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+            <DialogTitle sx={{ pb: 1 }}>Rename Header</DialogTitle>
+            <DialogContent>
+                <TextField
+                    label="Header Name"
+                    fullWidth
+                    autoFocus
+                    value={newHeader}
+                    onChange={(e) => setNewHeader(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") updateHeader(); }}
+                    sx={{ mt: 1 }}
+                />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="contained" onClick={updateHeader}>Save</Button>
+            </DialogActions>
+        </Dialog>
     );
 }

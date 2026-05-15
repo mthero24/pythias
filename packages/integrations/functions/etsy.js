@@ -85,7 +85,7 @@ export const generateRedirectURI = (baseURL) => {
 
     
     const clientId = process.env.etsyApiKey?.split(":")[0];
-    return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=http://localhost:3006/api/admin/integrations/etsy/oauth/redirect&scope=email_r%20transactions_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=${clientId}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+    return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=http://localhost:3006/api/admin/integrations/etsy/oauth/redirect&scope=email_r%20address_r%20transactions_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=${clientId}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
     //transactions_r%20email_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w
 };
 const base64URLEncode = (str) =>
@@ -109,6 +109,25 @@ export const uploadListingImage = async (
     };
     let url = `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/listings/${listing_id}/images`;
     let response = await axios.post(url, formData, requestOptions).catch((err) => { console.log(err.response.data) });
+    return response;
+};
+
+const uploadListingVideo = async (credentials, listing_id, videoUrl) => {
+    const videoResponse = await axios.get(videoUrl, { responseType: "arraybuffer" });
+    const videoBuffer = Buffer.from(videoResponse.data);
+    const filename = videoUrl.split("/").pop().split("?")[0] || "video.mp4";
+    const formData = new FormData();
+    formData.append("name", filename);
+    formData.append("video", videoBuffer, { filename, contentType: "video/mp4" });
+    const requestOptions = {
+        headers: {
+            "x-api-key": `${process.env.etsyApiKey}`,
+            Authorization: `Bearer ${credentials.apiKey}`,
+            ...formData.getHeaders(),
+        },
+    };
+    let url = `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/listings/${listing_id}/videos`;
+    let response = await axios.post(url, formData, requestOptions).catch((err) => { console.log(err?.response?.data) });
     return response;
 };
 
@@ -520,6 +539,27 @@ const updateListing = async (
         },
     };
     let url = `https://openapi.etsy.com/v3/application/listings/${listing_id}/inventory?legacy=false`;
+
+    try {
+        const imgRes = await axios.get(
+            `https://openapi.etsy.com/v3/application/listings/${listing_id}/images`,
+            { headers: requestOptions.headers }
+        );
+        for (let img of (imgRes.data.results || [])) {
+            try {
+                await axios.delete(
+                    `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/listings/${listing_id}/images/${img.listing_image_id}`,
+                    { headers: requestOptions.headers }
+                );
+                await new Promise(r => setTimeout(r, 300));
+            } catch (e) {
+                console.error("Failed to delete listing image:", e.message);
+            }
+        }
+    } catch (e) {
+        console.error("Failed to fetch existing listing images:", e.message);
+    }
+
     let i = 0;
     let inventory = [];
     let colorImageCompleted = [];
@@ -718,7 +758,7 @@ const updateListing = async (
             inventory.push(inventoryItem);
         }
     }
-    if (variants[0].blank.sizeGuide.images[0]) {
+    if (variants[0].blank.sizeGuide.images[0] && i > 0) {
         i++;
         try {
             // Get image buffer using axios
@@ -768,6 +808,16 @@ const updateListing = async (
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+
+    const videoUrl = product.blanks?.[0]?.videos?.[0];
+    if (videoUrl) {
+        try {
+            await uploadListingVideo(credentials, listing_id, videoUrl);
+        } catch (e) {
+            console.error("Failed to upload listing video:", e.message);
+        }
+    }
+
     inventory.sort(
         (a, b) =>
             a.property_values[0].value_ids[0] - b.property_values[0].value_ids[0]
@@ -1004,56 +1054,74 @@ const buildMarketplaceFulfillmentItems = async (sku, quantity, order) => {
     return items
 }
 export const fetchOrders = async (credentials) => {
-
     try {
         let refresh = await refreshToken(credentials.refreshToken);
         credentials.apiKey = refresh.access_token;
         credentials.refreshToken = refresh.refresh_token;
         await credentials.save();
-        let receipts = await getShopReceipts(
-            credentials
-        );
-    for (let etsy_order of receipts.results) {
-        try {
-          if (etsy_order.status == "Canceled") {
-            continue;
-          }
-          let order = await Order.findOne({poNumber: etsy_order["receipt_id"]})
-          if (order) {
-            // let trackingDetails = getOrderTrackingDetails(order);
-            // if (order && trackingDetails?.trackingNumber) {
-            //   await etsyAPI.createReceiptShipment(
-            //     shop.shop_id,
-            //     etsy_order.receipt_id,
-            //     trackingDetails,
-            //     credentials.accessToken
-            //   );
-            // }
-          } else {
-            let items = []
-            let order = await new Order({poNumber: etsy_order.receipt_id, shippingAddress: {
-                    name: etsy_order["name"],
-                    address1: etsy_order["first_line"]? etsy_order["first_line"]: "not provided",
-                    address2: etsy_order["second_line"],
-                    city: etsy_order["city"]? etsy_order["city"]: "not provided",
-                    zip: etsy_order["zip"]?  etsy_order["zip"]: "not provided",
-                    state: etsy_order["state"]? etsy_order["state"]: "not provided",
-                    country: etsy_order["country_iso"]? etsy_order["country_iso"]: "not provided"
-                }, status: "Paid", marketplace: "etsy", shippingType: "Standard", orderId: etsy_order.receipt_id})
-            for(let trans of etsy_order.transactions ){
-                let itms = await buildMarketplaceFulfillmentItems(trans.sku, trans.quantity, order)
-                items = [...items, ...itms]
+        let receipts = await getShopReceipts(credentials);
+        for (let etsy_order of receipts.results) {
+            try {
+                if (etsy_order.status == "Canceled") continue;
+                const receiptId = etsy_order.receipt_id.toString();
+                let order = await Order.findOne({ poNumber: receiptId });
+                if (!order) {
+                    let items = [];
+                    order = new Order({
+                        poNumber: receiptId,
+                        orderId: receiptId,
+                        shippingAddress: {
+                            name: etsy_order["name"],
+                            address1: etsy_order["first_line"] || "not provided",
+                            address2: etsy_order["second_line"],
+                            city: etsy_order["city"] || "not provided",
+                            zip: etsy_order["zip"] || "not provided",
+                            state: etsy_order["state"] || "not provided",
+                            country: etsy_order["country_iso"] || "not provided",
+                        },
+                        status: "Paid",
+                        marketplace: "etsy",
+                        shippingType: "Standard",
+                        paid: true,
+                    });
+                    for (let trans of etsy_order.transactions) {
+                        let itms = await buildMarketplaceFulfillmentItems(trans.sku, trans.quantity, order);
+                        items = [...items, ...itms];
+                    }
+                    order.items = items;
+                    await order.save();
+                }
+            } catch (err) {
+                console.log(err);
             }
-            order.items = items
-            await order.save()
-          }
-        } catch (err) {
-          console.log(err);
         }
-      }
     } catch (err) {
-       console.log(err);
+        console.log(err);
     }
+};
 
-//   console.log("complete");
+export const createReceiptShipment = async (credentials, receiptId, trackingCode, carrier) => {
+    const carrierMap = { usps: "usps", ups: "ups", fedex: "fedex", dhl: "dhl", ontrac: "ontrac" };
+    const carrier_name = carrierMap[carrier?.toLowerCase()] || carrier;
+    try {
+        let refresh = await refreshToken(credentials.refreshToken);
+        credentials.apiKey = refresh.access_token;
+        credentials.refreshToken = refresh.refresh_token;
+        await credentials.save();
+    } catch (e) {
+        console.error("Failed to refresh Etsy token for shipment:", e.message);
+    }
+    const url = `https://openapi.etsy.com/v3/application/shops/${credentials.shopId}/receipts/${receiptId}/tracking`;
+    const response = await axios.post(url, {
+        tracking_code: trackingCode,
+        carrier_name,
+        send_bcc: false,
+        send_notification: true,
+    }, {
+        headers: {
+            "x-api-key": `${process.env.etsyApiKey}`,
+            Authorization: `Bearer ${credentials.apiKey}`,
+        },
+    }).catch(err => console.error("Etsy createReceiptShipment error:", err?.response?.data));
+    return response?.data;
 };

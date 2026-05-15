@@ -1,4 +1,5 @@
-import { Box, Grid2, TextField, Modal, Button, Typography, Card, CardContent, Chip, Stack, IconButton, Paper, Divider, FormControlLabel, Checkbox, List, CircularProgress, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
+import { Box, Grid2, TextField, Modal, Button, Typography, Card, CardContent, Chip, Stack, IconButton, Paper, Divider, FormControlLabel, Checkbox, List, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
+import LoaderOverlay from "../../reusable/LoaderOverlay";
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import axios from "axios";
@@ -255,7 +256,8 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                             setOpen(false)
                             setLoading(false)
                         }
-                    }}>{loading ? <Box sx={{ display: "flex", alignItems: "center", gap: "2" }}><CircularProgress color="inherit" size={24} /> <Typography variant="body2">Saving ...  </Typography></Box> : "Create"}</Button>
+                    }}>{loading ? "Saving..." : "Create"}</Button>
+                    {loading && <LoaderOverlay />}
                 </Grid2>
             </Grid2>}
             {preview && <Box sx={{ display: "flex", justifyContent: "flex-end", padding: "2%" }}><Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setPreview(false); setStage("blanks"); setProducts([]); setUpcs([]); setImages([]); setSizes([]); setColors([]); setOpen(false) }}>Close</Button></Box>}
@@ -633,9 +635,8 @@ export const ProductImageCarosel = ({ productImages, defaultColor }) => {
             <Box sx={{ position: "relative", width: "100%", maxWidth: 480, aspectRatio: "1 / 1", backgroundColor: "background.default", borderRadius: 2, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <RetryImage onLoad={() => setLoading(false)} src={productImages[image]?.image} alt={productImages[image]?.sku} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                 {loading && (
-                    <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 1, background: "rgba(255,255,255,0.7)" }}>
-                        <CircularProgress color="secondary" size={28} />
-                        <Typography color="text.primary">Loading…</Typography>
+                    <Box sx={{ position: "absolute", inset: 0, background: "rgba(20,24,36,0.55)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <img src="/logoPythias-400.png" alt="Loading" style={{ width: 80, height: "auto", animation: "lo-pulse 2.2s ease-in-out infinite", filter: "drop-shadow(0 4px 16px rgba(212,175,55,0.5))" }} />
                     </Box>
                 )}
                 <IconButton onClick={() => { setLoading(true); setImage(image - 1 < 0 ? productImages.length - 1 : image - 1) }} sx={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", backgroundColor: "rgba(255,255,255,0.85)", "&:hover": { backgroundColor: "rgba(255,255,255,1)" } }}>

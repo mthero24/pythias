@@ -1,7 +1,9 @@
 import {Items, Inventory, ProductInventory} from "@pythias/mongo";
 
-export const buildLabelData = async (item, i, poNumber, opts={},) => {
-    let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
+export const buildLabelData = async (item, i, poNumber, opts={}, totalQuantity) => {
+    if (totalQuantity == null) {
+      totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
+    }
     if(!item.inventory) item.inventory = {};
     if(!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
     if(!item.inventory.inventory) {

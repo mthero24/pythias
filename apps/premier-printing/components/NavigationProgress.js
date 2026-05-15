@@ -6,12 +6,10 @@ export function NavigationProgress() {
     const [active, setActive] = useState(false);
     const pathname = usePathname();
 
-    // Hide bar when new page renders
     useEffect(() => {
         setActive(false);
     }, [pathname]);
 
-    // Show bar immediately on any internal link click
     useEffect(() => {
         const handle = (e) => {
             const anchor = e.target.closest("a[href]");
@@ -25,39 +23,116 @@ export function NavigationProgress() {
         return () => document.removeEventListener("click", handle);
     }, []);
 
+    useEffect(() => {
+        const on  = () => setActive(true);
+        const off = () => setActive(false);
+        window.addEventListener("pythias:loader:start", on);
+        window.addEventListener("pythias:loader:stop",  off);
+        window.addEventListener("beforeunload", on);
+        return () => {
+            window.removeEventListener("pythias:loader:start", on);
+            window.removeEventListener("pythias:loader:stop",  off);
+            window.removeEventListener("beforeunload", on);
+        };
+    }, []);
+
     if (!active) return null;
 
     return (
         <>
             <style>{`
-                @keyframes nav-bar {
-                    0%   { width: 0%;  opacity: 1; }
-                    60%  { width: 75%; opacity: 1; }
-                    100% { width: 88%; opacity: 1; }
+                @keyframes pp-fade-in {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
                 }
-                @keyframes nav-shimmer {
-                    0%   { left: -40%; }
-                    100% { left: 120%; }
+                @keyframes pp-glisten {
+                    0%   { left: -80%; }
+                    100% { left: 140%; }
                 }
-                .pythias-nav-bar {
+                @keyframes pp-pulse {
+                    0%, 100% { opacity: 0.9;  transform: scale(1);    }
+                    50%       { opacity: 1;    transform: scale(1.04); }
+                }
+                @keyframes pp-bar {
+                    0%   { width: 0%;  }
+                    60%  { width: 72%; }
+                    100% { width: 88%; }
+                }
+                .pp-overlay {
                     position: fixed;
-                    top: 0; left: 0;
-                    height: 3px;
-                    background: linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1);
+                    inset: 0;
                     z-index: 99999;
-                    animation: nav-bar 2.5s cubic-bezier(0.1, 0.4, 0.3, 1) forwards;
-                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(20, 24, 36, 0.88);
+                    backdrop-filter: blur(8px);
+                    -webkit-backdrop-filter: blur(8px);
+                    animation: pp-fade-in 150ms ease forwards;
                 }
-                .pythias-nav-shimmer {
+                .pp-logo-wrap {
+                    position: relative;
+                    display: inline-block;
+                    animation: pp-pulse 2.2s ease-in-out infinite;
+                    filter: drop-shadow(0 6px 40px rgba(212,175,55,0.30));
+                }
+                .pp-logo {
+                    width: 220px;
+                    height: auto;
+                    display: block;
+                }
+                .pp-glisten-wrap {
                     position: absolute;
-                    top: 0; height: 100%;
-                    width: 40%;
-                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
-                    animation: nav-shimmer 1.2s ease-in-out infinite;
+                    inset: 0;
+                    overflow: hidden;
+                    pointer-events: none;
+                }
+                .pp-glisten-beam {
+                    position: absolute;
+                    top: -30%;
+                    width: 50%;
+                    height: 160%;
+                    background: linear-gradient(
+                        105deg,
+                        transparent 25%,
+                        rgba(255,255,255,0.0) 38%,
+                        rgba(255,255,255,0.80) 50%,
+                        rgba(255,255,255,0.0) 62%,
+                        transparent 75%
+                    );
+                    animation: pp-glisten 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                    animation-delay: 0.4s;
+                }
+                .pp-bar-track {
+                    position: fixed;
+                    bottom: 0; left: 0; right: 0;
+                    height: 3px;
+                    background: rgba(212,175,55,0.15);
+                    z-index: 100000;
+                }
+                .pp-bar-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #b8860b, #d4af37, #f0d060, #d4af37);
+                    animation: pp-bar 2.8s cubic-bezier(0.1, 0.4, 0.3, 1) forwards;
+                    border-radius: 0 2px 2px 0;
                 }
             `}</style>
-            <div className="pythias-nav-bar">
-                <div className="pythias-nav-shimmer" />
+
+            <div className="pp-overlay">
+                <div className="pp-logo-wrap">
+                    <img
+                        src="/logoPythias-400.png"
+                        alt="Loading…"
+                        className="pp-logo"
+                    />
+                    <div className="pp-glisten-wrap">
+                        <div className="pp-glisten-beam" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="pp-bar-track">
+                <div className="pp-bar-fill" />
             </div>
         </>
     );

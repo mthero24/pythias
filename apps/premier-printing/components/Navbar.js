@@ -40,6 +40,7 @@ import StorageIcon from "@mui/icons-material/Storage";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 
 const DRAWER_WIDTH = 268;
 
@@ -63,8 +64,9 @@ const NAV_SECTIONS = [
       { label: "Colors",          href: "/admin/colors",    icon: <PaletteIcon fontSize="small" />,          showCSV: false },
       { label: "Edit Data",       href: "/admin/edit-data", icon: <EditIcon fontSize="small" />,             showCSV: false },
       { label: "Converters",      href: "/admin/converters",icon: <SyncAltIcon fontSize="small" />,         showCSV: false },
-      { label: "Marketplace Data",href: "/marketplaces",    icon: <StorefrontIcon fontSize="small" />,       showCSV: false },
-      { label: "Pricing",         href: "/admin/pricing",   icon: <AttachMoneyIcon fontSize="small" />,      showCSV: false },
+      { label: "Marketplace Data",href: "/marketplaces",         icon: <StorefrontIcon fontSize="small" />,              showCSV: false },
+      { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false },
+      { label: "Pricing",         href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
     ],
   },
   {

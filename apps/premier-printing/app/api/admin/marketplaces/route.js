@@ -1,6 +1,15 @@
 import {MarketPlaces, Blank} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import { getToken } from "next-auth/jwt";
+export async function DELETE(req) {
+    const token = await getToken({ req });
+    if (!token?.permissions?.marketplaces) {
+        return NextResponse.json({ error: true, msg: "Permission denied." }, { status: 403 });
+    }
+    const { id } = await req.json();
+    await MarketPlaces.findByIdAndDelete(id);
+    return NextResponse.json({ error: false });
+}
 export async function GET(req= NextApiRequest){
     let market = req.nextUrl.searchParams.get("marketPlace");
     console.log(market)

@@ -7,6 +7,7 @@ import btoa from "btoa";
 import axios from "axios";
 import {buildLabelData} from "@/functions/labelString"
 import Inventory from "../../../../models/inventory";
+import { Types } from "mongoose";
 let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G","H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",];
 let updateReturnBin = async (re, upc, sku)=>{
   try{
@@ -40,18 +41,28 @@ export async function POST(req=NextApiRequest){
     let batchID = ''
     for(let i = 0; i< 9; i++)
         batchID += letters[Math.floor(Math.random() * letters.length)]
+    // batch order-item counts in one aggregation instead of one query per item
+    const printableItems = data.items.filter(i => !i.labelPrinted);
+    const uniqueOrderIds = [...new Set(printableItems.filter(i => i.order).map(i => (i.order._id || i.order).toString()))];
+    const countAgg = uniqueOrderIds.length
+        ? await Items.aggregate([
+            { $match: { order: { $in: uniqueOrderIds.map(id => new Types.ObjectId(id)) }, canceled: false } },
+            { $group: { _id: "$order", count: { $sum: 1 } } }
+          ])
+        : [];
+    const orderCountMap = Object.fromEntries(countAgg.map(r => [r._id.toString(), r.count]));
+
     // build labels
     let preLabels = [];
     let j = 0
     let pieceIds = []
-    console.log(data.items.length)
-    for(let i of data.items){
-      if(!i.labelPrinted){
-        let label = await buildLabelData(i, j, data.poNumber)
+    console.log(printableItems.length)
+    for(let i of printableItems){
+        const totalQuantity = orderCountMap[(i.order?._id || i.order)?.toString()] ?? null;
+        let label = await buildLabelData(i, j, data.poNumber, {}, totalQuantity)
         pieceIds.push(i.pieceId)
         preLabels.push(label)
         j++
-      }
     }
     console.log(preLabels.length)
     preLabels.map(l=> labelsString += l)

@@ -10,10 +10,10 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import CreatableSelect from "react-select/creatable";
 import { CreateProductModal } from "../design/CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
-import LoaderOverlay from "../reusable/LoaderOverlay";
 import {useCSV} from "../reusable/CSVProvider";
 import {CreateNFProduct} from "./CreateNFProduct";
-export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts, printTypes, licenses }) => {
+import LoaderOverlay from "../reusable/LoaderOverlay";
+export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts, printTypes, licenses, canManageMarketplaces }) => {
     console.log(printTypes, licenses)
     const [products, setProducts] = useState(prods? prods : []);
     const [count, setCount] = useState(co);
@@ -293,11 +293,11 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                     <Pagination count={Math.ceil((count || 0) / 24)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
                 </Stack>
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={selectedProduct} setProduct={setSelectedProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={gen} seasons={seas} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={them} sportUsedFor={sport} setThemes={setThemes} setSportUsedFor={setSportUsedFor} pageProducts={products} setPageProducts={setProducts} printTypes={printTypes} licenses={licenses} />
-                    {loading && <LoaderOverlay/>}
-                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} source={source} setProducts={setProducts} products={products} />
+                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} source={source} setProducts={setProducts} products={products} canManage={canManageMarketplaces} />
                 <CreateNFProduct open={NFProduct} setOpen={setNFProduct} stage={start} setStage={setStart} product={selectedProduct} setProduct={setSelectedProduct} setProducts={setProducts} brands={brands} setBrands={setBrands} seasons={seasons} setSeasons={setSeasons} genders={genders} setGenders={setGenders} CreateSku={CreateSku} themes={themes} setThemes={setThemes} sportUsedFor={sportsUsedFor} setSportUsedFor={setSportUsedFor} />
             </Container>
             <Footer />
+            {loading && <LoaderOverlay />}
         </Box>
     );
 };

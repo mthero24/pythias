@@ -1,8 +1,10 @@
 import Items from "../models/Items";
 
-export const buildLabelData = async (item, i, poNumber, opts={}) => {
+export const buildLabelData = async (item, i, poNumber, opts={}, totalQuantity) => {
   if(item.order) {
-    let totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
+    if (totalQuantity == null) {
+      totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
+    }
     let frontBackString = "";
     //console.log(totalQuantity, "TQ");
     for(let loc of Object.keys(item.design)){
