@@ -10,7 +10,7 @@ export { NextGTIN, CreateUpdateUPC, createTempUpcs, updateTempUpc } from "./func
 export {getTokenAcenda, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda} from "./functions/acenda"
 export {createTargetCsv} from "./functions/csvfunctions/acenda";
 //walmart
-export {getItemsWalmart, retireItemWalmart, bulkUploadWalmart, getSpecWalmart,getFeedWalmart} from "./functions/walmart"
+export {getItemsWalmart, retireItemWalmart, bulkUploadWalmart, getSpecWalmart, getFeedWalmart, getOrdersWalmart} from "./functions/walmart"
 
 export {Main} from "./components/Main";
 export {createTikTokCsv} from "./functions/csvfunctions/tiktok";

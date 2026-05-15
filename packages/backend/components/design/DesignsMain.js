@@ -10,6 +10,7 @@ import { Footer } from "../reusable/Footer";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import BrushIcon from "@mui/icons-material/Brush";
 
 const MAX_THUMBS = 5;
 
@@ -50,12 +51,18 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
 
                 {/* Header */}
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Designs{" "}
-                        <Typography component="span" variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>
-                            ({count})
-                        </Typography>
-                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <BrushIcon sx={{ color: "#fff", fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                            <Stack direction="row" alignItems="baseline" spacing={1}>
+                                <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Designs</Typography>
+                                <Chip label={count} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+                            </Stack>
+                            <Typography variant="body2" color="text.secondary">Browse and manage artwork designs</Typography>
+                        </Box>
+                    </Stack>
                     {canEdit && (
                         <Button variant="contained" startIcon={<AddIcon />} onClick={createDesign}>
                             Create Design

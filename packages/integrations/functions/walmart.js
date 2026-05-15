@@ -1,7 +1,5 @@
 import axios from "axios"
-import btoa from "btoa"
-import { getToken } from "next-auth/jwt"
-import fs from "fs"
+
 const getTokenWalmart = async ({clientId, clientSecret, partnerId})=>{
     //console.log(clientId, clientSecret)
     let headers={
@@ -88,27 +86,29 @@ export const retireItemWalmart = async ({clientId, clientSecret, partnerId, sku}
     }
 }
 
-export const bulkUploadWalmart = async ({clientId, clientSecret, partnerId, type, file})=>{
+export const bulkUploadWalmart = async ({clientId, clientSecret, partnerId, type, payload})=>{
     let token = await getTokenWalmart({clientId, clientSecret, partnerId})
-    //console.log(token, "token")
-    let headers={
+    const jsonBuffer = Buffer.from(JSON.stringify(payload))
+    const boundary = `----WalmartBoundary${Date.now()}`
+    const body = Buffer.concat([
+        Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="items.json"\r\nContent-Type: application/json\r\n\r\n`),
+        jsonBuffer,
+        Buffer.from(`\r\n--${boundary}--\r\n`)
+    ])
+    let errorRes
+    let res = await axios.post(`https://marketplace.walmartapis.com/v3/feeds?feedType=${type}`, body, {
         headers: {
             Accept: "application/json",
+            "Content-Type": `multipart/form-data; boundary=${boundary}`,
             "WM_SEC.ACCESS_TOKEN": token,
             "WM_PARTNER.ID": partnerId,
             "WM_SVC.NAME": "pythias",
             "WM_QOS.CORRELATION_ID": "pythias",
             "WM_CONSUMER.CHANNEL.TYPE": "some-channel"
         }
-    }
-    let errorRes
-    let res = await axios.post(`https://marketplace.walmartapis.com/v3/feeds?feedType=${type}`, file, headers).catch(e=> {errorRes = e.response.data})
-    console.log(errorRes, res?.data)
-    if(errorRes){
-        return null
-    }else{
-        return res?.data.feedId
-    }
+    }).catch(e=> {errorRes = e.response?.data ?? e.message})
+    if(errorRes) return { error: errorRes }
+    return { feedId: res?.data.feedId }
 }
 export const getSpecWalmart = async ({clientId, clientSecret, partnerId, type})=>{
     let token = await getTokenWalmart({clientId, clientSecret, partnerId})
@@ -150,10 +150,10 @@ export const getSpecWalmart = async ({clientId, clientSecret, partnerId, type})=
         return res?.data.feedId
     }
 }
-export const getFeedWalmart = async ({clientId, clientSecret, partnerId,})=>{
+export const getFeedWalmart = async ({clientId, clientSecret, partnerId, feedId})=>{
     let token = await getTokenWalmart({clientId, clientSecret, partnerId})
-    console.log(token, "token")
-    let headers={
+    let errorRes
+    let res = await axios.get(`https://marketplace.walmartapis.com/v3/feeds?feedId=${feedId}`, {
         headers: {
             Accept: "application/json",
             "WM_SEC.ACCESS_TOKEN": token,
@@ -162,20 +162,31 @@ export const getFeedWalmart = async ({clientId, clientSecret, partnerId,})=>{
             "WM_QOS.CORRELATION_ID": "pythias",
             "WM_CONSUMER.CHANNEL.TYPE": "some-channel"
         }
-    }
-    let body = {
-        "feedType": "MP_ITEM",
-        "version": "4.8",
-        "productTypes": [
-          "Baby Blankets"
-        ]
-    }
+    }).catch(e=> {errorRes = e.response?.data ?? e.message})
+    if(errorRes) return { error: errorRes }
+    return res?.data
+}
+
+export const getOrdersWalmart = async ({clientId, clientSecret, partnerId, createdStartDate, limit = 200, nextCursor})=>{
+    let token = await getTokenWalmart({clientId, clientSecret, partnerId})
+    if(!token) return { error: "Failed to get Walmart token" }
+    const params = new URLSearchParams({ limit })
+    if(createdStartDate) params.set("createdStartDate", createdStartDate)
+    if(nextCursor) params.set("nextCursor", nextCursor)
     let errorRes
-    let res = await axios.get(`https://marketplace.walmartapis.com/v3/feeds?feedId=1832833987955790BFEAC76CDF36C391@AXkBCgA`, headers).catch(e=> {errorRes = e.response.data})
-    console.log(errorRes, res?.data, res.data.results)
-    if(errorRes){
-        return null
-    }else{
-        return res?.data.feedId
-    }
+    let res = await axios.get(`https://marketplace.walmartapis.com/v3/orders?${params}`, {
+        headers: {
+            Accept: "application/json",
+            "WM_SEC.ACCESS_TOKEN": token,
+            "WM_PARTNER.ID": partnerId,
+            "WM_SVC.NAME": "pythias",
+            "WM_QOS.CORRELATION_ID": "pythias",
+            "WM_CONSUMER.CHANNEL.TYPE": "some-channel"
+        }
+    }).catch(e=> {errorRes = e.response?.data ?? e.message})
+    if(errorRes) return { error: errorRes }
+    const list = res?.data?.list
+    const orders = list?.elements?.order ?? []
+    const nextCursorOut = list?.meta?.nextCursor ?? null
+    return { orders, nextCursor: nextCursorOut }
 }

@@ -7,7 +7,8 @@ export async function POST(req = NextApiRequest) {
     if(!inventory){
         return NextResponse.json({error: true, message: "Inventory not found"});
     }
-    inventory.quantity = data.quantity;
+    if (data.quantity !== undefined) inventory.quantity = data.quantity;
+    if (data.location !== undefined) inventory.location = data.location;
     await inventory.save();
     return NextResponse.json({error: false, message: "Inventory updated successfully", inventory});
 

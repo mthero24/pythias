@@ -113,12 +113,12 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
             }
         })
     }
-    if (filters.sportsUsedFor) {
+    if (filters.sportUsedFor) {
         if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
         query[0].$search.compound.must.push({
             text: {
                 path: "sportsUsedFor",
-                query: filters.sportsUsedFor.$in
+                query: filters.sportUsedFor.$in
             }
         })
     }
@@ -128,11 +128,17 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
 
 export const getProducts = async ({ Products, Blanks, page, query, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, PrintTypes, LicenseHolders, filters }) => {
     let products
-    let count
-    products = await search({ Products, q: query, page, filters, productsPerPage: 24, skip: (page - 1) * 24 });
-    if(products && products.length > 0){
-        count = products[0].meta.count.total
-        products = await Products.find({ _id: { $in: products.map(p => p._id) } }).sort({ "lastUpdated": -1 }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" }).lean();
+    let count = 0
+    const searchResults = await search({ Products, q: query, page, filters, productsPerPage: 24, skip: (page - 1) * 24 });
+    if(searchResults && searchResults.length > 0){
+        count = searchResults[0].meta.count.total
+        const orderedIds = searchResults.map(p => p._id.toString());
+        products = await Products.find({ _id: { $in: searchResults.map(p => p._id) } }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" }).lean();
+        if (query) {
+            products.sort((a, b) => orderedIds.indexOf(a._id.toString()) - orderedIds.indexOf(b._id.toString()));
+        } else {
+            products.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+        }
     }
     const blanks = await Blanks.find().populate("colors");
     const seasons = await Seasons.find();

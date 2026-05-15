@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Box, Grid2, TextField, Accordion, AccordionSummary, AccordionDetails, Button, Typography, Card, Chip, Stack, InputAdornment, Pagination, PaginationItem, Tooltip } from "@mui/material";
 import axios from "axios";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -16,7 +16,7 @@ import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 
-export function Main({ bla, it, defaultLocation, binType, cou, pa, q }) {
+export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue }) {
     const [fullStyles, setFullStyles] = useState(bla);
     const [styles, setStyles]         = useState(bla);
     const [items, setItems]           = useState(it);
@@ -50,15 +50,6 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q }) {
         save(inv);
     };
 
-    const totalValue = useMemo(() =>
-        styles.reduce((total, s) =>
-            total + (s.inventories?.reduce((acc, i) => {
-                const size = s.blank.sizes?.find(sz => sz.name === i.size_name);
-                return acc + (size?.cost || size?.wholesaleCost || 0) * (i.quantity ?? 0);
-            }, 0) ?? 0)
-        , 0)
-    , [styles]);
-
     const search = async () => {
         const res = await axios.get(`/api/admin/inventory?q=${query}`);
         if (res.data) {
@@ -79,7 +70,7 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q }) {
                     <Box sx={{ flex: 1 }}>
                         <Stack direction="row" alignItems="baseline" spacing={1.5}>
                             <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Inventory</Typography>
-                            <Tooltip title="Total cost value of all displayed inventory (quantity × cost per size)">
+                            <Tooltip title="Total cost value of all inventory (quantity × cost per size)">
                                 <Chip
                                     label={`$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                     size="small"

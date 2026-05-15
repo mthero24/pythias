@@ -7,6 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import CheckroomIcon from '@mui/icons-material/Checkroom';
 import EditIcon from '@mui/icons-material/Edit';
 import BuildIcon from '@mui/icons-material/Build';
 import CloseIcon from '@mui/icons-material/Close';
@@ -51,10 +52,22 @@ export function BlanksComponent({blanks, mPs, source}){
     return (
         <Box sx={{width: "100%", maxWidth: "100%", overflowX: "hidden"}}>
             <Container maxWidth="lg" sx={{minHeight: "90vh"}}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2, flexWrap: "wrap", gap: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Blanks <Typography component="span" variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>({visibleBlanks.length}{visibleBlanks.length !== blanks.length ? ` of ${blanks.length}` : ""})</Typography>
-                    </Typography>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <CheckroomIcon sx={{ color: "#fff", fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                            <Stack direction="row" alignItems="baseline" spacing={1}>
+                                <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Blanks</Typography>
+                                <Chip
+                                    label={visibleBlanks.length !== blanks.length ? `${visibleBlanks.length} of ${blanks.length}` : blanks.length}
+                                    size="small" variant="outlined" sx={{ fontWeight: 600 }}
+                                />
+                            </Stack>
+                            <Typography variant="body2" color="text.secondary">Manage garment styles, colors, and sizes</Typography>
+                        </Box>
+                    </Stack>
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                         <Button variant="outlined" onClick={() => setAliasOpen(true)}>Alias / Combined</Button>
                         <Button variant="contained" color="primary" startIcon={<AddIcon />} href="/admin/blanks/create">Create Blank</Button>

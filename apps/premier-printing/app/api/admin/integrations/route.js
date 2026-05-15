@@ -29,17 +29,17 @@ export async function POST(req=NextApiRequest){
         let url = await generateAuthorizationUrl()
         console.log(url)
         return NextResponse.json({error: false, url})
-    }else if(data.type == "acenda"){
-        console.log("apiKey")
+    }else if(data.type == "acenda" || data.type == "walmart"){
         let integration = await ApiKeyIntegrations.findOne({displayName: data.displayName, provider: data.provider});
         if(!integration){
-            integration = new ApiKeyIntegrations({displayName: data.displayName, apiKey: data.apiKey, apiSecret: data.apiSecret, organization: data.organization, provider: data.provider})
+            integration = new ApiKeyIntegrations({displayName: data.displayName, apiKey: data.apiKey, apiSecret: data.apiSecret, organization: data.organization, provider: data.provider, type: data.type})
             await integration.save()
-        }else if(!integration.provider){
+        }else{
             integration.provider = data.provider
             integration.apiKey = data.apiKey;
             integration.apiSecret = data.apiSecret;
             integration.organization = data.organization;
+            integration.type = data.type;
             await integration.save()
         }
         let integrations = await ApiKeyIntegrations.find({provider: data.provider})

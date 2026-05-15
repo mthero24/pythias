@@ -1,64 +1,82 @@
-import {Box, Modal, Grid2, Card, TextField, Typography, Button} from "@mui/material";
-import {createImage} from "../functions/image";
+"use client";
+import { Box, Dialog, DialogTitle, DialogContent, Grid2, TextField, Typography, Stack, Chip, Divider, IconButton } from "@mui/material";
+import { createImage } from "../functions/image";
 import Image from "next/image";
-import {useState} from "react";
+import { useState } from "react";
+import CloseIcon from "@mui/icons-material/Close";
 import axios from "axios";
-export function BinModal({open, setOpen, setAuto, bin, setBins, setBin, modalStyle, source}){
-    let [qty, setQty] = useState(1)
-    let update = async (bin)=>{
-        let res = await axios.put("/api/production/returns", {bin})
-        if(res.data.error) console.log(res.data.msg)
-    }
-    console.log(bin)
+
+export function BinModal({ open, setOpen, setAuto, bin, setBins, setBin, source }) {
+    const update = async (bin) => {
+        const res = await axios.put("/api/production/returns", { bin })
+            .catch(() => alert("Error updating bin"));
+        if (res?.data?.error) alert(res.data.msg);
+    };
+
     return (
-        <Modal
-            open={open}
-            onClose={()=>{setOpen(false); setBin(null); setAuto(true);}}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-            >
-            <Box sx={modalStyle}>
-                <Typography sx={{textAlign: "center", fontSize: "2rem"}}>Bin: {bin?.number}</Typography>
-                <Grid2 container spacing={2} sx={{padding: "2%", textAlign: "center"}}>
-                    <Grid2 size={12}>
-                        <Typography>Blank: {bin?.blank?.code}</Typography>
-                        <Typography>Size: {bin?.size}, Color: {bin?.color?.name}</Typography>
-                    </Grid2>
-                </Grid2>
-                {bin?.inventory.map(i=>(
-                    <Grid2 container spacing={2} key={i?._id} sx={{padding: "2%", textAlign: "center"}}>
-                        
-                        <Grid2 size={2}>
-                        {Object.keys(i?.design?.images? i?.design?.images: {}).map(d=>(
-                            <Box>
-                               { console.log(i.threadColor?.name, i.design.threadImages)}
-                                {i.design?.images[d] != "" && i.design?.images[d] != undefined && <Image src={createImage(bin.color?.name, bin.blank?.code, {side: d, url: i.threadColor != undefined? i.design?.threadImages[i.threadColor.name][d]: i.design?.images[d]}, source )} alt={i.sku} width={400} height={400} style={{width: "100%", height: "auto", padding: "2%", background: "#e2e2e2"}}/>}
-                            </Box>
-                           
-                        ))}
-                        </Grid2>
-                        <Grid2 size={source == "IM"? 0: 3}>
-                            <Typography sx={{marginTop: "10%"}}>{i?.upc}</Typography>
-                        </Grid2>
-                        <Grid2 size={source == "IM"? 6: 3}>
-                            <Typography sx={{marginTop: "10%"}}>{i?.sku}</Typography>
-                        </Grid2>
-                        <Grid2 size={2}>
-                            <TextField fullWidth type={"number"} value={i?.quantity} label="Quantity In Bin" sx={{margin: "1%"}} onChange={()=>{
-                                let bl = {...bin}
-                                let change = bl.inventory.filter(iv=> iv._id.toString() == i._id.toString())[0]
-                                change.quantity = parseInt(event.target.value)
-                                console.log(change)
-                                update(bin)
-                                setBin({...bl})
-                            }}/>
-                        </Grid2>
-                        <Grid2 size={12}>
-                            <hr/>
-                        </Grid2>
-                    </Grid2>
-                ))}
-            </Box>
-        </Modal>
-    )
+        <Dialog open={open} onClose={() => { setOpen(false); setBin(null); setAuto(true); }} maxWidth="md" fullWidth scroll="paper">
+            <DialogTitle sx={{ py: 1.5, px: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>
+                        Bin {bin?.number}
+                    </Typography>
+                    {bin?.blank?.code && <Chip label={bin.blank.code} size="small" color="primary" variant="outlined" sx={{ fontFamily: "monospace", fontWeight: 700 }} />}
+                    {bin?.color?.name && <Chip label={bin.color.name} size="small" variant="outlined" sx={{ textTransform: "capitalize" }} />}
+                    {bin?.size && <Chip label={bin.size} size="small" variant="outlined" sx={{ textTransform: "uppercase", fontWeight: 600 }} />}
+                    <IconButton size="small" onClick={() => { setOpen(false); setBin(null); setAuto(true); }}>
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
+                </Stack>
+            </DialogTitle>
+            <Divider />
+            <DialogContent sx={{ p: 2 }}>
+                <Stack spacing={1.5}>
+                    {bin?.inventory.map(i => (
+                        <Box key={i?._id} sx={{ bgcolor: "action.hover", borderRadius: 2, p: 1.5 }}>
+                            <Grid2 container spacing={1.5} alignItems="center">
+                                <Grid2 size={2}>
+                                    {Object.keys(i?.design?.images ?? {}).map(d => {
+                                        const imgSrc = i.design?.images[d];
+                                        if (!imgSrc) return null;
+                                        const url = i.threadColor
+                                            ? i.design?.threadImages?.[i.threadColor.name]?.[d]
+                                            : imgSrc;
+                                        return (
+                                            <Image
+                                                key={d}
+                                                src={createImage(bin.color?.name, bin.blank?.code, { side: d, url }, source)}
+                                                alt={i.sku} width={100} height={100}
+                                                style={{ width: "100%", height: "auto", borderRadius: 4, background: "#e2e2e2" }}
+                                            />
+                                        );
+                                    })}
+                                </Grid2>
+                                {source !== "IM" && (
+                                    <Grid2 size={3}>
+                                        <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{i?.upc}</Typography>
+                                    </Grid2>
+                                )}
+                                <Grid2 size={source === "IM" ? 7 : 4}>
+                                    <Typography variant="body2" fontWeight={600} sx={{ fontFamily: "monospace" }}>{i?.sku}</Typography>
+                                </Grid2>
+                                <Grid2 size={3}>
+                                    <TextField
+                                        fullWidth size="small" type="number"
+                                        label="Qty in Bin"
+                                        value={i?.quantity}
+                                        onChange={(e) => {
+                                            const bl = { ...bin };
+                                            bl.inventory.find(iv => iv._id.toString() === i._id.toString()).quantity = parseInt(e.target.value);
+                                            setBin({ ...bl });
+                                            update(bl);
+                                        }}
+                                    />
+                                </Grid2>
+                            </Grid2>
+                        </Box>
+                    ))}
+                </Stack>
+            </DialogContent>
+        </Dialog>
+    );
 }

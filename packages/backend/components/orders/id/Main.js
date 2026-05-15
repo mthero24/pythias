@@ -2,7 +2,7 @@
 import {
     Box, Typography, Button, Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
     Link, TextField, IconButton, Container, Stack, Card, CardContent, Chip,
-    Divider, Collapse, Tooltip, Avatar,
+    Divider, Collapse, Tooltip, Avatar, CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState } from "react";
@@ -24,6 +24,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import StickyNote2Icon from "@mui/icons-material/StickyNote2";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 const selectMenuPortalProps = {
     menuPortalTarget: typeof document !== "undefined" ? document.body : null,
@@ -64,7 +65,7 @@ const isItemMissing = (i) =>
     (Object.keys(i.design ?? {}).length === 0 && !i.isBlank) ||
     i.size == undefined ||
     i.color == undefined ||
-    i.blank == undefined;
+    (i.blank == undefined && i.styleV2 == undefined);
 
 export function Main({ ord, blanks, source }) {
     const [order, setOrder] = useState(ord);
@@ -77,6 +78,35 @@ export function Main({ ord, blanks, source }) {
     const [shipped, setShipped] = useState(false);
     const [note, setNote] = useState(false);
     const [expandedItems, setExpandedItems] = useState({});
+    const [trackingLoading, setTrackingLoading] = useState(false);
+    const [editingAddress, setEditingAddress] = useState(false);
+    const [addressForm, setAddressForm] = useState(ord.shippingAddress ?? {});
+    const [addressSaving, setAddressSaving] = useState(false);
+
+    const saveAddress = async () => {
+        setAddressSaving(true);
+        try {
+            const res = await axios.post("/api/orders/address", { id: order._id, shippingAddress: addressForm });
+            setOrder(prev => ({ ...prev, shippingAddress: res.data.shippingAddress }));
+            setEditingAddress(false);
+        } catch {
+            alert("Failed to save address");
+        } finally {
+            setAddressSaving(false);
+        }
+    };
+
+    const refreshTracking = async () => {
+        setTrackingLoading(true);
+        try {
+            await axios.post("/api/production/shipping/track");
+            window.location.reload();
+        } catch {
+            alert("Tracking refresh failed");
+        } finally {
+            setTrackingLoading(false);
+        }
+    };
 
     const handleItemUpdate = (i) => {
         let b, s, c;
@@ -94,7 +124,7 @@ export function Main({ ord, blanks, source }) {
         setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
 
     const statusMeta = STATUS_META[order.status] ?? { color: "default", label: order.status };
-    const canMarkShipped = order.status?.toLowerCase() !== "shipped";
+    const canMarkShipped = !["shipped", "delivered"].includes(order.status?.toLowerCase());
     const missingCount = order.items.filter(isItemMissing).length;
 
     return (
@@ -209,7 +239,9 @@ export function Main({ ord, blanks, source }) {
                                                             <Image src={`${blankImage}?width=150`} alt={i.sku} width={72} height={72} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                                                         ) : imageKeys.length > 0 ? (
                                                             <RetryImage
-                                                                src={`/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}`}
+                                                                src={source === "PO"
+                                                                    ? `https://images4.tshirtpalace.com/images/productImages/SKU--${(i.colorName || "").toLowerCase()}-${(i.styleCode || "").toLowerCase()}-${imageKeys[0]}.webp?url=${i.design[imageKeys[0]]}&width=150`
+                                                                    : `/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}`}
                                                                 alt={i.sku}
                                                                 width={72}
                                                                 height={72}
@@ -321,36 +353,145 @@ export function Main({ ord, blanks, source }) {
                         <Stack spacing={2} sx={{ position: { md: "sticky" }, top: { md: 72 } }}>
 
                             {/* Shipping address */}
-                            <SectionCard icon={<LocalShippingIcon />} title="Ship To">
-                                <Stack spacing={0.25}>
-                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{order.shippingAddress?.name}</Typography>
-                                    <Typography variant="body2" color="text.secondary">{order.shippingAddress?.address1}</Typography>
-                                    {order.shippingAddress?.address2 && (
-                                        <Typography variant="body2" color="text.secondary">{order.shippingAddress.address2}</Typography>
-                                    )}
-                                    <Typography variant="body2" color="text.secondary">
-                                        {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.zip?.split("-")[0]}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">{order.shippingAddress?.country}</Typography>
-                                </Stack>
+                            <SectionCard
+                                icon={<LocalShippingIcon />}
+                                title="Ship To"
+                                action={
+                                    !editingAddress ? (
+                                        <Tooltip title="Edit address">
+                                            <IconButton size="small" onClick={() => { setAddressForm(order.shippingAddress ?? {}); setEditingAddress(true); }}>
+                                                <EditIcon sx={{ fontSize: 16 }} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    ) : null
+                                }
+                            >
+                                {editingAddress ? (
+                                    <Stack spacing={1.5}>
+                                        <TextField label="Name" size="small" fullWidth value={addressForm.name ?? ""} onChange={e => setAddressForm(p => ({ ...p, name: e.target.value }))} />
+                                        <TextField label="Address 1" size="small" fullWidth value={addressForm.address1 ?? ""} onChange={e => setAddressForm(p => ({ ...p, address1: e.target.value }))} />
+                                        <TextField label="Address 2" size="small" fullWidth value={addressForm.address2 ?? ""} onChange={e => setAddressForm(p => ({ ...p, address2: e.target.value }))} />
+                                        <Stack direction="row" spacing={1}>
+                                            <TextField label="City" size="small" fullWidth value={addressForm.city ?? ""} onChange={e => setAddressForm(p => ({ ...p, city: e.target.value }))} />
+                                            <TextField label="State" size="small" sx={{ width: 80 }} value={addressForm.state ?? ""} onChange={e => setAddressForm(p => ({ ...p, state: e.target.value }))} />
+                                            <TextField label="Zip" size="small" sx={{ width: 100 }} value={addressForm.zip ?? ""} onChange={e => setAddressForm(p => ({ ...p, zip: e.target.value }))} />
+                                        </Stack>
+                                        <TextField label="Country" size="small" fullWidth value={addressForm.country ?? ""} onChange={e => setAddressForm(p => ({ ...p, country: e.target.value }))} />
+                                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                            <Button size="small" onClick={() => setEditingAddress(false)}>Cancel</Button>
+                                            <Button size="small" variant="contained" onClick={saveAddress} disabled={addressSaving}>
+                                                {addressSaving ? <CircularProgress size={14} /> : "Save"}
+                                            </Button>
+                                        </Stack>
+                                    </Stack>
+                                ) : (
+                                    <Stack spacing={0.25}>
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{order.shippingAddress?.name}</Typography>
+                                        <Typography variant="body2" color="text.secondary">{order.shippingAddress?.address1}</Typography>
+                                        {order.shippingAddress?.address2 && (
+                                            <Typography variant="body2" color="text.secondary">{order.shippingAddress.address2}</Typography>
+                                        )}
+                                        <Typography variant="body2" color="text.secondary">
+                                            {order.shippingAddress?.city}, {order.shippingAddress?.state} {order.shippingAddress?.zip?.split("-")[0]}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">{order.shippingAddress?.country}</Typography>
+                                    </Stack>
+                                )}
                             </SectionCard>
 
                             {/* Tracking */}
                             {order.shippingInfo?.labels?.length > 0 && (
-                                <SectionCard icon={<CheckCircleIcon />} title="Tracking">
-                                    <Stack spacing={1}>
+                                <SectionCard
+                                    icon={<LocalShippingIcon />}
+                                    title="Tracking"
+                                    action={
+                                        <Tooltip title="Refresh tracking">
+                                            <span>
+                                                <IconButton size="small" onClick={refreshTracking} disabled={trackingLoading}>
+                                                    {trackingLoading
+                                                        ? <CircularProgress size={14} />
+                                                        : <RefreshIcon sx={{ fontSize: 16 }} />}
+                                                </IconButton>
+                                            </span>
+                                        </Tooltip>
+                                    }
+                                >
+                                    <Stack spacing={2}>
                                         {order.shippingInfo.labels.map(l => {
                                             const isUPS = UPS_CARRIERS.includes(order.marketplace);
+                                            const isFedEx = l.provider === "fedex" || l.provider === "FedEx";
                                             const trackUrl = isUPS
                                                 ? `https://www.ups.com/track?track=yes&trackNums=${l.trackingNumber}&loc=en_US&requester=ST/`
+                                                : isFedEx
+                                                ? `https://www.fedex.com/fedextrack/?trknbr=${l.trackingNumber}`
                                                 : `https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=${l.trackingNumber}`;
+
+                                            const latest = l.trackingInfo?.[0]?.toLowerCase() ?? "";
+                                            const statusLabel = l.delivered
+                                                ? "Delivered"
+                                                : latest.includes("out for delivery")
+                                                ? "Out for Delivery"
+                                                : l.trackingInfo?.length > 0
+                                                ? "In Transit"
+                                                : "Pending";
+                                            const statusColor = l.delivered
+                                                ? "success"
+                                                : latest.includes("out for delivery")
+                                                ? "warning"
+                                                : l.trackingInfo?.length > 0
+                                                ? "info"
+                                                : "default";
+
                                             return (
-                                                <Stack key={l._id} direction="row" alignItems="center" spacing={1}>
-                                                    <LocalShippingIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                                                    <Link href={trackUrl} target="_blank" variant="body2" underline="hover">
-                                                        {l.trackingNumber}
-                                                    </Link>
-                                                </Stack>
+                                                <Box key={l._id ?? l.trackingNumber}>
+                                                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5, flexWrap: "wrap", gap: 0.5 }}>
+                                                        <Link
+                                                            href={trackUrl}
+                                                            target="_blank"
+                                                            variant="body2"
+                                                            underline="hover"
+                                                            sx={{ fontFamily: "monospace", fontSize: "0.78rem", fontWeight: 600, wordBreak: "break-all" }}
+                                                        >
+                                                            {l.trackingNumber}
+                                                        </Link>
+                                                        <Chip
+                                                            label={statusLabel}
+                                                            color={statusColor}
+                                                            size="small"
+                                                            variant={l.delivered ? "filled" : "outlined"}
+                                                            sx={{ fontSize: "0.6rem", height: 18, flexShrink: 0 }}
+                                                        />
+                                                    </Stack>
+                                                    {l.expectedDelivery && !l.delivered && (
+                                                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: l.trackingInfo?.length > 0 ? 1 : 0 }}>
+                                                            Expected {new Date(l.expectedDelivery).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                                                        </Typography>
+                                                    )}
+                                                    {l.trackingInfo?.length > 0 && (
+                                                        <Stack spacing={0.5}>
+                                                            <Box sx={{
+                                                                px: 1.25, py: 0.75, borderRadius: 1,
+                                                                backgroundColor: l.delivered ? "rgba(46,125,50,0.06)" : "background.default",
+                                                                border: "1px solid",
+                                                                borderColor: l.delivered ? "success.light" : "divider",
+                                                            }}>
+                                                                <Typography variant="caption" sx={{ fontWeight: 600, display: "block", lineHeight: 1.4 }}>
+                                                                    {l.trackingInfo[0]}
+                                                                </Typography>
+                                                            </Box>
+                                                            {l.trackingInfo.slice(1).map((ev, idx) => (
+                                                                <Typography
+                                                                    key={idx}
+                                                                    variant="caption"
+                                                                    color="text.secondary"
+                                                                    sx={{ display: "block", pl: 1.5, borderLeft: "2px solid", borderColor: "divider", lineHeight: 1.4 }}
+                                                                >
+                                                                    {ev}
+                                                                </Typography>
+                                                            ))}
+                                                        </Stack>
+                                                    )}
+                                                </Box>
                                             );
                                         })}
                                     </Stack>

@@ -44,12 +44,16 @@ export async function POST(req= NextApiRequest){
         order.markModified("shippingInfo.labels")
         await order.save()
     }
-    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false, undefined]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, "selectedShipping.provider": "usps"}).select("shippingInfo date poNumber").sort({date: 1}).skip(1 * 50 - 50).limit(50)
+    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false, undefined]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, status: {$ne: "Delivered"}}).select("shippingInfo date poNumber status").sort({date: 1}).limit(400).lean()
     return NextResponse.json({error: false, orders})
 }
 
 export async function PUT(req= NextApiRequest){
     let data = await req.json()
+    if (data.refresh) {
+        let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false, undefined]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, status: {$ne: "Delivered"}}).select("shippingInfo date poNumber status").sort({date: 1}).limit(400).lean()
+        return NextResponse.json({error: false, orders})
+    }
     console.log(data.order._id)
     let order = await Order.findOne({_id: data.order._id})
     console.log(order.shippingInfo.labels.length)
@@ -62,6 +66,6 @@ export async function PUT(req= NextApiRequest){
         order.markModified("shippingInfo.labels")
         await order.save()
     }
-    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false, undefined]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, "selectedShipping.provider": "usps"}).select("shippingInfo date poNumber").sort({date: 1}).skip(1* 50 - 50).limit(50)
+    let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false, undefined]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, status: {$ne: "Delivered"}}).select("shippingInfo date poNumber status").sort({date: 1}).limit(400).lean()
     return NextResponse.json({error: false, orders})
 }

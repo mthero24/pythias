@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { CSVProvider } from "@pythias/backend";
 import { AppThemeProvider } from "@/components/AppThemeProvider";
+import { NavigationProgress } from "@/components/NavigationProgress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AppThemeProvider>
+          <NavigationProgress />
           <CSVProvider>
             <Navbar />
             {children}

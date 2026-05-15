@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import NavBar from "@/components/Navbar"
+import NavBar from "@/components/Navbar";
+import { NavigationProgress } from "@/components/NavigationProgress";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{margin: 0, padding: 0}}
       >
+        <NavigationProgress />
         <NavBar />
         {children}
       </body>

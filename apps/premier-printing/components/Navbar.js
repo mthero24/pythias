@@ -92,7 +92,8 @@ const NAV_SECTIONS = [
       { label: "Find DTF",     href: "/production/dtf-find",   icon: <FindInPageIcon fontSize="small" />,      showCSV: false },
       { label: "Embroidery",   href: "/production/embroidery", icon: <AutoFixHighIcon fontSize="small" />,     showCSV: false },
       { label: "Folder",       href: "/production/roq-folder", icon: <FolderIcon fontSize="small" />,          showCSV: false },
-      { label: "Ship Orders",  href: "/production/shipping",   icon: <LocalShippingIcon fontSize="small" />,   showCSV: false },
+      { label: "Ship Orders",       href: "/production/shipping",        icon: <LocalShippingIcon fontSize="small" />,   showCSV: false },
+      { label: "Track Shipping",    href: "/production/shipping-labels", icon: <TrackChangesIcon fontSize="small" />,    showCSV: false },
     ],
   },
   {

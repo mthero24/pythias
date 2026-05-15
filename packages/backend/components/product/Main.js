@@ -6,13 +6,13 @@ import {Footer} from "../reusable/Footer";
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import CreatableSelect from "react-select/creatable";
 import { CreateProductModal } from "../design/CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import LoaderOverlay from "../reusable/LoaderOverlay";
 import {useCSV} from "../reusable/CSVProvider";
 import {CreateNFProduct} from "./CreateNFProduct";
-import { set } from "mongoose";
 export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts, printTypes, licenses }) => {
     console.log(printTypes, licenses)
     const [products, setProducts] = useState(prods? prods : []);
@@ -88,8 +88,19 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
     return (
         <Box sx={{width: "100%", maxWidth: "100%", overflowX: "hidden"}}>
             <Container maxWidth="lg" sx={{minHeight: "90vh"}}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2, flexWrap: "wrap", gap: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>Products <Typography component="span" variant="h6" color="text.secondary" sx={{ fontWeight: 400 }}>({totalProducts})</Typography></Typography>
+                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <StorefrontIcon sx={{ color: "#fff", fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                            <Stack direction="row" alignItems="baseline" spacing={1}>
+                                <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Products</Typography>
+                                <Chip label={totalProducts} size="small" variant="outlined" sx={{ fontWeight: 600 }} />
+                            </Stack>
+                            <Typography variant="body2" color="text.secondary">Manage your product catalog</Typography>
+                        </Box>
+                    </Stack>
                     <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => setNFProduct(true)}>Create Product</Button>
                 </Box>
                 <Box sx={{ marginBottom: 2, padding: 2, borderRadius: 2, background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
@@ -279,7 +290,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                     })}
                 </Grid2>
                 <Stack spacing={2} sx={{ margin: "1% 0%", display: "flex", alignItems: "center" }}>
-                    <Pagination count={Math.ceil(count / 25)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
+                    <Pagination count={Math.ceil((count || 0) / 24)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
                 </Stack>
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={selectedProduct} setProduct={setSelectedProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={gen} seasons={seas} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={them} sportUsedFor={sport} setThemes={setThemes} setSportUsedFor={setSportUsedFor} pageProducts={products} setPageProducts={setProducts} printTypes={printTypes} licenses={licenses} />
                     {loading && <LoaderOverlay/>}

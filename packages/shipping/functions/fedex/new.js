@@ -140,6 +140,40 @@ export async function getRatesFeNew({address, businessAddress, weight, service, 
     return {error: false, rate: send.data.output.rateReplyDetails[0].ratedShipmentDetails[0].totalNetFedExCharge}
     
 }
+export async function TrackPackageFedEx({ tn, credentials }) {
+    const { token } = await getAuth(credentials);
+    if (!token) return [];
+
+    const options = {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "x-locale": "en_US",
+        }
+    };
+
+    const body = {
+        includeDetailedScans: true,
+        trackingInfo: [{ trackingNumberInfo: { trackingNumber: tn } }]
+    };
+
+    const res = await axios
+        .post("https://apis.fedex.com/track/v1/trackingnumbers", body, options)
+        .catch(e => { console.log("FedEx tracking error:", e?.response?.data); });
+
+    const result = res?.data?.output?.completeTrackResults?.[0]?.trackResults?.[0];
+    if (!result) return { events: [], expectedDelivery: null };
+
+    const status = result.latestStatusDetail?.description || "";
+    const scans = (result.scanEvents || []).map(e => e.eventDescription).filter(Boolean);
+
+    const expectedDelivery = result.dateAndTimes?.find(d =>
+        d.type === "ESTIMATED_DELIVERY" || d.type === "ACTUAL_DELIVERY"
+    )?.dateTime ?? null;
+
+    return { events: [status, ...scans].filter(Boolean), expectedDelivery };
+}
+
 export async function purchaseFedexNew ({address, businessAddress,weight, dimensions, selectedShipping, overnight, saturdayDelivery=false, credentials, imageFormat, dpi}){
     let token = await getAuth(credentials)
     token = token.token

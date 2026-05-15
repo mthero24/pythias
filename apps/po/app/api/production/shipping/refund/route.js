@@ -50,6 +50,10 @@ export async function POST(req= NextApiRequest){
 
 export async function PUT(req= NextApiRequest){
     let data = await req.json()
+    if (data.refresh) {
+        let orders = await Order.find({"shippingInfo.labels.delivered": {$in: [false]}, date: {$gt: new Date(Date.now() - 60 * (24 * 60 * 60 * 1000))}, status: {$ne: "Delivered"}}).sort({date: 1}).select("shippingInfo date poNumber status").limit(400).lean()
+        return NextResponse.json({error: false, orders})
+    }
     console.log(data.order._id)
     let order = await Order.findOne({_id: data.order._id})
     console.log(order.shippingInfo.labels.length)

@@ -1,5 +1,5 @@
 "use client";
-import { Typography, Grid2, Button, TextField, Box, Stack, Pagination, PaginationItem, MenuItem, Chip, Divider, InputAdornment, Collapse, IconButton, Tooltip } from "@mui/material";
+import { Typography, Grid2, Button, TextField, Box, Stack, Pagination, PaginationItem, MenuItem, Chip, InputAdornment, Collapse, IconButton, Tooltip, CircularProgress } from "@mui/material";
 import Image from "next/image";
 import { useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
@@ -40,7 +40,7 @@ function navigate(query, page, filters) {
     window.location.href = `/inventory/product?q=${query}&page=${page}&filter=${JSON.stringify(filters)}`;
 }
 
-export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
+export function productMain({ inventory, q, totalCount, totalValue, p, blanks, fils }) {
     const [query, setQuery]           = useState(q || "");
     const [count]                     = useState(totalCount || 0);
     const [page, setPage]             = useState(p || 1);
@@ -58,16 +58,32 @@ export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
             .catch(() => alert("Error saving quantity"));
     };
 
+    const saveLocation = async (id, location) => {
+        await axios.post("/api/admin/inventory/product/update", { id, location })
+            .catch(() => alert("Error saving location"));
+    };
+
     const updateQuantity = (id, value) => {
         setInvs(prev => prev.map(i => i._id === id ? { ...i, quantity: parseInt(value) || 0 } : i));
     };
 
-    const downloadCsv = () => {
+    const updateLocation = (id, value) => {
+        setInvs(prev => prev.map(i => i._id === id ? { ...i, location: value } : i));
+    };
+
+    const [csvLoading, setCsvLoading] = useState(false);
+
+    const downloadCsv = async () => {
+        setCsvLoading(true);
+        const res = await axios.get("/api/admin/inventory/product/export")
+            .catch(() => { alert("Error downloading CSV"); setCsvLoading(false); return null; });
+        if (!res) return;
+        const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
         const rows = [
-            ["SKU", "Design", "Blank", "Color", "Size", "Quantity"],
-            ...invs.map(i => [i.sku, i.design?.sku ?? "", i.blank?.code ?? "", i.color?.name ?? "", i.size?.name ?? "", i.quantity]),
+            ["SKU", "Design", "Blank", "Color", "Size", "Quantity", "Location"],
+            ...res.data.items.map(i => [i.sku, i.designSku, i.blankCode, i.colorName, i.sizeName, i.quantity, i.location ?? ""]),
         ];
-        const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const csv = rows.map(r => r.map(cell).join(",")).join("\n");
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -75,6 +91,7 @@ export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
         a.download = "product-inventory.csv";
         a.click();
         URL.revokeObjectURL(url);
+        setCsvLoading(false);
     };
 
     const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -88,14 +105,33 @@ export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
                         <InventoryIcon sx={{ color: "#fff", fontSize: 20 }} />
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                        <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Product Inventory</Typography>
+                        <Stack direction="row" alignItems="baseline" spacing={1.5}>
+                            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Product Inventory</Typography>
+                            {totalValue > 0 && (
+                                <Tooltip title="Total cost value of all in-stock product inventory (quantity × cost per size)">
+                                    <Chip
+                                        label={`$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                        size="small"
+                                        color="success"
+                                        variant="outlined"
+                                        sx={{ fontWeight: 700, fontFamily: "monospace" }}
+                                    />
+                                </Tooltip>
+                            )}
+                        </Stack>
                         <Typography variant="body2" color="text.secondary">
                             {count > 0 ? `${count.toLocaleString()} items` : "Search or filter to browse"}
                         </Typography>
                     </Box>
                     <Stack direction="row" spacing={1}>
-                        <Tooltip title="Download visible results as CSV">
-                            <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={downloadCsv} disabled={invs.length === 0}>
+                        <Tooltip title="Download all in-stock product inventory as CSV">
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={csvLoading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon />}
+                                onClick={downloadCsv}
+                                disabled={csvLoading}
+                            >
                                 CSV
                             </Button>
                         </Tooltip>
@@ -175,11 +211,12 @@ export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
                 {invs.length > 0 && (
                     <Grid2 container spacing={1} alignItems="center" sx={{ px: 1, mb: 0.5 }}>
                         <Grid2 size={1} />
-                        <Grid2 size={3.5}><Typography variant="caption" fontWeight={700} color="text.secondary">SKU</Typography></Grid2>
+                        <Grid2 size={3}><Typography variant="caption" fontWeight={700} color="text.secondary">SKU</Typography></Grid2>
                         <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Blank</Typography></Grid2>
-                        <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">Color</Typography></Grid2>
+                        <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Color</Typography></Grid2>
                         <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Size</Typography></Grid2>
-                        <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">Quantity</Typography></Grid2>
+                        <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Quantity</Typography></Grid2>
+                        <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">Location</Typography></Grid2>
                     </Grid2>
                 )}
 
@@ -204,7 +241,7 @@ export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
                                     <Grid2 size={1} sx={{ display: "flex", justifyContent: "center" }}>
                                         <ItemImage src={image} size={64} />
                                     </Grid2>
-                                    <Grid2 size={3.5}>
+                                    <Grid2 size={3}>
                                         <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600, wordBreak: "break-all", fontSize: "0.75rem" }}>
                                             {item.sku}
                                         </Typography>
@@ -215,13 +252,13 @@ export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
                                     <Grid2 size={1.5}>
                                         <Chip label={item.blank?.code ?? "—"} size="small" color="primary" variant="outlined" sx={{ fontFamily: "monospace", fontWeight: 700 }} />
                                     </Grid2>
-                                    <Grid2 size={2}>
+                                    <Grid2 size={1.5}>
                                         <Typography variant="body2" sx={{ textTransform: "capitalize" }}>{item.color?.name ?? "—"}</Typography>
                                     </Grid2>
                                     <Grid2 size={1}>
                                         <Chip label={item.size?.name ?? "—"} size="small" variant="outlined" sx={{ textTransform: "uppercase", fontWeight: 600 }} />
                                     </Grid2>
-                                    <Grid2 size={2}>
+                                    <Grid2 size={1.5}>
                                         <Stack direction="row" alignItems="center" spacing={1}>
                                             <TextField
                                                 size="small"
@@ -234,6 +271,16 @@ export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
                                             />
                                             {outOfStock && <Chip label="OOS" size="small" color="error" sx={{ fontWeight: 700, fontSize: "0.6rem", height: 18, "& .MuiChip-label": { px: 0.75 } }} />}
                                         </Stack>
+                                    </Grid2>
+                                    <Grid2 size={2}>
+                                        <TextField
+                                            size="small"
+                                            fullWidth
+                                            placeholder="Not set"
+                                            value={item.location ?? ""}
+                                            onChange={(e) => updateLocation(item._id, e.target.value)}
+                                            onBlur={(e) => saveLocation(item._id, e.target.value)}
+                                        />
                                     </Grid2>
                                 </Grid2>
                             </Box>

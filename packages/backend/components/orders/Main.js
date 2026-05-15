@@ -5,11 +5,11 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { RetryImage } from "../reusable/RetryImage";
 
 const STATUS_COLORS = {
@@ -28,63 +28,103 @@ const isMissingInfo = (o) =>
             i.color == undefined ||
             i.size == undefined ||
             i.sizeName == undefined ||
-            i.blank == undefined
+            (i.blank == undefined && i.styleV2 == undefined)
     );
 
-export function Main({ ords, pages, page, q, filter }) {
+export function Main({ ords, pages, page, q, filter, showAll, source }) {
     const router = useRouter();
-    const [orders, setOrders] = useState(ords);
+    const [orders] = useState(ords);
     const [search, setSearch] = useState(q ?? "");
     const [opened, setOpened] = useState("");
-    const [searching, setSearching] = useState(false);
 
-    const performSearch = async () => {
-        setSearching(true);
-        try {
-            const res = await axios.post("/api/orders", { search });
-            if (res.data.error) alert(res.data.msg);
-            else setOrders(res.data.orders);
-        } finally {
-            setSearching(false);
-        }
+    const buildUrl = ({ pg = 1, f = filter, all = showAll, sq = search } = {}) => {
+        const params = new URLSearchParams();
+        if (pg > 1) params.set("page", String(pg));
+        if (f) params.set("filter", f);
+        if (all) params.set("status", "all");
+        if (sq?.trim()) params.set("q", sq.trim());
+        const qs = params.toString();
+        return `/orders${qs ? `?${qs}` : ""}`;
+    };
+
+    const performSearch = () => {
+        location.href = buildUrl({ pg: 1 });
     };
 
     const handlePageChange = (_, value) => {
-        location.href = `/orders?page=${value}${filter ? `&filter=${filter}` : ""}`;
+        location.href = buildUrl({ pg: value });
     };
 
-    const activeFilter = filter ?? "all";
+    const activeFilter = filter ?? "none";
 
     const FILTERS = [
-        { key: "all", label: "All Orders", href: "/orders?page=1" },
-        { key: "missinginfo", label: "Missing Info", href: "/orders?page=1&filter=missinginfo", icon: <WarningAmberIcon sx={{ fontSize: 14 }} /> },
-        { key: "blank", label: "Includes Blanks", href: "/orders?page=1&filter=blank" },
+        { key: "none",        label: "All Types",       f: null },
+        { key: "missinginfo", label: "Missing Info",     f: "missinginfo", icon: <WarningAmberIcon sx={{ fontSize: 14 }} /> },
+        { key: "blank",       label: "Includes Blanks",  f: "blank" },
     ];
 
     return (
         <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}>
-            <Container maxWidth="lg" sx={{ py: 3, minHeight: "90vh" }}>
+            {/* Header */}
+            <Box sx={{ bgcolor: "#fff", borderBottom: "1px solid #e2e8f0", px: 3, py: 2, mb: 0 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box sx={{
+                            width: 36, height: 36, borderRadius: 2, flexShrink: 0,
+                            background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                            <ShoppingCartIcon sx={{ color: "#fff", fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>
+                                Orders
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {showAll ? "All statuses" : "Awaiting shipment"}
+                                {filter === "missinginfo" ? " · Missing info" : filter === "blank" ? " · Includes blanks" : ""}
+                                {q ? ` · "${q}"` : ""}
+                            </Typography>
+                        </Box>
+                    </Stack>
 
-                {/* Header */}
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        Orders
-                    </Typography>
-                    <Stack direction="row" spacing={1}>
-                        {FILTERS.map((f) => (
+                    <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                        {/* Status toggle */}
+                        <Chip
+                            label="Awaiting Shipment"
+                            size="small"
+                            variant={!showAll ? "filled" : "outlined"}
+                            color={!showAll ? "warning" : "default"}
+                            onClick={() => { location.href = buildUrl({ pg: 1, all: false }); }}
+                            sx={{ cursor: "pointer", fontWeight: !showAll ? 600 : 400 }}
+                        />
+                        <Chip
+                            label="All Statuses"
+                            size="small"
+                            variant={showAll ? "filled" : "outlined"}
+                            color={showAll ? "primary" : "default"}
+                            onClick={() => { location.href = buildUrl({ pg: 1, all: true }); }}
+                            sx={{ cursor: "pointer", fontWeight: showAll ? 600 : 400 }}
+                        />
+                        <Box sx={{ width: "1px", height: 20, bgcolor: "divider", display: { xs: "none", sm: "block" } }} />
+                        {/* Type filters */}
+                        {FILTERS.map((fi) => (
                             <Chip
-                                key={f.key}
-                                label={f.label}
-                                icon={f.icon}
+                                key={fi.key}
+                                label={fi.label}
+                                icon={fi.icon}
                                 size="small"
-                                variant={activeFilter === f.key ? "filled" : "outlined"}
-                                color={activeFilter === f.key ? "primary" : "default"}
-                                onClick={() => { location.href = f.href; }}
-                                sx={{ cursor: "pointer", fontWeight: activeFilter === f.key ? 600 : 400 }}
+                                variant={activeFilter === fi.key ? "filled" : "outlined"}
+                                color={activeFilter === fi.key ? "primary" : "default"}
+                                onClick={() => { location.href = buildUrl({ pg: 1, f: fi.f }); }}
+                                sx={{ cursor: "pointer", fontWeight: activeFilter === fi.key ? 600 : 400 }}
                             />
                         ))}
                     </Stack>
                 </Box>
+            </Box>
+
+            <Container maxWidth="lg" sx={{ py: 3, minHeight: "90vh" }}>
 
                 {/* Search */}
                 <Box sx={{ mb: 2, p: 2, borderRadius: 2, background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
@@ -222,7 +262,7 @@ export function Main({ ords, pages, page, q, filter }) {
                                     <Divider />
                                     <Box sx={{ px: 2, py: 1.5, backgroundColor: "background.default" }}>
                                         {/* Mobile status + total row */}
-                                        <Stack direction="row" spacing={1} sx={{ mb: 1.5, display: { xs: "flex", md: "none" } }}>
+                                        <Stack direction="row" spacing={1} sx={{ mb: 1.5, display: { xs: "flex", md: "none" }, flexWrap: "wrap", alignItems: "center" }}>
                                             <Chip label={statusInfo.label} color={statusInfo.color} size="small" variant="outlined" sx={{ fontSize: "0.65rem", height: 20 }} />
                                             <Typography variant="caption" color="text.secondary">
                                                 {new Date(o.date).toLocaleDateString("en-US")} · ${parseFloat(o.total ?? 0).toFixed(2)}
@@ -259,7 +299,9 @@ export function Main({ ords, pages, page, q, filter }) {
                                                         <Box sx={{ width: 56, height: 56, borderRadius: 1, overflow: "hidden", backgroundColor: "background.default", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                                                             {imageKeys.length > 0 ? (
                                                                 <RetryImage
-                                                                    src={`/api/renderImages/${item.styleCode}-${item.colorName}-${imageKeys[0]}.jpg?blank=${item.styleCode}&colorName=${item.colorName}&design=${item.design[imageKeys[0]]}&width=100&side=${imageKeys[0]}`}
+                                                                    src={source === "PO"
+                                                                        ? `https://images4.tshirtpalace.com/images/productImages/SKU--${(item.colorName || "").toLowerCase()}-${(item.styleCode || "").toLowerCase()}-${imageKeys[0]}.webp?url=${item.design[imageKeys[0]]}&width=100`
+                                                                        : `/api/renderImages/${item.styleCode}-${item.colorName}-${imageKeys[0]}.jpg?blank=${item.styleCode}&colorName=${item.colorName}&design=${item.design[imageKeys[0]]}&width=100&side=${imageKeys[0]}`}
                                                                     alt={item.sku}
                                                                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
                                                                 />

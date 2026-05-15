@@ -13,5 +13,7 @@ export {checkAddress} from "./functions/usps/usps"
 export {ShipStationShip, getCarriers} from "./functions/shipstatiton"
 export {Refund} from "./components/refund/Main"
 export {TrackPackage as uspsTracking} from "./functions/usps/usps"; 
-export {getRatesFeNew, purchaseFedexNew} from "./functions/fedex/new";
+export {getRatesFeNew, purchaseFedexNew, TrackPackageFedEx} from "./functions/fedex/new";
 export {NoteSnackBar} from  "./components/NoteSnackBar";
+export { Items as OrderItems } from "./components/OrderModalComponents/items";
+export { Address as OrderAddress } from "./components/OrderModalComponents/address";

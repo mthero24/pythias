@@ -92,6 +92,42 @@ module.exports = {
       min_uptime: "30s",
       cron_restart: "0 9 * * *", //9am UTC is 4AM EST
     },
+    {
+      name: "tracking-premier-printing",
+      cwd: "apps/premier-printing",
+      script: "scripts/runTracking.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,       // only run when cron fires, not on exit
+      cron_restart: "0 */6 * * *", // every 6 hours
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3000,
+      },
+      out_file: "/dev/null",
+      error_file: "/dev/null",
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
+      name: "tracking-po",
+      cwd: "apps/po",
+      script: "scripts/runTracking.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "0 */6 * * *", // every 6 hours
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3001,
+      },
+      out_file: "/dev/null",
+      error_file: "/dev/null",
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
   ],
 };
   

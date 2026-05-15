@@ -29,9 +29,12 @@ export async function TrackPackage({tn, credentials}){
             //console.log(e.response.data)
         })
         //console.log(res?.data)
-        if(res && res.data && res.data.eventSummaries) return res.data.eventSummaries
+        if(res?.data?.eventSummaries) return {
+            events: res.data.eventSummaries,
+            expectedDelivery: res.data.expectedDeliveryDate ?? res.data.scheduledDeliveryDate ?? null,
+        }
     }
-    return []
+    return { events: [], expectedDelivery: null }
 }
 
 export async function GenerateManifest({PicNumbers, credentials, businessAddress}){

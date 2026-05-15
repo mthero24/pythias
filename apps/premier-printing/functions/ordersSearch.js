@@ -1,55 +1,65 @@
-import Order from "@/models/Order";
+const LIMIT = 200;
 
+export async function OrdersSearch({ Order, q, page = 1, statusFilter = {}, orderIds = null }) {
+    const skip = (page - 1) * LIMIT;
 
-export async function OrdersSearch ({q, productsPerPage, page}){
-    //console.log(options);
-    console.log(q)
-  let project;
-  //if(process.env.NODE_ENV == "development"){
-  project = {
-    meta: "$$SEARCH_META",
-    _id: 1,
-    score: {
-      $meta: "searchScore",
-    },
-  };
+    if (q && q.trim().length > 2) {
+        // Atlas Search — get all matching IDs, then apply extra filters in a regular find
+        const hits = await Order.aggregate([
+            {
+                $search: {
+                    index: "default",
+                    text: {
+                        query: q.replace(/[^a-zA-Z0-9 ]/g, "").trim(),
+                        path: [
+                            "poNumber",
+                            "shippingAddress.name",
+                            "shippingAddress.address1",
+                            "shippingAddress.city",
+                            "shippingAddress.state",
+                            "shippingAddress.zip",
+                        ],
+                        fuzzy: { maxEdits: 2, prefixLength: 3, maxExpansions: 2 },
+                        matchCriteria: "any",
+                    },
+                },
+            },
+            { $project: { _id: 1 } },
+        ]);
 
-  console.log(page, "__PAGE");
-  let skip = page * productsPerPage - productsPerPage;
+        let ids = hits.map(h => h._id);
 
-  let query = [
-    {
-      $search: {
-        index: "default",
-        text: {
-          query: q.replace(/[^a-zA-Z0-9]/g, ''),
-          path: ["poNumber", "shippingAddress.name", "shippingAddress.address", "shippingAddress.city", "shippingAddress.state", "shippingAddress.postalCode"],
-          fuzzy: {
-            maxEdits: 2,
-            prefixLength: 3,
-            maxExpansions: 2
-          },
-          matchCriteria: "any"
-        },
-        count: {
-          type: "total",
-        },
-      },
-    },
-    {
-      $project: project,
-    },
-    {
-      $skip: skip,
-    },
-    {
-      $limit: productsPerPage,
-    },
-  ];
-  console.log(query[0]["$search"])
-  
-  let orders = await Order.aggregate([query]);
-  //console.log("something", time);
-  console.log("stan search designs ", orders[0]);
-  return orders;
+        // Intersect with orderIds filter (blank / missinginfo) if present
+        if (orderIds) {
+            const allowed = new Set(orderIds.map(id => id.toString()));
+            ids = ids.filter(id => allowed.has(id.toString()));
+        }
+
+        const findQuery = { _id: { $in: ids }, "items.0": { $exists: true }, ...statusFilter };
+        const count = await Order.countDocuments(findQuery);
+        const orders = await Order.find(findQuery)
+            .sort({ date: -1 })
+            .populate("items")
+            .select("poNumber marketplace items status date total")
+            .skip(skip)
+            .limit(LIMIT)
+            .lean();
+
+        return { orders, count };
+    }
+
+    // No query — regular find with filters
+    const findQuery = { "items.0": { $exists: true }, ...statusFilter };
+    if (orderIds) findQuery._id = { $in: orderIds };
+
+    const count = await Order.countDocuments(findQuery);
+    const orders = await Order.find(findQuery)
+        .sort({ date: -1 })
+        .populate("items")
+        .select("poNumber marketplace items status date total")
+        .skip(skip)
+        .limit(LIMIT)
+        .lean();
+
+    return { orders, count };
 }
