@@ -26,7 +26,7 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-
+import logo from "@/public/images/logowhite.png";
 const BG = "#0f172a";
 
 const NAV_GROUPS = [
@@ -90,7 +90,7 @@ export default function ButtonAppBar() {
                     <Box sx={{ flex: 1 }}>
                         <Link href="/" style={{ display: "inline-flex", alignItems: "center" }}>
                             <Image
-                                src="/images/logowhite.png"
+                                src={logo}
                                 width={150} height={34} alt="Print Oracle"
                                 style={{ objectFit: "contain" }}
                                 priority
@@ -128,7 +128,7 @@ export default function ButtonAppBar() {
                 <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
                     <Link href="/" onClick={() => setDrawerOpen(false)} style={{ display: "inline-flex" }}>
                         <Image
-                            src="/images/logowhite.png"
+                            src={logo}
                             width={150} height={34} alt="Print Oracle"
                             style={{ objectFit: "contain" }}
                         />
