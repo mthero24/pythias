@@ -1,11 +1,12 @@
 "use client";
-import { Grid2, Box, Container, Typography, TextField, MenuItem, Button, Modal, FormControl, FormLabel, FormControlLabel, FormGroup, Radio, RadioGroup } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { Grid2, Box, Container, Typography, TextField, MenuItem, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, FormControl, FormLabel, FormControlLabel, FormGroup, Radio, RadioGroup } from '@mui/material';
+import AddIcon    from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon   from '@mui/icons-material/Edit';
+import CheckIcon  from '@mui/icons-material/Check';
+import CloseIcon  from '@mui/icons-material/Close';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import CheckIcon from '@mui/icons-material/Check';
 export function Main({marketplaces}){
     let [markets, setMarkets] = useState(marketplaces); 
     let [categoryOpen, setCategoryOpen] = useState(false);
@@ -167,126 +168,111 @@ export function Main({marketplaces}){
     </Container>
 }
 
-function AddCategoryModal({marketplace, open, setOpen, setMarkets, categoryEdit, setCategoryEdit}){
-    console.log("categoryEdit", categoryEdit)
+function AddCategoryModal({ marketplace, open, setOpen, setMarkets, categoryEdit, setCategoryEdit }) {
     const [category, setCategory] = useState(categoryEdit);
-    useEffect(() => {
-        setCategory(categoryEdit);
-    }, [categoryEdit])
-    let style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 400,
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
+    const isEdit = !!(categoryEdit && categoryEdit !== "");
+
+    useEffect(() => { setCategory(categoryEdit); }, [categoryEdit, open]);
+
+    const handleClose = () => { setOpen(false); setCategoryEdit(""); };
+
+    const handleSubmit = async () => {
+        if (!category?.trim()) return;
+        const res = await axios.put(`/api/marketplaces`, { marketplace: marketplace._id, category: category.trim(), oldCategory: categoryEdit });
+        if (res.status === 200) {
+            setCategory("");
+            setCategoryEdit("");
+            setOpen(false);
+            setMarkets(res.data.marketplaces);
+        }
     };
+
     return (
-        <Modal open={open} onClose={() => setOpen(false)}>
-            <Box sx={style}>
-                <Typography variant="h6">{categoryEdit && categoryEdit !== "" ? "Edit Category" : "Add Category"}</Typography>
-                <Box sx={{ mt: 2 }}>
-                    <TextField label="Category Name" fullWidth value={category} onChange={(e) => setCategory(e.target.value)} />
-                </Box>
-                <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                    <Button variant="contained" color="primary" onClick={async (e) => {
-                        // Handle add category action
-                        console.log("Adding category")
-
-                        let res = await axios.put(`/api/marketplaces`, { marketplace: marketplace._id, category, oldCategory: categoryEdit })
-                        console.log(res)
-                        if (res.status === 200) {
-                            // Handle successful addition
-                            setCategory("");
-                            setCategoryEdit("");
-                            setOpen(false);
-                            setMarkets(res.data.marketplaces);
-
-                        }
-                    }}>{categoryEdit && categoryEdit !== "" ? "Edit" : "Add"}</Button>
-                    <Button variant="outlined" color="secondary" onClick={() => setOpen(false)}>Cancel</Button>
-                </Box>
-            </Box>
-        </Modal>
+        <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                {isEdit ? "Edit Category" : "Add Category"}
+                <IconButton size="small" onClick={handleClose}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ pt: "12px !important" }}>
+                <TextField
+                    label="Category name"
+                    fullWidth
+                    size="small"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                    autoFocus
+                />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button variant="contained" onClick={handleSubmit} disabled={!category?.trim()}>
+                    {isEdit ? "Save" : "Add"}
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 }
+
 function DeleteCategoryModal({ marketplace, open, setOpen, setMarkets, category, setDeleteCategory, setCategoryToDelete }) {
-    let style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 500,
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
+    const handleClose = () => { setOpen(false); setCategoryToDelete(null); setDeleteCategory(null); };
+
+    const handleConfirm = async () => {
+        const res = await axios.post(`/api/marketplaces`, { marketplace: marketplace._id, category });
+        if (res.status === 200) {
+            setCategoryToDelete(null);
+            setDeleteCategory(false);
+            setMarkets(res.data.marketplaces);
+        }
     };
+
     return (
-        <Modal open={open} onClose={() => { setOpen(false); setCategoryToDelete(null); setDeleteCategory(null); }}>
-            <Box sx={style}>
-                <Typography variant="h6">Remove Category</Typography>
-                <Typography>Are you sure you want to remove the category "{category}"?</Typography>
-                <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                    <Button variant="contained" color="error" onClick={async (e) => {
-                        // Handle remove category action
-                        console.log("Removing category")
-
-                        let res = await axios.post(`/api/marketplaces`, { marketplace: marketplace._id, category })
-                        console.log(res)
-                        if (res.status === 200) {
-                            // Handle successful removal
-                            setCategoryToDelete(null);
-                            setDeleteCategory(false);
-                            setMarkets(res.data.marketplaces);
-
-                        }
-                    }}>Remove</Button>
-                    <Button variant="outlined" color="secondary" onClick={() => { setOpen(false); setCategoryToDelete(null); setDeleteCategory(null); }}>Cancel</Button>
-                </Box>
-            </Box>
-        </Modal>
+        <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                Remove Category
+                <IconButton size="small" onClick={handleClose}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent>
+                <Typography variant="body2" color="text.secondary">
+                    Remove the category <strong style={{ color: "#111827" }}>"{category}"</strong> and all its options? This cannot be undone.
+                </Typography>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button variant="contained" color="error" onClick={handleConfirm}>Remove</Button>
+            </DialogActions>
+        </Dialog>
     );
 }
+
 function RemoveOptionModal({ marketplace, open, setOpen, setMarkets, category, setCategoryToDelete, option, setOptionToDelete }) {
-    let style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 500,
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
+    const handleClose = () => { setOpen(false); setCategoryToDelete(null); setOptionToDelete(null); };
+
+    const handleConfirm = async () => {
+        const res = await axios.put(`/api/marketplaces`, { marketplace: marketplace._id, category, oldValue: option });
+        if (res.status === 200) {
+            setCategoryToDelete(null);
+            setOptionToDelete(null);
+            setMarkets(res.data.marketplaces);
+            setOpen(false);
+        }
     };
+
     return (
-        <Modal open={open} onClose={() => { setOpen(false); setCategoryToDelete(null); setOptionToDelete(null);  }}>
-            <Box sx={style}>
-                <Typography variant="h6">Remove Option</Typography>
-                <Typography>Are you sure you want to remove the option "{option}"?</Typography>
-                <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}>
-                    <Button variant="contained" color="error" onClick={async (e) => {
-                        // Handle remove option action
-                        console.log("Removing option")
-
-                        let res = await axios.put(`/api/marketplaces`, { marketplace: marketplace._id, category, oldValue: option })
-                        console.log(res)
-                        if (res.status === 200) {
-                            // Handle successful removal
-                            setCategoryToDelete(null);
-                            setOptionToDelete(null);
-                            setMarkets(res.data.marketplaces);
-                            setOpen(false);
-
-                        }
-                    }}>Remove</Button>
-                    <Button variant="outlined" color="secondary" onClick={() => { setOpen(false); setCategoryToDelete(null); setOptionToDelete(null); }}>Cancel</Button>
-                </Box>
-            </Box>
-        </Modal>
+        <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                Remove Option
+                <IconButton size="small" onClick={handleClose}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent>
+                <Typography variant="body2" color="text.secondary">
+                    Remove <strong style={{ color: "#111827" }}>"{option}"</strong> from <strong style={{ color: "#111827" }}>{category}</strong>? This cannot be undone.
+                </Typography>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button variant="contained" color="error" onClick={handleConfirm}>Remove</Button>
+            </DialogActions>
+        </Dialog>
     );
 }

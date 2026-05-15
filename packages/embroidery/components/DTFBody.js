@@ -1,283 +1,167 @@
-"use client"
-import {
-    Container,
-    Grid2,
-    Box,
-    Card,
-    Typography
-  } from "@mui/material";
-import { useState, useEffect } from "react";
-import React from "react";
+"use client";
+import { Grid2, Box, Card, Typography, Stack, Chip, Divider } from "@mui/material";
+import { useState } from "react";
 import Image from "next/image";
-import {Scan} from "./scan"
-import {createImage} from "../functions/image"
+import { Scan } from "./scan";
+import { createImage } from "../functions/image";
 import { Repull } from "../../repull/exports";
-export function DTFBody({auto, setAuto, printer, type}){
-    const [submitted, setSubmitted] = useState([]);
-    useEffect(()=>{
-      console.log(submitted, "submitted use Effect")
-    },[submitted])
+
+const RAW_SIDES = [
+    { key: "frontDesign",       label: "Front" },
+    { key: "backDesign",        label: "Back" },
+    { key: "upperSleeveDesign", label: "Upper Sleeve" },
+    { key: "lowerSleeveDesign", label: "Lower Sleeve" },
+    { key: "centerDesign",      label: "Center" },
+    { key: "pocketDesign",      label: "Pocket" },
+];
+
+const COMBO_SIDES = [
+    { key: "frontDesign",  comboKey: "frontCombo",  label: "Front Preview" },
+    { key: "backDesign",   comboKey: "backCombo",   label: "Back Preview" },
+    { key: "centerDesign", comboKey: "centerCombo", label: "Center Preview" },
+];
+
+export function DTFBody({ auto, setAuto, printer }) {
+    const [submitted, setSubmitted] = useState(null);
+
+    const hasRaw   = submitted && RAW_SIDES.some(s => submitted[s.key]);
+    const hasCombo = submitted && COMBO_SIDES.some(s => submitted[s.key]);
+
     return (
-            <Box sx={{padding: ".5%", background: "#d2d2d2", minHeight: "70vh"}}>
-                <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} type={type} />
-                <Box sx={{margin: "0% 5%"}}>
-                  <Card sx={{width: "100%"}}>
-                    <Container maxWidth={submitted?.type == "new"? "md": "md"}>
-                      {submitted && submitted.item && <Box sx={{padding: "2%"}}><Typography textAlign={"center"} fontWeight="bold" fontSize={"1.3rem"}>PieceID: {submitted.item.pieceId} Blank: {submitted.item.blank.code} <br/> Color: {submitted.item.colorName} size: {submitted.item.sizeName}, Thread Color: {submitted.item.threadColorName? submitted.item.threadColorName: "Multicolored"} </Typography></Box>}
-                    {submitted && submitted.type == undefined &&
-                    <Grid2 container spacing={2}>
-                        <Grid2
-                            size={{xs: 12, sm: submitted && submitted.backDesign? 4: 6, md: submitted && submitted.backDesign? 4: 6}}
-                            sx={{display: submitted && submitted.styleImage? "block": "none"}}
-                          >
-                            <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%"}}>
-                            <Image
-                              width={350}
-                              alt="style"
-                              height={350}
-                              style={{
-                                width: "100%",
-                                height: "auto"
-                              }}
-                              src={submitted && submitted.styleImage? submitted.styleImage: "/blank.jpg"}
+        <Box sx={{ bgcolor: "background.default", minHeight: "70vh", py: 2, display: "flex", flexDirection: "column" }}>
+
+            <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} />
+
+            {/* Item info chips */}
+            {submitted?.item && (
+                <Box sx={{ px: { xs: 1, sm: "2%", md: "5%" }, mb: 2 }}>
+                    <Card variant="outlined" sx={{ borderRadius: 3, px: 2, py: 1.5 }}>
+                        <Stack direction="row" flexWrap="wrap" gap={1} alignItems="center">
+                            <Chip
+                                label={submitted.item.pieceId}
+                                size="small"
+                                sx={{ fontFamily: "monospace", fontWeight: 700, bgcolor: "#eff6ff", color: "#1d4ed8" }}
                             />
-                            </Box>
-                          </Grid2>
-                          {submitted && submitted.frontDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: submitted && submitted.backDesign? 4: 6, md: submitted && submitted.backDesign? 4: 6}}
-                              
-                            >
-                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", minHeight: "100%", backgroundColor: "#e1e1e1e1"}}>
-                                <Image
-                                width={350}
-                                alt="front design"
-                                height={350}
-                                style={{
-                                  width: "100%",
-                                  height: "auto"
-                                }}
-                                src={submitted && submitted.frontDesign? submitted.frontDesign: "/blank.jpg"}
-                              />
-                                </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.backDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: 4, md: 4}}
-                              s={6}
-                              sx={{
-                                backgroundColor: "#e1e1e1e1",
-                              }}
-                            >
-                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
-                                <Image
-                                    width={350}
-                                    alt="back design"
-                                    height={350}
-                                    style={{
-                                      width: "100%",
-                                      height: "auto"
-                                    }}
-                                    src={submitted && submitted.backDesign? submitted.backDesign: "/blank.jpg"}
-                                />
-                              </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.upperSleeveDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: 4, md: 4}}
-                              s={6}
-                              sx={{
-                                backgroundColor: "#e1e1e1e1",
-                              }}
-                            >
-                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
-                                <Image
-                                    width={350}
-                                    alt="back design"
-                                    height={350}
-                                    style={{
-                                      width: "100%",
-                                      height: "auto"
-                                    }}
-                                    src={submitted && submitted.upperSleeveDesign? submitted.upperSleeveDesign: "/blank.jpg"}
-                                />
-                              </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.lowerSleeveDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: 4, md: 4}}
-                              s={6}
-                              sx={{
-                                backgroundColor: "#e1e1e1e1",
-                              }}
-                            >
-                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
-                                <Image
-                                    width={350}
-                                    alt="back design"
-                                    height={350}
-                                    style={{
-                                      width: "100%",
-                                      height: "auto"
-                                    }}
-                                    src={submitted && submitted.lowerSleeveDesign? submitted.lowerSleeveDesign: "/blank.jpg"}
-                                />
-                              </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.centerDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: 4, md: 4}}
-                              s={6}
-                              sx={{
-                                backgroundColor: "#e1e1e1e1",
-                              }}
-                            >
-                              {console.log(submitted.centerDesign, "center design")}
-                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
-                                <Image
-                                    width={350}
-                                    alt="back design"
-                                    height={350}
-                                    style={{
-                                      width: "100%",
-                                      height: "auto"
-                                    }}
-                                    src={submitted && submitted.centerDesign? submitted.centerDesign: "/blank.jpg"}
-                                />
-                              </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.pocketDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: 4, md: 4}}
-                              s={6}
-                              sx={{
-                                backgroundColor: "#e1e1e1e1",
-                              }}
-                            >
-                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", backgroundColor: "#e1e1e1e1"}}>
-                                <Image
-                                    width={350}
-                                    alt="back design"
-                                    height={350}
-                                    style={{
-                                      width: "100%",
-                                      height: "auto"
-                                    }}
-                                    src={submitted && submitted.pocketDesign? submitted.pocketDesign: "/blank.jpg"}
-                                />
-                              </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.frontDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: submitted && !submitted.backDesign? 12: 6, md: submitted && !submitted.backDesign? 12: 6}}
-                              
-                            >
-                                <Box sx={{display:"flex", flexDirection: "column", justifyContent: "center", justifyItems: "center", padding: "10%", }}>
-                                <Image
-                                width={350}
-                                alt="front design"
-                                height={350}
-                                style={{
-                                  width: "100%",
-                                  height: "auto"
-                                }}
-                                src={submitted && submitted.frontDesign && submitted.source != "PP" && submitted.source != "IM"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.frontDesign}): submitted && submitted.frontCombo? submitted.frontCombo: "/blank.jpg"}
-                              />
-                                </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.backDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: 6, md: 6}}
-                              s={6}
-                              sx={{
-                                backgroundColor: "#e1e1e1e1",
-                              }}
-                            >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%",}}>
-                                <Image
-                                    width={350}
-                                    alt="back design"
-                                    height={350}
-                                    style={{
-                                      width: "100%",
-                                      height: "auto"
-                                    }}
-                                    src={submitted && submitted.backDesign && submitted.source != "PP" && submitted.source != "IM"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.backDesign}): submitted && submitted.backCombo? submitted.backCombo: "/blank.jpg"}
-                                />
-                              </Box>
-                            </Grid2>
-                          )}
-                          {submitted && submitted.centerDesign && (
-                            <Grid2
-                            size={{xs: 12, sm: 6, md: 6}}
-                              s={6}
-                              sx={{
-                                backgroundColor: "#e1e1e1e1",
-                              }}
-                            >
-                                <Box sx={{display:"flex", flexDirection: "row", justifyContent: "center", margin: "1%", padding: "10%",}}>
-                                <Image
-                                    width={350}
-                                    alt="back design"
-                                    height={350}
-                                    style={{
-                                      width: "100%",
-                                      height: "auto"
-                                    }}
-                                    src={submitted && submitted.centerDesign && submitted.source != "PP" && submitted.source != "IM"? createImage(submitted.colorName, submitted.styleCode, {url: submitted.centerDesign}): submitted && submitted.centerCombo? submitted.centerCombo: "/blank.jpg"}
-                                />
-                              </Box>
-                            </Grid2>
-                          )}
-                    </Grid2>
-                  }
-                  {submitted && submitted.type == "new" && 
-                    (
-                      <Box>
-                        {Object.keys(submitted.images).map(im=>(
-                          <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%", margin: "2%"}}>
-                            <Box>
-                              <Image
-                                  width={500}
-                                  alt={`${im}`}
-                                  height={500}
-                                  style={{
-                                    width: "100%",
-                                    height: "auto",
-                                    background: "#e2e2e2"
-                                  }}
-                                src={createImage(submitted.colorName, submitted.styleCode, { url: submitted.images[im], side: im == "back" || im == "namePlate" ? "back" : "front", printArea: im }, 400, submitted.source)}
-                              />
-                            </Box>
-                            <Box sx={{ background: "#e2e2e2", padding: "1%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center"}}>
-                                {console.log(submitted.images[im], "image")}
-                              <Image
-                                  width={500}
-                                  alt="back design"
-                                  height={500}
-                                  style={{
-                                    width: "100%",
-                                    height: "auto"
-                                  }}
-                                  src={submitted.images[im]}
-                              />
-                            </Box>
-                          </Box>
-                        ))}
-                      </Box>
-                    )
-                  }
-                  </Container>
-                  </Card>
+                            {submitted.item.blank?.code && (
+                                <Chip label={submitted.item.blank.code} size="small" sx={{ fontWeight: 600 }} />
+                            )}
+                            {submitted.item.colorName && (
+                                <Chip label={submitted.item.colorName} size="small"
+                                    sx={{ bgcolor: "#f0fdf4", color: "#15803d", fontWeight: 600 }} />
+                            )}
+                            {submitted.item.sizeName && (
+                                <Chip label={submitted.item.sizeName} size="small"
+                                    sx={{ bgcolor: "#eff6ff", color: "#1d4ed8", fontWeight: 600 }} />
+                            )}
+                            <Chip
+                                label={`Thread: ${submitted.item.threadColorName || "Multicolored"}`}
+                                size="small"
+                                sx={{ bgcolor: "#fdf4ff", color: "#7e22ce", fontWeight: 600 }}
+                            />
+                        </Stack>
+                    </Card>
                 </Box>
+            )}
+
+            {/* Standard item — raw designs + garment previews */}
+            {submitted?.type === undefined && submitted?.item && (
+                <Box sx={{ px: { xs: 1, sm: "2%", md: "5%" } }}>
+                    {hasRaw && (
+                        <>
+                            <SectionLabel>Embroidery Designs</SectionLabel>
+                            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                                {submitted.styleImage && (
+                                    <Grid2 size={{ xs: 12, sm: 4, md: 3 }}>
+                                        <DesignCard src={submitted.styleImage} label="Garment" />
+                                    </Grid2>
+                                )}
+                                {RAW_SIDES.filter(s => submitted[s.key]).map(({ key, label }) => (
+                                    <Grid2 key={key} size={{ xs: 12, sm: 4, md: 3 }}>
+                                        <DesignCard src={submitted[key]} label={label} />
+                                    </Grid2>
+                                ))}
+                            </Grid2>
+                        </>
+                    )}
+
+                    {hasCombo && (
+                        <>
+                            <Divider sx={{ mb: 2 }} />
+                            <SectionLabel>Garment Preview</SectionLabel>
+                            <Grid2 container spacing={2}>
+                                {COMBO_SIDES.filter(s => submitted[s.key]).map(({ key, comboKey, label }) => (
+                                    <Grid2 key={key} size={{ xs: 12, sm: 6, md: 4 }}>
+                                        <DesignCard
+                                            label={label}
+                                            src={submitted.source !== "PP" && submitted.source !== "IM"
+                                                ? createImage(submitted.colorName, submitted.styleCode, { url: submitted[key] })
+                                                : submitted[comboKey] || "/blank.jpg"}
+                                        />
+                                    </Grid2>
+                                ))}
+                            </Grid2>
+                        </>
+                    )}
+                </Box>
+            )}
+
+            {/* New-style item — rendered vs raw side by side */}
+            {submitted?.type === "new" && submitted.images && (
+                <Box sx={{ px: { xs: 1, sm: "2%", md: "5%" } }}>
+                    <SectionLabel>Designs</SectionLabel>
+                    <Stack spacing={2}>
+                        {Object.keys(submitted.images).map(im => (
+                            <Card key={im} variant="outlined" sx={{ borderRadius: 3, overflow: "hidden" }}>
+                                <Box sx={{ px: 2, py: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 700, textTransform: "capitalize" }}>{im}</Typography>
+                                </Box>
+                                <Grid2 container>
+                                    <Grid2 size={6} sx={{ bgcolor: "#f3f4f6", p: 2, display: "flex", justifyContent: "center" }}>
+                                        <Image
+                                            width={400} height={400} alt={im}
+                                            style={{ width: "100%", height: "auto", maxWidth: 400, objectFit: "contain" }}
+                                            src={createImage(submitted.colorName, submitted.styleCode, { url: submitted.images[im], side: (im === "back" || im === "namePlate") ? "back" : "front", printArea: im }, 400, submitted.source)}
+                                        />
+                                    </Grid2>
+                                    <Grid2 size={6} sx={{ bgcolor: "#f3f4f6", p: 2, display: "flex", justifyContent: "center", borderLeft: "1px solid", borderColor: "divider" }}>
+                                        <Image
+                                            width={400} height={400} alt={`${im} raw`}
+                                            style={{ width: "100%", height: "auto", maxWidth: 400, objectFit: "contain" }}
+                                            src={submitted.images[im]}
+                                        />
+                                    </Grid2>
+                                </Grid2>
+                            </Card>
+                        ))}
+                    </Stack>
+                </Box>
+            )}
+
+            <Box sx={{ px: { xs: 1, sm: "2%", md: "5%" }, mt: "auto", pt: 3 }}>
                 <Repull />
             </Box>
-        )
+        </Box>
+    );
+}
+
+function SectionLabel({ children }) {
+    return (
+        <Typography variant="caption" sx={{ fontWeight: 700, color: "text.disabled", textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 1 }}>
+            {children}
+        </Typography>
+    );
+}
+
+function DesignCard({ src, label }) {
+    return (
+        <Card variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
+            <Box sx={{ px: 1.5, py: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>{label}</Typography>
+            </Box>
+            <Box sx={{ bgcolor: "#f3f4f6", p: 2, display: "flex", justifyContent: "center" }}>
+                <Image src={src} width={350} height={350} alt={label}
+                    style={{ width: "100%", height: "auto", objectFit: "contain" }} />
+            </Box>
+        </Card>
+    );
 }

@@ -1,31 +1,44 @@
-import {Box, Typography, Card, Grid2, Button} from "@mui/material";
-import axios from 'axios';
-export function BinInfo({bin, close, setBins}){
-    const Clear = async ()=>{
-        let res = await axios.delete(`/api/production/shipping/bins?number=${bin.number}`)
-        console.log(res)
-        if(res.data.error) alert(res.data.msg)
+import { Typography, Button, Stack, Chip, Divider } from "@mui/material";
+import axios from "axios";
+
+export function BinInfo({ bin, close, setBins }) {
+    const Clear = async () => {
+        const res = await axios.delete(`/api/production/shipping/bins?number=${bin.number}`);
+        if (res.data.error) alert(res.data.msg);
         else {
-            setBins(res.data.bins)
-            close()
+            setBins(res.data.bins);
+            close();
         }
-    }
-    return(
-        <Grid2 size={{xs: 6, sm:3}}>
-            <Card sx={{padding: "5%", margin: "1%"}}>
-                <Typography fontSize="1rem" textAlign="center" fontWeight={600}>Bin Number: {bin?.number}</Typography>
-                <Box sx={{display: "flex", flexDirection: "row", justifyContent:"center"}}>
-                    <Box sx={{padding: "2%"}}>
-                        <Typography textAlign={"center"} fontSize={".8rem"}>In Bin</Typography>
-                        <Typography textAlign={"center"} fontSize={".8rem"}>{bin?.items.length}</Typography>
-                    </Box>
-                    <Box sx={{padding: "2%"}}>
-                        <Typography textAlign={"center"} fontSize={".8rem"}>Remaining</Typography>
-                        <Typography textAlign={"center"} fontSize={".8rem"}>{bin?.order.items.filter(i=> !i.canceled && !i.shipped).length - bin?.items.length}</Typography>
-                    </Box>
-                </Box>
-                <Button onClick={Clear} fullWidth sx={{fontSize: ".7rem"}}>Clear</Button>
-            </Card>
-        </Grid2>
-    )
+    };
+
+    const remaining = bin.order.items.filter(i => !i.canceled && !i.shipped).length - bin.items.length;
+
+    return (
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ ml: 1 }}>
+            <Divider orientation="vertical" flexItem />
+            <Chip
+                label={`Bin #${bin.number}`}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ fontWeight: 700 }}
+            />
+            <Chip label={`${bin.items.length} in bin`} size="small" variant="outlined" />
+            <Chip
+                label={`${remaining} remaining`}
+                size="small"
+                variant="outlined"
+                color={remaining > 0 ? "warning" : "success"}
+            />
+            <Button
+                size="small"
+                color="error"
+                variant="outlined"
+                onClick={Clear}
+                sx={{ whiteSpace: "nowrap", fontSize: "0.72rem", py: 0.25 }}
+            >
+                Clear Bin
+            </Button>
+        </Stack>
+    );
 }

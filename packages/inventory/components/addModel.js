@@ -1,138 +1,200 @@
-import { useState, useEffect } from "react"
-import { Box, Grid2, Typography, Button, Modal, TextField, FormControlLabel, Checkbox, Divider, Accordion, AccordionActions, AccordionSummary, AccordionDetails, MenuItem } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { CircularProgress } from '@mui/material'
+import { useState, useEffect } from "react";
+import { Box, Grid2, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Divider, IconButton, Stack, CircularProgress, Chip } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import axios from "axios";
-import CloseIcon from '@mui/icons-material/Close';
 
 export const AddModal = ({ open, setOpen, setNeedsOrdered, needsOrdered, colors, setColors, setBlankCodes, blankCodes, defaultLocation }) => {
+    const [blanks, setBlanks]   = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving]   = useState(false);
+    const [items, setItems]     = useState([{ blank: null, color: "", size: "", quantity: 1, location: defaultLocation ?? "" }]);
 
-    const [blanks, setBlanks] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [items, setItems] = useState([{ blank: null, color: "", size: "", quantity: 0 }])
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "50%",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-        height: "60%",
-        overflow: "auto"
-    };
     useEffect(() => {
         const getBlanks = async () => {
-            let res = await axios.get("/api/admin/blanks")
-            console.log(res.data)
-            setBlanks(res.data.blanks.sort((a, b) => a.code.localeCompare(b.code)))
-            setLoading(false)
-        }
-        if (open && (!blanks || blanks.length <= 0)) {
-            getBlanks()
-            setLoading(true)
-        }
+            setLoading(true);
+            const res = await axios.get("/api/admin/blanks");
+            setBlanks(res.data.blanks.sort((a, b) => a.code.localeCompare(b.code)));
+            setLoading(false);
+        };
+        if (open && (!blanks || blanks.length <= 0)) getBlanks();
+    }, [open]);
 
-    }, [open])
+    const updateItem = (index, field, value) => {
+        setItems(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [field]: value };
+            if (field === "blank") {
+                next[index].color = "";
+                next[index].size  = "";
+            }
+            return next;
+        });
+    };
+
+    const addRow = () => setItems(prev => [...prev, { blank: null, color: "", size: "", quantity: 1, location: defaultLocation ?? "" }]);
+    const removeRow = (index) => setItems(prev => prev.filter((_, i) => i !== index));
+
+    const validItems = items.filter(i => i.blank && i.color && i.size && i.quantity > 0);
 
     const add = async () => {
-        if (items && items.length > 0) {
-            let res = await axios.post("/api/admin/inventory/create-order/add", { items: items.filter(i => i.blank && i.color && i.size && i.quantity > 0).map(i => ({ blank: i.blank, color: i.blank.colors.find(c => c.name === i.color), size: i.blank.sizes.find(s => s.name === i.size), quantity: i.quantity })) })
-            console.log(res.data)
-            let no = [...needsOrdered]
-            for (let inventory of res.data.inventories) {
-                no.push({ inv: inventory.inventory, order: inventory.order, included: true, location: defaultLocation })
-            }
-            setNeedsOrdered(no)
-            let bC = [...blankCodes]
-            let cL = [...colors]
-            for (let item of items) {
-                let blank = blanks.find(b => b.code === item.blank.code)
-                let color = item.color
-                if (!bC.includes(blank.code)) bC.push(blank.code)
-                if (!cL.includes(color)) cL.push(color)
-            }
-            setBlankCodes(bC)
-            setColors(cL)
-            setItems([{ blank: null, color: "", size: "", quantity: 0 }])
-            setOpen(false)
+        if (validItems.length === 0) return;
+        setSaving(true);
+        const res = await axios.post("/api/admin/inventory/create-order/add", {
+            items: validItems.map(i => ({
+                blank:    i.blank,
+                color:    i.blank.colors.find(c => c.name === i.color),
+                size:     i.blank.sizes.find(s => s.name === i.size),
+                quantity: i.quantity,
+            })),
+        }).catch(() => null);
+        setSaving(false);
+        if (!res?.data?.inventories) { alert("Error adding items"); return; }
+
+        setNeedsOrdered(prev => [
+            ...prev,
+            ...res.data.inventories.map((inventory, idx) => ({
+                inv:      inventory.inventory,
+                order:    inventory.order,
+                included: true,
+                location: validItems[idx]?.location ?? defaultLocation,
+            })),
+        ]);
+
+        const bC = [...blankCodes];
+        const cL = [...colors];
+        for (const item of items) {
+            if (!bC.includes(item.blank?.code)) bC.push(item.blank.code);
+            if (!cL.includes(item.color))       cL.push(item.color);
         }
-    }
+        setBlankCodes(bC);
+        setColors(cL);
+        setItems([{ blank: null, color: "", size: "", quantity: 1, location: defaultLocation ?? "" }]);
+        setOpen(false);
+    };
+
     return (
-        <Modal
-            open={open}
-            onClose={() => { setOpen(false) }}>
-            <Box sx={style}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
-                    <CloseIcon sx={{ color: "red", cursor: "pointer" }} onClick={() => { setOpen(false) }} />
-                </Box>
-                <Typography variant="h6" component="h2">
-                    Add Items To Order
-                </Typography>
-                {!loading && blanks && items && items.map((item, index) => (
-                    <Box key={index} sx={{ marginTop: "2%", marginBottom: "2%", borderBottom: "1px solid #000", paddingBottom: "2%" }}>
-                        <Grid2 container spacing={1}>
-                            <Grid2 size={3}>
-                                <TextField select fullWidth label="Blank Code" value={items[index].blank ? items[index].blank.code : ""} onChange={(e) => {
-                                    let its = [...items]
-                                    let item = its[index]
-                                    item.blank = blanks.find(b => b.code === e.target.value)
-                                    its[index] = item
-                                    setItems([...its])
-                                }}>
-                                    {blanks?.map(b => <MenuItem key={b.code} value={b.code}>{b.code}</MenuItem>)}
-                                </TextField>
-                            </Grid2>
-                            {items[index].blank && <Grid2 size={3}>
-                                <TextField select fullWidth label="Color" value={items[index].color} onChange={(e) => {
-                                    let its = [...items]
-                                    let item = its[index]
-                                    item.color = e.target.value
-                                    its[index] = item
-                                    setItems([...its])
-                                }}>
-                                    {items[index].blank?.colors.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
-                                </TextField>
-                            </Grid2>}
-                            {items[index].blank && <Grid2 size={3}>
-                                <TextField select fullWidth label="Size" value={items[index].size} onChange={(e) => {
-                                    let its = [...items]
-                                    let item = its[index]
-                                    item.size = e.target.value
-                                    its[index] = item
-                                    setItems([...its])
-                                }}>
-                                    {items[index].blank?.sizes.map(s => <MenuItem key={s.name} value={s.name}>{s.name}</MenuItem>)}
-                                </TextField>
-                            </Grid2>}
-                            {items[index].blank && <Grid2 size={3}>
-                                <TextField type="number" value={items[index].quantity} fullWidth label="Quantity" onChange={(e) => {
-                                    let its = [...items]
-                                    let item = its[index]
-                                    item.quantity = parseInt(e.target.value)
-                                    its[index] = item
-                                    setItems([...its])
-                                }} />
-                            </Grid2>}
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth scroll="paper">
+            <DialogTitle sx={{ py: 1.5, px: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>Add Items to Order</Typography>
+                    <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+                </Stack>
+            </DialogTitle>
+            <Divider />
+            <DialogContent sx={{ p: 2 }}>
+                {loading ? (
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5, py: 4 }}>
+                        <CircularProgress size={22} />
+                        <Typography variant="body2" color="text.secondary">Loading blanks…</Typography>
+                    </Box>
+                ) : (
+                    <Stack spacing={1.5}>
+                        {/* Column headers */}
+                        <Grid2 container spacing={1} sx={{ px: 0.5 }}>
+                            <Grid2 size={3}><Typography variant="caption" fontWeight={700} color="text.secondary">Style Code</Typography></Grid2>
+                            <Grid2 size={2.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Color</Typography></Grid2>
+                            <Grid2 size={2.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Size</Typography></Grid2>
+                            <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Qty</Typography></Grid2>
+                            <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Location</Typography></Grid2>
+                            <Grid2 size={1} />
                         </Grid2>
-                    </Box>))}
-                {loading && <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                    <CircularProgress color="#e2e2e2" sx={{ marginTop: "20px", marginRight: "10px" }} size={25} />
-                    <Typography variant="h6" sx={{ display: "block", color: "#e2e2e2", marginTop: "20px", fontSize: "1.6rem", fontWeight: "bold" }}>
-                        Loading...</Typography>
-                </Box>}
-                <Button onClick={() => {
-                    let its = [...items]
-                    its.push({ blank: null, color: "", size: "", quantity: 0 })
-                    setItems(its)
-                }}>Add</Button>
-                <Divider sx={{ marginTop: "2%", marginBottom: "2%" }} />
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignContent: "center", alignItems: "center" }}>
-                    <Button onClick={() => { add() }}>Add Items To Order</Button>
-                </Box>
-            </Box>
-        </Modal>
-    )
-}
+
+                        {items.map((item, index) => (
+                            <Box
+                                key={index}
+                                sx={{ bgcolor: "action.hover", borderRadius: 2, px: 1.5, py: 1 }}
+                            >
+                                <Grid2 container spacing={1} alignItems="center">
+                                    <Grid2 size={3}>
+                                        <TextField
+                                            select size="small" fullWidth label="Style Code"
+                                            value={item.blank?.code ?? ""}
+                                            onChange={(e) => updateItem(index, "blank", blanks.find(b => b.code === e.target.value))}
+                                        >
+                                            {blanks?.map(b => <MenuItem key={b.code} value={b.code}>{b.code}</MenuItem>)}
+                                        </TextField>
+                                    </Grid2>
+                                    <Grid2 size={2.5}>
+                                        <TextField
+                                            select size="small" fullWidth label="Color"
+                                            value={item.color}
+                                            disabled={!item.blank}
+                                            onChange={(e) => updateItem(index, "color", e.target.value)}
+                                        >
+                                            {item.blank?.colors.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
+                                        </TextField>
+                                    </Grid2>
+                                    <Grid2 size={2.5}>
+                                        <TextField
+                                            select size="small" fullWidth label="Size"
+                                            value={item.size}
+                                            disabled={!item.blank}
+                                            onChange={(e) => updateItem(index, "size", e.target.value)}
+                                        >
+                                            {item.blank?.sizes.map(s => <MenuItem key={s.name} value={s.name}>{s.name}</MenuItem>)}
+                                        </TextField>
+                                    </Grid2>
+                                    <Grid2 size={1.5}>
+                                        <TextField
+                                            size="small" fullWidth type="number" label="Qty"
+                                            value={item.quantity}
+                                            disabled={!item.blank}
+                                            onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 0)}
+                                            inputProps={{ min: 1 }}
+                                        />
+                                    </Grid2>
+                                    <Grid2 size={1.5}>
+                                        <TextField
+                                            size="small" fullWidth label="Location"
+                                            value={item.location ?? ""}
+                                            disabled={!item.blank}
+                                            onChange={(e) => updateItem(index, "location", e.target.value)}
+                                        />
+                                    </Grid2>
+                                    <Grid2 size={1} sx={{ display: "flex", justifyContent: "center" }}>
+                                        {items.length > 1 && (
+                                            <IconButton size="small" color="error" onClick={() => removeRow(index)}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        )}
+                                    </Grid2>
+                                </Grid2>
+                            </Box>
+                        ))}
+
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<AddIcon />}
+                            onClick={addRow}
+                            sx={{ alignSelf: "flex-start" }}
+                        >
+                            Add Row
+                        </Button>
+                    </Stack>
+                )}
+            </DialogContent>
+            <Divider />
+            <DialogActions sx={{ px: 2, py: 1.5, gap: 1 }}>
+                <Chip
+                    label={`${validItems.length} item${validItems.length !== 1 ? "s" : ""} ready`}
+                    size="small"
+                    color={validItems.length > 0 ? "primary" : "default"}
+                    variant="outlined"
+                    sx={{ mr: "auto" }}
+                />
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button
+                    variant="contained"
+                    disabled={validItems.length === 0 || saving}
+                    onClick={add}
+                    startIcon={saving ? <CircularProgress size={14} color="inherit" /> : undefined}
+                >
+                    {saving ? "Adding…" : "Add to Order"}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+};

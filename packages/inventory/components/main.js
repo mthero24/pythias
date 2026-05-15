@@ -1,225 +1,305 @@
 "use client";
-import {useState, useEffect} from "react";
-import {Box, Grid2, TextField, Accordion, Modal, AccordionSummary, AccordionDetails, Button, Typography, Card, Container, Pagination, PaginationItem} from "@mui/material";
+import { useState, useMemo } from "react";
+import { Box, Grid2, TextField, Accordion, AccordionSummary, AccordionDetails, Button, Typography, Card, Chip, Stack, InputAdornment, Pagination, PaginationItem, Tooltip } from "@mui/material";
 import axios from "axios";
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { OrderModal } from "./orderModal";
 import { DisplayModal } from "./display";
-import LoaderOverlay from "./LoaderOverlay";
+import { DeleteInventoryModal } from "./deleteInventoryModal";
 import { Footer } from "@pythias/backend";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import SearchIcon from '@mui/icons-material/Search';
-import DeleteIcon from '@mui/icons-material/Delete';
-import {DeleteInventoryModal} from "./deleteInventoryModal";
-export function Main({bla, it, defaultLocation, binType, cou, pa, q}){
-    const [fullStyles, setFullStyles] = useState(bla)
-    const [styles, setStyles] = useState(bla)
-    const [items, setItems] = useState(it)
-    const [open, setOpen] = useState(false)
-    const [openDisplay, setOpenDisplay] = useState(false)
-    const [orderType, setOrderType] = useState()
-    const [page, setPage] = useState(pa? pa: 1)
-    const [expanded, setExpanded] = useState("")
-    const [expandedColor, setExpandedColor] = useState("")
-    const [inventories, setInventories] = useState([]) 
-    const [query, setQuery] = useState(q)
-    const [count, setCount] = useState(cou)
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import SearchIcon from "@mui/icons-material/Search";
+import DeleteIcon from "@mui/icons-material/Delete";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
+import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+
+export function Main({ bla, it, defaultLocation, binType, cou, pa, q }) {
+    const [fullStyles, setFullStyles] = useState(bla);
+    const [styles, setStyles]         = useState(bla);
+    const [items, setItems]           = useState(it);
+    const [open, setOpen]             = useState(false);
+    const [openDisplay, setOpenDisplay] = useState(false);
+    const [orderType, setOrderType]   = useState();
+    const [page, setPage]             = useState(pa ?? 1);
+    const [expanded, setExpanded]     = useState("");
+    const [expandedColor, setExpandedColor] = useState("");
+    const [inventories, setInventories] = useState([]);
+    const [query, setQuery]           = useState(q);
+    const [count, setCount]           = useState(cou);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [inventoryToDelete, setInventoryToDelete] = useState(null);
-    const save = async (inventory)=>{
-        //console.log(inventory)
-        let res = await axios.post("/api/admin/inventory", {inventory})
-        if(res && res.data && !res.data.error){
-            setFullStyles(res.data.combined)
-            setItems(res.data.items)
-        }else alert("Error")
-    }
-    //console.log(items.length)
-    const updateInventory = async ({inventory, param})=>{
-        let s = [...styles]
-        console.log(inventory);
-        let blank = s.filter(s=> s.blank._id.toString() == inventory.blank?.toString() || s.blank?.code == inventory.style_code)[0]
-        let inv = blank.inventories.filter(iv=> iv._id.toString() == inventory._id.toString())[0]
 
-        inv[param] = param != "location" && param != "row" && param != "bin" && param != "shelf" && param != "unit"  ? parseInt(event.target.value): event.target.value;
-        setStyles([...s])
-        save(inv)
-    }
-    const search = async (term)=>{
-        let res = await axios.get(`/api/admin/inventory?q=${query}`)
-        if(res.data){
-            console.log(query)
-            setPage(1)
-            console.log(res.data.count, "count")
-            setCount(res.data.count)
-            setStyles(res.data.blanks)
+    const save = async (inventory) => {
+        const res = await axios.post("/api/admin/inventory", { inventory });
+        if (res?.data && !res.data.error) {
+            setFullStyles(res.data.combined);
+            setItems(res.data.items);
+        } else alert("Error saving inventory");
+    };
+
+    const updateInventory = async ({ inventory, param, value }) => {
+        const s = [...styles];
+        const blank = s.find(s => s.blank._id.toString() === inventory.blank?.toString() || s.blank?.code === inventory.style_code);
+        const inv = blank.inventories.find(iv => iv._id.toString() === inventory._id.toString());
+        const isText = ["location", "row", "bin", "shelf", "unit"].includes(param);
+        inv[param] = isText ? value : parseInt(value);
+        setStyles([...s]);
+        save(inv);
+    };
+
+    const totalValue = useMemo(() =>
+        styles.reduce((total, s) =>
+            total + (s.inventories?.reduce((acc, i) => {
+                const size = s.blank.sizes?.find(sz => sz.name === i.size_name);
+                return acc + (size?.cost || size?.wholesaleCost || 0) * (i.quantity ?? 0);
+            }, 0) ?? 0)
+        , 0)
+    , [styles]);
+
+    const search = async () => {
+        const res = await axios.get(`/api/admin/inventory?q=${query}`);
+        if (res.data) {
+            setPage(1);
+            setCount(res.data.count);
+            setStyles(res.data.blanks);
         }
-    }
-    return <Box>
-        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "2%"}}>
-            <Typography variant="h3" sx={{marginLeft: "3%", marginBottom: "2%"}}>Inventory</Typography>
-            <Button onClick={()=>{setOrderType("Inventory Order"); setOpen(true)}}>Create Inventory Order</Button>
-            <Button onClick={()=>{setOrderType("Out Of Stock"); setOpen(true)}}>Create Out Of Stock Order</Button>
-            <Button onClick={() => { setOpenDisplay(true) }}>Orders</Button>
-        </Box>
-        <Container sx={{minHeight: "70vh"}}>
-            <Box sx={{marginBottom: "1%", display: "flex", flexDirection: "row",}}>
-                <TextField fullWidth placeholder="Filter.." sx={{background: "white"}} value={query} onChange={async (e)=>{
-                   setQuery(e.target.value)
-                }}
-                onKeyDown={(e)=>{
-                    console.log(e.key)
-                    if(e.key == "Enter" || e.key == "enter") search()
-                }}
+    };
+
+    return (
+        <Box sx={{ bgcolor: "background.default", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+            {/* Header */}
+            <Box sx={{ bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider", px: 2, py: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <WarehouseIcon sx={{ color: "#fff", fontSize: 20 }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                        <Stack direction="row" alignItems="baseline" spacing={1.5}>
+                            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Inventory</Typography>
+                            <Tooltip title="Total cost value of all displayed inventory (quantity × cost per size)">
+                                <Chip
+                                    label={`$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                    size="small"
+                                    color="success"
+                                    variant="outlined"
+                                    sx={{ fontWeight: 700, fontFamily: "monospace" }}
+                                />
+                            </Tooltip>
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">Manage stock levels, locations, and orders</Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                        <Button variant="outlined" size="small" startIcon={<AddShoppingCartIcon />} onClick={() => { setOrderType("Inventory Order"); setOpen(true); }}>
+                            Inventory Order
+                        </Button>
+                        <Button variant="outlined" size="small" startIcon={<ErrorOutlineIcon />} onClick={() => { setOrderType("Out Of Stock"); setOpen(true); }}>
+                            Out Of Stock
+                        </Button>
+                        <Button variant="outlined" size="small" startIcon={<ListAltIcon />} onClick={() => setOpenDisplay(true)}>
+                            Orders
+                        </Button>
+                    </Stack>
+                </Stack>
+
+                {/* Search */}
+                <TextField
+                    fullWidth
+                    placeholder="Search by style, name, color…"
+                    size="small"
+                    value={query ?? ""}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") search(); }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon sx={{ color: "text.disabled", cursor: "pointer" }} onClick={search} />
+                            </InputAdornment>
+                        ),
+                    }}
                 />
-                <SearchIcon sx={{position: "relative", right: 40, top: 15, cursor: "pointer", marginRight: "-35px"}} onClick={search} />
             </Box>
-            {styles.map(s=>(
-                <Accordion expanded={expanded === s.blank.code} key={s.blank._id} sx={{marginBottom: "2%"}} >
-                    <AccordionSummary
-                    onClick={()=>{setExpanded(expanded == s.blank.code? "": s.blank.code)}}
-                    expandIcon={<ArrowDownwardIcon />}
-                    aria-controls="panel1-content"
-                    id="panel1-header"
+
+            {/* Inventory list */}
+            <Box sx={{ px: 2, py: 2, flex: 1 }}>
+                {styles.map(s => (
+                    <Accordion
+                        key={s.blank._id}
+                        expanded={expanded === s.blank.code}
+                        onChange={() => setExpanded(expanded === s.blank.code ? "" : s.blank.code)}
+                        variant="outlined"
+                        sx={{ mb: 1.5, borderRadius: "12px !important", "&:before": { display: "none" }, overflow: "hidden" }}
                     >
-                    <Typography component="span">{s.blank.code}  {">"} {s.blank.name} <br/>{s.blank.department}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                    <Typography>
-                       {s.blank.colors.map(si=>(
-                            <Accordion expanded={expanded === s.blank.code && expandedColor == si.name}  key={si._id} >
-                                <AccordionSummary
-                                onClick={()=>{
-                                    setExpandedColor(expandedColor == si.name? "": si.name); setInventories(s.inventories?.filter(i=>i.color_name == si.name))
-                                }}
-                                expandIcon={<ArrowDownwardIcon />}
-                                aria-controls="panel1-content"
-                                id="panel1-header"
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 2 }}>
+                            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ flex: 1, mr: 1 }}>
+                                <Chip label={s.blank.code} size="small" color="primary" variant="outlined" sx={{ fontWeight: 700, fontFamily: "monospace" }} />
+                                <Typography variant="body1" fontWeight={600}>{s.blank.name}</Typography>
+                                {s.blank.department && (
+                                    <Chip label={s.blank.department} size="small" variant="outlined" sx={{ fontSize: "0.7rem" }} />
+                                )}
+                            </Stack>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 0 }}>
+                            {s.blank.colors.map(si => (
+                                <Accordion
+                                    key={si._id}
+                                    expanded={expanded === s.blank.code && expandedColor === si.name}
+                                    onChange={() => {
+                                        setExpandedColor(expandedColor === si.name ? "" : si.name);
+                                        setInventories(s.inventories?.filter(i => i.color_name === si.name));
+                                    }}
+                                    disableGutters
+                                    sx={{ "&:before": { display: "none" }, borderTop: "1px solid", borderColor: "divider" }}
                                 >
-                                <Typography component="span">{si.name}</Typography>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Grid2 container spacing={1} sx={{margin: '2%', textAlign: "center"}}>
-                                            <Grid2 size={1.5}>
-                                                <Typography>Size</Typography>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <Typography>Qty</Typography>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <Typography>Min</Typography>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <Typography>Order</Typography>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <Typography>Pend</Typography>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <Typography>Out Of Stock</Typography>
-                                            </Grid2>
-                                            {binType == "location" && <Grid2 size={2}>
-                                                <Typography>Location</Typography>
-                                            </Grid2>}
-                                            
-                                           {binType == "row" && <><Grid2 size={1}>
-                                                <Typography>Row</Typography>
-                                            </Grid2>
-                                                <Grid2 size={1}>
-                                                <Typography>Unit</Typography>
-                                            </Grid2>
-                                                <Grid2 size={1}>
-                                                <Typography>Shelf</Typography>
-                                            </Grid2>
-                                                <Grid2 size={1}>
-                                                <Typography>Bin</Typography>
-                                            </Grid2></>}
-                                            
-                                        </Grid2>
-                                    {expanded == s.blank.code && expandedColor == si.name && inventories?.sort((a,b)=>{
-                                        if(a.size_name.length > b.size_name.length) return 1
-                                        else if(a.size_name.length < b.size_name.length) return -1
-                                        if(a.size_name > b.size_name) return -1
-                                        else if(a.size_name < b.size_name) return 1
-                                        else return 0
-                                    }).map(i=>(
-                                        <Grid2 container spacing={1} key={i._id} sx={{margin: '2%', textAlign: "center"}}>
-                                            {console.log(i)}
-                                            <Grid2 size={1.5}>
-                                                <Typography>{i.size_name}</Typography>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <TextField fullWidth type="number" value={i.quantity} onChange={()=>{updateInventory({inventory: i, param:"quantity"})}}/>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <TextField fullWidth type="number"  value={i.order_at_quantity} onChange={()=>{updateInventory({inventory: i, param:"order_at_quantity"})}}/>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <TextField fullWidth type="number"  value={i.quantity_to_order} onChange={()=>{updateInventory({inventory: i, param:"quantity_to_order"})}}/>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                {console.log(i.orders)}
-                                                <Typography>{i.orders?.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0)}</Typography>
-                                            </Grid2>
-                                            <Grid2 size={1}>
-                                                <Typography >{i.attached && i.attached.length > 0 ? i.attached.length : 0}</Typography>
-                                            </Grid2>
-                                           {binType == "location" && <Grid2 size={2}>
-                                                <TextField fullWidth value={i.location} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"location"})}}/>
-                                            </Grid2>}
-                                            {binType == "row" && <>
-                                                <Grid2 size={1}>
-                                                    <TextField fullWidth value={i.row} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"row"})}}/>
-                                                </Grid2>
-                                                <Grid2 size={1}>
-                                                    <TextField fullWidth value={i.unit} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"unit"})}}/>
-                                                </Grid2>
-                                                <Grid2 size={1}>
-                                                    <TextField fullWidth value={i.shelf} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"shelf"})}}/>
-                                                </Grid2>
-                                                <Grid2 size={1}>
-                                                    <TextField fullWidth value={i.bin} placeholder={"Not Set"} onChange={()=>{updateInventory({inventory: i, param:"bin"})}}/>
-                                                </Grid2>
-                                                <Grid2 size={1}>
-                                                    <DeleteIcon sx={{ cursor: "pointer", color: "#d32f2f"}} onClick={async ()=>{
-                                                        setInventoryToDelete(i);
-                                                        setDeleteModalOpen(true);
-                                                    }}/>
-                                                </Grid2>
+                                    <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 3, bgcolor: "action.hover" }}>
+                                        <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, mr: 1 }}>
+                                            <Typography variant="body2" fontWeight={600} sx={{ textTransform: "capitalize" }}>{si.name}</Typography>
+                                            {(() => {
+                                                const oosCount = s.inventories?.filter(i => i.color_name === si.name && i.quantity === 0).length ?? 0;
+                                                return oosCount > 0
+                                                    ? <Chip label={`${oosCount} OOS`} size="small" color="error" sx={{ fontWeight: 700, fontSize: "0.65rem" }} />
+                                                    : null;
+                                            })()}
+                                        </Stack>
+                                    </AccordionSummary>
+                                    <AccordionDetails sx={{ px: 2, py: 1.5 }}>
+                                        {/* Column headers */}
+                                        <Grid2 container spacing={1} sx={{ px: 1, mb: 0.5 }}>
+                                            <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Size</Typography></Grid2>
+                                            <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Qty</Typography></Grid2>
+                                            <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Min</Typography></Grid2>
+                                            <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Order</Typography></Grid2>
+                                            <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Pending</Typography></Grid2>
+                                            <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">OOS</Typography></Grid2>
+                                            {binType === "location" && <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">Location</Typography></Grid2>}
+                                            {binType === "row" && <>
+                                                <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Row</Typography></Grid2>
+                                                <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Unit</Typography></Grid2>
+                                                <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Shelf</Typography></Grid2>
+                                                <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Bin</Typography></Grid2>
                                             </>}
                                         </Grid2>
-                                    ))}
-                                </AccordionDetails>
-                            </Accordion>
-                       ))}
-                    </Typography>
-                    </AccordionDetails>
-                </Accordion>
-            ))}
-            <DeleteInventoryModal open={deleteModalOpen} setOpen={setDeleteModalOpen} inventory={inventoryToDelete} setInventory={setInventoryToDelete} setStyles={setStyles} query={query} page={page} setExpandedColor={setExpandedColor} />
-        </Container>
-        <Box sx={{display: "flex", justifyContent: "center", alignContent:"center", margin: "1%"}}>
-                <Pagination 
-                count={count} 
-                page={page}
-                variant="outlined" 
-                shape="rounded"
-                renderItem={(item) => (
-                    <PaginationItem
-                    slots={{ previous: ArrowBackIcon, next: ArrowForwardIcon }}
-                    {...item}
-                    /> 
-                )} 
-                onChange={(event, value)=>{
-                    window.location.href= `/inventory?page=${value}${query? `&q=${query}`: ""}`
-                }}
-                />
-        </Box>
-        <DisplayModal open={openDisplay} setOpen={setOpenDisplay} />
-        <OrderModal open={open} setOpen={setOpen} type={orderType} blanks={fullStyles} items={items} setBlanks={setFullStyles} setItems={setItems} defaultLocation={defaultLocation}/>
-        <Footer fixed={true} />
-    </Box>
-}
 
+                                        {/* Inventory rows */}
+                                        {expanded === s.blank.code && expandedColor === si.name && [...inventories].sort((a, b) => {
+                                            if (a.size_name.length !== b.size_name.length) return a.size_name.length - b.size_name.length;
+                                            return a.size_name < b.size_name ? 1 : -1;
+                                        }).map(i => {
+                                            const outOfStock = i.quantity === 0;
+                                            const oos = i.attached?.length > 0;
+                                            const belowMin = i.quantity < i.order_at_quantity;
+                                            const isRed = outOfStock || oos;
+                                            const rowBg = isRed ? "#fef2f2" : belowMin ? "#fffbeb" : "transparent";
+                                            return (
+                                                <Box
+                                                    key={i._id}
+                                                    sx={{ bgcolor: rowBg, borderRadius: 1.5, px: 1, py: 0.5, mb: 0.5, borderLeft: isRed ? "3px solid #ef4444" : belowMin ? "3px solid #f59e0b" : "3px solid transparent" }}
+                                                >
+                                                    <Grid2 container spacing={1} alignItems="center">
+                                                        <Grid2 size={1.5}>
+                                                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                                                                <Typography variant="body2" fontWeight={600} sx={{ textTransform: "uppercase" }}>{i.size_name}</Typography>
+                                                                {outOfStock && <Chip label="OOS" size="small" color="error" sx={{ fontWeight: 700, fontSize: "0.6rem", height: 16, "& .MuiChip-label": { px: 0.5 } }} />}
+                                                            </Stack>
+                                                        </Grid2>
+                                                        <Grid2 size={1}>
+                                                            <TextField size="small" fullWidth type="number" value={i.quantity}
+                                                                onChange={(e) => updateInventory({ inventory: i, param: "quantity", value: e.target.value })}
+                                                                sx={{ "& input": { color: isRed ? "error.main" : belowMin ? "warning.main" : "inherit", fontWeight: 700 } }}
+                                                            />
+                                                        </Grid2>
+                                                        <Grid2 size={1}>
+                                                            <TextField size="small" fullWidth type="number" value={i.order_at_quantity}
+                                                                onChange={(e) => updateInventory({ inventory: i, param: "order_at_quantity", value: e.target.value })} />
+                                                        </Grid2>
+                                                        <Grid2 size={1}>
+                                                            <TextField size="small" fullWidth type="number" value={i.quantity_to_order}
+                                                                onChange={(e) => updateInventory({ inventory: i, param: "quantity_to_order", value: e.target.value })} />
+                                                        </Grid2>
+                                                        <Grid2 size={1}>
+                                                            <Typography variant="body2" textAlign="center" fontWeight={600}>
+                                                                {i.orders?.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0) ?? 0}
+                                                            </Typography>
+                                                        </Grid2>
+                                                        <Grid2 size={1}>
+                                                            <Typography variant="body2" textAlign="center" fontWeight={600} color={oos ? "error.main" : "text.primary"}>
+                                                                {i.attached?.length ?? 0}
+                                                            </Typography>
+                                                        </Grid2>
+                                                        {binType === "location" && (
+                                                            <Grid2 size={2}>
+                                                                <TextField size="small" fullWidth value={i.location ?? ""} placeholder="Not Set"
+                                                                    onChange={(e) => updateInventory({ inventory: i, param: "location", value: e.target.value })} />
+                                                            </Grid2>
+                                                        )}
+                                                        {binType === "row" && <>
+                                                            <Grid2 size={1}>
+                                                                <TextField size="small" fullWidth value={i.row ?? ""} placeholder="—"
+                                                                    onChange={(e) => updateInventory({ inventory: i, param: "row", value: e.target.value })} />
+                                                            </Grid2>
+                                                            <Grid2 size={1}>
+                                                                <TextField size="small" fullWidth value={i.unit ?? ""} placeholder="—"
+                                                                    onChange={(e) => updateInventory({ inventory: i, param: "unit", value: e.target.value })} />
+                                                            </Grid2>
+                                                            <Grid2 size={1}>
+                                                                <TextField size="small" fullWidth value={i.shelf ?? ""} placeholder="—"
+                                                                    onChange={(e) => updateInventory({ inventory: i, param: "shelf", value: e.target.value })} />
+                                                            </Grid2>
+                                                            <Grid2 size={1}>
+                                                                <TextField size="small" fullWidth value={i.bin ?? ""} placeholder="—"
+                                                                    onChange={(e) => updateInventory({ inventory: i, param: "bin", value: e.target.value })} />
+                                                            </Grid2>
+                                                            <Grid2 size={1} sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                                <DeleteIcon
+                                                                    sx={{ cursor: "pointer", color: "error.main", fontSize: 20 }}
+                                                                    onClick={() => { setInventoryToDelete(i); setDeleteModalOpen(true); }}
+                                                                />
+                                                            </Grid2>
+                                                        </>}
+                                                    </Grid2>
+                                                </Box>
+                                            );
+                                        })}
+                                    </AccordionDetails>
+                                </Accordion>
+                            ))}
+                        </AccordionDetails>
+                    </Accordion>
+                ))}
+            </Box>
+
+            {/* Pagination */}
+            <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                <Pagination
+                    count={count}
+                    page={page}
+                    variant="outlined"
+                    shape="rounded"
+                    renderItem={(item) => (
+                        <PaginationItem slots={{ previous: ArrowBackIcon, next: ArrowForwardIcon }} {...item} />
+                    )}
+                    onChange={(e, value) => {
+                        window.location.href = `/inventory?page=${value}${query ? `&q=${query}` : ""}`;
+                    }}
+                />
+            </Box>
+
+            <DeleteInventoryModal
+                open={deleteModalOpen} setOpen={setDeleteModalOpen}
+                inventory={inventoryToDelete} setInventory={setInventoryToDelete}
+                setStyles={setStyles} query={query} page={page}
+                setExpandedColor={setExpandedColor}
+            />
+            <DisplayModal open={openDisplay} setOpen={setOpenDisplay} />
+            <OrderModal
+                open={open} setOpen={setOpen} type={orderType}
+                blanks={fullStyles} items={items}
+                setBlanks={setFullStyles} setItems={setItems}
+                defaultLocation={defaultLocation}
+            />
+            <Footer fixed={true} />
+        </Box>
+    );
+}

@@ -834,34 +834,43 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                         />
                         <Typography variant="body1" sx={{ marginTop: "1%" }}>Select Connection:</Typography>
                         <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", overflowX: "auto", width: "100%" }}>
-                            {connections && connections.length > 0 && connections.map((connection) => (
-                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", border: "1px solid #ccc", background: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#1976d2" : "#fff", color: marketPlace.connections && marketPlace.connections.includes(connection._id.toString()) ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={connection._id} onClick={() => {
-                                    let m = { ...marketPlace };
-                                    if(!m.connections) m.connections = [];
-                                    if (!m.connections.includes(connection._id.toString())) {
-                                        m.connections.push(connection._id.toString());
-                                    }else{
-                                        m.connections = m.connections.filter(conn => conn.toString() !== connection._id.toString());
-                                    }
-                                    setMarketPlace({ ...m });
-                                }}>
-                                    <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{connection.displayName}</Typography>
-                                </Box>
-                            ))}
-                            {tiktokAuth && tiktokAuth.map((auth) => (
-                                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", minHeight: "100%", border: "1px solid #ccc", background: marketPlace.connections && marketPlace.connections.includes(auth._id.toString()) ? "#1976d2" : "#fff", color: marketPlace.connections && marketPlace.connections.includes(auth._id.toString()) ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={auth._id} onClick={() => {
-                                    let m = { ...marketPlace };
-                                    if(!m.connections) m.connections = [];
-                                    if (!m.connections.includes(auth._id.toString())) {
-                                        m.connections.push(auth._id.toString());
-                                    }else{
-                                        m.connections = m.connections.filter(conn => conn.toString() !== auth._id.toString());
-                                    }
-                                    setMarketPlace({ ...m });
-                                }}>
-                                    <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{auth.seller_name}</Typography>
-                                </Box>
-                            ))}
+                            {connections && connections.length > 0 && connections.map((connection) => {
+                                // connections may be strings or full objects depending on whether the parent mapped them
+                                const connIds = (marketPlace.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
+                                const selected = connIds.includes(connection._id.toString());
+                                return (
+                                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", border: "1px solid #ccc", background: selected ? "#1976d2" : "#fff", color: selected ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={connection._id} onClick={() => {
+                                        let m = { ...marketPlace };
+                                        const ids = (m.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
+                                        if (!ids.includes(connection._id.toString())) {
+                                            m.connections = [...ids, connection._id.toString()];
+                                        } else {
+                                            m.connections = ids.filter(id => id !== connection._id.toString());
+                                        }
+                                        setMarketPlace({ ...m });
+                                    }}>
+                                        <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{connection.displayName}</Typography>
+                                    </Box>
+                                );
+                            })}
+                            {tiktokAuth && tiktokAuth.map((auth) => {
+                                const connIds = (marketPlace.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
+                                const selected = connIds.includes(auth._id.toString());
+                                return (
+                                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", marginTop: "1%", width: "20%", marginRight: "1%", padding: "1%", minHeight: "100%", border: "1px solid #ccc", background: selected ? "#1976d2" : "#fff", color: selected ? "#fff" : "#000", "&:hover": { border: "1px solid #000", opacity: 0.8, cursor: "pointer" } }} key={auth._id} onClick={() => {
+                                        let m = { ...marketPlace };
+                                        const ids = (m.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
+                                        if (!ids.includes(auth._id.toString())) {
+                                            m.connections = [...ids, auth._id.toString()];
+                                        } else {
+                                            m.connections = ids.filter(id => id !== auth._id.toString());
+                                        }
+                                        setMarketPlace({ ...m });
+                                    }}>
+                                        <Typography variant="body1" sx={{ marginRight: "1%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{auth.seller_name}</Typography>
+                                    </Box>
+                                );
+                            })}
                         </Box>
                         {marketPlace.headers.map((header, index) => {
                             return(

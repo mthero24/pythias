@@ -1,64 +1,46 @@
 "use client";
 import {
-    Box, Container, TextField, Grid2, Typography, Button, Stack, Card, CardContent,
-    Divider, IconButton, Tooltip, InputAdornment, Dialog, DialogTitle, DialogActions,
-    DialogContent, Chip,
+    Box, Container, TextField, Grid2, Typography, Button, Stack, Card,
+    Divider, IconButton, Tooltip, InputAdornment, Dialog, DialogTitle,
+    DialogActions, DialogContent, Chip,
 } from "@mui/material";
-import { useState } from "react";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { useState, useRef } from "react";
+import AddIcon  from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon        from "@mui/icons-material/Search";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import WcIcon from "@mui/icons-material/Wc";
-import StyleIcon from "@mui/icons-material/Style";
+import WcIcon            from "@mui/icons-material/Wc";
+import StyleIcon         from "@mui/icons-material/Style";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
-import CategoryIcon from "@mui/icons-material/Category";
-import SellIcon from "@mui/icons-material/Sell";
+import CategoryIcon      from "@mui/icons-material/Category";
+import SellIcon          from "@mui/icons-material/Sell";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import StorefrontIcon from "@mui/icons-material/Storefront";
-import PrintIcon from "@mui/icons-material/Print";
-import ReplayIcon from "@mui/icons-material/Replay";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import { Footer } from "../reusable/Footer";
+import StorefrontIcon    from "@mui/icons-material/Storefront";
+import PrintIcon         from "@mui/icons-material/Print";
+import ReplayIcon        from "@mui/icons-material/Replay";
+import ListAltIcon       from "@mui/icons-material/ListAlt";
+import LocationOnIcon    from "@mui/icons-material/LocationOn";
 import axios from "axios";
 
 const CATEGORY_META = {
-    seasons:        { label: "Seasons",         icon: <CalendarMonthIcon fontSize="small" /> },
-    genders:        { label: "Genders",         icon: <WcIcon fontSize="small" /> },
-    themes:         { label: "Themes",          icon: <StyleIcon fontSize="small" /> },
-    sportUsedFor:   { label: "Sport Used For",  icon: <FitnessCenterIcon fontSize="small" /> },
-    departments:    { label: "Departments",     icon: <CategoryIcon fontSize="small" /> },
-    brands:         { label: "Brands",          icon: <SellIcon fontSize="small" /> },
-    suppliers:      { label: "Suppliers",       icon: <LocalShippingIcon fontSize="small" /> },
-    vendors:        { label: "Vendors",         icon: <StorefrontIcon fontSize="small" /> },
-    printTypes:     { label: "Print Types",     icon: <PrintIcon fontSize="small" /> },
-    repullReasons:  { label: "Repull Reasons",  icon: <ReplayIcon fontSize="small" /> },
-    categories:     { label: "Categories",      icon: <ListAltIcon fontSize="small" /> },
-    printLocations: { label: "Print Locations", icon: <LocationOnIcon fontSize="small" /> },
+    seasons:        { label: "Seasons",         Icon: CalendarMonthIcon,  color: "#f59e0b" },
+    genders:        { label: "Genders",         Icon: WcIcon,             color: "#8b5cf6" },
+    themes:         { label: "Themes",          Icon: StyleIcon,          color: "#ec4899" },
+    sportUsedFor:   { label: "Sport Used For",  Icon: FitnessCenterIcon,  color: "#ef4444" },
+    departments:    { label: "Departments",     Icon: CategoryIcon,       color: "#6366f1" },
+    brands:         { label: "Brands",          Icon: SellIcon,           color: "#0ea5e9" },
+    suppliers:      { label: "Suppliers",       Icon: LocalShippingIcon,  color: "#f97316" },
+    vendors:        { label: "Vendors",         Icon: StorefrontIcon,     color: "#10b981" },
+    printTypes:     { label: "Print Types",     Icon: PrintIcon,          color: "#14b8a6" },
+    repullReasons:  { label: "Repull Reasons",  Icon: ReplayIcon,         color: "#6b7280" },
+    categories:     { label: "Categories",      Icon: ListAltIcon,        color: "#84cc16" },
+    printLocations: { label: "Print Locations", Icon: LocationOnIcon,     color: "#f43f5e" },
 };
 
 export function Edit({ data }) {
-    const [values, setValues] = useState(data);
-    const [add, setAdd] = useState({});
+    const [values, setValues]           = useState(data);
     const [deleteTarget, setDeleteTarget] = useState(null);
-
-    const save = async ({ type, value }) => {
-        if (!value?.trim()) return;
-        const res = await axios.post("/api/admin/oneoffs", { type, value: value.trim() });
-        if (res.data.error) {
-            alert(res.data.msg ?? "Error saving item");
-        } else {
-            setValues(prev => ({ ...prev, [type]: res.data[type] }));
-            setAdd(prev => ({ ...prev, [type]: "" }));
-        }
-    };
-
-    const handleAdd = (key) => {
-        const value = add[key]?.trim();
-        if (!value) return;
-        save({ type: key, value });
-    };
+    const [globalSearch, setGlobalSearch] = useState("");
 
     const confirmDelete = async () => {
         if (!deleteTarget) return;
@@ -69,120 +51,96 @@ export function Edit({ data }) {
         setDeleteTarget(null);
     };
 
+    const handleAdd = async (key, value, onSuccess) => {
+        if (!value?.trim()) return;
+        const res = await axios.post("/api/admin/oneoffs", { type: key, value: value.trim() });
+        if (res.data.error) {
+            alert(res.data.msg ?? "Error saving item");
+        } else {
+            setValues(prev => ({ ...prev, [key]: res.data[key] }));
+            onSuccess?.();
+        }
+    };
+
+    const totalItems = Object.values(values ?? {}).reduce((sum, arr) => sum + (arr?.length ?? 0), 0);
+
+    const globalQ = globalSearch.trim().toLowerCase();
+    const visibleKeys = Object.keys(values ?? {}).filter(key => {
+        if (!globalQ) return true;
+        const meta = CATEGORY_META[key] ?? {};
+        if (meta.label?.toLowerCase().includes(globalQ)) return true;
+        return (values[key] ?? []).some(item => item.name?.toLowerCase().includes(globalQ));
+    });
+
     return (
-        <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}>
-            <Container maxWidth="lg" sx={{ py: 4, minHeight: "90vh" }}>
+        <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
+            <Container maxWidth="lg" sx={{ py: 4 }}>
 
                 {/* Header */}
-                <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>Edit Data</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Manage lookup values used across designs and products
-                    </Typography>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #6366f1 0%, #10b981 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <ListAltIcon sx={{ color: "#fff", fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Marketplace Data</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {totalItems} value{totalItems !== 1 ? "s" : ""} across {Object.keys(values ?? {}).length} categories
+                            </Typography>
+                        </Box>
+                    </Stack>
+                    <TextField
+                        size="small"
+                        placeholder="Search all categories…"
+                        value={globalSearch}
+                        onChange={(e) => setGlobalSearch(e.target.value)}
+                        sx={{ width: 240 }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon fontSize="small" sx={{ color: "text.disabled" }} />
+                                </InputAdornment>
+                            ),
+                            endAdornment: globalSearch ? (
+                                <InputAdornment position="end">
+                                    <IconButton size="small" edge="end" onClick={() => setGlobalSearch("")}>
+                                        <CloseIcon sx={{ fontSize: 14 }} />
+                                    </IconButton>
+                                </InputAdornment>
+                            ) : null,
+                        }}
+                    />
                 </Box>
 
+                {/* No results */}
+                {visibleKeys.length === 0 && (
+                    <Box sx={{ py: 12, textAlign: "center" }}>
+                        <SearchIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1.5 }} />
+                        <Typography variant="body1" fontWeight={600} color="text.secondary">No matches for "{globalSearch}"</Typography>
+                        <Typography variant="body2" color="text.disabled">Try a different search term</Typography>
+                    </Box>
+                )}
+
                 <Grid2 container spacing={2}>
-                    {values && Object.keys(values).map((key) => {
-                        const meta = CATEGORY_META[key] ?? { label: key, icon: <ListAltIcon fontSize="small" /> };
+                    {visibleKeys.map((key) => {
+                        const meta = CATEGORY_META[key] ?? { label: key, Icon: ListAltIcon, color: "#6b7280" };
                         const list = values[key] ?? [];
+                        const matchedByLabel = globalQ && meta.label.toLowerCase().includes(globalQ);
+                        const filteredByGlobal = globalQ && !matchedByLabel
+                            ? list.filter(item => item.name?.toLowerCase().includes(globalQ))
+                            : list;
 
                         return (
                             <Grid2 key={key} size={{ xs: 12, sm: 6, md: 4 }}>
-                                <Card variant="outlined" sx={{ borderRadius: 2, height: "100%", display: "flex", flexDirection: "column" }}>
-                                    <CardContent sx={{ p: 2, flex: 1, display: "flex", flexDirection: "column" }}>
-
-                                        {/* Card header */}
-                                        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
-                                            <Box sx={{ color: "primary.main" }}>{meta.icon}</Box>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1 }}>
-                                                {meta.label}
-                                            </Typography>
-                                            <Chip
-                                                label={list.length}
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ fontSize: "0.65rem", height: 18 }}
-                                            />
-                                        </Stack>
-
-                                        {/* Add input */}
-                                        <TextField
-                                            size="small"
-                                            fullWidth
-                                            placeholder={`Add ${meta.label.toLowerCase()}…`}
-                                            value={add[key] ?? ""}
-                                            onChange={(e) => setAdd(prev => ({ ...prev, [key]: e.target.value }))}
-                                            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(key); }}
-                                            sx={{ mb: 1.5 }}
-                                            InputProps={{
-                                                endAdornment: (
-                                                    <InputAdornment position="end">
-                                                        <Tooltip title="Add">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => handleAdd(key)}
-                                                                disabled={!add[key]?.trim()}
-                                                                edge="end"
-                                                            >
-                                                                <AddIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </InputAdornment>
-                                                ),
-                                            }}
-                                        />
-
-                                        <Divider sx={{ mb: 1 }} />
-
-                                        {/* Scrollable list */}
-                                        <Box sx={{
-                                            flex: 1,
-                                            minHeight: 200,
-                                            maxHeight: 260,
-                                            overflowY: "auto",
-                                            "&::-webkit-scrollbar": { width: 4 },
-                                            "&::-webkit-scrollbar-thumb": { background: "rgba(0,0,0,0.15)", borderRadius: 2 },
-                                        }}>
-                                            {list.length === 0 ? (
-                                                <Box sx={{ py: 4, textAlign: "center" }}>
-                                                    <Typography variant="caption" color="text.disabled">
-                                                        No {meta.label.toLowerCase()} yet
-                                                    </Typography>
-                                                </Box>
-                                            ) : (
-                                                <Stack spacing={0}>
-                                                    {list.map((item, idx) => (
-                                                        <Box
-                                                            key={item._id ?? idx}
-                                                            sx={{
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                justifyContent: "space-between",
-                                                                px: 1,
-                                                                py: 0.75,
-                                                                borderRadius: 1,
-                                                                "&:hover": { backgroundColor: "action.hover" },
-                                                                "&:hover .delete-btn": { opacity: 1 },
-                                                            }}
-                                                        >
-                                                            <Typography variant="body2" sx={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                                                {item.name}
-                                                            </Typography>
-                                                            <IconButton
-                                                                className="delete-btn"
-                                                                size="small"
-                                                                onClick={() => setDeleteTarget({ type: key, id: item._id, name: item.name })}
-                                                                sx={{ opacity: 0, transition: "opacity 120ms", color: "error.main", ml: 0.5 }}
-                                                            >
-                                                                <DeleteOutlineIcon sx={{ fontSize: 16 }} />
-                                                            </IconButton>
-                                                        </Box>
-                                                    ))}
-                                                </Stack>
-                                            )}
-                                        </Box>
-                                    </CardContent>
-                                </Card>
+                                <CategoryCard
+                                    categoryKey={key}
+                                    meta={meta}
+                                    list={filteredByGlobal}
+                                    totalCount={list.length}
+                                    globalQ={globalQ}
+                                    onAdd={(value, onSuccess) => handleAdd(key, value, onSuccess)}
+                                    onDelete={(id, name) => setDeleteTarget({ type: key, id, name })}
+                                />
                             </Grid2>
                         );
                     })}
@@ -199,11 +157,9 @@ export function Edit({ data }) {
                 </DialogTitle>
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary">
-                        Are you sure you want to remove{" "}
-                        <Typography component="span" variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
-                            "{deleteTarget?.name}"
-                        </Typography>
-                        {" "}from {CATEGORY_META[deleteTarget?.type]?.label ?? deleteTarget?.type}?
+                        Remove{" "}
+                        <strong style={{ color: "#111827" }}>"{deleteTarget?.name}"</strong>
+                        {" "}from {CATEGORY_META[deleteTarget?.type]?.label ?? deleteTarget?.type}? This cannot be undone.
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
@@ -211,8 +167,136 @@ export function Edit({ data }) {
                     <Button variant="contained" color="error" onClick={confirmDelete}>Remove</Button>
                 </DialogActions>
             </Dialog>
-
-            <Footer />
         </Box>
+    );
+}
+
+function CategoryCard({ categoryKey, meta, list, totalCount, globalQ, onAdd, onDelete }) {
+    const { label, Icon, color } = meta;
+    const [addVal, setAddVal]   = useState("");
+    const [search, setSearch]   = useState("");
+    const inputRef              = useRef(null);
+
+    const sorted = [...list].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+
+    const localQ = search.trim().toLowerCase();
+    const displayed = localQ
+        ? sorted.filter(item => item.name?.toLowerCase().includes(localQ))
+        : sorted;
+
+    const handleAdd = () => {
+        onAdd(addVal, () => {
+            setAddVal("");
+            inputRef.current?.focus();
+        });
+    };
+
+    return (
+        <Card variant="outlined" sx={{
+            borderRadius: 3, overflow: "hidden",
+            transition: "box-shadow 150ms",
+            "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,0.08)" },
+        }}>
+            {/* Card header */}
+            <Stack
+                direction="row" alignItems="center" spacing={1.25}
+                sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}
+            >
+                <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon sx={{ fontSize: 15, color }} />
+                </Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1 }}>{label}</Typography>
+                <Chip
+                    label={totalCount}
+                    size="small"
+                    sx={{ height: 18, fontSize: "0.65rem", fontWeight: 700, bgcolor: `${color}15`, color, border: `1px solid ${color}30` }}
+                />
+            </Stack>
+
+            {/* Add input */}
+            <Box sx={{ px: 2, pt: 1.5, pb: 1 }}>
+                <TextField
+                    inputRef={inputRef}
+                    size="small"
+                    fullWidth
+                    placeholder={`Add ${label.toLowerCase()}…`}
+                    value={addVal}
+                    onChange={(e) => setAddVal(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <Tooltip title="Add (Enter)">
+                                    <span>
+                                        <IconButton size="small" edge="end" onClick={handleAdd} disabled={!addVal.trim()} sx={{ color: addVal.trim() ? color : undefined }}>
+                                            <AddIcon fontSize="small" />
+                                        </IconButton>
+                                    </span>
+                                </Tooltip>
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+            </Box>
+
+            <Divider />
+
+            {/* Per-card search (only when many items and no global search) */}
+            {totalCount > 10 && !globalQ && (
+                <Box sx={{ px: 2, pt: 1 }}>
+                    <TextField
+                        size="small" fullWidth
+                        placeholder="Filter…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon sx={{ fontSize: 14, color: "text.disabled" }} />
+                                </InputAdornment>
+                            ),
+                            endAdornment: search ? (
+                                <InputAdornment position="end">
+                                    <IconButton size="small" edge="end" onClick={() => setSearch("")}>
+                                        <CloseIcon sx={{ fontSize: 12 }} />
+                                    </IconButton>
+                                </InputAdornment>
+                            ) : null,
+                            sx: { fontSize: "0.8rem" },
+                        }}
+                    />
+                </Box>
+            )}
+
+            {/* Chips — wraps naturally, no inner scroll */}
+            <Box sx={{ px: 2, pt: 1.25, pb: 1.75 }}>
+                {displayed.length === 0 ? (
+                    <Typography variant="caption" color="text.disabled">
+                        {(localQ || globalQ) ? "No matches" : `No ${label.toLowerCase()} yet`}
+                    </Typography>
+                ) : (
+                    <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                        {displayed.map((item, idx) => (
+                            <Chip
+                                key={item._id ?? idx}
+                                label={item.name}
+                                size="small"
+                                onDelete={() => onDelete(item._id, item.name)}
+                                deleteIcon={<CloseIcon />}
+                                sx={{
+                                    height: 26, fontSize: "0.78rem",
+                                    bgcolor: `${color}12`,
+                                    border: `1px solid ${color}28`,
+                                    "& .MuiChip-deleteIcon": {
+                                        fontSize: 13, color: `${color}60`,
+                                        "&:hover": { color },
+                                    },
+                                }}
+                            />
+                        ))}
+                    </Stack>
+                )}
+            </Box>
+        </Card>
     );
 }

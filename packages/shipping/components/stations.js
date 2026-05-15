@@ -1,46 +1,30 @@
 "use client";
-import {Grid2, Box, Typography, Card} from "@mui/material"
-export function Stations({stations, station, setStation, setAuto}){
+import { Stack, Chip, Typography } from "@mui/material";
+
+export function Stations({ stations, station, setStation, setAuto }) {
+    if (!stations?.length) return null;
     return (
-      <Box sx={{ display: "flex", flexDirection: "row", paddingTop: "1%" }}>
-        <Card
-          sx={{
-            width: { xs: "99%", sm: "96%", md: "90%" },
-            marginBottom: "1%",
-            marginLeft: { xs: ".5%", sm: "2%", md: "5%" },
-            overflow: {xs:"auto", sm: "hidden"},
-            padding: ".5%"
-          }}
-        >
-          <Grid2 container spacing={2}>
-            {stations &&
-              stations.map((s) => (
-                <Grid2 size={{ md: 2, sm: 3, xs: 6 }} key={s}>
-                  <Card
+        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1 }}>
+            {stations.map((s) => (
+                <Chip
+                    key={s}
+                    label={
+                        <Typography sx={{ textTransform: "capitalize", fontWeight: station === s ? 700 : 500, fontSize: "0.875rem" }}>
+                            {s}
+                        </Typography>
+                    }
+                    onClick={() => { setStation(s); setAuto(true); }}
                     sx={{
-                      padding: { xs: "3%", md: "10%" },
-                      background: station == s ? "#0079DC" : "#FFF",
-                      color: station == s ? "#fff" : "#000",
-                      cursor: "pointer",
+                        bgcolor: station === s ? "primary.main" : "background.default",
+                        color: station === s ? "#fff" : "text.primary",
+                        border: "1px solid",
+                        borderColor: station === s ? "primary.main" : "divider",
+                        height: 36,
+                        px: 0.5,
+                        "&:hover": { bgcolor: station === s ? "primary.dark" : "action.hover" },
                     }}
-                    onClick={() => {
-                        setAuto(false);
-                        setStation(s);
-                        setAuto(true);
-                    }}
-                  >
-                    <Typography
-                      textAlign="center"
-                      fontSize={{ xs: "1rem", md: "1.5rem" }}
-                      textTransform={"capitalize"}
-                    >
-                      {s}
-                    </Typography>
-                  </Card>
-                </Grid2>
-              ))}
-          </Grid2>
-        </Card>
-      </Box>
+                />
+            ))}
+        </Stack>
     );
 }

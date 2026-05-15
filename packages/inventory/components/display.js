@@ -1,196 +1,180 @@
-import {useState, useEffect} from "react"
-import { Box, Grid2, Typography, Button, Modal, Card, CardContent, CardActions, Divider, Accordion, AccordionDetails, AccordionSummary, TextField } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useState, useEffect } from "react";
+import { Box, Grid2, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Card, Divider, Chip, Accordion, AccordionDetails, AccordionSummary, TextField, Stack, IconButton } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import axios from "axios";
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import DeleteIcon from '@mui/icons-material/Delete';
-export function DisplayModal({open, setOpen, type, items, blanks, setBlanks, setItems}){
-    const [orders, setOrders] = useState([])
-    const [check,setCheck] = useState(false)
-    const [showItems, setShowItems] = useState("")
-    const [edit, setEdit] = useState(false)
-    const [orderEdit, setOrderEdit] = useState(null)
-    let [orderLocation, setOrderLocation] = useState({})
-    useEffect(()=>{
-       const getOrders = async ()=>{
-            let res = await axios.get("/api/admin/inventory/order")
-            if(res && res.data){
-                console.log(res.data.orders)
-                setOrders(res.data.orders)
-            }
-       }
-       getOrders()
-    }, [open])
-    const markReceived = async ({order, location})=>{
-        console.log(order, location)
-        let res = await axios.put("/api/admin/inventory/order", {id: order._id, location: location.name}).catch(e=>{alert("something went wrong marking order received do not click receive again contact support")})
-        if(res && res.data && res.data.error == false){
-            setOrders(res.data.orders)
-        }else{
-            alert("something went wrong marking order received do not click receive again contact support")
-        }
-    }
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "95%",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-        height: "95%",
-        overflow: "auto"
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+
+export function DisplayModal({ open, setOpen }) {
+    const [orders, setOrders]         = useState([]);
+    const [showItems, setShowItems]   = useState("");
+    const [edit, setEdit]             = useState(false);
+    const [orderEdit, setOrderEdit]   = useState(null);
+    const [confirmReceive, setConfirmReceive] = useState(null);
+
+    useEffect(() => {
+        const getOrders = async () => {
+            const res = await axios.get("/api/admin/inventory/order");
+            if (res?.data) setOrders(res.data.orders);
+        };
+        if (open) getOrders();
+    }, [open]);
+
+    const markReceived = async ({ order, location }) => {
+        const res = await axios.put("/api/admin/inventory/order", { id: order._id, location: location.name })
+            .catch(() => alert("Something went wrong marking order received — do not click Receive again, contact support"));
+        if (res?.data?.error === false) setOrders(res.data.orders);
+        else alert("Something went wrong marking order received — do not click Receive again, contact support");
     };
+
+    const updateQuantity = async (orderId, locationId, itemId, quantity) => {
+        const o = orders.find(or => or._id.toString() === orderId);
+        const lo = o.locations.find(loc => loc._id.toString() === locationId);
+        const it = lo.items.find(itm => itm._id.toString() === itemId);
+        it.quantity = parseInt(quantity);
+        setOrders([...orders.filter(or => or._id.toString() !== orderId), o]);
+        const res = await axios.put("/api/admin/inventory/create-order/edit", { orderId: o._id, items: o.locations })
+            .catch(() => alert("Something went wrong updating quantity, please refresh"));
+        if (!res?.data || res.data.error !== false) alert("Something went wrong updating quantity, please refresh");
+    };
+
+    const deleteItem = async (orderId, locationId, itemId) => {
+        const o = orders.find(or => or._id.toString() === orderId);
+        const lo = o.locations.find(loc => loc._id.toString() === locationId);
+        lo.items = lo.items.filter(itm => itm._id.toString() !== itemId);
+        setOrders([...orders.filter(or => or._id.toString() !== orderId), o]);
+        const res = await axios.post("/api/admin/inventory/create-order/edit", { orderId: o._id, items: o.locations })
+            .catch(() => alert("Something went wrong deleting item, please refresh"));
+        if (!res?.data || res.data.error !== false) alert("Something went wrong deleting item, please refresh");
+    };
+
     return (
-        <Modal
-        open={open}
-        onClose={()=>{setOpen(false)}}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-                Order {type}
-            </Typography>
-            <Divider sx={{marginBottom: "3%"}}/>
-            <Grid2 container spacing={1}>
-                {orders && orders.map(o=>(
-                    <Grid2 size={{xs: 12, sm: 12}} key={o._id}>
-                        <Card>
-                            <CardContent>
-                                <Box sx={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                                    <Box>
-                                        <Typography component="h2" sx={{width: "100%"}}>{o.poNumber}</Typography>
-                                        <Typography>{o.vendor}</Typography>
-                                        <Typography>{new Date(o.dateOrdered).toLocaleDateString("En-us")}</Typography>
-                                        {o.dateExpected && <Typography>{new Date(o.dateExpected).toLocaleDateString("En-us")}</Typography>}
-                                    </Box>
-                                    <Box>
-                                        <Button onClick={() => {
-                                            setEdit(!edit)
-                                            setOrderEdit(o._id.toString())
-                                            }}>Edit</Button>
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                            <Divider/>
-                            <CardContent>
-                                {o.locations.map(l => (
-                                    <Accordion key={l._id}>
-                                        <AccordionSummary
-                                            expandIcon={<ExpandMoreIcon />}
-                                            aria-controls="panel1-content"
-                                            id="panel1-header"
+        <>
+            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth scroll="paper">
+                <DialogTitle sx={{ py: 1.5 }}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                        <LocalShippingIcon color="primary" />
+                        <Typography variant="h6" fontWeight={700} sx={{ flex: 1 }}>Inventory Orders</Typography>
+                        <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+                    </Stack>
+                </DialogTitle>
+                <Divider />
+                <DialogContent sx={{ p: 2 }}>
+                    <Grid2 container spacing={2}>
+                        {orders.map(o => (
+                            <Grid2 size={12} key={o._id}>
+                                <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                                    {/* Order header */}
+                                    <Box sx={{ px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", borderBottom: "1px solid", borderColor: "divider" }}>
+                                        <Chip label={o.poNumber} color="primary" variant="outlined" sx={{ fontWeight: 700, fontFamily: "monospace" }} />
+                                        <Typography variant="body2" fontWeight={600}>{o.vendor}</Typography>
+                                        <Chip label={`Ordered: ${new Date(o.dateOrdered).toLocaleDateString("en-US")}`} size="small" variant="outlined" />
+                                        {o.dateExpected && (
+                                            <Chip label={`Expected: ${new Date(o.dateExpected).toLocaleDateString("en-US")}`} size="small" variant="outlined" color="info" />
+                                        )}
+                                        <Button
+                                            size="small"
+                                            variant={edit && orderEdit === o._id.toString() ? "contained" : "outlined"}
+                                            sx={{ ml: "auto" }}
+                                            onClick={() => { setEdit(!edit); setOrderEdit(o._id.toString()); }}
                                         >
-                                            <Typography component="h2" sx={{ width: "100%" }}>{l.name.replace(/ /g, "")}</Typography>
-                                        </AccordionSummary>
-                                        <AccordionDetails>
-                                            <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end" }}>
-                                                {!l.received && <Button onClick={() => { setOrderLocation({ o, l }); setCheck(true) }}>Receive</Button>}
-                                                {l.received && <Typography fontSize="1.3rem" fontWeight="bold">Already Received</Typography>}
-                                            </Box>
-                                            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                            {edit && orderEdit === o._id.toString() ? "Done" : "Edit"}
+                                        </Button>
+                                    </Box>
 
-                                                {l.items?.map(i => (
-                                                    <Grid2 container spacing={2}>
-                                                        <Grid2 size={4}>
-                                                            <Typography>{i.inventory?.style_code}-{i.inventory?.color_name}-{i.inventory?.size_name}</Typography>
-                                                        </Grid2>
-                                                        <Grid2 size={4}>
-                                                            {edit && orderEdit == o._id.toString() ? <TextField type="number" value={i.quantity} onChange={async (e) => {
-                                                                let q = parseInt(e.target.value)
-                                                                let o = orders.filter(or => or._id.toString() == orderEdit)[0]
-                                                                let lo = o.locations.filter(loc => loc._id.toString() == l._id.toString())[0]
-                                                                let it = lo.items.filter(itm => itm._id.toString() == i._id.toString())[0]
-                                                                console.log(q, o, lo, it)
-                                                                it.quantity = q
-                                                                setOrders([...orders.filter(or => or._id.toString() != orderEdit), o])
-                                                                // Here you would also want to send this update to the server to persist the change
-                                                                let res = await axios.put("/api/admin/inventory/create-order/edit", { orderId: o._id, items: o.locations }).catch(e => { alert("something went wrong updating quantity, please refresh and try again") })
-                                                                if (res && res.data && res.data.error == false) {
-                                                                    console.log("quantity updated successfully")
-                                                                } else {
-                                                                    alert("something went wrong updating quantity, please refresh and try again")
-                                                                }
-                                                                // Update the quantity in your state or perform any necessary actions
-                                                            }} /> : <Typography>{i.quantity}</Typography>}
-                                                        </Grid2>
-                                                        <Grid2 size={3}>
-                                                            <Typography>{l.name}</Typography>
-                                                        </Grid2>
-                                                        <Grid2 size={1}>
-                                                            {!edit && <ArrowDropDownIcon sx={{ cursor: "pointer" }} onClick={() => {setOpen(i._id.toString()); console.log(i.inventory.orders, "orders")}} />}
-                                                            {edit && orderEdit == o._id.toString() ? <DeleteIcon sx={{ cursor: "pointer" }} onClick={async () => {
-                                                                let o = orders.filter(or => or._id.toString() == orderEdit)[0]
-                                                                let lo = o.locations.filter(loc => loc._id.toString() == l._id.toString())[0]
-                                                                lo.items = lo.items.filter(itm => itm._id.toString() != i._id.toString())
-                                                                setOrders([...orders.filter(or => or._id.toString() != orderEdit), o])
-                                                                // Here you would also want to send this update to the server to persist the change
-                                                                let res = await axios.post("/api/admin/inventory/create-order/edit", { orderId: o._id, items: o.locations }).catch(e => { alert("something went wrong deleting item, please refresh and try again") })
-                                                                if (res && res.data && res.data.error == false) {
-                                                                    console.log("item deleted successfully")
-                                                                } else {
-                                                                    alert("something went wrong deleting item, please refresh and try again")
-                                                                }
-                                                            }} /> : null}
-                                                        </Grid2>
-                                                        {open == i._id.toString() && i.inventory.orders?.filter(or => or.order.toString() == o._id.toString()).map((or, index) => (
-                                                            <Grid2 key={index} size={12}>
-                                                                {or.items.map((item, idx) => (
-                                                                    <Typography key={idx} sx={{ paddingLeft: "2%", marginBottom: "1%" }}>{item}</Typography>
-                                                                ))}
+                                    {/* Locations */}
+                                    <Box sx={{ p: 1 }}>
+                                        {o.locations.map(l => (
+                                            <Accordion key={l._id} variant="outlined" sx={{ mb: 0.5, borderRadius: "8px !important", "&:before": { display: "none" } }}>
+                                                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                                    <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+                                                        <Typography variant="body2" fontWeight={600}>{l.name.replace(/ /g, "")}</Typography>
+                                                        {l.received && <Chip icon={<CheckCircleIcon />} label="Received" size="small" color="success" />}
+                                                        <Chip label={`${l.items?.length ?? 0} items`} size="small" variant="outlined" sx={{ ml: "auto", mr: 1 }} />
+                                                    </Stack>
+                                                </AccordionSummary>
+                                                <AccordionDetails sx={{ pt: 0 }}>
+                                                    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+                                                        {!l.received && (
+                                                            <Button
+                                                                size="small"
+                                                                variant="contained"
+                                                                color="success"
+                                                                onClick={() => setConfirmReceive({ o, l })}
+                                                            >
+                                                                Mark Received
+                                                            </Button>
+                                                        )}
+                                                    </Box>
+                                                    {l.items?.map(i => (
+                                                        <Box key={i._id} sx={{ mb: 0.5 }}>
+                                                            <Grid2 container spacing={1} alignItems="center">
+                                                                <Grid2 size={5}>
+                                                                    <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+                                                                        {i.inventory?.style_code}-{i.inventory?.color_name}-{i.inventory?.size_name}
+                                                                    </Typography>
+                                                                </Grid2>
+                                                                <Grid2 size={4}>
+                                                                    {edit && orderEdit === o._id.toString()
+                                                                        ? <TextField
+                                                                            size="small"
+                                                                            type="number"
+                                                                            value={i.quantity}
+                                                                            onChange={(e) => updateQuantity(o._id.toString(), l._id.toString(), i._id.toString(), e.target.value)}
+                                                                          />
+                                                                        : <Chip label={i.quantity} size="small" variant="outlined" />
+                                                                    }
+                                                                </Grid2>
+                                                                <Grid2 size={2}>
+                                                                    <Typography variant="caption" color="text.secondary">{l.name}</Typography>
+                                                                </Grid2>
+                                                                <Grid2 size={1} sx={{ display: "flex", justifyContent: "center" }}>
+                                                                    {edit && orderEdit === o._id.toString() && (
+                                                                        <DeleteIcon
+                                                                            sx={{ cursor: "pointer", color: "error.main", fontSize: 18 }}
+                                                                            onClick={() => deleteItem(o._id.toString(), l._id.toString(), i._id.toString())}
+                                                                        />
+                                                                    )}
+                                                                </Grid2>
                                                             </Grid2>
-                                                        ))}
-                                                        
-                                                    </Grid2>
-                                                ))}
-
-                                            </Box>
-                                        </AccordionDetails>
-                                    </Accordion>
-                                ))}
-                            </CardContent>
-                        </Card>
+                                                        </Box>
+                                                    ))}
+                                                </AccordionDetails>
+                                            </Accordion>
+                                        ))}
+                                    </Box>
+                                </Card>
+                            </Grid2>
+                        ))}
                     </Grid2>
-                ))}  
-            </Grid2>
-            <CheckModal open={check} setOpen={setCheck} markReceived={markReceived} orderLocation={orderLocation} />
-        </Box>
-      </Modal>
-    )
-}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
 
-const CheckModal = ({open, setOpen, markReceived, orderLocation})=>{
-    const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: "30%",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
-        boxShadow: 24,
-        p: 4,
-        overflow: "auto"
-    };
-
-    return (
-        <Modal
-        open={open}
-        onClose={()=>{setOpen(false)}}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-            <Divider sx={{marginBottom: "3%"}}/>
-            <Box>
-                <Typography>Make sure you have the correct order selected.</Typography>
-                <Button onClick={()=>{markReceived({order: orderLocation.o, location: orderLocation.l}); setOpen(false)}}>Mark Received</Button>
-                <Button onClick={()=>{setOpen(false)}}>Cancel</Button>
-            </Box>
-        </Box>
-      </Modal>
-    )
+            {/* Confirm receive dialog */}
+            <Dialog open={!!confirmReceive} onClose={() => setConfirmReceive(null)} maxWidth="xs" fullWidth>
+                <DialogTitle fontWeight={700}>Confirm Receipt</DialogTitle>
+                <DialogContent>
+                    <Typography>Are you sure you want to mark this location as received?</Typography>
+                    {confirmReceive && (
+                        <Chip label={confirmReceive.l.name} sx={{ mt: 1 }} />
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmReceive(null)}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => { markReceived({ order: confirmReceive.o, location: confirmReceive.l }); setConfirmReceive(null); }}
+                    >
+                        Mark Received
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    );
 }

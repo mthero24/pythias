@@ -1,134 +1,267 @@
 "use client";
-import { Typography, Grid2, Card, Container, Button, TextField, Box, Stack, Pagination, MenuItem } from "@mui/material"
-import Image from "next/image"
-import {useState} from "react"
-import SearchIcon from '@mui/icons-material/Search';
-import TuneIcon from '@mui/icons-material/Tune';
+import { Typography, Grid2, Button, TextField, Box, Stack, Pagination, PaginationItem, MenuItem, Chip, Divider, InputAdornment, Collapse, IconButton, Tooltip } from "@mui/material";
+import Image from "next/image";
+import { useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import TuneIcon from "@mui/icons-material/Tune";
+import DownloadIcon from "@mui/icons-material/Download";
+import CloseIcon from "@mui/icons-material/Close";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import ImageNotSupportedIcon from "@mui/icons-material/ImageNotSupported";
 import axios from "axios";
-export function productMain({inventory, q, totalCount, p, blanks, fils}) {
-    const [query, setQuery] = useState(q || "")
-    const [count, setCount] = useState(totalCount || 0)
-    const [page, setPage] = useState(p || 1)
-    const [editing, setEditing] = useState(null)
-    console.log(fils, typeof fils)
-    const [filterOpen, setFilterOpen] = useState(typeof fils == "string" || typeof fils == "object" ? true : false)
-    const [filters, setFilters] = useState(typeof fils == "string" ? JSON.parse(fils) : typeof fils == "object" ? fils : { })
-    const [invs, setInventory] = useState(inventory || [])
-    console.log(filters, typeof filters, "filters")
-    const handlePageChange = (event, value) => {
-        console.log(value)
-        setPage(value)
-        let url = `/inventory/product?q=${query}&page=${value}&filter=${JSON.stringify(filters)}`
-        window.location.href = url
+
+function ItemImage({ src, size = 72 }) {
+    const [error, setError] = useState(false);
+    if (!src || error) {
+        return (
+            <Box sx={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "action.hover", borderRadius: 1.5, flexShrink: 0 }}>
+                <ImageNotSupportedIcon sx={{ color: "text.disabled", fontSize: size * 0.45 }} />
+            </Box>
+        );
+    }
+    return <Image src={src} width={size} height={size} alt="product" style={{ objectFit: "cover", borderRadius: 6, background: "#e3e3e3", flexShrink: 0 }} onError={() => setError(true)} />;
+}
+
+function getImage(item) {
+    for (const key of Object.keys(item.design?.images || {})) {
+        const dimage = item.design?.images[key];
+        if (!dimage) continue;
+        const blankImage = item.blank?.images?.find(im => im.boxes && im.boxes[key] && im.color?.toString() === item.color?._id?.toString());
+        if (!blankImage) return dimage;
+        const filename = blankImage.image.split("/").pop().split(".")[0];
+        return `/api/renderImage/${item.design.sku}-${item.blank.code}-${filename}-${item.color.name}-${key}.jpg`;
+    }
+    return null;
+}
+
+function navigate(query, page, filters) {
+    window.location.href = `/inventory/product?q=${query}&page=${page}&filter=${JSON.stringify(filters)}`;
+}
+
+export function productMain({ inventory, q, totalCount, p, blanks, fils }) {
+    const [query, setQuery]           = useState(q || "");
+    const [count]                     = useState(totalCount || 0);
+    const [page, setPage]             = useState(p || 1);
+    const [filterOpen, setFilterOpen] = useState(typeof fils === "string" || (typeof fils === "object" && fils !== null && Object.keys(fils).length > 0));
+    const [filters, setFilters]       = useState(typeof fils === "string" ? JSON.parse(fils) : (typeof fils === "object" && fils !== null ? fils : {}));
+    const [invs, setInvs]             = useState(inventory || []);
+
+    const applyFilter = (newFilters) => {
+        setFilters(newFilters);
+        navigate(query, 1, newFilters);
     };
-    return <Container>
-        <Typography variant="h1" sx={{fontSize: "2rem", marginBottom: "1rem"}}>Product Inventory</Typography>
-        <Card sx={{padding: "1%", marginBottom: "1%"}}>
-            <Box sx={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                <TextField fullWidth label="Search" value={query} onChange={(e) => {
-                    setQuery(e.target.value)
-                }} onKeyDown={(e)=>{
-                    console.log(e.key)
-                    if(e.key === "Enter"){
-                        let url = `/inventory/product?q=${query}&page=1&filter=${JSON.stringify(filters)}`
-                        window.location.href = url
-                    }
-                }} />
-                <Button sx={{ position: "relative", right: "1%", color: "#dad6d6", marginLeft: { xs: "-15%", md: "-5%" }, height: "50px" }} onClick={(e) => {
-                    let url = `/inventory/product?q=${query}&page=1&filter=${JSON.stringify(filters)}`
-                    window.location.href = url
-                }}><SearchIcon  /></Button>
+
+    const saveQuantity = async (id, quantity) => {
+        await axios.post("/api/admin/inventory/product/update", { id, quantity })
+            .catch(() => alert("Error saving quantity"));
+    };
+
+    const updateQuantity = (id, value) => {
+        setInvs(prev => prev.map(i => i._id === id ? { ...i, quantity: parseInt(value) || 0 } : i));
+    };
+
+    const downloadCsv = () => {
+        const rows = [
+            ["SKU", "Design", "Blank", "Color", "Size", "Quantity"],
+            ...invs.map(i => [i.sku, i.design?.sku ?? "", i.blank?.code ?? "", i.color?.name ?? "", i.size?.name ?? "", i.quantity]),
+        ];
+        const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "product-inventory.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+    return (
+        <Box sx={{ bgcolor: "background.default", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+            {/* Header */}
+            <Box sx={{ bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider", px: 2, py: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <InventoryIcon sx={{ color: "#fff", fontSize: 20 }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Product Inventory</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {count > 0 ? `${count.toLocaleString()} items` : "Search or filter to browse"}
+                        </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                        <Tooltip title="Download visible results as CSV">
+                            <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={downloadCsv} disabled={invs.length === 0}>
+                                CSV
+                            </Button>
+                        </Tooltip>
+                        <Button
+                            variant={filterOpen ? "contained" : "outlined"}
+                            size="small"
+                            startIcon={<TuneIcon />}
+                            onClick={() => setFilterOpen(!filterOpen)}
+                            endIcon={activeFilterCount > 0 ? <Chip label={activeFilterCount} size="small" color="error" sx={{ height: 16, fontSize: "0.65rem", "& .MuiChip-label": { px: 0.5 } }} /> : undefined}
+                        >
+                            Filters
+                        </Button>
+                    </Stack>
+                </Stack>
+
+                {/* Search */}
+                <TextField
+                    fullWidth
+                    placeholder="Search by SKU or design…"
+                    size="small"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") navigate(query, 1, filters); }}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon sx={{ color: "text.disabled", cursor: "pointer" }} onClick={() => navigate(query, 1, filters)} />
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+
+                {/* Filters */}
+                <Collapse in={filterOpen}>
+                    <Box sx={{ mt: 1.5 }}>
+                        <Grid2 container spacing={1} alignItems="center">
+                            <Grid2 size={{ xs: 12, sm: 4 }}>
+                                <TextField select fullWidth size="small" label="Style Code" value={filters.blank ?? ""}
+                                    onChange={(e) => applyFilter({ blank: e.target.value })}>
+                                    {blanks?.map(b => <MenuItem key={b.code} value={b.code}>{b.code}</MenuItem>)}
+                                </TextField>
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 4 }}>
+                                <TextField select fullWidth size="small" label="Color" value={filters.color ?? ""} disabled={!filters.blank}
+                                    onChange={(e) => applyFilter({ ...filters, color: e.target.value })}>
+                                    {blanks?.find(b => b.code === filters.blank)?.colors.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
+                                </TextField>
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <TextField select fullWidth size="small" label="Size" value={filters.size ?? ""} disabled={!filters.blank}
+                                    onChange={(e) => applyFilter({ ...filters, size: e.target.value })}>
+                                    {blanks?.find(b => b.code === filters.blank)?.sizes.map(s => <MenuItem key={s.name} value={s.name}>{s.name}</MenuItem>)}
+                                </TextField>
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 1 }} sx={{ display: "flex", justifyContent: "flex-end" }}>
+                                <Tooltip title="Clear all filters">
+                                    <IconButton size="small" onClick={() => applyFilter({})} disabled={activeFilterCount === 0}>
+                                        <CloseIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            </Grid2>
+                        </Grid2>
+                    </Box>
+                </Collapse>
             </Box>
-            <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-end", marginTop: "10px" }}>
-                <Button onClick={()=>{setFilterOpen(!filterOpen)}}><TuneIcon /></Button>
+
+            {/* List */}
+            <Box sx={{ px: 2, py: 2, flex: 1 }}>
+                {invs.length === 0 && (
+                    <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
+                        <InventoryIcon sx={{ fontSize: 48, mb: 1, opacity: 0.3 }} />
+                        <Typography>No results — try a different search or filter</Typography>
+                    </Box>
+                )}
+
+                {/* Column headers */}
+                {invs.length > 0 && (
+                    <Grid2 container spacing={1} alignItems="center" sx={{ px: 1, mb: 0.5 }}>
+                        <Grid2 size={1} />
+                        <Grid2 size={3.5}><Typography variant="caption" fontWeight={700} color="text.secondary">SKU</Typography></Grid2>
+                        <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Blank</Typography></Grid2>
+                        <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">Color</Typography></Grid2>
+                        <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Size</Typography></Grid2>
+                        <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">Quantity</Typography></Grid2>
+                    </Grid2>
+                )}
+
+                <Stack spacing={0.75}>
+                    {invs.map(item => {
+                        const image = getImage(item);
+                        const outOfStock = item.quantity === 0;
+                        return (
+                            <Box
+                                key={item._id}
+                                sx={{
+                                    bgcolor: outOfStock ? "#fef2f2" : "background.paper",
+                                    border: "1px solid",
+                                    borderColor: outOfStock ? "#fca5a5" : "divider",
+                                    borderLeft: outOfStock ? "3px solid #ef4444" : "3px solid transparent",
+                                    borderRadius: 2,
+                                    px: 1.5,
+                                    py: 1,
+                                }}
+                            >
+                                <Grid2 container spacing={1} alignItems="center">
+                                    <Grid2 size={1} sx={{ display: "flex", justifyContent: "center" }}>
+                                        <ItemImage src={image} size={64} />
+                                    </Grid2>
+                                    <Grid2 size={3.5}>
+                                        <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600, wordBreak: "break-all", fontSize: "0.75rem" }}>
+                                            {item.sku}
+                                        </Typography>
+                                        {item.design?.sku && (
+                                            <Typography variant="caption" color="text.secondary">Design: {item.design.sku}</Typography>
+                                        )}
+                                    </Grid2>
+                                    <Grid2 size={1.5}>
+                                        <Chip label={item.blank?.code ?? "—"} size="small" color="primary" variant="outlined" sx={{ fontFamily: "monospace", fontWeight: 700 }} />
+                                    </Grid2>
+                                    <Grid2 size={2}>
+                                        <Typography variant="body2" sx={{ textTransform: "capitalize" }}>{item.color?.name ?? "—"}</Typography>
+                                    </Grid2>
+                                    <Grid2 size={1}>
+                                        <Chip label={item.size?.name ?? "—"} size="small" variant="outlined" sx={{ textTransform: "uppercase", fontWeight: 600 }} />
+                                    </Grid2>
+                                    <Grid2 size={2}>
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <TextField
+                                                size="small"
+                                                type="number"
+                                                value={item.quantity}
+                                                inputProps={{ min: 0, style: { fontWeight: 700, color: outOfStock ? "#ef4444" : undefined } }}
+                                                onChange={(e) => updateQuantity(item._id, e.target.value)}
+                                                onBlur={(e) => saveQuantity(item._id, parseInt(e.target.value) || 0)}
+                                                sx={{ width: 90 }}
+                                            />
+                                            {outOfStock && <Chip label="OOS" size="small" color="error" sx={{ fontWeight: 700, fontSize: "0.6rem", height: 18, "& .MuiChip-label": { px: 0.75 } }} />}
+                                        </Stack>
+                                    </Grid2>
+                                </Grid2>
+                            </Box>
+                        );
+                    })}
+                </Stack>
             </Box>
-            {filterOpen && 
-                <Grid2 container spacing={2} sx={{alignItems: "center"}}>
-                    <Grid2 size={4}>
-                        <TextField select fullWidth label="Blank" value={filters.blank} sx={{width: "100%"}} onChange={(e) => {
-                            let f = {...filters}
-                            f.blank = e.target.value
-                            setFilters(f)
-                            let url = `/inventory/product?q=${query}&page=1&filter=${JSON.stringify(f)}`
-                            window.location.href = url
-                        }}>
-                            {blanks?.map(b => <MenuItem key={b.code} value={b.code}>{b.code}</MenuItem>)}
-                        </TextField>
-                    </Grid2>
-                    {filters.blank ? <Grid2 size={4}>
-                        <TextField select fullWidth label="Color" value={filters.color} sx={{width: "100%"}} onChange={(e) => {
-                            let f = {...filters}
-                            f.color = e.target.value
-                            setFilters(f)
-                            let url = `/inventory/product?q=${query}&page=1&filter=${JSON.stringify(f)}`
-                            window.location.href = url
-                        }}>
-                            {blanks.find(b => b.code === filters.blank)?.colors.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
-                        </TextField>
-                    </Grid2> : null}
-                    {filters.blank ? <Grid2 size={4}>
-                        <TextField select fullWidth label="Size" value={filters.size} sx={{width: "100%"}} onChange={(e) => {
-                            let f = {...filters}
-                            f.size = e.target.value
-                            setFilters(f)
-                            let url = `/inventory/product?q=${query}&page=1&filter=${JSON.stringify(f)}`
-                            window.location.href = url
-                        }}>
-                            {blanks.find(b => b.code === filters.blank)?.sizes.map(s => <MenuItem key={s.name} value={s.name}>{s.name}</MenuItem>)}
-                        </TextField>
-                    </Grid2> : null}
-                    <Grid2 size={12}>
-                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignContent: "center", alignItems: "center" }}>
-                            <Button onClick={() => {
-                                let f = {}
-                                let p = page
-                                setFilters(f)
-                                let url = `/inventory/product?q=${query}&page=1`
-                                window.location.href = url
-                            }}>Reset Filters</Button>
-                        </Box>
-                    </Grid2>
-                </Grid2>
-            }
-        </Card>
-        {invs.map(item => {
-            let image 
-            for(let i of Object.keys(item.design?.images || {})){
-                let dimage = item.design?.images[i] !== null ? item.design?.images[i] : null
-                if(dimage) {
-                    //console.log(item.blank.images)
-                    let blankImage = item?.blank?.images.filter(im => im.boxes && im.boxes[i] && im.color.toString() == item.color._id.toString())[0]
-                    if(!blankImage) image = dimage
-                    else image = `/api/renderImage/${item.design.sku}-${item.blank.code}-${blankImage.image.split("/")[blankImage.image.split("/").length - 1].split(".")[0]}-${item.color.name}-${i}.jpg`
-                    break
-                }
-            }
-            return <Card sx={{padding: "1%", marginBottom: "1%"}}>
-                <Grid2 container key={item._id} sx={{textAlign: "center", alignItems: "center"}}>
-                    <Grid2 size={12}>{<Typography variant="h5" sx={{textAlign: "center"}}>{item.sku}</Typography>}</Grid2>                    
-                    <Grid2 size={3}>{image && <Image src={image} width={200} height={200} alt="design image" style={{objectFit: "cover", background: "#e3e3e3"}} />}</Grid2>
-                    <Grid2 size={2}>Design: {item.design?.sku}</Grid2>
-                    <Grid2 size={2}>Blank: {item.blank?.code}</Grid2>
-                    <Grid2 size={2}>Color: {item.color.name}</Grid2>
-                    <Grid2 size={1}>Size: {item.size?.name}</Grid2>
-                    {editing === item._id ? <Grid2 size={1}><TextField value={item.quantity} label="Quantity" onChange={(e) => {
-                        let invst = [...invs]
-                        let inv = invst.find(i => i._id === item._id)
-                        inv.quantity = parseInt(e.target.value)
-                        setInventory(invst)
-                    }} /></Grid2> : <Grid2 size={1}>Quantity: {item.quantity}</Grid2>    }
-                    {editing === item._id ? <Grid2 size={1}><Button onClick={async () => {
-                        let invst = [...invs]
-                        let inv = invst.find(i => i._id === item._id)
-                        setInventory(invst)
-                        setEditing(null)
-                        let res = await axios.post(`/api/admin/inventory/product/update`, { id: inv._id, quantity: inv.quantity })
-                    }}>Save</Button></Grid2> : <Grid2 size={1}><Button onClick={() => setEditing(item._id)}>Edit</Button></Grid2>}
-                </Grid2>
-            </Card> 
-        })}
-        <Stack spacing={2} sx={{ marginTop: "1%", display: "flex", alignItems: "center" }}>
-            <Pagination count={Math.ceil(count / 50)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
-        </Stack>
-    </Container>
+
+            {/* Pagination */}
+            {count > 0 && (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                    <Pagination
+                        count={Math.ceil(count / 50)}
+                        page={page}
+                        variant="outlined"
+                        shape="rounded"
+                        showFirstButton
+                        showLastButton
+                        renderItem={(item) => (
+                            <PaginationItem slots={{ previous: ArrowBackIcon, next: ArrowForwardIcon }} {...item} />
+                        )}
+                        onChange={(e, value) => {
+                            setPage(value);
+                            navigate(query, value, filters);
+                        }}
+                    />
+                </Box>
+            )}
+        </Box>
+    );
 }

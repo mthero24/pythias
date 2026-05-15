@@ -1,147 +1,157 @@
 "use client";
-import {Box, Modal, Typography, Card, TextField, Grid2, Button} from "@mui/material";
-import Image from "next/image"
-import {Items} from "./OrderModalComponents/items";
+import { Box, Typography, Dialog, DialogTitle, DialogContent, Divider, Chip, IconButton, Stack, Button } from "@mui/material";
+import { Items } from "./OrderModalComponents/items";
 import { Address } from "./OrderModalComponents/address";
 import { BinInfo } from "./OrderModalComponents/BinInfo";
 import { Actions } from "./OrderModalComponents/Action";
-import CloseIcon from '@mui/icons-material/Close';
-import axios from "axios"
-import { createImage } from "../functions/image";
-import {useState, useEffect} from "react";
-export function OrderModal({order, item, bin, setOrder, setShowNotes, setItem,setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source, weight, setWeight, dimensions, setDimensions}) {
-    console.log(createImage("red", "AT", {url: "https://s3.wasabisys.com/teeshirtpalace-node-dev/designs/1734432513522.png&w=256&q=75"}))
-    const [shippingPrices, setShippingPrices] = useState()
-    const [getWeight, setGetWeight] = useState(false)
-    const [timer, setTimer] = useState(0)
-    const [label, setLabel] = useState()
-    const [closeTimer, setCloseTimer] = useState(false)
-    const [stopClose, setStopClose] = useState(false)
-    const close = ()=>{
-      setShow(false);
-      setAuto(true);
-      setOrder();
-      setItem();
-      setBin();
-      setAction()
-      setShippingPrices()
-      setWeight(0)
-      setDimensions()
-      setLabel()
-    }
-    useEffect(()=>{
-      let getShippingRates = async ()=>{
-        let res = await axios.post("/api/production/shipping/rates", {address: order.shippingAddress, marketplace: order.marketplace, shippingType: order.shippingType, weight, dimensions})
-        if(res.data.error) alert(res.data.msg)
-        else {
-          setShippingPrices(res.data.rates.rates)
-          console.log(res.data.rates.rates)
-        }
-      }
-      if(show && order && weight > 0 && dimensions){
-        getShippingRates()
-      }
-    }, [dimensions, weight])
-    useEffect(()=>{
-      let countDown = async ()=>{
-          setCloseTimer(true)
-          setStopClose(false)
-          for(let i = 2; i >= 0; i--){
-              setTimer(i)
-              console.log(i, closeTimer, timer,  "close timer")
-              await new Promise((resolve)=>{
-                setTimeout(()=>{
-                  resolve()
-                }, 1000)
-              })
-          }
-          checkClose()
-      }
-      let checkClose = ()=>{
-          if(!stopClose){
-              setCloseTimer()
-              setLabel()
-              close()
-              setCloseTimer(false)
-          }else countDown()
-      }
-      if(label){
-          countDown()
-      }
-  }, [label])
-    useEffect(()=>{
-      let startTimer = async ()=>{
-        for(let i = 2; i >= 1; i--){
-          setTimer(i)
-          await new Promise((resolve)=>{
-            setTimeout(()=>{
-              resolve()
-            }, 1000)
-          })
-        }
-        await getWeight()
-        setTimer(0)
-      }
-      let getWeight = async ()=>{
-        let res = await axios.get(`/api/production/shipping/scales?station=${station}&id=${order._id}`)
-        if(res.data.error) {
-          alert(res.data.msg)
-          setWeight(0)
-        }else {
-          console.log(res.data, "+++++++++++ result from weight") //186.25
-          setWeight(res.data.value)
-        }
-        return
-      }
-      if(action == "ship" && weight == 0){
-        startTimer()
-      }
-    }, [show, getWeight])
-    return (
-      <Modal
-        open={show}
-        onClose={() => {
-          close()
-        }}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", cursor: "pointer", color: "red"}}>
-            <CloseIcon sx={{color: "red"}} onClick={()=>{
-               close()
-            }}/>
-          </Box>
-          <Grid2 container spacing={2}>
-            {bin && (<BinInfo bin={bin} close={close} setBins={setBins}/>)}
-            <Grid2 size={{xs:6, sm: 6}} sx={{display: {xs: "none", sm: "block"}}}>
+import CloseIcon from "@mui/icons-material/Close";
+import NotesIcon from "@mui/icons-material/Notes";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import axios from "axios";
+import { useState, useEffect } from "react";
 
-            </Grid2>
-            <Grid2 size={{xs:6, sm: 3}}>
-                {order && order.notes.length > 0 && <Button onClick={()=>{setShowNotes(true)}}>Show Order Notes</Button>}
-            </Grid2>
-          </Grid2>
-          {action && <Actions action={action} setAction={setAction} bin={bin} order={order} item={item} style={style} shippingPrices={shippingPrices} setShippingPrices={setShippingPrices} timer={timer} weight={weight} setGetWeight={setGetWeight} getWeight={getWeight} setDimensions={setDimensions} dimensions={dimensions} station={station} close={close} label={label} setLabel={setLabel} closeTimer={closeTimer} setCloseTimer={setCloseTimer} stopClose={stopClose} setStopClose={setStopClose} setBins={setBins} source={source}/>}
-          {order && (
-            <Card sx={{height: `${style.height * 0.75}px`, overflow: "auto"}}>
-              <Box sx={{display: "flex", flexDirection: 'row', justifyContent: "space-evenly"}}>
-                <Typography fontWeight="bold" fontSize="1.2rem" sx={{display: {xs: "none", sm: "block"}}}>
-                   {new Date(order.date).toLocaleDateString("EN-us")}
-                </Typography>
-                <Typography fontWeight="bold" fontSize="1.2rem">
-                  {order.poNumber} 
-                </Typography>
-                <Typography fontWeight="bold" fontSize="1.2rem" sx={{display: {xs: "none", sm: "block"}}}>
-                   {order.status}
-                </Typography>
-              </Box>
-              <Grid2 container spacing={2}>
-                <Address order={order} style={style} />
-                <Items order={order} style={style} source={source}/>
-              </Grid2>
-            </Card>
-          )}
-        </Box>
-      </Modal>
+export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source, weight, setWeight, dimensions, setDimensions }) {
+    const [shippingPrices, setShippingPrices] = useState();
+    const [getWeight, setGetWeight]           = useState(false);
+    const [timer, setTimer]                   = useState(0);
+    const [label, setLabel]                   = useState();
+    const [closeTimer, setCloseTimer]         = useState(false);
+    const [stopClose, setStopClose]           = useState(false);
+
+    const close = () => {
+        setShow(false);
+        setAuto(true);
+        setOrder();
+        setItem();
+        setBin();
+        setAction();
+        setShippingPrices();
+        setWeight(0);
+        setDimensions();
+        setLabel();
+    };
+
+    useEffect(() => {
+        const getShippingRates = async () => {
+            const res = await axios.post("/api/production/shipping/rates", {
+                address: order.shippingAddress,
+                marketplace: order.marketplace,
+                shippingType: order.shippingType,
+                weight,
+                dimensions,
+            });
+            if (res.data.error) alert(res.data.msg);
+            else setShippingPrices(res.data.rates.rates);
+        };
+        if (show && order && weight > 0 && dimensions) getShippingRates();
+    }, [dimensions, weight]);
+
+    useEffect(() => {
+        const countDown = async () => {
+            setCloseTimer(true);
+            setStopClose(false);
+            for (let i = 2; i >= 0; i--) {
+                setTimer(i);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            checkClose();
+        };
+        const checkClose = () => {
+            if (!stopClose) {
+                setCloseTimer();
+                setLabel();
+                close();
+                setCloseTimer(false);
+            } else countDown();
+        };
+        if (label) countDown();
+    }, [label]);
+
+    useEffect(() => {
+        const startTimer = async () => {
+            for (let i = 2; i >= 1; i--) {
+                setTimer(i);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            await doGetWeight();
+            setTimer(0);
+        };
+        const doGetWeight = async () => {
+            const res = await axios.get(`/api/production/shipping/scales?station=${station}&id=${order._id}`);
+            if (res.data.error) {
+                alert(res.data.msg);
+                setWeight(0);
+            } else {
+                setWeight(res.data.value);
+            }
+        };
+        if (action === "ship" && weight === 0) startTimer();
+    }, [show, getWeight]);
+
+    const isOld = order && new Date(order.date) < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+    return (
+        <Dialog open={show} onClose={close} maxWidth="xl" fullWidth scroll="paper">
+            <DialogTitle sx={{ py: 1.5, px: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                    {order && (
+                        <>
+                            <Typography variant="h6" sx={{ fontWeight: 800, mr: 0.5 }}>{order.poNumber}</Typography>
+                            <Chip label={order.status} size="small" sx={{ fontWeight: 600 }} />
+                            <Chip
+                                label={new Date(order.date).toLocaleDateString("en-US")}
+                                size="small"
+                                variant="outlined"
+                                color={isOld ? "error" : "default"}
+                            />
+                            {order.notes?.length > 0 && (
+                                <IconButton size="small" color="warning" onClick={() => setShowNotes(true)} title="Order Notes">
+                                    <NotesIcon fontSize="small" />
+                                </IconButton>
+                            )}
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                endIcon={<OpenInNewIcon fontSize="small" />}
+                                onClick={() => window.open(`/orders/${order._id}`, "_blank")}
+                                sx={{ whiteSpace: "nowrap" }}
+                            >
+                                Open Order
+                            </Button>
+                        </>
+                    )}
+                    {bin && (
+                        <BinInfo bin={bin} close={close} setBins={setBins} />
+                    )}
+                    <IconButton size="small" onClick={close} sx={{ ml: "auto !important" }}>
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
+                </Stack>
+            </DialogTitle>
+            <Divider />
+            <DialogContent sx={{ p: 2 }}>
+                {action && (
+                    <Actions
+                        action={action} setAction={setAction}
+                        bin={bin} order={order} item={item}
+                        shippingPrices={shippingPrices} setShippingPrices={setShippingPrices}
+                        timer={timer} weight={weight}
+                        setGetWeight={setGetWeight} getWeight={getWeight}
+                        setDimensions={setDimensions} dimensions={dimensions}
+                        station={station} close={close}
+                        label={label} setLabel={setLabel}
+                        closeTimer={closeTimer} setCloseTimer={setCloseTimer}
+                        stopClose={stopClose} setStopClose={setStopClose}
+                        setBins={setBins} source={source}
+                    />
+                )}
+                {order && (
+                    <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2, mt: action ? 2 : 0 }}>
+                        <Address order={order} />
+                        <Items order={order} source={source} />
+                    </Box>
+                )}
+            </DialogContent>
+        </Dialog>
     );
 }

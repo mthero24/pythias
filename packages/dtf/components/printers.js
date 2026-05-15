@@ -1,136 +1,116 @@
 "use client";
-import {Grid2, Box, Typography, Card, Modal, Button} from "@mui/material"
+import {
+    Grid2, Box, Typography, Card, Dialog, DialogTitle, DialogContent,
+    DialogActions, Button, Stack, IconButton,
+} from "@mui/material";
+import PrintIcon  from "@mui/icons-material/Print";
+import CloseIcon  from "@mui/icons-material/Close";
 import { useState } from "react";
 import axios from "axios";
-export function Printers({printers, printer, setPrinter, setAuto}){
-  const [pendingModal, setPendingModal] = useState(false);
-  return (
-    <Box sx={{ display: "flex", flexDirection: "row", paddingTop: ".5%", background: "#d2d2d2" }}>
-      <Box sx={{
-         width: { xs: "99%", sm: "96%", md: "90%" },
-         marginLeft: { xs: ".5%", sm: "2%", md: "5%" },
-          }}>
-          <Card
-            sx={{
-              padding: ".5%",
-              background: "#f2f2f2",
-            }}
-          >
-            <Grid2 container spacing={2} sx={{ marginBottom: "1%" }}>
-              {printers &&
-                printers.map((s) => (
-                  <Grid2 size={{ md: 2, sm: 3, xs: 6 }} key={s}>
-                    <Card
-                      sx={{
-                        padding: { xs: "3%", md: "5%" },
-                        background: printer == s ? "#0079DC" : "#FFF",
-                        color: printer == s ? "#fff" : "#000",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => {
-                          setAuto(false);
-                          setPrinter(s);
-                          setAuto(true);
-                      }}
-                    >
-                      <Typography
-                        textAlign="center"
-                        fontSize={{ xs: "1rem", md: "1.5rem" }}
-                        textTransform={"capitalize"}
-                      >
-                        {s}
-                      </Typography>
-                    </Card>
-                  </Grid2>
-                ))}
-              <Grid2 size={{ md: 2, sm: 3, xs: 6 }}>
+
+export function Printers({ printers, printer, setPrinter, setAuto }) {
+    const [pendingModal, setPendingModal] = useState(false);
+
+    return (
+        <Box>
+            <Stack direction="row" flexWrap="wrap" gap={1} alignItems="center">
+                {printers?.map((s) => {
+                    const active = printer === s;
+                    return (
+                        <Card
+                            key={s}
+                            variant="outlined"
+                            onClick={() => { setAuto(false); setPrinter(s); setAuto(true); }}
+                            sx={{
+                                px: 2.5, py: 1.25, cursor: "pointer", borderRadius: 2,
+                                borderColor: active ? "#6366f1" : "divider",
+                                borderWidth: active ? 2 : 1,
+                                bgcolor: active ? "#6366f1" : "background.paper",
+                                color: active ? "#fff" : "text.primary",
+                                transition: "all 120ms",
+                                "&:hover": { borderColor: "#6366f1", bgcolor: active ? "#5558e3" : "#f0f0ff" },
+                            }}
+                        >
+                            <Stack direction="row" alignItems="center" spacing={0.75}>
+                                <PrintIcon sx={{ fontSize: 16 }} />
+                                <Typography variant="body2" sx={{ fontWeight: 700, textTransform: "capitalize" }}>{s}</Typography>
+                            </Stack>
+                        </Card>
+                    );
+                })}
                 <Card
-                  sx={{
-                    padding: { xs: "4%", md: "6%" },
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    setPendingModal(true);
-                  }}
+                    variant="outlined"
+                    onClick={() => setPendingModal(true)}
+                    sx={{
+                        px: 2.5, py: 1.25, cursor: "pointer", borderRadius: 2,
+                        transition: "all 120ms",
+                        "&:hover": { borderColor: "#6366f1", bgcolor: "#f0f0ff" },
+                    }}
                 >
-                  <Typography
-                    textAlign="center"
-                    fontSize={{ xs: ".5rem", md: "1.3rem" }}
-                    textTransform={"capitalize"}
-                  >
-                    Print Pending Items
-                  </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Print Pending Items</Typography>
                 </Card>
-              </Grid2>
-            </Grid2>
-          </Card>
+            </Stack>
+            <PrintPendingModal open={pendingModal} setOpen={setPendingModal} printers={printers} />
         </Box>
-        <PrintPendingModal open={pendingModal} setOpen={setPendingModal} printers={printers} />
-      </Box>
     );
 }
 
-const PrintPendingModal = ({open, setOpen, printers}) => {
-  const [usePrinters, setUsePrinters] = useState([]);
-  let style = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "60%",
-    height: "30%",
-    bgcolor: "background.paper",
-    border: "2px solid #000",
-    boxShadow: 24,
-    p: 4,
-    overflow: "auto"
-  };
-  return(
-    <Modal
-      open={open}
-      onClose={() => setOpen(false)}
-    >
-      <Box sx={style}>
-        <Typography variant="h6">Select Printers</Typography>
-        <Grid2 container spacing={2}>
-          {printers.map((p) => (
-            <Grid2 item xs={6} sm={4} md={3} key={p}>
-              <Card
-                sx={{
-                  padding: 2,
-                  background: usePrinters.includes(p) ? "#0079DC" : "#FFF",
-                  color: usePrinters.includes(p) ? "#fff" : "#000",
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  setUsePrinters((prev) =>
-                    prev.includes(p)
-                      ? prev.filter((item) => item !== p)
-                      : [...prev, p]
-                  );
-                }}
-              >
-                <Typography textAlign="center" fontSize={{ xs: ".5rem", md: "1.5rem" }}
-                  textTransform={"capitalize"}>{p}</Typography>
-              </Card>
-            </Grid2>
-          ))}
-        </Grid2>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              // Handle print pending items
-              let res = axios.put("/api/production/dtf", { printers: usePrinters });
-              setOpen(false);
-            }}
-          >
-            Print
-          </Button>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-        </Box>
-      </Box>
-    </Modal>
-  )
+function PrintPendingModal({ open, setOpen, printers }) {
+    const [usePrinters, setUsePrinters] = useState([]);
+
+    const toggle = (p) => setUsePrinters(prev =>
+        prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
+    );
+
+    const handlePrint = () => {
+        axios.put("/api/production/dtf", { printers: usePrinters });
+        setOpen(false);
+        setUsePrinters([]);
+    };
+
+    return (
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                Print Pending Items
+                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Select which printers to receive the pending items.
+                </Typography>
+                <Stack direction="row" flexWrap="wrap" gap={1}>
+                    {printers?.map(p => {
+                        const active = usePrinters.includes(p);
+                        return (
+                            <Card
+                                key={p}
+                                variant="outlined"
+                                onClick={() => toggle(p)}
+                                sx={{
+                                    px: 2.5, py: 1.25, cursor: "pointer", borderRadius: 2,
+                                    borderColor: active ? "#6366f1" : "divider",
+                                    borderWidth: active ? 2 : 1,
+                                    bgcolor: active ? "#6366f1" : "background.paper",
+                                    color: active ? "#fff" : "text.primary",
+                                    transition: "all 120ms",
+                                    "&:hover": { borderColor: "#6366f1", bgcolor: active ? "#5558e3" : "#f0f0ff" },
+                                }}
+                            >
+                                <Stack direction="row" alignItems="center" spacing={0.75}>
+                                    <PrintIcon sx={{ fontSize: 16 }} />
+                                    <Typography variant="body2" sx={{ fontWeight: 700, textTransform: "capitalize" }}>{p}</Typography>
+                                </Stack>
+                            </Card>
+                        );
+                    })}
+                </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="contained" onClick={handlePrint} disabled={usePrinters.length === 0}>
+                    Print to {usePrinters.length || ""} Printer{usePrinters.length !== 1 ? "s" : ""}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
 }
