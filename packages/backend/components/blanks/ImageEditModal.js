@@ -1,938 +1,942 @@
+"use client";
 import { Stage, Layer, Transformer, Rect, Image as KonvaImage, Line } from "react-konva";
-import {Box, Modal, Button, Typography, TextField, Grid2, Checkbox, MenuItem} from "@mui/material";
-import React, { use, useEffect, useRef, useState } from "react";
+import {
+    Box, Button, Typography, Stack, Chip, Divider, Paper,
+    Dialog, DialogTitle, DialogContent, DialogActions,
+    IconButton, TextField, CircularProgress, Switch, FormControlLabel,
+    Tooltip, Alert, Badge,
+} from "@mui/material";
+import React, { useEffect, useRef, useState } from "react";
 import { Uploader2 } from "../reusable/uploader2";
-import useImage from 'use-image';
+import useImage from "use-image";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import Image from "next/image";
-import { EditablePolygon } from "@pythias/backend"
-import { set } from "mongoose";
-const s3 = new S3Client({ credentials:{
-    accessKeyId:'XWHXU4FP7MT2V842ITN9',
-   secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
-}, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
-const degToRad = (angle) => (angle / 180) * Math.PI;
+import { EditablePolygon } from "@pythias/backend";
+import CropIcon from "@mui/icons-material/Crop";
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import CloseIcon from "@mui/icons-material/Close";
+import PanToolIcon from "@mui/icons-material/PanTool";
+import ZoomInMapIcon from "@mui/icons-material/ZoomInMap";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
-const getCorner = (pivotX, pivotY, diffX, diffY, angle) => {
-    const distance = Math.sqrt(diffX * diffX + diffY * diffY);
-    angle += Math.atan2(diffY, diffX);
-    const x = pivotX + distance * Math.cos(angle);
-    const y = pivotY + distance * Math.sin(angle);
-    return { x, y };
+const CANVAS = 400;
+
+// TODO: move S3 upload to a server-side API route to avoid client-side credential exposure
+const s3 = new S3Client({
+    credentials: {
+        accessKeyId: process.env.NEXT_PUBLIC_WASABI_KEY_ID || "",
+        secretAccessKey: process.env.NEXT_PUBLIC_WASABI_SECRET || "",
+    },
+    region: "us-west-1",
+    endpoint: "https://s3.us-west-1.wasabisys.com/",
+});
+
+const SUBLIMATION_FEATURES = [
+    "frontBody", "backBody", "sleeveLeftNoCuff", "sleeveLeftWithCuff",
+    "sleeveRightNoCuff", "sleeveRightWithCuff", "collar", "poloCollar",
+    "poloPocket", "background", "hoodOutside", "hoodInside", "cuffLeft", "cuffRight",
+];
+
+const emptyFeatures = () => Object.fromEntries(SUBLIMATION_FEATURES.map(k => [k, { layers: [] }]));
+const EMPTY_BOX = { x: 10, y: 10, width: 300, height: 300, rotation: 0 };
+
+const degToRad = (a) => (a / 180) * Math.PI;
+const getCorner = (px, py, dx, dy, angle) => {
+    const d = Math.sqrt(dx * dx + dy * dy);
+    angle += Math.atan2(dy, dx);
+    return { x: px + d * Math.cos(angle), y: py + d * Math.sin(angle) };
 };
-
-const getClientRect = (element) => {
-    const { x, y, width, height, rotation = 0 } = element;
+const getClientRect = ({ x, y, width, height, rotation = 0 }) => {
     const rad = degToRad(rotation);
-
-    const p1 = getCorner(x, y, 0, 0, rad);
-    const p2 = getCorner(x, y, width, 0, rad);
-    const p3 = getCorner(x, y, width, height, rad);
-    const p4 = getCorner(x, y, 0, height, rad);
-
-    const minX = Math.min(p1.x, p2.x, p3.x, p4.x);
-    const minY = Math.min(p1.y, p2.y, p3.y, p4.y);
-    const maxX = Math.max(p1.x, p2.x, p3.x, p4.x);
-    const maxY = Math.max(p1.y, p2.y, p3.y, p4.y);
-
-    return {
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-    };
+    const pts = [
+        getCorner(x, y, 0, 0, rad), getCorner(x, y, width, 0, rad),
+        getCorner(x, y, width, height, rad), getCorner(x, y, 0, height, rad),
+    ];
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) };
 };
+
+function URLImage({ src, ...rest }) {
+    const [img] = useImage(src, "anonymous");
+    return <KonvaImage image={img} {...rest} />;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function ImageEditModal({ open, onClose, blank, setBlank, update, color, printLocations, selectedImageSrc, setSelectedImageSrc }) {
-    //console.log("selectedImageSrc", selectedImageSrc)
-    const [rectangles, setRectangles] = useState([]);
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [selectionRectangle, setSelectionRectangle] = useState({
-        visible: false,
-        x1: 0,
-        y1: 0,
-        x2: 0,
-        y2: 0,
-    });
-    const isSelecting = useRef(false);
-    const transformerRef = useRef();
-    const boxRef = useRef();
-    const imageTransRef = useRef();
-    const rectRefs = useRef(new Map());
-    const stageRef = useRef();
-    const widthRef = useRef();
-    const heightRef = useRef();
-    const xRef = useRef();
-    const yRef = useRef();
-    const [image, setImage] = useState(selectedImageSrc ? {...selectedImageSrc} : {color: color?._id, image: null, boxes: {}});
-    const [reload, setReload] = useState(false);
+    // ── image & canvas state ──────────────────────────────────────────────────
+    const [image, setImage]               = useState({ color: color?._id, image: null, boxes: {} });
     const [originalImage, setOriginalImage] = useState(null);
-    const [step, setStep] = useState(""); // 1: Upload, 2: Edit
-    const [addImage, setAddImage] = useState(null);
-    const [cropAdd, setCropAdd] = useState(false);
-    const [reloadTransformers, setReloadTransformers] = useState(false);
-    const [active, setActive] = useState("");
+    const [rectangles, setRectangles]     = useState([]);
+    const [active, setActive]             = useState(""); // active print-location id
+    const [activeBox, setActiveBox]       = useState(EMPTY_BOX); // controlled dimension inputs
+    const [step, setStep]                 = useState(""); // "crop" | "location" | "addImage" | "setImage" | "cropAdd"
+    const [addImage, setAddImage]         = useState(null);
+    const [overlayImg, setOverlayImg]     = useState(null); // { image, x, y, width, height, rotation }
+    const [cropAdd, setCropAdd]           = useState(false);
+    const [pan, setPan]                   = useState(false);
+
+    // ── sublimation ───────────────────────────────────────────────────────────
+    const [hasSublimation, setHasSublimation]   = useState(false);
+    const [features, setFeatures]               = useState(emptyFeatures);
+    const [featureSelected, setFeatureSelected] = useState("frontBody");
+    const [sublimPoints, setSublimPoints]       = useState([]);
+    const [sublimModalOpen, setSublimModalOpen] = useState(false);
+    const [layerSelected, setLayerSelected]     = useState(null);
+
+    // ── save state ────────────────────────────────────────────────────────────
+    const [saving, setSaving]       = useState(false);
+    const [saveError, setSaveError] = useState("");
+
+    // ── misc ──────────────────────────────────────────────────────────────────
     const [copyBoxesOpen, setCopyBoxesOpen] = useState(false);
-    const [hasSublimation, setHasSublimation] = useState(false);
-    const sublimationBoxes = [{name:"front"}, {name:"back"}, {name:"leftSleeve"}, {name:"rightSleeve"}, {name:"collar"}];
-    const [points, setPoints] = useState([]);
-    const [tool, setTool] = useState('erraser');
-    const [lines, setLines] = useState([]);
-    const [pan, setPan] = useState(false);
-    const isDrawing = useRef(false);
-    const [layerSelected, setLayerSelected] = useState(null);
-    const [features, setFeatures] = useState({
-        frontBody: {layers: []},
-        backBody: {layers: []},
-        sleeveLeftNoCuff: {layers: []},
-        sleeveLeftWithCuff: { layers: [] },
-        sleeveRightNoCuff: {layers: []},
-        sleeveRightWithCuff: { layers: [] },
-        collar: {layers: []},
-        poloCollar: { layers: [] },
-        poloPocket: { layers: [] },
-        background: {layers: []},
-        hoodOutside: {layers: []},
-        hoodInside: {layers: []},
-        cuffLeft: {layers: []},
-        cuffRight: {layers: []},
-    })
-    const [sublimationModalOpen, setSublimationModalOpen] = useState(false);
-    const [featureSelected, setFeatureSelected] = useState("front");
-    useEffect(() => {
-        console.log(color, "color");
-        let img = {...image}
-        if(img){
-            console.log(img);
-            if (!img.sublimationBoxes) img.sublimationBoxes = {
-                frontBody: { layers: [] },
-                backBody: { layers: [] },
-                sleeveNoCuffLeft: { layers: [] },
-                sleeveWithCuffLeft: { layers: [] },
-                sleeveNoCuffRight: { layers: [] },
-                sleeveWithCuffRight: { layers: [] },
-                collar: { layers: [] },
-                poloCollar: { layers: [] },
-                poloPocket: { layers: [] },
-                background: { layers: [] },
-                hoodOutside: { layers: [] },
-                hoodInside: { layers: [] },
-                cuffLeft: { layers: [] },
-                cuffRight: { layers: [] },
-            };
-            for (let key of Object.keys(features)) {
-                if (!img?.sublimationBoxes[key]) img.sublimationBoxes[key] = { layers: [] };
-            }
-            let points = [];
-            for(let key of Object.keys(img.sublimationBoxes)){
-                img.sublimationBoxes[key].layers.forEach((layer, index) => {
-                    points.push(layer.points || []);
-                })
-            }
-            setPoints(points);
-            img.color = color?._id
-            setImage(img);
+    const [reloadUploader, setReloadUploader] = useState(false);
 
-        }
-    }, [color, open]);
+    // ── konva refs ────────────────────────────────────────────────────────────
+    const stageRef       = useRef();
+    const transformerRef = useRef();
+    const rectRef        = useRef();
+    const overlayRef     = useRef();
+    const boxRef         = useRef(); // ref to active Rect node
+    const isSelecting    = useRef(false);
+    const [selBox, setSelBox] = useState({ visible: false, x1: 0, y1: 0, x2: 0, y2: 0 });
+
+    // ── sync props → state when modal opens ──────────────────────────────────
     useEffect(() => {
-        let img
-        //console.log(color, selectedImageSrc)
-        if(selectedImageSrc.sublimationBoxes) setFeatures({...selectedImageSrc.sublimationBoxes});
-        if(!selectedImageSrc.sublimationBoxes){
-            selectedImageSrc.sublimationBoxes = features;
+        if (!open) return;
+        const src = selectedImageSrc;
+        let img = src ? { ...src } : { color: color?._id, image: null, boxes: {} };
+        if (!img.sublimationBoxes) img.sublimationBoxes = emptyFeatures();
+        for (const k of SUBLIMATION_FEATURES) {
+            if (!img.sublimationBoxes[k]) img.sublimationBoxes[k] = { layers: [] };
         }
-        for(let key of Object.keys(features)){
-            if (!selectedImageSrc?.sublimationBoxes[key]) selectedImageSrc.sublimationBoxes[key] = { layers: [] };
-        }
-        if(selectedImageSrc) img = {...selectedImageSrc}
-        else img = {color: color?._id, image: null, boxes: {}}
+        img.color = color?._id;
         setImage(img);
-    }, [selectedImageSrc]);
-    useEffect(() => {
-        if(!transformerRef.current) {
-            setReloadTransformers(true);
-            setTimeout(() => {
-                setReloadTransformers(false);
-            }, 100);
-        }
-        if (selectedIds.length && transformerRef.current) {
-            // Get the nodes from the refs Map
-            const nodes = selectedIds
-                .map(id => rectRefs.current.get(id))
-                .filter(node => node);
+        setFeatures(img.sublimationBoxes ? { ...img.sublimationBoxes } : emptyFeatures());
+        setSublimPoints([]);
+        setActive(""); setRectangles([]); setStep("");
+        setAddImage(null); setOverlayImg(null); setCropAdd(false);
+        setSaveError(""); setPan(false);
+    }, [open, selectedImageSrc, color?._id]);
 
-            transformerRef.current.nodes(nodes);
-        } else if (transformerRef.current) {
-            // Clear selection
+    // ── transformer sync ──────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!transformerRef.current) return;
+        if (step === "setImage") {
+            // KonvaImage ref is assigned during commit; wait one tick to be safe
+            const t = setTimeout(() => {
+                if (!transformerRef.current) return;
+                if (overlayRef.current) {
+                    transformerRef.current.nodes([overlayRef.current]);
+                    transformerRef.current.getLayer()?.batchDraw();
+                }
+            }, 0);
+            return () => clearTimeout(t);
+        }
+        if (rectRef.current) {
+            transformerRef.current.nodes([rectRef.current]);
+        } else {
             transformerRef.current.nodes([]);
         }
-    }, [selectedIds]);
+        transformerRef.current.getLayer()?.batchDraw();
+    }, [rectangles, step, overlayImg]);
+
+    // ── addImage → place on canvas as a resizable KonvaImage ─────────────────
     useEffect(() => {
-        if (addImage) {
-            let scaleX = 200 / addImage.width;
-            let scaleY = 200 / addImage.height;
-            let rects = [...rectangles]
-            rects = [{ x: 50, y: 50, width: 200, height: 200, id: "addImage", name: 'rect', fillPatternImage: addImage, fillPatternScaleX: scaleX, fillPatternScaleY: scaleY, draggable: true, }]
-            setRectangles(rects);
-            setStep("setImage")
-        }
+        if (!addImage) return;
+        const aspect = addImage.height > 0 ? addImage.width / addImage.height : 1;
+        const startW = Math.min(Math.round(CANVAS * 0.55), addImage.width || Math.round(CANVAS * 0.55));
+        const startH = Math.round(startW / aspect);
+        setOverlayImg({
+            image: addImage,
+            x: Math.round((CANVAS - startW) / 2),
+            y: Math.round((CANVAS - startH) / 2),
+            width: startW,
+            height: startH,
+            rotation: 0,
+        });
+        setRectangles([]);
+        setStep("setImage");
     }, [addImage]);
-    const handleStageClick = (e) => {
-        // If we are selecting with rect, do nothing
-        if (selectionRectangle.visible) {
-            return;
-        }
-        // If click on empty area - remove all selections
-        if (e.target === e.target.getStage()) {
-            setSelectedIds([]);
-            return;
-        }
 
-        // Do nothing if clicked NOT on our rectangles
-        if (!e.target.hasName('rect')) {
-            setSelectedIds([]);
-            return;
-        }
-        const clickedId = e.target.id();
-        boxRef.current = e.target;
-        // Do we pressed shift or ctrl?
-        const metaPressed = e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey;
-        const isSelected = selectedIds.includes(clickedId);
-        setSelectedIds([clickedId]);
-    };
+    // ── canvas handlers ───────────────────────────────────────────────────────
     const handleMouseDown = (e) => {
-        // Do nothing if we mousedown on any shape
-        if (e.target !== e.target.getStage()) {
-            return;
-        }
-
-        // Start selection rectangle
+        if (e.target !== e.target.getStage()) return;
         isSelecting.current = true;
         const pos = e.target.getStage().getPointerPosition();
-        setSelectionRectangle({
-            visible: true,
-            x1: pos.x,
-            y1: pos.y,
-            x2: pos.x,
-            y2: pos.y,
-        });
+        setSelBox({ visible: true, x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y });
     };
-
     const handleMouseMove = (e) => {
-        // Do nothing if we didn't start selection
-        if (!isSelecting.current) {
-            return;
-        }
-
+        if (!isSelecting.current) return;
         const pos = e.target.getStage().getPointerPosition();
-        setSelectionRectangle({
-            ...selectionRectangle,
-            x2: pos.x,
-            y2: pos.y,
-        });
+        setSelBox(s => ({ ...s, x2: pos.x, y2: pos.y }));
+    };
+    const handleMouseUp = () => {
+        if (!isSelecting.current) return;
+        isSelecting.current = false;
+        setTimeout(() => setSelBox(s => ({ ...s, visible: false })));
     };
 
-    const handleMouseUp = () => {
-        // Do nothing if we didn't start selection
-        if (!isSelecting.current) {
-            return;
-        }
-        isSelecting.current = false;
-
-        // Update visibility in timeout, so we can check it in click event
-        setTimeout(() => {
-            setSelectionRectangle({
-                ...selectionRectangle,
-                visible: false,
-            });
-        });
-
-        const selBox = {
-            x: Math.min(selectionRectangle.x1, selectionRectangle.x2),
-            y: Math.min(selectionRectangle.y1, selectionRectangle.y2),
-            width: Math.abs(selectionRectangle.x2 - selectionRectangle.x1),
-            height: Math.abs(selectionRectangle.y2 - selectionRectangle.y1),
+    const handleDragMove = (e) => {
+        const rect = e.target;
+        const clamped = {
+            x: Math.max(0, Math.min(CANVAS - rect.width(), rect.x())),
+            y: Math.max(0, Math.min(CANVAS - rect.height(), rect.y())),
         };
-
-        const selected = rectangles.filter(rect => {
-            // Check if rectangle intersects with selection box
-            return Konva.Util.haveIntersection(selBox, getClientRect(rect));
-        });
-        setSelectedIds(selected.map(rect => rect.id));
+        rect.x(clamped.x); rect.y(clamped.y);
+        setRectangles(prev => prev.map(r => r.id === rect.id() ? { ...r, ...clamped } : r));
     };
 
     const handleDragEnd = (e) => {
-        const id = e.target.id();
-        setRectangles(prevRects => {
-            const newRects = [...prevRects];
-            const index = newRects.findIndex(r => r.id === id);
-            if (xRef.current) xRef.current.value = parseInt(e.target.x());
-            if (yRef.current) yRef.current.value = parseInt(e.target.y());
-            if (index !== -1) {
-                newRects[index] = {
-                    ...newRects[index],
-                    x: e.target.x(),
-                    y: e.target.y()
-                };
-            }
-            return newRects;
-        });
+        const x = Math.round(e.target.x());
+        const y = Math.round(e.target.y());
+        setRectangles(prev => prev.map(r => r.id === e.target.id() ? { ...r, x, y } : r));
+        setActiveBox(prev => ({ ...prev, x, y }));
     };
-    const handleDragMove = (e) => {
-        const rect = e.target;
-        let newRects = [...rectangles];
-        const index = newRects.findIndex(r => r.id === rect.id());
-        let newX = rect.x();
-        let newY = rect.y();
 
-        // Define boundaries (Stage dimensions minus rectangle size)
-        const minX = 0;
-        const maxX = 400 - e.target.width();
-        const minY = 0;
-        const maxY = 400 - e.target.height();
-
-        // Clamp the position within the boundaries
-        if (newX < minX) {
-            newX = minX;
-        }
-        if (newX > maxX) {
-            newX = maxX;
-        }
-        if (newY < minY) {
-            newY = minY;
-        }
-        if (newY > maxY) {
-            newY = maxY;
-        }
-
-        rect.x(newX);
-        rect.y(newY);
-        if (index !== -1) {
-            newRects[index] = {
-                ...newRects[index],
-                x: newX,
-                y: newY
-            }
-        }
-        setRectangles(newRects);
-        // Optional: Update React state to persist position, but do so carefully
-        // setPosition({ x: newX, y: newY }); 
+    const handleTransformEnd = (e) => {
+        const node = e.target;
+        const scaleX = node.scaleX(), scaleY = node.scaleY();
+        node.scaleX(1); node.scaleY(1);
+        const w = Math.max(5, Math.round(node.width() * scaleX));
+        const h = Math.max(5, Math.round(node.height() * scaleY));
+        const rot = Math.round(node.rotation());
+        node.width(w); node.height(h);
+        setRectangles(prev => prev.map(r => r.id === node.id() ? { ...r, width: w, height: h, rotation: rot } : r));
+        setActiveBox(prev => ({ ...prev, width: w, height: h, rotation: rot }));
     };
-    const handleExportPartial = async() => {
-        let crop = rectangles.find(r => r.id === "crop");
+
+    const handleWheel = (e) => {
+        e.evt.preventDefault();
+        const scaleBy = 1.05;
+        const stage = stageRef.current;
+        const oldScale = stage.scaleX();
+        const pointer = stage.getPointerPosition();
+        const mousePointTo = {
+            x: (pointer.x - stage.x()) / oldScale,
+            y: (pointer.y - stage.y()) / oldScale,
+        };
+        const dir = e.evt.deltaY > 0 ? 1 : -1;
+        const newScale = dir > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+        stage.scale({ x: newScale, y: newScale });
+        stage.position({ x: pointer.x - mousePointTo.x * newScale, y: pointer.y - mousePointTo.y * newScale });
+    };
+
+    const resetView = () => {
+        if (stageRef.current) { stageRef.current.scale({ x: 1, y: 1 }); stageRef.current.position({ x: 0, y: 0 }); }
+    };
+
+    // ── location actions ──────────────────────────────────────────────────────
+    const handleLocationClick = (loc) => {
+        const saved = image.boxes?.[loc.name];
+        const data = saved ? { x: saved.x || 10, y: saved.y || 10, width: saved.width || 300, height: saved.height || 300, rotation: saved.rotation || 0 } : { ...EMPTY_BOX };
+        setActive(loc.name);
+        setActiveBox(data);
+        setRectangles([{
+            ...data, id: loc.name, name: "rect",
+            fill: "rgba(59,130,246,0.12)",
+            stroke: "#3b82f6", strokeWidth: 2,
+            dash: [8, 4], draggable: true,
+        }]);
+        setStep("location");
+    };
+
+    const updateBoxField = (field, val) => {
+        const num = parseInt(val) || 0;
+        setActiveBox(prev => ({ ...prev, [field]: num }));
+        setRectangles(prev => prev.map(r => r.id === active ? { ...r, [field]: num } : r));
+    };
+
+    const handleSaveLocation = () => {
+        const rect = rectangles.find(r => r.id === active);
+        const box = rect
+            ? { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height), rotation: Math.round(rect.rotation || 0) }
+            : activeBox;
+        setImage(prev => ({ ...prev, boxes: { ...(prev.boxes || {}), [active]: box } }));
         setRectangles([]);
-        await new Promise(r => setTimeout(r, 100))
-        let region = {
-            x: crop.x,
-            y: crop.y,
-            width: crop.width,
-            height: crop.height,
-            pixelRatio: 2
-        }
-        if (stageRef.current) {
-            const dataURL = stageRef.current.toDataURL({
-               ...region
+        setStep("");
+        setActive("");
+    };
+
+    const handleRemoveLocation = () => {
+        setImage(prev => {
+            const boxes = { ...(prev.boxes || {}) };
+            delete boxes[active];
+            return { ...prev, boxes };
+        });
+        setActive(""); setRectangles([]); setStep("");
+    };
+
+    // ── crop ──────────────────────────────────────────────────────────────────
+    const startCrop = () => {
+        setRectangles([{
+            x: 10, y: 10, width: 380, height: 380,
+            id: "crop", name: "rect",
+            fill: "transparent", stroke: "#f59e0b",
+            strokeWidth: 2, dash: [8, 4], draggable: true, rotation: 0,
+        }]);
+        setStep("crop"); setActive("");
+    };
+
+    const applyCrop = async () => {
+        const crop = rectangles.find(r => r.id === "crop");
+        if (!crop || !stageRef.current) return;
+        setRectangles([]);
+        await new Promise(r => setTimeout(r, 80));
+        const dataURL = stageRef.current.toDataURL({ x: crop.x, y: crop.y, width: crop.width, height: crop.height, pixelRatio: 2 });
+        setImage(prev => ({ ...prev, image: dataURL }));
+        setStep(""); setActive("");
+    };
+
+    // ── overlay image ─────────────────────────────────────────────────────────
+    const applyOverlay = async () => {
+        transformerRef.current?.nodes([]);
+        await new Promise(r => setTimeout(r, 50));
+        if (!stageRef.current) return;
+        const dataURL = stageRef.current.toDataURL({ x: 0, y: 0, width: CANVAS, height: CANVAS, pixelRatio: 2 });
+        setImage(prev => ({ ...prev, image: dataURL }));
+        setAddImage(null); setOverlayImg(null); setRectangles([]); setStep("");
+    };
+
+    const cancelOverlay = () => {
+        setAddImage(null); setOverlayImg(null); setRectangles([]); setStep("");
+    };
+
+    const startCropAdd = () => {
+        if (!overlayImg) return;
+        transformerRef.current?.nodes([]);
+        // Default crop rect to the overlay image bounds so user can see what they're cropping
+        setRectangles([{
+            x: overlayImg.x, y: overlayImg.y,
+            width: overlayImg.width, height: overlayImg.height,
+            id: "crop", name: "rect",
+            fill: "rgba(245,158,11,0.08)", stroke: "#f59e0b",
+            strokeWidth: 2, dash: [8, 4], draggable: true,
+        }]);
+        setCropAdd(true); setStep("cropAdd");
+    };
+
+    const applyCropAdd = () => {
+        if (!overlayImg) return;
+        const crop = rectangles.find(r => r.id === "crop");
+        if (!crop) return;
+
+        // Map the crop rect from stage coords back to source image pixel coords
+        const src = overlayImg.image;
+        const scaleX = overlayImg.width  / src.width;
+        const scaleY = overlayImg.height / src.height;
+        const srcX = Math.max(0, (crop.x - overlayImg.x) / scaleX);
+        const srcY = Math.max(0, (crop.y - overlayImg.y) / scaleY);
+        const srcW = Math.min(src.width  - srcX, crop.width  / scaleX);
+        const srcH = Math.min(src.height - srcY, crop.height / scaleY);
+
+        const PR = 2;
+        const canvas = document.createElement("canvas");
+        canvas.width  = Math.round(crop.width  * PR);
+        canvas.height = Math.round(crop.height * PR);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(src, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
+
+        const newImg = new window.Image();
+        newImg.src = canvas.toDataURL();
+        newImg.onload = () => {
+            setOverlayImg({
+                image: newImg,
+                x: Math.round(crop.x), y: Math.round(crop.y),
+                width: Math.round(crop.width), height: Math.round(crop.height),
+                rotation: 0,
             });
-            let img = {...image}
-            img.image = dataURL
-            setImage({...img});
+            setRectangles([]);
+            setCropAdd(false);
+            setStep("setImage");
+        };
+    };
+
+    // ── save ──────────────────────────────────────────────────────────────────
+    const handleSaveImage = async () => {
+        if (!image.image) return;
+        setSaving(true); setSaveError("");
+        try {
+            let finalImage = { ...image };
+            // If base64 (after crop / new upload), push to S3 first
+            if (image.image.startsWith("data:")) {
+                const key = `blanks/${Date.now()}.jpg`;
+                await s3.send(new PutObjectCommand({
+                    Bucket: "images1.pythiastechnologies.com",
+                    Key: key,
+                    Body: Buffer.from(image.image.split(",")[1], "base64"),
+                    ACL: "public-read",
+                    ContentEncoding: "base64",
+                    ContentDisposition: "inline",
+                    ContentType: "image/jpeg",
+                }));
+                await new Promise(r => setTimeout(r, 500));
+                finalImage.image = `https://images1.pythiastechnologies.com/${key}`;
+            }
+            finalImage.color = color?._id;
+            let b = { ...blank, images: [...(blank.images || [])] };
+            // Replace if updating existing, otherwise add
+            const existingIdx = selectedImageSrc?.image
+                ? b.images.findIndex(img => img.image === selectedImageSrc.image)
+                : -1;
+            if (existingIdx !== -1) b.images[existingIdx] = finalImage;
+            else b.images.push(finalImage);
+            setBlank(b);
+            await update({ blank: b });
+            handleClose();
+        } catch (e) {
+            setSaveError(e.message || "Failed to save image");
+        } finally {
+            setSaving(false);
         }
     };
-    const URLImage = ({ src, ...rest }) => {
-        const [image] = useImage(src, 'anonymous'); // 'anonymous' for cross-origin images
-        return <KonvaImage image={image} {...rest} />;
-    };
-   
+
+    const handleClose = () => { setSelectedImageSrc(null); onClose(); };
+
+    // ── mode description ──────────────────────────────────────────────────────
+    const modeHint = {
+        crop:     "Drag / resize the yellow box, then click Apply Crop",
+        location: active ? `Drag or resize the box, or type exact values below` : "",
+        addImage: "Use the uploader to add an overlay image",
+        setImage: "Position / resize the overlay, then click Apply",
+        cropAdd:  "Draw a crop region on the overlay, then click Apply Crop",
+    }[step] || (image.image ? "Click a print location to set its bounding box" : "Upload an image to get started");
+
+    // ─────────────────────────────────────────────────────────────────────────
     return (
-        <Modal open={open} onClose={()=>{onClose(); setSelectedImageSrc(null)}} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: hasSublimation? 1000: 600, height: 800, bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none' }}>
-                <Grid2 container spacing={2}>
-                    <Grid2 size={hasSublimation? 8 : 12} sx={{ display: 'flex', flexDirection: 'column',  }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Button variant="contained" color="primary" onClick={async () => {setCopyBoxesOpen(true)}}>
-                                Copy Boxes from Another Image
-                            </Button>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                                <Checkbox checked={hasSublimation} onChange={(e) => { setHasSublimation(e.target.checked) }} />Sublimation
-                            </Box>
-                        </Box>
-                        <Box sx={{display: hasSublimation ? "none" : "flex", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", overflowX: "auto", mt: 2, height: "180px"}}>
-                            { <Box width={120} height={150} padding={1} sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, cursor: "pointer" }} onClick={() => { 
-                                let rects = [...rectangles]
-                                if (!rects.find(r => r.id === "crop")) rects = [{
-                                    x: 10, y: 10, width: 350, height: 350, id: "crop", name: 'rect', fill: 'transparent', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                    rotation: 0, }]
-                                setRectangles(rects)
-                                setStep("crop")
-                            }}>
-                                <Button>Crop</Button>
-                            </Box>}
-                            {printLocations && printLocations.length > 0 && printLocations.map((loc, idx) => (
-                                <Box key={idx} width={120} height={150} padding={1} sx={{display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #ccc", borderRadius: "4px", marginRight: 1, backgroundColor: image.boxes && image.boxes[loc.name] != undefined ? '#959da5ff' : 'transparent'}} onClick={() => {
-                                    let rects = [...rectangles]
-                                    if (!rects.find(r => r.id === loc.name)){
-                                        if(image.boxes && image.boxes[loc.name]){
-                                            let box = image.boxes[loc.name]
-                                            console.log("using saved box", box)
-                                            rects=[{
-                                                x: box.x, y: box.y, width: box.width, height: box.height, rotation: box.rotation, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                            }]
-                                            setRectangles([...rects])
-                                            setStep("location")
-                                            return;
-                                        }
-                                        rects=[{
-                                            x: 10, y: 10, width: 300, height: 300, id: loc.name, name: 'rect', fill: '#c58686ff', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,
-                                            rotation: 0, }]
-                                    }
-                                    setActive(loc.name)
-                                    setRectangles([...rects])
-                                    setStep("location")
-                                }}>
-                                    <Button>{loc.name}</Button>
-                                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                        <input ref={active == loc.name ? xRef : null} placeholder="X" id={`x-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.x : 0} style={{ width: "50px" }} onChange={(e) => {
-                                            let rects = [...rectangles];
-                                            let index = rects.findIndex(r => r.id === loc.name);
-                                            if (index !== -1) {
-                                                rects[index] = {
-                                                    ...rects[index],
-                                                    x: parseInt(e.target.value) || rects[index].x
-                                                };
-                                                xRef.current = e.target;
-                                                setRectangles(rects);
-                                            }
-                                        }} />
-                                        <input ref={active == loc.name ? yRef : null} placeholder="Y" id={`y-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.y : 0} style={{ width: "50px" }} onChange={(e) => {
-                                            let rects = [...rectangles];
-                                            let index = rects.findIndex(r => r.id === loc.name);
-                                            if (index !== -1) {
-                                                rects[index] = {
-                                                    ...rects[index],
-                                                    y: parseInt(e.target.value) || rects[index].y
-                                                };
-                                                yRef.current = e.target;
-                                                setRectangles(rects);
-                                            }
-                                        }} />
-                                    </Box>
-                                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                        <input ref={active == loc.name ? widthRef : null} placeholder="Width" id={`width-${loc.name}`} defaultValue={image.boxes? image.boxes[loc.name]?.width:  0} style={{ width: "50px" }} onChange={(e)=>{
-                                            let rects = [...rectangles];
-                                            let index = rects.findIndex(r => r.id === loc.name);
-                                            if (index !== -1) {
-                                                rects[index] = {
-                                                    ...rects[index],
-                                                    width: parseInt(e.target.value) || rects[index].width
-                                                };
-                                                widthRef.current = e.target;
-                                                setRectangles(rects);
-                                            }
-                                        }} />
-                                        <input ref={active == loc.name ? heightRef : null} placeholder="Height" id={`height-${loc.name}`} defaultValue={image.boxes ? image.boxes[loc.name]?.height : 0} style={{ width: "50px" }} onChange={(e)=>{
-                                            let rects = [...rectangles];
-                                            let index = rects.findIndex(r => r.id === loc.name);
-                                            if (index !== -1) {
-                                                rects[index] = {
-                                                    ...rects[index],
-                                                    height: parseInt(e.target.value) || rects[index].height
-                                                };
-                                                heightRef.current = e.target;
-                                                setRectangles(rects);
-                                            }
-                                        }} />
-                                    </Box>
-                                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', mt: 1 }}>
-                                        <Button variant="contained" size="small" color="primary" onClick={()=>{
-                                            let img = { ...image }
-                                            let newBoxes = {}
-                                            for(let b in Object.keys(img.boxes)){
-                                                if(b !== loc.name)newBoxes[b] = img.boxes[b]
-                                            }
-                                            img.boxes = newBoxes
-                                            setImage({...img});
-                                        }} >Remove</Button>
-                                    </Box>
-                                </Box>
-                            ))}
-                        </Box>
-                        <Box sx={{ mt: 2, mb: 2, display: hasSublimation ? "block" : "none", }}>
-                            <Box sx={{width: "100%", display: hasSublimation ? "flex" : "none", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start" }}>
-                                {hasSublimation && <Box sx={{ mt: 2, display: 'flex', width: "100%", alignContent: "center", overflow: 'auto', flexDirection: 'row', gap: 2 }}>
-                                    {Object.keys(features).map((key, index) => (
-                                        <Box key={index}>
-                                            <Button key={index} variant={featureSelected == key ? "contained" : "outlined"} onClick={()=> {
-                                                setFeatureSelected(key)
-                                                let points = []
-                                                image.sublimationBoxes[key].layers.forEach(layer => {
-                                                    points.push(layer.points || [])
-                                                })
-                                                setPoints(points)
-                                            }}>{key}</Button>
-                                        </Box>
-                                    ))}
-                                </Box>}
-                            </Box>
-                            {hasSublimation && <Box sx={{ display: hasSublimation ? "flex" : "none", flexDirection: "row", alignItems: "center", justifyContent: "flex-start", mt: 2, height: "25px" }}>
-                                <Button sx={{ ml: 2 }} onClick={() => { setPan(!pan) }}>{pan ? "Stop Pan" : "Start Pan"}</Button>
-                            </Box>}
-                        </Box>
-                        {!reload && <Uploader2 afterFunction={async (data) => {   
-                            if(step == "addImage") {
+        <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth
+            PaperProps={{ sx: { height: "92vh", maxHeight: 840, display: "flex", flexDirection: "column" } }}>
+
+            <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1.5, px: 3, borderBottom: "1px solid", borderColor: "divider" }}>
+                <Typography variant="h6" fontWeight={700}>
+                    Edit Image {color?.name ? <span style={{ color: "#6b7280", fontWeight: 400 }}>— {color.name}</span> : ""}
+                </Typography>
+                <IconButton size="small" onClick={handleClose}><CloseIcon /></IconButton>
+            </DialogTitle>
+
+            <DialogContent sx={{ display: "flex", p: 0, overflow: "hidden", flex: 1 }}>
+                {/* ── LEFT: canvas panel ─────────────────────────────────── */}
+                <Box sx={{
+                    flex: "0 0 auto", display: "flex", flexDirection: "column",
+                    p: 2, gap: 1.5, borderRight: "1px solid", borderColor: "divider",
+                    width: CANVAS + 48, overflowY: "auto",
+                }}>
+                    {/* Uploader — shown when no image yet OR in addImage mode */}
+                    {!reloadUploader && (step === "addImage" || !image.image) && (
+                        <Uploader2 afterFunction={async (data) => {
+                            if (step === "addImage") {
                                 const img = new window.Image();
-                                img.src = data.url; // Replace with your image URL
-                                img.crossOrigin = 'anonymous'; // This is important for CORS-enabled images
-                                img.objectFit= 'fit'
-                                img.onload = () => {
-                                    setAddImage(img);
-                                };
-                                return;
-                            }else {
-                                let img = {...image}
-                                img.image = data.url
-                                setImage({...img});
+                                img.src = data.url; img.crossOrigin = "anonymous";
+                                img.onload = () => setAddImage(img);
+                            } else {
+                                setImage(prev => ({ ...prev, image: data.url }));
                                 setOriginalImage(data.url);
+                                setStep("");
                             }
-                        }} />}
-                        {image.image && step !== "addImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', overflow: 'hidden', position: "relative", top: -415, marginBottom: "-400px", alignItems: 'center', alignContent: 'center' }}>
-                            <Stage  width={400} height={400}
-                                style={{background: "#f0f0f0", border: '1px solid #ccc', cursor: pan ? "grab" : "default" }}
+                        }} />
+                    )}
+
+                    {/* Konva canvas */}
+                    {image.image && step !== "addImage" && (
+                        <Box sx={{ position: "relative" }}>
+                            <Stage
+                                ref={stageRef}
+                                width={CANVAS} height={CANVAS}
+                                style={{ background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 6, display: "block", cursor: pan ? "grab" : "default" }}
                                 draggable={pan}
                                 onMouseDown={handleMouseDown}
                                 onMousemove={handleMouseMove}
                                 onMouseup={handleMouseUp}
+                                onClick={(e) => {
+                                    if (e.target === e.target.getStage()) return;
+                                    boxRef.current = e.target;
+                                }}
                                 onContextMenu={(e) => {
-                                    // stop default scrolling
-                                    console.log("wheel down")
                                     e.evt.preventDefault();
-                                    console.log(e.target)
-                                    let rects = [...rectangles];
-                                    rects = rects.filter(r => r.id !== e.target.id())
-                                    setRectangles([...rects]);
+                                    setRectangles(prev => prev.filter(r => r.id !== e.target.id()));
                                 }}
-                                onWheel={(e) => {
-                                    // stop default scrolling
-                                    const scaleBy = 1.01;
-                                    e.evt.preventDefault();
-                                    console.log(stageRef.current)
-                                    const oldScale = stageRef.current.scaleX();
-                                    const pointer = stageRef.current.getPointerPosition();
-
-                                    const mousePointTo = {
-                                        x: (pointer.x - stageRef.current.x()) / oldScale,
-                                        y: (pointer.y - stageRef.current.y()) / oldScale,
-                                    };
-
-                                    // how to scale? Zoom in? Or zoom out?
-                                    let direction = e.evt.deltaY > 0 ? 1 : -1;
-
-                                    // when we zoom on trackpad, e.evt.ctrlKey is true
-                                    // in that case lets revert direction
-                                    if (e.evt.ctrlKey) {
-                                        direction = -direction;
-                                    }
-
-                                    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-
-                                    stageRef.current.scale({ x: newScale, y: newScale });
-
-                                    const newPos = {
-                                        x: pointer.x - mousePointTo.x * newScale,
-                                        y: pointer.y - mousePointTo.y * newScale,
-                                    };
-                                    stageRef.current.position(newPos);
-                                }}
-                                onClick={handleStageClick} ref={stageRef}>
+                                onWheel={handleWheel}
+                            >
+                                {/* Base image */}
                                 <Layer>
-                                    <URLImage src={image.image} x={0} y={0} width={400} height={400} />
+                                    <URLImage src={image.image} x={0} y={0} width={CANVAS} height={CANVAS} />
                                 </Layer>
-                                {!hasSublimation &&[...rectangles].map((rect, i) => (
-                                    <Layer key={i}>
+
+                                {/* Active rect + transformer */}
+                                <Layer>
+                                    {/* Overlay image — draggable/resizable in setImage, static in cropAdd */}
+                                    {(step === "setImage" || step === "cropAdd") && overlayImg && (
+                                        <KonvaImage
+                                            ref={overlayRef}
+                                            image={overlayImg.image}
+                                            x={overlayImg.x}
+                                            y={overlayImg.y}
+                                            width={overlayImg.width}
+                                            height={overlayImg.height}
+                                            rotation={overlayImg.rotation}
+                                            draggable={step === "setImage"}
+                                            onDragEnd={(e) => step === "setImage" && setOverlayImg(prev => ({
+                                                ...prev,
+                                                x: Math.round(e.target.x()),
+                                                y: Math.round(e.target.y()),
+                                            }))}
+                                            onTransformEnd={(e) => {
+                                                if (step !== "setImage") return;
+                                                const node = e.target;
+                                                const sx = node.scaleX(), sy = node.scaleY();
+                                                node.scaleX(1); node.scaleY(1);
+                                                const w = Math.max(5, Math.round(node.width() * sx));
+                                                const h = Math.max(5, Math.round(node.height() * sy));
+                                                node.width(w); node.height(h);
+                                                setOverlayImg(prev => ({ ...prev, width: w, height: h, rotation: Math.round(node.rotation()) }));
+                                            }}
+                                        />
+                                    )}
+                                    {rectangles.map(rect => (
                                         <Rect
                                             key={rect.id}
                                             id={rect.id}
                                             name={rect.name}
-                                            x={rect.x}
-                                            y={rect.y}
-                                            width={rect.width}
-                                            height={rect.height}
-                                            rotation={rect.rotation}
-                                            fill={rect.fill}
-                                            fillPatternImage={rect.fillPatternImage}
-                                            fillPatternScaleX={rect.fillPatternScaleX} // Optional: Adjust image scale
-                                            fillPatternScaleY={rect.fillPatternScaleY} // Optional: Adjust image scale
-                                            fillPatternRepeat='no-repeat'
-                                            stroke={rect.stroke}
-                                            dash={[10, 10]}
-                                            strokeWidth={2}
+                                            x={rect.x} y={rect.y}
+                                            width={rect.width} height={rect.height}
+                                            rotation={rect.rotation || 0}
+                                            fill={rect.fill || "rgba(59,130,246,0.12)"}
+                                            stroke={rect.stroke || "#3b82f6"}
+                                            strokeWidth={rect.strokeWidth || 2}
+                                            dash={rect.dash || [8, 4]}
                                             draggable
-                                            ref={node => {
-                                                if (node) {
-                                                    rectRefs.current.set(rect.id, node);
-                                                }
-                                            }}
+                                            ref={node => { rectRef.current = node; }}
                                             onDragMove={handleDragMove}
                                             onDragEnd={handleDragEnd}
-                                            onTransformEnd={(e) => {
-                                                // Get the transformed node
-                                                const node = transformerRef.current;
-                                                // Get the scale and rotation
-                                                const scaleX = stageRef.current.scaleX();
-                                                const scaleY = stageRef.current.scaleY();
-                                                // Reset the scale to 1 and update the new dimensions
-                                                let index = 0;
-                                                if (cropAdd) index = 1;
-                                                if (widthRef.current) widthRef.current.value = parseInt(Math.max(5, node.width() * scaleX));
-                                                if (heightRef.current) heightRef.current.value = parseInt(Math.max(5, node.height() * scaleY));
-                                                console.log(node.rotation())
-                                                const newRects = [...rectangles];
-                                                let newRect = newRects.find(b => b.id === boxRef.current.id())
-                                                newRect.rotation = node.rotation();
-                                                setRectangles([...newRects]);
-                                                // Get the scale and rotation
-                                            }}
-                                        />
-                                        {!reloadTransformers && <Transformer
-                                            ref={transformerRef}
-                                            flipEnabled={false}
-                                            rotateEnabled={true}
-                                            keepRatio={true} 
-                                            boundBoxFunc={(oldBox, newBox) => {
-                                                const newRects = [...rectangles];
-                                                let newRect = newRects.find(b => b.id === boxRef.current.id())
-                                                if (addImage) {
-                                                    const scale = Math.min(newBox.width / addImage.width, newBox.height / addImage.height);
-                                                    // Calculate offsets to center the image
-                                                    const scaledWidth = addImage.width * scale;
-                                                    const scaledHeight = addImage.height * scale;
-                                                    const offsetX = (newBox.width - scaledWidth) / 2;
-                                                    const offsetY = (newBox.height - scaledHeight) / 2;
-                                                    const centeredX = (newBox.width - addImage.width * scale) / 2;
-                                                    const centeredY = (newBox.height - addImage.height * scale) / 2;
-                                                    newRect.fillPatternImage = addImage;
-                                                    newRect.fillPatternScaleX = scale;
-                                                    newRect.fillPatternScaleY = scale;
-                                                    newRect.fillPatternX = centeredX;           // Shift pattern start point
-                                                    newRect.fillPatternY = centeredY;
-                                                }
-                                                // limit resize
-                                                if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) {
-                                                    newRect.width = oldBox.width;
-                                                    newRect.height = oldBox.height;
-                                                    setRectangles([...newRects])
-                                                    return oldBox;
-                                                }
-                                                if (Math.abs(newBox.width) > stageRef.current.width() || Math.abs(newBox.height) > stageRef.current.height()) {
-                                                    newRect.width = oldBox.width;
-                                                    newRect.height = oldBox.height;
-                                                    setRectangles([...newRects])
-                                                    return oldBox;
-                                                }
-                                                newRect.width = newBox.width;
-                                                newRect.height = newBox.height;
-                                                setRectangles([...newRects]);
-                                                return newBox;
-                                            }}
-                                            
-                                        />}
-                                        {selectionRectangle.visible && (
-                                            <Rect
-                                                x={Math.min(selectionRectangle.x1, selectionRectangle.x2)}
-                                                y={Math.min(selectionRectangle.y1, selectionRectangle.y2)}
-                                                width={Math.abs(selectionRectangle.x2 - selectionRectangle.x1)}
-                                                height={Math.abs(selectionRectangle.y2 - selectionRectangle.y1)}
-                                                fill="rgba(0,0,255,0.5)"
-                                            />
-                                        )}
-                                    </Layer>
-                                ))}
-                                {hasSublimation && <Layer>
-                                    {points.map((points, i) => (
-                                        <Line
-                                            key={i}
-                                            points={points}
-                                            closed
-                                            stroke="rgba(255,0,0,0.7)"
-                                            strokeWidth={2}
-                                            lineJoin="round"
+                                            onTransformEnd={handleTransformEnd}
                                         />
                                     ))}
-                                </Layer>}
+                                    <Transformer
+                                        ref={transformerRef}
+                                        flipEnabled={false}
+                                        rotateEnabled
+                                        boundBoxFunc={(oldBox, newBox) => {
+                                            if (Math.abs(newBox.width) < 5 || Math.abs(newBox.height) < 5) return oldBox;
+                                            if (Math.abs(newBox.width) > CANVAS || Math.abs(newBox.height) > CANVAS) return oldBox;
+                                            return newBox;
+                                        }}
+                                    />
+                                    {selBox.visible && (
+                                        <Rect
+                                            x={Math.min(selBox.x1, selBox.x2)} y={Math.min(selBox.y1, selBox.y2)}
+                                            width={Math.abs(selBox.x2 - selBox.x1)} height={Math.abs(selBox.y2 - selBox.y1)}
+                                            fill="rgba(59,130,246,0.15)"
+                                        />
+                                    )}
+                                </Layer>
+
+                                {/* Sublimation overlay */}
+                                {hasSublimation && (
+                                    <Layer>
+                                        {sublimPoints.map((pts, i) => (
+                                            <Line key={i} points={pts} closed stroke="rgba(239,68,68,0.8)" strokeWidth={2} lineJoin="round" />
+                                        ))}
+                                    </Layer>
+                                )}
                             </Stage>
-                        </Box>}
-                        {step === "crop" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                            <Button variant="contained" color="primary" onClick={async() => {
-                                handleExportPartial();
-                            }}>
-                                Crop
-                            </Button>
-                            <Button variant="contained" color="primary" onClick={async () => {
-                                let img = {...image}
-                                img.image = originalImage
-                                setImage({...img});
-                            }}>
-                                Reset
-                            </Button>
-                        </Box>}
-                        {step === "location" && !hasSublimation && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                            <Button variant="contained" color="primary" onClick={async() => {
-                                
-                                let rect = rectangles[0];
-                                let img = {...image}
-                                if(hasSublimation){
-                                    if(!img.sublimationBoxes) img.sublimationBoxes = {}
-                                    console.log("saving sublimation box", rect)
-                                    img.sublimationBoxes[rect.id] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, rotation: rect.rotation }
-                                    setImage({...img});
-                                    setRectangles([]);
-                                }else{
-                                    if(!img.boxes) img.boxes = {}
-                                    console.log("saving box", rect)
-                                    img.boxes[rect.id] = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, rotation: rect.rotation }
-                                    setImage({...img});
-                                    setRectangles([]);
-                                }
-                            }}>
-                                save Box
-                            </Button>
-                        </Box>}
-                        {step === "setImage" && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                            <Button variant="contained" color="primary" onClick={async() => {
-                                transformerRef.current.nodes([])
-                                let region = {
-                                    x: 0,
-                                    y: 0,
-                                    width: 400,
-                                    height: 400,
-                                    pixelRatio: 2
-                                }
-                                if (stageRef.current) {
-                                    const dataURL = stageRef.current.toDataURL({
-                                        ...region
-                                    });
-                                    let img = { ...image }
-                                    img.image = dataURL
-                                    setImage({ ...img });
-                                    setAddImage(null);
-                                    setRectangles([]);
-                                    setStep("")
-                                }
-                            }}>
-                                save Image Position
-                            </Button>
-                            <Button variant="contained" color="primary" onClick={async () => {
-                                transformerRef.current.nodes([])
-                                let rects = [...rectangles]
-                                rects.push({ x: 10, y: 10, width: 100, height: 100, id: "crop", name: 'rect', fill: 'transparent', stroke: '#00f', dash: [10, 10], strokeWidth: 2, draggable: true,})
-                                setRectangles(rects)
-                                setCropAdd(true)
-                                setStep("cropAdd")
-                            }}>
-                                crop Rectangle
-                            </Button>
-                        </Box>}
-                        {cropAdd && <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                            <Button variant="contained" color="primary" onClick={async() => {
-                                transformerRef.current.nodes([])
-                                let crop = rectangles.find(r => r.id === "crop");
-                                setRectangles(rectangles.filter(r => r.id !== "crop"));
-                                await new Promise(r => setTimeout(r, 100))
-                                let region = {
-                                    x: crop.x,
-                                    y: crop.y,
-                                    width: crop.width,
-                                    height: crop.height,
-                                    pixelRatio: 2
-                                }
-                                if (stageRef.current) {
-                                    const dataURL = stageRef.current.toDataURL({
-                                        ...region
-                                    });
-                                    const img = new window.Image();
-                                    img.src = dataURL; // Replace with your image URL
-                                    img.onload = () => {
-                                        setAddImage(img);
-                                    };
-                                    setCropAdd(false);
-                                    setStep("setImage")
-                                }
-                            }}>
-                                save crop
-                            </Button>
-                        </Box>}
-                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                            <Button variant="contained" color="primary" onClick={async ()=>{
-                                setStep("addImage")
-                                setReload(true)
-                                await new Promise(r => setTimeout(r, 1000))
-                                setReload(false)
-                            }}>
-                                Add Image
-                            </Button>
-                            <Button variant="contained" color="primary" onClick={async ()=>{
-                                console.log("image to save", image, selectedImageSrc)
-                                if(selectedImageSrc.image){
-                                    console.log("updating existing image")
-                                    let b = { ...blank }
-                                    if (!b.images) b.images = []
-                                    b.images = b.images.filter(img => img.image !== selectedImageSrc.image)
-                                    let img = { ...image }
-                                    b.images.push(img)
-                                    setBlank(b)
-                                    setImage({ color: color?._id, image: null, boxes: {} })
-                                    setRectangles([])
-                                    setHasSublimation(false);
-                                    setSelectedImageSrc(null);
-                                    update({ blank: b });
-                                }else{
-                                    console.log("saving new image")
-                                    let url = `blanks/${Date.now()}.jpg`
-                                    let params = {
-                                        Bucket: "images1.pythiastechnologies.com",
-                                        Key: url,
-                                        Body: Buffer.from(image.image.split(",")[1], "base64"),
-                                        ACL: "public-read",
-                                        ContentEncoding: "base64",
-                                        ContentDisposition: "inline",
-                                        ContentType: "image/jpeg",
-                                    };
-                                    const data = await s3.send(new PutObjectCommand(params));
-                                    await new Promise(r => setTimeout(r, 1000))
-                                    image.image = `https://images1.pythiastechnologies.com/${url}`
-                                    image.color = color?._id
-                                    console.log("uploaded image", data, image)
-                                    let b = {...blank}
-                                    if(!b.images) b.images = []
-                                    let img = {...image}
-                                    b.images.push(img)
-                                    setBlank(b)
-                                    setImage({color: color?._id, image: null, boxes: {}})
-                                    setRectangles([])
-                                    update({blank: b});
-                                    setHasSublimation(false);
-                                    setSelectedImageSrc(null);
-                                    setFeatureSelected("")
-                                }
-                            }}>
-                                Save Image
-                            </Button>
                         </Box>
-                    </Grid2>
-                    <Grid2 size={hasSublimation? 4 : 0} sx={{ display: hasSublimation ? "flex" : "none", flexDirection: 'column', borderLeft: '1px solid #ccc', pl: 2 }}>
-                        <Typography variant="h6" textAlign={"center"}>Feature {featureSelected}</Typography>
-                        <Button onClick={() => {
-                            let fea = {...features}
-                            let feature = fea[featureSelected];
-                            feature.layers.push({ type: 'layer', name: `Layer ${feature.layers.length + 1}`, lines: [], sublimated: true });
-                            fea[featureSelected] = feature;
-                            setLines(feature.layers[feature.layers.length - 1].lines);
-                            setFeatures({ ...fea});
-                            setLayerSelected(`Layer ${feature.layers.length + 1}`);
-                        }}>Add Layer</Button>
-                        <Box sx={{ mt: 2, mb: 2, maxHeight: '650px', overflow: 'auto' }}>
-                            {features[featureSelected]?.layers?.map((layer, idx) => (
-                                <Box key={idx} sx={{ border: '1px solid #ccc', p: 1, mb: 1, backgroundColor: layerSelected == layer.name ? '#e0e0e0' : 'transparent', cursor: 'pointer', maxHeight: '100%', gap: 2 }}>
-                                    <Typography variant="body1" onClick={() => {
-                                        setLayerSelected(layer.name)
-                                        setSublimationModalOpen(true);
-                                    }}>{layer.name}</Typography>
-                                    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 1 }}>
-                                        <Button onClick={() => {
-                                            let fea = {...features}
-                                            let feature = fea[featureSelected];
-                                            feature.layers.splice(idx, 1);
-                                            fea[featureSelected] = feature;
-                                            setFeatures({ ...fea});
-                                        }}>Delete Layer</Button>
-                                        <TextField label="Sublimated" select defaultValue={layer.sublimated} sx={{width: '120px'}} onChange={(e) => {
-                                            let fea = {...features}
-                                            let feature = fea[featureSelected];
-                                            feature.layers[idx].sublimated = e.target.value;
-                                            fea[featureSelected] = feature;
-                                            setFeatures({ ...fea});
-                                        }} >
-                                            <MenuItem value={true}>Yes</MenuItem>
-                                            <MenuItem value={false}>No</MenuItem>
-                                        </TextField>
-                                    </Box>
+                    )}
+
+                    {/* Mode hint */}
+                    <Typography variant="caption" color="text.secondary" sx={{ minHeight: 18 }}>
+                        {modeHint}
+                    </Typography>
+
+                    {/* Canvas utility icons */}
+                    {image.image && step !== "addImage" && (
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Tooltip title="Reset zoom & pan"><IconButton size="small" onClick={resetView}><ZoomInMapIcon fontSize="small" /></IconButton></Tooltip>
+                            <Tooltip title={pan ? "Disable pan mode" : "Enable pan mode"}>
+                                <IconButton size="small" color={pan ? "primary" : "default"} onClick={() => setPan(p => !p)}>
+                                    <PanToolIcon fontSize="small" />
+                                </IconButton>
+                            </Tooltip>
+                            {originalImage && (
+                                <Tooltip title="Restore original image">
+                                    <IconButton size="small" onClick={() => { setImage(prev => ({ ...prev, image: originalImage })); setStep(""); setRectangles([]); }}>
+                                        <RestartAltIcon fontSize="small" />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+                            <Typography variant="caption" color="text.disabled" sx={{ ml: 0.5 }}>
+                                Scroll to zoom · Right-click rect to remove
+                            </Typography>
+                        </Stack>
+                    )}
+
+                    {/* Step action buttons */}
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                        {step === "crop" && (
+                            <>
+                                <Button size="small" variant="contained" color="warning" startIcon={<CropIcon />} onClick={applyCrop}>Apply Crop</Button>
+                                <Button size="small" variant="outlined" onClick={() => { setRectangles([]); setStep(""); }}>Cancel</Button>
+                            </>
+                        )}
+                        {step === "setImage" && (
+                            <>
+                                <Button size="small" variant="contained" onClick={applyOverlay}>Apply Overlay</Button>
+                                <Button size="small" variant="outlined" onClick={startCropAdd}>Crop Overlay First</Button>
+                                <Button size="small" variant="outlined" color="inherit" onClick={cancelOverlay}>Cancel</Button>
+                            </>
+                        )}
+                        {cropAdd && step === "cropAdd" && (
+                            <>
+                                <Button size="small" variant="contained" color="warning" startIcon={<CropIcon />} onClick={applyCropAdd}>Apply Crop</Button>
+                                <Button size="small" variant="outlined" onClick={() => { setRectangles([]); setCropAdd(false); setStep("setImage"); }}>Cancel Crop</Button>
+                            </>
+                        )}
+                    </Stack>
+                </Box>
+
+                {/* ── RIGHT: controls panel ──────────────────────────────── */}
+                <Box sx={{ flex: 1, display: "flex", flexDirection: "column", p: 2.5, gap: 2.5, overflowY: "auto", minWidth: 0 }}>
+
+                    {/* Print Locations */}
+                    {!hasSublimation && printLocations?.length > 0 && (
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight={700} mb={1.25}>
+                                Print Locations
+                                <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                    ({Object.keys(image.boxes || {}).length} of {printLocations.length} configured)
+                                </Typography>
+                            </Typography>
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                                {printLocations.map((loc) => {
+                                    const hasBox = !!(image.boxes?.[loc.name]);
+                                    const isActive = active === loc.name;
+                                    return (
+                                        <Chip
+                                            key={loc.name}
+                                            label={loc.name}
+                                            size="small"
+                                            variant={isActive ? "filled" : "outlined"}
+                                            color={isActive ? "primary" : hasBox ? "success" : "default"}
+                                            icon={hasBox ? <CheckCircleOutlineIcon sx={{ fontSize: "0.85rem !important" }} /> : undefined}
+                                            onClick={() => handleLocationClick(loc)}
+                                            sx={{ cursor: "pointer", fontWeight: isActive ? 700 : 400, fontSize: "0.72rem" }}
+                                        />
+                                    );
+                                })}
+                            </Box>
+                        </Box>
+                    )}
+
+                    {/* Active location editor */}
+                    {step === "location" && active && (
+                        <Paper variant="outlined" sx={{ p: 2, borderColor: "primary.main", borderRadius: 2 }}>
+                            <Typography variant="subtitle2" fontWeight={700} color="primary.main" mb={1.5}>
+                                Editing: <em>{active}</em>
+                            </Typography>
+                            <Stack spacing={1.5}>
+                                <Stack direction="row" spacing={1}>
+                                    <TextField
+                                        size="small" label="X" type="number"
+                                        value={activeBox.x}
+                                        onChange={e => updateBoxField("x", e.target.value)}
+                                        inputProps={{ min: 0, max: CANVAS }} sx={{ flex: 1 }}
+                                    />
+                                    <TextField
+                                        size="small" label="Y" type="number"
+                                        value={activeBox.y}
+                                        onChange={e => updateBoxField("y", e.target.value)}
+                                        inputProps={{ min: 0, max: CANVAS }} sx={{ flex: 1 }}
+                                    />
+                                </Stack>
+                                <Stack direction="row" spacing={1}>
+                                    <TextField
+                                        size="small" label="Width" type="number"
+                                        value={activeBox.width}
+                                        onChange={e => updateBoxField("width", e.target.value)}
+                                        inputProps={{ min: 5, max: CANVAS }} sx={{ flex: 1 }}
+                                    />
+                                    <TextField
+                                        size="small" label="Height" type="number"
+                                        value={activeBox.height}
+                                        onChange={e => updateBoxField("height", e.target.value)}
+                                        inputProps={{ min: 5, max: CANVAS }} sx={{ flex: 1 }}
+                                    />
+                                </Stack>
+                                <TextField
+                                    size="small" label="Rotation (°)" type="number"
+                                    value={activeBox.rotation}
+                                    onChange={e => updateBoxField("rotation", e.target.value)}
+                                    inputProps={{ min: -180, max: 180 }}
+                                />
+                                <Stack direction="row" spacing={1}>
+                                    <Button
+                                        size="small" variant="contained"
+                                        startIcon={<CheckCircleOutlineIcon />}
+                                        onClick={handleSaveLocation} fullWidth
+                                    >
+                                        Save Box
+                                    </Button>
+                                    <Button
+                                        size="small" variant="outlined" color="error"
+                                        startIcon={<DeleteOutlineIcon />}
+                                        onClick={handleRemoveLocation} fullWidth
+                                        disabled={!image.boxes?.[active]}
+                                    >
+                                        Remove
+                                    </Button>
+                                </Stack>
+                            </Stack>
+                        </Paper>
+                    )}
+
+                    {/* Overlay image position controls */}
+                    {step === "setImage" && overlayImg && (
+                        <Paper variant="outlined" sx={{ p: 2, borderColor: "warning.main", borderRadius: 2 }}>
+                            <Typography variant="subtitle2" fontWeight={700} color="warning.main" mb={1.5}>
+                                Overlay Position &amp; Size
+                            </Typography>
+                            <Stack spacing={1.5}>
+                                <Stack direction="row" spacing={1}>
+                                    <TextField size="small" label="X" type="number"
+                                        value={overlayImg.x}
+                                        onChange={e => setOverlayImg(prev => ({ ...prev, x: parseInt(e.target.value) || 0 }))}
+                                        sx={{ flex: 1 }} />
+                                    <TextField size="small" label="Y" type="number"
+                                        value={overlayImg.y}
+                                        onChange={e => setOverlayImg(prev => ({ ...prev, y: parseInt(e.target.value) || 0 }))}
+                                        sx={{ flex: 1 }} />
+                                </Stack>
+                                <Stack direction="row" spacing={1}>
+                                    <TextField size="small" label="Width" type="number"
+                                        value={overlayImg.width}
+                                        onChange={e => setOverlayImg(prev => ({ ...prev, width: Math.max(5, parseInt(e.target.value) || 5) }))}
+                                        inputProps={{ min: 5 }} sx={{ flex: 1 }} />
+                                    <TextField size="small" label="Height" type="number"
+                                        value={overlayImg.height}
+                                        onChange={e => setOverlayImg(prev => ({ ...prev, height: Math.max(5, parseInt(e.target.value) || 5) }))}
+                                        inputProps={{ min: 5 }} sx={{ flex: 1 }} />
+                                </Stack>
+                                <TextField size="small" label="Rotation (°)" type="number"
+                                    value={overlayImg.rotation}
+                                    onChange={e => setOverlayImg(prev => ({ ...prev, rotation: parseInt(e.target.value) || 0 }))}
+                                    inputProps={{ min: -180, max: 180 }} />
+                            </Stack>
+                        </Paper>
+                    )}
+
+                    <Divider />
+
+                    {/* Tools */}
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={700} mb={1}>Tools</Typography>
+                        <Stack spacing={1}>
+                            {image.image && (
+                                <Button size="small" variant="outlined" startIcon={<CropIcon />}
+                                    onClick={startCrop} disabled={step === "crop"}>
+                                    Crop Image
+                                </Button>
+                            )}
+                            {image.image && (
+                                <Button size="small" variant="outlined" startIcon={<AddPhotoAlternateIcon />}
+                                    onClick={async () => {
+                                        setStep("addImage");
+                                        setReloadUploader(true);
+                                        await new Promise(r => setTimeout(r, 100));
+                                        setReloadUploader(false);
+                                    }}
+                                    disabled={step === "addImage"}>
+                                    Overlay Image
+                                </Button>
+                            )}
+                            <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />}
+                                onClick={() => setCopyBoxesOpen(true)}>
+                                Copy Boxes from Another Color
+                            </Button>
+                        </Stack>
+                    </Box>
+
+                    <Divider />
+
+                    {/* Sublimation */}
+                    <Box>
+                        <FormControlLabel
+                            control={<Switch checked={hasSublimation} onChange={e => setHasSublimation(e.target.checked)} size="small" />}
+                            label={<Typography variant="body2" fontWeight={600}>Sublimation Mapping</Typography>}
+                        />
+
+                        {hasSublimation && (
+                            <Box sx={{ mt: 1.5 }}>
+                                <Typography variant="caption" color="text.secondary" display="block" mb={1}>Select a feature to configure its layers</Typography>
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1.5 }}>
+                                    {SUBLIMATION_FEATURES.map(key => (
+                                        <Chip key={key} label={key} size="small"
+                                            variant={featureSelected === key ? "filled" : "outlined"}
+                                            color={featureSelected === key ? "secondary" : "default"}
+                                            onClick={() => {
+                                                setFeatureSelected(key);
+                                                const pts = (image.sublimationBoxes?.[key]?.layers || []).map(l => l.points || []);
+                                                setSublimPoints(pts);
+                                            }}
+                                            sx={{ fontSize: "0.68rem", cursor: "pointer" }}
+                                        />
+                                    ))}
                                 </Box>
-                            ))}
-                        </Box>
-                    </Grid2>
-                </Grid2>
-                <CopyBoxesModal open={copyBoxesOpen} onClose={() => setCopyBoxesOpen(false)} blank={blank} image={image} setImage={setImage}/>
-                <EditablePolygon
-                    open={sublimationModalOpen}
-                    setOpen={setSublimationModalOpen} 
-                    blank={blank}
-                    setBlank={setBlank}
-                    image={image}
-                    setImage={setImage}
-                    area={featureSelected}
-                    layer={layerSelected}
-                />
-            </Box>
-        </Modal>
+
+                                {featureSelected && (
+                                    <>
+                                        <Button size="small" variant="outlined" fullWidth sx={{ mb: 1 }}
+                                            onClick={() => {
+                                                setFeatures(prev => {
+                                                    const fea = { ...prev };
+                                                    const feat = { ...fea[featureSelected] };
+                                                    feat.layers = [...(feat.layers || []), {
+                                                        type: "layer",
+                                                        name: `Layer ${(feat.layers || []).length + 1}`,
+                                                        lines: [], sublimated: true,
+                                                    }];
+                                                    fea[featureSelected] = feat;
+                                                    return fea;
+                                                });
+                                            }}>
+                                            + Add Layer to {featureSelected}
+                                        </Button>
+                                        <Stack spacing={0.75} sx={{ maxHeight: 180, overflowY: "auto" }}>
+                                            {(features[featureSelected]?.layers || []).map((layer, idx) => (
+                                                <Paper key={idx} variant="outlined" sx={{
+                                                    px: 1.5, py: 1, cursor: "pointer", borderRadius: 1.5,
+                                                    bgcolor: layerSelected === layer.name ? "action.selected" : "transparent",
+                                                    "&:hover": { bgcolor: "action.hover" },
+                                                }}>
+                                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                        <Typography variant="body2" onClick={() => { setLayerSelected(layer.name); setSublimModalOpen(true); }}>
+                                                            {layer.name}
+                                                        </Typography>
+                                                        <IconButton size="small" color="error" onClick={() => {
+                                                            setFeatures(prev => {
+                                                                const fea = { ...prev };
+                                                                const feat = { ...fea[featureSelected] };
+                                                                feat.layers = feat.layers.filter((_, i) => i !== idx);
+                                                                fea[featureSelected] = feat;
+                                                                return fea;
+                                                            });
+                                                        }}>
+                                                            <DeleteOutlineIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Stack>
+                                                </Paper>
+                                            ))}
+                                        </Stack>
+                                    </>
+                                )}
+                            </Box>
+                        )}
+                    </Box>
+
+                    {saveError && (
+                        <Alert severity="error" onClose={() => setSaveError("")}>{saveError}</Alert>
+                    )}
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 2, borderTop: "1px solid", borderColor: "divider", gap: 1 }}>
+                <Button onClick={handleClose} variant="outlined">Cancel</Button>
+                <Button
+                    variant="contained"
+                    disabled={!image.image || saving}
+                    onClick={handleSaveImage}
+                    startIcon={saving ? <CircularProgress size={15} color="inherit" /> : null}
+                >
+                    {saving ? "Saving…" : "Save Image"}
+                </Button>
+            </DialogActions>
+
+            <CopyBoxesModal
+                open={copyBoxesOpen}
+                onClose={() => setCopyBoxesOpen(false)}
+                blank={blank} image={image} setImage={setImage}
+            />
+            <EditablePolygon
+                open={sublimModalOpen} setOpen={setSublimModalOpen}
+                blank={blank} setBlank={setBlank}
+                image={image} setImage={setImage}
+                area={featureSelected} layer={layerSelected}
+            />
+        </Dialog>
     );
 }
 
-const CopyBoxesModal = ({ open, onClose, blank, image, setImage}) => {
-    const style ={
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '80%',
-        bgcolor: 'background.paper',
-        boxShadow: 24,
-        p: 4,
-    }
-    return(
-        <Modal open={open} onClose={onClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
-            <Box sx={style}>
-                <Typography id="modal-modal-title" variant="h6" component="h2">
-                    Copy Boxes from Another Image
-                </Typography>
-                <Grid2 container spacing={2} sx={{ mt: 2, maxHeight: '70vh', overflowY: 'auto' }}>
-                    {blank.images && blank.images.length > 0 ? blank.images.sort((a, b) => a?.color?.localeCompare(b.color)).map((img, idx) => (
-                        <Grid2 size={2} key={idx} sx={{cursor: 'pointer', border: image._id == img._id ? '3px solid blue' : '1px solid #ccc', p: 1}} onClick={()=>{
-                            let newImage = {...image}
-                            if(!newImage.boxes) newImage.boxes = {}
-                            for(let box of Object.keys(img.boxes)){
-                                console.log("copying box", box, img.boxes)
-                                newImage.boxes[box] = img.boxes[box]
-                            }
-                            setImage(newImage);
-                            onClose();
-                        }}>
-                        
-                            <Image src={`${img.image ? `${img.image.replace('images1.pythieastechnologies.com', 'images2.pythieastechnologies.com/origin')}?width=200&height=200` : ''}`} alt={img.name} width={200} height={200} style={{ width: "200px", height: "auto", maxHeight: "200px" }} />
-                            <Stage width={200} height={200} style={{ position: "relative", top: "auto", left: "auto", marginTop: "-200px", pointerEvents: "none" }}>
-                                {Object.keys(img.boxes ? img.boxes : {}).map((key, i) => {
-                                    const rect = img.boxes[key];
-                                    if(!rect) return null;
-                                    return (
-                                        <Layer key={i}>
-                                            <Rect
-                                                key={i}
-                                                id={i}
-                                                x={rect.x / 2}
-                                                y={rect.y / 2}
-                                                width={rect.width / 2}
-                                                height={rect.height / 2}
-                                                rotation={rect.rotation}
-                                                stroke="#000"
-                                                dash={[5, 5]}
+// ─── Copy Boxes Modal ──────────────────────────────────────────────────────────
+function CopyBoxesModal({ open, onClose, blank, image, setImage }) {
+    return (
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+            <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography fontWeight={700}>Copy Boxes from Another Color</Typography>
+                <IconButton size="small" onClick={onClose}><CloseIcon /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+                {blank.images?.length ? (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, pt: 1 }}>
+                        {[...blank.images]
+                            .sort((a, b) => String(a.color).localeCompare(String(b.color)))
+                            .map((img, idx) => {
+                                const boxCount = Object.keys(img.boxes || {}).length;
+                                const isCurrentImage = image._id && img._id === image._id;
+                                return (
+                                    <Paper
+                                        key={idx}
+                                        variant="outlined"
+                                        onClick={() => {
+                                            if (!img.boxes) return;
+                                            setImage(prev => ({
+                                                ...prev,
+                                                boxes: { ...(prev.boxes || {}), ...img.boxes },
+                                            }));
+                                            onClose();
+                                        }}
+                                        sx={{
+                                            p: 1, cursor: boxCount > 0 ? "pointer" : "default", borderRadius: 2,
+                                            border: isCurrentImage ? "2px solid #3b82f6" : "1px solid #e2e8f0",
+                                            opacity: boxCount === 0 ? 0.5 : 1,
+                                            "&:hover": boxCount > 0 ? { bgcolor: "action.hover", borderColor: "primary.main" } : {},
+                                            width: 140,
+                                        }}
+                                    >
+                                        <Box sx={{ position: "relative", width: 120, height: 120, mb: 0.75 }}>
+                                            <Image
+                                                src={`${img.image?.replace("images1.pythieastechnologies.com", "images2.pythieastechnologies.com/origin")}?width=200&height=200`}
+                                                alt="" width={120} height={120}
+                                                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 4 }}
                                             />
-                                        </Layer>
-                                    )
-                                })}
-                            </Stage>
-                        </Grid2>
-                    )) : <Typography>No images available</Typography>}
-                </Grid2>
-            </Box>
-        </Modal>
-    )
+                                            {/* Box previews */}
+                                            <Stage width={120} height={120} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
+                                                {Object.entries(img.boxes || {}).map(([key, rect], i) => (
+                                                    <Layer key={i}>
+                                                        <Rect
+                                                            x={(rect.x || 0) * 0.3} y={(rect.y || 0) * 0.3}
+                                                            width={(rect.width || 0) * 0.3} height={(rect.height || 0) * 0.3}
+                                                            rotation={rect.rotation || 0}
+                                                            stroke="#3b82f6" strokeWidth={1.5} dash={[4, 3]}
+                                                        />
+                                                    </Layer>
+                                                ))}
+                                            </Stage>
+                                        </Box>
+                                        <Typography variant="caption" fontWeight={600} display="block" noWrap>
+                                            {boxCount} box{boxCount !== 1 ? "es" : ""}
+                                        </Typography>
+                                        {isCurrentImage && (
+                                            <Typography variant="caption" color="primary" display="block">current</Typography>
+                                        )}
+                                    </Paper>
+                                );
+                            })}
+                    </Box>
+                ) : (
+                    <Typography color="text.secondary" sx={{ py: 3, textAlign: "center" }}>No other images available</Typography>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
 }

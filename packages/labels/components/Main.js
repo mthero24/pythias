@@ -17,6 +17,7 @@ import CheckCircleIcon    from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon   from "@mui/icons-material/WarningAmber";
 import ErrorIcon          from "@mui/icons-material/Error";
 import ReplayIcon         from "@mui/icons-material/Replay";
+import SyncIcon           from "@mui/icons-material/Sync";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Sort } from "../functions/sort";
@@ -40,6 +41,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
     const [styleCodeSelected, setStyleCodeSelected]     = useState("Select");
     const [styleCodes, setStyleCodes]    = useState([]);
     const [loading, setLoading]          = useState(false);
+    const [pulling, setPulling]          = useState(false);
     const [marketplaceSelected, setMarketplaceSelected] = useState("Select");
     const [marketplaces, setMarketplaces] = useState([]);
     const [confirmReturnToQue, setConfirmReturnToQue] = useState(false);
@@ -222,6 +224,27 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
         else { setLabels(res.data.labels); setBatches(res.data.batches); setGiftLabels(res.data.giftMessages); setRePulls(res.data.rePulls); setReturnToInv(""); }
     };
 
+    const pullOrdersNow = async () => {
+        setPulling(true);
+        try {
+            const res = await axios.post("/api/internal/pull-orders");
+            if (res.data?.error) alert(`Pull orders failed: ${res.data.msg}`);
+            else {
+                const updated = await axios.get("/api/production/print-labels/updatePage");
+                if (updated.data && !updated.data.error) {
+                    setLabels(updated.data.labels);
+                    setBatches(updated.data.batches);
+                    setGiftLabels(updated.data.giftMessages);
+                    setRePulls(updated.data.rePulls);
+                }
+            }
+        } catch (e) {
+            alert(`Pull orders error: ${e.message}`);
+        } finally {
+            setPulling(false);
+        }
+    };
+
     const totalLabels = Object.values(useLabels).reduce((sum, arr) => sum + arr.length, 0);
 
     return (
@@ -265,6 +288,13 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                 onClick={() => setShoeUntracked(!showUntracked)}>
                                 Untracked Labels
                             </Button>
+                            {source === "PP" && (
+                                <Button variant="outlined" size="small" color="secondary"
+                                    startIcon={<SyncIcon sx={{ animation: pulling ? "spin 1s linear infinite" : "none", "@keyframes spin": { "100%": { transform: "rotate(360deg)" } } }} />}
+                                    onClick={pullOrdersNow} disabled={pulling}>
+                                    {pulling ? "Pulling…" : "Pull Orders Now"}
+                                </Button>
+                            )}
                         </Stack>
                     </Box>
 

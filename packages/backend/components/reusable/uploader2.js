@@ -1,15 +1,9 @@
 "use client";
-import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
 import {useDropzone} from 'react-dropzone'
-import {useState, useCallback} from "react";
+import {useCallback} from "react";
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import Image from "next/image";
-import {Grid2, Typography, Box, Card} from "@mui/material";
-import btoa from "btoa";
-const s3 = new S3Client({ credentials:{
-    accessKeyId:'XWHXU4FP7MT2V842ITN9',
-   secretAccessKey:'kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3'
-}, region: "us-west-1", profile: "wasabi", endpoint: "https://s3.us-west-1.wasabisys.com/"  }); // for S3
+import {Typography, Box, Card} from "@mui/material";
 
 export function Uploader2({afterFunction, image, setImage}){
     const onDrop = useCallback(acceptedFiles => {
