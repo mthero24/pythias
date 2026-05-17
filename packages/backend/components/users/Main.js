@@ -56,6 +56,40 @@ function avatarColor(str = "") {
     return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
+function isOnline(lastSeen) {
+    if (!lastSeen) return false;
+    return Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000;
+}
+
+function UserAvatar({ u, size = 44 }) {
+    const color = avatarColor(u.userName);
+    const online = isOnline(u.lastSeen);
+    const hasPhoto = u.avatar?.startsWith("http");
+    const hasColor = u.avatar?.startsWith("#");
+    return (
+        <Box sx={{ position: "relative", flexShrink: 0, width: size, height: size }}>
+            <Avatar
+                src={hasPhoto ? u.avatar : undefined}
+                sx={{
+                    bgcolor: hasColor ? u.avatar : hasPhoto ? undefined : color,
+                    width: size, height: size,
+                    fontSize: size > 36 ? "1rem" : "0.75rem",
+                    fontWeight: 800,
+                    boxShadow: `0 0 0 3px ${hasColor ? u.avatar : color}22`,
+                }}
+            >
+                {!hasPhoto && initials(u)}
+            </Avatar>
+            <Box sx={{
+                position: "absolute", bottom: 0, right: 0,
+                width: 11, height: 11, borderRadius: "50%",
+                bgcolor: online ? "#22c55e" : "#9ca3af",
+                border: "2px solid #fff",
+            }} />
+        </Box>
+    );
+}
+
 function initials(u) {
     if (u.firstName && u.lastName) return `${u.firstName[0]}${u.lastName[0]}`.toUpperCase();
     return (u.userName?.[0] ?? "?").toUpperCase();
@@ -169,6 +203,7 @@ export function Main({ user }) {
                         const count  = permCount(u);
                         const color  = avatarColor(u.userName);
                         const name   = displayName(u);
+                        // color still used for permission chip/icon tinting
                         const activePerms = PERMISSIONS.filter(p => u.permissions?.[p.key]);
 
                         return (
@@ -183,9 +218,7 @@ export function Main({ user }) {
                                     sx={{ display: "flex", alignItems: "center", px: 2.5, py: 2, gap: 2, cursor: "pointer" }}
                                     onClick={() => setOpened(isOpen ? "" : u._id)}
                                 >
-                                    <Avatar sx={{ bgcolor: color, width: 44, height: 44, fontSize: "1rem", fontWeight: 800, flexShrink: 0, boxShadow: `0 0 0 3px ${color}22` }}>
-                                        {initials(u)}
-                                    </Avatar>
+                                    <UserAvatar u={u} size={44} />
 
                                     <Box sx={{ flex: 1, minWidth: 0 }}>
                                         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>

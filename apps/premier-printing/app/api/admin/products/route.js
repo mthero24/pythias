@@ -90,6 +90,15 @@ export async function POST(req = NextApiRequest) {
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     const data = await req.json();
+
+    // Capture before states for products that already exist
+    const existingIds = data.products.filter(p => p._id).map(p => p._id);
+    const beforeMap = {};
+    if (existingIds.length > 0) {
+        const existing = await Products.find({ _id: { $in: existingIds } }).lean();
+        for (const p of existing) beforeMap[String(p._id)] = p;
+    }
+
     for (let product of data.products) {
         if (product.variants) await update({ product: product });
         if(product.isNFProduct && product.variantsArray) {
@@ -102,6 +111,17 @@ export async function POST(req = NextApiRequest) {
     }
     let products = await saveProducts({ products: data.products, Products, Inventory });
     logActivity({ action: "product_update", entity: "product", count: data.products.length, userName, email });
+
+    // Log changes for each product
+    await Promise.all((products || data.products).map(p =>
+        logChange({
+            entityType: "product", entityId: p._id, entityName: p.sku || "",
+            action: beforeMap[String(p._id)] ? "update" : "create",
+            before: beforeMap[String(p._id)] ?? null, after: p,
+            userName, email, provider: "premierPrinting",
+        })
+    ));
+
     return NextResponse.json({ error: false, products });
 }
 export async function PUT(req = NextApiRequest) {
@@ -120,7 +140,8 @@ export async function DELETE(req = NextApiRequest) {
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     const product = req.nextUrl.searchParams.get("product");
-    let prod = await Products.findOneAndDelete({ _id: product });
+    let prod = await Products.findOneAndDelete({ _id: product }).lean();
     logActivity({ action: "product_delete", entity: "product", entityId: product, entityName: prod?.sku || "", userName, email });
+    logChange({ entityType: "product", entityId: product, entityName: prod?.sku || "", action: "delete", before: prod, after: null, userName, email, provider: "premierPrinting" });
     return NextResponse.json({ error: false });
 }

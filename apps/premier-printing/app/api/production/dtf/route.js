@@ -68,8 +68,8 @@ export async function POST(req = NextApiRequest) {
     if (item && !item.canceled && !item.dtfScan) {
         item.dtfScan = true
         console.log(item.design, "item design")
-        Object.keys(item.design).map(async key=>{
-            if(key != undefined && item.design[key]){
+        await Promise.all(Object.keys(item.design).map(async key => {
+            if (key != undefined && item.design[key]) {
                 console.log(key, "key", item.design[key], "design key")
                 let envelopes = item.blank.envelopes.filter(
                     (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
@@ -88,7 +88,7 @@ export async function POST(req = NextApiRequest) {
                     printer: data.printer
                 })
             }
-        })
+        }))
       
           item.status = "DTF Load";
           if (!item.steps) item.steps = [];
@@ -144,7 +144,7 @@ export async function PUT(req = NextApiRequest) {
             for(let item of s.items){
                 if (item && !item.canceled && !item.dtfScan) {
                     item.dtfScan = true
-                    Object.keys(item.design).map(async key => {
+                    await Promise.all(Object.keys(item.design).map(async key => {
                         if (key != undefined && item.design[key]) {
                             let envelopes = item.blank.envelopes.filter(
                                 (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
@@ -163,7 +163,7 @@ export async function PUT(req = NextApiRequest) {
                                 printer: s.printer
                             })
                         }
-                    })
+                    }))
 
                     item.status = "DTF Load";
                     if (!item.steps) item.steps = [];

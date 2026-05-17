@@ -30,7 +30,11 @@ export async function TrackPackage({tn, credentials}){
         })
         //console.log(res?.data)
         if(res?.data?.eventSummaries) return {
-            events: res.data.eventSummaries,
+            events: res.data.eventSummaries.map(e => {
+                const parts = [e.eventSummary];
+                if (e.eventCity) parts.push(`${e.eventCity}, ${e.eventState}`);
+                return parts.filter(Boolean).join(' — ');
+            }).filter(Boolean),
             expectedDelivery: res.data.expectedDeliveryDate ?? res.data.scheduledDeliveryDate ?? null,
         }
     }

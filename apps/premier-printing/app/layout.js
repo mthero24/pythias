@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { CSVProvider } from "@pythias/backend";
+import { CSVProvider, FloatingChat, IdleLogout } from "@pythias/backend";
 import { AppThemeProvider } from "@/components/AppThemeProvider";
 import { NavigationProgress } from "@/components/NavigationProgress";
 
@@ -32,6 +32,8 @@ export default function RootLayout({ children }) {
           <CSVProvider>
             <Navbar />
             {children}
+            <FloatingChat />
+            <IdleLogout />
           </CSVProvider>
         </AppThemeProvider>
       </body>

@@ -6,9 +6,9 @@ import manifest from "../../../../../models/manifest";
 import axios from "axios"
 import Bin from "../../../../../models/Bin";
 import {updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart} from "@pythias/integrations";
-import {ApiKeyIntegrations} from "@pythias/mongo";
+import {ApiKeyIntegrations, Item as Items} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken } from "@pythias/backend/server";
+import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 export async function POST(req= NextApiRequest){
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
@@ -72,6 +72,7 @@ export async function POST(req= NextApiRequest){
                 await man.save()
             }
             let order = await Order.findOne({_id: data.orderId}).populate("items")
+            const beforeStatus = order.status;
             try {
                 await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
             } catch(e) { console.error("ShipStation update failed:", e.message); }
@@ -85,18 +86,14 @@ export async function POST(req= NextApiRequest){
                 trackingInfo: ["Label Purchased"],
                 provider: data.selectedShipping.provider
             });
-            for (let item of order.items) {
-                item.shipped = true;
-                item.shippedDate = new Date();
-                if (!item.steps) item.steps = [];
-                item.steps.push({
-                    status: "Shipped",
-                    date: new Date(),
-                });
-                await item.save();
-            }
+            const itemIds = order.items.map(i => i._id);
+            await Items.updateMany(
+                { _id: { $in: itemIds } },
+                { $set: { shipped: true, shippedDate: new Date() }, $push: { steps: { status: "Shipped", date: new Date() } } }
+            );
             order = await order.save();
             logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email });
+            logChange({ entityType: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", action: "label_purchased", before: { status: beforeStatus }, after: { status: "Shipped", trackingNumber: label.trackingNumber, carrier: data.selectedShipping.provider, cost: parseFloat(label.cost) }, userName, email, provider: "premierPrinting" });
             if (order.marketplace?.toLowerCase() === "etsy" && order.marketplaceOrderId) {
                 try {
                     const etsyConn = await ApiKeyIntegrations.findOne({ type: "etsy" });

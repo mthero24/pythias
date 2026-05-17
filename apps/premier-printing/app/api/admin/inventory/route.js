@@ -20,18 +20,14 @@ export async function POST(req=NextApiRequest){
     let updateItems = []
     if(!data.inventory.attached) data.inventory.attached = [];
     if (data.inventory.quantity > 0 && data.inventory.attached?.length > 0) {
-        for (let i = 0; i < data.inventory.quantity; i++) {
-            let item = await Items.findOne({ _id: data.inventory.attached[i] })
-            if (item) {
-                item.inventory = {
-                    inventoryType: "inventory",
-                    inventory: data.inventory._id,
-                    productInventory: null,
-                }
-                await item.save()
-                //console.log(item, "item in POST inventory route")
-                updateItems.push(data.inventory.attached[i])
-            }
+        const attachedSlice = data.inventory.attached.slice(0, data.inventory.quantity);
+        const existingItems = await Items.find({ _id: { $in: attachedSlice } }).select("_id").lean();
+        updateItems = existingItems.map(i => i._id.toString());
+        if (updateItems.length > 0) {
+            await Items.updateMany(
+                { _id: { $in: updateItems } },
+                { $set: { inventory: { inventoryType: "inventory", inventory: data.inventory._id, productInventory: null } } }
+            );
         }
     }
     let removedItems = []
@@ -51,8 +47,7 @@ export async function POST(req=NextApiRequest){
         data.inventory.inStock = []
     }
     data.inventory.inStock = [...data.inventory.inStock, ...updateItems];
-    let inv = await Inventory.findByIdAndUpdate(data.inventory._id, data.inventory, { new: true, returnNewDocument: true }).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin attached sizeId skus").lean().catch(e => { console.log(e) });
-    inv = await Inventory.findById(data.inventory._id).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin attached sizeId skus").lean().catch(e => { console.log(e) });
+    await Inventory.findByIdAndUpdate(data.inventory._id, data.inventory).catch(e => { console.log(e) });
     logActivity({ action: "inventory_update", entity: "inventory", entityId: data.inventory._id, entityName: `${data.inventory.style_code} ${data.inventory.color_name} ${data.inventory.size_name}`, userName, email, provider: "premierPrinting" });
     return NextResponse.json({ error: false, inventory: data.inventory })
 }

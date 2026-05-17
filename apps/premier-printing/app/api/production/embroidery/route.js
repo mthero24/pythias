@@ -72,8 +72,8 @@ export async function POST(req = NextApiRequest) {
     }).populate("designRef", "embroideryFiles").populate("blank", "code envelopes box sizes multiImages")
     console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
-        Object.keys(item.designRef.embroideryFiles).map(async key=>{
-            if(key != undefined && item.designRef.embroideryFiles[key]){
+        await Promise.all(Object.keys(item.designRef.embroideryFiles).map(async key => {
+            if (key != undefined && item.designRef.embroideryFiles[key]) {
                 await sendFile({
                     url: item.designRef.embroideryFiles[key],
                     pieceID: `${item.pieceId}-${key}`,
@@ -83,10 +83,10 @@ export async function POST(req = NextApiRequest) {
                     sku: item.sku,
                     printer: data.printer,
                     key: "$2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW",
-                    localIP:process.env.localIP
+                    localIP: process.env.localIP
                 })
             }
-        })
+        }))
         item.status = "DTF Load";
         if (!item.steps) item.steps = [];
         item.steps.push({

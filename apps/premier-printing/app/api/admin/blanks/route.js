@@ -121,7 +121,7 @@ export async function POST(req = NextApiRequest) {
       newBlank = await new Blanks(blank).save();
       if (newBlank.type !== "alias") await generateInventory(newBlank);
       logActivity({ action: "blank_create", entity: "blank", entityId: newBlank._id, entityName: newBlank.code || newBlank.name || "", userName, email });
-      logChange({ entityType: "blank", entityId: newBlank._id, entityName: newBlank.code || newBlank.name || "", action: "create", userName, email, provider: "premierPrinting" });
+      await logChange({ entityType: "blank", entityId: newBlank._id, entityName: newBlank.code || newBlank.name || "", action: "create", before: null, after: newBlank, userName, email, provider: "premierPrinting" });
     }
     return NextResponse.json({ error: false, blank: newBlank });
   } catch (err) {
@@ -134,9 +134,9 @@ export async function DELETE(req = NextApiRequest) {
   const token = await getToken({ req });
   const { userName, email } = userFromToken(token);
   const id = req.nextUrl.searchParams.get("id");
-  const deleted = await Blanks.findOneAndDelete({ _id: id });
+  const deleted = await Blanks.findOneAndDelete({ _id: id }).lean();
   logActivity({ action: "blank_delete", entity: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", userName, email });
-  logChange({ entityType: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", action: "delete", userName, email, provider: "premierPrinting" });
+  logChange({ entityType: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", action: "delete", before: deleted, after: null, userName, email, provider: "premierPrinting" });
   return NextResponse.json({ error: false });
 }
 

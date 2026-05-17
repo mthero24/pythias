@@ -45,7 +45,10 @@ const schema = new mongoose.Schema({
   ],
   role: { type: String, default: "production" },
   manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  permissions: Object
+  permissions: Object,
+  avatar: { type: String },
+  lastSeen: { type: Date },
+  sessionToken: { type: String },
 });
 
 schema.pre("save", async function () {

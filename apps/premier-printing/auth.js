@@ -1,6 +1,7 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 
 export const authOptions = {
   session: {
@@ -14,26 +15,23 @@ export const authOptions = {
         password: {},
       },
       async authorize(credentials) {
-        console.log("+++++++++++++++++", credentials)
-        let userName = credentials.userName;
-        const user = await User.findOne({ userName: userName }).lean();
-        console.log(user)
-        if (!user) {
-          throw new Error("Invalid credentials, please try again!");
-        }
-        if (
-          !user ||
-          !(await bcrypt.compare(credentials.password, user.password))
-        ) {
+        const userName = credentials.userName;
+        const user = await User.findOne({ userName }).lean();
+        if (!user) throw new Error("Invalid credentials, please try again!");
+        if (!(await bcrypt.compare(credentials.password, user.password))) {
           throw new Error("Invalid credentials, please try again!");
         }
 
-        return user;
+        // Generate a fresh session token — overwrites any existing session on other devices
+        const sessionToken = randomUUID();
+        await User.findOneAndUpdate({ _id: user._id }, { $set: { sessionToken } });
+
+        return { ...user, sessionToken };
       },
     }),
   ],
   callbacks: {
-    jwt: async ({ user, token, trigger, session }) => {
+    jwt: async ({ user, token }) => {
       if (user) {
         token = {
           ...token,
@@ -41,7 +39,8 @@ export const authOptions = {
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
-          permissions: user.permissions
+          permissions: user.permissions,
+          sessionToken: user.sessionToken,
         };
       }
       return token;
@@ -61,6 +60,6 @@ export const authOptions = {
   },
   pages: {
     signIn: "/login",
-    error: "/login?error=afddsa"
+    error: "/login?error=afddsa",
   },
 };

@@ -25,6 +25,7 @@ const upsCredentials = () => ({
 const SHIPPED_STATUSES = ["shipped", "Shipped", "Out For Delivery", "out_for_delivery"];
 
 async function processOrderTracking(order) {
+    if (!order.shippingInfo?.labels?.length) return false;
     let changed = false;
 
     for (const lbl of order.shippingInfo.labels) {
@@ -49,9 +50,10 @@ async function processOrderTracking(order) {
         const { events, expectedDelivery } = result;
         if (!events?.length) continue;
 
-        lbl.trackingInfo = events.slice(0, 10);
+        // Normalize — discard any previously stored raw objects, keep only strings
+        lbl.trackingInfo = events.slice(0, 10).filter(e => typeof e === "string");
         if (expectedDelivery) lbl.expectedDelivery = expectedDelivery;
-        const latest = events[0]?.toLowerCase() || "";
+        const latest = (typeof events[0] === "string" ? events[0] : "").toLowerCase();
 
         if (latest.includes("delivered") && !latest.includes("out for")) {
             lbl.delivered = true;
@@ -80,7 +82,7 @@ export const trackOrder = async (orderId) => {
 };
 
 export const runTracking = async () => {
-    const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
     const orders = await Order.find({
         status: { $in: SHIPPED_STATUSES },

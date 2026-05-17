@@ -1,21 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Chip } from "@mui/material";
+import { Avatar, Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Chip } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import * as Logo from '../public/premierprinting-logo.png';
 import { useCSV } from "@pythias/backend";
+import axios from "axios";
 
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
@@ -112,6 +114,22 @@ const NAV_SECTIONS = [
 
 export default function ButtonAppBar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [avatar, setAvatar]         = useState(null);
+  const { data: session }           = useSession();
+
+  useEffect(() => {
+    if (!session?.user) return;
+    axios.get("/api/account").then(res => {
+      if (!res.data.error && res.data.user?.avatar) setAvatar(res.data.user.avatar);
+    }).catch(() => {});
+  }, [session?.user?.userName]);
+
+  const initials = session?.user
+    ? ((session.user.firstName?.[0] ?? "") + (session.user.lastName?.[0] ?? "")).toUpperCase() || session.user.userName?.[0]?.toUpperCase() || "?"
+    : "?";
+
+  const avatarSx = avatar?.startsWith("#") ? { bgcolor: avatar } : {};
+  const avatarSrc = avatar?.startsWith("http") ? avatar : undefined;
 
   return (
     <>
@@ -143,6 +161,17 @@ export default function ButtonAppBar() {
 
           <Box sx={{ flex: 1 }} />
 
+          <Tooltip title="My account">
+            <IconButton component={Link} href="/account" size="small" sx={{ mr: 1, p: 0.25 }}>
+              <Avatar
+                src={avatarSrc}
+                sx={{ width: 30, height: 30, fontSize: "0.72rem", fontWeight: 700, bgcolor: avatarSx.bgcolor ?? "#6366f1", ...avatarSx }}
+              >
+                {!avatarSrc && initials}
+              </Avatar>
+            </IconButton>
+          </Tooltip>
+
           <Tooltip title="Sign out">
             <IconButton
               size="small"
@@ -165,12 +194,12 @@ export default function ButtonAppBar() {
         </Toolbar>
       </AppBar>
 
-      <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} avatarSrc={avatarSrc} avatarSx={avatarSx} initials={initials} />
     </>
   );
 }
 
-const NavDrawer = ({ open, onClose }) => {
+const NavDrawer = ({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) => {
   const { setShow } = useCSV();
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -263,6 +292,29 @@ const NavDrawer = ({ open, onClose }) => {
 
       {/* Footer */}
       <Box sx={{ px: 2, py: 1.5, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+        <Link href="/account" onClick={() => handleNav(false)} style={{ textDecoration: "none" }}>
+          <ListItemButton
+            sx={{
+              borderRadius: 1.5, py: 0.85, px: 1.5, mb: 0.5,
+              "&:hover": { backgroundColor: SIDEBAR_HOVER_BG },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <Avatar
+                src={avatarSrc}
+                sx={{ width: 26, height: 26, fontSize: "0.65rem", fontWeight: 700, bgcolor: avatarSx.bgcolor ?? "#6366f1", ...avatarSx }}
+              >
+                {!avatarSrc && initials}
+              </Avatar>
+            </ListItemIcon>
+            <ListItemText
+              primary={session?.user ? `${session.user.firstName || session.user.userName}` : "Account"}
+              secondary={session?.user?.userName ? `@${session.user.userName}` : undefined}
+              primaryTypographyProps={{ fontSize: "0.82rem", fontWeight: 500, color: SIDEBAR_TEXT }}
+              secondaryTypographyProps={{ fontSize: "0.7rem", color: SIDEBAR_TEXT_DIM }}
+            />
+          </ListItemButton>
+        </Link>
         <ListItemButton
           onClick={() => signOut({ callbackUrl: "/" })}
           sx={{

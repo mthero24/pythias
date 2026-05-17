@@ -38,6 +38,6 @@ export async function DELETE(req = NextApiRequest) {
   let id = await req.nextUrl.searchParams.get("id")
   console.log(id, "Color ID to delete")
   await Color.findOneAndDelete({_id: id})
-  let colors = await Color.find({})
+  let colors = await Color.find({}).lean()
   return NextResponse.json({error: false, colors});
 }

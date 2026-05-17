@@ -80,6 +80,9 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [imageToDelete, setImageToDelete] = useState(null);
     const [deleteBlankModalOpen, setDeleteBlankModalOpen] = useState(false);
+    const [menuPortalTarget, setMenuPortalTarget] = useState(null);
+
+    useEffect(() => { setMenuPortalTarget(document.body); }, []);
 
     const handleImageSave = () => {};
 
@@ -165,7 +168,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
 
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>Vendor</Typography>
-                                <CreatableSelect placeholder="Select vendor..." options={vendors.map(v => ({ value: v.name, label: v.name }))} value={blank.vendor ? { value: blank.vendor, label: blank.vendor } : null} onChange={(selected) => {
+                                <CreatableSelect menuPortalTarget={menuPortalTarget} menuPosition="fixed" placeholder="Select vendor..." options={vendors.map(v => ({ value: v.name, label: v.name }))} value={blank.vendor ? { value: blank.vendor, label: blank.vendor } : null} onChange={(selected) => {
                                     let bla = {...blank};
                                     bla.vendor = selected.value;
                                     setBlank(bla);
@@ -174,7 +177,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>Department</Typography>
-                                <CreatableSelect placeholder="Select department..." options={departments.map(d => ({ value: d.name, label: d.name }))} value={blank.department ? { value: blank.department, label: blank.department } : null} onChange={(selected) => {
+                                <CreatableSelect menuPortalTarget={menuPortalTarget} menuPosition="fixed" placeholder="Select department..." options={departments.map(d => ({ value: d.name, label: d.name }))} value={blank.department ? { value: blank.department, label: blank.department } : null} onChange={(selected) => {
                                     let bla = {...blank};
                                     bla.department = selected.value;
                                     setBlank(bla);
@@ -183,7 +186,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>Category</Typography>
-                                <CreatableSelect placeholder="Select categories..." isMulti options={categories.map(c => ({ value: c.name, label: c.name }))} value={blank.category ? blank.category.map(c => ({ value: c, label: c })) : null} onChange={(selected) => {
+                                <CreatableSelect menuPortalTarget={menuPortalTarget} menuPosition="fixed" placeholder="Select categories..." isMulti options={categories.map(c => ({ value: c.name, label: c.name }))} value={blank.category ? blank.category.map(c => ({ value: c, label: c })) : null} onChange={(selected) => {
                                     let bla = {...blank};
                                     bla.category = selected.map(s => s.value);
                                     setBlank(bla);
@@ -192,7 +195,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>Brand</Typography>
-                                <CreatableSelect placeholder="Select brand..." options={brands.map(b => ({ value: b.name, label: b.name }))} value={blank.brand ? { value: blank.brand, label: blank.brand } : null} onChange={(selected) => {
+                                <CreatableSelect menuPortalTarget={menuPortalTarget} menuPosition="fixed" placeholder="Select brand..." options={brands.map(b => ({ value: b.name, label: b.name }))} value={blank.brand ? { value: blank.brand, label: blank.brand } : null} onChange={(selected) => {
                                     let bla = {...blank};
                                     bla.brand = selected.value;
                                     setBlank(bla);
@@ -201,7 +204,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>Supplier</Typography>
-                                <CreatableSelect placeholder="Select suppliers..." isMulti options={suppliers.map(s => ({ value: s.name, label: s.name }))} value={blank.supplier ? blank.supplier.map(s => ({ value: s, label: s })) : null} onChange={(selected) => {
+                                <CreatableSelect menuPortalTarget={menuPortalTarget} menuPosition="fixed" placeholder="Select suppliers..." isMulti options={suppliers.map(s => ({ value: s.name, label: s.name }))} value={blank.supplier ? blank.supplier.map(s => ({ value: s, label: s })) : null} onChange={(selected) => {
                                     let bla = {...blank};
                                     bla.supplier = selected.map(s => s.value);
                                     setBlank(bla);
@@ -210,7 +213,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>Print Types</Typography>
-                                <CreatableSelect placeholder="Select print types..." isMulti options={printTypes.map(pt => ({ value: pt._id, label: pt.name }))} value={blank.printType ? blank.printType.map(p => printTypes.find(pt => pt._id == p)).filter(Boolean).map(pt => ({ value: pt._id, label: pt.name })) : null} onChange={(selected) => {
+                                <CreatableSelect menuPortalTarget={menuPortalTarget} menuPosition="fixed" placeholder="Select print types..." isMulti options={printTypes.map(pt => ({ value: pt._id, label: pt.name }))} value={blank.printType ? blank.printType.map(p => printTypes.find(pt => pt._id == p)).filter(Boolean).map(pt => ({ value: pt._id, label: pt.name })) : null} onChange={(selected) => {
                                     let bla = {...blank};
                                     bla.printType = selected.map(s => s.value);
                                     setBlank(bla);
@@ -423,6 +426,8 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                         <Box>
                             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block", fontWeight: 500 }}>Colors</Typography>
                             <CreatableSelect
+                                menuPortalTarget={menuPortalTarget}
+                                menuPosition="fixed"
                                 placeholder="Add colors..."
                                 isMulti
                                 options={allColors.map(c => ({
@@ -471,6 +476,8 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                         <Box>
                             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block", fontWeight: 500 }}>Print Locations</Typography>
                             <CreatableSelect
+                                menuPortalTarget={menuPortalTarget}
+                                menuPosition="fixed"
                                 placeholder="Add print locations..."
                                 isMulti
                                 options={printLocations.map(pl => ({ value: pl, label: pl.name }))}

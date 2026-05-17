@@ -26,7 +26,8 @@ function getStatusMeta(status) {
 
 function trackingLabel(trackingInfo) {
     if (!trackingInfo || trackingInfo.length === 0) return "No tracking yet";
-    return trackingInfo[0];
+    const first = trackingInfo.find(e => typeof e === "string");
+    return first ?? "No tracking yet";
 }
 
 export function Refund({ ords, pa }) {
@@ -180,7 +181,7 @@ export function Refund({ ords, pa }) {
                                 {l.trackingNumber}
                             </Typography>
 
-                            <Tooltip title={(l.trackingInfo || []).join(" → ")} placement="top">
+                            <Tooltip title={(l.trackingInfo || []).filter(e => typeof e === "string").join(" → ")} placement="top">
                                 <Typography variant="body2" color="text.secondary" sx={{
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                                     fontSize: "0.8rem",

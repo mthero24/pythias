@@ -1,13 +1,14 @@
-import {AccountMain} from "@pythias/backend";
-import {User} from "@pythias/mongo";
-import { getToken } from "next-auth/jwt";
-import { serialize } from "@/functions/serialize";
-import {headers} from "next/headers"
-export default async function Account(req){
-    const headersList = await headers()
-    console.log(headersList.get("user"))
-    let user = await User.findOne({userName: headersList.get("user")})
-    console.log(user)
-    user = serialize(user)
-    return <AccountMain user={user} />
+import { AccountMain } from "@pythias/backend";
+import { User } from "@pythias/mongo";
+import { headers } from "next/headers";
+
+export const dynamic = "force-dynamic";
+
+export default async function Account() {
+    const headersList = await headers();
+    const userName = headersList.get("user");
+    const user = await User.findOne({ userName })
+        .select("userName firstName lastName email role avatar")
+        .lean();
+    return <AccountMain user={JSON.parse(JSON.stringify(user ?? {}))} />;
 }

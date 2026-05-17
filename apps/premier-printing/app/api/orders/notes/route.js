@@ -1,17 +1,18 @@
-import {NextApiRequest, NextResponse} from "next/server";
+import { NextApiRequest, NextResponse } from "next/server";
 import Order from "@/models/Order";
 import { getToken } from "next-auth/jwt";
-export async function POST(req=NextApiRequest){
+import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+
+export async function POST(req = NextApiRequest) {
     const token = await getToken({ req });
-    console.log(token)
-    let data = await req.json()
-    let order = await Order.findById(data.order._id).populate("items")
-    if(!order.notes) order.notes = []
-    order.notes.push({
-        userName: token.userName,
-        date: new Date(Date.now()),
-        note: data.note
-    })
-    order = await order.save()
-    return NextResponse.json({error: false, order})
+    const { userName, email } = userFromToken(token);
+    const data = await req.json();
+    let order = await Order.findById(data.order._id).populate("items");
+    if (!order.notes) order.notes = [];
+    const note = { userName: token.userName, date: new Date(), note: data.note };
+    order.notes.push(note);
+    order = await order.save();
+    logActivity({ action: "order_note", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email });
+    logChange({ entityType: "order", entityId: order._id, entityName: order.poNumber || "", action: "note_added", before: null, after: note, userName, email, provider: "premierPrinting" });
+    return NextResponse.json({ error: false, order });
 }

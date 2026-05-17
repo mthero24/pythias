@@ -451,19 +451,20 @@ export function Main({ ord, blanks, source }) {
                                                 ? `https://www.fedex.com/fedextrack/?trknbr=${l.trackingNumber}`
                                                 : `https://tools.usps.com/go/TrackConfirmAction?qtc_tLabels1=${l.trackingNumber}`;
 
-                                            const latest = l.trackingInfo?.[0]?.toLowerCase() ?? "";
+                                            const events = (l.trackingInfo ?? []).filter(e => typeof e === "string");
+                                            const latest = events[0]?.toLowerCase() ?? "";
                                             const statusLabel = l.delivered
                                                 ? "Delivered"
                                                 : latest.includes("out for delivery")
                                                 ? "Out for Delivery"
-                                                : l.trackingInfo?.length > 0
+                                                : events.length > 0
                                                 ? "In Transit"
                                                 : "Pending";
                                             const statusColor = l.delivered
                                                 ? "success"
                                                 : latest.includes("out for delivery")
                                                 ? "warning"
-                                                : l.trackingInfo?.length > 0
+                                                : events.length > 0
                                                 ? "info"
                                                 : "default";
 
@@ -488,11 +489,11 @@ export function Main({ ord, blanks, source }) {
                                                         />
                                                     </Stack>
                                                     {l.expectedDelivery && !l.delivered && (
-                                                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: l.trackingInfo?.length > 0 ? 1 : 0 }}>
+                                                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: events.length > 0 ? 1 : 0 }}>
                                                             Expected {new Date(l.expectedDelivery).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                                                         </Typography>
                                                     )}
-                                                    {l.trackingInfo?.length > 0 && (
+                                                    {events.length > 0 && (
                                                         <Stack spacing={0.5}>
                                                             <Box sx={{
                                                                 px: 1.25, py: 0.75, borderRadius: 1,
@@ -501,10 +502,10 @@ export function Main({ ord, blanks, source }) {
                                                                 borderColor: l.delivered ? "success.light" : "divider",
                                                             }}>
                                                                 <Typography variant="caption" sx={{ fontWeight: 600, display: "block", lineHeight: 1.4 }}>
-                                                                    {l.trackingInfo[0]}
+                                                                    {events[0]}
                                                                 </Typography>
                                                             </Box>
-                                                            {l.trackingInfo.slice(1).map((ev, idx) => (
+                                                            {events.slice(1).map((ev, idx) => (
                                                                 <Typography
                                                                     key={idx}
                                                                     variant="caption"

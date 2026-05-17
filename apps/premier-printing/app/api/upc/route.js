@@ -55,8 +55,11 @@ export async function POST(req=NextApiRequest){
 
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
+    const filter = {$or: [{design: null, blank: {$ne: null}, recycle: false},{color: null, blank: {$ne: null}, recycle: false}]};
     await UpcToSku.findByIdAndUpdate(data.upc._id, data.upc)
-    let skus = await UpcToSku.find({$or: [{design: null, blank: {$ne: null}, recycle: false},{color: null, blank: {$ne: null}, recycle: false}]}).populate("design", "name").populate("color", "name").populate({path: "blank", select:"code name sizes colors", populate: "colors"}).limit(50)
-    let count = await UpcToSku.find({$or: [{design: null, blank: {$ne: null}, recycle: false},{color: null, blank: {$ne: null}, recycle: false}]}).countDocuments()
+    const [skus, count] = await Promise.all([
+        UpcToSku.find(filter).populate("design", "name").populate("color", "name").populate({path: "blank", select:"code name sizes colors", populate: "colors"}).limit(50),
+        UpcToSku.countDocuments(filter),
+    ])
     return NextResponse.json({error: false, skus, count})
 }
