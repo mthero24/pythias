@@ -1,104 +1,1318 @@
-"use client"
-import {Box, Grid2, Card, Container, Typography, Divider, Button} from "@mui/material";
-import Image from "next/image"
-import  tiktok from "./tiktoksm.jpeg"
-import  etsy from "./etsy2.jpeg"
-import  amazon from "./amazon.png"
-import acenda from "./Acenda.png"
-import {TikTokModal} from "./TikTokModal";
-import {useState} from "react";
-import {AcendaModal} from "./AcendaModal";
-import {WalmartModal} from "./WalmartModal";
+"use client";
+import {
+    Box, Grid2, Card, CardActionArea, Container, Typography, Divider,
+    Button, Chip, Stack, Paper, Avatar, Switch,
+    Collapse, Table, TableHead, TableBody, TableRow, TableCell,
+    TableContainer, CircularProgress, Alert, Tooltip, Select, MenuItem,
+    TextField,
+} from "@mui/material";
+import Image from "next/image";
+import tiktok  from "./tiktoksm.jpeg";
+import etsy    from "./etsy2.jpeg";
+import amazon  from "./amazon.png";
+import acenda  from "./Acenda.png";
+import { TikTokModal }  from "./TikTokModal";
+import { AcendaModal }  from "./AcendaModal";
+import { WalmartModal } from "./WalmartModal";
+import { FaireModal }   from "./FaireModal";
+import { SheinModal }   from "./SheinModal";
+import { TemuModal }    from "./TemuModal";
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import AddIcon from "@mui/icons-material/Add";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import SyncIcon from "@mui/icons-material/Sync";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import axios from "axios";
 
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI }){
-    const [tikTokOpen, setTikTokOpen] = useState(false)
-    const [acendaOpen, setAcendaOpen] = useState(false)
-    const [walmartOpen, setWalmartOpen] = useState(false)
-    const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || [])
-    return (
-        <Container maxWidth={"lg"}>
-            <Box sx={{padding: "3%"}}>
-                <Grid2 container spacing={3}>
-                    <Grid2 size={12}>
-                        <Typography textAlign={"center"} fontSize={"1.4rem"}>Create New Connection</Typography>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} onClick={()=>{setTikTokOpen(true)}}>
-                            <Box >
-                                <Image src={tiktok} alt={"tiktok"} width={600} height={600} style={{width: "100%", height: "auto"}}/>
-                            </Box>
-                        </Card>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} >
-                            <Link href={etsyRedirectURI || "#"} target="_blank" style={{textDecoration: "none", color: "inherit"}}>
-                                <Box >
-                                    <Image src={etsy} alt={"etsy"} width={600} height={600} style={{width: "100%", height: "auto", background: "#fff"}}/>
-                                </Box>
-                            </Link>
-                        </Card>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8,  } }}>
-                             <Box >
-                                <Image src={amazon} alt={"amazon"} width={600} height={600} style={{width: "100%", height: "auto"}}/>
-                            </Box>
-                        </Card>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} onClick={()=>{setAcendaOpen(true)}}>
-                             <Box>
-                                <Image src={acenda} alt={"acenda"} width={600} height={600} style={{width: "100%", height: "auto", objectFit: "cover"}}/>
-                            </Box>
-                        </Card>
-                    </Grid2>
-                    <Grid2 size={3}>
-                        <Card sx={{ padding: "4%", boxShadow: "1px 2px 1px #e2e2e2", height: "100%", "&:hover": { cursor: "pointer", boxShadow: "3px 4px 3px #e2e2e2", opacity: .8, } }} onClick={()=>{setWalmartOpen(true)}}>
-                             <Box>
-                                <img src="/walmart.png" alt="walmart" style={{width: "100%", height: "auto", objectFit: "cover"}}/>
-                            </Box>
-                        </Card>
-                    </Grid2>
-                </Grid2>
+// ─── Brand config ─────────────────────────────────────────────────────────────
+const PLATFORMS = {
+    tiktok:  { label: "TikTok Shop",  color: "#010101", description: "Sell directly on TikTok Shop with product listings and order sync." },
+    etsy:    { label: "Etsy",         color: "#F56400", description: "Connect your Etsy storefront for listing management and orders." },
+    amazon:  { label: "Amazon",       color: "#FF9900", description: "Amazon Marketplace integration.", comingSoon: true },
+    acenda:  { label: "Acenda",       color: "#1565C0", description: "Sync inventory and catalog with your Acenda storefront." },
+    walmart: { label: "Walmart",      color: "#0071CE", description: "List products on Walmart Marketplace and manage orders." },
+    faire:   { label: "Faire",        color: "#10305A", description: "Wholesale marketplace connecting brands with independent retailers." },
+    shein:   { label: "SHEIN",        color: "#000000", description: "List products on SHEIN's global marketplace via the Open Platform API." },
+    temu:    { label: "Temu",         color: "#ff6500", description: "List products on Temu's global marketplace via the Partner Open Platform API." },
+};
+
+function platformColor(type) {
+    return PLATFORMS[type]?.color ?? "#6b7280";
+}
+
+// ─── Platform card in the gallery ────────────────────────────────────────────
+function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, comingSoon }) {
+    const inner = (
+        <Box sx={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            gap: 1.5, height: "100%", p: 3, textAlign: "center",
+        }}>
+            <Box sx={{
+                height: 64, display: "flex", alignItems: "center", justifyContent: "center",
+                width: "100%",
+            }}>
+                {logo
+                    ? <Image src={logo} alt={alt} width={200} height={64}
+                        style={{ maxWidth: "100%", maxHeight: 64, width: "auto", height: "auto", objectFit: "contain" }} />
+                    : <img src={logoSrc} alt={alt}
+                        style={{ maxWidth: "100%", maxHeight: 64, width: "auto", height: "auto", objectFit: "contain" }} />
+                }
             </Box>
-            <TikTokModal open={tikTokOpen} setOpen={setTikTokOpen} provider={provider}/>
-            <AcendaModal open={acendaOpen} setOpen={setAcendaOpen} provider={provider} apiConnections={apiConnections} setConnections={setApiConnections}/>
-            <WalmartModal open={walmartOpen} setOpen={setWalmartOpen} provider={provider} apiConnections={apiConnections} setConnections={setApiConnections}/>
-            <Divider/>
-            <Box sx={{padding: "3%"}}>
-                 <Typography textAlign={"center"} fontSize={"1.4rem"}>Connections</Typography>
-                 {tiktokShops.map(tt=>(
-                    <Box key={tt._id} sx={{background: "#fff", padding: "2%", borderRadius: "10px", margin: "1%", display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+            <Typography variant="subtitle1" fontWeight={700}>{name}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1, fontSize: "0.8rem" }}>
+                {description}
+            </Typography>
+            {comingSoon
+                ? <Chip label="Coming Soon" size="small" sx={{ bgcolor: "#f3f4f6", color: "#6b7280", fontWeight: 600 }} />
+                : <Button
+                    variant="outlined" size="small" startIcon={<AddIcon />}
+                    sx={{ mt: "auto", pointerEvents: "none", borderRadius: 2 }}
+                >
+                    Connect
+                </Button>
+            }
+        </Box>
+    );
+
+    if (comingSoon) {
+        return (
+            <Card variant="outlined" sx={{
+                height: "100%", opacity: 0.6,
+                borderRadius: 2, border: "1px solid #e5e7eb",
+            }}>
+                {inner}
+            </Card>
+        );
+    }
+
+    if (href) {
+        return (
+            <Card variant="outlined" sx={{
+                height: "100%", borderRadius: 2, border: "1px solid #e5e7eb",
+                transition: "box-shadow .15s, transform .15s",
+                "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,.12)", transform: "translateY(-2px)" },
+            }}>
+                <CardActionArea component={Link} href={href} target="_blank" sx={{ height: "100%" }}>
+                    {inner}
+                </CardActionArea>
+            </Card>
+        );
+    }
+
+    return (
+        <Card variant="outlined" sx={{
+            height: "100%", borderRadius: 2, border: "1px solid #e5e7eb",
+            transition: "box-shadow .15s, transform .15s",
+            "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,.12)", transform: "translateY(-2px)" },
+        }}>
+            <CardActionArea onClick={onClick} sx={{ height: "100%" }}>
+                {inner}
+            </CardActionArea>
+        </Card>
+    );
+}
+
+// ─── Etsy Orders Panel ────────────────────────────────────────────────────────
+const ETSY_CARRIERS = ["usps","ups","fedex","dhl","ontrac","other"];
+
+function EtsyOrdersPanel({ connectionId }) {
+    const [orders, setOrders]     = useState([]);
+    const [loading, setLoading]   = useState(false);
+    const [error, setError]       = useState("");
+    const [fetched, setFetched]   = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier]   = useState("usps");
+    const [tracking, setTracking] = useState("");
+    const [shipping, setShipping] = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/etsy/orders?connectionId=${connectionId}`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : JSON.stringify(d) ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const ship = async () => {
+        if (!tracking.trim()) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/etsy/orders", {
+                connectionId, receiptId: shipTarget.receipt_id, trackingCode: tracking.trim(), carrier,
+            });
+            setOrders(prev => prev.filter(o => o.receipt_id !== shipTarget.receipt_id));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Open Orders (paid, not shipped)</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#f0fdf4" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Receipt #{shipTarget.receipt_id} — {shipTarget.name}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {ETSY_CARRIERS.map(c => <MenuItem key={c} value={c}>{c.toUpperCase()}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Code" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#F56400", "&:hover": { bgcolor: "#d45200" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Receipt #</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.receipt_id} hover selected={shipTarget?.receipt_id === o.receipt_id}>
+                                    <TableCell><Typography variant="body2" fontWeight={500}>#{o.receipt_id}</Typography></TableCell>
+                                    <TableCell><Typography variant="body2">{o.name ?? "—"}</Typography></TableCell>
+                                    <TableCell><Typography variant="body2">{(o.transactions ?? []).length}</Typography></TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">
+                                            {o.grandtotal?.amount ? `$${(o.grandtotal.amount / o.grandtotal.divisor).toFixed(2)}` : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.create_timestamp ? new Date(o.create_timestamp * 1000).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button size="small" variant="outlined"
+                                            startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                            onClick={() => { setShipTarget(o); setTracking(""); }}
+                                            sx={{ borderColor: "#F56400", color: "#F56400" }}>
+                                            Ship
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No open orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Acenda Orders Panel ───────────────────────────────────────────────────────
+function AcendaOrdersPanel({ connectionId }) {
+    const [orders, setOrders]   = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState("");
+    const [acking, setAcking]   = useState(null);
+    const [fetched, setFetched] = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/acenda/orders?connectionId=${connectionId}&unacked=true`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : JSON.stringify(d) ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const acknowledge = async (orderId) => {
+        setAcking(orderId);
+        try {
+            await axios.post("/api/integrations/acenda/orders", { connectionId, orderId });
+            setOrders(prev => prev.filter(o => o.id !== orderId));
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : "Acknowledge failed");
+        } finally { setAcking(null); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">
+                    Unacknowledged Orders
+                </Typography>
+                <Button
+                    size="small" variant="outlined" startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}
+                >
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Created</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.id} hover>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={500}>{o.order_number ?? o.id}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip label={o.status ?? "—"} size="small"
+                                            sx={{ bgcolor: "#dbeafe", color: "#1e40af", fontWeight: 600, fontSize: "0.7rem" }} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">{(o.line_items ?? o.items ?? []).length}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Tooltip title="Mark as acknowledged (removes from queue)">
+                                            <Button
+                                                size="small" variant="outlined" color="success"
+                                                startIcon={acking === o.id ? <CircularProgress size={12} /> : <CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                                                disabled={acking === o.id}
+                                                onClick={() => acknowledge(o.id)}
+                                            >
+                                                Acknowledge
+                                            </Button>
+                                        </Tooltip>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary" sx={{ pl: 0.5 }}>
+                    No unacknowledged orders found.
+                </Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Walmart Orders Panel ─────────────────────────────────────────────────────
+const WALMART_CARRIERS = ["USPS", "UPS", "FedEx", "DHL"];
+
+function WalmartOrdersPanel({ connectionId }) {
+    const [orders, setOrders]   = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState("");
+    const [fetched, setFetched] = useState(false);
+    const [acking, setAcking]   = useState(null);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier] = useState("USPS");
+    const [tracking, setTracking] = useState("");
+    const [shipping, setShipping] = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/walmart/orders?connectionId=${connectionId}&released=true`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : JSON.stringify(d) ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const acknowledge = async (purchaseOrderId) => {
+        setAcking(purchaseOrderId);
+        try {
+            await axios.post("/api/integrations/walmart/orders", { connectionId, purchaseOrderId, action: "acknowledge" });
+            setOrders(prev => prev.filter(o => o.purchaseOrderId !== purchaseOrderId));
+        } catch (e) {
+            setError(typeof e.response?.data?.error === "string" ? e.response.data.error : "Acknowledge failed");
+        } finally { setAcking(null); }
+    };
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            const lines = (shipTarget.orderLines?.orderLine ?? []).map(l => ({
+                lineNumber: l.lineNumber,
+                quantity: parseInt(l.orderLineQuantity?.amount ?? "1", 10),
+                trackingNumber: tracking.trim(),
+                carrier,
+            }));
+            await axios.post("/api/integrations/walmart/orders", { connectionId, purchaseOrderId: shipTarget.purchaseOrderId, action: "ship", lines });
+            setOrders(prev => prev.filter(o => o.purchaseOrderId !== shipTarget.purchaseOrderId));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(typeof e.response?.data?.error === "string" ? e.response.data.error : "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Released Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#e0f2fe" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order #{shipTarget.customerOrderId ?? shipTarget.purchaseOrderId}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {WALMART_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#0071CE", "&:hover": { bgcolor: "#005fa3" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.purchaseOrderId} hover selected={shipTarget?.purchaseOrderId === o.purchaseOrderId}>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={500}>
+                                            #{o.customerOrderId ?? o.purchaseOrderId}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">{o.shippingInfo?.postalAddress?.name ?? "—"}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">{(o.orderLines?.orderLine ?? []).length}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.orderDate ? new Date(o.orderDate).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={0.5}>
+                                            <Button size="small" variant="outlined"
+                                                startIcon={acking === o.purchaseOrderId ? <CircularProgress size={12} /> : <CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                                                disabled={acking === o.purchaseOrderId}
+                                                onClick={() => acknowledge(o.purchaseOrderId)}
+                                                color="success">
+                                                Ack
+                                            </Button>
+                                            <Button size="small" variant="outlined"
+                                                startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                                onClick={() => { setShipTarget(o); setTracking(""); }}
+                                                sx={{ borderColor: "#0071CE", color: "#0071CE" }}>
+                                                Ship
+                                            </Button>
+                                        </Stack>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No released orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── SHEIN Orders Panel ───────────────────────────────────────────────────────
+const SHEIN_CARRIERS = ["USPS", "UPS", "FedEx", "DHL", "OnTrac", "LSO", "Other"];
+
+function SheinOrdersPanel({ connectionId }) {
+    const [orders, setOrders]   = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState("");
+    const [fetched, setFetched] = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier] = useState("USPS");
+    const [tracking, setTracking] = useState("");
+    const [shipping, setShipping] = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/shein/orders?connectionId=${connectionId}&status=unshipped`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : JSON.stringify(d) ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/shein/orders", {
+                connectionId,
+                orderId: shipTarget.order_no ?? shipTarget.id,
+                action: "ship",
+                carrierCode: carrier,
+                trackingNumber: tracking.trim(),
+            });
+            setOrders(prev => prev.filter(o => (o.order_no ?? o.id) !== (shipTarget.order_no ?? shipTarget.id)));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Unshipped Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#f5f5f5" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order #{shipTarget.order_no ?? shipTarget.id}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {SHEIN_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#222" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.order_no ?? o.id} hover selected={shipTarget?.order_no === o.order_no}>
+                                    <TableCell><Typography variant="body2" fontWeight={500}>#{o.order_no ?? o.id}</Typography></TableCell>
+                                    <TableCell>
+                                        <Chip label={o.order_status ?? "—"} size="small"
+                                            sx={{ bgcolor: "#f3f4f6", color: "#374151", fontWeight: 600, fontSize: "0.7rem" }} />
+                                    </TableCell>
+                                    <TableCell><Typography variant="body2">{(o.order_items ?? o.items ?? []).length}</Typography></TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.create_time ? new Date(o.create_time * 1000).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button size="small" variant="outlined"
+                                            startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                            onClick={() => { setShipTarget(o); setTracking(""); }}
+                                            sx={{ borderColor: "#000", color: "#000" }}>
+                                            Ship
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No unshipped orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Temu Orders Panel ────────────────────────────────────────────────────────
+const TEMU_CARRIERS = ["USPS", "UPS", "FedEx", "DHL", "OnTrac", "Other"];
+
+function TemuOrdersPanel({ connectionId }) {
+    const [orders, setOrders]   = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState("");
+    const [fetched, setFetched] = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier] = useState("USPS");
+    const [tracking, setTracking] = useState("");
+    const [shipping, setShipping] = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/temu/orders?connectionId=${connectionId}&orderStatus=1`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : JSON.stringify(d) ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/temu/orders", {
+                connectionId,
+                orderSn: shipTarget.orderSn ?? shipTarget.order_sn ?? shipTarget.id,
+                action: "ship",
+                carrierCode: carrier,
+                trackingNumber: tracking.trim(),
+            });
+            const key = shipTarget.orderSn ?? shipTarget.order_sn ?? shipTarget.id;
+            setOrders(prev => prev.filter(o => (o.orderSn ?? o.order_sn ?? o.id) !== key));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Pending Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#fff5ee" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.orderSn ?? shipTarget.order_sn ?? shipTarget.id}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {TEMU_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#ff6500", "&:hover": { bgcolor: "#e05a00" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => {
+                                const key = o.orderSn ?? o.order_sn ?? o.id;
+                                return (
+                                    <TableRow key={key} hover selected={(shipTarget?.orderSn ?? shipTarget?.order_sn ?? shipTarget?.id) === key}>
+                                        <TableCell><Typography variant="body2" fontWeight={500}>{key}</Typography></TableCell>
+                                        <TableCell>
+                                            <Chip label={o.orderStatus ?? o.order_status ?? "—"} size="small"
+                                                sx={{ bgcolor: "#fff5ee", color: "#ff6500", fontWeight: 600, fontSize: "0.7rem" }} />
+                                        </TableCell>
+                                        <TableCell><Typography variant="body2">{(o.orderGoodsList ?? o.items ?? []).length}</Typography></TableCell>
+                                        <TableCell>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {o.createTime ? new Date(o.createTime).toLocaleDateString() : "—"}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button size="small" variant="outlined"
+                                                startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                                onClick={() => { setShipTarget(o); setTracking(""); }}
+                                                sx={{ borderColor: "#ff6500", color: "#ff6500" }}>
+                                                Ship
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No pending orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Faire Orders Panel ────────────────────────────────────────────────────────
+const FAIRE_CARRIERS = ["USPS", "UPS", "FEDEX", "DHL_EXPRESS", "DHL_ECOMMERCE", "CANADA_POST", "OTHER"];
+
+function FaireOrdersPanel({ connectionId }) {
+    const [orders, setOrders]   = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState("");
+    const [fetched, setFetched] = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier] = useState("USPS");
+    const [tracking, setTracking] = useState("");
+    const [shipping, setShipping] = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/faire/orders?connectionId=${connectionId}&excludedStates=SHIPPED,CANCELED`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : JSON.stringify(d) ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const accept = async (orderId) => {
+        try {
+            await axios.post("/api/integrations/faire/orders", { connectionId, orderId, action: "accept" });
+            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, state: "PROCESSING" } : o));
+        } catch (e) {
+            setError(typeof e.response?.data?.error === "string" ? e.response.data.error : "Accept failed");
+        }
+    };
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/faire/orders", {
+                connectionId, orderId: shipTarget.id, action: "ship",
+                shipment: { carrier, tracking_code: tracking.trim() },
+            });
+            setOrders(prev => prev.filter(o => o.id !== shipTarget.id));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(typeof e.response?.data?.error === "string" ? e.response.data.error : "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Open Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#f0f4ff" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.display_id ?? shipTarget.id}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 140 }}>
+                            {FAIRE_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Code" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#10305A", "&:hover": { bgcolor: "#0c2347" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>State</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.id} hover selected={shipTarget?.id === o.id}>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={500}>{o.display_id ?? o.id}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip label={o.state ?? "—"} size="small"
+                                            sx={{ bgcolor: "#dbeafe", color: "#1e40af", fontWeight: 600, fontSize: "0.7rem" }} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">{(o.items ?? []).length}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={0.5}>
+                                            {o.state === "NEW" && (
+                                                <Button size="small" variant="outlined" color="success"
+                                                    startIcon={<CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                                                    onClick={() => accept(o.id)}>
+                                                    Accept
+                                                </Button>
+                                            )}
+                                            <Button size="small" variant="outlined"
+                                                startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                                onClick={() => { setShipTarget(o); setTracking(""); }}
+                                                sx={{ borderColor: "#10305A", color: "#10305A" }}>
+                                                Ship
+                                            </Button>
+                                        </Stack>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No open orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Connection row ────────────────────────────────────────────────────────────
+function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pullOrdersEnabled: initialPullEnabled, onDeactivate }) {
+    const normalizedType = type?.toLowerCase() ?? "";
+    const cfg   = PLATFORMS[normalizedType] ?? {};
+    const label = cfg.label ?? type ?? "Unknown";
+    const color = cfg.color ?? "#6b7280";
+    const isAcenda = normalizedType === "acenda" ||
+        (!normalizedType && !!organization && !["walmart","faire","tiktok","etsy","shein","temu"].includes(normalizedType));
+    const isEtsy    = normalizedType === "etsy";
+    const isWalmart = normalizedType === "walmart";
+    const isFaire   = normalizedType === "faire";
+    const isShein   = normalizedType === "shein";
+    const isTemu    = normalizedType === "temu";
+
+    const [pullEnabled, setPullEnabled] = useState(!!initialPullEnabled);
+    const [toggling, setToggling]       = useState(false);
+    const [confirming, setConfirming]   = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
+
+    const maskedKey = apiKey
+        ? `${"•".repeat(Math.max(0, apiKey.length - 4))}${apiKey.slice(-4)}`
+        : "—";
+
+    const deactivate = async () => {
+        setDeactivating(true);
+        try {
+            await axios.delete(`/api/admin/integrations?connectionId=${id}`);
+            onDeactivate?.(id);
+        } catch (e) {
+            console.error("Deactivate failed", e);
+            setDeactivating(false);
+            setConfirming(false);
+        }
+    };
+
+    const togglePullOrders = async (checked) => {
+        setToggling(true);
+        try {
+            await axios.patch("/api/admin/integrations/settings", {
+                connectionId: id,
+                field: "pullOrdersEnabled",
+                value: checked,
+            });
+            setPullEnabled(checked);
+        } catch (e) {
+            console.error("Toggle failed", e);
+        } finally { setToggling(false); }
+    };
+
+    return (
+        <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+            <Box sx={{ display: "flex", alignItems: "stretch" }}>
+                <Box sx={{ width: 6, bgcolor: color, flexShrink: 0 }} />
+                <Box sx={{ flexGrow: 1 }}>
+                    {/* ── Main row ── */}
+                    <Box sx={{
+                        display: "flex", flexDirection: { xs: "column", sm: "row" },
+                        alignItems: { sm: "center" }, justifyContent: "space-between",
+                        px: 2.5, py: 2, gap: 2,
+                    }}>
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                            <Avatar sx={{ bgcolor: color, width: 38, height: 38, fontSize: "0.75rem", fontWeight: 700 }}>
+                                {label.slice(0, 2).toUpperCase()}
+                            </Avatar>
+                            <Box>
+                                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                    <Typography fontWeight={700} fontSize="0.95rem">{name}</Typography>
+                                    <Chip label={label} size="small"
+                                        sx={{ bgcolor: `${color}18`, color, fontWeight: 600, fontSize: "0.7rem", border: "none" }} />
+                                    <Chip label="Active" size="small"
+                                        sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem", border: "none" }} />
+                                </Stack>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+                                    API Key: {maskedKey}
+                                    {organization && <> &nbsp;·&nbsp; Org: {organization}</>}
+                                </Typography>
+                            </Box>
+                        </Stack>
+
+                        <Stack direction="row" alignItems="center" spacing={1.5} flexShrink={0} flexWrap="wrap">
+                            {manageHref && !confirming && (
+                                <Button
+                                    component={Link} href={manageHref}
+                                    variant="contained" size="small"
+                                    endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                                    sx={{ bgcolor: color, "&:hover": { bgcolor: color, filter: "brightness(0.88)" }, borderRadius: 1.5 }}
+                                >
+                                    Manage
+                                </Button>
+                            )}
+                            {confirming ? (
+                                <>
+                                    <Typography variant="caption" color="error" fontWeight={600}>Remove this connection?</Typography>
+                                    <Button size="small" variant="contained" color="error" onClick={deactivate}
+                                        disabled={deactivating} sx={{ borderRadius: 1.5 }}
+                                        startIcon={deactivating ? <CircularProgress size={12} color="inherit" /> : null}>
+                                        Confirm
+                                    </Button>
+                                    <Button size="small" onClick={() => setConfirming(false)} disabled={deactivating} sx={{ borderRadius: 1.5 }}>
+                                        Cancel
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button variant="outlined" size="small" color="error" sx={{ borderRadius: 1.5 }}
+                                    onClick={() => setConfirming(true)}>
+                                    Deactivate
+                                </Button>
+                            )}
+                        </Stack>
+                    </Box>
+
+                    {/* ── Pull Orders toggle strip ── */}
+                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu) && (() => {
+                        const accentColor = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : "#1565C0";
+                        const bgEnabled   = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : "#eff6ff";
+                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : "Acenda";
+                        return (
+                            <Box sx={{
+                                borderTop: "1px solid #f1f5f9",
+                                bgcolor: pullEnabled ? bgEnabled : "#f8fafc",
+                                px: 2.5, py: 1.25,
+                                display: "flex", alignItems: "center", gap: 2,
+                            }}>
+                                <Switch
+                                    checked={pullEnabled}
+                                    onChange={e => togglePullOrders(e.target.checked)}
+                                    disabled={toggling}
+                                    size="small"
+                                    sx={{
+                                        "& .MuiSwitch-switchBase.Mui-checked": { color: accentColor },
+                                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: accentColor },
+                                    }}
+                                />
+                                <Box>
+                                    <Typography variant="body2" fontWeight={600} color={pullEnabled ? accentColor : "text.secondary"}>
+                                        Pull Orders {toggling && <CircularProgress size={10} sx={{ ml: 0.5 }} />}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {pullEnabled ? `Pulling open orders from ${platformName}` : `Enable to pull orders from ${platformName}`}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        );
+                    })()}
+
+                    {/* ── Orders panels (expand when enabled) ── */}
+                    {isAcenda && (
+                        <Collapse in={pullEnabled}>
+                            <AcendaOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isEtsy && (
+                        <Collapse in={pullEnabled}>
+                            <EtsyOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isWalmart && (
+                        <Collapse in={pullEnabled}>
+                            <WalmartOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isFaire && (
+                        <Collapse in={pullEnabled}>
+                            <FaireOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isShein && (
+                        <Collapse in={pullEnabled}>
+                            <SheinOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isTemu && (
+                        <Collapse in={pullEnabled}>
+                            <TemuOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                </Box>
+            </Box>
+        </Paper>
+    );
+}
+
+// ─── TikTok connection row ─────────────────────────────────────────────────────
+function TikTokConnectionCard({ shop, onDeactivate }) {
+    const color = "#010101";
+    const [confirming, setConfirming]     = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
+
+    const deactivate = async () => {
+        setDeactivating(true);
+        try {
+            await axios.delete(`/api/admin/integrations?connectionId=${shop._id}&type=tiktok`);
+            onDeactivate?.(shop._id);
+        } catch (e) {
+            console.error("Deactivate failed", e);
+            setDeactivating(false);
+            setConfirming(false);
+        }
+    };
+
+    return (
+        <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+            <Box sx={{ display: "flex", alignItems: "stretch" }}>
+                <Box sx={{ width: 6, bgcolor: color, flexShrink: 0 }} />
+                <Box sx={{
+                    display: "flex", flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { sm: "center" }, justifyContent: "space-between",
+                    flexGrow: 1, px: 2.5, py: 2, gap: 2,
+                }}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                        <Avatar sx={{ bgcolor: color, width: 38, height: 38, fontSize: "0.75rem", fontWeight: 700 }}>TT</Avatar>
                         <Box>
-                            <Typography>Tik Tok - Seller Name: {tt.seller_name}</Typography>
-                            <Typography sx={{fontSize: ".8rem", textAlign: "center"}} >Shops</Typography>
-                            <Divider sx={{margin: "1%"}}/>
-                            {tt.shop_list.map(l=>(
-                                <Typography sx={{fontSize: ".8rem"}} key={l.shp_name}>{`Shop Name: ${l.shop_name} Region: ${l.region}`}</Typography>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <Typography fontWeight={700} fontSize="0.95rem">{shop.seller_name}</Typography>
+                                <Chip label="TikTok Shop" size="small"
+                                    sx={{ bgcolor: "#010101", color: "#fff", fontWeight: 600, fontSize: "0.7rem" }} />
+                                <Chip label="Active" size="small"
+                                    sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem", border: "none" }} />
+                            </Stack>
+                            {(shop.shop_list ?? []).map(s => (
+                                <Typography key={s.shop_name} variant="caption" color="text.secondary" display="block">
+                                    {s.shop_name} · {s.region}
+                                </Typography>
                             ))}
                         </Box>
-                        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start"}}>
-                            <Button sx={{background: "#0066CC", color: "#fff"}}> {tt.access_token != undefined? "Reauthorize": "Authorize"}</Button>
-                            <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>
-                        </Box>
-                    </Box>
-                 ))}  
-                 {apiConnections.map(api=>(
-                    <Box key={api._id} sx={{background: "#fff", padding: "2%", borderRadius: "10px", margin: "1%", display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
-                        <Box>
-                            <Typography>{api.displayName} {api.type ? `(${api.type})` : ""}</Typography>
-                             <Typography sx={{ fontSize: ".8rem", textAlign: "left" }} title="API Key">Client ID: {"*".repeat(Math.max(0, api.apiKey?.length - 6))}{api?.apiKey?.slice(-6)}</Typography>
-                            <Divider sx={{margin: "1%"}}/>
-                             <Typography sx={{ fontSize: ".8rem", textAlign: "left" }} title="API Secret">Client Secret: {"*".repeat(Math.max(0, api.apiSecret?.length - 6))}{api.apiSecret?.slice(-6)}</Typography>
-                             {api.organization && <Typography sx={{ fontSize: ".8rem", textAlign: "left" }} title="Partner/Org">Partner ID: {api.organization}</Typography>}
-                        </Box>
-                        <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-start"}}>
-                            <Button sx={{background: "red", color: "#fff"}}>Deactivate</Button>
-                        </Box>
-                    </Box>
-                 ))}  
+                    </Stack>
+                    <Stack direction="row" spacing={1} flexShrink={0} alignItems="center">
+                        {!confirming && (
+                            <Button variant="contained" size="small"
+                                sx={{ bgcolor: "#69C9D0", color: "#000", "&:hover": { bgcolor: "#50b8bf" }, borderRadius: 1.5 }}>
+                                {shop.access_token ? "Reauthorize" : "Authorize"}
+                            </Button>
+                        )}
+                        {confirming ? (
+                            <>
+                                <Typography variant="caption" color="error" fontWeight={600}>Remove this connection?</Typography>
+                                <Button size="small" variant="contained" color="error" onClick={deactivate}
+                                    disabled={deactivating} sx={{ borderRadius: 1.5 }}
+                                    startIcon={deactivating ? <CircularProgress size={12} color="inherit" /> : null}>
+                                    Confirm
+                                </Button>
+                                <Button size="small" onClick={() => setConfirming(false)} disabled={deactivating} sx={{ borderRadius: 1.5 }}>
+                                    Cancel
+                                </Button>
+                            </>
+                        ) : (
+                            <Button variant="outlined" size="small" color="error" sx={{ borderRadius: 1.5 }}
+                                onClick={() => setConfirming(true)}>
+                                Deactivate
+                            </Button>
+                        )}
+                    </Stack>
+                </Box>
             </Box>
-        </Container>
-    )
+        </Paper>
+    );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI }) {
+    const [tikTokOpen,  setTikTokOpen]  = useState(false);
+    const [acendaOpen,  setAcendaOpen]  = useState(false);
+    const [walmartOpen, setWalmartOpen] = useState(false);
+    const [faireOpen,   setFaireOpen]   = useState(false);
+    const [sheinOpen,   setSheinOpen]   = useState(false);
+    const [temuOpen,    setTemuOpen]    = useState(false);
+    const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || []);
+    const [tiktokConnections, setTiktokConnections] = useState(tiktokShops || []);
+
+    const allConnections = [
+        ...tiktokConnections.map(t => ({ _type: "tiktok", ...t })),
+        ...apiConnections,
+    ];
+
+    const manageHref = (api) => {
+        if (api.type === "walmart") return `/admin/integrations/walmart?connectionId=${api._id}`;
+        if (api.type === "faire")   return `/admin/integrations/faire?connectionId=${api._id}`;
+        return null;
+    };
+
+    return (
+        <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh", pb: 6 }}>
+            {/* Page header */}
+            <Box sx={{ bgcolor: "#fff", borderBottom: "1px solid #e5e7eb", py: 3, px: { xs: 2, sm: 4 }, mb: 4 }}>
+                <Container maxWidth="lg">
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <StorefrontIcon sx={{ color: "#6b7280" }} />
+                        <Box>
+                            <Typography variant="h5" fontWeight={700}>Integrations</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Connect your selling channels and manage marketplace listings.
+                            </Typography>
+                        </Box>
+                    </Stack>
+                </Container>
+            </Box>
+
+            <Container maxWidth="lg">
+                {/* ── Available integrations ── */}
+                <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2}>
+                    Available Platforms
+                </Typography>
+                <Grid2 container spacing={2.5} sx={{ mt: 0.5, mb: 5 }}>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logo={tiktok} alt="TikTok Shop"
+                            name="TikTok Shop"
+                            description={PLATFORMS.tiktok.description}
+                            onClick={() => setTikTokOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logo={etsy} alt="Etsy"
+                            name="Etsy"
+                            description={PLATFORMS.etsy.description}
+                            href={etsyRedirectURI || "#"}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logo={amazon} alt="Amazon"
+                            name="Amazon"
+                            description={PLATFORMS.amazon.description}
+                            comingSoon
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logo={acenda} alt="Acenda"
+                            name="Acenda"
+                            description={PLATFORMS.acenda.description}
+                            onClick={() => setAcendaOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/walmart.png" alt="Walmart"
+                            name="Walmart"
+                            description={PLATFORMS.walmart.description}
+                            onClick={() => setWalmartOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/faire.svg" alt="Faire"
+                            name="Faire"
+                            description={PLATFORMS.faire.description}
+                            onClick={() => setFaireOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/shein.svg" alt="SHEIN"
+                            name="SHEIN"
+                            description={PLATFORMS.shein.description}
+                            onClick={() => setSheinOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/temu.svg" alt="Temu"
+                            name="Temu"
+                            description={PLATFORMS.temu.description}
+                            onClick={() => setTemuOpen(true)}
+                        />
+                    </Grid2>
+                </Grid2>
+
+                {/* ── Active connections ── */}
+                <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2}>
+                    Active Connections ({allConnections.length})
+                </Typography>
+
+                {allConnections.length === 0 ? (
+                    <Paper variant="outlined" sx={{
+                        mt: 1, p: 5, borderRadius: 2, textAlign: "center",
+                        border: "1px dashed #d1d5db",
+                    }}>
+                        <StorefrontIcon sx={{ fontSize: 40, color: "#d1d5db", mb: 1 }} />
+                        <Typography color="text.secondary">No connections yet. Select a platform above to get started.</Typography>
+                    </Paper>
+                ) : (
+                    <Stack spacing={1.5} sx={{ mt: 1 }}>
+                        {tiktokConnections.map(tt => (
+                            <TikTokConnectionCard key={tt._id} shop={tt}
+                                onDeactivate={id => setTiktokConnections(prev => prev.filter(t => t._id !== id))} />
+                        ))}
+                        {apiConnections.map(api => (
+                            <ConnectionCard
+                                key={api._id}
+                                id={api._id}
+                                name={api.displayName}
+                                type={api.type}
+                                apiKey={api.apiKey}
+                                organization={api.organization}
+                                manageHref={manageHref(api)}
+                                pullOrdersEnabled={api.pullOrdersEnabled}
+                                onDeactivate={id => setApiConnections(prev => prev.filter(a => a._id !== id))}
+                            />
+                        ))}
+                    </Stack>
+                )}
+            </Container>
+
+            {/* Modals */}
+            <TikTokModal  open={tikTokOpen}  setOpen={setTikTokOpen}  provider={provider} />
+            <AcendaModal  open={acendaOpen}  setOpen={setAcendaOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <WalmartModal open={walmartOpen} setOpen={setWalmartOpen} provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <FaireModal   open={faireOpen}   setOpen={setFaireOpen}   provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <SheinModal   open={sheinOpen}   setOpen={setSheinOpen}   provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <TemuModal    open={temuOpen}    setOpen={setTemuOpen}    provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+        </Box>
+    );
 }

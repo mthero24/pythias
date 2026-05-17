@@ -76,6 +76,28 @@ export const getCatalogAcenda = async ({clientId, clientSecret, organization}) =
         return res?.data.result
     }
 }
+export const getShipAdviceAcenda = async ({ clientId, clientSecret, organization, unacked = true, limit = 50, offset = 0 }) => {
+    const token = await getTokenAcenda({ clientId, clientSecret });
+    if (!token) return { error: "Auth failed" };
+    const headers = { "X-Astur-Organization": organization, AUTHORIZATION: `Bearer ${token}` };
+    const params = { limit, offset };
+    if (unacked) params.unacked = true;
+    let errorRes;
+    const res = await axios.get("https://api.acenda.io/v1/ship_advice", { params, headers }).catch(e => { errorRes = e.response?.data ?? e.message; });
+    if (errorRes) return { error: errorRes };
+    return { orders: res?.data?.results ?? [], total: res?.data?.total ?? 0 };
+};
+
+export const acknowledgeShipAdviceAcenda = async ({ clientId, clientSecret, organization, id }) => {
+    const token = await getTokenAcenda({ clientId, clientSecret });
+    if (!token) return { error: "Auth failed" };
+    const headers = { "X-Astur-Organization": organization, AUTHORIZATION: `Bearer ${token}` };
+    let errorRes;
+    const res = await axios.post(`https://api.acenda.io/v1/ship_advice/${id}/acknowledge`, {}, { headers }).catch(e => { errorRes = e.response?.data ?? e.message; });
+    if (errorRes) return { error: errorRes };
+    return { success: true, data: res?.data };
+};
+
 export const getSkuAcenda = async ({clientId, clientSecret, organization, sku}) =>{
     let token = await getTokenAcenda({clientId, clientSecret})
     //console.log(token , "token")

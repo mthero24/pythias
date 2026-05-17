@@ -363,9 +363,76 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 }
             }
             setLoading(false);
+        } else if (c.type === "faire") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/faire/send", { product, connectionId: c._id }).catch((e) => {
+                const msg = e.response?.data?.error ?? "Something went wrong sending to Faire.";
+                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+                setLoading(false);
+            });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.faireProductId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                alert(`Sent to Faire. Product ID: ${res.data.faireProductId}`);
+            }
+            setLoading(false);
+        } else if (c.type === "shein") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/shein/send", { product, connectionId: c._id }).catch((e) => {
+                const msg = e.response?.data?.error ?? "Something went wrong sending to SHEIN.";
+                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+                setLoading(false);
+            });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.sheinSpuName;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                alert(`Sent to SHEIN. SPU Name: ${res.data.sheinSpuName}`);
+            }
+            setLoading(false);
+        } else if (c.type === "temu") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/temu/send", { product, connectionId: c._id }).catch((e) => {
+                const msg = e.response?.data?.error ?? "Something went wrong sending to Temu.";
+                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+                setLoading(false);
+            });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.goodsId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                alert(`Sent to Temu. Goods ID: ${res.data.goodsId}`);
+            }
+            setLoading(false);
         } else if (c.type === "walmart") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/walmart/send", { product, connectionId: c._id }).catch(() => { alert("Something went wrong sending to Walmart."); setLoading(false); });
+            const res = await axios.post("/api/integrations/walmart/send", { product, connectionId: c._id }).catch((e) => {
+                const msg = e.response?.data?.error ?? "Something went wrong sending to Walmart.";
+                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+                // If not authorized, deselect the Walmart marketplace from this product
+                if (e.response?.data?.notAuthorized) {
+                    const parentMp = marketPlaces.find(mp => mp.connections?.some(conn => (conn._id?.toString() ?? conn.toString()) === c._id.toString()));
+                    if (parentMp) {
+                        const p = { ...product };
+                        p.marketPlacesArray = (p.marketPlacesArray ?? []).filter(m => (m._id ? m._id.toString() : m.toString()) !== parentMp._id.toString());
+                        axios.post("/api/admin/products", { products: [p] }).then(() => {
+                            setProduct({ ...p });
+                            if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                        });
+                    }
+                }
+                setLoading(false);
+            });
             if (res?.data && !res.data.error) {
                 let p = { ...product };
                 if (!p.ids) p.ids = {};
@@ -529,6 +596,27 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                             <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "walmart")[0].displayName}</Typography>
                                                             <Divider sx={{ my: 0.75 }} />
                                                             {product.ids?.[marketPlace.connections.filter(c => c?.type === "walmart")[0].displayName] && <Typography variant="body2" color="text.secondary">Walmart Feed ID: {product.ids[marketPlace.connections.filter(c => c?.type === "walmart")[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.filter(c => c?.type === "faire")[0] && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "faire")[0].displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.filter(c => c?.type === "faire")[0].displayName] && <Typography variant="body2" color="text.secondary">Faire Product ID: {product.ids[marketPlace.connections.filter(c => c?.type === "faire")[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.filter(c => c?.type === "shein")[0] && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "shein")[0].displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.filter(c => c?.type === "shein")[0].displayName] && <Typography variant="body2" color="text.secondary">SHEIN SPU: {product.ids[marketPlace.connections.filter(c => c?.type === "shein")[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.filter(c => c?.type === "temu")[0] && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "temu")[0].displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.filter(c => c?.type === "temu")[0].displayName] && <Typography variant="body2" color="text.secondary">Temu Goods ID: {product.ids[marketPlace.connections.filter(c => c?.type === "temu")[0].displayName]}</Typography>}
                                                         </Card>
                                                     )}
                                                     {header.length > 0 && (

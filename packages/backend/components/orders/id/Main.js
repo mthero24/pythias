@@ -5,7 +5,7 @@ import {
     Divider, Collapse, Tooltip, Avatar, CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CreatableSelect from "react-select/creatable";
 import axios from "axios";
 import { Search } from "@pythias/backend";
@@ -83,6 +83,25 @@ export function Main({ ord, blanks, source }) {
     const [addressForm, setAddressForm] = useState(ord.shippingAddress ?? {});
     const [addressSaving, setAddressSaving] = useState(false);
 
+    useEffect(() => {
+        const shippedStatuses = ["Shipped", "shipped", "Out For Delivery"];
+        if (!shippedStatuses.includes(ord.status)) return;
+        if (!ord.shippingInfo?.labels?.length) return;
+        setTrackingLoading(true);
+        axios.post("/api/production/shipping/track", { orderId: ord._id })
+            .then(res => {
+                if (!res.data.error && res.data.order) {
+                    setOrder(prev => ({
+                        ...prev,
+                        status: res.data.order.status,
+                        shippingInfo: res.data.order.shippingInfo,
+                    }));
+                }
+            })
+            .catch(() => {})
+            .finally(() => setTrackingLoading(false));
+    }, []);
+
     const saveAddress = async () => {
         setAddressSaving(true);
         try {
@@ -99,8 +118,14 @@ export function Main({ ord, blanks, source }) {
     const refreshTracking = async () => {
         setTrackingLoading(true);
         try {
-            await axios.post("/api/production/shipping/track");
-            window.location.reload();
+            const res = await axios.post("/api/production/shipping/track", { orderId: order._id });
+            if (!res.data.error && res.data.order) {
+                setOrder(prev => ({
+                    ...prev,
+                    status: res.data.order.status,
+                    shippingInfo: res.data.order.shippingInfo,
+                }));
+            }
         } catch {
             alert("Tracking refresh failed");
         } finally {

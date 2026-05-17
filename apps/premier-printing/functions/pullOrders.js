@@ -1,5 +1,5 @@
-import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory, Converters } from "@pythias/mongo";
-import { getOrders, generatePieceID } from "@pythias/integrations";
+import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory, Converters, ApiKeyIntegrations } from "@pythias/mongo";
+import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda } from "@pythias/integrations";
 
 
 const CreateSku = async ({ blank, color, size, design, threadColor, designSku }) => {
@@ -166,10 +166,193 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     return item
 }
 
+// ─── Marketplace order normalizers ────────────────────────────────────────────
+// Normalize Faire orders to the same shape the processing loop expects.
+function normalizeFaireOrder(o, conn) {
+    const stateMap = { NEW: "awaiting_shipment", PROCESSING: "awaiting_shipment", SHIPPED: "shipped", CANCELED: "cancelled", BACKORDERED: "on_hold" };
+    return {
+        orderNumber: o.display_id ?? o.id,
+        orderId: o.id,
+        orderKey: o.id,
+        orderDate: o.created_at ? new Date(o.created_at) : new Date(),
+        orderStatus: stateMap[o.state] ?? "awaiting_shipment",
+        advancedOptions: { source: "faire" },
+        billTo: { name: "faire" },
+        shipTo: {
+            name: o.ship_to?.name ?? "not provided",
+            street1: o.ship_to?.address1 ?? "not provided",
+            street2: o.ship_to?.address2 ?? "",
+            city: o.ship_to?.city ?? "not provided",
+            postalCode: o.ship_to?.postal_code ?? "not provided",
+            state: o.ship_to?.state ?? "",
+            country: o.ship_to?.country_code ?? "US",
+        },
+        orderTotal: (o.items ?? []).reduce((s, i) => s + ((i.price?.amount_minor ?? 0) / 100), 0),
+        customerNotes: "",
+        items: (o.items ?? []).map(i => ({
+            sku: i.sku ?? "",
+            quantity: i.quantity ?? 1,
+            orderItemId: i.id,
+            unitPrice: (i.price?.amount_minor ?? 0) / 100,
+            name: i.display_title ?? i.sku ?? "",
+            upc: "",
+            options: [],
+        })),
+        _marketplaceOrderId: o.id,
+        _marketplaceConnectionId: conn._id,
+    };
+}
+
+function normalizeWalmartOrder(o, conn) {
+    const lines = (o.orderLines?.orderLine ?? []).flatMap(line => {
+        const qty = parseInt(line.orderLineQuantity?.amount ?? "1", 10);
+        return Array.from({ length: qty }, () => ({
+            sku: line.item?.sku ?? "",
+            quantity: 1,
+            orderItemId: `${o.purchaseOrderId}_${line.lineNumber}`,
+            unitPrice: line.charges?.charge?.[0]?.chargeAmount?.amount ?? 0,
+            name: line.item?.productName ?? "",
+            upc: "",
+            options: [],
+        }));
+    });
+    return {
+        orderNumber: o.customerOrderId ?? o.purchaseOrderId,
+        orderId: o.purchaseOrderId,
+        orderKey: o.purchaseOrderId,
+        orderDate: o.orderDate ? new Date(o.orderDate) : new Date(),
+        orderStatus: "awaiting_shipment",
+        advancedOptions: { source: "walmart" },
+        billTo: { name: "walmart" },
+        shipTo: {
+            name: o.shippingInfo?.postalAddress?.name ?? "not provided",
+            street1: o.shippingInfo?.postalAddress?.address1 ?? "not provided",
+            street2: o.shippingInfo?.postalAddress?.address2 ?? "",
+            city: o.shippingInfo?.postalAddress?.city ?? "not provided",
+            postalCode: o.shippingInfo?.postalAddress?.postalCode ?? "not provided",
+            state: o.shippingInfo?.postalAddress?.state ?? "",
+            country: o.shippingInfo?.postalAddress?.country ?? "US",
+        },
+        orderTotal: lines.reduce((s, l) => s + l.unitPrice, 0),
+        customerNotes: "",
+        items: lines,
+        _marketplaceOrderId: o.purchaseOrderId,
+        _marketplaceConnectionId: conn._id,
+    };
+}
+
+function normalizeEtsyOrder(o, conn) {
+    return {
+        orderNumber: String(o.receipt_id),
+        orderId: String(o.receipt_id),
+        orderKey: String(o.receipt_id),
+        orderDate: o.create_timestamp ? new Date(o.create_timestamp * 1000) : new Date(),
+        orderStatus: "awaiting_shipment",
+        advancedOptions: { source: "etsy" },
+        billTo: { name: "etsy" },
+        shipTo: {
+            name: o.name ?? "not provided",
+            street1: o.first_line ?? o.second_line ?? "not provided",
+            street2: "",
+            city: o.city ?? "not provided",
+            postalCode: o.zip ?? "not provided",
+            state: o.state ?? "",
+            country: o.country_iso ?? "US",
+        },
+        orderTotal: o.grandtotal?.amount ? o.grandtotal.amount / (o.grandtotal.divisor ?? 100) : 0,
+        customerNotes: "",
+        items: (o.transactions ?? []).map(t => ({
+            sku: t.sku ?? t.product_data?.sku ?? "",
+            quantity: t.quantity ?? 1,
+            orderItemId: String(t.transaction_id),
+            unitPrice: t.price?.amount ? t.price.amount / (t.price.divisor ?? 100) : 0,
+            name: t.title ?? "",
+            upc: "",
+            options: (t.variations ?? []).map(v => ({ value: v.formatted_value })),
+        })),
+        _marketplaceOrderId: String(o.receipt_id),
+        _marketplaceConnectionId: conn._id,
+    };
+}
+
+function normalizeAcendaOrder(o, conn) {
+    return {
+        orderNumber: o.order_number ?? String(o.id),
+        orderId: String(o.id),
+        orderKey: String(o.id),
+        orderDate: o.created_at ? new Date(o.created_at) : new Date(),
+        orderStatus: "awaiting_shipment",
+        advancedOptions: { source: "acenda" },
+        billTo: { name: "acenda" },
+        shipTo: {
+            name: o.shipping_address?.name ?? o.billing_address?.name ?? "not provided",
+            street1: o.shipping_address?.address1 ?? "not provided",
+            street2: o.shipping_address?.address2 ?? "",
+            city: o.shipping_address?.city ?? "not provided",
+            postalCode: o.shipping_address?.zip ?? "not provided",
+            state: o.shipping_address?.province ?? "",
+            country: o.shipping_address?.country_code ?? "US",
+        },
+        orderTotal: parseFloat(o.total_price ?? "0"),
+        customerNotes: "",
+        items: (o.line_items ?? o.items ?? []).flatMap(i =>
+            Array.from({ length: parseInt(i.quantity ?? "1", 10) }, () => ({
+                sku: i.sku ?? "",
+                quantity: 1,
+                orderItemId: String(i.id ?? i.line_item_id ?? Math.random()),
+                unitPrice: parseFloat(i.price ?? "0"),
+                name: i.title ?? i.name ?? "",
+                upc: "",
+                options: [],
+            }))
+        ),
+        _marketplaceOrderId: String(o.id),
+        _marketplaceConnectionId: conn._id,
+    };
+}
+
+// ─── Pull from active marketplace connections ──────────────────────────────────
+async function pullFromConnections() {
+    const connections = await ApiKeyIntegrations.find({ pullOrdersEnabled: true }).lean();
+    const orders = [];
+    for (const conn of connections) {
+        const type = conn.type?.toLowerCase();
+        try {
+            if (type === "faire") {
+                const { orders: raw, error } = await getOrdersFaire({
+                    apiKey: conn.apiKey,
+                    excludedStates: "SHIPPED,CANCELED",
+                    limit: 50,
+                });
+                if (!error) orders.push(...(raw ?? []).map(o => normalizeFaireOrder(o, conn)));
+            } else if (type === "walmart") {
+                const result = await getReleasedOrdersWalmart({ clientId: conn.apiKey, clientSecret: conn.apiSecret });
+                if (!result.error) orders.push(...(result.orders ?? []).map(o => normalizeWalmartOrder(o, conn)));
+            } else if (type === "etsy") {
+                // getOpenReceiptsEtsy needs a live Mongoose document for token refresh
+                const liveConn = await ApiKeyIntegrations.findById(conn._id);
+                const data = await getOpenReceiptsEtsy(liveConn);
+                orders.push(...(data?.results ?? []).map(o => normalizeEtsyOrder(o, conn)));
+            } else if (type === "acenda" || conn.organization) {
+                const { orders: raw, error } = await getShipAdviceAcenda({
+                    clientId: conn.apiKey,
+                    clientSecret: conn.apiSecret,
+                    organization: conn.organization,
+                    unacked: true,
+                });
+                if (!error) orders.push(...(raw ?? []).map(o => normalizeAcendaOrder(o, conn)));
+            }
+        } catch (e) {
+            console.error(`pullFromConnections error for ${type}:`, e.message);
+        }
+    }
+    return { orders, enabledTypes: new Set(connections.map(c => c.type?.toLowerCase()).filter(Boolean)) };
+}
+
 export async function pullOrders(){
     let colorFixer
     let sizeFixer
-    let blankConverter 
+    let blankConverter
     let designFixer
     let skuFixer
     let designConverterDoc = await Converters.findOne({type: "design"});
@@ -183,7 +366,20 @@ export async function pullOrders(){
     if(designConverterDoc && designConverterDoc.converter) designFixer = designConverterDoc.converter;
     if(skuConverterDoc && skuConverterDoc.converter) skuFixer = skuConverterDoc.converter? skuConverterDoc.converter: {};
     console.log("pulling orders")
-    let orders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`,})
+
+    // Pull directly from enabled marketplace connections
+    const { orders: marketplaceOrders, enabledTypes } = await pullFromConnections();
+
+    // Pull from ShipStation, skipping sources handled by direct connections
+    const ssRaw = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}` });
+    const ssOrders = enabledTypes.size > 0
+        ? ssRaw.filter(o => {
+            const src = (o.advancedOptions?.source ?? o.billTo?.name ?? "").toLowerCase();
+            return !enabledTypes.has(src);
+        })
+        : ssRaw;
+
+    const orders = [...marketplaceOrders, ...ssOrders]
     for(let o of orders){
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({poNumber: o.orderNumber}).populate("items")
@@ -203,7 +399,9 @@ export async function pullOrders(){
                 shippingType: marketplace == "faire" || marketplace == "TSC" || marketplace == "Zulily"? "Expedited": "Standard",
                 marketplace: o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name,
                 total: o.orderTotal,
-                paid: true
+                paid: true,
+                ...(o._marketplaceOrderId ? { marketplaceOrderId: o._marketplaceOrderId } : {}),
+                ...(o._marketplaceConnectionId ? { marketplaceConnectionId: o._marketplaceConnectionId } : {}),
             })
             if(o.customerNotes){
                 console.log(o.customerNotes.split("<br/>"))

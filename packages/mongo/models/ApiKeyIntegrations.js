@@ -13,5 +13,6 @@ let schema = new mongoose.Schema({
     shopId: String,
     shopName: String,
     sellerName: String,
+    pullOrdersEnabled: { type: Boolean, default: false },
 })
 export default PremierPrinting.model("ApiKeyIntegrations", schema);

@@ -1,7 +1,7 @@
 import { Order, Item } from "@pythias/mongo";
 import { OrdersMain } from "@pythias/backend";
 import { serialize } from "@/functions/serialize";
-import { OrdersSearch } from "@/functions/ordersSearch";
+import { OrdersSearch, ORDERS_PER_PAGE } from "@/functions/ordersSearch";
 export const dynamic = "force-dynamic";
 import "@/functions/pullOrders";
 
@@ -27,7 +27,7 @@ export default async function OrdersPage(req) {
     }
 
     const { orders, count } = await OrdersSearch({ Order, q, page, statusFilter, orderIds });
-    const pages = Math.ceil(count / 200);
+    const pages = Math.ceil(count / ORDERS_PER_PAGE);
 
     return (
         <OrdersMain

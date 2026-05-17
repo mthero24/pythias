@@ -1,5 +1,4 @@
-
-
-export async function GET(req){
-    return Response.json({error: "not implemented"})
-}
+import { handleAdminEtsyGET, handleAdminEtsyPOST, handleAdminEtsyPUT } from "@pythias/integrations";
+export const GET = handleAdminEtsyGET;
+export const POST = handleAdminEtsyPOST;
+export const PUT = handleAdminEtsyPUT;

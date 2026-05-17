@@ -72,7 +72,9 @@ const schema = new mongoose.Schema({
     ref: brand,
   },
   brandName: "String",
-  marketplaceOrderId: { type: String, },
+  marketplaceOrderId: { type: String },
+  marketplaceConnectionId: { type: mongoose.Schema.Types.ObjectId },
+  marketplaceShipped: { type: Boolean, default: false },
   error: { type: String },
   shippingRates: {
     firstClassRate: Number,
@@ -174,5 +176,7 @@ const schema = new mongoose.Schema({
 //   }
 //   next();
 // });
+
+schema.index({ date: -1 });
 
 export default PremierPrinting.model("Order", schema);

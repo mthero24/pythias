@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:developer.walmart.com)",
+      "WebFetch(domain:medium.com)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:marketplace.walmartapis.com)",
+      "WebFetch(domain:rollout.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(find ./apps/*/app/api -type f -name \"*.js\" -o -name \"*.ts\")",
+      "Bash(grep -E \"\\\\.\\(js|ts\\)$\")",
+      "Bash(curl --silent --request POST --url https://marketplace.walmartapis.com/v3/items/spec --header \"accept: application/json\" --header \"content-type: application/json\" --data '{\"feedType\":\"MP_WFS_ITEM\",\"version\":\"5.0.20240517-04_08_27-api\",\"productTypes\":[\"Baby Blankets\"]}')",
+      "WebFetch(domain:developers.faire.com)",
+      "WebFetch(domain:faire.github.io)"
+    ]
+  }
+}

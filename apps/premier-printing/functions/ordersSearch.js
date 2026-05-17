@@ -1,65 +1,123 @@
-const LIMIT = 200;
+import { Items } from "@pythias/mongo";
+
+export const ORDERS_PER_PAGE = 25;
+
+const ORDER_SELECT = "poNumber marketplace items status date total shippingAddress";
+const ITEM_SELECT  = "sku name colorName sizeName styleCode design isBlank color size blank upc pieceId";
+
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export async function OrdersSearch({ Order, q, page = 1, statusFilter = {}, orderIds = null }) {
-    const skip = (page - 1) * LIMIT;
+    const skip     = (page - 1) * ORDERS_PER_PAGE;
+    const populate = { path: "items", select: ITEM_SELECT };
 
-    if (q && q.trim().length > 2) {
-        // Atlas Search — get all matching IDs, then apply extra filters in a regular find
-        const hits = await Order.aggregate([
-            {
-                $search: {
-                    index: "default",
-                    text: {
-                        query: q.replace(/[^a-zA-Z0-9 ]/g, "").trim(),
-                        path: [
-                            "poNumber",
-                            "shippingAddress.name",
-                            "shippingAddress.address1",
-                            "shippingAddress.city",
-                            "shippingAddress.state",
-                            "shippingAddress.zip",
-                        ],
-                        fuzzy: { maxEdits: 2, prefixLength: 3, maxExpansions: 2 },
-                        matchCriteria: "any",
-                    },
-                },
-            },
-            { $project: { _id: 1 } },
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
+    // When searching by query, drop both the date limit and status filter so any matching order is found
+    const searching = Boolean(q?.trim());
+    const dateLimit = searching ? {} : { date: { $gte: since } };
+    const activeStatusFilter = searching ? {} : statusFilter;
+    const baseFilter = { "items.0": { $exists: true }, ...dateLimit, ...activeStatusFilter };
+    if (orderIds) baseFilter._id = { $in: orderIds };
+
+    // ── No search query ──────────────────────────────────────────────────────
+    if (!q?.trim()) {
+        const [count, orders] = await Promise.all([
+            Order.countDocuments(baseFilter),
+            Order.find(baseFilter)
+                .populate(populate)
+                .select(ORDER_SELECT)
+                .skip(skip).limit(ORDERS_PER_PAGE).lean(),
         ]);
-
-        let ids = hits.map(h => h._id);
-
-        // Intersect with orderIds filter (blank / missinginfo) if present
-        if (orderIds) {
-            const allowed = new Set(orderIds.map(id => id.toString()));
-            ids = ids.filter(id => allowed.has(id.toString()));
-        }
-
-        const findQuery = { _id: { $in: ids }, "items.0": { $exists: true }, ...statusFilter };
-        const count = await Order.countDocuments(findQuery);
-        const orders = await Order.find(findQuery)
-            .sort({ date: -1 })
-            .populate("items")
-            .select("poNumber marketplace items status date total")
-            .skip(skip)
-            .limit(LIMIT)
-            .lean();
-
         return { orders, count };
     }
 
-    // No query — regular find with filters
-    const findQuery = { "items.0": { $exists: true }, ...statusFilter };
-    if (orderIds) findQuery._id = { $in: orderIds };
+    // ── Search query present ─────────────────────────────────────────────────
+    const raw    = q.trim();
+    const idSet  = new Set();
 
-    const count = await Order.countDocuments(findQuery);
-    const orders = await Order.find(findQuery)
-        .sort({ date: -1 })
-        .populate("items")
-        .select("poNumber marketplace items status date total")
-        .skip(skip)
-        .limit(LIMIT)
-        .lean();
+    const searches = [
+        // 1. Regex on PO number, marketplace, tracking number
+        Order.find({
+            ...baseFilter,
+            $or: [
+                { poNumber:    { $regex: escapeRegex(raw), $options: "i" } },
+                { marketplace: { $regex: escapeRegex(raw), $options: "i" } },
+                { "shippingInfo.labels.trackingNumber": { $regex: escapeRegex(raw), $options: "i" } },
+            ],
+        }).select("_id").lean(),
+
+        // 2. SKU / piece ID via items collection
+        Items.find({
+            $or: [
+                { pieceId: { $regex: escapeRegex(raw), $options: "i" } },
+                { sku:     { $regex: escapeRegex(raw), $options: "i" } },
+            ],
+        }).select("order").lean(),
+    ];
+
+    // 3. Atlas fuzzy — name + address (only useful for > 2 chars)
+    let atlasPromise = Promise.resolve([]);
+    if (raw.length > 2) {
+        const sanitized = raw.replace(/[^a-zA-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+        if (sanitized) {
+            atlasPromise = Order.aggregate([
+                {
+                    $search: {
+                        index: "default",
+                        text: {
+                            query: sanitized,
+                            path: [
+                                "shippingAddress.name",
+                                "shippingAddress.address1",
+                                "shippingAddress.city",
+                                "shippingAddress.state",
+                                "shippingAddress.zip",
+                            ],
+                            fuzzy: { maxEdits: 1, prefixLength: 2, maxExpansions: 50 },
+                            matchCriteria: "any",
+                        },
+                    },
+                },
+                { $match: baseFilter },
+                { $project: { _id: 1 } },
+            ]).catch((e) => {
+                console.error("Atlas Search failed:", e.message);
+                return [];
+            });
+        }
+    }
+
+    const [regexHits, itemHits, atlasHits] = await Promise.all([...searches, atlasPromise]);
+
+    regexHits.forEach(h => idSet.add(h._id.toString()));
+    itemHits.forEach(h  => { if (h.order) idSet.add(h.order.toString()); });
+    atlasHits.forEach(h => idSet.add(h._id.toString()));
+
+    if (!idSet.size) return { orders: [], count: 0 };
+
+    // Intersect with pre-filter whitelist
+    let matchIds = [...idSet];
+    if (orderIds) {
+        const allowed = new Set(orderIds.map(id => id.toString()));
+        matchIds = matchIds.filter(id => allowed.has(id));
+    }
+    if (!matchIds.length) return { orders: [], count: 0 };
+
+    // Mongoose auto-casts string IDs to ObjectId — no mongoose import needed
+    const matchFilter = {
+        _id: { $in: matchIds },
+        "items.0": { $exists: true },
+        ...activeStatusFilter,
+    };
+
+    const [count, orders] = await Promise.all([
+        Order.countDocuments(matchFilter),
+        Order.find(matchFilter)
+            .populate(populate)
+            .select(ORDER_SELECT)
+            .skip(skip).limit(ORDERS_PER_PAGE).lean(),
+    ]);
 
     return { orders, count };
 }

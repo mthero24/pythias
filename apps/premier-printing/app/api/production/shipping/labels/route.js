@@ -5,7 +5,7 @@ import Order from "../../../../../models/Order";
 import manifest from "../../../../../models/manifest";
 import axios from "axios"
 import Bin from "../../../../../models/Bin";
-import {updateOrder, createReceiptShipment} from "@pythias/integrations";
+import {updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart} from "@pythias/integrations";
 import {ApiKeyIntegrations} from "@pythias/mongo";
 export async function POST(req= NextApiRequest){
     let data = await req.json();
@@ -91,15 +91,44 @@ export async function POST(req= NextApiRequest){
                 await item.save();
             }
             order = await order.save();
-            if (order.marketplace?.toLowerCase() === "etsy") {
+            if (order.marketplace?.toLowerCase() === "etsy" && order.marketplaceOrderId) {
                 try {
-                    let etsyConn = await ApiKeyIntegrations.findOne({ type: "etsy" });
+                    const etsyConn = await ApiKeyIntegrations.findOne({ type: "etsy" });
                     if (etsyConn) {
-                        await createReceiptShipment(etsyConn, order.orderId, label.trackingNumber, data.selectedShipping.provider);
+                        await createReceiptShipment(etsyConn, order.marketplaceOrderId, label.trackingNumber, data.selectedShipping.provider);
                     }
-                } catch (e) {
-                    console.error("Failed to update Etsy shipment:", e.message);
-                }
+                } catch (e) { console.error("Failed to update Etsy shipment:", e.message); }
+            }
+            if (order.marketplace?.toLowerCase() === "faire" && order.marketplaceOrderId) {
+                try {
+                    const faireConn = await ApiKeyIntegrations.findById(order.marketplaceConnectionId)
+                        ?? await ApiKeyIntegrations.findOne({ type: "faire" });
+                    if (faireConn) {
+                        const FAIRE_CARRIER = { usps: "USPS", ups: "UPS", fedex: "FEDEX", dhl: "DHL_EXPRESS" };
+                        const carrier = FAIRE_CARRIER[data.selectedShipping.provider?.toLowerCase()] ?? "OTHER";
+                        await shipOrderFaire({ apiKey: faireConn.apiKey, orderId: order.marketplaceOrderId, shipments: [{ carrier, tracking_code: label.trackingNumber }] });
+                    }
+                } catch (e) { console.error("Failed to update Faire shipment:", e.message); }
+            }
+            if (order.marketplace?.toLowerCase() === "walmart" && order.marketplaceOrderId) {
+                try {
+                    const walmartConn = await ApiKeyIntegrations.findById(order.marketplaceConnectionId)
+                        ?? await ApiKeyIntegrations.findOne({ type: "walmart" });
+                    if (walmartConn) {
+                        const WALMART_CARRIER = { usps: "USPS", ups: "UPS", fedex: "FedEx", dhl: "DHL" };
+                        const carrier = WALMART_CARRIER[data.selectedShipping.provider?.toLowerCase()] ?? "USPS";
+                        const { order: wOrder } = await getOrderWalmart({ clientId: walmartConn.apiKey, clientSecret: walmartConn.apiSecret, purchaseOrderId: order.marketplaceOrderId });
+                        if (wOrder) {
+                            const lines = (wOrder.orderLines?.orderLine ?? []).map(l => ({
+                                lineNumber: l.lineNumber,
+                                quantity: parseInt(l.orderLineQuantity?.amount ?? "1", 10),
+                                trackingNumber: label.trackingNumber,
+                                carrier,
+                            }));
+                            await shipOrderWalmart({ clientId: walmartConn.apiKey, clientSecret: walmartConn.apiSecret, purchaseOrderId: order.marketplaceOrderId, lines });
+                        }
+                    }
+                } catch (e) { console.error("Failed to update Walmart shipment:", e.message); }
             }
             // print label
             let bin = await Bin.findOneAndUpdate({order: order._id},  {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})

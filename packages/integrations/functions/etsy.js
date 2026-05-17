@@ -758,11 +758,12 @@ const updateListing = async (
             inventory.push(inventoryItem);
         }
     }
-    if (variants[0].blank.sizeGuide.images[0] && i > 0) {
-        i++;
+    const sizeGuideUrl = variants[0].blank.sizeGuide.images[0];
+    if (sizeGuideUrl && !colorImageCompleted.includes(sizeGuideUrl)) {
+        i = Math.max(i + 1, 2);
         try {
             // Get image buffer using axios
-            let url = variants[0].blank.sizeGuide.images[0];
+            let url = sizeGuideUrl;
             const response = await axios.get(url, {
                 responseType: "arraybuffer",
                 timeout: 30000, // 30 second timeout
@@ -844,7 +845,7 @@ export const updateListingFrom = async (listing_id, product, credentials)=> {
         credentials
     );
     credentials = updatedCredentials2;
-    updateListing(
+    await updateListing(
         credentials,
         listing_id,
         product,
@@ -910,7 +911,7 @@ export const createDraftListing = async (product, credentials) => {
             credentials
         );
         credentials = updatedCredentials2;
-        updateListing(
+        await updateListing(
             credentials,
             listing.listing_id,
             product,
@@ -1098,6 +1099,22 @@ export const fetchOrders = async (credentials) => {
     } catch (err) {
         console.log(err);
     }
+};
+
+// Refresh token + fetch open (paid, not shipped) receipts.
+// credentials must be a live Mongoose document so save() works.
+export const getOpenReceiptsEtsy = async (credentials) => {
+    try {
+        const refresh = await refreshToken(credentials.refreshToken);
+        if (refresh?.access_token) {
+            credentials.apiKey = refresh.access_token;
+            credentials.refreshToken = refresh.refresh_token;
+            await credentials.save();
+        }
+    } catch (e) {
+        console.error("Etsy token refresh failed:", e.message);
+    }
+    return getShopReceipts(credentials);
 };
 
 export const createReceiptShipment = async (credentials, receiptId, trackingCode, carrier) => {

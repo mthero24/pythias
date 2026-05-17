@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar"
+import Navbar from "@/components/Navbar";
+import ThemeRegistry from "./ThemeRegistry";
 import {CSVProvider} from "@pythias/backend";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Pythias - Test App",
-  description: "Pythias - Test App",
+  title: "Print Threads",
+  description: "Print Threads — production management",
   icons: {
     icon: "/icon.png",
   },
@@ -26,12 +27,13 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{background: "#f2f2f2", color: "#000"}}
       >
-        <CSVProvider>
-          <Navbar/>
-          {children}
-        </CSVProvider>
+        <ThemeRegistry>
+          <CSVProvider>
+            <Navbar/>
+            {children}
+          </CSVProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );
