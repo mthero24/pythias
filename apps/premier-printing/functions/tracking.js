@@ -1,4 +1,4 @@
-import { uspsTracking, TrackPackageFedEx } from "@pythias/shipping";
+import { uspsTracking, TrackPackageFedEx, TrackPackageUPS } from "@pythias/shipping";
 import Order from "@/models/Order";
 
 const uspsCredentials = () => ({
@@ -17,7 +17,12 @@ const fedexCredentials = () => ({
     secret: process.env.SecretKeyFedExTest,
 });
 
-const SHIPPED_STATUSES = ["Shipped", "shipped", "Out For Delivery"];
+const upsCredentials = () => ({
+    clientID: process.env.upsClientId,
+    clientSecret: process.env.upsClientSecret,
+});
+
+const SHIPPED_STATUSES = ["shipped", "Shipped", "Out For Delivery", "out_for_delivery"];
 
 async function processOrderTracking(order) {
     let changed = false;
@@ -33,6 +38,8 @@ async function processOrderTracking(order) {
                 result = await uspsTracking({ tn, credentials: uspsCredentials() });
             } else if (lbl.provider === "fedex" || lbl.provider === "FedEx") {
                 result = await TrackPackageFedEx({ tn, credentials: fedexCredentials() });
+            } else if (tn.toUpperCase().startsWith("1Z") || lbl.provider === "ups" || lbl.provider === "UPS") {
+                result = await TrackPackageUPS({ tn, credentials: upsCredentials() });
             }
         } catch (e) {
             console.log("Tracking error for", tn, e.message);
@@ -79,6 +86,20 @@ export const runTracking = async () => {
         status: { $in: SHIPPED_STATUSES },
         "shippingInfo.labels.0": { $exists: true },
         date: { $gt: cutoff },
+    }).select("status shippingInfo poNumber");
+
+    let updated = 0;
+    for (const order of orders) {
+        if (await processOrderTracking(order)) updated++;
+    }
+
+    return { updated, total: orders.length };
+};
+
+export const runTrackingAll = async () => {
+    const orders = await Order.find({
+        "shippingInfo.labels.0": { $exists: true },
+        status: { $nin: ["Delivered", "Cancelled", "cancelled", "cancelled_by_buyer"] },
     }).select("status shippingInfo poNumber");
 
     let updated = 0;

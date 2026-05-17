@@ -34,3 +34,4 @@ export {SublimationImages} from "./components/design/sublimationImages";
 export { PricingMain } from "./components/pricing/main";
 export { Main as MarketplacesMain } from "./components/marketplaces/Main";
 export { Main as ColorsMain } from "./components/colors/Main";
+export { ActivityDashboard } from "./components/userActivity/Dashboard";

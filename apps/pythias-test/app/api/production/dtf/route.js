@@ -3,6 +3,8 @@ import Items from "../../../../models/Items";
 import Color from "@/models/Color"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, style, item, source)=>{
     let styleImage = style.multiImages.front?.filter(i=> i.color == item.color.toString())[0]
     if(!styleImage){
@@ -76,6 +78,8 @@ export async function GET(req) {
 }
 
 export async function POST(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let config = JSON.parse(process.env.dtf);
     console.log(config);
     setConfig({
@@ -121,6 +125,7 @@ export async function POST(req = NextApiRequest) {
           });
         const result = await getImages(item.design?.front, item.design?.back, item.design?.upperSleeve, item.design?.lowerSleeve, item.design?.center, item.design?.pocket, item.blank, item)
         await item.save()
+        logActivity({ action: "dtf_sent", entity: "dtf", entityId: item._id, entityName: item.pieceId || "", userName, email, provider: "pythiasTest" });
         return NextResponse.json({
             error: false, msg: "added to que", ...result, item,
             images: item.design, type: "new", source: "PP" });

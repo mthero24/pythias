@@ -27,3 +27,5 @@ export {default as ApiKeyIntegrations} from "./models/ApiKeyIntegrations";
 export {default as Temps} from "./models/Temps";
 export { default as ProductInventory } from "./models/ProductInventory";
 export { default as Converters } from "./models/converters";
+export { default as UserActivity } from "./models/UserActivity";
+export { default as ChangeLog } from "./models/ChangeLog";

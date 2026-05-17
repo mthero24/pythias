@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runTracking, trackOrder } from "@/functions/tracking";
+import { runTracking, runTrackingAll, trackOrder } from "@/functions/tracking";
 import Order from "@/models/Order";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,10 @@ export async function POST(req) {
             await trackOrder(body.orderId);
             const order = await Order.findById(body.orderId).select("status shippingInfo").lean();
             return NextResponse.json({ error: false, order });
+        }
+        if (body.all) {
+            const result = await runTrackingAll();
+            return NextResponse.json({ error: false, ...result });
         }
         const result = await runTracking();
         return NextResponse.json({ error: false, ...result });

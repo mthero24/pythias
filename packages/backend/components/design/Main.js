@@ -5,7 +5,7 @@ import {
     Stack, Chip, IconButton, Tooltip,
 } from "@mui/material";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Uploader } from "../reusable/premier/uploader";
 import CreatableSelect from "react-select/creatable";
 import { useRouter } from "next/navigation";
@@ -57,6 +57,7 @@ const SectionCard = ({ icon, title, subtitle, children, action }) => (
 export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport, printTypes, canEdit = true }) {
     const router = useRouter();
     const [des, setDesign] = useState({ ...design });
+    const originalDesign = useRef({ ...design });
     const [bran, setBrands] = useState(brands);
     const [marketPlaces, setMarketPlaces] = useState(mPs);
     const [loading, setLoading] = useState(true);
@@ -142,8 +143,9 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
 
     let updateDesign = async (des, oldSku) => {
         if (!canEdit) return;
-        let res = await axios.put("/api/admin/designs", { design: { ...des }, oldSku }).catch(e => { res = e.response; });
+        let res = await axios.put("/api/admin/designs", { design: { ...des }, oldSku, before: originalDesign.current }).catch(e => { res = e.response; });
         if (res?.data?.error) alert(res.data.msg);
+        else originalDesign.current = { ...des };
     };
 
     const tagUpdate = (val) => {

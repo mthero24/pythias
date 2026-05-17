@@ -38,6 +38,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [imageGroups, setImageGroups] = useState([])
     const [allColors, setAllColors] = useState(colors)
     const [blank, setBlank] = useState(bla? {...bla}: {});
+    const originalBlank = useRef(bla ? { ...bla } : {});
     const [bulletPointsOpen, setBulletPointsOpen] = useState(false)
     const [sizesOpen, setSizesOpen] = useState(false)
     const [sizesGuideOpen, setSizesGuideOpen] = useState(false)
@@ -70,9 +71,11 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     };
     const update = async ({blank})=>{
         console.log("update", blank)
-        let res = await axios.post("/api/admin/blanks", { blank });
+        let res = await axios.post("/api/admin/blanks", { blank, before: blank._id ? originalBlank.current : null });
         if(res.data.error){
             alert("Error saving blank")
+        } else {
+            originalBlank.current = { ...blank };
         }
     }
     return (

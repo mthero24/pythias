@@ -1175,6 +1175,9 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
         ...apiConnections,
     ];
 
+    const connectedTypes = new Set(apiConnections.map(a => a.type?.toLowerCase()));
+    const hasTikTok = tiktokConnections.length > 0;
+
     const manageHref = (api) => {
         if (api.type === "walmart") return `/admin/integrations/walmart?connectionId=${api._id}`;
         if (api.type === "faire")   return `/admin/integrations/faire?connectionId=${api._id}`;
@@ -1204,22 +1207,26 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     Available Platforms
                 </Typography>
                 <Grid2 container spacing={2.5} sx={{ mt: 0.5, mb: 5 }}>
-                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                        <PlatformCard
-                            logo={tiktok} alt="TikTok Shop"
-                            name="TikTok Shop"
-                            description={PLATFORMS.tiktok.description}
-                            onClick={() => setTikTokOpen(true)}
-                        />
-                    </Grid2>
-                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                        <PlatformCard
-                            logo={etsy} alt="Etsy"
-                            name="Etsy"
-                            description={PLATFORMS.etsy.description}
-                            href={etsyRedirectURI || "#"}
-                        />
-                    </Grid2>
+                    {!hasTikTok && (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                            <PlatformCard
+                                logo={tiktok} alt="TikTok Shop"
+                                name="TikTok Shop"
+                                description={PLATFORMS.tiktok.description}
+                                onClick={() => setTikTokOpen(true)}
+                            />
+                        </Grid2>
+                    )}
+                    {!connectedTypes.has("etsy") && (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                            <PlatformCard
+                                logo={etsy} alt="Etsy"
+                                name="Etsy"
+                                description={PLATFORMS.etsy.description}
+                                href={etsyRedirectURI || "#"}
+                            />
+                        </Grid2>
+                    )}
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
                         <PlatformCard
                             logo={amazon} alt="Amazon"
@@ -1236,38 +1243,46 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             onClick={() => setAcendaOpen(true)}
                         />
                     </Grid2>
-                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                        <PlatformCard
-                            logoSrc="/walmart.png" alt="Walmart"
-                            name="Walmart"
-                            description={PLATFORMS.walmart.description}
-                            onClick={() => setWalmartOpen(true)}
-                        />
-                    </Grid2>
-                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                        <PlatformCard
-                            logoSrc="/faire.svg" alt="Faire"
-                            name="Faire"
-                            description={PLATFORMS.faire.description}
-                            onClick={() => setFaireOpen(true)}
-                        />
-                    </Grid2>
-                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                        <PlatformCard
-                            logoSrc="/shein.svg" alt="SHEIN"
-                            name="SHEIN"
-                            description={PLATFORMS.shein.description}
-                            onClick={() => setSheinOpen(true)}
-                        />
-                    </Grid2>
-                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                        <PlatformCard
-                            logoSrc="/temu.svg" alt="Temu"
-                            name="Temu"
-                            description={PLATFORMS.temu.description}
-                            onClick={() => setTemuOpen(true)}
-                        />
-                    </Grid2>
+                    {!connectedTypes.has("walmart") && (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                            <PlatformCard
+                                logoSrc="/walmart.png" alt="Walmart"
+                                name="Walmart"
+                                description={PLATFORMS.walmart.description}
+                                onClick={() => setWalmartOpen(true)}
+                            />
+                        </Grid2>
+                    )}
+                    {!connectedTypes.has("faire") && (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                            <PlatformCard
+                                logoSrc="/faire.svg" alt="Faire"
+                                name="Faire"
+                                description={PLATFORMS.faire.description}
+                                onClick={() => setFaireOpen(true)}
+                            />
+                        </Grid2>
+                    )}
+                    {!connectedTypes.has("shein") && (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                            <PlatformCard
+                                logoSrc="/shein.svg" alt="SHEIN"
+                                name="SHEIN"
+                                description={PLATFORMS.shein.description}
+                                onClick={() => setSheinOpen(true)}
+                            />
+                        </Grid2>
+                    )}
+                    {!connectedTypes.has("temu") && (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                            <PlatformCard
+                                logoSrc="/temu.svg" alt="Temu"
+                                name="Temu"
+                                description={PLATFORMS.temu.description}
+                                onClick={() => setTemuOpen(true)}
+                            />
+                        </Grid2>
+                    )}
                 </Grid2>
 
                 {/* ── Active connections ── */}

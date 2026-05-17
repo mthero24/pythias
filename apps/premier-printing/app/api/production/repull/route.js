@@ -1,11 +1,15 @@
 import { Bin, Items, RepullReasons, Blank, Inventory } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function GET(){
     console.log("GET REASONS")
     let blanks = await Blank.find().populate("colors").select("code colors sizes")
     return NextResponse.json({ error: false, reasons: await RepullReasons.find(), blanks})
 }
 export async function POST(req=NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data= await req.json()
     let item = await Items.findOne({pieceId: data.pieceId})
     console.log(item, "item to repull", data.blank, data.color, data.size)
@@ -41,6 +45,7 @@ export async function POST(req=NextApiRequest){
             await bin.save()
         }
         await item.save()
+        logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email });
         return NextResponse.json({error: false, msg: "Item Has Been Set To be Repulled!"})
     }else return NextResponse.json({error: true, msg: "Item not found"})
 }

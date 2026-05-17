@@ -3,6 +3,8 @@ import {Item as Items} from "@pythias/mongo";
 import Color from "@/models/Color"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function GET(req) {
     let config = JSON.parse(process.env.dtf);
     console.log(config)
@@ -49,6 +51,8 @@ export async function GET(req) {
 }
 
 export async function POST(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let config = JSON.parse(process.env.dtf);
     console.log(config);
     setConfig({
@@ -93,6 +97,7 @@ export async function POST(req = NextApiRequest) {
             date: new Date(),
           });
         await item.save()
+        logActivity({ action: "dtf_sent", entity: "dtf", entityId: item._id, entityName: item.pieceId || "", userName, email });
         return NextResponse.json({
             error: false, msg: "added to que", styleCode: item.blank.code,
             colorName: item.colorName, item,
@@ -109,6 +114,8 @@ export async function POST(req = NextApiRequest) {
 }
 
 export async function PUT(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     //console.log(data, "data")
     try{
@@ -168,6 +175,7 @@ export async function PUT(req = NextApiRequest) {
                 }
             }
         }
+        logActivity({ action: "dtf_sent", entity: "dtf", count: items.length, userName, email });
         return NextResponse.json({ error: false, msg: `${items.length} sent to printers`, items: send });
     } catch (error) {
         console.error("Error in DTF PUT:", error);

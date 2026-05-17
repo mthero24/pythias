@@ -2,173 +2,155 @@ import { NextApiRequest, NextResponse } from "next/server";
 import Blanks from "@/models/Blanks";
 import Inventory from "@/models/inventory";
 import Color from "@/models/Color";
-//#some note
-export async function GET(){
-  try{
-    let blanks = await Blanks.find({}).populate("colors").lean();
-    return NextResponse.json({error: false, blanks})
-  }catch(e){
-    return NextResponse.json({error: true, msg: JSON.stringify(e)})
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+
+export async function GET() {
+  try {
+    const blanks = await Blanks.find({}).populate("colors").lean();
+    return NextResponse.json({ error: false, blanks });
+  } catch (e) {
+    return NextResponse.json({ error: true, msg: JSON.stringify(e) });
   }
 }
-const updateFold = (blank)=>{
-  let newFold = []
-  if(!blank.fold) blank.fold = [];
-  for(let s of blank.sizes){
-    let fold = blank.fold?.filter(f=> f.size.toString() == s._id)[0]
-    if(fold) newFold.push(fold)
-    else{
-      newFold.push({
-        size: s._id,
-        sizeName: s.name,
-        fold: "TSHIRT SML",
-        sleeves: 0,
-        body: 0
-      })
+
+const updateFold = (blank) => {
+  if (!blank.fold) blank.fold = [];
+  blank.fold = blank.sizes.map(s => {
+    const existing = blank.fold.find(f => f.size?.toString() === String(s._id) || f.sizeName === s.name);
+    if (existing) {
+      if (!existing.size) existing.size = s._id;
+      return existing;
     }
-  }
-  blank.fold = newFold
-  return blank
-}
-const updateEnvelopes = (blank)=>{
-  let newEnvelopes = [];
-  console.log(blank.printLocations)
-  let printLocations = blank.printLocations.map(l=> {return l.name})
-  console.log(printLocations)
-  if(!blank.envelopes) blank.envelopes = [];
-  for(let e of blank.envelopes){
-    if(printLocations.includes(e.placement)) newEnvelopes.push(e)
-  }
-  for(let s of blank.sizes){
-    //console.log(s)
-    for(let loc of printLocations){
-      if(!newEnvelopes.filter(e=> e.size?.toString() == s?._id?.toString() && e.placement == loc)[0]){
-        newEnvelopes.push({
-          size: s._id,
-          sizeName: s.name,
-          platen: 2,
-          placement: loc,
-          horizoffset: 0,
-          vertoffset: 0,
-          width: 11,
-          height: 14
-        })
+    return { size: s._id, sizeName: s.name, fold: "TSHIRT SML", sleeves: 0, body: 0 };
+  });
+  return blank;
+};
+
+const updateEnvelopes = (blank) => {
+  const printLocations = blank.printLocations.map(l => l.name);
+  if (!blank.envelopes) blank.envelopes = [];
+
+  const newEnvelopes = blank.envelopes.filter(e => printLocations.includes(e.placement));
+  const existingKeys = new Set(newEnvelopes.map(e => `${e.size?.toString()}-${e.placement}`));
+
+  for (const s of blank.sizes) {
+    for (const loc of printLocations) {
+      const key = `${s._id?.toString()}-${loc}`;
+      if (!existingKeys.has(key)) {
+        newEnvelopes.push({ size: s._id, sizeName: s.name, platen: 2, placement: loc, horizoffset: 0, vertoffset: 0, width: 11, height: 14 });
+        existingKeys.add(key);
       }
     }
   }
-  if(newEnvelopes.length > 0){
-    blank.envelopes = newEnvelopes.sort((a,b)=>{
-      console.log(a)
-      if(a.placement.length > b.placement.length) return -1
-      if(a.placement.length < b.placement.length) return 1
-      return 0
-    })
-  }
-  return blank
-}
-let updateInventory = async (blank)=>{
-  console.log("update inventory", blank.colors.length)
-  for(let color of blank.colors){
-    color = await Color.findById(color)
-    for(let size of blank.sizes){
-      //console.log(color, size.name, size._id)
-      let inv = await Inventory.findOne({blank: blank._id, color: color._id, $or: [{sizeId: size._id}, {size_name: size.name}]})
-      //console.log(inv, blank._id)
-      if(inv){
-        inv.color_name = color.name
-        inv.size_name = size.name
-        inv.style_code = blank.code
-        inv.sizeId = size._id
-        inv.color = color._id
-        inv.blank = blank._id
-        inv = await inv.save()
-        //console.log(inv)
-      }else{
-        console.log("new")
-        let inventory_id = encodeURIComponent(`${color.name}-${size.name}-${blank.code}`)
-        let barcode_id= Math.floor(Math.random() * 999999)
-        console.log(inventory_id, barcode_id)
-        inv = new Inventory({blank: blank._id, style_code: blank.code, inventory_id, barcode_id, color: color._id, color_name: color.name, sizeId: size._id, size_name: size.name, quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,})
-        console.log(inv.inventory_id, inv.barcode_id)
-        await inv.save()
+
+  blank.envelopes = newEnvelopes.sort((a, b) => b.placement.length - a.placement.length);
+  return blank;
+};
+
+const updateInventory = async (blank) => {
+  const colorIds = blank.colors.map(c => c._id || c);
+  const [colors, existing] = await Promise.all([
+    Color.find({ _id: { $in: colorIds } }).lean(),
+    Inventory.find({ blank: blank._id }).lean(),
+  ]);
+
+  const colorMap = Object.fromEntries(colors.map(c => [String(c._id), c]));
+  const existingMap = Object.fromEntries(existing.map(i => [`${String(i.color)}-${i.size_name}`, i]));
+
+  const ops = [];
+  for (const colorId of colorIds) {
+    const color = colorMap[String(colorId)];
+    if (!color) continue;
+    for (const size of blank.sizes) {
+      const key = `${String(color._id)}-${size.name}`;
+      if (existingMap[key]) {
+        ops.push({
+          updateOne: {
+            filter: { _id: existingMap[key]._id },
+            update: { $set: { color_name: color.name, size_name: size.name, style_code: blank.code, sizeId: size._id, color: color._id, blank: blank._id } },
+          },
+        });
+      } else {
+        ops.push({
+          insertOne: {
+            document: {
+              blank: blank._id, style_code: blank.code,
+              inventory_id: encodeURIComponent(`${color.name}-${size.name}-${blank.code}`),
+              barcode_id: Math.floor(Math.random() * 999999),
+              color: color._id, color_name: color.name,
+              sizeId: size._id, size_name: size.name,
+              quantity: 0, pending_quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,
+              orders: [], attached: [], inStock: [],
+            },
+          },
+        });
       }
     }
   }
-}
+  if (ops.length > 0) await Inventory.bulkWrite(ops, { ordered: false });
+};
+
 export async function POST(req = NextApiRequest) {
-  let data = await req.json();
-  console.log("data", data)
-  let blank = data.blank
-  let newBlank
+  const token = await getToken({ req });
+  const { userName, email } = userFromToken(token);
+  let { blank, before } = await req.json();
+  let newBlank;
   try {
     if (blank._id) {
-      console.log(blank.printLocations?.length > 0 && blank.sizes.length > 0)
-      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
-      if (blank.sizes.length > 0) blank = updateFold(blank)
-      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank)
-      newBlank = await Blanks.findById(blank._id).populate("printLocations") 
-      updateInventory(blank)
-    }
-    else {
-      console.log("new blank")
-      let newBlank = new Blanks({ ...blank });
-      blank = await newBlank.save();
-      console.log("new blank", blank)
-      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank)
-      if (blank.sizes.length > 0) blank = updateFold(blank)
-      await blank.save()
+      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank);
+      if (blank.sizes.length > 0) blank = updateFold(blank);
+      const beforeBlank = before ?? await Blanks.findById(blank._id).lean();
+      newBlank = await Blanks.findByIdAndUpdate(blank._id, blank, { new: true }).populate("printLocations");
+      updateInventory(blank); // fire-and-forget
+      logActivity({ action: "blank_update", entity: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", userName, email, provider: "pythiasTest" });
+      await logChange({ entityType: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", action: "update", before: beforeBlank, after: blank, userName, email, provider: "pythiasTest" });
+    } else {
+      if (blank.printLocations?.length > 0 && blank.sizes.length > 0) blank = updateEnvelopes(blank);
+      if (blank.sizes.length > 0) blank = updateFold(blank);
+      newBlank = await new Blanks(blank).save();
       await generateInventory(newBlank);
+      logActivity({ action: "blank_create", entity: "blank", entityId: newBlank._id, entityName: newBlank.code || newBlank.name || "", userName, email, provider: "pythiasTest" });
+      logChange({ entityType: "blank", entityId: newBlank._id, entityName: newBlank.code || newBlank.name || "", action: "create", userName, email, provider: "pythiasTest" });
     }
-    return NextResponse.json({error: false, blank: newBlank});
+    return NextResponse.json({ error: false, blank: newBlank });
   } catch (err) {
-    return NextResponse.json(err.toString());
+    return NextResponse.json({ error: true, message: err.toString() });
   }
 }
-export async function DELETE(req = NextApiRequest,) {
-  await Blanks.findOneAndDelete({_id: req.nextUrl.searchParams.get("id")})
+
+export async function DELETE(req = NextApiRequest) {
+  const token = await getToken({ req });
+  const { userName, email } = userFromToken(token);
+  const id = req.nextUrl.searchParams.get("id");
+  const deleted = await Blanks.findOneAndDelete({ _id: id });
+  logActivity({ action: "blank_delete", entity: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", userName, email, provider: "pythiasTest" });
+  logChange({ entityType: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", action: "delete", userName, email, provider: "pythiasTest" });
   return NextResponse.json({ error: false });
 }
 
 async function generateInventory(style) {
-  let lastBC = await Inventory.find()
-    .select("barcode_id")
-    .lean()
-    .sort({ barcode_id: -1 });
-  let barcode_id = 0;
-  while (lastBC.map((i) => Number(i.barcode_id)).includes(barcode_id)) {
-    barcode_id++;
-  }
-  let created = [];
-  for (let cid of style.colors) {
-    let color = await Color.findById(cid);
-    for (let size of style.sizes) {
-      try {
-        let inventory = new Inventory({
-          inventory_id: encodeURIComponent(
-            `${color.name}-${size.name}-${style.code}`
-          ),
-          style_code: style.code,
-          quantity: 0,
-          order_at_quantity: 0,
-          desired_order_quantity: 1,
-          color,
-          color_name: color.name,
-          size_name: size.name,
-          size: size._id,
-          last_counted: new Date(),
-          barcode_id,
-          blank: style._id
-        });
-        await inventory.save();
-        barcode_id++;
-        while (lastBC.map((i) => Number(i.barcode_id)).includes(barcode_id)) {
-          barcode_id++;
-        }
-        created.push(inventory);
-      } catch (e) {
-        console.log("Print Error", e);
-      }
+  const [lastBarcode, colors] = await Promise.all([
+    Inventory.findOne().select("barcode_id").sort({ barcode_id: -1 }).lean(),
+    Color.find({ _id: { $in: style.colors } }).lean(),
+  ]);
+
+  let nextBC = lastBarcode ? Number(lastBarcode.barcode_id) + 1 : 0;
+
+  const docs = [];
+  for (const color of colors) {
+    for (const size of style.sizes) {
+      docs.push({
+        inventory_id: encodeURIComponent(`${color.name}-${size.name}-${style.code}`),
+        style_code: style.code,
+        quantity: 0, order_at_quantity: 0, desired_order_quantity: 1,
+        color: color._id, color_name: color.name,
+        size_name: size.name, size: size._id,
+        last_counted: new Date(),
+        barcode_id: nextBC++,
+        blank: style._id,
+      });
     }
   }
-  return;
+  if (docs.length > 0) await Inventory.insertMany(docs, { ordered: false });
 }

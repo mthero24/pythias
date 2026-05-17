@@ -25,15 +25,29 @@ export async function GET(req=NextApiResponse){
           .sort({ labelLastPrinted: -1 }).populate("color", "name").populate("designRef", "sku name printType")
           .lean();
         console.log(items.length)
-         let inventoryArray = await Inventory.find({}).select("row unit shelf bin ordered color_name size_name stye_code quantity pending_quantity").lean()
-            .select("quantity pending_quantity inventory_id color_name size_name style_code row unit shelf bin")
-            .lean();
-        items = items.filter(i=> new Date(i.labelPrintedDates[i.labelPrintedDates.length - 1]).getTime() < Date.now() - (3 * (24 * 60 * 60 * 1000)))
-        let standardOrders = items.map(s=> s.order)
-        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items marketplace").lean()
-        //console.log(standardOrders.length, "standatd orders", standardOrders[0], items[0].order.toString())
-        items = items.map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0]; console.log(s.order, "order map");  return {...s}})
-        items = items.map(s=> { s.inventory = inventoryArray.filter(i=> i.color_name == s.color.name && i.size_name == s.sizeName && i.style_code == s.styleCode)[0];  return {...s}})
+         items = items.filter(i=> new Date(i.labelPrintedDates[i.labelPrintedDates.length - 1]).getTime() < Date.now() - (3 * (24 * 60 * 60 * 1000)))
+
+        // Fetch orders and inventory in parallel; query only the inventory combos present in these items
+        const orderIds = items.map(s => s.order);
+        const invCombos = [...new Map(
+            items.map(s => [`${s.styleCode}|${s.color?.name}|${s.sizeName}`, { style_code: s.styleCode, color_name: s.color?.name, size_name: s.sizeName }])
+        ).values()];
+
+        const [standardOrders, inventoryArray] = await Promise.all([
+            Order.find({ _id: { $in: orderIds } }).select("poNumber items marketplace").lean(),
+            invCombos.length > 0
+                ? Inventory.find({ $or: invCombos }).select("row unit shelf bin color_name size_name style_code quantity pending_quantity").lean()
+                : [],
+        ]);
+
+        const orderMap = Object.fromEntries(standardOrders.map(o => [o._id.toString(), o]));
+        const invMap = Object.fromEntries(inventoryArray.map(i => [`${i.style_code}|${i.color_name}|${i.size_name}`, i]));
+
+        items = items.map(s => ({
+            ...s,
+            order: orderMap[s.order.toString()],
+            inventory: invMap[`${s.styleCode}|${s.color?.name}|${s.sizeName}`],
+        }))
         //console.log(items.length, items[0].labelLastPrinted, "after map");
         return NextResponse.json(items);
       } catch (e) {

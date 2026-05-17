@@ -68,6 +68,44 @@ async function auth(credentials) {
       return access_token
     }
 }
+export async function TrackPackageUPS({ tn, credentials }) {
+    const token = await auth(credentials);
+    const resp = await fetch(
+        `https://onlinetools.ups.com/api/track/v1/details/${encodeURIComponent(tn)}?locale=en_US&returnSignature=false`,
+        {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                transId: tn,
+                transactionSrc: "tracking",
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    const data = await resp.json();
+    const pkg = data?.trackResponse?.shipment?.[0]?.package?.[0];
+    if (!pkg) return { events: [], expectedDelivery: null };
+
+    const events = (pkg.activity ?? []).map(a => {
+        const desc = a.status?.description ?? "";
+        const loc  = [a.location?.address?.city, a.location?.address?.stateProvince]
+            .filter(Boolean).join(", ");
+        return loc ? `${desc} — ${loc}` : desc;
+    });
+
+    const deliveryDate = pkg.deliveryDate?.[0]?.date ?? null;
+    const expectedDelivery = deliveryDate
+        ? new Date(
+            deliveryDate.slice(0, 4),
+            parseInt(deliveryDate.slice(4, 6)) - 1,
+            deliveryDate.slice(6, 8)
+          ).toISOString()
+        : null;
+
+    return { events, expectedDelivery };
+}
+
 export async function ship({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials, thirdParty, imageFormat}) {
     console.log(thirdParty, "+++++++++++++++++++++ third party")
     let bill 

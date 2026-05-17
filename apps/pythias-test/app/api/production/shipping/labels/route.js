@@ -6,7 +6,11 @@ import manifest from "../../../../../models/manifest";
 import axios from "axios"
 import Bin from "../../../../../models/Bin";
 import {updateOrder} from "@pythias/integrations";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function POST(req= NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     console.log(data)
     //return NextResponse.json({error: true})
@@ -90,6 +94,7 @@ export async function POST(req= NextApiRequest){
                 await item.save();
             }
             order = await order.save();
+            logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email, provider: "pythiasTest" });
             // print label
             let bin = await Bin.findOneAndUpdate({order: order._id},  {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
             let headers = {

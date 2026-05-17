@@ -1,8 +1,9 @@
 import { Products, Design, SkuToUpc, Inventory } from "@pythias/mongo";
 import {NextApiRequest, NextResponse } from "next/server";
 import { updateTempUpc, createTempUpcs } from "@pythias/integrations"
-import {saveProducts} from "@pythias/backend";
-import { preCacheImages } from "@pythias/backend";
+import { saveProducts, preCacheImages } from "@pythias/backend";
+import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { getToken } from "next-auth/jwt";
 const update = async({product})=>{
     if (product.threadColors && product.threadColors.length > 0) {
         for (let b of product.blanks) {
@@ -86,6 +87,8 @@ export async function GET(req = NextApiRequest) {
     return NextResponse.json({ error: false, products: productData });
 }
 export async function POST(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     const data = await req.json();
     for (let product of data.products) {
         if (product.variants) await update({ product: product });
@@ -98,17 +101,26 @@ export async function POST(req = NextApiRequest) {
         }
     }
     let products = await saveProducts({ products: data.products, Products, Inventory });
+    logActivity({ action: "product_update", entity: "product", count: data.products.length, userName, email });
     return NextResponse.json({ error: false, products });
 }
 export async function PUT(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     const data = await req.json();
     console.log("Updating product", data.product._id);
+    const oldProduct = await Products.findById(data.product._id).lean();
     let product = await Products.findByIdAndUpdate(data.product._id, data.product, { new: true, returnNewDocument: true }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" });
     console.log("Updated product", product);
+    logActivity({ action: "product_update", entity: "product", entityId: product?._id, entityName: product?.sku || "", userName, email });
+    await logChange({ entityType: "product", entityId: product?._id, entityName: product?.sku || data.product?.sku || "", action: "update", before: oldProduct, after: data.product, userName, email, provider: "premierPrinting" });
     return NextResponse.json({ error: false, product });
 }
 export async function DELETE(req = NextApiRequest) {
-    const product = await req.nextUrl.searchParams.get("product");
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
+    const product = req.nextUrl.searchParams.get("product");
     let prod = await Products.findOneAndDelete({ _id: product });
+    logActivity({ action: "product_delete", entity: "product", entityId: product, entityName: prod?.sku || "", userName, email });
     return NextResponse.json({ error: false });
 }

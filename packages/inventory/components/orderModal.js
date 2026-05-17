@@ -23,18 +23,33 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
     const [expandedColor, setExpandedColor]             = useState("");
 
     useEffect(() => {
-        const getBlanks = async () => {
-            setLoading(true);
-            const res = await axios.get("/api/admin/inventory/create-order");
-            if (res?.data) setBlan(res.data.blanks);
-        };
-        if (open) {
-            if (blanks.length === 0) getBlanks();
-            let no = [];
-            if (type === "Out Of Stock") {
-                const bl = [], cl = [];
-                for (const blank of blanks) {
-                    for (const inv of blank.inventories) {
+        if (!open) return;
+
+        const controller = new AbortController();
+
+        const load = async () => {
+            let currentBlanks = blanks;
+            if (currentBlanks.length === 0) {
+                setLoading(true);
+                try {
+                    const res = await axios.get("/api/admin/inventory/create-order", {
+                        signal: controller.signal,
+                    });
+                    if (res?.data) {
+                        currentBlanks = res.data.blanks;
+                        setBlan(currentBlanks);
+                    }
+                } catch (e) {
+                    if (!axios.isCancel(e)) console.error("Failed to load inventory:", e);
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            const no = [], bl = [], cl = [];
+            for (const blank of currentBlanks) {
+                for (const inv of blank.inventories) {
+                    if (type === "Out Of Stock") {
                         const onOrder = (inv.attached?.length ?? 0) - (inv.orders?.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0) ?? 0);
                         if (onOrder > 0) {
                             if (!bl.includes(inv.style_code)) bl.push(inv.style_code);
@@ -42,14 +57,7 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                             no.push({ inv, order: onOrder, included: false, location: defaultLocation });
                         }
                     }
-                }
-                setBlankCodes([...bl]);
-                setColors([...cl]);
-            }
-            if (type === "Inventory Order") {
-                const bl = [], cl = [];
-                for (const blank of blanks) {
-                    for (const inv of blank.inventories) {
+                    if (type === "Inventory Order") {
                         const inStock = inv.quantity + (inv.orders?.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0) ?? 0);
                         if (inStock - inv.order_at_quantity < 0) {
                             if (!bl.includes(inv.style_code)) bl.push(inv.style_code);
@@ -58,13 +66,17 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                         }
                     }
                 }
-                setBlankCodes([...bl]);
-                setColors([...cl]);
             }
-            setNeedsOrdered([...no]);
-            if (blanks.length > 0) setLoading(false);
-        }
-    }, [open, blanks]);
+            setBlankCodes(bl);
+            setColors(cl);
+            setNeedsOrdered(no);
+            setLoading(false);
+        };
+
+        load();
+
+        return () => controller.abort();
+    }, [open]);
 
     const updateOrder = (param, value) => setOrder(prev => ({ ...prev, [param]: value }));
 

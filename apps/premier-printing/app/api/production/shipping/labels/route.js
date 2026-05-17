@@ -7,7 +7,11 @@ import axios from "axios"
 import Bin from "../../../../../models/Bin";
 import {updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart} from "@pythias/integrations";
 import {ApiKeyIntegrations} from "@pythias/mongo";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function POST(req= NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     console.log(data)
     //return NextResponse.json({error: true})
@@ -68,8 +72,9 @@ export async function POST(req= NextApiRequest){
                 await man.save()
             }
             let order = await Order.findOne({_id: data.orderId}).populate("items")
-            let re2s = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
-            //console.log(re2s)
+            try {
+                await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
+            } catch(e) { console.error("ShipStation update failed:", e.message); }
             order.shippingInfo.label = label.label
             order.shippingInfo.shippingCost += parseFloat(label.cost);
             order.status = "Shipped"
@@ -91,6 +96,7 @@ export async function POST(req= NextApiRequest){
                 await item.save();
             }
             order = await order.save();
+            logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email });
             if (order.marketplace?.toLowerCase() === "etsy" && order.marketplaceOrderId) {
                 try {
                     const etsyConn = await ApiKeyIntegrations.findOne({ type: "etsy" });
@@ -138,24 +144,21 @@ export async function POST(req= NextApiRequest){
                     "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
                 }
             }
-            let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: label.label, station: data.station, barcode: "ppp"}, headers)
-            console.log(res.data)
-            if(res.error){
-                return NextResponse.json({error: true, msg: "error printing label"})
-            }else{
-                console.log("retrun")
-                return NextResponse.json({error: false, label: label.label, 
-                    bins: {
-                        readyToShip: await Bin.find({ ready: true })
-                            .sort({ number: 1 })
-                            .populate({ path: "order", populate: "items" })
-                            .lean(),
-                        inUse: await Bin.find({ inUse: true })
-                            .sort({ number: 1 })
-                            .populate({ path: "order", populate: "items" })
-                            .lean(),
-                },})
-            }
+            try {
+                let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: label.label, station: data.station, barcode: "ppp"}, headers)
+                console.log(res.data)
+            } catch(e) { console.error("Print request failed:", e.message); }
+            return NextResponse.json({error: false, label: label.label,
+                bins: {
+                    readyToShip: await Bin.find({ ready: true })
+                        .sort({ number: 1 })
+                        .populate({ path: "order", populate: "items" })
+                        .lean(),
+                    inUse: await Bin.find({ inUse: true })
+                        .sort({ number: 1 })
+                        .populate({ path: "order", populate: "items" })
+                        .lean(),
+            },})
         }
     }catch(e){
         console.log(e)

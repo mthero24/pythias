@@ -2,6 +2,7 @@ import {NextApiRequest, NextResponse} from "next/server";
 import {Design, Products} from "@pythias/mongo";
 import { headers } from 'next/headers'
 import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
 const createSku = ()=>{
@@ -40,6 +41,7 @@ export async function GET(req){
 }
 export async function POST(req=NextApiRequest){
     const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     if(!token?.permissions?.designs){
         return NextResponse.json({error: true, msg: "You do not have permission to edit designs."}, {status: 403})
     }
@@ -52,7 +54,7 @@ export async function POST(req=NextApiRequest){
     try{
         let sku = createSku();
         let design = new Design({
-            date: new Date(Date.now()), 
+            date: new Date(Date.now()),
             images: {},
             //user: user._id,
             name: `${sku}-${Date.now()}`,
@@ -60,6 +62,8 @@ export async function POST(req=NextApiRequest){
         })
         console.log(design)
         design  = await design.save()
+        logActivity({ action: "design_create", entity: "design", entityId: design._id, entityName: design.sku, userName, email });
+        logChange({ entityType: "design", entityId: design._id, entityName: design.sku, action: "create", userName, email, provider: "premierPrinting" });
         return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)
@@ -68,12 +72,13 @@ export async function POST(req=NextApiRequest){
 }
 export async function PUT(req=NextApiRequest){
     const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     if(!token?.permissions?.designs){
         return NextResponse.json({error: true, msg: "You do not have permission to edit designs."}, {status: 403})
     }
     let data = await req.json()
     console.log(data.design.sendToMarketplaces, "send to market places ++++++++++++++++++++++++")
-    try{  
+    try{
         if(data.oldSku && data.oldSku != data.design.sku){
             console.log("updating products with new sku", data.oldSku, data.design.sku)
             let products = await Products.find({design: data.design._id})
@@ -126,8 +131,10 @@ export async function PUT(req=NextApiRequest){
             }
         }
         else console.log("skus are the same, no need to update products")
-        let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design})
-        design = await Design.findOne({_id: design._id}).populate("blanks.blank blanks.colors blanks.defaultColor")
+        const beforeDesign = data.before ?? await Design.findById(data.design._id).lean();
+        let design = await Design.findOneAndUpdate({_id: data.design._id}, {...data.design}, { new: true }).populate("blanks.blank blanks.colors blanks.defaultColor")
+        logActivity({ action: "design_update", entity: "design", entityId: data.design._id, entityName: data.design.sku || data.design.name || "", userName, email });
+        await logChange({ entityType: "design", entityId: data.design._id, entityName: data.design.sku || data.design.name || "", action: "update", before: beforeDesign, after: data.design, userName, email, provider: "premierPrinting" });
         return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)
@@ -137,10 +144,14 @@ export async function PUT(req=NextApiRequest){
 
 export async function DELETE(req, res){
     const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     if(!token?.permissions?.designs){
         return NextResponse.json({error: true, msg: "You do not have permission to edit designs."}, {status: 403})
     }
-    console.log(await req.nextUrl.searchParams.get("design"))
-    let design = await Design.findByIdAndDelete(req.nextUrl.searchParams.get("design"))
+    const designId = req.nextUrl.searchParams.get("design");
+    console.log(designId)
+    let design = await Design.findByIdAndDelete(designId)
+    logActivity({ action: "design_delete", entity: "design", entityId: designId, entityName: design?.sku || design?.name || "", userName, email });
+    logChange({ entityType: "design", entityId: designId, entityName: design?.sku || design?.name || "", action: "delete", userName, email, provider: "premierPrinting" });
     return NextResponse.json({error: false})
 }

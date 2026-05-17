@@ -9,7 +9,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { Divider, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Chip } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import * as Logo from '../public/premierprinting-logo.png';
 import { useCSV } from "@pythias/backend";
@@ -41,6 +41,7 @@ import Inventory2Icon from "@mui/icons-material/Inventory2";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import BarChartIcon from "@mui/icons-material/BarChart";
 
 const DRAWER_WIDTH = 268;
 
@@ -66,7 +67,8 @@ const NAV_SECTIONS = [
       { label: "Converters",      href: "/admin/converters",icon: <SyncAltIcon fontSize="small" />,         showCSV: false },
       { label: "Marketplace Data",href: "/marketplaces",         icon: <StorefrontIcon fontSize="small" />,              showCSV: false },
       { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false },
-      { label: "Pricing",         href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
+      { label: "Pricing",          href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
+      { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
     ],
   },
   {
@@ -171,6 +173,8 @@ export default function ButtonAppBar() {
 const NavDrawer = ({ open, onClose }) => {
   const { setShow } = useCSV();
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const hasCharts = !!session?.user?.permissions?.charts;
 
   const isActive = (item) =>
     item.exact ? pathname === item.href : pathname?.startsWith(item.href);
@@ -216,7 +220,7 @@ const NavDrawer = ({ open, onClose }) => {
               {section.label}
             </Typography>
             <List disablePadding>
-              {section.items.map((item) => {
+              {section.items.filter(item => !item.charts || hasCharts).map((item) => {
                 const active = isActive(item);
                 return (
                   <Link key={item.href} href={item.href} onClick={() => handleNav(item.showCSV)} style={{ textDecoration: "none" }}>

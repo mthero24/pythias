@@ -3,6 +3,8 @@ import Items from "@/models/Items";
 import Style from "@/models/StyleV2";
 import { setConfig, createImage } from "@pythias/dtf";
 import { smartCrop } from "@/functions/smartCrop";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 const getImages = async (front, back, style, item) => {
   let styleImage = style.images.filter(
     (i) => i.color.toString() == item.color?._id.toString(),
@@ -119,6 +121,8 @@ export async function GET(req = NextApiRequest) {
 }
 
 export async function POST(req = NextApiRequest) {
+  const token = await getToken({ req });
+  const { userName, email } = userFromToken(token);
   let config = JSON.parse(process.env.dtf);
   console.log(config);
   setConfig({
@@ -239,6 +243,7 @@ export async function POST(req = NextApiRequest) {
           items[0],
         );
       console.log(frontDesign, backDesign);
+      logActivity({ action: "dtf_sent", entity: "dtf", count: itemsToSend.length, userName, email, provider: "po" });
       return NextResponse.json({
         error: false,
         msg: "added to que",
@@ -322,6 +327,7 @@ export async function POST(req = NextApiRequest) {
       //user: user._id,
     };
     await item.save();
+    logActivity({ action: "dtf_sent", entity: "dtf", entityId: item._id, entityName: item.pieceId || "", userName, email, provider: "po" });
     const { styleImage, frontDesign, backDesign, styleCode, colorName } =
       await getImages(item.design.front, item.design.back, item.styleV2, item);
     console.log(frontDesign, backDesign);

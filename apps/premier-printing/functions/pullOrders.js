@@ -6,63 +6,54 @@ const CreateSku = async ({ blank, color, size, design, threadColor, designSku })
     let sku = `${blank.code}_${color.sku}_${size.sku}${threadColor ? `_${threadColor}` : ""}${design ? `_${design.sku}` : ""}${!design && designSku ? `_${designSku}` : ""}`;
     return sku;
 }
-export const updateInventory = async ()=>{
-    let inventories = await Inventory.find({})
-    console.log(inventories.length, "inventories")
-    for (let inv of inventories) {
-        let items = await Item.find({ "inventory.inventory": inv._id, labelPrinted: false, canceled: false, shipped: false, paid: true })
-        if (inv.quantity < 0 || !inv.quantity) {
-            inv.quantity = 0;
-        }
-        inv.attached = []
-        inv.inStock = []
-        if (items.length > 0) {
-            let itemIds = items.map(i => i._id.toString());
-            inv.inStock = inv.inStock.filter(i => itemIds.includes(i.toString()));
-            inv.attached = inv.attached.filter(i => itemIds.includes(i.toString()));
-            if(inv.quantity > 0) {
-                if(inv.quantity > inv.inStock.length + inv.attached.length) {
-                    inv.attached = [];
-                }
-            }
-            if(inv.quantity > inv.inStock.length){
-                inv.attached = []
-            }
-            let newInStck = [];
-            for(let id of inv.inStock) {
-                if (!newInStck.includes(id) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(id)) {
-                    newInStck.push(id);
-                }
-            }
-            inv.inStock = newInStck;
-            let newAttached = [];
-            for(let id of inv.attached) {
-                if(!newAttached.includes(id) && !inv.inStock.includes(id)) {
-                    newAttached.push(id);
-                }
-            }
-            inv.attached = newAttached;
-            console.log(inv.style_code, inv.color_name, inv.size_name, inv.quantity, inv.attached.length, inv.inStock.length, items.length, inv.orders.map(o => o.items.length).reduce((accumulator, currentValue) => accumulator + currentValue, 0));
-            if (inv.quantity > 0) {
-                for (let item of items) {
-                    if (inv.quantity - inv.inStock.length > 0 && !inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
-                        inv.inStock.push(item._id.toString())
-                    } else if (!inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
-                        inv.attached.push(item._id.toString())
-                    }
-                }
-            } else {
-                if (items.length > 0) {
-                    for (let item of items) {
-                        if (!inv.attached.includes(item._id.toString()) && !inv.inStock.includes(item._id.toString()) && !inv.orders.map(o => o.items.map(i => i)).flat().includes(item._id.toString())) {
-                            inv.attached.push(item._id.toString())
-                        }
-                    }
-                }
-            }
-        }
-        await inv.save()
+export const updateInventory = async () => {
+    // One query for all relevant items instead of one per inventory record
+    const activeItems = await Item.find({
+        "inventory.inventory": { $exists: true, $ne: null },
+        labelPrinted: false, canceled: false, shipped: false, paid: true,
+    }).select("_id inventory.inventory").lean();
+
+    // Group item IDs by inventory ID
+    const itemsByInvId = {};
+    for (const item of activeItems) {
+        const invId = String(item.inventory?.inventory);
+        if (!itemsByInvId[invId]) itemsByInvId[invId] = [];
+        itemsByInvId[invId].push(String(item._id));
     }
+
+    // Load all inventory as plain objects — avoid Mongoose Document overhead
+    const inventories = await Inventory.find({}).lean();
+
+    const ops = [];
+    for (const inv of inventories) {
+        const invId = String(inv._id);
+        const itemIds = itemsByInvId[invId] || [];
+        const quantity = (inv.quantity < 0 || !inv.quantity) ? 0 : inv.quantity;
+
+        // Build a Set of item IDs already committed to orders — O(1) lookup instead of repeated .flat().includes()
+        const orderedIds = new Set((inv.orders || []).flatMap(o => (o.items || []).map(i => String(i))));
+
+        const inStock = [];
+        const attached = [];
+
+        for (const itemId of itemIds) {
+            if (orderedIds.has(itemId)) continue;
+            if (quantity > 0 && quantity - inStock.length > 0) {
+                inStock.push(itemId);
+            } else {
+                attached.push(itemId);
+            }
+        }
+
+        ops.push({
+            updateOne: {
+                filter: { _id: inv._id },
+                update: { $set: { quantity, attached, inStock } },
+            },
+        });
+    }
+
+    if (ops.length > 0) await Inventory.bulkWrite(ops, { ordered: false });
 }
 const createItemVariant = async (variant, product, order, price) => {
     let item = new Item({

@@ -22,7 +22,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
-import { signOut } from "next-auth/react";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -63,6 +64,7 @@ const NAV_GROUPS = [
         items: [
             { label: "Edit Data",  href: "/edit-data",  icon: <EditIcon fontSize="small" /> },
             { label: "Clockwise",  href: "/clockwise",  icon: <AccessTimeIcon fontSize="small" /> },
+            { label: "Activity",   href: "/activity",   icon: <BarChartIcon fontSize="small" />, adminOnly: true },
         ],
     },
 ];
@@ -70,6 +72,8 @@ const NAV_GROUPS = [
 export default function ButtonAppBar() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const pathname = usePathname();
+    const { data: session } = useSession();
+    const isAdmin = session?.user?.role === "admin";
 
     return (
         <>
@@ -154,7 +158,7 @@ export default function ButtonAppBar() {
                                 {group.label}
                             </Typography>
                             <List dense disablePadding sx={{ px: 1 }}>
-                                {group.items.map(item => {
+                                {group.items.filter(item => !item.adminOnly || isAdmin).map(item => {
                                     const active = pathname === item.href;
                                     return (
                                         <Link

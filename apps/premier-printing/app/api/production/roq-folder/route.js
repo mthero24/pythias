@@ -6,9 +6,13 @@ import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
 import {updateOrder} from "@pythias/integrations";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 import { truncate } from "fs";
 const ups =["faire", "Zulily", "TSC"]
 export async function POST(req = NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     console.log(data)
     let item = await Items.findOne({pieceId: data.scan,}).populate("blank")
@@ -113,7 +117,10 @@ export async function POST(req = NextApiRequest){
             console.log(response?.data, responseData)
             if(response?.data.error) return NextResponse.json(response.data)
             else if(responseData) return NextResponse.json(responseData)
-            else return NextResponse.json({error: false, msg: "added to que", item, source: "PP"})
+            else {
+                logActivity({ action: "item_folded", entity: "order", entityId: item.order?._id || item.order, entityName: item.pieceId || "", userName, email });
+                return NextResponse.json({error: false, msg: "added to que", item, source: "PP"})
+            }
         }
         else return NextResponse.json({error: true, msg: "Could Not Find Fold Settings"})
     }else{

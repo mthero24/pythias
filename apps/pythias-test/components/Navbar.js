@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useCSV } from "@pythias/backend";
 import * as logo from "../public/pythias-logo--new-gold-50.png";
 
@@ -43,6 +43,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
+import BarChartIcon from "@mui/icons-material/BarChart";
 
 const DRAWER_WIDTH = 260;
 
@@ -66,6 +67,7 @@ const NAV_SECTIONS = [
       { label: "Products",     href: "/admin/products",     icon: <Inventory2Icon fontSize="small" />, csv: true },
       { label: "Integrations", href: "/admin/integrations", icon: <HubIcon fontSize="small" />, csv: true },
       { label: "Fix UPC",      href: "/admin/fix-upc",      icon: <QrCodeIcon fontSize="small" /> },
+      { label: "Activity",     href: "/admin/activity",     icon: <BarChartIcon fontSize="small" />, charts: true },
     ],
   },
   {
@@ -144,6 +146,8 @@ export default function ButtonAppBar() {
 
 function NavDrawer({ open, onClose }) {
   const { setShow } = useCSV();
+  const { data: session } = useSession();
+  const hasCharts = !!session?.user?.permissions?.charts;
 
   const handleNav = (csv = false) => {
     setShow(csv);
@@ -205,7 +209,7 @@ function NavDrawer({ open, onClose }) {
               {section.label}
             </Typography>
             <List disablePadding>
-              {section.items.map((item) => (
+              {section.items.filter(item => !item.charts || hasCharts).map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

@@ -1,5 +1,6 @@
 "use client";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
+import { SessionProvider } from "next-auth/react";
 
 const theme = createTheme({
     typography: {
@@ -190,9 +191,11 @@ const theme = createTheme({
 
 export function AppThemeProvider({ children }) {
     return (
-        <ThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-        </ThemeProvider>
+        <SessionProvider>
+            <ThemeProvider theme={theme}>
+                <CssBaseline />
+                {children}
+            </ThemeProvider>
+        </SessionProvider>
     );
 }
