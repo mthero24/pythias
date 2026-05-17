@@ -1,202 +1,95 @@
 "use client";
-import {Box, Button, Typography, Grid2, Modal} from "@mui/material";
+import {Box, Chip, Dialog, DialogContent, DialogTitle, IconButton, Typography, Grid2} from "@mui/material";
 import React, {useEffect, useState} from "react";
 import Image from "next/image";
-import {Uploader} from "@pythias/backend"
+import {Uploader} from "@pythias/backend";
 import CloseIcon from '@mui/icons-material/Close';
-export function SublimationImages({design, setDesign, updateDesign, open, setOpen}) {
-    const [reload, setReload] = useState(true)
+
+const ZoneCard = ({ label, children }) => (
+    <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, overflow: "hidden", height: "100%" }}>
+        <Box sx={{ px: 1.5, py: 0.75, backgroundColor: "#f5f7fa", borderBottom: "1px solid #e0e0e0", display: "flex", alignItems: "center" }}>
+            <Typography variant="caption" sx={{ fontSize: "0.7rem", fontWeight: 600, color: "text.secondary" }}>{label}</Typography>
+        </Box>
+        <Box sx={{ p: 1 }}>{children}</Box>
+    </Box>
+);
+
+export function SublimationImages({ design, setDesign, updateDesign, open, setOpen }) {
+    const [reload, setReload] = useState(true);
     useEffect(() => {
-        if (!reload) setReload(!reload)
-    }, [reload])
-    const afterFunction = async ({location, url}) => {
-        // Handle file upload
-        let des = { ...design }
-        console.log(des, "+++++ design before upload")
-        console.log("Uploaded to:", location, url);
-        if (!des.sublimationImages) {
-            des.sublimationImages = {}
-        }
-        console.log
-        des.sublimationImages[location] = url
-        console.log(des, "+++++ design after upload")
-        updateDesign(des)
-        setDesign(des)
-        setReload(false)
-    }
+        if (!reload) setReload(!reload);
+    }, [reload]);
+
+    const afterFunction = async ({ location, url }) => {
+        let des = { ...design };
+        if (!des.sublimationImages) des.sublimationImages = {};
+        des.sublimationImages[location] = url;
+        updateDesign(des);
+        setDesign(des);
+        setReload(false);
+    };
+
+    const zones = [
+        { key: "frontBody",           label: "1 — Front Body" },
+        { key: "backBody",            label: "2 — Back Body" },
+        { key: "sleeveWithCuffRight", label: "3 — Sleeve w/Cuff Right" },
+        { key: "sleeveWithCuffLeft",  label: "4 — Sleeve w/Cuff Left" },
+        { key: "sleeveNoCuffRight",   label: "5 — Sleeve No Cuff Right" },
+        { key: "sleeveNoCuffLeft",    label: "6 — Sleeve No Cuff Left" },
+        { key: "hoodOutside",         label: "7/8 — Hood Exterior" },
+        { key: "hoodInside",          label: "9/10 — Hood Interior" },
+        { key: "cuffRight",           label: "11 — Cuff Right" },
+        { key: "cuffLeft",            label: "12 — Cuff Left" },
+        { key: "collar",              label: "13 — Collar" },
+        { key: "poloCollar",          label: "14 — Polo Collar" },
+        { key: "poloPocket",          label: "15 — Polo Pocket" },
+    ];
+
+    const uploadedCount = zones.filter(z => design.sublimationImages?.[z.key]).length;
+
     return (
-        <Modal open={open} onClose={() => setOpen(false)}>
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: "95%", height: "95%", bgcolor: 'background.paper', boxShadow: 24, p: 4, outline: 'none', overflowY: 'auto' }}>
-                <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
-                    <Box sx={{display: "flex", flexDirection: "column",}}>
-                        <Typography variant="h6" gutterBottom>
-                            Sublimation Images
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                            Manage your sublimation images here.
-                        </Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%", cursor: "pointer", "&:hover": { opacity: .6 } }} onClick={() => setOpen(false)}>
-                        <CloseIcon sx={{ color: "#780606" }} />
-                    </Box>
-                </Box>
-                <Grid2 container spacing={2} sx={{mt: 1}}>
-                    {/* Add your sublimation image components here */}
-                    <Grid2 size={{xs:12, md:4, lg:4}}>
-                        <Box sx={{ p: 2, textAlign: 'center'}}>
-                            <Image src="/sublimation_guide.png" alt="Sublimation Image 1" width={400} height={400} style={{width: '100%', height: 'auto'}} />
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{xs:12, md:2, lg:2}}>
-                        <Box sx={{border: '1px solid #ccc', borderRadius: 2, p: 1,}}>
-                            <Typography variant="small" sx={{ fontSize: "0.6rem"}}>8 - Hood Exterior - left</Typography>
-                            <Typography variant="small" sx={{textAlign: "right", fontSize: "0.6rem"}}>7 - Hood Exterior - right</Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 1 }}>
-                                {console.log(design)}
-                                {reload &&<Uploader
-                                    afterFunction={afterFunction}
-                                    image={design.sublimationImages?.hoodOutside}
-                                    location={"hoodOutside"}
-                                />}
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xl" fullWidth PaperProps={{ sx: { height: "92vh", borderRadius: 2 } }}>
+            <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 2, borderBottom: "1px solid #f0f0f0" }}>
+                <Typography variant="h6" fontWeight={700} sx={{ flexGrow: 1 }}>Sublimation Images</Typography>
+                <Chip label={`${uploadedCount} / ${zones.length} uploaded`} size="small" variant="outlined" color={uploadedCount === zones.length ? "success" : "default"} />
+                <IconButton size="small" onClick={() => setOpen(false)}>
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+            </DialogTitle>
+            <DialogContent sx={{ p: 2, overflowY: "auto" }}>
+                <Grid2 container spacing={2}>
+                    {/* Reference guide */}
+                    <Grid2 size={{ xs: 12, md: 4 }}>
+                        <Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, overflow: "hidden", position: "sticky", top: 0 }}>
+                            <Box sx={{ px: 1.5, py: 0.75, backgroundColor: "#f5f7fa", borderBottom: "1px solid #e0e0e0" }}>
+                                <Typography variant="caption" fontWeight={600} color="text.secondary">Zone Reference Guide</Typography>
+                            </Box>
+                            <Box sx={{ p: 1 }}>
+                                <Image src="/sublimation_guide.png" alt="Sublimation zone guide" width={400} height={400} style={{ width: "100%", height: "auto" }} />
                             </Box>
                         </Box>
                     </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ fontSize: "0.6rem" }}>9 - Hood Interior - left</Typography>
-                            <Typography variant="small" sx={{ textAlign: "right", fontSize: "0.6rem" }}>10 - Hood Interior - right</Typography>
-                            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, mt: 1 }}>
-                                {reload && <Uploader
-                                    afterFunction={afterFunction}
-                                    image={design.sublimationImages?.hoodInside}
-                                    location={"hoodInside"}
-                                />}
-                            </Box>
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>14 - Polo Collar</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.poloCollar}
-                                location={"poloCollar"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>15 - Polo Pocket</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.poloPocket}
-                                location={"poloPocket"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>5 - Sleeve No Cuff - Right</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.sleeveNoCuffRight}
-                                location={"sleeveNoCuffRight"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>3 - Sleeve w/Cuff - Right</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.sleeveWithCuffRight}
-                                location={"sleeveWithCuffRight"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>1 - Front Body</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.frontBody}
-                                location={"frontBody"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>2 - Back Body</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.backBody}
-                                location={"backBody"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>4 Sleeve W/Cuff - Left</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.sleeveWithCuffLeft}
-                                location={"sleeveWithCuffLeft"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>6 Sleeve No Cuff - Left</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.sleeveNoCuffLeft}
-                                location={"sleeveNoCuffLeft"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 4, md: 2, lg: 2 }}>
-                        <Box sx={{ p: 2, textAlign: 'center' }}>
-                            <Image src="/american_standard_log.png" alt="Sublimation Image 1" width={400} height={400} style={{ width: '100%', height: 'auto' }} />
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>11 - Cuff Right</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.cuffRight}
-                                location={"cuffRight"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>13 - Collar</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.collar}
-                                location={"collar"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}></Grid2>
-                    <Grid2 size={{ xs: 12, md: 2, lg: 2 }}>
-                        <Box sx={{ border: '1px solid #ccc', borderRadius: 2, p: 1, }}>
-                            <Typography variant="small" sx={{ marginRight: "20%", fontSize: "0.6rem" }}>12 - Cuff Left</Typography>
-                            {reload && <Uploader
-                                afterFunction={afterFunction}
-                                image={design.sublimationImages?.cuffLeft}
-                                location={"cuffLeft"}
-                            />}
-                        </Box>
-                    </Grid2>
-                    <Grid2 size={{ xs: 4, md: 2, lg: 2 }}>
-                        <Box sx={{ p: 2, textAlign: 'center' }}>
-                            <Image src="/american_standard_log.png" alt="Sublimation Image 1" width={400} height={400} style={{ width: '100%', height: 'auto' }} />
-                        </Box>
+
+                    {/* Upload zones */}
+                    <Grid2 size={{ xs: 12, md: 8 }}>
+                        <Grid2 container spacing={1.5}>
+                            {zones.map(zone => (
+                                <Grid2 key={zone.key} size={{ xs: 6, sm: 4, md: 4 }}>
+                                    <ZoneCard label={zone.label}>
+                                        {reload && (
+                                            <Uploader
+                                                afterFunction={afterFunction}
+                                                image={design.sublimationImages?.[zone.key]}
+                                                location={zone.key}
+                                            />
+                                        )}
+                                    </ZoneCard>
+                                </Grid2>
+                            ))}
+                        </Grid2>
                     </Grid2>
                 </Grid2>
-            </Box>
-        </Modal>
+            </DialogContent>
+        </Dialog>
     );
 }

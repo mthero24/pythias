@@ -98,7 +98,7 @@ const updateInventory = async (blank) => {
 export async function POST(req = NextApiRequest) {
   const token = await getToken({ req });
   const { userName, email } = userFromToken(token);
-  let { blank, before } = await req.json();
+  let { blank, before, action } = await req.json();
   let newBlank;
   try {
     for (const s of blank.sizes) {
@@ -111,8 +111,9 @@ export async function POST(req = NextApiRequest) {
       const beforeBlank = before ?? await Blanks.findById(blank._id).lean();
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank, { new: true }).populate("printLocations");
       if (blank.type !== "alias") updateInventory(blank); // fire-and-forget
-      logActivity({ action: "blank_update", entity: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", userName, email });
-      await logChange({ entityType: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", action: "update", before: beforeBlank, after: blank, userName, email, provider: "premierPrinting" });
+      const logAction = action || "blank_update";
+      logActivity({ action: logAction, entity: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", userName, email });
+      await logChange({ entityType: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", action: logAction, before: beforeBlank, after: blank, userName, email, provider: "premierPrinting" });
     } else {
       // Apply envelope/fold to the plain object before the single save
       if (blank.printLocations?.length > 0 && blank.sizes.length > 0 && blank.type !== "alias") blank = updateEnvelopes(blank);

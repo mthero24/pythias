@@ -65,21 +65,29 @@ export async function OrdersSearch({ Order, q, page = 1, statusFilter = {}, orde
                 {
                     $search: {
                         index: "default",
-                        text: {
-                            query: sanitized,
-                            path: [
-                                "shippingAddress.name",
-                                "shippingAddress.address1",
-                                "shippingAddress.city",
-                                "shippingAddress.state",
-                                "shippingAddress.zip",
+                        compound: {
+                            must: [
+                                {
+                                    text: {
+                                        query: sanitized,
+                                        path: [
+                                            "shippingAddress.name",
+                                            "shippingAddress.address1",
+                                            "shippingAddress.city",
+                                            "shippingAddress.state",
+                                            "shippingAddress.zip",
+                                        ],
+                                        fuzzy: { maxEdits: 1, prefixLength: 2, maxExpansions: 50 },
+                                        matchCriteria: "any",
+                                    },
+                                },
                             ],
-                            fuzzy: { maxEdits: 1, prefixLength: 2, maxExpansions: 50 },
-                            matchCriteria: "any",
+                            filter: [
+                                { exists: { path: "items" } },
+                            ],
                         },
                     },
                 },
-                { $match: baseFilter },
                 { $project: { _id: 1 } },
             ]).catch((e) => {
                 console.error("Atlas Search failed:", e.message);

@@ -385,7 +385,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
             if (existingIdx !== -1) b.images[existingIdx] = finalImage;
             else b.images.push(finalImage);
             setBlank(b);
-            await update({ blank: b });
+            await update({ blank: b, action: existingIdx !== -1 ? "blank_image_edit" : "blank_image_add" });
             handleClose();
         } catch (e) {
             setSaveError(e.message || "Failed to save image");

@@ -44,7 +44,7 @@ function platformColor(type) {
 }
 
 // ─── Platform card in the gallery ────────────────────────────────────────────
-function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, comingSoon }) {
+function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, comingSoon, connected }) {
     const inner = (
         <Box sx={{
             display: "flex", flexDirection: "column", alignItems: "center",
@@ -65,14 +65,17 @@ function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, co
             <Typography variant="body2" color="text.secondary" sx={{ flexGrow: 1, fontSize: "0.8rem" }}>
                 {description}
             </Typography>
-            {comingSoon
-                ? <Chip label="Coming Soon" size="small" sx={{ bgcolor: "#f3f4f6", color: "#6b7280", fontWeight: 600 }} />
-                : <Button
-                    variant="outlined" size="small" startIcon={<AddIcon />}
-                    sx={{ mt: "auto", pointerEvents: "none", borderRadius: 2 }}
-                >
-                    Connect
-                </Button>
+            {connected
+                ? <Chip label="Connected" size="small" icon={<CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                    sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, "& .MuiChip-icon": { color: "#065f46" } }} />
+                : comingSoon
+                    ? <Chip label="Coming Soon" size="small" sx={{ bgcolor: "#f3f4f6", color: "#6b7280", fontWeight: 600 }} />
+                    : <Button
+                        variant="outlined" size="small" startIcon={<AddIcon />}
+                        sx={{ mt: "auto", pointerEvents: "none", borderRadius: 2 }}
+                    >
+                        Connect
+                    </Button>
             }
         </Box>
     );
@@ -82,6 +85,18 @@ function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, co
             <Card variant="outlined" sx={{
                 height: "100%", opacity: 0.6,
                 borderRadius: 2, border: "1px solid #e5e7eb",
+            }}>
+                {inner}
+            </Card>
+        );
+    }
+
+    if (connected) {
+        return (
+            <Card variant="outlined" sx={{
+                height: "100%", borderRadius: 2,
+                border: "1px solid #6ee7b7",
+                bgcolor: "#f0fdf4",
             }}>
                 {inner}
             </Card>
@@ -1207,26 +1222,24 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     Available Platforms
                 </Typography>
                 <Grid2 container spacing={2.5} sx={{ mt: 0.5, mb: 5 }}>
-                    {!hasTikTok && (
-                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                            <PlatformCard
-                                logo={tiktok} alt="TikTok Shop"
-                                name="TikTok Shop"
-                                description={PLATFORMS.tiktok.description}
-                                onClick={() => setTikTokOpen(true)}
-                            />
-                        </Grid2>
-                    )}
-                    {!connectedTypes.has("etsy") && (
-                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                            <PlatformCard
-                                logo={etsy} alt="Etsy"
-                                name="Etsy"
-                                description={PLATFORMS.etsy.description}
-                                href={etsyRedirectURI || "#"}
-                            />
-                        </Grid2>
-                    )}
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logo={tiktok} alt="TikTok Shop"
+                            name="TikTok Shop"
+                            description={PLATFORMS.tiktok.description}
+                            connected={hasTikTok}
+                            onClick={hasTikTok ? undefined : () => setTikTokOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logo={etsy} alt="Etsy"
+                            name="Etsy"
+                            description={PLATFORMS.etsy.description}
+                            connected={connectedTypes.has("etsy")}
+                            href={connectedTypes.has("etsy") ? undefined : (etsyRedirectURI || "#")}
+                        />
+                    </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
                         <PlatformCard
                             logo={amazon} alt="Amazon"
@@ -1243,46 +1256,42 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             onClick={() => setAcendaOpen(true)}
                         />
                     </Grid2>
-                    {!connectedTypes.has("walmart") && (
-                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                            <PlatformCard
-                                logoSrc="/walmart.png" alt="Walmart"
-                                name="Walmart"
-                                description={PLATFORMS.walmart.description}
-                                onClick={() => setWalmartOpen(true)}
-                            />
-                        </Grid2>
-                    )}
-                    {!connectedTypes.has("faire") && (
-                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                            <PlatformCard
-                                logoSrc="/faire.svg" alt="Faire"
-                                name="Faire"
-                                description={PLATFORMS.faire.description}
-                                onClick={() => setFaireOpen(true)}
-                            />
-                        </Grid2>
-                    )}
-                    {!connectedTypes.has("shein") && (
-                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                            <PlatformCard
-                                logoSrc="/shein.svg" alt="SHEIN"
-                                name="SHEIN"
-                                description={PLATFORMS.shein.description}
-                                onClick={() => setSheinOpen(true)}
-                            />
-                        </Grid2>
-                    )}
-                    {!connectedTypes.has("temu") && (
-                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                            <PlatformCard
-                                logoSrc="/temu.svg" alt="Temu"
-                                name="Temu"
-                                description={PLATFORMS.temu.description}
-                                onClick={() => setTemuOpen(true)}
-                            />
-                        </Grid2>
-                    )}
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/walmart.png" alt="Walmart"
+                            name="Walmart"
+                            description={PLATFORMS.walmart.description}
+                            connected={connectedTypes.has("walmart")}
+                            onClick={connectedTypes.has("walmart") ? undefined : () => setWalmartOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/faire.svg" alt="Faire"
+                            name="Faire"
+                            description={PLATFORMS.faire.description}
+                            connected={connectedTypes.has("faire")}
+                            onClick={connectedTypes.has("faire") ? undefined : () => setFaireOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/shein.svg" alt="SHEIN"
+                            name="SHEIN"
+                            description={PLATFORMS.shein.description}
+                            connected={connectedTypes.has("shein")}
+                            onClick={connectedTypes.has("shein") ? undefined : () => setSheinOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/temu.svg" alt="Temu"
+                            name="Temu"
+                            description={PLATFORMS.temu.description}
+                            connected={connectedTypes.has("temu")}
+                            onClick={connectedTypes.has("temu") ? undefined : () => setTemuOpen(true)}
+                        />
+                    </Grid2>
                 </Grid2>
 
                 {/* ── Active connections ── */}
