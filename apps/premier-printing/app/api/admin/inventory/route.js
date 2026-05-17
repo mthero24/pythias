@@ -2,6 +2,7 @@ import {Inventory, Blank as Blanks, Items }from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import {getInv} from "@pythias/inventory"
 import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function GET(req=NextApiRequest){
     let term = req.nextUrl.searchParams.get("q");
     let res = await getInv({ Blanks, Inventory, term, page: 1})
@@ -10,6 +11,7 @@ export async function GET(req=NextApiRequest){
 
 export async function POST(req=NextApiRequest){
     const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     console.log(token, "token")
     if(token.permissions && token.permissions.inventory !== true){
         return NextResponse.json({error: true, msg: "You do not have permission to perform this action."}, {status: 200})
@@ -51,7 +53,7 @@ export async function POST(req=NextApiRequest){
     data.inventory.inStock = [...data.inventory.inStock, ...updateItems];
     let inv = await Inventory.findByIdAndUpdate(data.inventory._id, data.inventory, { new: true, returnNewDocument: true }).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin attached sizeId skus").lean().catch(e => { console.log(e) });
     inv = await Inventory.findById(data.inventory._id).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin attached sizeId skus").lean().catch(e => { console.log(e) });
-
+    logActivity({ action: "inventory_update", entity: "inventory", entityId: data.inventory._id, entityName: `${data.inventory.style_code} ${data.inventory.color_name} ${data.inventory.size_name}`, userName, email, provider: "premierPrinting" });
     return NextResponse.json({ error: false, inventory: data.inventory })
 }
 export async function PUT(req=NextApiRequest){

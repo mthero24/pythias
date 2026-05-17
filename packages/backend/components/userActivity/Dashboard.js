@@ -4,27 +4,33 @@ import {
     Box, Typography, Paper, Table, TableBody, TableCell, TableHead,
     TableRow, Chip, ToggleButton, ToggleButtonGroup, CircularProgress,
     Select, MenuItem, FormControl, InputLabel, Divider, Tabs, Tab,
-    Collapse, IconButton, Pagination,
+    Collapse, IconButton, Pagination, TextField, InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import axios from "axios";
 
 const ACTION_LABELS = {
-    blank_create:   "Blank Created",
-    blank_update:   "Blank Updated",
-    blank_delete:   "Blank Deleted",
-    design_create:  "Design Created",
-    design_update:  "Design Updated",
-    design_delete:  "Design Deleted",
-    product_update: "Product Saved",
-    product_delete: "Product Deleted",
-    order_shipped:  "Shipped",
-    order_binned:   "Binned",
-    dtf_sent:       "DTF Sent",
-    label_print:    "Labels Printed",
-    item_folded:    "Folded",
-    item_repull:    "Repulled",
+    blank_create:              "Blank Created",
+    blank_update:              "Blank Updated",
+    blank_delete:              "Blank Deleted",
+    design_create:             "Design Created",
+    design_update:             "Design Updated",
+    design_delete:             "Design Deleted",
+    product_update:            "Product Saved",
+    product_delete:            "Product Deleted",
+    order_shipped:             "Shipped",
+    order_binned:              "Binned",
+    order_received:            "Order Received",
+    dtf_sent:                  "DTF Sent",
+    label_print:               "Labels Printed",
+    item_folded:               "Folded",
+    item_repull:               "Repulled",
+    inventory_update:          "Inventory Updated",
+    inventory_order_create:    "Inventory Order Created",
+    inventory_order_receive:   "Inventory Order Received",
+    out_of_stock:              "Out of Stock",
 };
 
 const ACTION_COLOR = {
@@ -36,12 +42,17 @@ const ACTION_COLOR = {
     design_delete:  "error",
     product_update: "primary",
     product_delete: "error",
-    order_shipped:  "info",
-    order_binned:   "warning",
-    dtf_sent:       "secondary",
-    label_print:    "success",
-    item_folded:    "info",
-    item_repull:    "warning",
+    order_shipped:             "info",
+    order_binned:              "warning",
+    order_received:            "success",
+    dtf_sent:                  "secondary",
+    label_print:               "success",
+    item_folded:               "info",
+    item_repull:               "warning",
+    inventory_update:          "primary",
+    inventory_order_create:    "warning",
+    inventory_order_receive:   "success",
+    out_of_stock:              "error",
 };
 
 const ENTITY_ACTION_COLOR = { create: "success", update: "primary", delete: "error" };
@@ -152,10 +163,66 @@ function ChangeRow({ entry }) {
     );
 }
 
+function ErrorRow({ entry }) {
+    const [open, setOpen] = useState(false);
+    const ts = new Date(entry.timestamp);
+    const hasContext = entry.context && Object.keys(entry.context).length > 0;
+    const hasStack = !!entry.stack;
+    const expandable = hasContext || hasStack;
+    return (
+        <>
+            <TableRow hover sx={{ cursor: expandable ? "pointer" : "default", "& > *": { borderBottom: open ? "none" : undefined } }} onClick={() => expandable && setOpen(o => !o)}>
+                <TableCell sx={{ whiteSpace: "nowrap", fontSize: "0.78rem" }}>
+                    <Typography variant="caption" display="block">{ts.toLocaleDateString()}</Typography>
+                    <Typography variant="caption" color="text.secondary">{ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Typography>
+                </TableCell>
+                <TableCell><Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>{entry.source || "—"}</Typography></TableCell>
+                <TableCell><Typography variant="body2" color="error.main" sx={{ wordBreak: "break-word" }}>{entry.message}</Typography></TableCell>
+                <TableCell>
+                    {expandable ? (
+                        <IconButton size="small" sx={{ p: 0.25 }}>{open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}</IconButton>
+                    ) : "—"}
+                </TableCell>
+            </TableRow>
+            {expandable && (
+                <TableRow>
+                    <TableCell colSpan={4} sx={{ py: 0 }}>
+                        <Collapse in={open} timeout="auto" unmountOnExit>
+                            <Box sx={{ py: 1.5, px: 2, bgcolor: "action.hover", borderRadius: 1, mb: 0.5 }}>
+                                {hasContext && (
+                                    <Box sx={{ mb: hasStack ? 1.5 : 0 }}>
+                                        <Typography variant="caption" fontWeight={700} display="block" mb={0.5}>Context</Typography>
+                                        <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.73rem", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                                            {JSON.stringify(entry.context, null, 2)}
+                                        </Typography>
+                                    </Box>
+                                )}
+                                {hasStack && (
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} display="block" mb={0.5}>Stack Trace</Typography>
+                                        <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.7rem", whiteSpace: "pre-wrap", wordBreak: "break-all", color: "error.main" }}>
+                                            {entry.stack}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </Box>
+                        </Collapse>
+                    </TableCell>
+                </TableRow>
+            )}
+        </>
+    );
+}
+
 export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/api/admin/activity" }) {
     const changelogBase = apiBase.replace("/activity", "/changelog");
+    const errorlogBase  = apiBase.replace("/activity", "/errorlog");
 
     const [tab, setTab] = useState(0);
+    const handleTabChange = (_, v) => {
+        setTab(v);
+        if (v !== 1) { setChangeUserSearch(""); setChangeEntitySearch(""); }
+    };
     const [range, setRange] = useState("day");
     const [selectedUser, setSelectedUser] = useState("all");
 
@@ -172,6 +239,17 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
     const [changesPage, setChangesPage] = useState(1);
     const [changesPages, setChangesPages] = useState(1);
     const [entityTypeFilter, setEntityTypeFilter] = useState("all");
+    const [changeUserSearch, setChangeUserSearch] = useState("");
+    const [changeEntitySearch, setChangeEntitySearch] = useState("");
+    const [debouncedUserSearch, setDebouncedUserSearch] = useState("");
+    const [debouncedEntitySearch, setDebouncedEntitySearch] = useState("");
+
+    // Errors tab state
+    const [errorsLoading, setErrorsLoading] = useState(false);
+    const [errors, setErrors] = useState([]);
+    const [errorsTotal, setErrorsTotal] = useState(0);
+    const [errorsPage, setErrorsPage] = useState(1);
+    const [errorsPages, setErrorsPages] = useState(1);
 
     const loadActivity = useCallback(async () => {
         setLoading(true);
@@ -190,17 +268,41 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
             const params = new URLSearchParams({ provider, range, page: changesPage });
             if (selectedUser !== "all") params.set("user", selectedUser);
             if (entityTypeFilter !== "all") params.set("entityType", entityTypeFilter);
+            if (debouncedUserSearch.trim()) params.set("userSearch", debouncedUserSearch.trim());
+            if (debouncedEntitySearch.trim()) params.set("entitySearch", debouncedEntitySearch.trim());
             const { data } = await axios.get(`${changelogBase}?${params}`);
             if (!data.error) { setChanges(data.entries); setChangesTotal(data.total); setChangesPages(data.pages); }
         } catch (e) { console.error(e); }
         finally { setChangesLoading(false); }
-    }, [provider, range, selectedUser, entityTypeFilter, changesPage, changelogBase]);
+    }, [provider, range, selectedUser, entityTypeFilter, changesPage, changelogBase, debouncedUserSearch, debouncedEntitySearch]);
+
+    const loadErrors = useCallback(async () => {
+        setErrorsLoading(true);
+        try {
+            const params = new URLSearchParams({ provider, range, page: errorsPage });
+            const { data } = await axios.get(`${errorlogBase}?${params}`);
+            if (!data.error) { setErrors(data.entries); setErrorsTotal(data.total); setErrorsPages(data.pages); }
+        } catch (e) { console.error(e); }
+        finally { setErrorsLoading(false); }
+    }, [provider, range, errorsPage, errorlogBase]);
 
     useEffect(() => { if (tab === 0) loadActivity(); }, [loadActivity, tab]);
     useEffect(() => { if (tab === 1) loadChanges(); }, [loadChanges, tab]);
+    useEffect(() => { if (tab === 2) loadErrors(); }, [loadErrors, tab]);
+
+    // Debounce text search fields (400ms)
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedUserSearch(changeUserSearch), 400);
+        return () => clearTimeout(t);
+    }, [changeUserSearch]);
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedEntitySearch(changeEntitySearch), 400);
+        return () => clearTimeout(t);
+    }, [changeEntitySearch]);
 
     // Reset to page 1 when filters change
-    useEffect(() => { setChangesPage(1); }, [range, selectedUser, entityTypeFilter]);
+    useEffect(() => { setChangesPage(1); }, [range, selectedUser, entityTypeFilter, debouncedUserSearch, debouncedEntitySearch]);
+    useEffect(() => { setErrorsPage(1); }, [range]);
 
     const userNames = Object.keys(users).sort();
     const actionsPresent = [...new Set(Object.values(users).flatMap(u => Object.keys(u.actions)))].sort();
@@ -222,15 +324,29 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
                 </Select>
             </FormControl>
             {tab === 1 && (
-                <FormControl size="small" sx={{ minWidth: 130 }}>
-                    <InputLabel>Entity</InputLabel>
-                    <Select value={entityTypeFilter} label="Entity" onChange={e => setEntityTypeFilter(e.target.value)}>
-                        <MenuItem value="all">All</MenuItem>
-                        <MenuItem value="blank">Blanks</MenuItem>
-                        <MenuItem value="design">Designs</MenuItem>
-                        <MenuItem value="product">Products</MenuItem>
-                    </Select>
-                </FormControl>
+                <>
+                    <FormControl size="small" sx={{ minWidth: 130 }}>
+                        <InputLabel>Entity</InputLabel>
+                        <Select value={entityTypeFilter} label="Entity" onChange={e => setEntityTypeFilter(e.target.value)}>
+                            <MenuItem value="all">All</MenuItem>
+                            <MenuItem value="blank">Blanks</MenuItem>
+                            <MenuItem value="design">Designs</MenuItem>
+                            <MenuItem value="product">Products</MenuItem>
+                        </Select>
+                    </FormControl>
+                    <TextField
+                        size="small" label="User" value={changeUserSearch}
+                        onChange={e => setChangeUserSearch(e.target.value)}
+                        sx={{ minWidth: 130 }}
+                        InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16 }} /></InputAdornment> }}
+                    />
+                    <TextField
+                        size="small" label="Code / Name" value={changeEntitySearch}
+                        onChange={e => setChangeEntitySearch(e.target.value)}
+                        sx={{ minWidth: 150 }}
+                        InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16 }} /></InputAdornment> }}
+                    />
+                </>
             )}
             <ToggleButtonGroup
                 size="small" value={range} exclusive
@@ -256,9 +372,10 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
                 <Box sx={{ ml: "auto" }}>{controls}</Box>
             </Box>
 
-            <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
+            <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 3 }}>
                 <Tab label="Activity" />
                 <Tab label="Change History" />
+                <Tab label="Errors" />
             </Tabs>
 
             {/* ── Activity Tab ── */}
@@ -379,6 +496,47 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
                         {changesPages > 1 && (
                             <Box sx={{ display: "flex", justifyContent: "center" }}>
                                 <Pagination count={changesPages} page={changesPage} onChange={(_, p) => setChangesPage(p)} color="primary" />
+                            </Box>
+                        )}
+                    </>
+                )
+            )}
+
+            {/* ── Errors Tab ── */}
+            {tab === 2 && (
+                errorsLoading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress /></Box>
+                ) : (
+                    <>
+                        <Typography variant="body2" color="text.secondary" mb={2}>
+                            {errorsTotal} error{errorsTotal !== 1 ? "s" : ""} in {rangeLabel.toLowerCase()}
+                        </Typography>
+                        <Paper variant="outlined" sx={{ overflow: "auto", mb: 3 }}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow sx={{ bgcolor: "action.hover" }}>
+                                        <TableCell><strong>Time</strong></TableCell>
+                                        <TableCell><strong>Source</strong></TableCell>
+                                        <TableCell><strong>Message</strong></TableCell>
+                                        <TableCell><strong>Details</strong></TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {errors.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="center">
+                                                <Typography color="text.secondary" py={2}>No errors in {rangeLabel.toLowerCase()}</Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : errors.map(entry => (
+                                        <ErrorRow key={entry._id} entry={entry} />
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Paper>
+                        {errorsPages > 1 && (
+                            <Box sx={{ display: "flex", justifyContent: "center" }}>
+                                <Pagination count={errorsPages} page={errorsPage} onChange={(_, p) => setErrorsPage(p)} color="primary" />
                             </Box>
                         )}
                     </>

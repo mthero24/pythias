@@ -1,12 +1,16 @@
 import {NextApiRequest, NextResponse} from "next/server"
 import {Blank as Blanks, Item as Items, Inventory, InventoryOrders} from "@pythias/mongo";
 import axios from "axios";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function GET(){
     console.log("Fetching inventory orders");
     let orders = await InventoryOrders.find({received: false}).populate("locations.items.inventory")
     return NextResponse.json({error: false, orders})
 }
 export async function PUT(req=NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json()
     //console.log(data)
     let printItems = []
@@ -34,11 +38,14 @@ export async function PUT(req=NextApiRequest){
         if (order.locations.filter(l => l.received == false).length == 0) order.received = true
         order.markModified("locations received")
         await order.save()
+        logActivity({ action: "inventory_order_receive", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email, provider: "premierPrinting" });
     }
     let orders = await InventoryOrders.find({ received: { $in: [null, false] } }).populate("locations.items.inventory")
     return NextResponse.json({ error: false, orders })
 }
 export async function POST(req=NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json()
     //console.log(data)
     console.log(data)
@@ -82,6 +89,7 @@ export async function POST(req=NextApiRequest){
     }
     console.log(order)
     await order.save()
+    logActivity({ action: "inventory_order_create", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email, provider: "premierPrinting" });
     let inventory = await Inventory.find({}).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location")
     let blanks = await Blanks.find({}).populate("colors").select("code name colors sizes department")
     let combined = []

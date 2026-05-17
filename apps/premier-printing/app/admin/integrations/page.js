@@ -17,7 +17,7 @@ function buildEtsyRedirectURI() {
 
 export default async function Integrations(){
     let tiktokShops = await TikTokAuth.find({ provider: "premierPrinting" }).catch(e => { console.log(e) }) || []
-    let apiKeyIntegrations = await ApiKeyIntegrations.find({ provider: "premierPrinting" })
+    let apiKeyIntegrations = await ApiKeyIntegrations.find({ $or: [{ provider: "premierPrinting" }, { provider: null }] })
     tiktokShops = serialize(tiktokShops)
     apiKeyIntegrations = serialize(apiKeyIntegrations)
     const etsyRedirectURI = buildEtsyRedirectURI()

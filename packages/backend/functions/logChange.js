@@ -13,6 +13,7 @@ const TRACKED = {
     design: [
         "name", "sku", "description", "tags", "sendToMarketplaces",
         "printType", "gender", "season", "published", "blanks",
+        "isLicenseDesign", "licenseHolder",
     ],
     product: [
         "name", "sku", "title", "brand", "productDescription",

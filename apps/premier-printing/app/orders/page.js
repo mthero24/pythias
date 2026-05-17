@@ -3,8 +3,6 @@ import { OrdersMain } from "@pythias/backend";
 import { serialize } from "@/functions/serialize";
 import { OrdersSearch, ORDERS_PER_PAGE } from "@/functions/ordersSearch";
 export const dynamic = "force-dynamic";
-import "@/functions/pullOrders";
-
 export default async function OrdersPage(req) {
     const query = await req.searchParams;
     const page = query.page ? parseInt(query.page) : 1;

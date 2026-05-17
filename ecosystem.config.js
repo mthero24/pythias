@@ -93,6 +93,24 @@ module.exports = {
       cron_restart: "0 9 * * *", //9am UTC is 4AM EST
     },
     {
+      name: "pull-orders",
+      cwd: "apps/premier-printing",
+      script: "scripts/runPullOrders.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "0 * * * *", // every hour
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3000,
+      },
+      out_file: "/dev/null",
+      error_file: "/dev/null",
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "tracking-premier-printing",
       cwd: "apps/premier-printing",
       script: "scripts/runTracking.js",

@@ -8,12 +8,14 @@ export async function GET(req) {
         return NextResponse.json({ error: true, msg: "Access denied" }, { status: 403 });
     }
 
-    const provider    = req.nextUrl.searchParams.get("provider") || "pythiasTest";
-    const range       = req.nextUrl.searchParams.get("range") || "day";
-    const entityType  = req.nextUrl.searchParams.get("entityType") || null;
-    const userName    = req.nextUrl.searchParams.get("user") || null;
-    const page        = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") || "1"));
-    const limit       = 50;
+    const provider      = req.nextUrl.searchParams.get("provider") || "pythiasTest";
+    const range         = req.nextUrl.searchParams.get("range") || "day";
+    const entityType    = req.nextUrl.searchParams.get("entityType") || null;
+    const userName      = req.nextUrl.searchParams.get("user") || null;
+    const userSearch    = req.nextUrl.searchParams.get("userSearch") || null;
+    const entitySearch  = req.nextUrl.searchParams.get("entitySearch") || null;
+    const page          = Math.max(1, parseInt(req.nextUrl.searchParams.get("page") || "1"));
+    const limit         = 50;
 
     const now = new Date();
     let since;
@@ -25,6 +27,8 @@ export async function GET(req) {
     const match = { provider, timestamp: { $gte: since } };
     if (entityType) match.entityType = entityType;
     if (userName) match.userName = userName;
+    if (userSearch) match.userName = { $regex: userSearch, $options: "i" };
+    if (entitySearch) match.entityName = { $regex: entitySearch, $options: "i" };
 
     try {
         const [entries, total] = await Promise.all([

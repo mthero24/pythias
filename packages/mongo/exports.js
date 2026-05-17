@@ -29,3 +29,4 @@ export { default as ProductInventory } from "./models/ProductInventory";
 export { default as Converters } from "./models/converters";
 export { default as UserActivity } from "./models/UserActivity";
 export { default as ChangeLog } from "./models/ChangeLog";
+export { default as ErrorLog } from "./models/ErrorLog";

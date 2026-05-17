@@ -1,5 +1,6 @@
 import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc, Inventory, ProductInventory, Converters, ApiKeyIntegrations } from "@pythias/mongo";
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda } from "@pythias/integrations";
+import { logActivity } from "@pythias/backend/server";
 
 
 const CreateSku = async ({ blank, color, size, design, threadColor, designSku }) => {
@@ -598,6 +599,7 @@ export async function pullOrders(){
             }
             order.items = items
             order = await order.save()
+            logActivity({ action: "order_received", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName: "system", provider: "premierPrinting" });
             items.map(async i => {
                 i.order = order._id
                 await i.save()
@@ -632,6 +634,3 @@ export async function pullOrders(){
     }
     await updateInventory();
 }
-setInterval(()=>{
-    if(process.env.pm_id == 0 || process.env.pm_id == "0") pullOrders()
-}, 1 * 60 *60 *1000)

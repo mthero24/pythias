@@ -1,5 +1,6 @@
 import {Products, ProductInventory, Item, Inventory} from "@pythias/mongo"
 import {NextApiRequest, NextResponse} from "next/server";
+import { logActivity } from "@pythias/backend/server";
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
@@ -12,6 +13,7 @@ export async function POST(req=NextApiRequest){
         console.log(productInventory, "productInventory")
         productInventory.quantity = 0
         await productInventory.save()
+        logActivity({ action: "out_of_stock", entity: "inventory", entityId: productInventory._id, entityName: variant.sku || data.upc || "", provider: "premierPrinting" });
         return NextResponse.json({ error: false, msg: "Inventory created and updated", productInventory: productInventory, variant })
     }
     return NextResponse.json({error: true, msg: "Look up SKU or UPC on the design page!!!"})
