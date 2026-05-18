@@ -62,7 +62,7 @@ export const trackOrder = async (orderId) => {
 };
 
 export const runTracking = async () => {
-    const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
     const orders = await Order.find({
         status: { $in: ["Shipped", "shipped", "Out For Delivery"] },

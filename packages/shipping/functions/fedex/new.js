@@ -142,7 +142,7 @@ export async function getRatesFeNew({address, businessAddress, weight, service, 
 }
 export async function TrackPackageFedEx({ tn, credentials }) {
     const { token } = await getAuth(credentials);
-    if (!token) return [];
+    if (!token) return { events: [], expectedDelivery: null };
 
     const options = {
         headers: {

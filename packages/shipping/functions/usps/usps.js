@@ -1,7 +1,7 @@
 import axios from "axios"
 import fs from "fs"
 async function GetToken({credentials}){
-    console.log(credentials)
+    //console.log(credentials)
     let res = await axios.post(`https://${credentials.api? credentials.api: "api"}.usps.com/oauth2/v3/token`, {
         grant_type: "client_credentials",
         client_id: credentials.clientId,
@@ -25,17 +25,52 @@ export async function TrackPackage({tn, credentials}){
                 Authorization: `Bearer ${token}`
             }
         }
+        let errData
         let res = await axios.get(`https://${credentials.api? credentials.api: "api"}.usps.com/tracking/v3/tracking/${tn}`, headers).catch(e=>{
             //console.log(e.response.data)
+            errData = e.response
         })
-        //console.log(res?.data)
-        if(res?.data?.eventSummaries) return {
-            events: res.data.eventSummaries.map(e => {
-                const parts = [e.eventSummary];
+        //console.log(res, res?.data)
+        if(res?.data?.eventSummaries) {
+            console.log(`[usps] response for ${tn} has eventSummaries, count: ${res.data.eventSummaries.length}`);
+            const events = res.data.eventSummaries.map(e => {
+                if (typeof e === "string") return e;
+                const desc = e.eventSummary || e.Event || e.eventStatus || e.statusSummary || e.description || "";
+                const parts = [desc];
                 if (e.eventCity) parts.push(`${e.eventCity}, ${e.eventState}`);
                 return parts.filter(Boolean).join(' — ');
-            }).filter(Boolean),
-            expectedDelivery: res.data.expectedDeliveryDate ?? res.data.scheduledDeliveryDate ?? null,
+            }).filter(Boolean);
+            return {
+                events,
+                expectedDelivery: res.data.expectedDeliveryDate ?? res.data.scheduledDeliveryDate ?? null,
+            }
+        }
+
+        // Older USPS v3 response shape: TrackSummary + TrackDetail
+        if(res?.data?.TrackSummary || res?.data?.trackSummary) {
+            const summary = res.data.TrackSummary || res.data.trackSummary;
+            const detail  = res.data.TrackDetail  || res.data.trackDetail || [];
+            const toStr = e => {
+                if (typeof e === "string") return e;
+                const desc = e.Event || e.eventSummary || e.description || "";
+                const loc  = e.EventCity || e.eventCity;
+                const st   = e.EventState || e.eventState;
+                return [desc, loc && st ? `${loc}, ${st}` : ""].filter(Boolean).join(" — ");
+            };
+            const events = [toStr(summary), ...detail.map(toStr)].filter(Boolean);
+            return {
+                events,
+                expectedDelivery: res.data.expectedDeliveryDate ?? res.data.scheduledDeliveryDate ?? null,
+            }
+        }
+        const quotaMsg = (errData?.data?.message || res?.data?.message || "").toLowerCase();
+        if (quotaMsg.includes("quota") || errData?.status === 429) {
+            throw new Error("USPS_QUOTA_EXCEEDED");
+        }
+        if(errData){
+            console.log(`[usps] error response for ${tn}:`, errData.status, errData.data);
+        }else{
+            console.log(`[usps] unrecognised response for ${tn}, keys:`, res?.data ? Object.keys(res.data) : "no response");
         }
     }
     return { events: [], expectedDelivery: null }

@@ -5,35 +5,16 @@ import { Inventory } from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 import { generatePieceID } from "@pythias/integrations";
 import "@/functions/addItemsToInventory";
+
 export async function LabelsData(){
-    // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
-    // console.log("inv count", (await inv).length, "+++++++++++++++++++")
-    const bulkOrders = await Order.find({
-        $expr: { $gt: [{ $size: "$items" }, 50] },
-        status: { $nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment", "Pending Artwork Approval"] },
-        date: { $gte: new Date("2025-10-31") },
-        bulk: { $in: [null, false] }
-    }).populate("items");
-    console.log(bulkOrders.length, "orders with more than 50 items")
-    if (bulkOrders.length > 0) {
-        const orderBulkOps = [];
-        const itemBulkOps = [];
-        for (const o of bulkOrders) {
-            orderBulkOps.push({ updateOne: { filter: { _id: o._id }, update: { $set: { bulk: true } } } });
-            const skus = [...new Set(o.items.filter(i => !i.canceled).map(i => i.sku))];
-            for (const s of skus) {
-                const bulkId = generatePieceID();
-                o.items.filter(it => it.sku === s && !it.canceled).forEach(it => {
-                    itemBulkOps.push({ updateOne: { filter: { _id: it._id }, update: { $set: { bulkId } } } });
-                });
-            }
-        }
-        await Promise.all([
-            Order.bulkWrite(orderBulkOps, { ordered: false }),
-            Items.bulkWrite(itemBulkOps, { ordered: false }),
-        ]);
-    }
-    const [standardItems, expeditedItems] = await Promise.all([
+    // Phase 1: fire all independent queries at once
+    const [bulkOrders, standardItems, expeditedItems, giftItemsRaw, batches] = await Promise.all([
+        Order.find({
+            $expr: { $gt: [{ $size: "$items" }, 50] },
+            status: { $nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment", "Pending Artwork Approval"] },
+            date: { $gte: new Date("2025-10-31") },
+            bulk: { $in: [null, false] }
+        }).populate("items"),
         Items.find({
             styleV2: { $ne: undefined },
             labelPrinted: false,
@@ -54,23 +35,61 @@ export async function LabelsData(){
             type: { $nin: ["sublimation", "gift"] },
             shippingType: { $ne: "Standard" },
         }).populate("order", "poNumber items marketplace").populate("inventory.inventory", "row unit shelf bin quantity").lean(),
+        Items.find({
+            labelPrinted: false, paid: true, canceled: false, type: "gift",
+            sku: { $in: ["gift-bag", "gift-message"] },
+        }).lean(),
+        Batches.find({}).limit(20).sort({ _id: -1 }).lean(),
     ]);
-    let labels = { Standard: standardItems, Expedited: expeditedItems };
-    let Marketplace = []
-    for(let k of Object.keys(labels)){
-        Marketplace = [...Marketplace, ...labels[k].filter(l=> l.order?.marketplace != null && l.order?.marketplace != undefined)]
-        labels[k] = labels[k].filter(l=> l.order?.marketplace == null || l.order?.marketplace == undefined)
-    }
-    console.log(Marketplace.length, "marketplace labels")
-    labels["Marketplace"] = Marketplace
-    let rePulls = 0
-    for (const k of Object.keys(labels)) {
-        labels[k] = labels[k].filter(l => l.order != undefined)
-        rePulls += labels[k].filter(l => l.rePulled).length
-        labels[k] = await Sort(labels[k])
-    }
 
-    // Step 1: Link unassigned items to inventory (no status assignment, no counter changes)
+    // Phase 2: bulk-order tagging (fire-and-forget) + gift order lookup — in parallel
+    const giftOrderIds = giftItemsRaw.map(s => s.order);
+    const [, giftOrderList] = await Promise.all([
+        (async () => {
+            if (!bulkOrders.length) return;
+            console.log(bulkOrders.length, "orders with more than 50 items");
+            const orderBulkOps = [];
+            const itemBulkOps  = [];
+            for (const o of bulkOrders) {
+                orderBulkOps.push({ updateOne: { filter: { _id: o._id }, update: { $set: { bulk: true } } } });
+                const skus = [...new Set(o.items.filter(i => !i.canceled).map(i => i.sku))];
+                for (const s of skus) {
+                    const bulkId = generatePieceID();
+                    o.items.filter(it => it.sku === s && !it.canceled).forEach(it => {
+                        itemBulkOps.push({ updateOne: { filter: { _id: it._id }, update: { $set: { bulkId } } } });
+                    });
+                }
+            }
+            // fire-and-forget — don't block the response
+            Promise.all([
+                Order.bulkWrite(orderBulkOps, { ordered: false }),
+                Items.bulkWrite(itemBulkOps, { ordered: false }),
+            ]);
+        })(),
+        Order.find({ _id: { $in: giftOrderIds } }).select("poNumber items marketplace").lean(),
+    ]);
+
+    // Build labels map and split marketplace
+    let labels = { Standard: standardItems, Expedited: expeditedItems };
+    let Marketplace = [];
+    for (const k of Object.keys(labels)) {
+        Marketplace = [...Marketplace, ...labels[k].filter(l => l.order?.marketplace != null)];
+        labels[k]  = labels[k].filter(l => l.order?.marketplace == null);
+    }
+    labels["Marketplace"] = Marketplace;
+
+    // Phase 3: sort all categories in parallel
+    let rePulls = 0;
+    const sorted = await Promise.all(
+        Object.keys(labels).map(async k => {
+            labels[k] = labels[k].filter(l => l.order != undefined);
+            rePulls += labels[k].filter(l => l.rePulled).length;
+            return [k, await Sort(labels[k])];
+        })
+    );
+    for (const [k, v] of sorted) labels[k] = v;
+
+    // Phase 4: link unassigned items to inventory (blocks display — needed for new items)
     const needsAssignment = [];
     for (const k of Object.keys(labels)) {
         for (const l of labels[k]) {
@@ -115,63 +134,55 @@ export async function LabelsData(){
         if (linkOps.length) Items.bulkWrite(linkOps, { ordered: false }); // fire-and-forget
     }
 
-    // Step 2: Full recompute of stockStatus for ALL items with inventory (FIFO by date)
+    // Phase 5: recompute stockStatus fire-and-forget — doesn't block the response
+    // DB values (kept current by addItemsToInventory background job) are shown immediately
     const allWithInv = [];
     for (const k of Object.keys(labels)) {
         for (const l of labels[k]) {
             if (l.inventory?.inventory != null) allWithInv.push(l);
         }
     }
-
     if (allWithInv.length > 0) {
-        const allInvIds = [...new Set(allWithInv.map(l => (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString()).filter(Boolean))];
-        const allInvDocs = await Inventory.find({ _id: { $in: allInvIds } }, "quantity orders").lean();
-        const allInvMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
-            quantity: inv.quantity ?? 0,
-            hasActiveOrder: (inv.orders || []).length > 0,
-            slotsUsed: 0,
-        }]));
+        (async () => {
+            try {
+                const allInvIds = [...new Set(allWithInv.map(l => (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString()).filter(Boolean))];
+                const allInvDocs = await Inventory.find({ _id: { $in: allInvIds } }, "quantity orders").lean();
+                const allInvMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
+                    quantity: inv.quantity ?? 0,
+                    hasActiveOrder: (inv.orders || []).length > 0,
+                    slotsUsed: 0,
+                }]));
 
-        allWithInv.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+                allWithInv.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
 
-        const updateOps = [];
-        for (const l of allWithInv) {
-            const invId = (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString();
-            const data = allInvMap.get(invId);
-            if (!data) continue;
-            let computed;
-            if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
-            else if (data.hasActiveOrder) { computed = "ordered"; }
-            else { computed = "attached"; }
-            if (l.stockStatus !== computed) {
-                updateOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: computed } } } });
-            }
-            l.stockStatus = computed;
-        }
-        if (updateOps.length) Items.bulkWrite(updateOps, { ordered: false }); // fire-and-forget
+                const updateOps = [];
+                for (const l of allWithInv) {
+                    const invId = (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString();
+                    const data = allInvMap.get(invId);
+                    if (!data) continue;
+                    let computed;
+                    if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
+                    else if (data.hasActiveOrder) { computed = "ordered"; }
+                    else { computed = "attached"; }
+                    if (l.stockStatus !== computed) {
+                        updateOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: computed } } } });
+                    }
+                }
+                if (updateOps.length) await Items.bulkWrite(updateOps, { ordered: false });
+            } catch {}
+        })();
     }
-    //console.log(labels.Standard[0], "standard labels")
-    let giftMessages = await Items.find({
-        labelPrinted: false, paid: true, canceled: false, type: "gift", sku: {
-            $in: ["gift-bag", "gift-message"]}
-        }).lean()
-    let giftOrderIds = giftMessages.map(s=> s.order)
-    const giftOrderList = await Order.find({_id: {$in: giftOrderIds}}).select("poNumber items marketplace").lean()
-    const giftOrderMap = Object.fromEntries(giftOrderList.map(o => [o._id.toString(), o]))
-    giftMessages = giftMessages.map(s=> {
-        s.order = giftOrderMap[s.order.toString()];
-        s.styleCode = "GIFT";
-        return {...s}
-    })
-    //console.log(giftMessages)
-    //giftMessages.map(g=>console.log(g.order))
-    giftMessages = giftMessages.filter(s=> typeof s.order !== "undefined")
-    //console.log(giftMessages)
-    if(labels) labels = JSON.parse(JSON.stringify(labels))
-    if(giftMessages) giftMessages = JSON.parse(JSON.stringify(giftMessages))
-    let batches = JSON.parse(
-        JSON.stringify(await Batches.find({}).limit(20).sort({ _id: -1 }).lean())
-    );
-    //console.log(batches)
-    return {labels, giftMessages, rePulls, batches}
+
+    // Build gift messages
+    const giftOrderMap = Object.fromEntries(giftOrderList.map(o => [o._id.toString(), o]));
+    let giftMessages = giftItemsRaw
+        .map(s => ({ ...s, order: giftOrderMap[s.order?.toString()], styleCode: "GIFT" }))
+        .filter(s => s.order !== undefined);
+
+    return {
+        labels: JSON.parse(JSON.stringify(labels)),
+        giftMessages: JSON.parse(JSON.stringify(giftMessages)),
+        rePulls,
+        batches: JSON.parse(JSON.stringify(batches)),
+    };
 }
