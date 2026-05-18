@@ -96,18 +96,32 @@ function SendScan({ setSubmitted, auto, setAuto, printer, onAction }) {
         // Add to top of queue immediately — don't wait for response
         setQueue(prev => [{ id, pieceId, status: "pending" }, ...prev].slice(0, MAX_QUEUE));
 
-        // Fire request in background
-        axios.post("/api/production/dtf", { pieceId, printer })
-            .then(res => {
+        // Fire request in background — retry up to 2 times on failure
+        const attemptSend = async (attemptsLeft) => {
+            try {
+                const res = await axios.post("/api/production/dtf", { pieceId, printer });
                 if (res.data.error) {
+                    if (attemptsLeft > 0) {
+                        updateItem(id, { msg: `Retrying…` });
+                        await new Promise(r => setTimeout(r, 1000));
+                        return attemptSend(attemptsLeft - 1);
+                    }
                     updateItem(id, { status: "error", msg: res.data.msg });
                 } else {
                     updateItem(id, { status: "success", msg: res.data.msg || "Sent to printer" });
                     setSubmitted(res.data);
                     onAction?.();
                 }
-            })
-            .catch(() => updateItem(id, { status: "error", msg: "Request failed" }));
+            } catch {
+                if (attemptsLeft > 0) {
+                    updateItem(id, { msg: `Retrying…` });
+                    await new Promise(r => setTimeout(r, 1000));
+                    return attemptSend(attemptsLeft - 1);
+                }
+                updateItem(id, { status: "error", msg: "Request failed" });
+            }
+        };
+        attemptSend(2);
     };
 
     const pending = queue.filter(i => i.status === "pending").length;
