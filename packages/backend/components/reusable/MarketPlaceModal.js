@@ -149,7 +149,7 @@ const RemoveMarketPlaceModal = ({ open, setOpen, mp, removeMarketplaceConnection
     )
 }
 
-export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source, products, setProducts, canManage }) => {
+export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source, products, setProducts, canManage, canEdit }) => {
     const [size, setSize] = useState([]);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteTitle, setDeleteTitle] = useState();
@@ -541,12 +541,14 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                             {product && isSelected && (
                                                 <Button fullWidth size="small" variant="outlined" color="warning" sx={{ fontSize: "0.7rem", py: 0.4 }} onClick={() => { setMarketplace(mp); setOpenRemoveModal(true); }}>Remove</Button>
                                             )}
-                                            {canManage && (
+                                            {(canManage || canEdit) && (
                                                 <Box sx={{ display: "flex", gap: 0.5 }}>
                                                     <Button fullWidth size="small" variant="outlined" sx={{ fontSize: "0.7rem", py: 0.4 }} onClick={() => { setMarketplace(mp); setAddMarketPlace(true); }}>Edit</Button>
-                                                    <IconButton size="small" color="error" sx={{ p: 0.5 }} onClick={() => setConfirmDeleteMp(mp)}>
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
+                                                    {canManage && (
+                                                        <IconButton size="small" color="error" sx={{ p: 0.5 }} onClick={() => setConfirmDeleteMp(mp)}>
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    )}
                                                 </Box>
                                             )}
                                         </Box>

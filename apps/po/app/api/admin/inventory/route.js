@@ -3,6 +3,7 @@ import {NextApiRequest, NextResponse} from "next/server";
 import {default as Blanks} from "@/models/StyleV2";
 import Items from "@/models/Items";
 import {getInv} from "@pythias/inventory"
+import { addItemsToInventory, reconcileAllocated } from "@/functions/addItemsToInventory"
 export async function GET(req=NextApiRequest){
     let term = req.nextUrl.searchParams.get("q");
     let res = await getInv({ Blanks, Inventory, term, page: 1})
@@ -20,4 +21,9 @@ export async function PUT(req=NextApiRequest){
     let data = await req.json()
     let inventory = await Inventory.findOneAndDelete({inventory_id: data.inventory_id});
     return NextResponse.json({error: false})
+}
+export async function PATCH() {
+    await reconcileAllocated();
+    await addItemsToInventory();
+    return NextResponse.json({ error: false });
 }

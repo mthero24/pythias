@@ -188,7 +188,7 @@ export function BlanksComponent({blanks, mPs, source}){
                     })}
                 </Grid2>
 
-                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => b.sizes?.map(s => s.name))} blank={blank} setBlank={setBlank} source={source} />
+                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => b.sizes?.map(s => s.name))} blank={blank} setBlank={setBlank} source={source} canEdit />
                 <AliasModal open={aliasOpen} setOpen={setAliasOpen} blanks={blanks} />
             </Container>
             <Footer />

@@ -143,6 +143,7 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    stockStatus: { type: String, enum: ["inStock", "attached", "ordered", null], default: null },
     inventory: {
       inventoryType: "String",
       inventory: {

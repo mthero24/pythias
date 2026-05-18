@@ -123,7 +123,7 @@ export function Blank({bla, mPs, blanks}){
           </div>
         </div>
         {loading && <LoaderOverlay />}
-        <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => { return b.sizes?.map(s => { return s.name }) })} blank={blank} setBlank={setBlank} />
+        <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => { return b.sizes?.map(s => { return s.name }) })} blank={blank} setBlank={setBlank} canEdit />
       </Container>
     );
 }

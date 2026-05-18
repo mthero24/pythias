@@ -81,7 +81,7 @@ export async function POST(req=NextApiRequest){
     let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
     await batch.save()
-    await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
+    await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, stockStatus: null, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
     logActivity({ action: "label_print", entity: "order", count: pieceIds.length, userName, email });
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)

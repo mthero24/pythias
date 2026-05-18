@@ -93,7 +93,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
         let sel = [...selected];
         Object.keys(useLabels).map(l => {
             sel.push(...useLabels[l].map(k => {
-                if (k.order.poNumber.includes("RT") && k.inventory?.inventory?.quantity > 0) return k.pieceId;
+                if (k.order.poNumber.includes("RT") && k.stockStatus === "inStock") return k.pieceId;
             }));
         });
         sel = sel.filter(s => s != undefined);
@@ -102,52 +102,22 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
     };
 
     const selectBasedOnPTSC = ({ printType, styleCode, marketplace }) => {
+        const effectivePT = printType !== undefined ? printType : printTypeSelected;
+        const effectiveSC = styleCode !== undefined ? styleCode : styleCodeSelected;
+        const effectiveMP = marketplace !== undefined ? marketplace : marketplaceSelected;
+
         let sel = [];
-        if (printType && printType !== "Select" && styleCodeSelected && styleCodeSelected !== "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (printType && printType !== "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (printType && printType !== "Select" && styleCodeSelected && styleCodeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type?.toLowerCase() == printType.toLowerCase()) && k.styleCode == styleCodeSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (printType == "Select" && styleCodeSelected !== "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.styleCode == styleCodeSelected) && k.order.marketplace == marketplaceSelected && k.inventory?.inventory?.quantity > 0) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (printType == "Select" && styleCodeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (printType == "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.order.marketplace == marketplaceSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (printType) {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if (((k.type?.toLowerCase() || k.designRef?.printType?.toLowerCase()) == printType.toLowerCase()) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        }
-        if (styleCode && styleCode !== "Select" && printTypeSelected && printTypeSelected !== "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type == printTypeSelected) && k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (styleCode && styleCode !== "Select" && printTypeSelected && printTypeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type == printTypeSelected) && k.styleCode == styleCode && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (styleCode && styleCode !== "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if (k.styleCode == styleCode && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (styleCode && styleCode == "Select" && printTypeSelected && printTypeSelected !== "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && k.order.marketplace == marketplaceSelected && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (styleCode == "Select" && printTypeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (styleCode == "Select" && marketplaceSelected && marketplaceSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.order.marketplace == marketplaceSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (styleCode) {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.styleCode == styleCode) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        }
-        if (marketplace && marketplace !== "Select" && printTypeSelected && printTypeSelected !== "Select" && styleCodeSelected && styleCodeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (marketplace && marketplace !== "Select" && printTypeSelected && printTypeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.order.marketplace == marketplace && k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (marketplace && marketplace !== "Select" && styleCodeSelected && styleCodeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.order.marketplace == marketplace && k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (marketplace && marketplace == "Select" && printTypeSelected && printTypeSelected !== "Select" && styleCodeSelected && styleCodeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase() && k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (marketplace && marketplace == "Select" && printTypeSelected && printTypeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.type?.toLowerCase() == printTypeSelected.toLowerCase()) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (marketplace && marketplace == "Select" && styleCodeSelected && styleCodeSelected !== "Select") {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.styleCode == styleCodeSelected) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k.inventory?.inventory?.inStock) { if (k.inventory?.inventory?.inStock.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        } else if (marketplace) {
-            Object.keys(useLabels).map(l => { sel.push(...useLabels[l].map(k => { if ((k.order.marketplace == marketplace) && (k.inventory?.inventory?.quantity > 0 || source == "PP")) if (k?.inventory?.inventory?.inStock) { if (k?.inventory?.inventory?.inStock?.includes(k._id) || source == "PP") return k.pieceId; } else return k.pieceId; })); });
-        }
+        Object.keys(useLabels).map(l => {
+            sel.push(...useLabels[l].map(k => {
+                if (effectivePT && effectivePT !== "Select") {
+                    const t = k.type?.toLowerCase() || k.designRef?.printType?.toLowerCase();
+                    if (t !== effectivePT.toLowerCase()) return;
+                }
+                if (effectiveSC && effectiveSC !== "Select" && k.styleCode !== effectiveSC) return;
+                if (effectiveMP && effectiveMP !== "Select" && k.order.marketplace !== effectiveMP) return;
+                if (k.stockStatus === "inStock" || source === "PP") return k.pieceId;
+            }));
+        });
         sel = sel.filter(s => s != undefined);
         setSelected([...sel]);
     };
@@ -179,8 +149,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                 items.push(...useLabels[type]);
             } else {
                 for (let l of useLabels[type]) {
-                    if (l.inventory && l.inventory.inventory && l.inventory.inventory.inStock && l.inventory.inventory.inStock.length > 0 && l.inventory.inventory.inStock.includes(l._id)) items.push(l);
-                    else if (l.inventory && l.inventory.productInventory && l.inventory.productInventory.inStock && l.inventory.productInventory.inStock.length > 0 && l.inventory.productInventory.inStock.includes(l._id)) items.push(l);
+                    if (l.stockStatus === "inStock" || (l.inventory?.inventoryType === "productInventory" && l.inventory?.productInventory)) items.push(l);
                 }
             }
             items = Sort(items, source);
@@ -413,11 +382,13 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                     <Grid2 container spacing={2}>
                         {useLabels && Object.keys(useLabels).map((l) => {
                             const inStockCount = useLabels[l].filter(item =>
-                                (item.inventory?.inventoryType === "inventory" && item.inventory?.inventory?.inStock?.includes(item._id.toString())) ||
-                                (item.inventory?.inventoryType === "productInventory" && item.inventory?.productInventory?.inStock?.includes(item._id.toString()))
+                                item.stockStatus === "inStock" ||
+                                (item.inventory?.inventoryType === "productInventory" && item.inventory?.productInventory)
                             ).length;
-                            const outCount = useLabels[l].filter(item =>
-                                item.inventory?.inventoryType === "inventory" && !item.inventory?.inventory?.inStock?.includes(item._id.toString())
+                            const orderedCount = useLabels[l].filter(item => item.stockStatus === "ordered").length;
+                            const outCount = useLabels[l].filter(item => item.stockStatus === "attached").length;
+                            const noInvCount = useLabels[l].filter(item =>
+                                !item.stockStatus && !(item.inventory?.inventoryType === "productInventory" && item.inventory?.productInventory)
                             ).length;
 
                             const displayed = useLabels[l].filter(s => {
@@ -440,11 +411,16 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                                     <Chip label={`${useLabels[l].length} total`} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 700 }} />
                                                 </Stack>
                                                 {source !== "PO" && (
-                                                    <Stack direction="row" spacing={0.5}>
+                                                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
                                                         <Chip icon={<CheckCircleIcon sx={{ fontSize: "12px !important" }} />} label={`${inStockCount} in stock`} size="small"
-                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#f0fdf4", color: "#15803d" }} />
-                                                        <Chip icon={<ErrorIcon sx={{ fontSize: "12px !important" }} />} label={`${outCount} out`} size="small"
-                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#fef2f2", color: "#dc2626" }} />
+                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#f0fdf4", color: "#15803d", cursor: "pointer" }}
+                                                            onClick={() => selectBasedOnPTSC({ printType: "Select", styleCode: "Select", marketplace: "Select" })} />
+                                                        {orderedCount > 0 && <Chip icon={<SyncIcon sx={{ fontSize: "12px !important" }} />} label={`${orderedCount} on order`} size="small"
+                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#fffbeb", color: "#b45309" }} />}
+                                                        {outCount > 0 && <Chip icon={<ErrorIcon sx={{ fontSize: "12px !important" }} />} label={`${outCount} out`} size="small"
+                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#fef2f2", color: "#dc2626" }} />}
+                                                        {noInvCount > 0 && <Chip icon={<WarningAmberIcon sx={{ fontSize: "12px !important" }} />} label={`${noInvCount} no inv`} size="small"
+                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#f9fafb", color: "#6b7280" }} />}
                                                     </Stack>
                                                 )}
                                             </Stack>
@@ -481,7 +457,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
 
                                         {/* Table header */}
                                         <Box sx={{ display: "grid", gridTemplateColumns: source === "IM" ? "140px 100px 120px 80px 100px 100px 60px 1fr" : "140px 100px 120px 80px 100px 60px 1fr", px: 2, py: 0.75, bgcolor: "#6366f1", color: "#fff", gap: 1 }}>
-                                            {["In Stock", "Piece ID", "PO Number", "Style", "Color", ...(source === "IM" ? ["Thread"] : []), "Size", "Date"].map(h => (
+                                            {["Status", "Piece ID", "PO Number", "Style", "Color", ...(source === "IM" ? ["Thread"] : []), "Size", "Date"].map(h => (
                                                 <Typography key={h} variant="caption" sx={{ fontWeight: 700, fontSize: "0.68rem", textAlign: "center" }}>{h}</Typography>
                                             ))}
                                         </Box>
@@ -491,23 +467,14 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                             {displayed.map((item, j) => {
                                                 const isSelected = selected.includes(item.pieceId);
                                                 const inv = item.inventory;
-                                                const itemId = item._id?.toString();
-                                                const inStockArr  = inv?.inventory?.inStock  ?? [];
-                                                const attachedArr = inv?.inventory?.attached ?? [];
-                                                const isInStock  = inv?.inventoryType === "inventory"
-                                                    ? inStockArr.some(id => id?.toString() === itemId)
-                                                    : inv?.inventoryType === "productInventory" && !!inv?.productInventory;
-                                                const isAttached = attachedArr.some(id => id?.toString() === itemId);
-                                                const isOrdered  = inv?.inventoryType === "inventory" && inv?.inventory?.orders?.some(o => o.items?.some(id => id?.toString() === itemId));
-                                                const isReturns  = inv?.inventoryType === "productInventory" && !!inv?.productInventory;
+                                                const isReturns = inv?.inventoryType === "productInventory" && !!inv?.productInventory;
 
-                                                let stockStatus, stockColor;
-                                                if (inv?.inventoryType === "inventory") {
-                                                    if (isInStock)       { stockStatus = "In Stock";     stockColor = isSelected ? "#fff" : "#15803d"; }
-                                                    else if (isOrdered)  { stockStatus = "Ordered";      stockColor = isSelected ? "#fff" : "#d97706"; }
-                                                    else                 { stockStatus = "Out of Stock"; stockColor = isSelected ? "#fff" : "#dc2626"; }
-                                                } else if (isReturns)    { stockStatus = "Returns";      stockColor = isSelected ? "#fff" : "#15803d"; }
-                                                else                     { stockStatus = "Out of Stock"; stockColor = isSelected ? "#fff" : "#dc2626"; }
+                                                let stockLabel, stockColor;
+                                                if (item.stockStatus === "inStock")       { stockLabel = "In Stock";     stockColor = isSelected ? "#fff" : "#15803d"; }
+                                                else if (item.stockStatus === "ordered")  { stockLabel = "On Order";     stockColor = isSelected ? "#fff" : "#b45309"; }
+                                                else if (item.stockStatus === "attached") { stockLabel = "Out of Stock"; stockColor = isSelected ? "#fff" : "#dc2626"; }
+                                                else if (isReturns)                       { stockLabel = "Returns";      stockColor = isSelected ? "#fff" : "#15803d"; }
+                                                else                                      { stockLabel = "No Inventory"; stockColor = isSelected ? "#fff" : "#6b7280"; }
 
                                                 return (
                                                     <Box key={j} onClick={() => select(item.pieceId)}
@@ -521,14 +488,11 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                                             {/* Stock status */}
                                                             <Box>
                                                                 <Typography variant="caption" sx={{ fontWeight: 700, color: stockColor, fontSize: "0.68rem", display: "block" }}>
-                                                                    {stockStatus}
+                                                                    {stockLabel}
                                                                 </Typography>
-                                                                {inv?.inventoryType === "inventory" && inv?.inventory && (
+                                                                {inv?.inventoryType === "inventory" && inv?.inventory?.quantity !== undefined && (
                                                                     <Typography variant="caption" sx={{ fontSize: "0.62rem", color: isSelected ? "#fff" : "text.secondary", display: "block" }}>
-                                                                        {inv.inventory.inStock?.length > 0 && `Pending: ${inv.inventory.inStock.length}`}
-                                                                        {inv.inventory.attached?.length > 0 && ` · Need: ${inv.inventory.attached.length}`}
-                                                                        {inv.inventory.orders?.length > 0 && ` · Ordered: ${inv.inventory.orders.reduce((s, o) => s + o.items.length, 0)}`}
-                                                                        {` · Stock: ${inv.inventory.quantity}`}
+                                                                        {`Stock: ${inv.inventory.quantity}`}
                                                                     </Typography>
                                                                 )}
                                                                 {inv?.inventoryType === "productInventory" && inv?.productInventory && (

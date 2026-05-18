@@ -128,6 +128,7 @@ const schema = new mongoose.Schema(
         ref: ProductInventory,
       },
     },
+    stockStatus: { type: String, enum: ["inStock", "attached", "ordered", null], default: null },
     updated: {type: Boolean, default: false},
   },
   { suppressWarning: true }

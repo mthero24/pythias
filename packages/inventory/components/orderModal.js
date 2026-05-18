@@ -34,6 +34,7 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                 try {
                     const res = await axios.get("/api/admin/inventory/create-order", {
                         signal: controller.signal,
+                        timeout: 30000,
                     });
                     if (res?.data) {
                         currentBlanks = res.data.blanks;
@@ -50,7 +51,7 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
             for (const blank of currentBlanks) {
                 for (const inv of blank.inventories) {
                     if (type === "Out Of Stock") {
-                        const onOrder = (inv.attached?.length ?? 0) - (inv.orders?.reduce((acc, curr) => acc + parseInt(curr.quantity || 0), 0) ?? 0);
+                        const onOrder = inv.attachedCount ?? 0;
                         if (onOrder > 0) {
                             if (!bl.includes(inv.style_code)) bl.push(inv.style_code);
                             if (!cl.includes(inv.color_name)) cl.push(inv.color_name);
@@ -207,11 +208,11 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                                 <Grid2 container spacing={1} alignItems="center">
                                     <Grid2 size={0.5} />
                                     <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">SIZE</Typography></Grid2>
-                                    <Grid2 size={isInventoryOrder ? 6 : 5.5}>
+                                    <Grid2 size={5.5}>
                                         <Typography variant="caption" fontWeight={700} color="text.secondary">SKU</Typography>
                                     </Grid2>
-                                    <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">QTY</Typography></Grid2>
                                     <Grid2 size={2.5}><Typography variant="caption" fontWeight={700} color="text.secondary">LOCATION</Typography></Grid2>
+                                    <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">QTY</Typography></Grid2>
                                 </Grid2>
                             </Box>
 
@@ -311,13 +312,23 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                                                                                     sx={{ fontWeight: 700, textTransform: "uppercase", width: "100%" }}
                                                                                 />
                                                                             </Grid2>
-                                                                            <Grid2 size={isInventoryOrder ? 6 : 5.5}>
+                                                                            <Grid2 size={5.5}>
                                                                                 <Typography
                                                                                     variant="caption"
                                                                                     sx={{ fontFamily: "monospace", color: no.included ? "text.primary" : "text.disabled" }}
                                                                                 >
                                                                                     {no.inv.style_code}-{no.inv.color_name}-{no.inv.size_name}
                                                                                 </Typography>
+                                                                            </Grid2>
+                                                                            <Grid2 size={2.5}>
+                                                                                <TextField
+                                                                                    size="small"
+                                                                                    fullWidth
+                                                                                    placeholder="Location"
+                                                                                    value={no.location ?? ""}
+                                                                                    disabled={!no.included}
+                                                                                    onChange={(e) => updateItem(no.inv._id, "location", e.target.value)}
+                                                                                />
                                                                             </Grid2>
                                                                             <Grid2 size={1.5}>
                                                                                 <TextField
@@ -328,16 +339,6 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                                                                                     disabled={!no.included}
                                                                                     onChange={(e) => updateItem(no.inv._id, "order", e.target.value)}
                                                                                     inputProps={{ min: 0, style: { textAlign: "center" } }}
-                                                                                />
-                                                                            </Grid2>
-                                                                            <Grid2 size={2.5}>
-                                                                                <TextField
-                                                                                    size="small"
-                                                                                    fullWidth
-                                                                                    placeholder="Location"
-                                                                                    value={no.location ?? ""}
-                                                                                    disabled={!no.included}
-                                                                                    onChange={(e) => updateItem(no.inv._id, "location", e.target.value)}
                                                                                 />
                                                                             </Grid2>
                                                                         </Grid2>

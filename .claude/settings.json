@@ -12,7 +12,9 @@
       "Bash(grep -E \"\\\\.\\(js|ts\\)$\")",
       "Bash(curl --silent --request POST --url https://marketplace.walmartapis.com/v3/items/spec --header \"accept: application/json\" --header \"content-type: application/json\" --data '{\"feedType\":\"MP_WFS_ITEM\",\"version\":\"5.0.20240517-04_08_27-api\",\"productTypes\":[\"Baby Blankets\"]}')",
       "WebFetch(domain:developers.faire.com)",
-      "WebFetch(domain:faire.github.io)"
+      "WebFetch(domain:faire.github.io)",
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)"
     ]
   }
 }
