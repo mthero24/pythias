@@ -183,7 +183,12 @@ export async function POST(req= NextApiRequest){
                     //console.log(res.item)
                     await res.item.save()
                     await res.bin.save()
-                    logActivity({ action: "item_binned", entity: "order", entityId: item._id, entityName: item.pieceId || "", userName, email, provider: "po" });
+                    logActivity({ action: "order_binned", entity: "order", entityId: item._id, entityName: item.pieceId || "", userName, email, provider: "po" });
+                    const [readyToShip, inUse] = await Promise.all([
+                        Bins.find({ ready: true, inUse: true }).sort({ number: 1 }).populate({ path: "order", populate: "items" }).lean(),
+                        Bins.find({ inUse: true, ready: false }).sort({ number: 1 }).populate({ path: "order", populate: "items" }).lean(),
+                    ]);
+                    res.bins = { readyToShip, inUse };
                 }
             }
         }else if(order){

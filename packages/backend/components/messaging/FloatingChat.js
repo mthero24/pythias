@@ -508,7 +508,8 @@ export function FloatingChat({ requiredRoles }) {
                                     const showSender = activeConv.type === "group" && !isMe;
                                     const msgReactions = msg.reactions ?? {};
                                     const reactionEntries = Object.entries(msgReactions).filter(([, u]) => u.length > 0);
-                                    const isLast = i === visibleMessages.length - 1;
+                                    const isLast  = i === visibleMessages.length - 1;
+                                    const isFirst = i < 2;
 
                                     return (
                                         <Box
@@ -535,7 +536,9 @@ export function FloatingChat({ requiredRoles }) {
                                                 {hoveredMsg === msg._id && (
                                                     <Box sx={{
                                                         position: "absolute",
-                                                        bottom: "calc(100% + 2px)",
+                                                        ...(isFirst
+                                                            ? { top: "calc(100% + 2px)" }
+                                                            : { bottom: "calc(100% + 2px)" }),
                                                         [isMe ? "right" : "left"]: 0,
                                                         zIndex: 20,
                                                         display: "flex",

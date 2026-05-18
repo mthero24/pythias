@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { Message, Group } from "@pythias/mongo";
+import User from "@/models/User";
 
 export async function GET(req) {
     const token = await getToken({ req });
@@ -62,6 +63,7 @@ export async function GET(req) {
         return NextResponse.json({ error: false, results });
     }
 
+    User.findOneAndUpdate({ email: me }, { lastSeen: new Date() }).catch(() => {});
     const myGroups = await Group.find({ members: me }).lean();
     const groupIds = myGroups.map(g => g._id.toString());
 
@@ -102,6 +104,27 @@ export async function GET(req) {
         .sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
     const totalUnread = conversations.reduce((s, c) => s + c.unread, 0);
     return NextResponse.json({ error: false, conversations, totalUnread });
+}
+
+export async function PATCH(req) {
+    const token = await getToken({ req });
+    const me = token?.userName ?? token?.email;
+    if (!me) return NextResponse.json({ error: true }, { status: 401 });
+    const { messageId, emoji } = await req.json();
+    if (!messageId || !emoji) return NextResponse.json({ error: true, msg: "Missing fields" });
+
+    const msg = await Message.findById(messageId);
+    if (!msg) return NextResponse.json({ error: true, msg: "Not found" }, { status: 404 });
+
+    const reactions = msg.reactions ?? {};
+    const users = reactions[emoji] ?? [];
+    reactions[emoji] = users.includes(me)
+        ? users.filter(u => u !== me)
+        : [...users, me];
+    msg.reactions = reactions;
+    msg.markModified("reactions");
+    await msg.save();
+    return NextResponse.json({ error: false, reactions: msg.reactions });
 }
 
 export async function POST(req) {

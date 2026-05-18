@@ -491,11 +491,23 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                             {displayed.map((item, j) => {
                                                 const isSelected = selected.includes(item.pieceId);
                                                 const inv = item.inventory;
-                                                const isInStock = inv?.inventoryType === "inventory"
-                                                    ? inv?.inventory?.inStock?.includes(item._id.toString())
-                                                    : inv?.inventoryType === "productInventory" && inv?.productInventory;
-                                                const isOrdered = inv?.inventoryType === "inventory" && inv?.inventory?.orders?.some(o => o.items.includes(item._id.toString()));
-                                                const stockColor = isSelected ? "#fff" : isInStock ? "#15803d" : isOrdered ? "#d97706" : "#dc2626";
+                                                const itemId = item._id?.toString();
+                                                const inStockArr  = inv?.inventory?.inStock  ?? [];
+                                                const attachedArr = inv?.inventory?.attached ?? [];
+                                                const isInStock  = inv?.inventoryType === "inventory"
+                                                    ? inStockArr.some(id => id?.toString() === itemId)
+                                                    : inv?.inventoryType === "productInventory" && !!inv?.productInventory;
+                                                const isAttached = attachedArr.some(id => id?.toString() === itemId);
+                                                const isOrdered  = inv?.inventoryType === "inventory" && inv?.inventory?.orders?.some(o => o.items?.some(id => id?.toString() === itemId));
+                                                const isReturns  = inv?.inventoryType === "productInventory" && !!inv?.productInventory;
+
+                                                let stockStatus, stockColor;
+                                                if (inv?.inventoryType === "inventory") {
+                                                    if (isInStock)       { stockStatus = "In Stock";     stockColor = isSelected ? "#fff" : "#15803d"; }
+                                                    else if (isOrdered)  { stockStatus = "Ordered";      stockColor = isSelected ? "#fff" : "#d97706"; }
+                                                    else                 { stockStatus = "Out of Stock"; stockColor = isSelected ? "#fff" : "#dc2626"; }
+                                                } else if (isReturns)    { stockStatus = "Returns";      stockColor = isSelected ? "#fff" : "#15803d"; }
+                                                else                     { stockStatus = "Out of Stock"; stockColor = isSelected ? "#fff" : "#dc2626"; }
 
                                                 return (
                                                     <Box key={j} onClick={() => select(item.pieceId)}
@@ -509,9 +521,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                                             {/* Stock status */}
                                                             <Box>
                                                                 <Typography variant="caption" sx={{ fontWeight: 700, color: stockColor, fontSize: "0.68rem", display: "block" }}>
-                                                                    {inv?.inventoryType === "inventory"
-                                                                        ? inv?.inventory?.inStock?.includes(item._id.toString()) ? "In Stock" : inv?.inventory?.quantity > 0 ? "In Stock" : "Out of Stock"
-                                                                        : inv?.inventoryType === "productInventory" && inv?.productInventory ? "Returns" : "Out of Stock"}
+                                                                    {stockStatus}
                                                                 </Typography>
                                                                 {inv?.inventoryType === "inventory" && inv?.inventory && (
                                                                     <Typography variant="caption" sx={{ fontSize: "0.62rem", color: isSelected ? "#fff" : "text.secondary", display: "block" }}>

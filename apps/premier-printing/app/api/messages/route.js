@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { Message, Group } from "@pythias/mongo";
+import User from "@/models/User";
 
 export async function GET(req) {
     const token = await getToken({ req });
@@ -66,6 +67,7 @@ export async function GET(req) {
     }
 
     // — list conversations (DMs + groups) —
+    User.findOneAndUpdate({ userName: me }, { lastSeen: new Date() }).catch(() => {});
     const myGroups = await Group.find({ members: me }).lean();
     const groupIds = myGroups.map(g => g._id.toString());
 

@@ -69,6 +69,7 @@ export function Scan({ auto, setAuto, order, setOrder, showNotes, setShowNotes, 
                     setOrder(res.data.bin.order);
                     setBin(res.data.bin);
                 }
+                if (res.data.bins) setBins(res.data.bins);
                 if (res.data.item || res.data.order || res.data.bin) {
                     setShow(true);
                     setActivate(res.data.activate);
