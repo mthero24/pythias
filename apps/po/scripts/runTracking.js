@@ -14,6 +14,6 @@ const url = `http://localhost:${PORT}/api/production/shipping/track`;
         console.log(`[tracking] po done — updated=${data.updated} / total=${data.total} (${Date.now() - start}ms)`);
     } catch (e) {
         console.error(`[tracking] po error: ${e.message}`);
-        process.exit(1);
+        // exit 0 so PM2 marks this "stopped", not "errored" — cron_restart fires reliably on stopped processes
     }
 })();
