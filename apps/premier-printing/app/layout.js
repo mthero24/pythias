@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
             <Navbar />
             {children}
             <FloatingChat />
-            <IdleLogout />
+            <IdleLogout name="Premier Printing" initials="PP" tagline="Production Management" />
           </CSVProvider>
         </AppThemeProvider>
       </body>

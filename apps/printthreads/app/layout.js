@@ -35,7 +35,7 @@ export default function RootLayout({ children }) {
             <Navbar/>
             {children}
             <FloatingChat />
-            <IdleLogout />
+            <IdleLogout name="Print Threads" initials="PT" tagline="Production Management" />
           </CSVProvider>
         </ThemeRegistry>
       </body>

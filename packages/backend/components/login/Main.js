@@ -19,7 +19,7 @@ const FEATURES = [
     "Team collaboration and activity logs",
 ];
 
-export function Main({ type, name = "Premier Printing", initials = "PP", tagline = "Production Management" }) {
+export function Main({ type, name = "Premier Printing", initials = "PP", tagline = "Production Management", onSuccess }) {
     const isRegister = type === "register";
 
     const [data, setData]             = useState({ userName: "", password: "", email: "", firstName: "", lastName: "" });
@@ -54,7 +54,8 @@ export function Main({ type, name = "Premier Printing", initials = "PP", tagline
                     redirect: false,
                 });
                 if (response?.ok) {
-                    location.replace("/");
+                    if (onSuccess) onSuccess();
+                    else location.replace("/");
                 } else {
                     setError(response?.error ?? "Invalid username or password.");
                 }
