@@ -5,7 +5,7 @@ import {RepullReasons} from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import inventory from "@/models/inventory";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken } from "@pythias/backend/server";
+import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
 export async function GET(){
     console.log("GET REASONS")
     return NextResponse.json({ error: false, reasons: await RepullReasons.find()})
@@ -44,6 +44,9 @@ export async function POST(req=NextApiRequest){
         }
         await item.save()
         logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email, provider: "po" });
+        if (data.reason === "Pulling Error") {
+            logChange({ entityType: "item", entityId: item._id, entityName: item.pieceId, action: "repull", userName, email, provider: "po" });
+        }
         return NextResponse.json({error: false, msg: "Item Has Been Set To be Repulled!"})
     }else return NextResponse.json({error: true, msg: "Item not found"})
 }

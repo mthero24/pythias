@@ -138,9 +138,9 @@ const createItemVariant = async (variant, product, order, price) => {
 }
 const createItem = async (i, order, blank, color, threadColor, size, design, sku, isBlank) => {
     console.log(isBlank, "isBlank+++++++++++++++")
-    let item = new Item({ pieceId: await generatePieceID(), 
-        paid: true, 
-        sku: i.sku, 
+    let item = new Item({ pieceId: await generatePieceID(),
+        paid: true,
+        sku: sku || i.sku,
         orderItemId: i.orderItemId, 
         blank: blank, 
         styleCode: blank?.code, 
@@ -458,8 +458,8 @@ export async function pullOrders(){
                         const sizeName  = parts[2]?.trim() ?? "";
                         const designSku = parts.slice(3).join("_");
 
-                        let blank = await Blank.findOne({ code: blankCode }).populate("colors").populate("blanks");
-                        if (!blank) blank = await Blank.findOne({ code: blankConverter?.[blankCode] ?? blankCode }).populate("colors").populate("blanks");
+                        let blank = await Blank.findOne({ code: blankCode }).populate("colors").populate({ path: "blanks", populate: { path: "colors" } });
+                        if (!blank) blank = await Blank.findOne({ code: blankConverter?.[blankCode] ?? blankCode }).populate("colors").populate({ path: "blanks", populate: { path: "colors" } });
 
                         const color = resolveColor(blank, colorSku, colorFixer);
                         const size  = resolveSize(blank, sizeName, sizeFixer);
@@ -489,8 +489,9 @@ export async function pullOrders(){
                                     const ac = resolveColor(ab, colorSku, colorFixer) ?? color;
                                     const as = resolveAliasSize(ab, blank, sizeName, sizeFixer);
                                     if (!as) { console.error(`Size "${sizeName}" not found in alias blank ${ab.code} — skipping`); continue; }
-                                    console.log(`Alias (product): blank=${ab.code} color=${ac?.name} size=${as.name}`);
-                                    items.push(await createItemVariant({ ...variant, blank: ab, color: ac, size: as._id }, product, order, i.unitPrice));
+                                    const subSku = `${ab.code}_${ac?.sku ?? colorSku}_${as.sku ?? sizeName}${designSku ? `_${designSku}` : ""}`;
+                                    console.log(`Alias (product): blank=${ab.code} color=${ac?.name} size=${as.name} sku=${subSku}`);
+                                    items.push(await createItemVariant({ ...variant, blank: ab, color: ac, size: as._id, sku: subSku }, product, order, i.unitPrice));
                                 }
                             }
 
@@ -527,8 +528,9 @@ export async function pullOrders(){
                                     const ac = resolveColor(ab, colorSku, colorFixer) ?? color;
                                     const as = resolveAliasSize(ab, blank, sizeName, sizeFixer);
                                     if (!as) console.error(`Size "${sizeName}" not found in alias blank ${ab.code} — item may lack size`);
-                                    console.log(`Alias (no product): blank=${ab.code} color=${ac?.name} size=${as?.name}`);
-                                    items.push(await createItem(i, order, ab, ac, null, as, design, rawSku, isBlank));
+                                    const subSku = `${ab.code}_${ac?.sku ?? colorSku}_${as?.sku ?? sizeName}${designSku ? `_${designSku}` : ""}`;
+                                    console.log(`Alias (no product): blank=${ab.code} color=${ac?.name} size=${as?.name} sku=${subSku}`);
+                                    items.push(await createItem(i, order, ab, ac, null, as, design, subSku, isBlank));
                                 }
                             } else {
                                 items.push(await createItem(i, order, blank, color, null, size, design, rawSku, isBlank));

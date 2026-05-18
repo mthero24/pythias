@@ -55,7 +55,7 @@ const ACTION_COLOR = {
     out_of_stock:              "error",
 };
 
-const ENTITY_ACTION_COLOR = { create: "success", update: "primary", delete: "error" };
+const ENTITY_ACTION_COLOR = { create: "success", update: "primary", delete: "error", repull: "warning" };
 
 const FIELD_LABELS = {
     // Blank
@@ -332,6 +332,7 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
                             <MenuItem value="blank">Blanks</MenuItem>
                             <MenuItem value="design">Designs</MenuItem>
                             <MenuItem value="product">Products</MenuItem>
+                            <MenuItem value="item">Items (Repulls)</MenuItem>
                         </Select>
                     </FormControl>
                     <TextField
@@ -431,6 +432,25 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
                                             <TableCell align="center"><Typography fontWeight={700}>{users[u].total}</Typography></TableCell>
                                         </TableRow>
                                     ))}
+                                    {userNames.length > 1 && (() => {
+                                        const grandTotal = userNames.reduce((s, u) => s + users[u].total, 0);
+                                        return (
+                                            <TableRow sx={{ bgcolor: "action.selected", "& td": { borderTop: "2px solid", borderColor: "divider" } }}>
+                                                <TableCell><Typography fontWeight={700}>Totals</Typography></TableCell>
+                                                {actionsPresent.map(a => {
+                                                    const sum = userNames.reduce((s, u) => s + (users[u].actions[a] || 0), 0);
+                                                    return (
+                                                        <TableCell key={a} align="center">
+                                                            {sum > 0
+                                                                ? <Chip size="small" label={sum} color={ACTION_COLOR[a] ?? "default"} />
+                                                                : <Typography color="text.disabled">—</Typography>}
+                                                        </TableCell>
+                                                    );
+                                                })}
+                                                <TableCell align="center"><Typography fontWeight={700}>{grandTotal}</Typography></TableCell>
+                                            </TableRow>
+                                        );
+                                    })()}
                                 </TableBody>
                             </Table>
                         </Paper>

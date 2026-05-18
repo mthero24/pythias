@@ -2,6 +2,8 @@ import { Urbanist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/componants/Navbar";
 import ThemeProvider from "@/componants/ThemeProvider";
+import AnalyticsTracker from "@/componants/AnalyticsTracker";
+import Script from "next/script";
 
 const urbanist = Urbanist({
   variable: "--font-urbanist",
@@ -78,9 +80,17 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${urbanist.variable} antialiased`}>
         <ThemeProvider>
+          <AnalyticsTracker />
           <Navbar />
           {children}
         </ThemeProvider>
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-Q27ZSTSXVH" strategy="afterInteractive" />
+        <Script id="gtag-init" strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-Q27ZSTSXVH');
+        `}</Script>
       </body>
     </html>
   );

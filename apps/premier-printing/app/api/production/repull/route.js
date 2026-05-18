@@ -1,7 +1,7 @@
 import { Bin, Items, RepullReasons, Blank, Inventory } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken } from "@pythias/backend/server";
+import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
 export async function GET(){
     console.log("GET REASONS")
     let blanks = await Blank.find().populate("colors").select("code colors sizes")
@@ -46,6 +46,9 @@ export async function POST(req=NextApiRequest){
         }
         await item.save()
         logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email });
+        if (data.reason === "Pulling Error") {
+            logChange({ entityType: "item", entityId: item._id, entityName: item.pieceId, action: "repull", userName, email, provider: "premierPrinting" });
+        }
         return NextResponse.json({error: false, msg: "Item Has Been Set To be Repulled!"})
     }else return NextResponse.json({error: true, msg: "Item not found"})
 }
