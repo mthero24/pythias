@@ -58,6 +58,8 @@ const getImages = async (front, back, style, item) => {
   };
 };
 export async function GET(req = NextApiRequest) {
+  const token = await getToken({ req });
+  const { userName, email } = userFromToken(token);
   let config = JSON.parse(process.env.dtf);
   console.log(config);
   setConfig({
@@ -94,6 +96,7 @@ export async function GET(req = NextApiRequest) {
       };
 
       await item.save();
+      logActivity({ action: "dtf_find", entity: "order", entityId: item._id, entityName: item.pieceId || "", userName, email, provider: "po" });
 
       console.log(item, "item");
       // console.log(style)
