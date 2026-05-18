@@ -3,7 +3,7 @@ import {
     Box, Grid2, Typography, Card, CardContent, CardActionArea, Button,
     Container, Pagination, Stack, InputAdornment, TextField, Chip, Divider, Tooltip
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { Footer } from "../reusable/Footer";
@@ -20,6 +20,13 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
     const [page, setPage] = useState(pa ? parseInt(pa) : 1);
     const [count, setCount] = useState(ct);
     const [searching, setSearching] = useState(false);
+    const searchInitRef = useRef(true);
+
+    useEffect(() => {
+        if (searchInitRef.current) { searchInitRef.current = false; return; }
+        const t = setTimeout(runSearch, 400);
+        return () => clearTimeout(t);
+    }, [search]);
 
     const createDesign = async () => {
         let res = await axios.post("/api/admin/designs", {});

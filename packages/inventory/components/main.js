@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Box, Grid2, TextField, Accordion, AccordionSummary, AccordionDetails, Button, Typography, Card, Chip, Stack, InputAdornment, Pagination, PaginationItem, Tooltip } from "@mui/material";
 import axios from "axios";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -31,6 +31,7 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue
     const [count, setCount]           = useState(cou);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [inventoryToDelete, setInventoryToDelete] = useState(null);
+    const debounceRefs = useRef({});
 
     const save = async (inventory) => {
         const res = await axios.post("/api/admin/inventory", { inventory });
@@ -47,7 +48,9 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue
         const isText = ["location", "row", "bin", "shelf", "unit"].includes(param);
         inv[param] = isText ? value : parseInt(value);
         setStyles([...s]);
-        save(inv);
+        const key = `${inventory._id}-${param}`;
+        clearTimeout(debounceRefs.current[key]);
+        debounceRefs.current[key] = setTimeout(() => save(inv), 600);
     };
 
     const search = async () => {

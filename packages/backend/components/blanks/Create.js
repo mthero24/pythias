@@ -96,6 +96,8 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
         update({blank: bla})
     };
 
+    const debounceRef = useRef(null);
+
     const update = async ({blank, action})=>{
         let res = await axios.post("/api/admin/blanks", { blank, before: blank._id ? originalBlank.current : null, action });
         if(res.data.error){
@@ -104,6 +106,11 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
             originalBlank.current = { ...blank };
         }
     }
+
+    const debouncedUpdate = (args) => {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => update(args), 600);
+    };
 
     return (
         <Box sx={{ backgroundColor: "#f5f7fa", minHeight: "100vh" }}>
@@ -143,7 +150,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                     bla.name = e.target.value;
                                     bla.slug = e.target.value.trim().replace(/ /g, "-").toLowerCase();
                                     setBlank(bla);
-                                    update({blank: bla});
+                                    debouncedUpdate({blank: bla});
                                 }}/>
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
@@ -151,7 +158,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                     let bla = {...blank};
                                     bla.code = e.target.value;
                                     setBlank(bla);
-                                    update({blank: bla});
+                                    debouncedUpdate({blank: bla});
                                 }} />
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
@@ -159,7 +166,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                     let bla = {...blank};
                                     bla.handlingTime = e.target.value;
                                     setBlank(bla);
-                                    update({blank: bla});
+                                    debouncedUpdate({blank: bla});
                                 }} />
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
@@ -226,7 +233,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                     let bla = {...blank};
                                     bla.description = e.target.value;
                                     setBlank(bla);
-                                    update({blank: bla});
+                                    debouncedUpdate({blank: bla});
                                 }} />
                                 <Button size="small" sx={{ mt: 0.5 }} onClick={generateDescription}>Generate with AI</Button>
                             </Grid2>
@@ -304,25 +311,25 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                 let bla = {...blank};
                                                 bla.sizes[i].name = e.target.value;
                                                 setBlank(bla);
-                                                update({blank: bla});
+                                                debouncedUpdate({blank: bla});
                                             }} />
                                             <TextField label="Retail Price" size="small" fullWidth value={s.retailPrice} onChange={(e) => {
                                                 let bla = {...blank};
                                                 bla.sizes[i].retailPrice = e.target.value;
                                                 setBlank(bla);
-                                                update({blank: bla});
+                                                debouncedUpdate({blank: bla});
                                             }} />
                                             <TextField label="Wholesale Cost" size="small" fullWidth value={s.wholesaleCost} onChange={(e) => {
                                                 let bla = {...blank};
                                                 bla.sizes[i].wholesaleCost = e.target.value;
                                                 setBlank(bla);
-                                                update({blank: bla});
+                                                debouncedUpdate({blank: bla});
                                             }} />
                                             <TextField label="Weight (oz)" size="small" fullWidth value={s.weight} onChange={(e) => {
                                                 let bla = {...blank};
                                                 bla.sizes[i].weight = e.target.value;
                                                 setBlank(bla);
-                                                update({blank: bla});
+                                                debouncedUpdate({blank: bla});
                                             }} />
                                             <Button size="small" variant="outlined" color="error" fullWidth onClick={() => {
                                                 let bla = {...blank};
