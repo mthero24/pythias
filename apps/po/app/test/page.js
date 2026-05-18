@@ -83,5 +83,6 @@ export default async function Test(){
     //         await inv.save()
     //     }
     // }
+    await updateInventory()
     return <h1>Test</h1>
 }
