@@ -79,6 +79,24 @@ const SERVICES = [
         desc: "Print production labels, packing slips, barcodes, and QR codes for any order directly from the dashboard — no third-party tools needed.",
         highlights: ["Production labels", "Packing slips", "Barcode & QR codes", "Bulk label printing"],
     },
+    {
+        href: "/services/design",
+        icon: "🎨",
+        color: "#ec4899",
+        tag: "Design",
+        title: "Design & Product Management",
+        desc: "Create, organize, and publish your entire product design library from one place. Approval workflows, version control, and one-click push to every connected marketplace.",
+        highlights: ["Design library & versioning", "Approval workflows", "SKU & variant mapping", "One-click marketplace publish"],
+    },
+    {
+        href: "/services/image-creation",
+        icon: "🤖",
+        color: "#0ea5e9",
+        tag: "Automation",
+        title: "Automated Product Image Creation",
+        desc: "AI-powered mockup generation across every product, color, and size variant — the moment a design is uploaded. No manual compositing, no third-party tools.",
+        highlights: ["AI mockup generation", "Bulk variant rendering", "Background removal", "Direct listing export"],
+    },
 ];
 
 export default function ServicesPage() {

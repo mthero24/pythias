@@ -29,7 +29,7 @@ async function processOrderTracking(order) {
     let changed = false;
 
     for (const lbl of order.shippingInfo.labels) {
-        if (lbl.delivered) continue;
+        if (lbl.delivered || lbl.refunded) continue;
         const tn = lbl.trackingNumber;
         if (!tn) continue;
 
@@ -65,7 +65,7 @@ async function processOrderTracking(order) {
     }
 
     if (changed) {
-        if (order.shippingInfo.labels.every(l => l.delivered)) {
+        if (order.shippingInfo.labels.every(l => l.delivered || l.refunded)) {
             order.status = "Delivered";
         }
         order.markModified("shippingInfo.labels");

@@ -16,6 +16,8 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import GroupIcon from "@mui/icons-material/Group";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import PersonIcon from "@mui/icons-material/Person";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import DoneIcon from "@mui/icons-material/Done";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
@@ -24,6 +26,28 @@ const POLL_CONVS_MS  = 10_000;
 const POLL_MSGS_MS   = 5_000;
 const POLL_USERS_MS  = 60_000;
 const ONLINE_WINDOW  = 5 * 60 * 1000;
+
+const REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+
+function playChime() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = ctx.currentTime;
+        [880, 1108].forEach((freq, i) => {
+            const osc  = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = "sine";
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, now + i * 0.13);
+            gain.gain.linearRampToValueAtTime(0.22, now + i * 0.13 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.13 + 0.55);
+            osc.start(now + i * 0.13);
+            osc.stop(now + i * 0.13 + 0.55);
+        });
+    } catch {}
+}
 
 function isOnline(lastSeen) {
     if (!lastSeen) return false;
@@ -113,12 +137,9 @@ function FileAttachment({ msg, isMe }) {
                     src={msg.fileUrl}
                     alt={msg.fileName}
                     sx={{
-                        maxWidth: 220,
-                        maxHeight: 180,
-                        borderRadius: 1.5,
-                        display: "block",
-                        objectFit: "cover",
-                        border: "1px solid rgba(0,0,0,0.08)",
+                        maxWidth: 220, maxHeight: 180,
+                        borderRadius: 1.5, display: "block",
+                        objectFit: "cover", border: "1px solid rgba(0,0,0,0.08)",
                     }}
                 />
             </Box>
@@ -131,16 +152,10 @@ function FileAttachment({ msg, isMe }) {
             target="_blank"
             rel="noopener noreferrer"
             sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.75,
-                mt: msg.text ? 0.5 : 0,
-                px: 1.25,
-                py: 0.75,
-                borderRadius: 1.5,
+                display: "flex", alignItems: "center", gap: 0.75,
+                mt: msg.text ? 0.5 : 0, px: 1.25, py: 0.75, borderRadius: 1.5,
                 bgcolor: isMe ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.06)",
-                textDecoration: "none",
-                color: "inherit",
+                textDecoration: "none", color: "inherit",
                 "&:hover": { bgcolor: isMe ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.1)" },
             }}
         >
@@ -150,12 +165,25 @@ function FileAttachment({ msg, isMe }) {
                     {msg.fileName}
                 </Typography>
                 {msg.fileSize && (
-                    <Typography sx={{ fontSize: "0.65rem", opacity: 0.7 }}>
-                        {formatBytes(msg.fileSize)}
-                    </Typography>
+                    <Typography sx={{ fontSize: "0.65rem", opacity: 0.7 }}>{formatBytes(msg.fileSize)}</Typography>
                 )}
             </Box>
         </Box>
+    );
+}
+
+function ReadReceipt({ msg, isMe, activeConvUsers }) {
+    if (!isMe) return null;
+    const readers = (msg.readBy ?? []).filter(u => u !== msg.from);
+    const read = readers.length > 0;
+    return (
+        <Tooltip title={read ? `Read by ${readers.join(", ")}` : "Sent"} placement="left">
+            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", ml: 0.25 }}>
+                {read
+                    ? <DoneAllIcon sx={{ fontSize: 13, color: "#6366f1" }} />
+                    : <DoneIcon sx={{ fontSize: 13, color: "#9ca3af" }} />}
+            </Box>
+        </Tooltip>
     );
 }
 
@@ -167,7 +195,7 @@ export function FloatingChat({ requiredRoles }) {
     const [open, setOpen]                   = useState(false);
     const [conversations, setConversations] = useState([]);
     const [totalUnread, setTotalUnread]     = useState(0);
-    const [activeConv, setActiveConv]       = useState(null); // { type: "dm"|"group", id, name? }
+    const [activeConv, setActiveConv]       = useState(null);
     const [messages, setMessages]           = useState([]);
     const [users, setUsers]                 = useState([]);
     const [newMsg, setNewMsg]               = useState("");
@@ -175,21 +203,25 @@ export function FloatingChat({ requiredRoles }) {
     const [search, setSearch]               = useState("");
     const [msgSearch, setMsgSearch]         = useState("");
     const [showPicker, setShowPicker]       = useState(false);
-    const [pickerTab, setPickerTab]         = useState("dm"); // "dm" | "group"
+    const [pickerTab, setPickerTab]         = useState("dm");
     const [loadingMsgs, setLoadingMsgs]     = useState(false);
     const [uploading, setUploading]         = useState(false);
-    const [pendingFile, setPendingFile]     = useState(null); // { name, type, size, uploading }
+    const [pendingFile, setPendingFile]     = useState(null);
+    const [hoveredMsg, setHoveredMsg]       = useState(null);
 
-    // Group create dialog
     const [groupDialog, setGroupDialog]     = useState(false);
     const [groupName, setGroupName]         = useState("");
     const [groupMembers, setGroupMembers]   = useState([]);
     const [creatingGroup, setCreatingGroup] = useState(false);
 
-    const messagesEndRef = useRef(null);
-    const inputRef       = useRef(null);
-    const fileInputRef   = useRef(null);
-    const activeConvRef  = useRef(null);
+    const messagesEndRef    = useRef(null);
+    const inputRef          = useRef(null);
+    const fileInputRef      = useRef(null);
+    const activeConvRef     = useRef(null);
+    const lastMsgIdRef      = useRef(null);
+    const isInitialFetchRef = useRef(true);
+    const prevUnreadRef     = useRef(0);
+
     activeConvRef.current = activeConv;
 
     const fetchUsers = useCallback(async () => {
@@ -206,12 +238,15 @@ export function FloatingChat({ requiredRoles }) {
             const res = await axios.get("/api/messages");
             if (!res.data.error) {
                 setConversations(res.data.conversations);
-                if (!activeConvRef.current) setTotalUnread(res.data.totalUnread);
+                const newTotal = res.data.totalUnread ?? 0;
+                if (newTotal > prevUnreadRef.current) playChime();
+                prevUnreadRef.current = newTotal;
+                if (!activeConvRef.current) setTotalUnread(newTotal);
             }
         } catch {}
     }, [me]);
 
-    const fetchMessages = useCallback(async (conv) => {
+    const fetchMessages = useCallback(async (conv, initial = false) => {
         if (!me || !conv) return;
         try {
             const url = conv.type === "group"
@@ -219,7 +254,14 @@ export function FloatingChat({ requiredRoles }) {
                 : `/api/messages?with=${conv.id}`;
             const res = await axios.get(url);
             if (!res.data.error) {
-                setMessages(res.data.messages);
+                const msgs = res.data.messages;
+                if (!initial && msgs.length > 0) {
+                    const lastId  = lastMsgIdRef.current;
+                    const lastMsg = msgs[msgs.length - 1];
+                    if (lastMsg._id !== lastId && lastMsg.from !== me) playChime();
+                }
+                lastMsgIdRef.current = msgs[msgs.length - 1]?._id ?? lastMsgIdRef.current;
+                setMessages(msgs);
                 setConversations(prev => prev.map(c =>
                     c._id === conv.id ? { ...c, unread: 0 } : c
                 ));
@@ -244,7 +286,7 @@ export function FloatingChat({ requiredRoles }) {
 
     useEffect(() => {
         if (!me || !activeConv || !open) return;
-        const id = setInterval(() => fetchMessages(activeConv), POLL_MSGS_MS);
+        const id = setInterval(() => fetchMessages(activeConv, false), POLL_MSGS_MS);
         return () => clearInterval(id);
     }, [me, activeConv, open, fetchMessages]);
 
@@ -258,7 +300,8 @@ export function FloatingChat({ requiredRoles }) {
         setSearch("");
         setMsgSearch("");
         setLoadingMsgs(true);
-        await fetchMessages(conv);
+        lastMsgIdRef.current = null;
+        await fetchMessages(conv, true);
         setLoadingMsgs(false);
         setTimeout(() => inputRef.current?.focus(), 100);
     };
@@ -274,9 +317,20 @@ export function FloatingChat({ requiredRoles }) {
                 ? { group: activeConv.id, text, ...filePayload }
                 : { to: activeConv.id, text, ...filePayload };
             await axios.post("/api/messages", body);
-            await fetchMessages(activeConv);
+            await fetchMessages(activeConv, false);
         } catch {}
         setSending(false);
+    };
+
+    const toggleReaction = async (messageId, emoji) => {
+        try {
+            const res = await axios.patch("/api/messages", { messageId, emoji });
+            if (!res.data.error) {
+                setMessages(prev => prev.map(m =>
+                    m._id === messageId ? { ...m, reactions: res.data.reactions } : m
+                ));
+            }
+        } catch {}
     };
 
     const handleKeyDown = (e) => {
@@ -294,45 +348,23 @@ export function FloatingChat({ requiredRoles }) {
             form.append("file", file);
             const res = await axios.post("/api/messages/upload", form);
             if (!res.data.error) {
-                await send({
-                    fileUrl:  res.data.url,
-                    fileName: res.data.fileName,
-                    fileType: res.data.fileType,
-                    fileSize: res.data.fileSize,
-                });
+                await send({ fileUrl: res.data.url, fileName: res.data.fileName, fileType: res.data.fileType, fileSize: res.data.fileSize });
             }
         } catch {}
         setUploading(false);
         setPendingFile(null);
     };
 
-    const openNew = () => {
-        setShowPicker(true);
-        setActiveConv(null);
-        setSearch("");
-        setPickerTab("dm");
-    };
-
-    const goBack = () => {
-        setActiveConv(null);
-        setShowPicker(false);
-        setMessages([]);
-        setSearch("");
-        setMsgSearch("");
-    };
+    const openNew = () => { setShowPicker(true); setActiveConv(null); setSearch(""); setPickerTab("dm"); };
+    const goBack  = () => { setActiveConv(null); setShowPicker(false); setMessages([]); setSearch(""); setMsgSearch(""); };
 
     const createGroup = async () => {
         if (!groupName.trim() || groupMembers.length === 0) return;
         setCreatingGroup(true);
         try {
-            const res = await axios.post("/api/messages/groups", {
-                name: groupName.trim(),
-                members: groupMembers,
-            });
+            const res = await axios.post("/api/messages/groups", { name: groupName.trim(), members: groupMembers });
             if (!res.data.error) {
-                setGroupDialog(false);
-                setGroupName("");
-                setGroupMembers([]);
+                setGroupDialog(false); setGroupName(""); setGroupMembers([]);
                 setShowPicker(false);
                 await fetchConversations();
                 openConversation({ type: "group", id: res.data.group._id, name: res.data.group.name });
@@ -342,9 +374,7 @@ export function FloatingChat({ requiredRoles }) {
     };
 
     const toggleGroupMember = (userName) => {
-        setGroupMembers(prev =>
-            prev.includes(userName) ? prev.filter(u => u !== userName) : [...prev, userName]
-        );
+        setGroupMembers(prev => prev.includes(userName) ? prev.filter(u => u !== userName) : [...prev, userName]);
     };
 
     if (!me) return null;
@@ -354,40 +384,28 @@ export function FloatingChat({ requiredRoles }) {
 
     const filteredConvs = conversations.filter(c => {
         if (!filterStr) return true;
-        if (c.type === "group") {
-            return c.name?.toLowerCase().includes(filterStr);
-        }
+        if (c.type === "group") return c.name?.toLowerCase().includes(filterStr);
         const u = users.find(u => u.userName === c._id);
-        return (
-            c._id?.toLowerCase().includes(filterStr) ||
+        return c._id?.toLowerCase().includes(filterStr) ||
             u?.firstName?.toLowerCase().includes(filterStr) ||
-            u?.lastName?.toLowerCase().includes(filterStr)
-        );
+            u?.lastName?.toLowerCase().includes(filterStr);
     });
 
     const filteredUsers = users.filter(u => {
         if (!filterStr) return true;
-        return (
-            u.userName.toLowerCase().includes(filterStr) ||
+        return u.userName.toLowerCase().includes(filterStr) ||
             u.firstName?.toLowerCase().includes(filterStr) ||
-            u.lastName?.toLowerCase().includes(filterStr)
-        );
+            u.lastName?.toLowerCase().includes(filterStr);
     });
 
     const visibleMessages = msgSearch.trim()
         ? messages.filter(m =>
             m.text?.toLowerCase().includes(msgSearch.toLowerCase()) ||
-            m.fileName?.toLowerCase().includes(msgSearch.toLowerCase())
-          )
+            m.fileName?.toLowerCase().includes(msgSearch.toLowerCase()))
         : messages;
 
-    const activeUserObj = activeConv?.type === "dm"
-        ? users.find(u => u.userName === activeConv.id)
-        : null;
-
-    const activeGroupConv = activeConv?.type === "group"
-        ? conversations.find(c => c._id === activeConv.id && c.type === "group")
-        : null;
+    const activeUserObj = activeConv?.type === "dm" ? users.find(u => u.userName === activeConv.id) : null;
+    const activeGroupConv = activeConv?.type === "group" ? conversations.find(c => c._id === activeConv.id && c.type === "group") : null;
 
     return (
         <>
@@ -395,20 +413,14 @@ export function FloatingChat({ requiredRoles }) {
                 <Paper
                     elevation={0}
                     sx={{
-                        position: "fixed",
-                        bottom: 88,
-                        right: 24,
+                        position: "fixed", bottom: 88, right: 24,
                         width: { xs: "calc(100vw - 32px)", sm: 480 },
                         maxWidth: 480,
                         height: { xs: "calc(100vh - 120px)", sm: 540 },
-                        borderRadius: 3,
-                        display: "flex",
-                        flexDirection: "column",
-                        overflow: "hidden",
-                        zIndex: 1300,
+                        borderRadius: 3, display: "flex", flexDirection: "column",
+                        overflow: "hidden", zIndex: 1300,
                         boxShadow: "0 20px 60px rgba(0,0,0,0.18), 0 4px 20px rgba(0,0,0,0.10)",
-                        border: "1px solid rgba(0,0,0,0.08)",
-                        bgcolor: "#fff",
+                        border: "1px solid rgba(0,0,0,0.08)", bgcolor: "#fff",
                     }}
                 >
                     {/* Header */}
@@ -436,9 +448,7 @@ export function FloatingChat({ requiredRoles }) {
                                     <Stack direction="row" alignItems="center" spacing={1.25}>
                                         <Avatar {...groupAvatarProps(activeGroupConv ?? { name: activeConv.name })} sx={{ width: 30, height: 30, fontSize: "0.7rem", fontWeight: 700, ...groupAvatarProps(activeGroupConv ?? { name: activeConv.name }).sx }} />
                                         <Box>
-                                            <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1 }}>
-                                                {activeConv.name}
-                                            </Typography>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1 }}>{activeConv.name}</Typography>
                                             <Typography variant="caption" sx={{ color: "text.disabled", fontSize: "0.65rem" }}>
                                                 {activeGroupConv?.members?.length ?? ""} members
                                             </Typography>
@@ -453,14 +463,10 @@ export function FloatingChat({ requiredRoles }) {
                             <Stack direction="row" spacing={0.5}>
                                 {!activeConv && !showPicker && (
                                     <Tooltip title="New message">
-                                        <IconButton size="small" onClick={openNew}>
-                                            <EditIcon fontSize="small" />
-                                        </IconButton>
+                                        <IconButton size="small" onClick={openNew}><EditIcon fontSize="small" /></IconButton>
                                     </Tooltip>
                                 )}
-                                <IconButton size="small" onClick={() => setOpen(false)}>
-                                    <CloseIcon fontSize="small" />
-                                </IconButton>
+                                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
                             </Stack>
                         </Stack>
                     </Box>
@@ -471,17 +477,10 @@ export function FloatingChat({ requiredRoles }) {
                             {/* In-thread search */}
                             <Box sx={{ px: 1.5, pt: 0.75, pb: 0.25, borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
                                 <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Search messages…"
-                                    value={msgSearch}
-                                    onChange={e => setMsgSearch(e.target.value)}
+                                    fullWidth size="small" placeholder="Search messages…"
+                                    value={msgSearch} onChange={e => setMsgSearch(e.target.value)}
                                     InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon sx={{ fontSize: 15, color: "text.disabled" }} />
-                                            </InputAdornment>
-                                        ),
+                                        startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 15, color: "text.disabled" }} /></InputAdornment>,
                                         endAdornment: msgSearch ? (
                                             <InputAdornment position="end">
                                                 <IconButton size="small" onClick={() => setMsgSearch("")} sx={{ p: 0.25 }}>
@@ -504,33 +503,74 @@ export function FloatingChat({ requiredRoles }) {
                                         {msgSearch ? "No messages match your search" : "No messages yet — say hello!"}
                                     </Typography>
                                 ) : visibleMessages.map((msg, i) => {
-                                    const isMe = msg.from === me;
-                                    const senderObj = !isMe
-                                        ? (users.find(u => u.userName === msg.from) ?? { userName: msg.from })
-                                        : null;
+                                    const isMe      = msg.from === me;
+                                    const senderObj = !isMe ? (users.find(u => u.userName === msg.from) ?? { userName: msg.from }) : null;
                                     const showSender = activeConv.type === "group" && !isMe;
+                                    const msgReactions = msg.reactions ?? {};
+                                    const reactionEntries = Object.entries(msgReactions).filter(([, u]) => u.length > 0);
+                                    const isLast = i === visibleMessages.length - 1;
+
                                     return (
-                                        <Box key={msg._id ?? i} sx={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 0.75 }}>
+                                        <Box
+                                            key={msg._id ?? i}
+                                            sx={{ position: "relative", display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 0.75 }}
+                                            onMouseEnter={() => setHoveredMsg(msg._id)}
+                                            onMouseLeave={() => setHoveredMsg(null)}
+                                        >
                                             {!isMe && (activeUserObj || showSender) && (
                                                 <Avatar
                                                     {...(senderObj ? buildAvatarProps(senderObj) : {})}
                                                     sx={{ width: 24, height: 24, fontSize: "0.6rem", ...(senderObj ? buildAvatarProps(senderObj).sx : {}), flexShrink: 0, mb: 0.25 }}
                                                 />
                                             )}
+
                                             <Box sx={{ maxWidth: 280 }}>
                                                 {showSender && (
                                                     <Typography sx={{ fontSize: "0.65rem", color: "text.disabled", mb: 0.25, pl: 0.5 }}>
                                                         {displayName(senderObj)}
                                                     </Typography>
                                                 )}
-                                                <Box
-                                                    sx={{
-                                                        px: 1.5, py: 0.875,
-                                                        borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                                                        bgcolor: isMe ? "#6366f1" : "#f3f4f6",
-                                                        color: isMe ? "#fff" : "text.primary",
-                                                    }}
-                                                >
+
+                                                {/* Reaction picker — appears above bubble on hover */}
+                                                {hoveredMsg === msg._id && (
+                                                    <Box sx={{
+                                                        position: "absolute",
+                                                        bottom: "calc(100% + 2px)",
+                                                        [isMe ? "right" : "left"]: 0,
+                                                        zIndex: 20,
+                                                        display: "flex",
+                                                        bgcolor: "#fff",
+                                                        borderRadius: "20px",
+                                                        boxShadow: "0 2px 16px rgba(0,0,0,0.15)",
+                                                        border: "1px solid rgba(0,0,0,0.08)",
+                                                        px: 0.75, py: 0.4, gap: 0.1,
+                                                    }}>
+                                                        {REACTIONS.map(emoji => (
+                                                            <Box
+                                                                key={emoji}
+                                                                onClick={() => toggleReaction(msg._id, emoji)}
+                                                                sx={{
+                                                                    fontSize: "1.1rem", cursor: "pointer",
+                                                                    px: 0.5, py: 0.25, borderRadius: "12px",
+                                                                    lineHeight: 1.3,
+                                                                    transition: "transform 0.1s",
+                                                                    "&:hover": { bgcolor: "#f3f4f6", transform: "scale(1.3)" },
+                                                                    userSelect: "none",
+                                                                }}
+                                                            >
+                                                                {emoji}
+                                                            </Box>
+                                                        ))}
+                                                    </Box>
+                                                )}
+
+                                                {/* Message bubble */}
+                                                <Box sx={{
+                                                    px: 1.5, py: 0.875,
+                                                    borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                                                    bgcolor: isMe ? "#6366f1" : "#f3f4f6",
+                                                    color: isMe ? "#fff" : "text.primary",
+                                                }}>
                                                     {msg.text && (
                                                         <Typography sx={{ fontSize: "0.875rem", lineHeight: 1.4, wordBreak: "break-word" }}>
                                                             {msg.text}
@@ -538,9 +578,44 @@ export function FloatingChat({ requiredRoles }) {
                                                     )}
                                                     <FileAttachment msg={msg} isMe={isMe} />
                                                 </Box>
-                                                <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25, textAlign: isMe ? "right" : "left", fontSize: "0.63rem", px: 0.5 }}>
-                                                    {formatTime(msg.date)}
-                                                </Typography>
+
+                                                {/* Reaction pills */}
+                                                {reactionEntries.length > 0 && (
+                                                    <Stack
+                                                        direction="row" flexWrap="wrap" gap={0.4}
+                                                        sx={{ mt: 0.4, px: 0.25, justifyContent: isMe ? "flex-end" : "flex-start" }}
+                                                    >
+                                                        {reactionEntries.map(([emoji, reactionUsers]) => (
+                                                            <Box
+                                                                key={emoji}
+                                                                onClick={() => toggleReaction(msg._id, emoji)}
+                                                                sx={{
+                                                                    display: "flex", alignItems: "center", gap: 0.3,
+                                                                    px: 0.65, py: 0.15, borderRadius: "12px", cursor: "pointer",
+                                                                    bgcolor: reactionUsers.includes(me) ? "rgba(99,102,241,0.12)" : "#f3f4f6",
+                                                                    border: reactionUsers.includes(me) ? "1px solid rgba(99,102,241,0.35)" : "1px solid #e5e7eb",
+                                                                    "&:hover": { bgcolor: reactionUsers.includes(me) ? "rgba(99,102,241,0.2)" : "#e5e7eb" },
+                                                                    transition: "background 0.15s",
+                                                                }}
+                                                            >
+                                                                <Typography sx={{ fontSize: "0.78rem", lineHeight: 1 }}>{emoji}</Typography>
+                                                                <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: reactionUsers.includes(me) ? "#6366f1" : "#6b7280" }}>
+                                                                    {reactionUsers.length}
+                                                                </Typography>
+                                                            </Box>
+                                                        ))}
+                                                    </Stack>
+                                                )}
+
+                                                {/* Timestamp + read receipt */}
+                                                <Stack direction="row" alignItems="center" justifyContent={isMe ? "flex-end" : "flex-start"} spacing={0.25} sx={{ mt: 0.25, px: 0.5 }}>
+                                                    <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.63rem" }}>
+                                                        {formatTime(msg.date)}
+                                                    </Typography>
+                                                    {isMe && isLast && (
+                                                        <ReadReceipt msg={msg} isMe={isMe} />
+                                                    )}
+                                                </Stack>
                                             </Box>
                                         </Box>
                                     );
@@ -561,22 +636,11 @@ export function FloatingChat({ requiredRoles }) {
                             )}
 
                             <Box sx={{ px: 1.5, py: 1, borderTop: "1px solid", borderColor: "divider", bgcolor: "#fafafa" }}>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    style={{ display: "none" }}
-                                    onChange={handleFileChange}
-                                />
+                                <input ref={fileInputRef} type="file" style={{ display: "none" }} onChange={handleFileChange} />
                                 <TextField
-                                    inputRef={inputRef}
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Message…"
-                                    value={newMsg}
-                                    onChange={e => setNewMsg(e.target.value)}
-                                    onKeyDown={handleKeyDown}
-                                    multiline
-                                    maxRows={3}
+                                    inputRef={inputRef} fullWidth size="small" placeholder="Message…"
+                                    value={newMsg} onChange={e => setNewMsg(e.target.value)}
+                                    onKeyDown={handleKeyDown} multiline maxRows={3}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -606,17 +670,11 @@ export function FloatingChat({ requiredRoles }) {
                         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                             <Box sx={{ px: 1.5, pt: 1, pb: 0.5 }}>
                                 <TextField
-                                    fullWidth
-                                    size="small"
+                                    fullWidth size="small"
                                     placeholder={showPicker ? "Search people…" : "Search conversations…"}
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
+                                    value={search} onChange={e => setSearch(e.target.value)}
                                     InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
-                                            </InputAdornment>
-                                        ),
+                                        startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} /></InputAdornment>,
                                         sx: { borderRadius: 2, bgcolor: "#f3f4f6" },
                                     }}
                                 />
@@ -625,20 +683,14 @@ export function FloatingChat({ requiredRoles }) {
                             {showPicker && (
                                 <Stack direction="row" spacing={1} sx={{ px: 1.5, pb: 0.5 }}>
                                     <Chip
-                                        icon={<PersonIcon sx={{ fontSize: 14 }} />}
-                                        label="Direct"
-                                        size="small"
-                                        onClick={() => setPickerTab("dm")}
-                                        variant={pickerTab === "dm" ? "filled" : "outlined"}
+                                        icon={<PersonIcon sx={{ fontSize: 14 }} />} label="Direct" size="small"
+                                        onClick={() => setPickerTab("dm")} variant={pickerTab === "dm" ? "filled" : "outlined"}
                                         sx={{ cursor: "pointer", ...(pickerTab === "dm" ? { bgcolor: "#6366f1", color: "#fff", "& .MuiChip-icon": { color: "#fff" } } : {}) }}
                                     />
                                     <Chip
-                                        icon={<GroupAddIcon sx={{ fontSize: 14 }} />}
-                                        label="New Group"
-                                        size="small"
+                                        icon={<GroupAddIcon sx={{ fontSize: 14 }} />} label="New Group" size="small"
                                         onClick={() => { setGroupDialog(true); setGroupMembers([]); setGroupName(""); }}
-                                        variant="outlined"
-                                        sx={{ cursor: "pointer" }}
+                                        variant="outlined" sx={{ cursor: "pointer" }}
                                     />
                                 </Stack>
                             )}
@@ -646,25 +698,19 @@ export function FloatingChat({ requiredRoles }) {
                             <Box sx={{ flex: 1, overflowY: "auto" }}>
                                 {showPicker ? (
                                     filteredUsers.length === 0 ? (
-                                        <Typography variant="body2" color="text.disabled" sx={{ textAlign: "center", pt: 4 }}>
-                                            No users found
-                                        </Typography>
+                                        <Typography variant="body2" color="text.disabled" sx={{ textAlign: "center", pt: 4 }}>No users found</Typography>
                                     ) : filteredUsers.map(u => (
                                         <ConvRow
                                             key={u.userName}
                                             avatar={<UserAvatar user={u} size={38} />}
-                                            name={displayName(u)}
-                                            subtitle={u.role ?? ""}
-                                            unread={0}
+                                            name={displayName(u)} subtitle={u.role ?? ""} unread={0}
                                             onClick={() => openConversation({ type: "dm", id: u.userName })}
                                         />
                                     ))
                                 ) : filteredConvs.length === 0 ? (
                                     <Box sx={{ px: 2, pt: 4, textAlign: "center" }}>
                                         <Typography variant="body2" color="text.disabled">No conversations yet</Typography>
-                                        <Typography variant="caption" color="text.disabled">
-                                            Click the pencil icon to start one
-                                        </Typography>
+                                        <Typography variant="caption" color="text.disabled">Click the pencil icon to start one</Typography>
                                     </Box>
                                 ) : filteredConvs.map(c => {
                                     if (c.type === "group") {
@@ -672,17 +718,9 @@ export function FloatingChat({ requiredRoles }) {
                                         return (
                                             <ConvRow
                                                 key={c._id}
-                                                avatar={
-                                                    <Avatar {...gAp} sx={{ width: 38, height: 38, ...gAp.sx }}>
-                                                        {gAp.children}
-                                                    </Avatar>
-                                                }
-                                                name={c.name}
-                                                subtitle={c.lastMessage}
-                                                meta={formatTime(c.lastDate)}
-                                                unread={c.unread}
+                                                avatar={<Avatar {...gAp} sx={{ width: 38, height: 38, ...gAp.sx }}>{gAp.children}</Avatar>}
+                                                name={c.name} subtitle={c.lastMessage} meta={formatTime(c.lastDate)} unread={c.unread}
                                                 onClick={() => openConversation({ type: "group", id: c._id, name: c.name })}
-                                                noOnlineDot
                                             />
                                         );
                                     }
@@ -691,10 +729,7 @@ export function FloatingChat({ requiredRoles }) {
                                         <ConvRow
                                             key={c._id}
                                             avatar={<UserAvatar user={u} size={38} />}
-                                            name={displayName(u)}
-                                            subtitle={c.lastMessage}
-                                            meta={formatTime(c.lastDate)}
-                                            unread={c.unread}
+                                            name={displayName(u)} subtitle={c.lastMessage} meta={formatTime(c.lastDate)} unread={c.unread}
                                             onClick={() => openConversation({ type: "dm", id: c._id })}
                                         />
                                     );
@@ -709,12 +744,8 @@ export function FloatingChat({ requiredRoles }) {
             <Fab
                 onClick={() => setOpen(o => !o)}
                 sx={{
-                    position: "fixed",
-                    bottom: 24,
-                    right: 24,
-                    zIndex: 1300,
-                    bgcolor: "#6366f1",
-                    "&:hover": { bgcolor: "#4f46e5" },
+                    position: "fixed", bottom: 24, right: 24, zIndex: 1300,
+                    bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" },
                     boxShadow: "0 8px 24px rgba(99,102,241,0.4)",
                 }}
             >
@@ -728,38 +759,18 @@ export function FloatingChat({ requiredRoles }) {
                 <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>New Group</DialogTitle>
                 <DialogContent>
                     <TextField
-                        autoFocus
-                        fullWidth
-                        size="small"
-                        label="Group name"
-                        value={groupName}
-                        onChange={e => setGroupName(e.target.value)}
-                        sx={{ mb: 2, mt: 0.5 }}
+                        autoFocus fullWidth size="small" label="Group name" value={groupName}
+                        onChange={e => setGroupName(e.target.value)} sx={{ mb: 2, mt: 0.5 }}
                     />
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: "block" }}>
-                        Members
-                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5, display: "block" }}>Members</Typography>
                     <List dense sx={{ maxHeight: 240, overflowY: "auto", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 1 }}>
                         {users.map(u => (
-                            <ListItem
-                                key={u.userName}
-                                button
-                                onClick={() => toggleGroupMember(u.userName)}
-                                sx={{ py: 0.5 }}
-                            >
+                            <ListItem key={u.userName} button onClick={() => toggleGroupMember(u.userName)} sx={{ py: 0.5 }}>
                                 <ListItemAvatar sx={{ minWidth: 40 }}>
                                     <Avatar {...buildAvatarProps(u)} sx={{ width: 28, height: 28, fontSize: "0.7rem", ...buildAvatarProps(u).sx }} />
                                 </ListItemAvatar>
-                                <ListItemText
-                                    primary={displayName(u)}
-                                    primaryTypographyProps={{ variant: "body2" }}
-                                />
-                                <Checkbox
-                                    edge="end"
-                                    checked={groupMembers.includes(u.userName)}
-                                    size="small"
-                                    sx={{ "&.Mui-checked": { color: "#6366f1" } }}
-                                />
+                                <ListItemText primary={displayName(u)} primaryTypographyProps={{ variant: "body2" }} />
+                                <Checkbox edge="end" checked={groupMembers.includes(u.userName)} size="small" sx={{ "&.Mui-checked": { color: "#6366f1" } }} />
                             </ListItem>
                         ))}
                     </List>
@@ -775,9 +786,7 @@ export function FloatingChat({ requiredRoles }) {
                 <DialogActions sx={{ px: 3, pb: 2 }}>
                     <Button onClick={() => setGroupDialog(false)} size="small">Cancel</Button>
                     <Button
-                        onClick={createGroup}
-                        variant="contained"
-                        size="small"
+                        onClick={createGroup} variant="contained" size="small"
                         disabled={!groupName.trim() || groupMembers.length === 0 || creatingGroup}
                         sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } }}
                     >
@@ -801,28 +810,22 @@ function ConvRow({ avatar, name, subtitle, meta, unread, onClick }) {
             }}
         >
             <Box sx={{ flexShrink: 0 }}>{avatar}</Box>
-
             <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between">
                     <Typography variant="body2" sx={{ fontWeight: unread > 0 ? 700 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {name}
                     </Typography>
                     {meta && (
-                        <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0, ml: 1, fontSize: "0.63rem" }}>
-                            {meta}
-                        </Typography>
+                        <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0, ml: 1, fontSize: "0.63rem" }}>{meta}</Typography>
                     )}
                 </Stack>
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: unread > 0 ? 600 : 400 }}>
                     {subtitle}
                 </Typography>
             </Box>
-
             {unread > 0 && (
                 <Box sx={{ width: 18, height: 18, borderRadius: "50%", bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Typography sx={{ fontSize: "0.62rem", color: "#fff", fontWeight: 700 }}>
-                        {unread > 9 ? "9+" : unread}
-                    </Typography>
+                    <Typography sx={{ fontSize: "0.62rem", color: "#fff", fontWeight: 700 }}>{unread > 9 ? "9+" : unread}</Typography>
                 </Box>
             )}
         </Box>

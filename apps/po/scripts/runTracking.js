@@ -1,7 +1,7 @@
 // Runs every 6 hours via PM2 cron_restart. Calls the Next.js tracking route
 // so there's no separate DB connection to manage here.
 const PORT = process.env.PORT || 3001;
-const url = `http://localhost:${PORT}/api/production/shipping/track`;
+const url = `http://127.0.0.1:${PORT}/api/production/shipping/track`;
 
 (async () => {
     const start = Date.now();

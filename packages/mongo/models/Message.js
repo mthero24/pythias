@@ -12,6 +12,7 @@ const schema = new mongoose.Schema({
     fileSize: { type: Number },
     date:     { type: Date, default: Date.now },
     readBy:   [{ type: String }],
+    reactions: { type: Object, default: {} },   // { "👍": ["user1", "user2"], ... }
 });
 
 schema.index({ from: 1, to: 1, date: -1 });

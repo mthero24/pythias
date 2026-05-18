@@ -61,7 +61,7 @@ function OrderRow({ order, index }) {
                 seen.add(bulkId);
                 bulkItems.push({
                     bulkId,
-                    inventory: items[0].inventory.inventory,
+                    inventory: items[0].inventory?.inventory ?? null,
                     quantity: items.length,
                     totalQuantity: total,
                     blankCode: items[0].styleCode,

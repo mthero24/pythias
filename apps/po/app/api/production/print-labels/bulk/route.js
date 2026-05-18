@@ -4,81 +4,105 @@ import Order from "@/models/Order";
 import Batches from "@/models/batches";
 import btoa from "btoa";
 import axios from "axios";
-import {buildBulkLabelData} from "@/functions/bulkLabelString"
+import { buildBulkLabelData } from "@/functions/bulkLabelString";
 import { Inventory } from "@pythias/mongo";
-import inventory from "@/models/inventory";
-let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G","H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",];
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 
-const subtractInventory = async (item)=>{
-    console.log(item)
-    if(item.type != "gift"){
-        let inv = await Inventory.findOne({_id: item.inventory._id? item.inventory._id: item.inventory})
-        //console.log(inv, "invetory subrtact")
-        console.log(inv.quantity)
-        inv.quantity = inv.quantity - item.quantity
-        console.log( inv.quantity, "qty")
-        inv.inStock = inv.inStock ? inv.inStock.filter(i=> !item.items.map(i=> i._id.toString()).includes(i.toString())) : []
-        inv.attached = inv.attached ? inv.attached.filter(i => !item.items.map(i => i._id.toString()).includes(i.toString())) : []
-        await inv.save()
-        //console.log(inv, "invetory subrtact")
-    }
-}
-const checkInventory = async (item)=>{
-    if(item.type == "gift") return 100
-    let inv = await Inventory.findOne({_id: item.inventory.inventory._id})
-    return inv.quantity
-}
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
+
+const subtractInventory = async (item) => {
+    if (item.type === "gift") return;
+    const invId = item.inventory?._id ?? item.inventory;
+    if (!invId) return;
+    const inv = await Inventory.findOne({ _id: invId });
+    if (!inv) return;
+    const itemIds = new Set((item.items ?? []).map(i => i._id.toString()));
+    inv.quantity = inv.quantity - item.quantity;
+    inv.inStock  = (inv.inStock  ?? []).filter(i => !itemIds.has(i.toString()));
+    inv.attached = (inv.attached ?? []).filter(i => !itemIds.has(i.toString()));
+    await inv.save();
+};
+
 export const config = {
-    api: {
-      bodyParser: {
-        sizeLimit: '10mb',
-      },
-    },
-  }
-export async function POST(req=NextApiRequest){
-    let data = await req.json();
-    let labelsString = ``
-    //create batchId
-    let batchID = ''
-    for(let i = 0; i< 9; i++)
-        batchID += letters[Math.floor(Math.random() * letters.length)]
-    // build labels
-    let preLabels = []
-    let pieceIds = []
-    let j = 1
-    for(let i of data.items){
-        let label = await buildBulkLabelData(i, j)
-        preLabels.push(label)
-        pieceIds.push(i.bulkId)
-        j++
-        await subtractInventory(i)
-        
+    api: { bodyParser: { sizeLimit: "10mb" } },
+};
+
+export async function POST(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
+
+    let data;
+    try {
+        data = await req.json();
+    } catch {
+        return NextResponse.json({ error: true, msg: "Invalid request body" }, { status: 400 });
     }
-    // full fill promises
-    preLabels.map(l=> labelsString += l)
-    //create label string
-    //convert to base64
-    labelsString = btoa(labelsString)
-   
-    //print labels
-    console.log(process.env.localIP, process.env.localKey)
-    let headers = {
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+
+    if (!data?.items?.length) {
+        return NextResponse.json({ error: true, msg: "No items" }, { status: 400 });
+    }
+
+    try {
+        // Build batch ID
+        let batchID = "";
+        for (let i = 0; i < 9; i++)
+            batchID += letters[Math.floor(Math.random() * letters.length)];
+
+        // Build label strings and subtract inventory
+        let labelsString = "";
+        const pieceIds = [];
+        let j = 1;
+        for (const item of data.items) {
+            const label = await buildBulkLabelData(item, j);
+            labelsString += label;
+            pieceIds.push(item.bulkId);
+            j++;
+            await subtractInventory(item);
         }
+
+        // Encode for printer
+        const encoded = btoa(labelsString);
+
+        // Send to printer — 10 s timeout so the route never hangs
+        const headers = {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`,
+            },
+            timeout: 10_000,
+        };
+        await axios
+            .post(`http://${process.env.localIP}/api/print-labels`, { label: encoded, printer: "printer1" }, headers)
+            .catch(e => console.error("[bulk-labels] printer error:", e.message));
+
+        // Persist batch + item updates
+        const now = new Date();
+        await new Batches({ batchID, date: now, count: pieceIds.length }).save();
+        await Items.updateMany(
+            { bulkId: { $in: pieceIds } },
+            {
+                labelPrinted: true,
+                $push: {
+                    labelPrintedDates: { $each: [now] },
+                    steps: { $each: [{ status: "label Printed", date: now }] },
+                },
+                batchID,
+            }
+        );
+
+        // Mark order printed
+        const order = await Order.findOne({ _id: data.items[0].order._id });
+        if (order) {
+            order.bulkPrinted = true;
+            await order.save();
+        }
+
+        logActivity({ action: "label_print", entity: "order", count: pieceIds.length, userName, email, provider: "po" });
+
+        return NextResponse.json({ error: false });
+    } catch (e) {
+        console.error("[bulk-labels] error:", e.message);
+        return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
     }
-    console.log(headers)
-    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
-    console.log(res?.data)
-    //update data
-    console.log(pieceIds)
-    let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
-    await batch.save()
-    await Items.updateMany({bulkId: {$in: pieceIds}}, {labelPrinted: true, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
-    let order = await Order.findOne({_id: data.items[0].order._id})
-    order.bulkPrinted = true
-    await order.save()
-    //console.log(giftMessages)
-    return NextResponse.json({error: false})
 }

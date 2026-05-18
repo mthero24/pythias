@@ -110,6 +110,27 @@ export async function GET(req) {
     return NextResponse.json({ error: false, conversations, totalUnread });
 }
 
+export async function PATCH(req) {
+    const token = await getToken({ req });
+    if (!token?.userName) return NextResponse.json({ error: true }, { status: 401 });
+    const me = token.userName;
+    const { messageId, emoji } = await req.json();
+    if (!messageId || !emoji) return NextResponse.json({ error: true, msg: "Missing fields" });
+
+    const msg = await Message.findById(messageId);
+    if (!msg) return NextResponse.json({ error: true, msg: "Not found" }, { status: 404 });
+
+    const reactions = msg.reactions ?? {};
+    const users = reactions[emoji] ?? [];
+    reactions[emoji] = users.includes(me)
+        ? users.filter(u => u !== me)
+        : [...users, me];
+    msg.reactions = reactions;
+    msg.markModified("reactions");
+    await msg.save();
+    return NextResponse.json({ error: false, reactions: msg.reactions });
+}
+
 export async function POST(req) {
     const token = await getToken({ req });
     if (!token?.userName) return NextResponse.json({ error: true }, { status: 401 });

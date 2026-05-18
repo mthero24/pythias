@@ -48,7 +48,7 @@ export async function logActivity({
 export function userFromToken(token) {
     if (!token) return { userName: "unknown", email: "" };
     return {
-        userName: token.name || token.email?.split("@")[0] || token.sub || "unknown",
+        userName: token.userName || token.name || token.email?.split("@")[0] || token.sub || "unknown",
         email: token.email || "",
     };
 }

@@ -109,6 +109,7 @@ const schema = new mongoose.Schema({
         cost: Number,
         trackingInfo: [String],
         delivered: { type: Boolean, default: false },
+        refunded: { type: Boolean, default: false },
         provider: String,
         expectedDelivery: Date,
       },

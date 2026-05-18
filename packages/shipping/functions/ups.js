@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 let access_token
 let expires_in
-let getNew = new Date(Date.now())
+let getNew = new Date(0)
 const csv = require("csvtojson");
 let zones = {}
 let rates = {}

@@ -17,13 +17,19 @@ const subtractInventory = async (item)=>{
     if(item.type != "gift"){
         let inv = await Inventory.findOne({_id: item.inventory.inventory._id? item.inventory.inventory._id: item.inventory.inventory})
         //console.log(inv, "invetory subrtact")
-        console.log(inv.quantity)
-        inv.quantity = inv.quantity - 1
-        console.log( inv.quantity, "qty")
-        inv.inStock = inv.inStock ? inv.inStock.filter(i=> i.toString() != item._id.toString()) : []
-        inv.attached = inv.attached ? inv.attached.filter(i=> i.toString() != item._id.toString()) : []
-        await inv.save()
+        try{
+            if(inv){
+                console.log(inv.quantity)
+                inv.quantity = inv.quantity - 1
+                console.log( inv.quantity, "qty")
+                inv.inStock = inv.inStock ? inv.inStock.filter(i=> i.toString() != item._id.toString()) : []
+                inv.attached = inv.attached ? inv.attached.filter(i=> i.toString() != item._id.toString()) : []
+                await inv.save()
+            }
         //console.log(inv, "invetory subrtact")
+        }catch(e){
+            console.log(e)
+        }
     }
 }
 const checkInventory = async (item)=>{

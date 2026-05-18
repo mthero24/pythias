@@ -77,7 +77,7 @@ export function Refund({ ords, pa }) {
 
     const rows = orders.flatMap(o =>
         (o.shippingInfo?.labels ?? [])
-            .filter(l => !l.delivered)
+            .filter(l => !l.delivered && !l.refunded)
             .map(l => ({ order: o, label: l }))
     );
 

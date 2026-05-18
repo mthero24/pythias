@@ -3,7 +3,7 @@
 // the DB work — no separate DB connection needed here.
 const PORT   = process.env.PORT   || 3000;
 const SECRET = process.env.CRON_SECRET || "";
-const url    = `http://localhost:${PORT}/api/internal/pull-orders`;
+const url    = `http://127.0.0.1:${PORT}/api/internal/pull-orders`;
 
 (async () => {
     const start = Date.now();

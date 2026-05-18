@@ -6,6 +6,7 @@ import { Inventory, InventoryOrders } from "@pythias/mongo";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
 import { addItemsToInventory } from "@/functions/addItemsToInventory";
+import { LabelsData } from "@/functions/labels";
 const updateInventory = async (invIds) => {
     let inventories = await Inventory.find({ }).select("style_code _id")
     inventories = inventories.sort((a, b) => a.style_code?.localeCompare(b.style_code))
@@ -74,76 +75,13 @@ const updateInventory = async (invIds) => {
     console.log("total: ", total)
 }
 export default async function Test(){
-    //updateInventory();
-    // let items = await Items.find({ bulkId: "XLFPWXHUW"})
-    // console.log(items.length, "items")
-    // for(let i of items){
-    //     console.log("no inventory", i._id)
-    //     let inv = await Inventory.findOne({ inventory_id: encodeURIComponent(`${i.colorName}-${i.sizeName}-${i.styleCode}`) })
+    // let { labels, giftMessages, rePulls, batches } = await LabelsData()
+    // for(let s of labels.Standard){
+    //     let inv = await Inventory.findOne({ inventory_id: encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`) })
     //     if(inv){
-    //         console.log("found inventory", inv._id)
-    //         i.inventory = {
-    //             inventoryType: "inventory",
-    //             inventory: inv._id,
-    //             productInventory: null,
-    //         }
-    //         i.markModified("inventory")
-    //         i = await i.save()
-    //         console.log(i.inventory)
-    //     }
-        
-    // }
-    // let style = await Styles.findOne({code: "LPCPH"})
-    // console.log("style", style.sizes)
-    // for(let fold of style.fold){
-    //     if(!fold.sleeves) fold.sleeves = 0;
-    //     if(!fold.body) fold.body = 0;
-    // }
-    // style.markModified("fold")
-    // await style.save();
-    //updateInventory();
-    // let items = await Items.find({ labelPrinted: false, order: { $ne: null }, canceled: false, shipped: false, paid: true })
-    // items = await Promise.all(items.map(async i=> {
-    //     i.order = await Order.findOne({ _id: i.order });
-    //     return i;
-    // }));
-    // console.log(items.length, "items to add to inventory")
-    // let cancel = items.filter(i=> i.order == null)
-    // for(let c of cancel){
-    //     c.canceled = true;
-    //     await c.save()
-    // }
-    // items = items.filter(i => i.order != null)
-    // for(let item of items){
-    //     item.inventory = {
-    //         inventoryType: "inventory",
-    //         inventory: await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }),
-    //         productInventory: null,
-    //     }
-    //     await item.save()
-    // }
-    //  await updateInventory();
-    // let invOrder = await InventoryOrders.findOne({ _id: "698b705f27a7aeb67a67f1f5"}).populate("locations.items.inventory")
-    // for (let loc of invOrder.locations){
-    //     for (let item of loc.items) {
-    //         item.inventory.orders = item.inventory.orders.filter(o => o.order.toString() != invOrder._id.toString())
-    //         await item.inventory.save()
+    //         inv.quantity = inv.quantity + 2
+    //         await inv.save()
     //     }
     // }
-    // for(let loc of invOrder.locations){
-    //     if(loc.name.toLowerCase() == "ohio"){
-    //         for(let item of loc.items){
-    //             //console.log(item)
-    //             let labels = await Items.find({"inventory.inventory": item.inventory._id, labelPrinted: false, canceled: false, paid: true }).sort({_id: -1}).limit(item.quantity)
-    //             console.log(labels.length, item.quantity)
-    //             item.inventory.orders.push({
-    //                 order: invOrder._id.toString(),
-    //                 items: labels.map(l=> l._id.toString())
-    //             })
-    //             await item.inventory.save()
-    //         }
-    //     }
-    // }
-   
     return <h1>Test</h1>
 }
