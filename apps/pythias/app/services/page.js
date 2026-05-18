@@ -149,7 +149,7 @@ export default function ServicesPage() {
                         Ready to see it in action?
                     </Typography>
                     <Typography sx={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.7, mb: 4 }}>
-                        Book a demo and we'll walk you through the platform with your actual workflow in mind.
+                        Book a demo and we&apos;ll walk you through the platform with your actual workflow in mind.
                     </Typography>
                     <Button component={Link} href="/#calendar-booking-section" variant="contained" size="large" sx={{ bgcolor: "#D3A73D", color: "#111", fontWeight: 700, px: 4, py: 1.5, "&:hover": { bgcolor: "#b8860b" }, boxShadow: "0 4px 16px rgba(211,167,61,0.4)" }}>
                         Book a Demo

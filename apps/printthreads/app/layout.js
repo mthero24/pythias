@@ -2,7 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ThemeRegistry from "./ThemeRegistry";
-import { CSVProvider, FloatingChat } from "@pythias/backend";
+import { CSVProvider, FloatingChat, IdleLogout } from "@pythias/backend";
 import { NavigationProgress } from "@/components/NavigationProgress";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +35,7 @@ export default function RootLayout({ children }) {
             <Navbar/>
             {children}
             <FloatingChat />
+            <IdleLogout />
           </CSVProvider>
         </ThemeRegistry>
       </body>
