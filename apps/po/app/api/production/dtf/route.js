@@ -368,6 +368,8 @@ export async function POST(req = NextApiRequest) {
 }
 
 export async function PUT(req = NextApiRequest) {
+  const token = await getToken({ req });
+  const { userName, email } = userFromToken(token);
   let data = await req.json();
   //console.log(data, "data")
   try {
@@ -442,6 +444,7 @@ export async function PUT(req = NextApiRequest) {
         }
       }
     }
+    logActivity({ action: "dtf_sent", entity: "dtf", count: items.length, userName, email, provider: "po" });
     return NextResponse.json({
       error: false,
       msg: `${items.length} sent to printers`,

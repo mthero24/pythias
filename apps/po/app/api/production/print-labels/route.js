@@ -76,7 +76,9 @@ export async function POST(req=NextApiRequest){
         pieceIds.push(i.pieceId)
         j++
     }
-    await Promise.all(data.items.map(subtractInventory));
+    for(let item of data.items){
+        await subtractInventory(item)
+    };
     // full fill promises
     preLabels.map(l=> labelsString += l)
     //create label string

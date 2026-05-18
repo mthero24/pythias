@@ -3,6 +3,8 @@ import Items from "@/models/Items";
 import Color from "@/models/Color"
 import {sendFile} from "@pythias/embroidery"
 import axios from "axios";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 const getImages = async (front, back, style, item)=>{
     let styleImage = style.images.filter(
         (i) => i.color.toString() == item.color?._id.toString()
@@ -37,6 +39,8 @@ export async function GET(){
     return NextResponse.json({error: false})
 }
 export async function POST(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json()
     console.log(data, "data")
     let item = await Items.findOne({
@@ -66,6 +70,7 @@ export async function POST(req = NextApiRequest) {
             date: new Date(),
         });
         await item.save()
+        logActivity({ action: "emb_sent", entity: "order", entityId: item._id, entityName: item.pieceId || "", userName, email, provider: "po" });
         const {styleImage, frontDesign, backDesign, styleCode, colorName} = await getImages(item.design.front, item.design.back, item.styleV2, item)
         return NextResponse.json({ error: false, msg: "added to que", frontDesign, backDesign, styleImage, styleCode, colorName, images: item.design, type: "new" });
     }else if(data.printer == "printer2"){

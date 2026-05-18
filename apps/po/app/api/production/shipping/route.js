@@ -7,7 +7,11 @@ import {buyLabel} from "@pythias/shipping";
 import Manifest from "../../../../models/manifest";
 import {isSingleItem, isShipped, canceled} from "../../../../functions/itemFunctions"
 import axios from "axios"
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function POST(req= NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     console.log(data)
     
@@ -87,6 +91,7 @@ export async function POST(req= NextApiRequest){
             if(label.error){
                 return NextResponse.json({error: true, msg: "error printing label"})
             }else{
+                logActivity({ action: "order_preshipped", entity: "order", entityId: item.order._id, entityName: item.order.poNumber || "", userName, email, provider: "po" });
                 return NextResponse.json({label})
             }
         }
@@ -178,6 +183,7 @@ export async function POST(req= NextApiRequest){
                     //console.log(res.item)
                     await res.item.save()
                     await res.bin.save()
+                    logActivity({ action: "item_binned", entity: "order", entityId: item._id, entityName: item.pieceId || "", userName, email, provider: "po" });
                 }
             }
         }else if(order){
