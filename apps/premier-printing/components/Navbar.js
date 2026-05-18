@@ -44,6 +44,8 @@ import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 
 const DRAWER_WIDTH = 268;
 
@@ -71,6 +73,7 @@ const NAV_SECTIONS = [
       { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false, permission: "integrations" },
       { label: "Pricing",          href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
+      { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
     ],
   },
   {

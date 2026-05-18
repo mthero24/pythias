@@ -19,6 +19,8 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import InventoryIcon from "@mui/icons-material/Inventory2";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import EditIcon from "@mui/icons-material/Edit";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
@@ -66,8 +68,10 @@ const NAV_GROUPS = [
         items: [
             { label: "Edit Data",       href: "/edit-data",           icon: <EditIcon fontSize="small" /> },
             { label: "Clockwise",       href: "/clockwise",           icon: <AccessTimeIcon fontSize="small" /> },
-            { label: "Line Settings",   href: "/production-settings", icon: <SettingsIcon fontSize="small" />, adminOnly: true },
-            { label: "Activity",        href: "/activity",            icon: <BarChartIcon fontSize="small" />, adminOnly: true },
+            { label: "Line Settings",   href: "/production-settings", icon: <SettingsIcon fontSize="small" />,          adminOnly: true },
+            { label: "Activity",        href: "/activity",            icon: <BarChartIcon fontSize="small" />,          adminOnly: true },
+            { label: "Analytics",       href: "/analytics",           icon: <TrendingUpIcon fontSize="small" />,        adminOnly: true },
+            { label: "Live Users",      href: "/live",                icon: <FiberManualRecordIcon fontSize="small" sx={{ color: "#22c55e" }} />, adminOnly: true },
         ],
     },
 ];
