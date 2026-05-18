@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/componants/Navbar";
 import ThemeProvider from "@/componants/ThemeProvider";
 import AnalyticsTracker from "@/componants/AnalyticsTracker";
+import { PageTracker } from "@pythias/backend";
 import Script from "next/script";
 
 const urbanist = Urbanist({
@@ -80,6 +81,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${urbanist.variable} antialiased`}>
         <ThemeProvider>
+          <PageTracker />
           <AnalyticsTracker />
           <Navbar />
           {children}

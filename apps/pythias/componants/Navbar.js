@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   AppBar, Toolbar, Box, Button, IconButton,
   Drawer, List, ListItem, ListItemButton, ListItemText, Container,
@@ -20,6 +21,8 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <AppBar

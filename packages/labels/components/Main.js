@@ -45,6 +45,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
     const [marketplaceSelected, setMarketplaceSelected] = useState("Select");
     const [marketplaces, setMarketplaces] = useState([]);
     const [confirmReturnToQue, setConfirmReturnToQue] = useState(false);
+    const [stockFilter, setStockFilter]   = useState(null);
 
     useEffect(() => {
         let pt = [], sc = [], mp = [];
@@ -392,6 +393,13 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                             ).length;
 
                             const displayed = useLabels[l].filter(s => {
+                                const isReturns = s.inventory?.inventoryType === "productInventory" && !!s.inventory?.productInventory;
+                                if (stockFilter) {
+                                    if (stockFilter === "inStock"  && s.stockStatus !== "inStock" && !isReturns) return false;
+                                    if (stockFilter === "ordered"  && s.stockStatus !== "ordered")              return false;
+                                    if (stockFilter === "attached" && s.stockStatus !== "attached")             return false;
+                                    if (stockFilter === "noInv"    && (s.stockStatus || isReturns))            return false;
+                                }
                                 if (!filter) return true;
                                 return (
                                     s.pieceId?.toLowerCase().includes(filter.toLowerCase()) ||
@@ -410,19 +418,20 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                                     <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{l}</Typography>
                                                     <Chip label={`${useLabels[l].length} total`} size="small" sx={{ height: 20, fontSize: "0.68rem", fontWeight: 700 }} />
                                                 </Stack>
-                                                {source !== "PO" && (
-                                                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                                                        <Chip icon={<CheckCircleIcon sx={{ fontSize: "12px !important" }} />} label={`${inStockCount} in stock`} size="small"
-                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#f0fdf4", color: "#15803d", cursor: "pointer" }}
-                                                            onClick={() => selectBasedOnPTSC({ printType: "Select", styleCode: "Select", marketplace: "Select" })} />
-                                                        {orderedCount > 0 && <Chip icon={<SyncIcon sx={{ fontSize: "12px !important" }} />} label={`${orderedCount} on order`} size="small"
-                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#fffbeb", color: "#b45309" }} />}
-                                                        {outCount > 0 && <Chip icon={<ErrorIcon sx={{ fontSize: "12px !important" }} />} label={`${outCount} out`} size="small"
-                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#fef2f2", color: "#dc2626" }} />}
-                                                        {noInvCount > 0 && <Chip icon={<WarningAmberIcon sx={{ fontSize: "12px !important" }} />} label={`${noInvCount} no inv`} size="small"
-                                                            sx={{ height: 20, fontSize: "0.68rem", bgcolor: "#f9fafb", color: "#6b7280" }} />}
-                                                    </Stack>
-                                                )}
+                                                <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                                                    <Chip icon={<CheckCircleIcon sx={{ fontSize: "12px !important" }} />} label={`${inStockCount} in stock`} size="small"
+                                                        onClick={() => setStockFilter(stockFilter === "inStock" ? null : "inStock")}
+                                                        sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: stockFilter === "inStock" ? "#15803d" : "#f0fdf4", color: stockFilter === "inStock" ? "#fff" : "#15803d", outline: stockFilter === "inStock" ? "2px solid #15803d" : "none" }} />
+                                                    {orderedCount > 0 && <Chip icon={<SyncIcon sx={{ fontSize: "12px !important" }} />} label={`${orderedCount} on order`} size="small"
+                                                        onClick={() => setStockFilter(stockFilter === "ordered" ? null : "ordered")}
+                                                        sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: stockFilter === "ordered" ? "#b45309" : "#fffbeb", color: stockFilter === "ordered" ? "#fff" : "#b45309", outline: stockFilter === "ordered" ? "2px solid #b45309" : "none" }} />}
+                                                    {outCount > 0 && <Chip icon={<ErrorIcon sx={{ fontSize: "12px !important" }} />} label={`${outCount} out`} size="small"
+                                                        onClick={() => setStockFilter(stockFilter === "attached" ? null : "attached")}
+                                                        sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: stockFilter === "attached" ? "#dc2626" : "#fef2f2", color: stockFilter === "attached" ? "#fff" : "#dc2626", outline: stockFilter === "attached" ? "2px solid #dc2626" : "none" }} />}
+                                                    {noInvCount > 0 && <Chip icon={<WarningAmberIcon sx={{ fontSize: "12px !important" }} />} label={`${noInvCount} no inv`} size="small"
+                                                        onClick={() => setStockFilter(stockFilter === "noInv" ? null : "noInv")}
+                                                        sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: stockFilter === "noInv" ? "#6b7280" : "#f9fafb", color: stockFilter === "noInv" ? "#fff" : "#6b7280", outline: stockFilter === "noInv" ? "2px solid #6b7280" : "none" }} />}
+                                                </Stack>
                                             </Stack>
 
                                             {/* Action buttons */}

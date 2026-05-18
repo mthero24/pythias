@@ -10,6 +10,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import axios from "axios";
+import { LiveUsers } from "./LiveUsers";
 
 const ACTION_LABELS = {
     blank_create:              "Blank Created",
@@ -217,6 +218,7 @@ function ErrorRow({ entry }) {
 export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/api/admin/activity" }) {
     const changelogBase = apiBase.replace("/activity", "/changelog");
     const errorlogBase  = apiBase.replace("/activity", "/errorlog");
+    const presenceBase  = apiBase.replace("/activity", "/users/presence");
 
     const [tab, setTab] = useState(0);
     const handleTabChange = (_, v) => {
@@ -300,7 +302,6 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
         return () => clearTimeout(t);
     }, [changeEntitySearch]);
 
-    // Reset to page 1 when filters change
     useEffect(() => { setChangesPage(1); }, [range, selectedUser, entityTypeFilter, debouncedUserSearch, debouncedEntitySearch]);
     useEffect(() => { setErrorsPage(1); }, [range]);
 
@@ -377,6 +378,7 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
                 <Tab label="Activity" />
                 <Tab label="Change History" />
                 <Tab label="Errors" />
+                <Tab label="Live" />
             </Tabs>
 
             {/* ── Activity Tab ── */}
@@ -562,6 +564,9 @@ export function ActivityDashboard({ provider = "premierPrinting", apiBase = "/ap
                     </>
                 )
             )}
+
+            {/* ── Live Tab ── */}
+            {tab === 3 && <LiveUsers apiUrl={presenceBase} embedded />}
         </Box>
     );
 }

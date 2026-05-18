@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import User from "@/models/User";
+import { User } from "@pythias/mongo";
 
 export async function POST(req) {
     const token = await getToken({ req });
@@ -20,8 +20,8 @@ export async function POST(req) {
         if (!existing) return NextResponse.json({ valid: false });
 
         if (existing.currentPage !== page) {
-            $set.previousPage = existing.currentPage ?? null;
-            $set.currentPage  = page;
+            $set.previousPage  = existing.currentPage ?? null;
+            $set.currentPage   = page;
             $set.pageEnteredAt = now;
         }
     }

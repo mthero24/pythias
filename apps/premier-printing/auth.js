@@ -1,7 +1,6 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { randomUUID } from "crypto";
 
 export const authOptions = {
   session: {
@@ -22,11 +21,7 @@ export const authOptions = {
           throw new Error("Invalid credentials, please try again!");
         }
 
-        // Generate a fresh session token — overwrites any existing session on other devices
-        const sessionToken = randomUUID();
-        await User.findOneAndUpdate({ _id: user._id }, { $set: { sessionToken } });
-
-        return { ...user, sessionToken };
+        return { ...user };
       },
     }),
   ],
@@ -40,7 +35,6 @@ export const authOptions = {
           firstName: user.firstName,
           lastName: user.lastName,
           permissions: user.permissions,
-          sessionToken: user.sessionToken,
         };
       }
       return token;

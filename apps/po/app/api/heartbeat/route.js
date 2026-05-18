@@ -13,21 +13,21 @@ export async function POST(req) {
     const $set = { lastSeen: now };
 
     if (page && typeof page === "string" && !page.startsWith("/api/")) {
-        const existing = await User.findOne({ userName: token.userName })
+        const existing = await User.findOne({ email: token.userName })
             .select("currentPage")
             .lean();
 
         if (!existing) return NextResponse.json({ valid: false });
 
         if (existing.currentPage !== page) {
-            $set.previousPage = existing.currentPage ?? null;
-            $set.currentPage  = page;
+            $set.previousPage  = existing.currentPage ?? null;
+            $set.currentPage   = page;
             $set.pageEnteredAt = now;
         }
     }
 
     const user = await User.findOneAndUpdate(
-        { userName: token.userName },
+        { email: token.userName },
         { $set }
     ).lean();
 

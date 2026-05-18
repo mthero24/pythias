@@ -9,7 +9,7 @@ export const authOptions = {
             name: "Credentials",
             credentials: {
                 userName: {},
-                passWord: {},
+                password: {},
             },
             async authorize(credentials) {
                 console.log("+++++++++++++++++", credentials);

@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { CSVProvider, FloatingChat, IdleLogout } from "@pythias/backend";
+import { CSVProvider, FloatingChat, PageTracker, AnalyticsTracker } from "@pythias/backend";
 import { AppThemeProvider } from "@/components/AppThemeProvider";
 import { NavigationProgress } from "@/components/NavigationProgress";
 
@@ -30,10 +30,11 @@ export default function RootLayout({ children }) {
         <AppThemeProvider>
           <NavigationProgress />
           <CSVProvider>
+            <PageTracker />
+            <AnalyticsTracker />
             <Navbar />
             {children}
             <FloatingChat />
-            <IdleLogout name="Premier Printing" initials="PP" tagline="Production Management" />
           </CSVProvider>
         </AppThemeProvider>
       </body>

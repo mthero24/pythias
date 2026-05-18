@@ -49,6 +49,9 @@ const schema = new mongoose.Schema({
   avatar: { type: String },
   lastSeen: { type: Date },
   sessionToken: { type: String },
+  currentPage: { type: String },
+  previousPage: { type: String },
+  pageEnteredAt: { type: Date },
 });
 
 schema.pre("save", async function () {

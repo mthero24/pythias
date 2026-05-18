@@ -70,63 +70,18 @@ export async function LabelsData(){
         labels[k] = await Sort(labels[k])
     }
 
-    // Separate items: no inventory assigned vs. has inventory but stockStatus not yet set
+    // Step 1: Link unassigned items to inventory (no status assignment, no counter changes)
     const needsAssignment = [];
-    const hasInvNoStatus = [];
     for (const k of Object.keys(labels)) {
         for (const l of labels[k]) {
             if (l.inventory?.inventory == null) needsAssignment.push(l);
-            else if (!l.stockStatus) hasInvNoStatus.push(l);
         }
     }
 
-    // Items with inventory assigned but no stockStatus — claim slots via allocated counter
-    if (hasInvNoStatus.length > 0) {
-        const invIds = [...new Set(hasInvNoStatus.map(l => (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString()).filter(Boolean))];
-        const invDocs = await Inventory.find({ _id: { $in: invIds } }, "quantity allocated orders").lean();
-        const invMap = new Map(invDocs.map(inv => [inv._id.toString(), {
-            available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
-            orderedIds: new Set((inv.orders || []).flatMap(o => (o.items || []).map(i => i.toString()))),
-            slotsUsed: 0, attachedAdded: 0,
-        }]));
-
-        const statusOps = [];
-        for (const l of hasInvNoStatus) {
-            const invId = (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString();
-            const data = invMap.get(invId);
-            if (!data) continue;
-            let status;
-            if (data.orderedIds.has(l._id.toString())) { status = "ordered"; }
-            else if (data.slotsUsed < data.available) { status = "inStock"; data.slotsUsed++; }
-            else { status = "attached"; data.attachedAdded++; }
-            l.stockStatus = status;
-            statusOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: status } } } });
-        }
-
-        const invOps = [...invMap.entries()]
-            .filter(([, d]) => d.slotsUsed > 0 || d.attachedAdded > 0)
-            .map(([id, d]) => {
-                const inc = {};
-                if (d.slotsUsed) inc.allocated = d.slotsUsed;
-                if (d.attachedAdded) inc.attachedCount = d.attachedAdded;
-                return { updateOne: { filter: { _id: id }, update: { $inc: inc } } };
-            });
-
-        await Promise.all([
-            statusOps.length ? Items.bulkWrite(statusOps, { ordered: false }) : Promise.resolve(),
-            invOps.length ? Inventory.bulkWrite(invOps, { ordered: false }) : Promise.resolve(),
-        ]);
-    }
-
-    // Batch-assign inventory to items with no inventory reference
     if (needsAssignment.length > 0) {
         const uniqueEncodedKeys = [...new Set(needsAssignment.map(l => encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`)))];
-        const invResults = await Inventory.find({ inventory_id: { $in: uniqueEncodedKeys } }, "_id inventory_id quantity allocated orders").lean();
-        const invData = new Map(invResults.map(inv => [inv.inventory_id, {
-            _id: inv._id, inv,
-            available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
-            slotsUsed: 0, attachedAdded: 0,
-        }]));
+        const invResults = await Inventory.find({ inventory_id: { $in: uniqueEncodedKeys } }, "_id inventory_id quantity orders").lean();
+        const invData = new Map(invResults.map(inv => [inv.inventory_id, inv]));
 
         const missedSamples = [...new Map(
             needsAssignment
@@ -140,43 +95,60 @@ export async function LabelsData(){
                         { inventory_id: `${l.colorName}-${l.sizeName}-${l.styleCode}` },
                         { color_name: l.colorName, size_name: l.sizeName, style_code: l.styleCode },
                     ]
-                }, "_id inventory_id quantity allocated orders").lean();
+                }, "_id inventory_id quantity orders").lean();
                 if (!inv) return;
-                const key = encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`);
-                invData.set(key, { _id: inv._id, inv, available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)), slotsUsed: 0, attachedAdded: 0 });
+                invData.set(encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`), inv);
             }));
         }
 
-        const itemOps = [];
+        const linkOps = [];
         for (const l of needsAssignment) {
-            const key = encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`);
-            const data = invData.get(key);
-            if (!data) continue;
-            const status = data.slotsUsed < data.available ? "inStock" : "attached";
-            if (status === "inStock") data.slotsUsed++; else data.attachedAdded++;
-            l.inventory = { inventoryType: "inventory", inventory: data.inv, productInventory: null };
-            l.stockStatus = status;
-            itemOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: {
+            const inv = invData.get(encodeURIComponent(`${l.colorName}-${l.sizeName}-${l.styleCode}`));
+            if (!inv) continue;
+            l.inventory = { inventoryType: "inventory", inventory: inv, productInventory: null };
+            linkOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: {
                 "inventory.inventoryType": "inventory",
-                "inventory.inventory": data._id,
+                "inventory.inventory": inv._id,
                 "inventory.productInventory": null,
-                stockStatus: status,
             } } } });
         }
+        if (linkOps.length) Items.bulkWrite(linkOps, { ordered: false }); // fire-and-forget
+    }
 
-        const invOps = [...invData.values()]
-            .filter(d => d.slotsUsed > 0 || d.attachedAdded > 0)
-            .map(d => {
-                const inc = {};
-                if (d.slotsUsed) inc.allocated = d.slotsUsed;
-                if (d.attachedAdded) inc.attachedCount = d.attachedAdded;
-                return { updateOne: { filter: { _id: d._id }, update: { $inc: inc } } };
-            });
+    // Step 2: Full recompute of stockStatus for ALL items with inventory (FIFO by date)
+    const allWithInv = [];
+    for (const k of Object.keys(labels)) {
+        for (const l of labels[k]) {
+            if (l.inventory?.inventory != null) allWithInv.push(l);
+        }
+    }
 
-        await Promise.all([
-            itemOps.length ? Items.bulkWrite(itemOps, { ordered: false }) : Promise.resolve(),
-            invOps.length ? Inventory.bulkWrite(invOps, { ordered: false }) : Promise.resolve(),
-        ]);
+    if (allWithInv.length > 0) {
+        const allInvIds = [...new Set(allWithInv.map(l => (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString()).filter(Boolean))];
+        const allInvDocs = await Inventory.find({ _id: { $in: allInvIds } }, "quantity orders").lean();
+        const allInvMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
+            quantity: inv.quantity ?? 0,
+            hasActiveOrder: (inv.orders || []).length > 0,
+            slotsUsed: 0,
+        }]));
+
+        allWithInv.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+
+        const updateOps = [];
+        for (const l of allWithInv) {
+            const invId = (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString();
+            const data = allInvMap.get(invId);
+            if (!data) continue;
+            let computed;
+            if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
+            else if (data.hasActiveOrder) { computed = "ordered"; }
+            else { computed = "attached"; }
+            if (l.stockStatus !== computed) {
+                updateOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: computed } } } });
+            }
+            l.stockStatus = computed;
+        }
+        if (updateOps.length) Items.bulkWrite(updateOps, { ordered: false }); // fire-and-forget
     }
     //console.log(labels.Standard[0], "standard labels")
     let giftMessages = await Items.find({

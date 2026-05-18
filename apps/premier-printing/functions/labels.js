@@ -51,6 +51,51 @@ export async function LabelsData(){
         rePulls += labels[k].filter(l=> l.rePulled).length
         labels[k] = await Sort(labels[k])
     }
+
+    // Assign stockStatus to PP items that have inventory but no status yet
+    const hasInvNoStatus = [];
+    for (const k of Object.keys(labels)) {
+        for (const l of labels[k]) {
+            if (l.inventory?.inventory != null && !l.stockStatus) hasInvNoStatus.push(l);
+        }
+    }
+
+    if (hasInvNoStatus.length > 0) {
+        const invIds = [...new Set(hasInvNoStatus.map(l => (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString()).filter(Boolean))];
+        const invDocs = await Inventory.find({ _id: { $in: invIds } }, "quantity allocated orders").lean();
+        const invMap = new Map(invDocs.map(inv => [inv._id.toString(), {
+            available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
+            hasActiveOrder: (inv.orders || []).length > 0,
+            slotsUsed: 0, attachedAdded: 0,
+        }]));
+
+        const statusOps = [];
+        for (const l of hasInvNoStatus) {
+            const invId = (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString();
+            const data = invMap.get(invId);
+            if (!data) continue;
+            let status;
+            if (data.slotsUsed < data.available) { status = "inStock"; data.slotsUsed++; }
+            else if (data.hasActiveOrder) { status = "ordered"; }
+            else { status = "attached"; data.attachedAdded++; }
+            l.stockStatus = status;
+            statusOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: status } } } });
+        }
+
+        const invOps = [...invMap.entries()]
+            .filter(([, d]) => d.slotsUsed > 0 || d.attachedAdded > 0)
+            .map(([id, d]) => {
+                const inc = {};
+                if (d.slotsUsed) inc.allocated = d.slotsUsed;
+                if (d.attachedAdded) inc.attachedCount = d.attachedAdded;
+                return { updateOne: { filter: { _id: id }, update: { $inc: inc } } };
+            });
+
+        await Promise.all([
+            statusOps.length ? Items.bulkWrite(statusOps, { ordered: false }) : Promise.resolve(),
+            invOps.length ? Inventory.bulkWrite(invOps, { ordered: false }) : Promise.resolve(),
+        ]);
+    }
     let giftMessages = await Items.find({
         labelPrinted: false,
         canceled: false,
