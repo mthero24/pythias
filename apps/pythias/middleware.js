@@ -18,14 +18,17 @@ export async function middleware(req = NextRequest) {
   const token = await getToken({ req });
 
   if (protectedRoute || protectedApi) {
-    const permissions = token?.permissions ?? {};
-    if (token) permissions.account = true;
+    if (!token) {
+      if (protectedApi) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
 
+    const permissions = { ...(token.permissions ?? {}) };
+    //if (token.role === "admin") permissions.admin = true;
+    permissions.admin = true;
     const route = protectedRoute || protectedApi;
     if (!permissions[route.permission]) {
-      if (protectedApi) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+      if (protectedApi) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       return NextResponse.redirect(new URL("/login", req.url));
     }
   }

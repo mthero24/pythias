@@ -120,9 +120,8 @@ export async function PUT(req = NextApiRequest) {
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     let data = await req.json();
-    //console.log(data, "data")
-    try{
-        let items = await Items.find({
+    try {
+        const items = await Items.find({
             blank: { $ne: null },
             colorName: { $ne: null },
             sizeName: { $ne: null },
@@ -132,54 +131,61 @@ export async function PUT(req = NextApiRequest) {
             canceled: false,
             type: "DTF",
             paid: true,
-        }).populate("color", "name").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").populate("order", "poNumber items marketplace date").populate("blank", "code envelopes box sizes multiImages")
-        console.log(items.length, "items to print")
-        let chunks = items.length / data.printers.length;
-        chunks = Math.ceil(chunks);
-        console.log(chunks, "chunks")
-        let send = [];
-        for (let i = 0; i < data.printers.length; i++) {
-            console.log(i * chunks, i * chunks + chunks, items.slice(i * chunks, i * chunks + chunks).length, "i * chunks", "i * chunks + chunks")
-            send.push({ printer: data.printers[i], items: items.slice(i * chunks, i * chunks + chunks)});
-        }
-        //console.log(send, "send");
-        for(let s of send){
-            for(let item of s.items){
-                if (item && !item.canceled && !item.dtfScan) {
-                    item.dtfScan = true
-                    await Promise.all(Object.keys(item.design).map(async key => {
-                        if (key != undefined && item.design[key]) {
-                            let envelopes = item.blank.envelopes.filter(
-                                (envelope) => (envelope.size?.toString() == item.size.toString() || envelope.sizeName == item.sizeName) && envelope.placement == key
-                            );
-                            await createImage({
-                                url: item.design[key],
-                                pieceID: `${item.pieceId}-${key}`,
-                                horizontal: false,
-                                size: `${envelopes[0].width}x${envelopes[0].height}`,
-                                offset: envelopes[0].vertoffset,
-                                style: item.blank.code,
-                                styleSize: item.sizeName,
-                                color: item.colorName,
-                                sku: item.sku,
-                                shouldFitDesign: null,
-                                printer: s.printer
-                            })
-                        }
-                    }))
+        }).populate("designRef", "sku name printType").populate("blank", "code envelopes box sizes multiImages");
 
-                    item.status = "DTF Load";
-                    if (!item.steps) item.steps = [];
-                    item.steps.push({
-                        status: "DTF Load",
-                        date: new Date(),
-                    });
-                    await item.save()
-                }
-            }
-        }
-        logActivity({ action: "dtf_sent", entity: "dtf", count: items.length, userName, email });
-        return NextResponse.json({ error: false, msg: `${items.length} sent to printers`, items: send });
+        const chunks = Math.ceil(items.length / data.printers.length);
+        const send = data.printers.map((printer, i) => ({
+            printer,
+            items: items.slice(i * chunks, i * chunks + chunks),
+        }));
+
+        const now = new Date();
+        const bulkOps = [];
+
+        // All printers in parallel, all items within each printer in parallel
+        await Promise.all(send.map(async ({ printer, items: printerItems }) => {
+            await Promise.all(printerItems.map(async (item) => {
+                if (!item || item.canceled || item.dtfScan) return;
+
+                await Promise.all(
+                    Object.keys(item.design).map(async (key) => {
+                        if (!item.design[key]) return;
+                        const envelope = item.blank.envelopes.find(
+                            (e) => (e.size?.toString() === item.size?.toString() || e.sizeName === item.sizeName) && e.placement === key
+                        );
+                        if (!envelope) return;
+                        await createImage({
+                            url: item.design[key],
+                            pieceID: `${item.pieceId}-${key}`,
+                            horizontal: false,
+                            size: `${envelope.width}x${envelope.height}`,
+                            offset: envelope.vertoffset,
+                            style: item.blank.code,
+                            styleSize: item.sizeName,
+                            color: item.colorName,
+                            sku: item.sku,
+                            shouldFitDesign: null,
+                            printer,
+                        });
+                    })
+                );
+
+                bulkOps.push({
+                    updateOne: {
+                        filter: { _id: item._id },
+                        update: {
+                            $set: { dtfScan: true, status: "DTF Load" },
+                            $push: { steps: { status: "DTF Load", date: now } },
+                        },
+                    },
+                });
+            }));
+        }));
+
+        if (bulkOps.length) await Items.bulkWrite(bulkOps, { ordered: false });
+
+        logActivity({ action: "dtf_sent", entity: "dtf", count: bulkOps.length, userName, email });
+        return NextResponse.json({ error: false, msg: `${bulkOps.length} sent to printers`, items: send });
     } catch (error) {
         console.error("Error in DTF PUT:", error);
         return NextResponse.json({ error: true, msg: "Error processing request" });

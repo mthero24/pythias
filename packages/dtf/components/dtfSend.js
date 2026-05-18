@@ -48,7 +48,7 @@ export function DTFSend({ printers }) {
                             sx={{ fontWeight: 700, fontSize: "0.78rem", bgcolor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe", "& .MuiChip-icon": { color: "#1d4ed8" } }}
                         />
                     </Stack>
-                    <Printers printers={printers} printer={printer} setPrinter={setPrinter} setAuto={setAuto} />
+                    <Printers printers={printers} printer={printer} setPrinter={setPrinter} setAuto={setAuto} onAction={fetchStats} />
                 </Box>
 
                 <DTFBody auto={auto} setAuto={setAuto} printer={printer} type="send" onAction={fetchStats} />

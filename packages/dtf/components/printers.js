@@ -1,14 +1,14 @@
 "use client";
 import {
     Grid2, Box, Typography, Card, Dialog, DialogTitle, DialogContent,
-    DialogActions, Button, Stack, IconButton,
+    DialogActions, Button, Stack, IconButton, CircularProgress, Alert,
 } from "@mui/material";
 import PrintIcon  from "@mui/icons-material/Print";
 import CloseIcon  from "@mui/icons-material/Close";
 import { useState } from "react";
 import axios from "axios";
 
-export function Printers({ printers, printer, setPrinter, setAuto }) {
+export function Printers({ printers, printer, setPrinter, setAuto, onAction }) {
     const [pendingModal, setPendingModal] = useState(false);
 
     return (
@@ -50,21 +50,31 @@ export function Printers({ printers, printer, setPrinter, setAuto }) {
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>Print Pending Items</Typography>
                 </Card>
             </Stack>
-            <PrintPendingModal open={pendingModal} setOpen={setPendingModal} printers={printers} />
+            <PrintPendingModal open={pendingModal} setOpen={setPendingModal} printers={printers} onAction={onAction} />
         </Box>
     );
 }
 
-function PrintPendingModal({ open, setOpen, printers }) {
+function PrintPendingModal({ open, setOpen, printers, onAction }) {
     const [usePrinters, setUsePrinters] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
 
     const toggle = (p) => setUsePrinters(prev =>
         prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
     );
 
-    const handlePrint = () => {
-        axios.put("/api/production/dtf", { printers: usePrinters });
-        setOpen(false);
+    const handlePrint = async () => {
+        setLoading(true);
+        setResult(null);
+        try {
+            const res = await axios.put("/api/production/dtf", { printers: usePrinters });
+            setResult(res.data.msg || "Done");
+            onAction?.();
+        } catch {
+            setResult("Error sending to printers");
+        }
+        setLoading(false);
         setUsePrinters([]);
     };
 
@@ -85,9 +95,9 @@ function PrintPendingModal({ open, setOpen, printers }) {
                             <Card
                                 key={p}
                                 variant="outlined"
-                                onClick={() => toggle(p)}
+                                onClick={() => !loading && toggle(p)}
                                 sx={{
-                                    px: 2.5, py: 1.25, cursor: "pointer", borderRadius: 2,
+                                    px: 2.5, py: 1.25, cursor: loading ? "default" : "pointer", borderRadius: 2,
                                     borderColor: active ? "#6366f1" : "divider",
                                     borderWidth: active ? 2 : 1,
                                     bgcolor: active ? "#6366f1" : "background.paper",
@@ -104,11 +114,13 @@ function PrintPendingModal({ open, setOpen, printers }) {
                         );
                     })}
                 </Stack>
+                {result && <Alert severity={result.startsWith("Error") ? "error" : "success"} sx={{ mt: 2 }}>{result}</Alert>}
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button onClick={() => setOpen(false)}>Cancel</Button>
-                <Button variant="contained" onClick={handlePrint} disabled={usePrinters.length === 0}>
-                    Print to {usePrinters.length || ""} Printer{usePrinters.length !== 1 ? "s" : ""}
+                <Button onClick={() => { setOpen(false); setResult(null); }} disabled={loading}>Cancel</Button>
+                <Button variant="contained" onClick={handlePrint} disabled={usePrinters.length === 0 || loading}
+                    startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}>
+                    {loading ? "Sending…" : `Print to ${usePrinters.length || ""} Printer${usePrinters.length !== 1 ? "s" : ""}`}
                 </Button>
             </DialogActions>
         </Dialog>
