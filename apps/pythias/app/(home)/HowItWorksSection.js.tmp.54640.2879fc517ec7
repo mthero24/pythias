@@ -15,7 +15,7 @@ const steps = [
   {
     icon: <AutorenewRounded sx={{ fontSize: 28 }} />,
     title: "Automate Order Fulfillment",
-    description: "Orders automatically flow into production, get printed and packed, then shipped with integrated USPS, FedEx, and UPS label generation.",
+    description: "Orders automatically flow into production, get printed and packed, then shipped with integrated USPS and FedEx label generation.",
   },
   {
     icon: <TrendingUpRounded sx={{ fontSize: 28 }} />,
@@ -28,7 +28,6 @@ export default function HowItWorksSection() {
   return (
     <Box
       component="section"
-      id="how-it-works-section"
       sx={{
         py: { xs: 8, lg: 12 },
         background: "linear-gradient(155deg, #0f172a 0%, #111827 55%, #0c1628 100%)",

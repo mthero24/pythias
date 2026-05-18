@@ -1,155 +1,77 @@
-import { Box, Container, Typography, Grid } from "@mui/material";
-import Image from "next/image";
+import { Box, Container, Typography, Chip } from "@mui/material";
+import {
+  PrintRounded,
+  LocalShippingRounded,
+  InventoryRounded,
+  StorefrontRounded,
+  BarChartRounded,
+  GroupsRounded,
+  LabelRounded,
+  TrackChangesRounded,
+} from "@mui/icons-material";
 
 const features = [
-  {
-    title: "Production Integration",
-    description:
-      "Connect directly with Brother GTX printers and folding machines. Automated job queuing, status tracking, and quality control workflows keep your production running smoothly.",
-    image:
-      "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&h=300&fit=crop&auto=format",
-    imageAlt: "3D printer and manufacturing setup",
-    reverse: false,
-  },
-  {
-    title: "Shipping & Fulfillment",
-    description:
-      "Integrated USPS and FedEx shipping software with automated label generation, tracking, and delivery notifications. Streamline your entire fulfillment process.",
-    image:
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=300&fit=crop&auto=format",
-    imageAlt: "Shipping and logistics warehouse",
-    reverse: true,
-  },
-  {
-    title: "Smart Inventory Management",
-    description:
-      "Real-time stock tracking across all products and materials. Automated reorder points, supplier management, and inventory forecasting to prevent stockouts.",
-    image:
-      "https://images.unsplash.com/photo-1553413077-190dd305871c?w=500&h=300&fit=crop&auto=format",
-    imageAlt: "Warehouse inventory management system",
-    reverse: false,
-  },
-  {
-    title: "Multi-Marketplace Fulfillment",
-    description:
-      "Unified dashboard for managing orders from Amazon, Etsy, Walmart, Target, and more. Automatic order routing and marketplace-specific packaging requirements.",
-    image:
-      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=500&h=300&fit=crop&auto=format",
-    imageAlt: "E-commerce dashboard with multiple marketplace logos",
-    reverse: true,
-  },
+  { icon: <PrintRounded />,         color: "#D3A73D", title: "Production Queue Management",    desc: "DTF, embroidery, sublimation, and screen print queues organized by deadline, type, and priority." },
+  { icon: <LocalShippingRounded />, color: "#6366f1", title: "Shipping & Carrier Integration",  desc: "Auto-generate USPS, FedEx, and UPS labels on order completion. Tracking syncs back to every marketplace." },
+  { icon: <InventoryRounded />,     color: "#10b981", title: "Inventory & Stock Control",       desc: "Real-time blank inventory tracking, automated reorder alerts, and supplier management in one place." },
+  { icon: <StorefrontRounded />,    color: "#ef4444", title: "Multi-Marketplace Orders",        desc: "Amazon, Etsy, Walmart, TikTok, Shopify, and Kohl's — all orders unified in a single production view." },
+  { icon: <BarChartRounded />,      color: "#8b5cf6", title: "Analytics & Reporting",           desc: "Daily output reports, line efficiency metrics, order status dashboards, and custom date-range exports." },
+  { icon: <GroupsRounded />,        color: "#14b8a6", title: "Team Collaboration",              desc: "Built-in messaging, role-based access, activity logs, and shift management keep your floor aligned." },
+  { icon: <LabelRounded />,         color: "#f59e0b", title: "Label & Barcode Printing",        desc: "Print production labels, packing slips, and barcodes for any order directly from your dashboard." },
+  { icon: <TrackChangesRounded />,  color: "#3b82f6", title: "Order Tracking & Visibility",     desc: "Real-time tracking from production start to delivery. Customers and staff always know where orders stand." },
 ];
 
 export default function FeaturesSection() {
   return (
     <Box
       component="section"
-      sx={{
-        padding: { xs: "4rem 0", lg: "6rem 0" },
-        background: "#fafafa",
-      }}
+      id="features-section"
+      sx={{ py: { xs: 8, lg: 12 }, background: "#f8fafc" }}
     >
-      <Container maxWidth="xl">
-        <Box sx={{ textAlign: "center", marginBottom: { xs: 4, lg: 6 } }}>
-          <Typography
-            variant="h2"
-            component="h2"
-            sx={{
-              fontSize: { xs: "2rem", md: "2.5rem", lg: "3rem" },
-              fontWeight: 700,
-              marginBottom: 2,
-              color: "#1a1a1a",
-            }}
-          >
-            Everything You Need to Run Your Print-on-Demand Business
+      <Container maxWidth="lg">
+        <Box sx={{ textAlign: "center", mb: { xs: 6, lg: 8 } }}>
+          <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#D3A73D", mb: 1.5 }}>
+            Features
           </Typography>
           <Typography
-            variant="h6"
-            sx={{
-              color: "#666666",
-              maxWidth: "700px",
-              margin: "0 auto",
-              lineHeight: 1.6,
-            }}
+            variant="h2"
+            sx={{ fontSize: { xs: "2rem", md: "2.5rem", lg: "2.875rem" }, fontWeight: 800, color: "#111827", letterSpacing: "-0.02em", mb: 2 }}
           >
-            Powerful features designed to automate every aspect of your workflow
+            Everything you need to run your print shop.
+          </Typography>
+          <Typography sx={{ color: "#6b7280", maxWidth: 560, mx: "auto", lineHeight: 1.7, fontSize: "1.0625rem" }}>
+            Powerful features designed to automate every aspect of your workflow — from first order to final delivery.
           </Typography>
         </Box>
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: { xs: 6, lg: 8 },
-          }}
-        >
-          {features.map((feature, index) => (
-            <Grid
-              container
-              spacing={{ xs: 4, md: 6 }}
-              alignItems="center"
-              key={index}
-              direction={{
-                xs: "column",
-                md: feature.reverse ? "row-reverse" : "row",
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4,1fr)" }, gap: 2.5 }}>
+          {features.map((f) => (
+            <Box
+              key={f.title}
+              sx={{
+                bgcolor: "#fff",
+                border: "1px solid #e5e7eb",
+                borderRadius: 4,
+                p: 3,
+                transition: "box-shadow 0.2s, transform 0.2s",
+                "&:hover": { boxShadow: "0 8px 28px rgba(0,0,0,0.09)", transform: "translateY(-3px)" },
               }}
             >
-              <Grid item xs={12} md={6}>
-                <Box
-                  sx={{
-                    textAlign: { xs: "center", md: "left" },
-                  }}
-                >
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      fontWeight: 600,
-                      marginBottom: 2,
-                      color: "#1a1a1a",
-                      fontSize: { xs: "1.75rem", md: "2rem" },
-                    }}
-                  >
-                    {feature.title}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: "#666666",
-                      lineHeight: 1.7,
-                      fontSize: "1.125rem",
-                    }}
-                  >
-                    {feature.description}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box
-                  sx={{
-                    position: "relative",
-                    borderRadius: 3,
-                    overflow: "hidden",
-                    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-                    transition: "transform 0.3s ease",
-                    "&:hover": {
-                      transform: "translateY(-5px)",
-                    },
-                  }}
-                >
-                  <Image
-                    src={feature.image}
-                    alt={feature.imageAlt}
-                    width={500}
-                    height={300}
-                    style={{
-                      width: "100%",
-                      height: "auto",
-                      display: "block",
-                    }}
-                  />
-                </Box>
-              </Grid>
-            </Grid>
+              <Box sx={{
+                width: 48, height: 48, borderRadius: 2.5, mb: 2,
+                bgcolor: `${f.color}18`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: f.color, fontSize: "1.5rem",
+              }}>
+                {f.icon}
+              </Box>
+              <Typography sx={{ fontWeight: 700, fontSize: "0.9375rem", color: "#111827", mb: 1 }}>
+                {f.title}
+              </Typography>
+              <Typography sx={{ fontSize: "0.855rem", color: "#6b7280", lineHeight: 1.62 }}>
+                {f.desc}
+              </Typography>
+            </Box>
           ))}
         </Box>
       </Container>

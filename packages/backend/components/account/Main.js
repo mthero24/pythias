@@ -82,6 +82,27 @@ export function Main({ user }) {
         setUploading(false);
     };
 
+    const [pwForm, setPwForm]     = useState({ current: "", next: "", confirm: "" });
+    const [pwSaving, setPwSaving] = useState(false);
+
+    const setPw = (key) => (e) => setPwForm(p => ({ ...p, [key]: e.target.value }));
+
+    const changePassword = async () => {
+        if (!pwForm.current || !pwForm.next) return setSnack({ severity: "error", msg: "All password fields are required." });
+        if (pwForm.next !== pwForm.confirm) return setSnack({ severity: "error", msg: "New passwords do not match." });
+        if (pwForm.next.length < 6) return setSnack({ severity: "error", msg: "New password must be at least 6 characters." });
+        setPwSaving(true);
+        try {
+            const res = await axios.put("/api/account", { currentPassword: pwForm.current, newPassword: pwForm.next });
+            if (res.data.error) throw new Error(res.data.msg ?? "Failed");
+            setSnack({ severity: "success", msg: "Password updated!" });
+            setPwForm({ current: "", next: "", confirm: "" });
+        } catch (err) {
+            setSnack({ severity: "error", msg: err.response?.data?.msg ?? "Incorrect current password." });
+        }
+        setPwSaving(false);
+    };
+
     const roleColor = { admin: "error", manager: "warning", production: "primary" };
 
     return (
@@ -240,6 +261,51 @@ export function Main({ user }) {
                                         </Button>
                                     </Stack>
                                 )}
+                            </Stack>
+                        </CardContent>
+                    </Card>
+                    {/* Change password */}
+                    <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                        <CardContent sx={{ p: 2.5 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>Change Password</Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+                                Enter your current password to set a new one.
+                            </Typography>
+                            <Divider sx={{ mb: 2.5 }} />
+                            <Stack spacing={2}>
+                                <TextField
+                                    label="Current password"
+                                    type="password"
+                                    fullWidth size="small"
+                                    value={pwForm.current}
+                                    onChange={setPw("current")}
+                                    autoComplete="current-password"
+                                />
+                                <TextField
+                                    label="New password"
+                                    type="password"
+                                    fullWidth size="small"
+                                    value={pwForm.next}
+                                    onChange={setPw("next")}
+                                    autoComplete="new-password"
+                                />
+                                <TextField
+                                    label="Confirm new password"
+                                    type="password"
+                                    fullWidth size="small"
+                                    value={pwForm.confirm}
+                                    onChange={setPw("confirm")}
+                                    autoComplete="new-password"
+                                />
+                                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                                    <Button
+                                        variant="contained" size="small"
+                                        onClick={changePassword}
+                                        disabled={pwSaving}
+                                    >
+                                        {pwSaving ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Update password"}
+                                    </Button>
+                                </Box>
                             </Stack>
                         </CardContent>
                     </Card>

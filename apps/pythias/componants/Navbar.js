@@ -1,161 +1,115 @@
 "use client";
 import { useState } from "react";
 import {
-  AppBar,
-  Toolbar,
-  Box,
-  Button,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Container,
+  AppBar, Toolbar, Box, Button, IconButton,
+  Drawer, List, ListItem, ListItemButton, ListItemText, Container,
 } from "@mui/material";
 import { Menu as MenuIcon, Close as CloseIcon } from "@mui/icons-material";
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "../public/logo_vertical.png";
 
-const links = [{label: "Login", href: "/login"}];
+const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+const NAV_LINKS = [
+  { label: "Services",    href: "/services" },
+  { label: "Features",    action: () => scrollTo("features-section") },
+  { label: "How It Works", action: () => scrollTo("how-it-works-section") },
+  { label: "FAQ",         action: () => scrollTo("faq-section") },
+];
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
   return (
     <AppBar
       position="sticky"
-      sx={{
-        backgroundColor: "#1a1a1a",
-        borderRadius: 0,
-        boxShadow:
-          "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
-      }}
+      elevation={0}
+      sx={{ bgcolor: "#0f172a", borderBottom: "1px solid rgba(255,255,255,0.07)", borderRadius: 0 }}
     >
       <Container maxWidth="xl">
-        <Toolbar
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            minHeight: "80px",
-            padding: { xs: 0, md: 0 },
-          }}
-        >
+        <Toolbar sx={{ justifyContent: "space-between", alignItems: "center", minHeight: 72, px: { xs: 0 } }}>
+
           {/* Logo */}
           <Box sx={{ flexShrink: 0 }}>
-            <Link href="/">
-              <Image
-                src={Logo}
-                alt="Pythias Technologies"
-                width={148}
-                height={70}
-                priority
-              />
+            <Link href="/" style={{ display: "inline-flex" }}>
+              <Image src={Logo} alt="Pythias Technologies" width={130} height={60} priority style={{ height: "auto" }} />
             </Link>
           </Box>
 
-          {/* Desktop Navigation */}
-          <Box
-            sx={{
-              display: { xs: "none", md: "flex" },
-              gap: 1,
-              alignItems: "center",
-            }}
-          >
-            {links.map((link) => (
+          {/* Desktop nav */}
+          <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 0.5 }}>
+            {NAV_LINKS.map((link) => (
               <Button
-                key={link.href}
-                component={Link}
-                href={link.href}
-                sx={{
-                  color: "white",
-                  textTransform: "none",
-                  fontWeight: 500,
-                  padding: "8px 16px",
-                  borderRadius: 2,
-                  whiteSpace: "nowrap",
-                  "&:hover": {
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  },
-                }}
+                key={link.label}
+                {...(link.href ? { component: Link, href: link.href } : { onClick: link.action })}
+                sx={{ color: "rgba(255,255,255,0.65)", fontWeight: 500, px: 2, borderRadius: 2, "&:hover": { color: "#fff", bgcolor: "rgba(255,255,255,0.06)" } }}
               >
                 {link.label}
               </Button>
             ))}
+            <Button
+              component={Link}
+              href="/login"
+              sx={{ color: "rgba(255,255,255,0.65)", fontWeight: 500, px: 2, borderRadius: 2, ml: 0.5, "&:hover": { color: "#fff", bgcolor: "rgba(255,255,255,0.06)" } }}
+            >
+              Login
+            </Button>
+            <Button
+              onClick={() => scrollTo("calendar-booking-section")}
+              variant="contained"
+              sx={{ ml: 1.5, px: 2.5, py: 1, bgcolor: "#D3A73D", color: "#111", fontWeight: 700, "&:hover": { bgcolor: "#b8860b", boxShadow: "0 4px 16px rgba(211,167,61,0.4)" }, boxShadow: "none" }}
+            >
+              Book a Demo
+            </Button>
           </Box>
 
-          {/* Mobile Menu Button */}
-          <IconButton
-            sx={{
-              display: { xs: "flex", md: "none" },
-              color: "white",
-            }}
-            onClick={handleDrawerToggle}
-          >
+          {/* Mobile menu icon */}
+          <IconButton sx={{ display: { xs: "flex", md: "none" }, color: "#fff" }} onClick={() => setMobileOpen(true)}>
             <MenuIcon />
           </IconButton>
         </Toolbar>
       </Container>
 
-      {/* Mobile Drawer */}
+      {/* Mobile drawer */}
       <Drawer
         anchor="right"
         open={mobileOpen}
-        onClose={handleDrawerToggle}
-        sx={{
-          display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": {
-            width: 280,
-            backgroundColor: "#1a1a1a",
-            color: "white",
-          },
-        }}
+        onClose={() => setMobileOpen(false)}
+        PaperProps={{ sx: { width: 280, bgcolor: "#0f172a", color: "#fff" } }}
       >
-        <Box sx={{ padding: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 2,
-            }}
-          >
-            <Image
-              src={Logo}
-              alt="Pythias Technologies"
-              width={100}
-              height={50}
-              style={{ filter: "invert(1)" }}
-            />
-            <IconButton onClick={handleDrawerToggle} sx={{ color: "white" }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
+        <Box sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Image src={Logo} alt="Pythias Technologies" width={100} height={46} />
+          <IconButton onClick={() => setMobileOpen(false)} sx={{ color: "#fff" }}>
+            <CloseIcon />
+          </IconButton>
         </Box>
-
         <List>
-          {links.map((link) => (
-            <ListItem key={link.href} disablePadding>
+          {NAV_LINKS.map((link) => (
+            <ListItem key={link.label} disablePadding>
               <ListItemButton
-                component={Link}
-                href={link.href}
-                onClick={handleDrawerToggle}
-                sx={{
-                  color: "white",
-                  "&:hover": {
-                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  },
-                }}
+                {...(link.href ? { component: Link, href: link.href } : { onClick: () => { link.action(); setMobileOpen(false); } })}
+                sx={{ color: "rgba(255,255,255,0.75)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)" } }}
               >
                 <ListItemText primary={link.label} />
               </ListItemButton>
             </ListItem>
           ))}
+          <ListItem disablePadding>
+            <ListItemButton component={Link} href="/login" onClick={() => setMobileOpen(false)} sx={{ color: "rgba(255,255,255,0.75)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)" } }}>
+              <ListItemText primary="Login" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem sx={{ pt: 2 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={() => { scrollTo("calendar-booking-section"); setMobileOpen(false); }}
+              sx={{ bgcolor: "#D3A73D", color: "#111", fontWeight: 700, "&:hover": { bgcolor: "#b8860b" } }}
+            >
+              Book a Demo
+            </Button>
+          </ListItem>
         </List>
       </Drawer>
     </AppBar>

@@ -49,6 +49,7 @@ const schema = new mongoose.Schema({
   shopifyShopName: { type: String },
   etsyAccessToken: { type: String },
   etsyRefreshToken: { type: String },
+  avatar: { type: String },
   type: { type: String, default: "customer" },
   isSalesMan: { type: Boolean, default: false },
   prices: {},

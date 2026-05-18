@@ -40,6 +40,7 @@ export default function FAQSection() {
   return (
     <Box
       component="section"
+      id="faq-section"
       sx={{
         padding: { xs: "4rem 0", lg: "6rem 0" },
         background: "white",

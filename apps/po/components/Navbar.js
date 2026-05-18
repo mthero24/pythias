@@ -165,7 +165,15 @@ export default function ButtonAppBar() {
                 </Box>
 
                 {/* Nav */}
-                <Box sx={{ flex: 1, overflowY: "auto", py: 1 }}>
+                <Box sx={{
+                    flex: 1, overflowY: "auto", py: 1,
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "rgba(255,255,255,0.12) transparent",
+                    "&::-webkit-scrollbar": { width: 4 },
+                    "&::-webkit-scrollbar-track": { background: "transparent" },
+                    "&::-webkit-scrollbar-thumb": { background: "rgba(255,255,255,0.12)", borderRadius: 4 },
+                    "&::-webkit-scrollbar-thumb:hover": { background: "rgba(255,255,255,0.22)" },
+                }}>
                     {NAV_GROUPS.map((group, gi) => (
                         <Box key={group.label}>
                             {gi > 0 && <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", my: 0.5, mx: 2 }} />}

@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "nextjs-web",
+      name: "nextjs-premier",
       cwd: "apps/premier-printing", // Point to the web app's directory
       script: "node_modules/next/dist/bin/next", // Use Next.js binary
       args: "start -p 3000", // Start on port 3000
@@ -24,7 +24,7 @@ module.exports = {
       cron_restart: "0 9 * * *", //9am UTC is 4AM EST
     },
     {
-      name: "nextjs-web",
+      name: "nextjs-pythias",
       cwd: "apps/pythias", // Point to the web app's directory
       script: "node_modules/next/dist/bin/next", // Use Next.js binary
       args: "start -p 3002", // Start on port 3000
@@ -47,7 +47,7 @@ module.exports = {
       cron_restart: "0 9 * * *", //9am UTC is 4AM EST
     },
     {
-      name: "nextjs-web",
+      name: "nextjs-printthreads",
       cwd: "apps/printthreads", // Point to the web app's directory
       script: "node_modules/next/dist/bin/next", // Use Next.js binary
       args: "start -p 3003", // Start on port 3000
@@ -70,7 +70,7 @@ module.exports = {
       cron_restart: "0 9 * * *", //9am UTC is 4AM EST
     },
     {
-      name: "nextjs-web",
+      name: "nextjs-po",
       cwd: "apps/po", // Point to the web app's directory
       script: "node_modules/next/dist/bin/next", // Use Next.js binary
       args: "start -p 3001", // Start on port 3000
