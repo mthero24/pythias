@@ -186,17 +186,21 @@ export async function handleFaireOrdersGET(req) {
     const connection = await ApiKeyIntegrations.findById(connectionId).lean();
     if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
 
-    const page          = Number(searchParams.get("page")  ?? 1);
-    const limit         = Number(searchParams.get("limit") ?? 50);
-    const cursor        = searchParams.get("cursor");
-    const updatedAtMin  = searchParams.get("updatedAtMin");
+    const page           = Number(searchParams.get("page")  ?? 1);
+    const limit          = Number(searchParams.get("limit") ?? 50);
+    const cursor         = searchParams.get("cursor");
+    const updatedAtMin   = searchParams.get("updatedAtMin");
+    const createdAtMin   = searchParams.get("createdAtMin");
     const excludedStates = searchParams.get("excludedStates");
+    const sortBy         = searchParams.get("sortBy");
 
     const result = await getOrdersFaire({
         apiKey: connection.apiKey, page, limit,
-        ...(cursor ? { cursor } : {}),
-        ...(updatedAtMin ? { updatedAtMin } : {}),
+        ...(cursor        ? { cursor }        : {}),
+        ...(updatedAtMin  ? { updatedAtMin }  : {}),
+        ...(createdAtMin  ? { createdAtMin }  : {}),
         ...(excludedStates ? { excludedStates } : {}),
+        ...(sortBy        ? { sortBy }        : {}),
     });
     if (result.error) return NextResponse.json({ error: result.error }, { status: 502 });
     return NextResponse.json({ orders: result.orders ?? [], page: result.page, cursor: result.cursor });

@@ -68,7 +68,7 @@ const NAV_SECTIONS = [
       { label: "Edit Data",       href: "/admin/edit-data", icon: <EditIcon fontSize="small" />,             showCSV: false },
       { label: "Converters",      href: "/admin/converters",icon: <SyncAltIcon fontSize="small" />,         showCSV: false },
       { label: "Marketplace Data",href: "/marketplaces",         icon: <StorefrontIcon fontSize="small" />,              showCSV: false },
-      { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false },
+      { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false, permission: "integrations" },
       { label: "Pricing",          href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
     ],
@@ -116,6 +116,9 @@ export default function ButtonAppBar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [avatar, setAvatar]         = useState(null);
   const { data: session }           = useSession();
+  const pathname                    = usePathname();
+
+  if (pathname === "/login") return null;
 
   useEffect(() => {
     if (!session?.user) return;
@@ -204,6 +207,7 @@ const NavDrawer = ({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) 
   const pathname = usePathname();
   const { data: session } = useSession();
   const hasCharts = !!session?.user?.permissions?.charts;
+  const permissions = session?.user?.permissions ?? {};
 
   const isActive = (item) =>
     item.exact ? pathname === item.href : pathname?.startsWith(item.href);
@@ -249,7 +253,7 @@ const NavDrawer = ({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) 
               {section.label}
             </Typography>
             <List disablePadding>
-              {section.items.filter(item => !item.charts || hasCharts).map((item) => {
+              {section.items.filter(item => (!item.charts || hasCharts) && (!item.permission || permissions[item.permission])).map((item) => {
                 const active = isActive(item);
                 return (
                   <Link key={item.href} href={item.href} onClick={() => handleNav(item.showCSV)} style={{ textDecoration: "none" }}>

@@ -15,5 +15,6 @@ export default async function ShippingLabels() {
         .limit(400)
         .lean();
 
-    return <Refund ords={JSON.parse(JSON.stringify(orders))} />;
+    const safe = orders.filter(o => o.shippingInfo?.labels?.length > 0);
+    return <Refund ords={JSON.parse(JSON.stringify(safe))} />;
 }

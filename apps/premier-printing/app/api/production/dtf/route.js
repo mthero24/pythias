@@ -6,6 +6,8 @@ import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function GET(req) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let config = JSON.parse(process.env.dtf);
     console.log(config)
     setConfig({
@@ -31,6 +33,7 @@ export async function GET(req) {
                 date: new Date(),
             });
             await item.save();
+            logActivity({ action: "dtf_found", entity: "dtf", entityId: item._id, entityName: item.pieceId || "", userName, email });
 
             console.log(item, "item");
             // console.log(style)

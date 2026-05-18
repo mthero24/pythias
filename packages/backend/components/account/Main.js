@@ -4,7 +4,6 @@ import {
     TextField, Stack, Chip, Divider, CircularProgress, Snackbar, Alert,
     Tooltip, IconButton,
 } from "@mui/material";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { useState, useRef } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
@@ -16,15 +15,6 @@ const PRESET_COLORS = [
     "#ec4899", "#ef4444", "#14b8a6", "#f59e0b",
     "#06b6d4", "#8b5cf6", "#84cc16", "#64748b",
 ];
-
-const s3 = new S3Client({
-    credentials: {
-        accessKeyId: "XWHXU4FP7MT2V842ITN9",
-        secretAccessKey: "kf78BeufoEwwhSdecZCdcpZVJsIng6v5WFJM1Nm3",
-    },
-    region: "us-west-1",
-    endpoint: "https://s3.us-west-1.wasabisys.com/",
-});
 
 function getAvatarProps(avatar, initials) {
     if (!avatar) return { sx: { bgcolor: "#6366f1" }, children: initials };
@@ -78,18 +68,11 @@ export function Main({ user }) {
         if (!file) return;
         setUploading(true);
         try {
-            const buffer = await file.arrayBuffer();
-            const ext = file.name.split(".").pop();
-            const key = `avatars/${user.userName}-${Date.now()}.${ext}`;
-            await s3.send(new PutObjectCommand({
-                Bucket: "images1.pythiastechnologies.com",
-                Key: key,
-                Body: Buffer.from(buffer),
-                ACL: "public-read",
-                ContentType: file.type,
-                ContentDisposition: "inline",
-            }));
-            const url = `https://images1.pythiastechnologies.com/${key}`;
+            const form = new FormData();
+            form.append("file", file);
+            const res = await axios.post("/api/messages/upload", form);
+            if (res.data.error) throw new Error(res.data.msg);
+            const url = res.data.url;
             setAvatar(url);
             await axios.put("/api/account", { avatar: url });
             setSnack({ severity: "success", msg: "Photo uploaded!" });
@@ -146,12 +129,12 @@ export function Main({ user }) {
                             <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={uploadPhoto} />
                         </Box>
 
-                        <Box sx={{ pb: 0.5, textAlign: { xs: "center", sm: "left" } }}>
-                            <Typography variant="h5" sx={{ color: { xs: "text.primary", sm: "#fff" }, fontWeight: 800, lineHeight: 1.2 }}>
+                        <Box sx={{ pt: 1.5, pb: 0.5, textAlign: { xs: "center", sm: "left" } }}>
+                            <Typography variant="h5" sx={{ color: "text.primary", fontWeight: 800, lineHeight: 1.2 }}>
                                 {firstName || lastName ? `${firstName} ${lastName}`.trim() : user.userName}
                             </Typography>
                             <Stack direction="row" spacing={1} justifyContent={{ xs: "center", sm: "flex-start" }} sx={{ mt: 0.75 }}>
-                                <Chip label={`@${user.userName}`} size="small" sx={{ bgcolor: "rgba(255,255,255,0.12)", color: { xs: "text.secondary", sm: "rgba(255,255,255,0.7)" }, border: "none", fontSize: "0.72rem" }} />
+                                <Chip label={`@${user.userName}`} size="small" sx={{ bgcolor: "#f3f4f6", color: "text.secondary", border: "none", fontSize: "0.72rem" }} />
                                 <Chip label={user.role ?? "production"} size="small" color={roleColor[user.role] ?? "default"} />
                             </Stack>
                         </Box>

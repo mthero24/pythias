@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -7,6 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import {
+  Avatar,
   Divider,
   Drawer,
   List,
@@ -41,6 +43,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import FolderIcon from "@mui/icons-material/Folder";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -79,7 +84,9 @@ const NAV_SECTIONS = [
       { label: "Find DTF",     href: "/production/dtf-find",      icon: <SearchIcon fontSize="small" /> },
       { label: "Embroidery",   href: "/production/embroidery",    icon: <AutoFixHighIcon fontSize="small" /> },
       { label: "Folder",       href: "/production/roq-folder",    icon: <FolderIcon fontSize="small" /> },
-      { label: "Ship Orders",  href: "/production/shipping",      icon: <LocalShippingIcon fontSize="small" /> },
+      { label: "Ship Orders",      href: "/production/shipping",       icon: <LocalShippingIcon fontSize="small" /> },
+      { label: "Track Shipping",   href: "/production/shipping-labels", icon: <TrackChangesIcon fontSize="small" /> },
+      { label: "Track Production", href: "/production/track-labels",    icon: <TimelineIcon fontSize="small" /> },
     ],
   },
   {
@@ -92,7 +99,22 @@ const NAV_SECTIONS = [
 ];
 
 export default function ButtonAppBar() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]   = useState(false);
+  const [avatar, setAvatar] = useState(null);
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!session?.user) return;
+    axios.get("/api/account").then(res => {
+      if (!res.data.error && res.data.user?.avatar) setAvatar(res.data.user.avatar);
+    }).catch(() => {});
+  }, [session?.user?.userName]);
+
+  const initials = session?.user
+    ? ((session.user.firstName?.[0] ?? "") + (session.user.lastName?.[0] ?? "")).toUpperCase() || session.user.userName?.[0]?.toUpperCase() || "?"
+    : "?";
+  const avatarSx  = avatar?.startsWith("#") ? { bgcolor: avatar } : {};
+  const avatarSrc = avatar?.startsWith("http") ? avatar : undefined;
 
   return (
     <>
@@ -118,33 +140,37 @@ export default function ButtonAppBar() {
 
           <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
             <Link href="/admin" style={{ display: "flex", alignItems: "center" }}>
-              <Image
-                alt="logo"
-                src={logo}
-                width={110}
-                height={40}
-                style={{ objectFit: "contain" }}
-              />
+              <Image alt="logo" src={logo} width={110} height={40} style={{ objectFit: "contain" }} />
             </Link>
           </Box>
 
+          <Tooltip title="My account">
+            <IconButton component={Link} href="/account" size="small" sx={{ mr: 1, p: 0.25 }}>
+              <Avatar src={avatarSrc} sx={{ width: 30, height: 30, fontSize: "0.72rem", fontWeight: 700, bgcolor: avatarSx.bgcolor ?? "#6366f1", ...avatarSx }}>
+                {!avatarSrc && initials}
+              </Avatar>
+            </IconButton>
+          </Tooltip>
+
           <Tooltip title="Sign out">
             <IconButton
+              size="small"
               onClick={() => signOut({ callbackUrl: "/" })}
-              sx={{ color: "#64748b", "&:hover": { color: "#0d1117" } }}
+              sx={{ color: "text.secondary", border: "1px solid", borderColor: "rgba(0,0,0,0.12)", borderRadius: 1.5, px: 1.25, py: 0.6, gap: 0.75, "&:hover": { backgroundColor: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.2)" } }}
             >
-              <LogoutIcon fontSize="small" />
+              <LogoutIcon sx={{ fontSize: 16 }} />
+              <Typography variant="caption" sx={{ fontWeight: 600, fontSize: "0.72rem" }}>Sign out</Typography>
             </IconButton>
           </Tooltip>
         </Toolbar>
       </AppBar>
 
-      <NavDrawer open={open} onClose={() => setOpen(false)} />
+      <NavDrawer open={open} onClose={() => setOpen(false)} avatarSrc={avatarSrc} avatarSx={avatarSx} initials={initials} />
     </>
   );
 }
 
-function NavDrawer({ open, onClose }) {
+function NavDrawer({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) {
   const { setShow } = useCSV();
   const { data: session } = useSession();
   const hasCharts = !!session?.user?.permissions?.charts;
@@ -186,7 +212,7 @@ function NavDrawer({ open, onClose }) {
       </Box>
 
       {/* Nav sections */}
-      <Box sx={{ flex: 1, overflowY: "auto", py: 1 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", py: 1, "&::-webkit-scrollbar": { width: 4 }, "&::-webkit-scrollbar-track": { background: "transparent" }, "&::-webkit-scrollbar-thumb": { background: "rgba(255,255,255,0.15)", borderRadius: 2 } }}>
         {NAV_SECTIONS.map((section, si) => (
           <Box key={section.label} sx={{ mb: 0.5 }}>
             {si > 0 && (
@@ -243,23 +269,33 @@ function NavDrawer({ open, onClose }) {
         ))}
       </Box>
 
-      {/* Footer sign-out */}
-      <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.08)", p: 1.5, flexShrink: 0 }}>
+      {/* Footer */}
+      <Box sx={{ px: 1.5, py: 1.5, borderTop: "1px solid rgba(255,255,255,0.08)", flexShrink: 0 }}>
+        <Link href="/account" onClick={() => handleNav(false)} style={{ textDecoration: "none" }}>
+          <ListItemButton sx={{ borderRadius: "6px", py: 0.85, px: 1.5, mb: 0.5, "&:hover": { backgroundColor: SIDEBAR_HOVER } }}>
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <Avatar src={avatarSrc} sx={{ width: 26, height: 26, fontSize: "0.65rem", fontWeight: 700, bgcolor: avatarSx.bgcolor ?? "#6366f1", ...avatarSx }}>
+                {!avatarSrc && initials}
+              </Avatar>
+            </ListItemIcon>
+            <ListItemText
+              primary={session?.user ? (session.user.firstName || session.user.userName) : "Account"}
+              secondary={session?.user?.userName ? `@${session.user.userName}` : undefined}
+              slotProps={{
+                primary: { sx: { fontSize: "0.82rem", fontWeight: 500, color: SIDEBAR_TEXT } },
+                secondary: { sx: { fontSize: "0.7rem", color: SIDEBAR_MUTED } },
+              }}
+            />
+          </ListItemButton>
+        </Link>
         <ListItemButton
           onClick={() => signOut({ callbackUrl: "/" })}
-          sx={{
-            borderRadius: "6px",
-            color: SIDEBAR_MUTED,
-            "&:hover": { backgroundColor: SIDEBAR_HOVER, color: SIDEBAR_TEXT },
-          }}
+          sx={{ borderRadius: "6px", py: 0.85, px: 1.5, "&:hover": { backgroundColor: "rgba(239,68,68,0.12)" } }}
         >
-          <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
+          <ListItemIcon sx={{ minWidth: 32, color: "rgba(239,68,68,0.75)" }}>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText
-            primary="Sign out"
-            primaryTypographyProps={{ fontSize: "0.875rem" }}
-          />
+          <ListItemText primary="Sign out" slotProps={{ primary: { sx: { fontSize: "0.82rem", fontWeight: 500, color: "rgba(239,68,68,0.85)" } } }} />
         </ListItemButton>
       </Box>
     </Drawer>

@@ -22,7 +22,7 @@ const IMAGE_MAP = {
 
 const getImage = (imageKey) => IMAGE_MAP[imageKey] ?? multiple;
 
-export function Actions({ bin, setBins, item, order, action, setAction, shippingPrices, setShippingPrices, timer, weight, setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source }) {
+export function Actions({ bin, setBins, item, order, action, setAction, shippingPrices, setShippingPrices, timer, weight, setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source, onAction }) {
     const [shippingSelected, setShippingSelected] = useState({ name: "GroundAdvantage" });
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false);
     const [processing, setProcessing]             = useState(false);
@@ -64,6 +64,7 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
             setBins(res.data.bins);
             setShippingPrices();
             setProcessing(false);
+            onAction?.();
         }
     };
 

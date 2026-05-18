@@ -1,10 +1,10 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Card, TextField, Box, Checkbox, FormControlLabel, Typography, InputAdornment, CircularProgress } from "@mui/material";
+import { Card, TextField, Box, Switch, FormControlLabel, Typography, InputAdornment, CircularProgress } from "@mui/material";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import axios from "axios";
 
-export function Scan({ auto, setAuto, setItem }) {
+export function Scan({ auto, setAuto, setItem, onAction }) {
     const textFieldRef = useRef(null);
     const [scan, setScan]             = useState("");
     const [shipSingles, setShipSingles] = useState(true);
@@ -43,6 +43,7 @@ export function Scan({ auto, setAuto, setItem }) {
                 setItem(res.data.item);
                 setScan("");
                 setError(null);
+                onAction?.();
             }
         } else {
             setScan("");
@@ -75,14 +76,17 @@ export function Scan({ auto, setAuto, setItem }) {
                     />
                     <FormControlLabel
                         control={
-                            <Checkbox
+                            <Switch
                                 checked={shipSingles}
                                 onChange={(e) => { setShipSingles(e.target.checked); setAuto(true); }}
-                                sx={{ "& .MuiSvgIcon-root": { fontSize: 24 } }}
+                                sx={{
+                                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#6366f1" },
+                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#6366f1" },
+                                }}
                             />
                         }
-                        label="Ship Singles"
-                        sx={{ whiteSpace: "nowrap", ml: 0 }}
+                        label={<Typography sx={{ fontWeight: 600, fontSize: "0.875rem", whiteSpace: "nowrap" }}>Ship Singles</Typography>}
+                        sx={{ ml: 0 }}
                     />
                 </Box>
             </Card>

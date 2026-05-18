@@ -3,6 +3,7 @@ import "./globals.css";
 import NavBar from "@/components/Navbar";
 import { NavigationProgress } from "@/components/NavigationProgress";
 import { Providers } from "@/components/Providers";
+import { FloatingChat } from "@pythias/backend";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
           <NavigationProgress />
           <NavBar />
           {children}
+          <FloatingChat requiredRoles={["admin", "production", "manager"]} />
         </Providers>
       </body>
     </html>

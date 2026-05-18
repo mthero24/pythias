@@ -76,7 +76,7 @@ export function Refund({ ords, pa }) {
     };
 
     const rows = orders.flatMap(o =>
-        o.shippingInfo.labels
+        (o.shippingInfo?.labels ?? [])
             .filter(l => !l.delivered)
             .map(l => ({ order: o, label: l }))
     );
@@ -178,7 +178,7 @@ export function Refund({ ords, pa }) {
                             />
 
                             <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem", color: "#374151" }}>
-                                {l.trackingNumber}
+                                {l.trackingNumber != null ? String(l.trackingNumber) : ""}
                             </Typography>
 
                             <Tooltip title={(l.trackingInfo || []).filter(e => typeof e === "string").join(" → ")} placement="top">

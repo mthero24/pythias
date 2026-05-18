@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
-    AppBar, Box, Toolbar, IconButton, Drawer,
+    AppBar, Avatar, Box, Toolbar, IconButton, Drawer,
     List, ListItemButton, ListItemIcon, ListItemText,
-    Divider, Typography, Tooltip, Stack,
+    Divider, Typography, Tooltip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -23,6 +24,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -62,18 +64,33 @@ const NAV_GROUPS = [
     {
         label: "Other",
         items: [
-            { label: "Edit Data",  href: "/edit-data",  icon: <EditIcon fontSize="small" /> },
-            { label: "Clockwise",  href: "/clockwise",  icon: <AccessTimeIcon fontSize="small" /> },
-            { label: "Activity",   href: "/activity",   icon: <BarChartIcon fontSize="small" />, adminOnly: true },
+            { label: "Edit Data",       href: "/edit-data",           icon: <EditIcon fontSize="small" /> },
+            { label: "Clockwise",       href: "/clockwise",           icon: <AccessTimeIcon fontSize="small" /> },
+            { label: "Line Settings",   href: "/production-settings", icon: <SettingsIcon fontSize="small" />, adminOnly: true },
+            { label: "Activity",        href: "/activity",            icon: <BarChartIcon fontSize="small" />, adminOnly: true },
         ],
     },
 ];
 
 export default function ButtonAppBar() {
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const pathname = usePathname();
-    const { data: session } = useSession();
+    const [avatar, setAvatar]         = useState(null);
+    const pathname                    = usePathname();
+    const { data: session }           = useSession();
     const isAdmin = session?.user?.role === "admin";
+
+    useEffect(() => {
+        if (!session?.user) return;
+        axios.get("/api/account").then(res => {
+            if (!res.data.error && res.data.user?.avatar) setAvatar(res.data.user.avatar);
+        }).catch(() => {});
+    }, [session?.user?.userName]);
+
+    const initials  = session?.user
+        ? ((session.user.firstName?.[0] ?? "") + (session.user.lastName?.[0] ?? "")).toUpperCase() || session.user.userName?.[0]?.toUpperCase() || "?"
+        : "?";
+    const avatarSx  = avatar?.startsWith("#") ? { bgcolor: avatar } : {};
+    const avatarSrc = avatar?.startsWith("http") ? avatar : undefined;
 
     return (
         <>
@@ -101,6 +118,14 @@ export default function ButtonAppBar() {
                             />
                         </Link>
                     </Box>
+
+                    <Tooltip title="My account">
+                        <IconButton component={Link} href="/account" size="small" sx={{ mr: 0.5, p: 0.25 }}>
+                            <Avatar src={avatarSrc} sx={{ width: 30, height: 30, fontSize: "0.72rem", fontWeight: 700, bgcolor: avatarSx.bgcolor ?? "#6366f1", ...avatarSx }}>
+                                {!avatarSrc && initials}
+                            </Avatar>
+                        </IconButton>
+                    </Tooltip>
 
                     <Tooltip title="Sign out">
                         <IconButton
@@ -185,11 +210,11 @@ export default function ButtonAppBar() {
                                                 </ListItemIcon>
                                                 <ListItemText
                                                     primary={item.label}
-                                                    primaryTypographyProps={{
+                                                    slotProps={{ primary: { sx: {
                                                         fontSize: "0.875rem",
                                                         fontWeight: active ? 600 : 400,
                                                         color: active ? "#f1f5f9" : "rgba(255,255,255,0.65)",
-                                                    }}
+                                                    }}}}
                                                 />
                                                 {active && (
                                                     <Box sx={{ width: 3, height: 18, borderRadius: 2, bgcolor: "#3b82f6", flexShrink: 0 }} />
@@ -204,20 +229,34 @@ export default function ButtonAppBar() {
                 </Box>
 
                 {/* Footer */}
-                <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.07)", p: 1, flexShrink: 0 }}>
+                <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.07)", px: 1, py: 1, flexShrink: 0 }}>
+                    <Link href="/account" onClick={() => setDrawerOpen(false)} style={{ textDecoration: "none" }}>
+                        <ListItemButton sx={{ borderRadius: 1.5, px: 1.5, py: 0.75, mb: 0.5, "&:hover": { bgcolor: "rgba(255,255,255,0.05)" } }}>
+                            <ListItemIcon sx={{ minWidth: 36 }}>
+                                <Avatar src={avatarSrc} sx={{ width: 26, height: 26, fontSize: "0.65rem", fontWeight: 700, bgcolor: avatarSx.bgcolor ?? "#6366f1", ...avatarSx }}>
+                                    {!avatarSrc && initials}
+                                </Avatar>
+                            </ListItemIcon>
+                            <ListItemText
+                                primary={session?.user ? (session.user.firstName || session.user.userName) : "Account"}
+                                secondary={session?.user?.userName ? `@${session.user.userName}` : undefined}
+                                slotProps={{
+                                    primary: { sx: { fontSize: "0.82rem", fontWeight: 500, color: "rgba(255,255,255,0.82)" } },
+                                    secondary: { sx: { fontSize: "0.7rem", color: "rgba(255,255,255,0.38)" } },
+                                }}
+                            />
+                        </ListItemButton>
+                    </Link>
                     <ListItemButton
                         onClick={() => signOut({ callbackUrl: "https://www.printoracle.com/" })}
-                        sx={{
-                            borderRadius: 1.5, px: 1.5, py: 0.75,
-                            "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
-                        }}
+                        sx={{ borderRadius: 1.5, px: 1.5, py: 0.75, "&:hover": { bgcolor: "rgba(239,68,68,0.12)" } }}
                     >
-                        <ListItemIcon sx={{ minWidth: 34, color: "rgba(255,255,255,0.4)" }}>
+                        <ListItemIcon sx={{ minWidth: 34, color: "rgba(239,68,68,0.75)" }}>
                             <LogoutIcon fontSize="small" />
                         </ListItemIcon>
                         <ListItemText
                             primary="Sign out"
-                            primaryTypographyProps={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.6)" }}
+                            slotProps={{ primary: { sx: { fontSize: "0.82rem", fontWeight: 500, color: "rgba(239,68,68,0.85)" } } }}
                         />
                     </ListItemButton>
                 </Box>

@@ -3,7 +3,6 @@ import { Button, Box, Typography, TextField, Stack, Dialog, DialogTitle, DialogC
 import { useState } from "react";
 import axios from "axios";
 import { BinSettings } from "./binSettings";
-import { FeedBack } from "./feedback";
 import ArticleIcon from "@mui/icons-material/Article";
 import ReplayIcon from "@mui/icons-material/Replay";
 import QrCodeIcon from "@mui/icons-material/QrCode";
@@ -56,9 +55,6 @@ export function Manifest({ binCount, setAuto, setBins, modalStyle }) {
                 Request Refund
             </Button>
 
-            <Box sx={{ ml: "auto" }}>
-                <FeedBack setAuto={setAuto} />
-            </Box>
             <BinSettings binCount={binCount} setAuto={setAuto} setBinss={setBins} modalStyle={modalStyle} />
 
             {/* Manifest image dialog */}

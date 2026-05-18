@@ -42,6 +42,7 @@ const schema = new mongoose.Schema({
       "Out For Delivery",
       "Pending Payment",
       "Pending Artwork Approval",
+      "Finalizing",
     ],
   },
   poNumber: {

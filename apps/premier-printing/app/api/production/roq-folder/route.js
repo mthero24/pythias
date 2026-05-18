@@ -72,6 +72,7 @@ export async function POST(req = NextApiRequest){
                 });
                 let re2s = updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:item.order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
                 await item.order.save();
+                logActivity({ action: "item_shipped", entity: "order", entityId: item.order._id, entityName: item.order.poNumber || "", userName, email });
             }
         }
         //get fold settings

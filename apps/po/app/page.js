@@ -1,15 +1,5 @@
-import Temps from "../models/Temps";
 import { Main } from "./Main";
 
-export default async function ProductionPage() {
-    let temp = await Temps.findOne({});
-    if (!temp) {
-        temp = new Temps({ light: { temp: 320, time: 50 }, dark: { temp: 360, time: 60 } });
-        await temp.save();
-    }
-    if (!temp.aStyles) {
-        temp.aStyles = [];
-        await temp.save();
-    }
-    return <Main temp={JSON.parse(JSON.stringify(temp))} />;
+export default function Home() {
+    return <Main />;
 }

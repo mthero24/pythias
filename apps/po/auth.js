@@ -38,7 +38,7 @@ export const authOptions = {
             if (user) {
                 token = {
                 ...token,
-                userName: user.userName,
+                userName: user.email,
                 role: user.isAdmin ? "admin" : user.type,
                 firstName: user.firstName,
                 lastName: user.lastName,

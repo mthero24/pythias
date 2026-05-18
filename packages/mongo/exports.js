@@ -30,4 +30,4 @@ export { default as Converters } from "./models/converters";
 export { default as UserActivity } from "./models/UserActivity";
 export { default as ChangeLog } from "./models/ChangeLog";
 export { default as ErrorLog } from "./models/ErrorLog";
-export { default as Message } from "./models/Message";
+export { default as Message } from "./models/Message";export { default as Group } from './models/Group';

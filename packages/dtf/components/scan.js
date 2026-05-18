@@ -4,7 +4,7 @@ import { Card, TextField, Box, InputAdornment, CircularProgress } from "@mui/mat
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import axios from "axios";
 
-export function Scan({ setSubmitted, auto, setAuto, printer, type }) {
+export function Scan({ setSubmitted, auto, setAuto, printer, type, onAction }) {
     const textFieldRef = useRef(null);
     const [scan, setScan]       = useState("");
     const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export function Scan({ setSubmitted, auto, setAuto, printer, type }) {
         else res = await axios.get(`/api/production/dtf?pieceID=${scan}`);
         setLoading(false);
         if (res.data.error) alert(res.data.msg);
-        else setSubmitted(res.data);
+        else { setSubmitted(res.data); onAction?.(); }
     };
 
     return (

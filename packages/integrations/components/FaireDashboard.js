@@ -292,10 +292,14 @@ function OrdersTab({ connectionId }) {
         setLoading(true);
         setError("");
         try {
-            const params = new URLSearchParams({ connectionId, limit: 50 });
+            const ninetyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            const params = new URLSearchParams({ connectionId, limit: 50, updatedAtMin: ninetyDaysAgo });
             if (nextCursor) params.set("cursor", nextCursor);
             const res = await axios.get(`/api/integrations/faire/orders?${params}`);
-            setOrders(prev => nextCursor ? [...prev, ...res.data.orders] : res.data.orders);
+            setOrders(prev => {
+                const combined = nextCursor ? [...prev, ...res.data.orders] : res.data.orders;
+                return combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            });
             setCursor(res.data.cursor ?? null);
         } catch (e) {
             setError(errMsg(e));

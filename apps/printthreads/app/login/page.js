@@ -1,6 +1,5 @@
-import {LoginMain} from "@pythias/backend"
-export default async function Login(){
-    return(
-        <LoginMain type="login"/>
-    )
+import { LoginMain } from "@pythias/backend";
+
+export default function Login() {
+    return <LoginMain type="login" name="PrintThreads" initials="PTH" tagline="Production Management" />;
 }

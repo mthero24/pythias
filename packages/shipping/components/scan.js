@@ -1,17 +1,27 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Card, TextField, Box, Checkbox, FormControlLabel, InputAdornment, CircularProgress, Stack } from "@mui/material";
+import { Card, TextField, Box, InputAdornment, CircularProgress, Stack, ToggleButtonGroup, ToggleButton, Typography } from "@mui/material";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
+import RepeatIcon from "@mui/icons-material/Repeat";
+import PrintIcon from "@mui/icons-material/Print";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import axios from "axios";
 import { NoteSnackBar } from "./NoteSnackBar";
 
-export function Scan({ auto, setAuto, order, setOrder, showNotes, setShowNotes, setItem, setBin, setShow, setActivate, pieceId, setBins, source, station, weight, setWeight, dimensions, setDimensions }) {
+export function Scan({ auto, setAuto, order, setOrder, showNotes, setShowNotes, setItem, setBin, setShow, setActivate, pieceId, setBins, source, station, weight, setWeight, dimensions, setDimensions, onAction }) {
     const textFieldRef = useRef(null);
-    const [scan, setScan]       = useState(pieceId);
-    const [reship, setReship]   = useState(false);
-    const [reprint, setReprint] = useState(false);
-    const [preShip, setPreShip] = useState(false);
+    const [scan, setScan]   = useState(pieceId);
+    const [mode, setMode]   = useState(null); // null | "reship" | "reprint" | "preShip"
     const [loading, setLoading] = useState(false);
+
+    const reship  = mode === "reship";
+    const reprint = mode === "reprint";
+    const preShip = mode === "preShip";
+
+    const handleMode = (_, next) => {
+        setMode(next);
+        if (next === "reship") setAuto(true);
+    };
 
     useEffect(() => {
         const update = async () => {
@@ -40,7 +50,7 @@ export function Scan({ auto, setAuto, order, setOrder, showNotes, setShowNotes, 
         if (res.data.error) {
             alert(res.data.msg);
             setScan("");
-            setReship(false);
+            setMode(null);
         } else {
             if (!reprint && !preShip) {
                 if (res.data.item) {
@@ -70,9 +80,8 @@ export function Scan({ auto, setAuto, order, setOrder, showNotes, setShowNotes, 
                 else alert(`Order Pre-Printed: ${res.data.label.trackingNumber}`);
             }
             setScan("");
-            setReship(false);
-            setReprint(false);
-            setPreShip(false);
+            setMode(null);
+            onAction?.();
         }
     };
 
@@ -100,21 +109,49 @@ export function Scan({ auto, setAuto, order, setOrder, showNotes, setShowNotes, 
                             ),
                         }}
                     />
-                    <FormControlLabel
-                        control={<Checkbox checked={reship} onChange={(e) => { setReship(e.target.checked); setAuto(true); }} />}
-                        label="ReShip"
-                        sx={{ whiteSpace: "nowrap", ml: 0 }}
-                    />
-                    <FormControlLabel
-                        control={<Checkbox checked={reprint} onChange={(e) => setReprint(e.target.checked)} />}
-                        label="RePrint"
-                        sx={{ whiteSpace: "nowrap", ml: 0 }}
-                    />
-                    <FormControlLabel
-                        control={<Checkbox checked={preShip} onChange={(e) => setPreShip(e.target.checked)} />}
-                        label="PreShip"
-                        sx={{ whiteSpace: "nowrap", ml: 0 }}
-                    />
+                    <ToggleButtonGroup
+                        exclusive
+                        value={mode}
+                        onChange={handleMode}
+                        size="small"
+                        sx={{
+                            "& .MuiToggleButton-root": {
+                                px: 2, py: 0.75,
+                                border: "1px solid rgba(0,0,0,0.12)",
+                                borderRadius: "8px !important",
+                                mx: 0.25,
+                                gap: 0.75,
+                                textTransform: "none",
+                                fontWeight: 600,
+                                fontSize: "0.8rem",
+                                color: "text.secondary",
+                                "&.Mui-selected": {
+                                    bgcolor: "#6366f1",
+                                    color: "#fff",
+                                    borderColor: "#6366f1",
+                                    "&:hover": { bgcolor: "#4f46e5" },
+                                },
+                                "&:hover": { bgcolor: "rgba(99,102,241,0.06)" },
+                            },
+                            "& .MuiToggleButtonGroup-grouped": {
+                                borderRadius: "8px !important",
+                                border: "1px solid rgba(0,0,0,0.12) !important",
+                            },
+                        }}
+                    >
+                        <ToggleButton value="reship">
+                            <RepeatIcon sx={{ fontSize: 16 }} />
+                            <Typography variant="inherit">ReShip</Typography>
+                        </ToggleButton>
+                        <ToggleButton value="reprint">
+                            <PrintIcon sx={{ fontSize: 16 }} />
+                            <Typography variant="inherit">RePrint</Typography>
+                        </ToggleButton>
+                        <ToggleButton value="preShip">
+                            <LocalShippingIcon sx={{ fontSize: 16 }} />
+                            <Typography variant="inherit">PreShip</Typography>
+                        </ToggleButton>
+                    </ToggleButtonGroup>
                 </Stack>
             </Card>
         </Box>

@@ -1,12 +1,15 @@
 "use client";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography, Chip } from "@mui/material";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
 import { Manifest } from "./manifest";
 import { Stations } from "./stations";
 import { Bins } from "./bins";
 import { Scan } from "./scan";
 import { OrderModal } from "./orderModal";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
 import { Repull } from "../../repull/exports";
 import { Footer } from "@pythias/backend";
 
@@ -23,6 +26,20 @@ export function Main({ stations, binCount, bins, pieceId, stat, source }) {
     const [showNotes, setShowNotes]   = useState(false);
     const [weight, setWeight]         = useState(0);
     const [dimensions, setDimensions] = useState();
+    const [stats, setStats]           = useState({ shipped: 0, binned: 0 });
+
+    const fetchStats = useCallback(async () => {
+        try {
+            const res = await axios.get("/api/production/shipping/stats");
+            if (!res.data.error) setStats(res.data);
+        } catch {}
+    }, []);
+
+    useEffect(() => {
+        fetchStats();
+        const interval = setInterval(fetchStats, 30_000);
+        return () => clearInterval(interval);
+    }, [fetchStats]);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -51,14 +68,30 @@ export function Main({ stations, binCount, bins, pieceId, stat, source }) {
             <Box sx={{ bgcolor: "background.default", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
                 {/* Header */}
                 <Box sx={{ bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider", px: 2, py: 2 }}>
-                    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
-                        <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <LocalShippingIcon sx={{ color: "#fff", fontSize: 20 }} />
-                        </Box>
-                        <Box>
-                            <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Ship Orders</Typography>
-                            <Typography variant="body2" color="text.secondary">Scan a piece ID or bin to process shipping</Typography>
-                        </Box>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+                        <Stack direction="row" alignItems="center" spacing={1.5}>
+                            <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                <LocalShippingIcon sx={{ color: "#fff", fontSize: 20 }} />
+                            </Box>
+                            <Box>
+                                <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>Ship Orders</Typography>
+                                <Typography variant="body2" color="text.secondary">Scan a piece ID or bin to process shipping</Typography>
+                            </Box>
+                        </Stack>
+                        <Stack direction="row" spacing={1}>
+                            <Chip
+                                icon={<CheckCircleIcon sx={{ fontSize: "16px !important" }} />}
+                                label={`${stats.shipped} shipped`}
+                                size="small"
+                                sx={{ fontWeight: 700, fontSize: "0.78rem", bgcolor: "#dcfce7", color: "#16a34a", border: "1px solid #bbf7d0", "& .MuiChip-icon": { color: "#16a34a" } }}
+                            />
+                            <Chip
+                                icon={<Inventory2Icon sx={{ fontSize: "16px !important" }} />}
+                                label={`${stats.binned} binned`}
+                                size="small"
+                                sx={{ fontWeight: 700, fontSize: "0.78rem", bgcolor: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", "& .MuiChip-icon": { color: "#2563eb" } }}
+                            />
+                        </Stack>
                     </Stack>
                     <Manifest binCount={binCount} setAuto={setAuto} setBins={setBins} modalStyle={modalStyle} style={modalStyle} />
                     <Stations stations={stations} station={station} setStation={setStation} setAuto={setAuto} />
@@ -69,7 +102,7 @@ export function Main({ stations, binCount, bins, pieceId, stat, source }) {
                     setAuto={setAuto} setOrder={setOrder} setItem={setItem} setBin={setBin}
                     setShow={setShow} setActivate={setAction} pieceId={pieceId} setBins={setBins}
                     source={source} station={station} weight={weight} setWeight={setWeight}
-                    dimensions={dimensions} setDimensions={setDimensions}
+                    dimensions={dimensions} setDimensions={setDimensions} onAction={fetchStats}
                 />
 
                 <Bins
@@ -87,7 +120,7 @@ export function Main({ stations, binCount, bins, pieceId, stat, source }) {
                     style={modalStyle} show={show} setShow={setShow} setAuto={setAuto}
                     setBins={setBins} action={action} setAction={setAction}
                     station={station} source={source} weight={weight} setWeight={setWeight}
-                    dimensions={dimensions} setDimensions={setDimensions}
+                    dimensions={dimensions} setDimensions={setDimensions} onAction={fetchStats}
                 />
             </Box>
             <Footer fixed={true} />

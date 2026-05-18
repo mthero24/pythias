@@ -5,7 +5,11 @@ import Item from "@/models/Items";
 import {updateOrder} from "@pythias/integrations";
 import axios from "axios";
 import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
 export async function POST(req= NextApiRequest){
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     console.log(data)
     if(data.reprint){
@@ -101,6 +105,7 @@ export async function POST(req= NextApiRequest){
                     });
                     await res.item.save()
                     await res.bin.save()
+                    logActivity({ action: "order_binned", entity: "order", entityId: res.order._id, entityName: res.order.poNumber || "", userName, email });
                 }
             }
         }else if(order){

@@ -10,7 +10,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
-export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source, weight, setWeight, dimensions, setDimensions }) {
+export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source, weight, setWeight, dimensions, setDimensions, onAction }) {
     const [shippingPrices, setShippingPrices] = useState();
     const [getWeight, setGetWeight]           = useState(false);
     const [timer, setTimer]                   = useState(0);
@@ -142,7 +142,7 @@ export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, 
                         label={label} setLabel={setLabel}
                         closeTimer={closeTimer} setCloseTimer={setCloseTimer}
                         stopClose={stopClose} setStopClose={setStopClose}
-                        setBins={setBins} source={source}
+                        setBins={setBins} source={source} onAction={onAction}
                     />
                 )}
                 {order && (
