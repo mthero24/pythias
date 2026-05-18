@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Card, TextField, Box, InputAdornment, CircularProgress } from "@mui/material";
+import { Card, TextField, Box, InputAdornment, CircularProgress, Alert, Collapse } from "@mui/material";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import axios from "axios";
 
@@ -8,6 +8,18 @@ export function Scan({ setSubmitted, auto, setAuto, printer, type, onAction }) {
     const textFieldRef = useRef(null);
     const [scan, setScan]       = useState("");
     const [loading, setLoading] = useState(false);
+    const [toast, setToast]     = useState(null); // { severity, msg }
+    const toastTimer            = useRef(null);
+
+    const showToast = (severity, msg) => {
+        clearTimeout(toastTimer.current);
+        setToast({ severity, msg });
+        if (severity !== "error") {
+            toastTimer.current = setTimeout(() => setToast(null), 4000);
+        }
+    };
+
+    useEffect(() => () => clearTimeout(toastTimer.current), []);
 
     useEffect(() => {
         if (auto) {
@@ -21,12 +33,24 @@ export function Scan({ setSubmitted, auto, setAuto, printer, type, onAction }) {
         setLoading(true);
         setScan("");
         setSubmitted(null);
-        let res;
-        if (type === "send") res = await axios.post("/api/production/dtf", { pieceId: scan, printer });
-        else res = await axios.get(`/api/production/dtf?pieceID=${scan}`);
+        setToast(null);
+        try {
+            let res;
+            if (type === "send") res = await axios.post("/api/production/dtf", { pieceId: scan, printer });
+            else res = await axios.get(`/api/production/dtf?pieceID=${scan}`);
+
+            if (res.data.error) {
+                showToast("error", res.data.msg);
+            } else {
+                setSubmitted(res.data);
+                onAction?.();
+                showToast("success", res.data.msg || "Done");
+            }
+        } catch {
+            showToast("error", "Request failed. Check your connection.");
+        }
         setLoading(false);
-        if (res.data.error) alert(res.data.msg);
-        else { setSubmitted(res.data); onAction?.(); }
+        textFieldRef.current?.focus();
     };
 
     return (
@@ -51,6 +75,15 @@ export function Scan({ setSubmitted, auto, setAuto, printer, type, onAction }) {
                         ),
                     }}
                 />
+                <Collapse in={!!toast} unmountOnExit>
+                    <Alert
+                        severity={toast?.severity ?? "info"}
+                        onClose={() => { setToast(null); clearTimeout(toastTimer.current); }}
+                        sx={{ mt: 1.5, borderRadius: 2 }}
+                    >
+                        {toast?.msg}
+                    </Alert>
+                </Collapse>
             </Card>
         </Box>
     );
