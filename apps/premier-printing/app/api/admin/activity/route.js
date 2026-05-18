@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { UserActivity } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
-
+// This route provides activity data for the admin dashboard, including user actions and timelines.
 export async function GET(req) {
     const token = await getToken({ req });
     if (!token?.permissions?.charts) {
