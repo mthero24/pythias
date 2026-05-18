@@ -42,10 +42,10 @@ export default function DemoConfirmedPage() {
                     <Box sx={{ textAlign: "center", mb: 6 }}>
                         <CheckCircleOutlineIcon sx={{ fontSize: 72, color: "#6366f1", mb: 2 }} />
                         <Typography variant="h3" fontWeight={800} gutterBottom sx={{ color: "#1a1a1a" }}>
-                            You're on the calendar!
+                            {"You're on the calendar!"}
                         </Typography>
                         <Typography variant="h6" sx={{ color: "#555", lineHeight: 1.7 }}>
-                            Thanks for booking a demo with Pythias Technologies. We're looking forward to showing you what the platform can do for your business.
+                            {"Thanks for booking a demo with Pythias Technologies. We’re looking forward to showing you what the platform can do for your business."}
                         </Typography>
                     </Box>
 

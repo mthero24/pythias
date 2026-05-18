@@ -1,37 +1,43 @@
-import {NextRequest, NextResponse, userAgent } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+
 const protectedRoutes = [
-  {
-    path: "/admin/",
-    roles: ["admin"],
-    permission: "admin"
-  },
+  { path: "/admin/", permission: "admin" },
 ];
 
-export async function middleware(req=NextRequest, res) {
-  const protectedRoute = protectedRoutes.find((route) =>
-      req.nextUrl.pathname.startsWith(route.path)
-    );
-  const requestHeaders = new Headers(req.headers)
+const protectedApiRoutes = [
+  { path: "/api/analytics/dashboard", permission: "admin" },
+];
+
+export async function middleware(req = NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  const protectedRoute = protectedRoutes.find(r => pathname.startsWith(r.path));
+  const protectedApi   = protectedApiRoutes.find(r => pathname.startsWith(r.path));
+
   const token = await getToken({ req });
-  if (protectedRoute) {
-    const permissions = token && token.permissions? token.permissions: {}
-    if(token) permissions.account = true
-    if (!permissions[protectedRoute.permission]) {
+
+  if (protectedRoute || protectedApi) {
+    const permissions = token?.permissions ?? {};
+    if (token) permissions.account = true;
+
+    const route = protectedRoute || protectedApi;
+    if (!permissions[route.permission]) {
+      if (protectedApi) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
       return NextResponse.redirect(new URL("/login", req.url));
     }
   }
-  if(token){
-    requestHeaders.set('user', token.userName)
+
+  const requestHeaders = new Headers(req.headers);
+  if (token) {
+    requestHeaders.set("user", token.userName);
   }
-  return NextResponse.next({
-    request: {
-      // New request headers
-      headers: requestHeaders,
-    },
-  });
+
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
 };
