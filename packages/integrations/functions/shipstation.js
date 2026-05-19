@@ -56,6 +56,13 @@ export const getPageOrders = async ({auth, page}) => {
     let res = await axios.get(`https://ssapi.shipstation.com/orders?createDateStart=${(lastDate.getMonth() + 1).toString().length == 2 ? lastDate.getMonth() + 1 : `0${lastDate.getMonth() + 1}`}/${lastDate.getDate().toString().length == 2 ? lastDate.getDate() : `0${lastDate.getDate()}`}/${lastDate.getFullYear()}&page=${page}&pageSize=500`, headers).catch(e => { console.log(e.response.data) })
     return res.data.orders
 }
+export async function cancelOrder({ auth, orderId }) {
+    const headers = { headers: { Authorization: `Basic ${btoa(auth)}` } };
+    const res = await axios.delete(`https://ssapi.shipstation.com/orders/${orderId}`, headers)
+        .catch(e => { console.error("ShipStation cancel error:", e.response?.data ?? e.message); return null; });
+    return res ? { success: true } : { error: "ShipStation cancel failed" };
+}
+
 export async function updateOrder({auth, orderId, carrierCode, trackingNumber}){
     let lastDate = new Date(Date.now())
     console.log(auth)

@@ -116,3 +116,37 @@ export const getSkuAcenda = async ({clientId, clientSecret, organization, sku}) 
         return res?.data.result
     }
 }
+
+export const fulfillShipAdviceAcenda = async ({ clientId, clientSecret, organization, id, carrier, trackingNumber }) => {
+    const token = await getTokenAcenda({ clientId, clientSecret });
+    if (!token) return { error: "Auth failed" };
+    const headers = { "X-Astur-Organization": organization, AUTHORIZATION: `Bearer ${token}` };
+    let errorRes;
+    const res = await axios.post(
+        `https://api.acenda.io/v1/ship_advice/${id}/fulfill`,
+        { carrier, tracking_number: trackingNumber },
+        { headers }
+    ).catch(e => { errorRes = e.response?.data ?? e.message; });
+    if (errorRes) return { error: errorRes };
+    return { success: true, data: res?.data };
+};
+
+export const getSalesChannelsAcenda = async ({ clientId, clientSecret, organization }) => {
+    const token = await getTokenAcenda({ clientId, clientSecret });
+    if (!token) return { error: "Auth failed" };
+    const headers = { "X-Astur-Organization": organization, AUTHORIZATION: `Bearer ${token}` };
+    let errorRes;
+    const res = await axios.get("https://api.acenda.io/v1/sales_channel", { headers }).catch(e => { errorRes = e.response?.data ?? e.message; });
+    if (errorRes) return { channels: [] };
+    return { channels: res?.data?.results ?? res?.data?.result ?? [] };
+};
+
+export const getInventoryDetailAcenda = async ({ clientId, clientSecret, organization, limit = 50, offset = 0 }) => {
+    const token = await getTokenAcenda({ clientId, clientSecret });
+    if (!token) return { error: "Auth failed" };
+    const headers = { "X-Astur-Organization": organization, AUTHORIZATION: `Bearer ${token}` };
+    let errorRes;
+    const res = await axios.get("https://api.acenda.io/v1/inventory_detail", { params: { limit, offset }, headers }).catch(e => { errorRes = e.response?.data ?? e.message; });
+    if (errorRes) return { error: errorRes };
+    return { inventory: res?.data?.results ?? [], total: res?.data?.total ?? 0 };
+};

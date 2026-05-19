@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { Products, SkuToUpc, ApiKeyIntegrations } from "@pythias/mongo";
-import { getSkuAcenda, addInventoryAcenda, getShipAdviceAcenda, acknowledgeShipAdviceAcenda } from "../functions/acenda.js";
+import {
+    getSkuAcenda, addInventoryAcenda, getShipAdviceAcenda, acknowledgeShipAdviceAcenda,
+    fulfillShipAdviceAcenda, getSalesChannelsAcenda, getInventoryDetailAcenda,
+    getWarehouseAcenda, getCatalogAcenda,
+} from "../functions/acenda.js";
 
 export async function handleAcendaPOST(req) {
     const body = await req.json();
@@ -99,13 +103,25 @@ export async function handleAcendaOrdersGET(req) {
 
 export async function handleAcendaOrdersPOST(req) {
     const body = await req.json();
-    const { connectionId, orderId } = body;
+    const { connectionId, orderId, action, carrier, trackingNumber } = body;
     if (!connectionId || !orderId) {
         return NextResponse.json({ error: "connectionId and orderId are required" }, { status: 400 });
     }
 
     const connection = await ApiKeyIntegrations.findById(connectionId).lean();
     if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+
+    if (action === "fulfill") {
+        if (!carrier || !trackingNumber) {
+            return NextResponse.json({ error: "carrier and trackingNumber are required for fulfill" }, { status: 400 });
+        }
+        const result = await fulfillShipAdviceAcenda({
+            clientId: connection.apiKey, clientSecret: connection.apiSecret,
+            organization: connection.organization, id: orderId, carrier, trackingNumber,
+        });
+        if (result.error) return NextResponse.json({ error: result.error }, { status: 502 });
+        return NextResponse.json({ success: true });
+    }
 
     const result = await acknowledgeShipAdviceAcenda({
         clientId: connection.apiKey, clientSecret: connection.apiSecret,
@@ -114,4 +130,30 @@ export async function handleAcendaOrdersPOST(req) {
 
     if (result.error) return NextResponse.json({ error: result.error }, { status: 502 });
     return NextResponse.json({ success: true });
+}
+
+export async function handleAcendaDashboardGET(req) {
+    const { searchParams } = new URL(req.url);
+    const connectionId = searchParams.get("connectionId");
+    if (!connectionId) return NextResponse.json({ error: "connectionId required" }, { status: 400 });
+
+    const connection = await ApiKeyIntegrations.findById(connectionId).lean();
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+
+    const creds = { clientId: connection.apiKey, clientSecret: connection.apiSecret, organization: connection.organization };
+
+    const [channels, warehouses, catalog, inventory] = await Promise.all([
+        getSalesChannelsAcenda(creds),
+        getWarehouseAcenda(creds),
+        getCatalogAcenda(creds),
+        getInventoryDetailAcenda({ ...creds, limit: 100 }),
+    ]);
+
+    return NextResponse.json({
+        channels: channels?.channels ?? [],
+        warehouses: Array.isArray(warehouses) ? warehouses : [],
+        catalog: Array.isArray(catalog) ? catalog : [],
+        inventory: inventory?.inventory ?? [],
+        inventoryTotal: inventory?.total ?? 0,
+    });
 }

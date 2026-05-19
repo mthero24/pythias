@@ -2,15 +2,442 @@
 import {
     Typography, Box, Grid2, TextField, Pagination, Container, Stack,
     Chip, Card, Collapse, Divider, InputAdornment, IconButton, Tooltip,
+    Button, Dialog, DialogTitle, DialogContent, DialogActions,
+    Alert, CircularProgress, MenuItem, Select, FormControl, InputLabel,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import axios from "axios";
 import { RetryImage } from "../reusable/RetryImage";
+
+// ─── Create Order Modal ────────────────────────────────────────────────────────
+const COUNTRIES = ["US", "CA"];
+
+const REGIONS = {
+    US: [
+        ["AL","Alabama"],["AK","Alaska"],["AZ","Arizona"],["AR","Arkansas"],["CA","California"],
+        ["CO","Colorado"],["CT","Connecticut"],["DE","Delaware"],["FL","Florida"],["GA","Georgia"],
+        ["HI","Hawaii"],["ID","Idaho"],["IL","Illinois"],["IN","Indiana"],["IA","Iowa"],
+        ["KS","Kansas"],["KY","Kentucky"],["LA","Louisiana"],["ME","Maine"],["MD","Maryland"],
+        ["MA","Massachusetts"],["MI","Michigan"],["MN","Minnesota"],["MS","Mississippi"],["MO","Missouri"],
+        ["MT","Montana"],["NE","Nebraska"],["NV","Nevada"],["NH","New Hampshire"],["NJ","New Jersey"],
+        ["NM","New Mexico"],["NY","New York"],["NC","North Carolina"],["ND","North Dakota"],["OH","Ohio"],
+        ["OK","Oklahoma"],["OR","Oregon"],["PA","Pennsylvania"],["RI","Rhode Island"],["SC","South Carolina"],
+        ["SD","South Dakota"],["TN","Tennessee"],["TX","Texas"],["UT","Utah"],["VT","Vermont"],
+        ["VA","Virginia"],["WA","Washington"],["WV","West Virginia"],["WI","Wisconsin"],["WY","Wyoming"],
+        ["DC","District of Columbia"],["PR","Puerto Rico"],["VI","Virgin Islands"],["GU","Guam"],["AS","American Samoa"],
+    ],
+    CA: [
+        ["AB","Alberta"],["BC","British Columbia"],["MB","Manitoba"],["NB","New Brunswick"],
+        ["NL","Newfoundland and Labrador"],["NS","Nova Scotia"],["NT","Northwest Territories"],
+        ["NU","Nunavut"],["ON","Ontario"],["PE","Prince Edward Island"],["QC","Quebec"],
+        ["SK","Saskatchewan"],["YT","Yukon"],
+    ],
+};
+
+function CreateOrderModal({ open, onClose, onCreated }) {
+    // ── SKU lookup state ────────────────────────────────────────────────────────
+    const [sku, setSku]             = useState("");
+    const [looking, setLooking]     = useState(false);
+    const [product, setProduct]     = useState(null);
+    const [lookupErr, setLookupErr] = useState("");
+    const [selColor, setSelColor]   = useState(null);
+    const [selSizeId, setSelSizeId] = useState(null); // blank size _id string
+    const [qty, setQty]             = useState(1);
+
+    // ── Items cart ──────────────────────────────────────────────────────────────
+    const [cartItems, setCartItems] = useState([]);
+
+    // ── Order info ──────────────────────────────────────────────────────────────
+    const [po, setPo]       = useState("");
+    const [market, setMkt]  = useState("");
+    const [addr, setAddr]   = useState({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" });
+    const [saving, setSaving] = useState(false);
+    const [saveErr, setSaveErr] = useState("");
+
+    const resetLookup = () => { setSku(""); setProduct(null); setLookupErr(""); setSelColor(null); setSelSizeId(null); setQty(1); };
+    const handleClose = () => { resetLookup(); setCartItems([]); setPo(""); setMkt(""); setAddr({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" }); setSaving(false); setSaveErr(""); onClose(); };
+
+    // ── Lookup ──────────────────────────────────────────────────────────────────
+    const lookupSku = useCallback(async () => {
+        const s = sku.trim();
+        if (!s) return;
+        setLooking(true); setLookupErr(""); setProduct(null); setSelColor(null); setSelSizeId(null);
+        try {
+            const res = await axios.get(`/api/orders/lookup-product?sku=${encodeURIComponent(s)}`);
+            const p = res.data;
+            setProduct(p);
+            // Pre-select from matched variant
+            const sel = p.selectedVariant;
+            const preColor = p.colors.find(c => c._id === sel.colorId) ?? p.colors[0] ?? null;
+            setSelColor(preColor);
+            setSelSizeId(sel.sizeId ?? null);
+        } catch (e) {
+            setLookupErr(e.response?.data?.error ?? "Product not found");
+        } finally { setLooking(false); }
+    }, [sku]);
+
+    // ── Derived selection ───────────────────────────────────────────────────────
+    // Sizes available for the selected color (only valid combos)
+    const availableSizes = product && selColor
+        ? product.variants
+            .filter(v => v.colorId === selColor._id && v.sizeId && v.sizeName)
+            .map(v => ({ sizeId: v.sizeId, sizeName: v.sizeName }))
+            .filter((s, i, a) => a.findIndex(x => x.sizeId === s.sizeId) === i)
+        : [];
+
+    const selectedVariant = product?.variants?.find(
+        v => v.colorId === selColor?._id && v.sizeId === selSizeId
+    ) ?? null;
+
+    // Image: prefer variant image, fall back to productImages keyed by colorId
+    const activeImage = selectedVariant?.image
+        ?? (selColor ? product?.productImagesByColor?.[selColor._id] : null)
+        ?? null;
+
+    // ── Add item to cart ────────────────────────────────────────────────────────
+    const addItem = () => {
+        if (!selectedVariant) return;
+        const sizeName = availableSizes.find(s => s.sizeId === selSizeId)?.sizeName ?? "";
+        setCartItems(prev => [...prev, {
+            id:           Date.now(),
+            sku:          selectedVariant.sku,
+            title:        product.title,
+            colorId:      selColor._id,
+            colorName:    selColor.name,
+            colorHex:     selColor.hexcode ?? null,
+            sizeId:       selSizeId,
+            sizeName,
+            blankId:      product.blank?._id ?? null,
+            styleCode:    product.blank?.code ?? "",
+            designId:     product.designId ?? null,
+            designImages: product.design?.images ?? null,
+            printType:    product.design?.printType ?? null,
+            price:        selectedVariant.price ?? 0,
+            image:        activeImage,
+            qty:          Math.max(1, qty),
+        }]);
+        resetLookup();
+    };
+
+    const removeItem   = (id) => setCartItems(prev => prev.filter(i => i.id !== id));
+    const changeQty    = (id, delta) => setCartItems(prev => prev.map(i =>
+        i.id === id ? { ...i, qty: Math.max(1, (i.qty ?? 1) + delta) } : i
+    ));
+    const changePrice  = (id, val) => setCartItems(prev => prev.map(i =>
+        i.id === id ? { ...i, price: val } : i
+    ));
+
+    const addrChange = (field) => (e) => setAddr(p => ({ ...p, [field]: e.target.value }));
+
+    // ── Submit ──────────────────────────────────────────────────────────────────
+    const submit = async () => {
+        if (cartItems.length === 0) { setSaveErr("Add at least one item"); return; }
+        if (!po.trim()) { setSaveErr("PO number is required"); return; }
+        if (!addr.name || !addr.address1 || !addr.city || !addr.country) {
+            setSaveErr("Name, address, city, and country are required"); return;
+        }
+        setSaving(true); setSaveErr("");
+        try {
+            const res = await axios.post("/api/orders/create", {
+                items:           cartItems,
+                marketplace:     market.trim() || "Manual",
+                poNumber:        po.trim(),
+                shippingAddress: addr,
+            });
+            onCreated?.(res.data.orderId);
+            handleClose();
+        } catch (e) {
+            setSaveErr(e.response?.data?.error ?? "Failed to create order");
+            setSaving(false);
+        }
+    };
+
+    const fs = { size: "small" };
+
+    return (
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth
+            PaperProps={{ sx: { borderRadius: 2 } }}>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1 }}>
+                New Order
+                <IconButton size="small" onClick={handleClose}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+
+            <DialogContent dividers sx={{ pt: 2 }}>
+                <Stack spacing={3}>
+
+                    {/* ── SKU lookup ── */}
+                    <Box>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
+                            Add Item
+                        </Typography>
+                        <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                            <TextField
+                                {...fs} fullWidth label="SKU" placeholder="e.g. PC54_RED_L_SUNFLOWER"
+                                value={sku}
+                                onChange={e => { setSku(e.target.value); setProduct(null); setLookupErr(""); }}
+                                onKeyDown={e => e.key === "Enter" && lookupSku()}
+                            />
+                            <Button
+                                variant="outlined" size="small" onClick={lookupSku}
+                                disabled={!sku.trim() || looking}
+                                sx={{ minWidth: 80, flexShrink: 0 }}
+                                startIcon={looking ? <CircularProgress size={14} color="inherit" /> : <SearchIcon sx={{ fontSize: 16 }} />}
+                            >
+                                Look up
+                            </Button>
+                        </Stack>
+                        {lookupErr && <Alert severity="error" sx={{ mb: 1 }}>{lookupErr}</Alert>}
+
+                        {/* Product card */}
+                        {product && (
+                            <Box sx={{ display: "flex", gap: 2, p: 1.5, bgcolor: "#f8fafc", borderRadius: 1.5, border: "1px solid #e2e8f0" }}>
+                                {/* Image */}
+                                <Box sx={{
+                                    width: 96, height: 96, flexShrink: 0, borderRadius: 1,
+                                    bgcolor: "#e5e7eb", overflow: "hidden",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                }}>
+                                    {activeImage
+                                        ? <RetryImage src={activeImage} alt={product.title} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                                        : <Box sx={{ width: "100%", height: "100%", bgcolor: "#e5e7eb" }} />
+                                    }
+                                </Box>
+
+                                {/* Controls */}
+                                <Box sx={{ flex: 1, minWidth: 0 }}>
+                                    <Typography variant="body2" fontWeight={700} sx={{ mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {product.title}
+                                    </Typography>
+
+                                    {/* Color row: swatches left, qty right */}
+                                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                                        {product.colors.length > 0 ? (
+                                            <Box>
+                                                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.4 }}>Color</Typography>
+                                                <Stack direction="row" flexWrap="wrap" gap={0.6}>
+                                                    {product.colors.map(c => (
+                                                        <Tooltip key={c._id} title={c.name}>
+                                                            <Box
+                                                                onClick={() => { setSelColor(c); setSelSizeId(null); }}
+                                                                sx={{
+                                                                    width: 22, height: 22, borderRadius: "50%", cursor: "pointer", flexShrink: 0,
+                                                                    bgcolor: c.hexcode ? `#${c.hexcode.replace(/^#/, "")}` : "#aaa",
+                                                                    border: selColor?._id === c._id ? "3px solid #3b82f6" : "2px solid #d1d5db",
+                                                                    boxShadow: selColor?._id === c._id ? "0 0 0 1px #fff inset" : "none",
+                                                                }}
+                                                            />
+                                                        </Tooltip>
+                                                    ))}
+                                                </Stack>
+                                                {selColor && <Typography variant="caption" color="text.secondary">{selColor.name}</Typography>}
+                                            </Box>
+                                        ) : <Box />}
+                                        <Box sx={{ width: 116, display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.4 }}>Qty</Typography>
+                                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                                                <IconButton size="small" disabled={qty <= 1} onClick={() => setQty(q => Math.max(1, q - 1))}
+                                                    sx={{ width: 24, height: 24, border: "1px solid #e2e8f0", borderRadius: 0.75 }}>
+                                                    <Typography variant="caption" sx={{ lineHeight: 1, fontWeight: 700 }}>−</Typography>
+                                                </IconButton>
+                                                <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 22, textAlign: "center" }}>{qty}</Typography>
+                                                <IconButton size="small" onClick={() => setQty(q => Math.min(99, q + 1))}
+                                                    sx={{ width: 24, height: 24, border: "1px solid #e2e8f0", borderRadius: 0.75 }}>
+                                                    <Typography variant="caption" sx={{ lineHeight: 1, fontWeight: 700 }}>+</Typography>
+                                                </IconButton>
+                                            </Stack>
+                                        </Box>
+                                    </Stack>
+
+                                    {/* Size chips */}
+                                    {availableSizes.length > 0 && (
+                                        <Box sx={{ mb: 1 }}>
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.4 }}>Size</Typography>
+                                            <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                                                {availableSizes.map(s => (
+                                                    <Chip
+                                                        key={s.sizeId} label={s.sizeName} size="small"
+                                                        onClick={() => setSelSizeId(s.sizeId)}
+                                                        variant={selSizeId === s.sizeId ? "filled" : "outlined"}
+                                                        color={selSizeId === s.sizeId ? "primary" : "default"}
+                                                        sx={{ cursor: "pointer", fontSize: "0.72rem" }}
+                                                    />
+                                                ))}
+                                            </Stack>
+                                        </Box>
+                                    )}
+
+                                    {/* SKU + button row */}
+                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                        {selectedVariant ? (
+                                            <Typography variant="caption" color="text.secondary">
+                                                SKU: <strong>{selectedVariant.sku}</strong>
+                                                {selectedVariant.price ? ` · $${Number(selectedVariant.price).toFixed(2)}` : ""}
+                                            </Typography>
+                                        ) : <Box />}
+                                        <Button
+                                            variant="contained" size="small"
+                                            disabled={!selectedVariant}
+                                            onClick={addItem}
+                                            startIcon={<AddIcon sx={{ fontSize: 14 }} />}
+                                            sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", width: 116, flexShrink: 0 }}
+                                        >
+                                            Add to Order
+                                        </Button>
+                                    </Stack>
+                                </Box>
+                            </Box>
+                        )}
+                    </Box>
+
+                    {/* ── Cart ── */}
+                    {cartItems.length > 0 && (
+                        <Box>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
+                                Items ({cartItems.length} {cartItems.length === 1 ? "line" : "lines"} · {cartItems.reduce((s, i) => s + (i.qty ?? 1), 0)} units)
+                            </Typography>
+                            <Stack spacing={0.75}>
+                                {cartItems.map(item => (
+                                    <Box key={item.id} sx={{
+                                        display: "flex", alignItems: "center", gap: 1.5,
+                                        p: 1, borderRadius: 1, border: "1px solid #e2e8f0", bgcolor: "#fff",
+                                    }}>
+                                        {/* Thumbnail */}
+                                        <Box sx={{ width: 44, height: 44, borderRadius: 0.75, bgcolor: "#f3f4f6", flexShrink: 0, overflow: "hidden" }}>
+                                            {item.image
+                                                ? <RetryImage src={item.image} alt={item.sku} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                                                : <Box sx={{ width: "100%", height: "100%", bgcolor: "#e5e7eb" }} />
+                                            }
+                                        </Box>
+                                        {/* Info */}
+                                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                                            <Typography variant="body2" fontWeight={600} sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {item.title}
+                                            </Typography>
+                                            <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+                                                {item.colorHex && (
+                                                    <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: `#${item.colorHex.replace(/^#/, "")}`, border: "1px solid #d1d5db", flexShrink: 0 }} />
+                                                )}
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {item.colorName} / {item.sizeName}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.disabled">· {item.sku}</Typography>
+                                            </Stack>
+                                        </Box>
+                                        {/* Price override */}
+                                        <TextField
+                                            size="small"
+                                            type="number"
+                                            value={item.price ?? ""}
+                                            onChange={e => changePrice(item.id, e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)}
+                                            inputProps={{ min: 0, step: 0.01, style: { textAlign: "right", padding: "4px 6px", width: 64 } }}
+                                            InputProps={{ startAdornment: <InputAdornment position="start" sx={{ mr: 0 }}>$</InputAdornment> }}
+                                            sx={{ flexShrink: 0, "& .MuiOutlinedInput-root": { fontSize: "0.8rem" } }}
+                                        />
+                                        {/* Qty stepper */}
+                                        <Stack direction="row" alignItems="center" spacing={0.5} sx={{ flexShrink: 0 }}>
+                                            <IconButton size="small" disabled={(item.qty ?? 1) <= 1} onClick={() => changeQty(item.id, -1)}
+                                                sx={{ width: 22, height: 22, border: "1px solid #e2e8f0", borderRadius: 0.75 }}>
+                                                <Typography variant="caption" sx={{ lineHeight: 1, fontWeight: 700, fontSize: "0.8rem" }}>−</Typography>
+                                            </IconButton>
+                                            <Typography variant="body2" sx={{ fontWeight: 700, minWidth: 20, textAlign: "center" }}>{item.qty ?? 1}</Typography>
+                                            <IconButton size="small" onClick={() => changeQty(item.id, 1)}
+                                                sx={{ width: 22, height: 22, border: "1px solid #e2e8f0", borderRadius: 0.75 }}>
+                                                <Typography variant="caption" sx={{ lineHeight: 1, fontWeight: 700, fontSize: "0.8rem" }}>+</Typography>
+                                            </IconButton>
+                                        </Stack>
+                                        <IconButton size="small" onClick={() => removeItem(item.id)} sx={{ color: "error.main", flexShrink: 0 }}>
+                                            <DeleteOutlineIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        </Box>
+                    )}
+
+                    {/* ── Order info ── */}
+                    <Box>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
+                            Order Info
+                        </Typography>
+                        <Stack direction="row" spacing={1.5}>
+                            <TextField {...fs} fullWidth label="PO Number" value={po} onChange={e => setPo(e.target.value)} required />
+                            <TextField {...fs} fullWidth label="Marketplace" value={market} onChange={e => setMkt(e.target.value)} placeholder="e.g. Amazon, Manual" />
+                        </Stack>
+                    </Box>
+
+                    {/* ── Shipping address ── */}
+                    <Box>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
+                            Shipping Address
+                        </Typography>
+                        <Stack spacing={1.25}>
+                            <Stack direction="row" spacing={1.5}>
+                                <TextField {...fs} fullWidth label="Full Name" value={addr.name} onChange={addrChange("name")} required />
+                                <TextField {...fs} fullWidth label="Phone" value={addr.phone} onChange={addrChange("phone")} />
+                            </Stack>
+                            <TextField {...fs} fullWidth label="Address Line 1" value={addr.address1} onChange={addrChange("address1")} required />
+                            <TextField {...fs} fullWidth label="Address Line 2 (optional)" value={addr.address2} onChange={addrChange("address2")} />
+                            <Stack direction="row" spacing={1.5}>
+                                <TextField {...fs} fullWidth label="City" value={addr.city} onChange={addrChange("city")} required />
+                                <FormControl {...fs} sx={{ width: 160, flexShrink: 0 }}>
+                                    <InputLabel>{addr.country === "CA" ? "Province" : "State"}</InputLabel>
+                                    <Select
+                                        value={addr.state}
+                                        label={addr.country === "CA" ? "Province" : "State"}
+                                        onChange={e => setAddr(p => ({ ...p, state: e.target.value }))}
+                                        MenuProps={{ PaperProps: { sx: { maxHeight: 280 } } }}
+                                    >
+                                        <MenuItem value=""><em>—</em></MenuItem>
+                                        {(REGIONS[addr.country] ?? []).map(([code, name]) => (
+                                            <MenuItem key={code} value={code}>{code} — {name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <TextField {...fs} sx={{ width: 96, flexShrink: 0 }} label="ZIP" value={addr.zip} onChange={addrChange("zip")} />
+                                <FormControl {...fs} sx={{ width: 80, flexShrink: 0 }}>
+                                    <InputLabel>Country</InputLabel>
+                                    <Select
+                                        value={addr.country}
+                                        label="Country"
+                                        onChange={e => setAddr(p => ({ ...p, country: e.target.value, state: "" }))}
+                                    >
+                                        {COUNTRIES.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                                    </Select>
+                                </FormControl>
+                            </Stack>
+                        </Stack>
+                    </Box>
+
+                    {saveErr && <Alert severity="error">{saveErr}</Alert>}
+                </Stack>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={handleClose} disabled={saving}>Cancel</Button>
+                <Button
+                    variant="contained" onClick={submit}
+                    disabled={saving || cartItems.length === 0 || !po.trim() || !addr.name || !addr.address1 || !addr.city}
+                    startIcon={saving ? <CircularProgress size={14} color="inherit" /> : null}
+                    sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)" }}
+                >
+                    {(() => {
+                        const units = cartItems.reduce((s, i) => s + (i.qty ?? 1), 0);
+                        return `Create Order${units > 0 ? ` (${units} item${units !== 1 ? "s" : ""})` : ""}`;
+                    })()}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
 
 const STATUS_COLORS = {
     awaiting_shipment: { color: "warning", label: "Awaiting Shipment" },
@@ -36,6 +463,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
     const [orders] = useState(ords);
     const [search, setSearch] = useState(q ?? "");
     const [opened, setOpened] = useState("");
+    const [createOpen, setCreateOpen] = useState(false);
 
     const buildUrl = ({ pg = 1, f = filter, all = showAll, sq = search } = {}) => {
         const params = new URLSearchParams();
@@ -89,6 +517,14 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                     </Stack>
 
                     <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                        <Button
+                            variant="contained" size="small"
+                            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+                            onClick={() => setCreateOpen(true)}
+                            sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", borderRadius: 1.5, fontWeight: 600, mr: 0.5 }}
+                        >
+                            New Order
+                        </Button>
                         {/* Status toggle */}
                         <Chip
                             label="Awaiting Shipment"
@@ -366,6 +802,12 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                 </Stack>
 
             </Container>
+
+            <CreateOrderModal
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                onCreated={(orderId) => router.push(`/orders/${orderId}`)}
+            />
         </Box>
     );
 }

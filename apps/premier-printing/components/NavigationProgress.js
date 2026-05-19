@@ -28,11 +28,9 @@ export function NavigationProgress() {
         const off = () => setActive(false);
         window.addEventListener("pythias:loader:start", on);
         window.addEventListener("pythias:loader:stop",  off);
-        window.addEventListener("beforeunload", on);
         return () => {
             window.removeEventListener("pythias:loader:start", on);
             window.removeEventListener("pythias:loader:stop",  off);
-            window.removeEventListener("beforeunload", on);
         };
     }, []);
 

@@ -1,62 +1,107 @@
 import { Items } from "@pythias/mongo";
+import { Types } from "mongoose";
 
 export const ORDERS_PER_PAGE = 25;
 
-const ORDER_SELECT = "poNumber marketplace items status date total shippingAddress";
-const ITEM_SELECT  = "sku name colorName sizeName styleCode design isBlank color size blank upc pieceId";
-
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const PIPE_MS   = 20000;
+const SEARCH_MS = 10000;
+
+const ITEM_PROJECT = {
+    sku: 1, name: 1, colorName: 1, sizeName: 1, styleCode: 1,
+    design: 1, isBlank: 1, color: 1, size: 1, blank: 1, upc: 1, pieceId: 1,
+};
+
+const ORDER_PROJECT = {
+    poNumber: 1, orderId: 1, marketplace: 1, items: 1, status: 1, date: 1, total: 1, shippingAddress: 1,
+};
+
+function pickHint(statusFilter) {
+    if (statusFilter?.status) return { status: 1, date: -1 };
+    return { date: -1 };
+}
+
+// Single aggregation: $match → $sort (uses compound index) → $facet for count + paged data
+async function fetchPage(Order, matchFilter, skip, hint) {
+    const [result] = await Order.aggregate([
+        { $match: matchFilter },
+        { $sort: { date: -1 } },
+        {
+            $facet: {
+                count: [{ $count: "n" }],
+                orders: [
+                    { $skip: skip },
+                    { $limit: ORDERS_PER_PAGE },
+                    {
+                        $lookup: {
+                            from: "items",
+                            localField: "items",
+                            foreignField: "_id",
+                            as: "items",
+                            pipeline: [{ $project: ITEM_PROJECT }],
+                        },
+                    },
+                    { $project: ORDER_PROJECT },
+                ],
+            },
+        },
+    ]).hint(hint).option({ maxTimeMS: PIPE_MS });
+
+    return {
+        orders: result?.orders ?? [],
+        count:  result?.count?.[0]?.n ?? 0,
+    };
+}
+
 export async function OrdersSearch({ Order, q, page = 1, statusFilter = {}, orderIds = null }) {
-    const skip     = (page - 1) * ORDERS_PER_PAGE;
-    const populate = { path: "items", select: ITEM_SELECT };
+    const skip = (page - 1) * ORDERS_PER_PAGE;
 
     const since = new Date();
     since.setDate(since.getDate() - 30);
-    // When searching by query, drop both the date limit and status filter so any matching order is found
-    const searching = Boolean(q?.trim());
-    const dateLimit = searching ? {} : { date: { $gte: since } };
+    const searching          = Boolean(q?.trim());
+    const dateLimit          = searching ? {} : { date: { $gte: since } };
     const activeStatusFilter = searching ? {} : statusFilter;
-    const baseFilter = { "items.0": { $exists: true }, ...dateLimit, ...activeStatusFilter };
+    const baseFilter         = { ...dateLimit, ...activeStatusFilter };
     if (orderIds) baseFilter._id = { $in: orderIds };
 
     // ── No search query ──────────────────────────────────────────────────────
     if (!q?.trim()) {
-        const [count, orders] = await Promise.all([
-            Order.countDocuments(baseFilter),
-            Order.find(baseFilter)
-                .populate(populate)
-                .select(ORDER_SELECT)
-                .skip(skip).limit(ORDERS_PER_PAGE).lean(),
-        ]);
-        return { orders, count };
+        return fetchPage(Order, baseFilter, skip, pickHint(activeStatusFilter));
     }
 
     // ── Search query present ─────────────────────────────────────────────────
-    const raw    = q.trim();
-    const idSet  = new Set();
+    const raw   = q.trim();
+    const idSet = new Set();
 
-    const searches = [
-        // 1. Regex on PO number, marketplace, tracking number
-        Order.find({
-            ...baseFilter,
-            $or: [
-                { poNumber:    { $regex: escapeRegex(raw), $options: "i" } },
-                { marketplace: { $regex: escapeRegex(raw), $options: "i" } },
-                { "shippingInfo.labels.trackingNumber": { $regex: escapeRegex(raw), $options: "i" } },
-            ],
-        }).select("_id").lean(),
+    const escaped = escapeRegex(raw);
 
-        // 2. SKU / piece ID via items collection
-        Items.find({
-            $or: [
-                { pieceId: { $regex: escapeRegex(raw), $options: "i" } },
-                { sku:     { $regex: escapeRegex(raw), $options: "i" } },
-            ],
-        }).select("order").lean(),
-    ];
+    // 1. poNumber — exact + case-insensitive prefix
+    const poPromise = Order.find({
+        ...baseFilter,
+        $or: [
+            { poNumber: raw },
+            { poNumber: { $regex: `^${escaped}`, $options: "i" } },
+        ],
+    }).select("_id").limit(200).lean().maxTimeMS(SEARCH_MS).catch(() => []);
 
-    // 3. Atlas fuzzy — name + address (only useful for > 2 chars)
+    // 2. SKU / pieceId via Items (both indexed)
+    const itemHitsPromise = Items.find({
+        $or: [
+            { pieceId: { $regex: escaped } },
+            { sku:     { $regex: escaped } },
+        ],
+    }).select("order").limit(500).lean().maxTimeMS(SEARCH_MS).catch(() => []);
+
+    // 3a. Regex fallback — always runs, indexed on shippingAddress.name
+    const nameRegexPromise = Order.find({
+        "shippingAddress.name": { $regex: escaped, $options: "i" },
+    }).select("_id").limit(200).lean().maxTimeMS(SEARCH_MS).catch((e) => {
+        console.error("[OrdersSearch] name regex failed:", e.message);
+        return [];
+    });
+
+    // 3b. Atlas fuzzy — shipping name only
     let atlasPromise = Promise.resolve([]);
     if (raw.length > 2) {
         const sanitized = raw.replace(/[^a-zA-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
@@ -66,45 +111,40 @@ export async function OrdersSearch({ Order, q, page = 1, statusFilter = {}, orde
                     $search: {
                         index: "default",
                         compound: {
-                            must: [
-                                {
-                                    text: {
-                                        query: sanitized,
-                                        path: [
-                                            "shippingAddress.name",
-                                            "shippingAddress.address1",
-                                            "shippingAddress.city",
-                                            "shippingAddress.state",
-                                            "shippingAddress.zip",
-                                        ],
-                                        fuzzy: { maxEdits: 1, prefixLength: 2, maxExpansions: 50 },
-                                        matchCriteria: "any",
-                                    },
+                            must: [{
+                                text: {
+                                    query: sanitized,
+                                    path: ["shippingAddress.name"],
+                                    fuzzy: { maxEdits: 1, prefixLength: 2, maxExpansions: 50 },
                                 },
-                            ],
-                            filter: [
-                                { exists: { path: "items" } },
-                            ],
+                            }],
                         },
                     },
                 },
+                { $limit: 100 },
                 { $project: { _id: 1 } },
-            ]).catch((e) => {
-                console.error("Atlas Search failed:", e.message);
+            ], { maxTimeMS: SEARCH_MS }).catch((e) => {
+                console.error("[OrdersSearch] Atlas Search failed:", e.message);
                 return [];
             });
         }
     }
 
-    const [regexHits, itemHits, atlasHits] = await Promise.all([...searches, atlasPromise]);
+    const [poHits, itemHits, nameHits, atlasHits] = await Promise.all([
+        poPromise, itemHitsPromise, nameRegexPromise, atlasPromise,
+    ]);
 
-    regexHits.forEach(h => idSet.add(h._id.toString()));
+    console.log(`[OrdersSearch] q="${raw}" poHits=${poHits.length} itemHits=${itemHits.length} nameHits=${nameHits.length} atlasHits=${atlasHits.length}`);
+
+    poHits.forEach(h    => idSet.add(h._id.toString()));
     itemHits.forEach(h  => { if (h.order) idSet.add(h.order.toString()); });
+    nameHits.forEach(h  => idSet.add(h._id.toString()));
     atlasHits.forEach(h => idSet.add(h._id.toString()));
+
+    console.log(`[OrdersSearch] idSet size=${idSet.size}`);
 
     if (!idSet.size) return { orders: [], count: 0 };
 
-    // Intersect with pre-filter whitelist
     let matchIds = [...idSet];
     if (orderIds) {
         const allowed = new Set(orderIds.map(id => id.toString()));
@@ -112,20 +152,13 @@ export async function OrdersSearch({ Order, q, page = 1, statusFilter = {}, orde
     }
     if (!matchIds.length) return { orders: [], count: 0 };
 
-    // Mongoose auto-casts string IDs to ObjectId — no mongoose import needed
-    const matchFilter = {
-        _id: { $in: matchIds },
-        "items.0": { $exists: true },
-        ...activeStatusFilter,
-    };
+    // Cast strings to ObjectIds — aggregation $match does not auto-cast unlike find()
+    const objectIds = matchIds.map(id => Types.ObjectId.createFromHexString(id));
+    const matchFilter = { _id: { $in: objectIds }, ...activeStatusFilter };
 
-    const [count, orders] = await Promise.all([
-        Order.countDocuments(matchFilter),
-        Order.find(matchFilter)
-            .populate(populate)
-            .select(ORDER_SELECT)
-            .skip(skip).limit(ORDERS_PER_PAGE).lean(),
-    ]);
+    console.log(`[OrdersSearch] fetching page for ${objectIds.length} ids`);
+    const { orders } = await fetchPage(Order, matchFilter, skip, { _id: 1 });
+    console.log(`[OrdersSearch] fetchPage returned ${orders.length} orders`);
 
-    return { orders, count };
+    return { orders, count: matchIds.length };
 }

@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import axios from "axios";
-import { ApiKeyIntegrations, Sale, ShopifyUserData, ShopifyProducts } from "@pythias/mongo";
+import { ApiKeyIntegrations, Sale, ShopifyProducts } from "@pythias/mongo";
 
 const SHOPIFY_APP_URL = process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com";
-const API_VERSION = "2025-07";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -16,17 +15,12 @@ async function getConnections() {
   return ApiKeyIntegrations.find({ displayName: /^shopify-/ }).lean();
 }
 
-async function shopifyGQL({ shop, token, query, variables = {} }) {
-  const res = await axios.post(
-    `https://${shop}/admin/api/${API_VERSION}/graphql.json`,
-    { query, variables },
-    { headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" } }
-  );
-  return res.data.data;
+async function getConn(shop) {
+  return ApiKeyIntegrations.findOne({ displayName: `shopify-${shop}` }).lean();
 }
 
-async function getUserData(shop) {
-  return ShopifyUserData.findOne({ shop }).lean();
+function shopifyHeaders(conn) {
+  return { Authorization: `Bearer ${conn.apiKey}` };
 }
 
 // ── GET /api/admin/shopify  ── list connections + summary ─────────────────────
@@ -138,25 +132,63 @@ export async function handleShopifySalesDELETE(req) {
   return NextResponse.json({ error: false, deletedId: saleId });
 }
 
-// ── GET /api/admin/shopify/products?shop= ─── synced products ─────────────────
+// ── GET /api/admin/shopify/products?shop=&page_info= ─── proxied via pythias-app
 
 export async function handleShopifyAdminProductsGET(req) {
-  const token = await getToken({ req });
-  if (!token) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
+  const jwtToken = await getToken({ req });
+  if (!jwtToken) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const shop = searchParams.get("shop");
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const limit = 20;
+  const shop      = searchParams.get("shop");
+  const limit     = Math.min(Number(searchParams.get("limit") || 50), 250);
+  const page_info = searchParams.get("page_info") || null;
 
-  const query = shop
-    ? { shop }
-    : { shop: { $in: (await getConnections()).map(c => shopName(c.displayName)) } };
+  if (!shop) return NextResponse.json({ error: true, msg: "shop is required" }, { status: 400 });
 
-  const [products, total] = await Promise.all([
-    ShopifyProducts.find(query).skip((page - 1) * limit).limit(limit).lean(),
-    ShopifyProducts.countDocuments(query),
-  ]);
+  const conn = await getConn(shop);
+  if (!conn) return NextResponse.json({ error: true, msg: "Shop not connected" }, { status: 404 });
 
-  return NextResponse.json({ error: false, products, total, page, pages: Math.ceil(total / limit) });
+  const params = new URLSearchParams({ shop, limit });
+  if (page_info) params.set("page_info", page_info);
+
+  let errorRes;
+  const res = await axios.get(
+    `${SHOPIFY_APP_URL}/api/products?${params}`,
+    { headers: shopifyHeaders(conn) }
+  ).catch(e => { errorRes = e.response?.data ?? e.message; });
+
+  if (errorRes) return NextResponse.json({ error: true, msg: errorRes }, { status: 502 });
+
+  return NextResponse.json(res.data);
+}
+
+// ── GET /api/admin/shopify/orders?shop=&status=&page_info= ── proxied via pythias-app
+
+export async function handleShopifyOrdersGET(req) {
+  const jwtToken = await getToken({ req });
+  if (!jwtToken) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const shop      = searchParams.get("shop");
+  const status    = searchParams.get("status") || "open";
+  const limit     = Math.min(Number(searchParams.get("limit") || 50), 250);
+  const page_info = searchParams.get("page_info") || null;
+
+  if (!shop) return NextResponse.json({ error: true, msg: "shop is required" }, { status: 400 });
+
+  const conn = await getConn(shop);
+  if (!conn) return NextResponse.json({ error: true, msg: "Shop not connected" }, { status: 404 });
+
+  const params = new URLSearchParams({ shop, status, limit });
+  if (page_info) params.set("page_info", page_info);
+
+  let errorRes;
+  const res = await axios.get(
+    `${SHOPIFY_APP_URL}/api/orders?${params}`,
+    { headers: shopifyHeaders(conn) }
+  ).catch(e => { errorRes = e.response?.data ?? e.message; });
+
+  if (errorRes) return NextResponse.json({ error: true, msg: errorRes }, { status: 502 });
+
+  return NextResponse.json(res.data);
 }

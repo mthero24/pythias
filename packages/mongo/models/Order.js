@@ -178,5 +178,9 @@ const schema = new mongoose.Schema({
 // });
 
 schema.index({ date: -1 });
+schema.index({ poNumber: 1 });
+schema.index({ marketplace: 1 });
+schema.index({ status: 1, date: -1 });
+schema.index({ "shippingInfo.labels.trackingNumber": 1 }, { sparse: true });
 
 export default PremierPrinting.model("Order", schema);

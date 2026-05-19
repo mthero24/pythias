@@ -134,4 +134,8 @@ const schema = new mongoose.Schema(
   { suppressWarning: true }
 );
 
+schema.index({ sku: 1 });
+schema.index({ order: 1 });
+schema.index({ pieceId: 1 }, { unique: true, sparse: true });
+
 export default PremierPrinting.model("Item", schema);

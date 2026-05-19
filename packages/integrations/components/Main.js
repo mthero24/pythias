@@ -17,7 +17,9 @@ import { WalmartModal } from "./WalmartModal";
 import { FaireModal }   from "./FaireModal";
 import { SheinModal }   from "./SheinModal";
 import { TemuModal }    from "./TemuModal";
-import { useState, useCallback } from "react";
+import { AmazonModal }  from "./AmazonModal";
+import { MiraklModal } from "./MiraklModal";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import AddIcon from "@mui/icons-material/Add";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -32,12 +34,13 @@ const PLATFORMS = {
     shopify: { label: "Shopify",      color: "#96bf48", description: "Sell through your Shopify store with automatic order sync, product listings, and sales management." },
     tiktok:  { label: "TikTok Shop",  color: "#010101", description: "Sell directly on TikTok Shop with product listings and order sync." },
     etsy:    { label: "Etsy",         color: "#F56400", description: "Connect your Etsy storefront for listing management and orders." },
-    amazon:  { label: "Amazon",       color: "#FF9900", description: "Amazon Marketplace integration.", comingSoon: true },
+    amazon:  { label: "Amazon",       color: "#FF9900", description: "Sell on Amazon Marketplace with order sync, fulfillment confirmation, and product listings via SP-API." },
     acenda:  { label: "Acenda",       color: "#1565C0", description: "Sync inventory and catalog with your Acenda storefront." },
     walmart: { label: "Walmart",      color: "#0071CE", description: "List products on Walmart Marketplace and manage orders." },
     faire:   { label: "Faire",        color: "#10305A", description: "Wholesale marketplace connecting brands with independent retailers." },
     shein:   { label: "SHEIN",        color: "#000000", description: "List products on SHEIN's global marketplace via the Open Platform API." },
     temu:    { label: "Temu",         color: "#ff6500", description: "List products on Temu's global marketplace via the Partner Open Platform API." },
+    mirakl:  { label: "Mirakl",      color: "#1d4ed8", description: "Sell on any Mirakl-powered marketplace (Target Plus, Carrefour, Best Buy Canada, and others) with order sync and fulfillment." },
 };
 
 function platformColor(type) {
@@ -917,6 +920,338 @@ function FaireOrdersPanel({ connectionId }) {
     );
 }
 
+// ─── Amazon Orders Panel ──────────────────────────────────────────────────────
+const AMAZON_CARRIERS = ["UPS", "USPS", "FedEx", "DHL", "OnTrac", "Other"];
+
+function AmazonOrdersPanel({ connectionId }) {
+    const [orders, setOrders]         = useState([]);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState("");
+    const [fetched, setFetched]       = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier]       = useState("UPS");
+    const [tracking, setTracking]     = useState("");
+    const [shipping, setShipping]     = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/amazon/orders?connectionId=${connectionId}`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/amazon/orders", {
+                connectionId,
+                orderId:    shipTarget.AmazonOrderId,
+                action:     "ship",
+                trackingNumber: tracking.trim(),
+                carrier,
+                orderItems: (shipTarget.orderItems ?? []).map(i => ({
+                    orderItemId: i.OrderItemId,
+                    quantity:    parseInt(i.QuantityOrdered ?? "1", 10),
+                })),
+            });
+            setOrders(prev => prev.filter(o => o.AmazonOrderId !== shipTarget.AmazonOrderId));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Unshipped Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#fff8f0" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.AmazonOrderId}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {AMAZON_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#FF9900", "&:hover": { bgcolor: "#e88800" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Buyer</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.AmazonOrderId} hover selected={shipTarget?.AmazonOrderId === o.AmazonOrderId}>
+                                    <TableCell><Typography variant="body2" fontWeight={500}>{o.AmazonOrderId}</Typography></TableCell>
+                                    <TableCell><Typography variant="body2">{o.BuyerInfo?.BuyerName ?? "—"}</Typography></TableCell>
+                                    <TableCell><Typography variant="body2">{(o.orderItems ?? []).length}</Typography></TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">
+                                            {o.OrderTotal ? `${o.OrderTotal.CurrencyCode} ${o.OrderTotal.Amount}` : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.PurchaseDate ? new Date(o.PurchaseDate).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button size="small" variant="outlined"
+                                            startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                            onClick={() => { setShipTarget(o); setTracking(""); }}
+                                            sx={{ borderColor: "#FF9900", color: "#FF9900" }}>
+                                            Ship
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No unshipped orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Mirakl Orders Panel ─────────────────────────────────────────────────────
+const MIRAKL_CARRIERS = ["USPS", "UPS", "FedEx", "DHL", "OnTrac", "LSO", "Other"];
+
+function MiraklOrdersPanel({ connectionId }) {
+    const [orders, setOrders]         = useState([]);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState("");
+    const [fetched, setFetched]       = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier]       = useState("USPS");
+    const [tracking, setTracking]     = useState("");
+    const [shipping, setShipping]     = useState(false);
+    const [accepting, setAccepting]   = useState(null);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const params = new URLSearchParams({ connectionId, orderStates: "WAITING_ACCEPTANCE,WAITING_DEBIT,WAITING_DEBIT_PAYMENT,SHIPPING", max: 100 });
+            const res = await axios.get(`/api/integrations/mirakl/orders?${params}`);
+            setOrders((res.data.orders ?? []).sort((a, b) => new Date(b.created_date ?? 0) - new Date(a.created_date ?? 0)));
+        } catch (e) {
+            const d = e.response?.data;
+            setError(typeof d?.error === "string" ? d.error : JSON.stringify(d) ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const accept = async (orderId) => {
+        setAccepting(orderId);
+        try {
+            await axios.post("/api/integrations/mirakl/orders", { connectionId, orderId, action: "accept" });
+            setOrders(prev => prev.map(o => o.order_id === orderId
+                ? { ...o, order_state: { ...o.order_state, state: "WAITING_DEBIT" } }
+                : o));
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Accept failed");
+        } finally { setAccepting(null); }
+    };
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/mirakl/orders", {
+                connectionId,
+                orderId: shipTarget.order_id,
+                action: "ship",
+                carrier,
+                trackingNumber: tracking.trim(),
+            });
+            setOrders(prev => prev.filter(o => o.order_id !== shipTarget.order_id));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Open Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#eff6ff" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.order_id}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {MIRAKL_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#1d4ed8", "&:hover": { bgcolor: "#1e40af" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>State</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => {
+                                const state = o.order_state?.state;
+                                return (
+                                    <TableRow key={o.order_id} hover selected={shipTarget?.order_id === o.order_id}>
+                                        <TableCell><Typography variant="body2" fontWeight={500}>{o.order_id}</Typography></TableCell>
+                                        <TableCell>
+                                            <Chip label={state ?? "—"} size="small"
+                                                sx={{ bgcolor: state === "WAITING_ACCEPTANCE" ? "#e0e7ff" : "#dbeafe", color: state === "WAITING_ACCEPTANCE" ? "#4338ca" : "#1e40af", fontWeight: 600, fontSize: "0.7rem" }} />
+                                        </TableCell>
+                                        <TableCell><Typography variant="body2">{(o.order_lines ?? []).length}</Typography></TableCell>
+                                        <TableCell>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {o.created_date ? new Date(o.created_date).toLocaleDateString() : "—"}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Stack direction="row" spacing={0.5}>
+                                                {state === "WAITING_ACCEPTANCE" && (
+                                                    <Button size="small" variant="outlined" color="success"
+                                                        startIcon={accepting === o.order_id ? <CircularProgress size={12} /> : <CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                                                        disabled={accepting === o.order_id}
+                                                        onClick={() => accept(o.order_id)}>
+                                                        Accept
+                                                    </Button>
+                                                )}
+                                                {(state === "WAITING_DEBIT" || state === "WAITING_DEBIT_PAYMENT" || state === "SHIPPING") && (
+                                                    <Button size="small" variant="outlined"
+                                                        startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                                        onClick={() => { setShipTarget(o); setTracking(""); }}
+                                                        sx={{ borderColor: "#1d4ed8", color: "#1d4ed8" }}>
+                                                        Ship
+                                                    </Button>
+                                                )}
+                                            </Stack>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No open orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Acenda Dashboard Panel ───────────────────────────────────────────────────
+function AcendaDashboardPanel({ connectionId, manageHref }) {
+    const [data, setData]       = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        axios.get(`/api/integrations/acenda/dashboard?connectionId=${connectionId}`)
+            .then(r => setData(r.data))
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, [connectionId]);
+
+    const stats = [
+        { label: "Sales Channels", value: data?.channels?.length ?? 0 },
+        { label: "Warehouses",     value: data?.warehouses?.length ?? 0 },
+        { label: "Catalog Items",  value: data?.catalog?.length ?? 0 },
+        { label: "Inventory SKUs", value: data?.inventoryTotal ?? 0 },
+    ];
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2, borderTop: "1px solid #f1f5f9" }}>
+            <Stack direction="row" alignItems="center" spacing={2} mt={1.5} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Acenda Dashboard</Typography>
+                {manageHref && (
+                    <Button component={Link} href={manageHref} size="small" variant="outlined"
+                        sx={{ borderColor: "#1565C0", color: "#1565C0", borderRadius: 1.5, fontSize: "0.72rem" }}>
+                        Open Full Dashboard
+                    </Button>
+                )}
+                {loading && <CircularProgress size={14} />}
+            </Stack>
+            {data && (
+                <Stack direction="row" spacing={2} flexWrap="wrap">
+                    {stats.map(s => (
+                        <Paper key={s.label} variant="outlined" sx={{ px: 2, py: 1, borderRadius: 1.5, textAlign: "center", minWidth: 100 }}>
+                            <Typography variant="h6" fontWeight={700} color="#1565C0">{s.value}</Typography>
+                            <Typography variant="caption" color="text.secondary">{s.label}</Typography>
+                        </Paper>
+                    ))}
+                </Stack>
+            )}
+        </Box>
+    );
+}
+
 // ─── Connection row ────────────────────────────────────────────────────────────
 function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pullOrdersEnabled: initialPullEnabled, onDeactivate }) {
     const normalizedType = type?.toLowerCase() ?? "";
@@ -925,8 +1260,10 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
     const label = cfg.label ?? type ?? "Unknown";
     const color = cfg.color ?? "#6b7280";
     const displayLabel = isShopify ? name.replace(/^shopify-/, "") : name;
-    const isAcenda = !isShopify && (normalizedType === "acenda" ||
-        (!normalizedType && !!organization && !["walmart","faire","tiktok","etsy","shein","temu"].includes(normalizedType)));
+    const isAmazon  = normalizedType === "amazon";
+    const isMirakl  = normalizedType === "mirakl";
+    const isAcenda  = !isShopify && !isAmazon && !isMirakl && (normalizedType === "acenda" ||
+        (!normalizedType && !!organization && !["walmart","faire","tiktok","etsy","shein","temu","amazon","mirakl"].includes(normalizedType)));
     const isEtsy    = normalizedType === "etsy";
     const isWalmart = normalizedType === "walmart";
     const isFaire   = normalizedType === "faire";
@@ -1031,10 +1368,10 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     </Box>
 
                     {/* ── Pull Orders toggle strip ── */}
-                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu) && (() => {
-                        const accentColor = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : "#1565C0";
-                        const bgEnabled   = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : "#eff6ff";
-                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : "Acenda";
+                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu || isAmazon || isMirakl) && (() => {
+                        const accentColor  = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : isAmazon ? "#FF9900" : isMirakl ? "#1d4ed8" : "#1565C0";
+                        const bgEnabled    = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : isAmazon ? "#fff8f0" : isMirakl ? "#eff6ff" : "#eff6ff";
+                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : isAmazon ? "Amazon" : isMirakl ? "Mirakl" : "Acenda";
                         return (
                             <Box sx={{
                                 borderTop: "1px solid #f1f5f9",
@@ -1063,6 +1400,9 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                             </Box>
                         );
                     })()}
+
+                    {/* ── Acenda dashboard always-visible panel ── */}
+                    {isAcenda && <AcendaDashboardPanel connectionId={id} manageHref={manageHref} />}
 
                     {/* ── Orders panels (expand when enabled) ── */}
                     {isAcenda && (
@@ -1093,6 +1433,16 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     {isTemu && (
                         <Collapse in={pullEnabled}>
                             <TemuOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isAmazon && (
+                        <Collapse in={pullEnabled}>
+                            <AmazonOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isMirakl && (
+                        <Collapse in={pullEnabled}>
+                            <MiraklOrdersPanel connectionId={id} />
                         </Collapse>
                     )}
                 </Box>
@@ -1185,6 +1535,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const [faireOpen,   setFaireOpen]   = useState(false);
     const [sheinOpen,   setSheinOpen]   = useState(false);
     const [temuOpen,    setTemuOpen]    = useState(false);
+    const [amazonOpen,  setAmazonOpen]  = useState(false);
+    const [miraklOpen,  setMiraklOpen]  = useState(false);
     const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || []);
     const [tiktokConnections, setTiktokConnections] = useState(tiktokShops || []);
 
@@ -1199,7 +1551,9 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const manageHref = (api) => {
         if (api.type === "walmart") return `/admin/integrations/walmart?connectionId=${api._id}`;
         if (api.type === "faire")   return `/admin/integrations/faire?connectionId=${api._id}`;
-        if (api.type === "shopify" || api.displayName?.startsWith("shopify-")) return "/admin/sales";
+        if (api.type === "acenda")  return `/admin/integrations/acenda?connectionId=${api._id}`;
+        if (api.type === "shopify" || api.displayName?.startsWith("shopify-")) return `/admin/integrations/shopify?connectionId=${api._id}`;
+        if (api.type === "mirakl")  return `/admin/integrations/mirakl?connectionId=${api._id}`;
         return null;
     };
 
@@ -1231,7 +1585,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             logoSrc="/Shopify_logo_2018.png" alt="Shopify"
                             name="Shopify"
                             description={PLATFORMS.shopify.description}
-                            href={shopifyAppUrl || "https://shopapp.pythiastechnologies.com"}
+                            href="https://apps.shopify.com/pythias-app"
                         />
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
@@ -1256,7 +1610,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             logo={amazon} alt="Amazon"
                             name="Amazon"
                             description={PLATFORMS.amazon.description}
-                            comingSoon
+                            connected={connectedTypes.has("amazon")}
+                            onClick={connectedTypes.has("amazon") ? undefined : () => setAmazonOpen(true)}
                         />
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
@@ -1264,7 +1619,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             logo={acenda} alt="Acenda"
                             name="Acenda"
                             description={PLATFORMS.acenda.description}
-                            onClick={() => setAcendaOpen(true)}
+                            connected={connectedTypes.has("acenda")}
+                            onClick={connectedTypes.has("acenda") ? undefined : () => setAcendaOpen(true)}
                         />
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
@@ -1301,6 +1657,15 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             description={PLATFORMS.temu.description}
                             connected={connectedTypes.has("temu")}
                             onClick={connectedTypes.has("temu") ? undefined : () => setTemuOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/mirakl.svg" alt="Mirakl"
+                            name="Mirakl"
+                            description={PLATFORMS.mirakl.description}
+                            connected={connectedTypes.has("mirakl")}
+                            onClick={connectedTypes.has("mirakl") ? undefined : () => setMiraklOpen(true)}
                         />
                     </Grid2>
                 </Grid2>
@@ -1348,6 +1713,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             <FaireModal   open={faireOpen}   setOpen={setFaireOpen}   provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <SheinModal   open={sheinOpen}   setOpen={setSheinOpen}   provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <TemuModal    open={temuOpen}    setOpen={setTemuOpen}    provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <AmazonModal  open={amazonOpen}  setOpen={setAmazonOpen}  provider={provider} setConnections={setApiConnections} />
+            <MiraklModal  open={miraklOpen}  setOpen={setMiraklOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
         </Box>
     );
 }

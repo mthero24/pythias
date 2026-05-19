@@ -25,6 +25,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import StickyNote2Icon from "@mui/icons-material/StickyNote2";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import CancelIcon from "@mui/icons-material/Cancel";
 
 const selectMenuPortalProps = {
     menuPortalTarget: typeof document !== "undefined" ? document.body : null,
@@ -82,6 +83,9 @@ export function Main({ ord, blanks, source }) {
     const [editingAddress, setEditingAddress] = useState(false);
     const [addressForm, setAddressForm] = useState(ord.shippingAddress ?? {});
     const [addressSaving, setAddressSaving] = useState(false);
+    const [cancelOpen, setCancelOpen] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
+    const [cancelErr, setCancelErr] = useState("");
 
     useEffect(() => {
         const shippedStatuses = ["Shipped", "shipped", "Out For Delivery"];
@@ -133,6 +137,19 @@ export function Main({ ord, blanks, source }) {
         }
     };
 
+    const cancelOrder = async () => {
+        setCancelling(true); setCancelErr("");
+        try {
+            await axios.post("/api/orders/cancel", { id: order._id });
+            setOrder(prev => ({ ...prev, status: "cancelled", canceled: true }));
+            setCancelOpen(false);
+        } catch (e) {
+            setCancelErr(e.response?.data?.error ?? "Failed to cancel order");
+        } finally {
+            setCancelling(false);
+        }
+    };
+
     const handleItemUpdate = (i) => {
         let b, s, c;
         if (i.blank) b = blanks.filter(bl => bl._id.toString() === i.blank.toString())[0];
@@ -150,6 +167,7 @@ export function Main({ ord, blanks, source }) {
 
     const statusMeta = STATUS_META[order.status] ?? { color: "default", label: order.status };
     const canMarkShipped = !["shipped", "delivered"].includes(order.status?.toLowerCase());
+    const canCancel = !["cancelled", "shipped", "delivered"].includes(order.status?.toLowerCase()) && !order.canceled;
     const missingCount = order.items.filter(isItemMissing).length;
 
     return (
@@ -187,6 +205,11 @@ export function Main({ ord, blanks, source }) {
                         )}
                     </Stack>
                     <Stack direction="row" spacing={1}>
+                        {canCancel && (
+                            <Button size="small" variant="outlined" color="error" startIcon={<CancelIcon />} onClick={() => { setCancelErr(""); setCancelOpen(true); }} sx={{ fontSize: "0.75rem" }}>
+                                Cancel Order
+                            </Button>
+                        )}
                         <Button size="small" variant="outlined" startIcon={<NoteAddIcon />} onClick={() => setNote(true)} sx={{ fontSize: "0.75rem" }}>
                             Add Note
                         </Button>
@@ -588,6 +611,39 @@ export function Main({ ord, blanks, source }) {
             <ShippedModal open={shipped} setOpen={setShipped} order={order} setOrder={setOrder} />
             <NoteModal open={note} setOpen={setNote} order={order} setOrder={setOrder} />
             <Repull />
+
+            {/* Cancel confirmation dialog */}
+            <Dialog open={cancelOpen} onClose={() => !cancelling && setCancelOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+                    <CancelIcon color="error" fontSize="small" />
+                    Cancel Order
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                        Are you sure you want to cancel <strong>{order.poNumber}</strong>?
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        {order.marketplaceConnectionId
+                            ? "This order will be cancelled in our system and on the marketplace."
+                            : order.orderId?.startsWith("MANUAL-")
+                                ? "This order will be cancelled in our system."
+                                : "This order will be cancelled in our system and in ShipStation."
+                        }
+                    </Typography>
+                    {cancelErr && <Typography variant="body2" color="error" sx={{ mt: 1 }}>{cancelErr}</Typography>}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setCancelOpen(false)} disabled={cancelling}>Keep Order</Button>
+                    <Button
+                        variant="contained" color="error"
+                        onClick={cancelOrder}
+                        disabled={cancelling}
+                        startIcon={cancelling ? <CircularProgress size={14} color="inherit" /> : <CancelIcon />}
+                    >
+                        {cancelling ? "Cancelling…" : "Yes, Cancel"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             <Footer />
         </Box>

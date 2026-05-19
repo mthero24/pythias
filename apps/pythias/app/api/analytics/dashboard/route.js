@@ -16,9 +16,10 @@ export async function GET(req) {
     else if (range === "90d") since = new Date(now - 90 * 24 * 60 * 60 * 1000);
     else                      since = new Date(now - 7  * 24 * 60 * 60 * 1000); // 7d default
 
-    const matchAll   = { enteredAt: { $gte: since } };
-    const matchHuman = { enteredAt: { $gte: since }, isBot: false };
-    const matchBot   = { enteredAt: { $gte: since }, isBot: true };
+    const noBackend  = { page: { $not: { $regex: "^/(api|admin)" } } };
+    const matchAll   = { enteredAt: { $gte: since }, ...noBackend };
+    const matchHuman = { enteredAt: { $gte: since }, isBot: false, ...noBackend };
+    const matchBot   = { enteredAt: { $gte: since }, isBot: true,  ...noBackend };
 
     const [
         totalViews,
