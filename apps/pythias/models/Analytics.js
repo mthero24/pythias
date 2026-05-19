@@ -51,5 +51,20 @@ const SessionSchema = new mongoose.Schema({
 SessionSchema.index({ startedAt: -1 });
 SessionSchema.index({ isBot: 1, startedAt: -1 });
 
-export const PageView = PremierPrinting.model("AnalyticsPageView", PageViewSchema, "analytics_pageviews");
-export const Session  = PremierPrinting.model("AnalyticsSession",  SessionSchema,  "analytics_sessions");
+// ── Conversion ────────────────────────────────────────────────────────────────
+// One document per conversion event (e.g. demo_booked).
+const ConversionSchema = new mongoose.Schema({
+    sessionId:       { type: String, required: true, index: true },
+    conversionEvent: { type: String, required: true },
+    page:            { type: String, default: "" },
+    occurredAt:      { type: Date, default: Date.now },
+    source:          { type: String, default: "" },   // copied from Session on write
+    referrer:        { type: String, default: "" },
+    ip:              { type: String, default: "" },
+});
+ConversionSchema.index({ occurredAt: -1 });
+ConversionSchema.index({ conversionEvent: 1, occurredAt: -1 });
+
+export const PageView   = PremierPrinting.model("AnalyticsPageView",  PageViewSchema,   "analytics_pageviews");
+export const Session    = PremierPrinting.model("AnalyticsSession",   SessionSchema,    "analytics_sessions");
+export const Conversion = PremierPrinting.model("AnalyticsConversion",ConversionSchema, "analytics_conversions");

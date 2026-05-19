@@ -10,6 +10,7 @@ import PeopleIcon        from "@mui/icons-material/People";
 import SmartToyIcon      from "@mui/icons-material/SmartToy";
 import TrendingUpIcon    from "@mui/icons-material/TrendingUp";
 import SpeedIcon         from "@mui/icons-material/Speed";
+import CheckCircleIcon   from "@mui/icons-material/CheckCircle";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtTime(secs) {
@@ -117,16 +118,38 @@ export default function AnalyticsDashboard() {
                 <>
                     {/* ── Summary cards ── */}
                     <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
-                        <StatCard icon={<TrendingUpIcon />}  label="Human Pageviews"  value={s.humanViews.toLocaleString()} sub={`${s.totalViews.toLocaleString()} total`} />
-                        <StatCard icon={<PeopleIcon />}      label="Sessions"         value={s.humanSessions.toLocaleString()} sub={`${s.avgPagesPerSession} pages/session`} color="#0ea5e9" />
-                        <StatCard icon={<AccessTimeIcon />}  label="Avg Time on Page" value={fmtTime(s.avgTimeOnPage)} color="#10b981" />
-                        <StatCard icon={<SmartToyIcon />}    label="Bot Traffic"      value={`${s.botPercent}%`} sub={`${s.botViews.toLocaleString()} bot views`} color="#f59e0b" />
+                        <StatCard icon={<TrendingUpIcon />}   label="Human Pageviews"  value={s.humanViews.toLocaleString()} sub={`${s.totalViews.toLocaleString()} total`} />
+                        <StatCard icon={<PeopleIcon />}       label="Sessions"         value={s.humanSessions.toLocaleString()} sub={`${s.avgPagesPerSession} pages/session`} color="#0ea5e9" />
+                        <StatCard icon={<AccessTimeIcon />}   label="Avg Time on Page" value={fmtTime(s.avgTimeOnPage)} color="#10b981" />
+                        <StatCard icon={<CheckCircleIcon />}  label="Demo Bookings"    value={s.totalConversions ?? 0} sub={`${s.conversionRate ?? 0}% conversion rate`} color="#22c55e" />
+                        <StatCard icon={<SmartToyIcon />}     label="Bot Traffic"      value={`${s.botPercent}%`} sub={`${s.botViews.toLocaleString()} bot views`} color="#f59e0b" />
                     </Box>
 
                     {/* ── Traffic chart ── */}
                     <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
                         <TrafficChart data={data.trafficByDay} />
                     </Paper>
+
+                    {/* ── Conversions ── */}
+                    {data.conversions?.total > 0 && (
+                        <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                                <CheckCircleIcon sx={{ color: "#22c55e" }} />
+                                <Typography variant="h6" fontWeight={600}>Demo Bookings — {data.conversions.total}</Typography>
+                            </Box>
+                            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+                                {data.conversions.bySource.map(c => (
+                                    <Chip
+                                        key={c.source}
+                                        label={`${c.source || "direct"}: ${c.count}`}
+                                        color="success"
+                                        variant="outlined"
+                                        size="small"
+                                    />
+                                ))}
+                            </Box>
+                        </Paper>
+                    )}
 
                     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3, mb: 4 }}>
                         {/* ── Top pages ── */}

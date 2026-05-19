@@ -100,7 +100,7 @@ export const runTracking = async () => {
             status: { $in: SHIPPED_STATUSES },
             "shippingInfo.labels.0": { $exists: true },
             date: { $gt: cutoff },
-        }).select("status shippingInfo poNumber date").skip(skip).limit(BATCH);
+        }).select("status shippingInfo poNumber date").sort({ date: 1 }).skip(skip).limit(BATCH);
 
         if (!orders.length) break;
         total += orders.length;

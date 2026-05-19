@@ -37,6 +37,7 @@ export async function POST(req= NextApiRequest){
         if (res && res.error && res.msg != `{"code":"ECONNRESET"}`) {
             return NextResponse.json({ error: true, msg: "error printing label" })
         } else {
+            logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email, provider: "po" });
             console.log("return")
             return NextResponse.json({
                 error: false, label: order.shippingInfo.label,

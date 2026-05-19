@@ -84,8 +84,8 @@ export async function POST(req = NextApiRequest) {
     let order = new InventoryOrders({
         vendor: data.order.company,
         poNumber: data.order.poNumber,
-        dateOrdered: new Date(data.order.dateOrdered),
-        dateExpected: data.order.dateExpected ? new Date(data.order.dateExpected) : null,
+        dateOrdered: new Date(data.order.dateOrdered + "T12:00:00"),
+        dateExpected: data.order.dateExpected ? new Date(data.order.dateExpected + "T12:00:00") : null,
         locations: [],
         items: data.items,
     });

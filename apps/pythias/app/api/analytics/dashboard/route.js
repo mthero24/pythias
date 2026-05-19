@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { PageView, Session } from "@/models/Analytics";
+import { PageView, Session, Conversion } from "@/models/Analytics";
 
 export async function GET(req) {
     const token = await getToken({ req });
@@ -118,6 +118,22 @@ export async function GET(req) {
           ]))[0]?.avg ?? 0
         : 0;
 
+    const matchConversions = { occurredAt: { $gte: since } };
+    const [totalConversions, conversionsBySource, conversionsByDay] = await Promise.all([
+        Conversion.countDocuments(matchConversions),
+        Conversion.aggregate([
+            { $match: matchConversions },
+            { $group: { _id: "$source", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 10 },
+        ]),
+        Conversion.aggregate([
+            { $match: matchConversions },
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$occurredAt" } }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+        ]),
+    ]);
+
     return NextResponse.json({
         error: false,
         range,
@@ -131,6 +147,13 @@ export async function GET(req) {
             humanSessions,
             avgTimeOnPage:      Math.round(avgTimeOnPage),
             avgPagesPerSession: Math.round(avgPagesPerSession * 10) / 10,
+            totalConversions,
+            conversionRate: humanSessions > 0 ? Math.round((totalConversions / humanSessions) * 1000) / 10 : 0,
+        },
+        conversions: {
+            total: totalConversions,
+            bySource: conversionsBySource.map(c => ({ source: c._id || "direct", count: c.count })),
+            byDay:    conversionsByDay.map(c => ({ date: c._id, count: c.count })),
         },
         topPages:       topPages.map(p => ({ page: p._id, views: p.views, avgTime: Math.round(p.avgTime ?? 0) })),
         topSources:     topSources.map(s => ({ source: s._id || "direct", count: s.count })),

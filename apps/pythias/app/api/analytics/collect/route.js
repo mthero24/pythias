@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PageView, Session } from "@/models/Analytics";
+import { PageView, Session, Conversion } from "@/models/Analytics";
 
 // ── Bot detection ─────────────────────────────────────────────────────────────
 const BOT_UA = /bot|crawler|spider|scraper|wget|curl|python-requests|python\/|java\/|go-http|apache-httpclient|googlebot|bingbot|yandexbot|baiduspider|duckduckbot|semrushbot|ahrefsbot|moz\/|petalbot|lighthouse|headless|puppeteer|playwright|selenium|phantomjs|cfnetwork|node-fetch|axios|okhttp|libwww/i;
@@ -42,7 +42,7 @@ function parseSource(referrer, utmSource) {
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { type, sessionId, page, referrer, timeOnPage, interacted, vitals, source, medium, campaign } = body;
+        const { type, sessionId, page, referrer, timeOnPage, interacted, vitals, source, medium, campaign, conversionEvent } = body;
 
         if (!sessionId || !page) return NextResponse.json({ ok: false }, { status: 400 });
 
@@ -116,6 +116,22 @@ export async function POST(req) {
                     $inc: { totalTime: timeOnPage ?? 0 },
                 }
             );
+
+        } else if (type === "conversion") {
+            if (!sessionId || !conversionEvent) return NextResponse.json({ ok: false }, { status: 400 });
+
+            // Pull source/referrer from the session so conversions are attributable
+            const session = await Session.findOne({ sessionId }).select("source referrer").lean();
+
+            await Conversion.create({
+                sessionId,
+                conversionEvent,
+                page: page || "",
+                occurredAt: new Date(),
+                source:   session?.source   || "",
+                referrer: session?.referrer || "",
+                ip: getIp(req),
+            });
         }
 
         return NextResponse.json({ ok: true });

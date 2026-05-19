@@ -49,7 +49,7 @@ export async function POST(req=NextApiRequest){
     let data = await req.json()
     //console.log(data)
     console.log(data)
-    let order = new InventoryOrders({vendor: data.order.company, poNumber: data.order.poNumber, dateOrdered: new Date(data.order.dateOrdered), dateExpected: data.order.dateExpected? new Date(data.order.dateExpected): null, locations: [], items: data.items})
+    let order = new InventoryOrders({vendor: data.order.company, poNumber: data.order.poNumber, dateOrdered: new Date(data.order.dateOrdered + "T12:00:00"), dateExpected: data.order.dateExpected? new Date(data.order.dateExpected + "T12:00:00"): null, locations: [], items: data.items})
     let locations = []
     for(let i of data.needsOrdered){
         if(!locations.includes(i.location)) locations.push(i.location)
