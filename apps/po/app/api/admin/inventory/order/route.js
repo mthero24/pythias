@@ -3,6 +3,8 @@ import { InventoryOrders, Inventory, Blank, Items as PPItems } from "@pythias/mo
 import TspItems from "@/models/Items";
 import { Sort } from "@pythias/labels";
 import axios from "axios";
+import { getToken } from "next-auth/jwt";
+import { logChange, userFromToken } from "@pythias/backend/server";
 
 export async function GET() {
     let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory");
@@ -10,6 +12,8 @@ export async function GET() {
 }
 
 export async function PUT(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     let printItems = [];
     let order = await InventoryOrders.findById(data.id);
@@ -70,6 +74,7 @@ export async function PUT(req = NextApiRequest) {
             if (order.locations.filter(l => l.received == false).length == 0) order.received = true;
             order.markModified("locations received");
             await order.save();
+            logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "receive", userName, email, provider: "po" });
             let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory");
             return NextResponse.json({ error: false, orders });
         } catch (e) {
@@ -80,6 +85,8 @@ export async function PUT(req = NextApiRequest) {
 }
 
 export async function POST(req = NextApiRequest) {
+    const token = await getToken({ req });
+    const { userName, email } = userFromToken(token);
     let data = await req.json();
     let order = new InventoryOrders({
         vendor: data.order.company,
@@ -149,5 +156,6 @@ export async function POST(req = NextApiRequest) {
     }
 
     await order.save();
+    logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "create", userName, email, provider: "po" });
     return NextResponse.json({ error: false });
 }

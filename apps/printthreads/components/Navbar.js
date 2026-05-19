@@ -48,6 +48,7 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 const DRAWER_WIDTH = 260;
 
@@ -71,6 +72,7 @@ const NAV_SECTIONS = [
       { label: "Designs",      href: "/admin/designs",     icon: <BrushIcon fontSize="small" /> },
       { label: "Products",     href: "/admin/products",    icon: <Inventory2Icon fontSize="small" />, csv: true },
       { label: "Integrations", href: "/admin/integrations",icon: <HubIcon fontSize="small" />, csv: true },
+      { label: "Sales",        href: "/admin/sales",        icon: <LocalOfferIcon fontSize="small" /> },
       { label: "Fix UPC",      href: "/admin/fix-upc",      icon: <QrCodeIcon fontSize="small" /> },
     ],
   },

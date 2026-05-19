@@ -89,3 +89,10 @@ export {
     handleShopifyRemoveConnectionPOST, handleShopifyUninstallPOST,
     handleShopifyBrandsGET, handleShopifyProductsGET,
 } from "./handlers/shopify";
+export {
+    handleShopifyAdminGET,
+    handleShopifySalesGET,
+    handleShopifySalesPOST,
+    handleShopifySalesDELETE,
+    handleShopifyAdminProductsGET,
+} from "./handlers/shopifySales";

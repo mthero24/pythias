@@ -30,6 +30,8 @@ import BrushIcon from "@mui/icons-material/Brush";
 import InventoryIcon from "@mui/icons-material/Inventory2";
 import HubIcon from "@mui/icons-material/Hub";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 const QUICK_LINKS = [
     { label: "Dashboard",        description: "Analytics and performance overview",        href: "/admin",                      icon: <DashboardIcon sx={{ fontSize: 28 }} />,         accent: "#8b5cf6" },
@@ -46,6 +48,7 @@ const QUICK_LINKS = [
     { label: "Inventory",        description: "Manage blank and product inventory",         href: "/inventory",                  icon: <InventoryIcon sx={{ fontSize: 28 }} />,          accent: "#f97316" },
     { label: "Returns",          description: "Process and track customer returns",         href: "/production/returns",         icon: <AssignmentReturnIcon sx={{ fontSize: 28 }} />,   accent: "#ef4444" },
     { label: "Integrations",     description: "Manage marketplace connections",             href: "/admin/integrations",         icon: <HubIcon sx={{ fontSize: 28 }} />,                accent: "#6366f1" },
+    { label: "Sales",            description: "Manage Shopify sales and discounts",          href: "/admin/sales",                icon: <LocalOfferIcon sx={{ fontSize: 28 }} />,         accent: "#f59e0b" },
 ];
 
 const MARKETPLACES = [

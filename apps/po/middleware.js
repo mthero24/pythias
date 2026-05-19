@@ -3,6 +3,20 @@ import { getToken } from "next-auth/jwt";
 
 const protectedRoutes = [
   { path: "/admin",          roles: ["admin"] },
+  {
+    path: "/admin/shopify",
+    roles: ["admin"],
+    permission: "integrations"
+  },
+  {
+    path: "/admin/sales",
+    roles: ["admin"],
+  },
+  {
+    path: "/api/admin/shopify",
+    roles: ["admin"],
+    permission: "integrations"
+  },
   { path: "/account",        roles: ["admin", "production"] },
   { path: "/",               roles: ["admin", "production"] },
   { path: "/production",     roles: ["admin", "production"] },

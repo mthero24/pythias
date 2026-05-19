@@ -46,6 +46,7 @@ import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstruct
 import BarChartIcon from "@mui/icons-material/BarChart";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 
 const DRAWER_WIDTH = 268;
 
@@ -71,9 +72,11 @@ const NAV_SECTIONS = [
       { label: "Converters",      href: "/admin/converters",icon: <SyncAltIcon fontSize="small" />,         showCSV: false },
       { label: "Marketplace Data",href: "/marketplaces",         icon: <StorefrontIcon fontSize="small" />,              showCSV: false },
       { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false, permission: "integrations" },
+      { label: "Sales",           href: "/admin/sales",          icon: <AttachMoneyIcon fontSize="small" />,            showCSV: false, permission: "integrations" },
       { label: "Pricing",          href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
+      { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },
     ],
   },
   {

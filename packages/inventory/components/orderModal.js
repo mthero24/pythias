@@ -51,12 +51,13 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
             for (const blank of currentBlanks) {
                 for (const inv of blank.inventories) {
                     if (type === "Out Of Stock") {
-                        const onOrder = inv.attachedCount ?? 0;
-                        const alreadyOrdered = inv.orders && inv.orders.length > 0;
-                        if (onOrder > 0 && !alreadyOrdered) {
+                        const attached = inv.attachedCount ?? 0;
+                        const alreadyOnOrder = (inv.orders || []).reduce((acc, o) => acc + (parseInt(o.quantity) || 0), 0);
+                        const stillNeeded = attached - alreadyOnOrder;
+                        if (stillNeeded > 0) {
                             if (!bl.includes(inv.style_code)) bl.push(inv.style_code);
                             if (!cl.includes(inv.color_name)) cl.push(inv.color_name);
-                            no.push({ inv, order: onOrder, included: false, location: defaultLocation });
+                            no.push({ inv, order: stillNeeded, included: false, location: defaultLocation });
                         }
                     }
                     if (type === "Inventory Order") {

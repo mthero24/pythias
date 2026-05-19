@@ -25,8 +25,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -68,10 +71,12 @@ const NAV_GROUPS = [
         items: [
             { label: "Edit Data",       href: "/edit-data",           icon: <EditIcon fontSize="small" /> },
             { label: "Clockwise",       href: "/clockwise",           icon: <AccessTimeIcon fontSize="small" /> },
+            { label: "Sales",           href: "/admin/sales",         icon: <LocalOfferIcon fontSize="small" />,        adminOnly: true },
             { label: "Line Settings",   href: "/production-settings", icon: <SettingsIcon fontSize="small" />,          adminOnly: true },
             { label: "Activity",        href: "/activity",            icon: <BarChartIcon fontSize="small" />,          adminOnly: true },
             { label: "Analytics",       href: "/analytics",           icon: <TrendingUpIcon fontSize="small" />,        adminOnly: true },
             { label: "Live Users",      href: "/live",                icon: <FiberManualRecordIcon fontSize="small" sx={{ color: "#22c55e" }} />, adminOnly: true },
+            { label: "Downloads",       href: "/downloads",           icon: <SystemUpdateAltIcon fontSize="small" /> },
         ],
     },
 ];

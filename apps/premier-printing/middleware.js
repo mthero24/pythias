@@ -52,6 +52,21 @@ const protectedRoutes = [
     permission: "inventory"
   },
   {
+    path: "/admin/shopify",
+    roles: ["admin"],
+    permission: "integrations"
+  },
+  {
+    path: "/admin/sales",
+    roles: ["admin"],
+    permission: "integrations"
+  },
+  {
+    path: "/api/admin/shopify",
+    roles: ["admin"],
+    permission: "integrations"
+  },
+  {
     path: "/admin/fix-upc",
     roles: ["admin", "production"],
     permission: "upc"

@@ -1,5 +1,5 @@
 import {Main} from "@pythias/integrations";
-import {TikTokAuth, ApiKeyIntegrations} from "@pythias/mongo";
+import {TikTokAuth, ApiKeyIntegrations, ShopifyUserData} from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import crypto from "crypto";
 export const dynamic = 'force-dynamic';
@@ -18,8 +18,15 @@ function buildEtsyRedirectURI() {
 export default async function Integrations(){
     let tiktokShops = await TikTokAuth.find({ provider: "premierPrinting" }).catch(e => { console.log(e) }) || []
     let apiKeyIntegrations = await ApiKeyIntegrations.find({ $or: [{ provider: "premierPrinting" }, { provider: null }] })
+    const shopifyConnections = await ShopifyUserData.find({ provider: "Premier Printing" }).catch(() => [])
     tiktokShops = serialize(tiktokShops)
-    apiKeyIntegrations = serialize(apiKeyIntegrations)
+    apiKeyIntegrations = [
+        ...serialize(apiKeyIntegrations),
+        ...serialize(shopifyConnections).map(s => ({
+            _id: s._id, displayName: `shopify-${s.shop}`, type: "shopify",
+            apiKey: s.pythiasToken, pullOrdersEnabled: s.autoImportOrders,
+        })),
+    ]
     const etsyRedirectURI = buildEtsyRedirectURI()
-    return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI}/>
+    return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI} shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"}/>
 }

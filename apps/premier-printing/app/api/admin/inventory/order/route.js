@@ -2,7 +2,7 @@ import {NextApiRequest, NextResponse} from "next/server"
 import {Blank as Blanks, Item as Items, Inventory, InventoryOrders} from "@pythias/mongo";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken } from "@pythias/backend/server";
+import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
 export async function GET(){
     console.log("Fetching inventory orders");
     let orders = await InventoryOrders.find({received: false}).populate("locations.items.inventory")
@@ -39,6 +39,7 @@ export async function PUT(req=NextApiRequest){
         order.markModified("locations received")
         await order.save()
         logActivity({ action: "inventory_order_receive", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email, provider: "premierPrinting" });
+    logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "receive", userName, email, provider: "premierPrinting" });
     }
     let orders = await InventoryOrders.find({ received: { $in: [null, false] } }).populate("locations.items.inventory")
     return NextResponse.json({ error: false, orders })
@@ -90,6 +91,7 @@ export async function POST(req=NextApiRequest){
     console.log(order)
     await order.save()
     logActivity({ action: "inventory_order_create", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email, provider: "premierPrinting" });
+    logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "create", userName, email, provider: "premierPrinting" });
     let inventory = await Inventory.find({}).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location")
     let blanks = await Blanks.find({}).populate("colors").select("code name colors sizes department")
     let combined = []

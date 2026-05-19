@@ -29,6 +29,7 @@ import axios from "axios";
 
 // ─── Brand config ─────────────────────────────────────────────────────────────
 const PLATFORMS = {
+    shopify: { label: "Shopify",      color: "#96bf48", description: "Sell through your Shopify store with automatic order sync, product listings, and sales management." },
     tiktok:  { label: "TikTok Shop",  color: "#010101", description: "Sell directly on TikTok Shop with product listings and order sync." },
     etsy:    { label: "Etsy",         color: "#F56400", description: "Connect your Etsy storefront for listing management and orders." },
     amazon:  { label: "Amazon",       color: "#FF9900", description: "Amazon Marketplace integration.", comingSoon: true },
@@ -919,11 +920,13 @@ function FaireOrdersPanel({ connectionId }) {
 // ─── Connection row ────────────────────────────────────────────────────────────
 function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pullOrdersEnabled: initialPullEnabled, onDeactivate }) {
     const normalizedType = type?.toLowerCase() ?? "";
-    const cfg   = PLATFORMS[normalizedType] ?? {};
+    const isShopify = normalizedType === "shopify" || name?.startsWith("shopify-");
+    const cfg   = isShopify ? PLATFORMS.shopify : (PLATFORMS[normalizedType] ?? {});
     const label = cfg.label ?? type ?? "Unknown";
     const color = cfg.color ?? "#6b7280";
-    const isAcenda = normalizedType === "acenda" ||
-        (!normalizedType && !!organization && !["walmart","faire","tiktok","etsy","shein","temu"].includes(normalizedType));
+    const displayLabel = isShopify ? name.replace(/^shopify-/, "") : name;
+    const isAcenda = !isShopify && (normalizedType === "acenda" ||
+        (!normalizedType && !!organization && !["walmart","faire","tiktok","etsy","shein","temu"].includes(normalizedType)));
     const isEtsy    = normalizedType === "etsy";
     const isWalmart = normalizedType === "walmart";
     const isFaire   = normalizedType === "faire";
@@ -982,7 +985,7 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                             </Avatar>
                             <Box>
                                 <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                                    <Typography fontWeight={700} fontSize="0.95rem">{name}</Typography>
+                                    <Typography fontWeight={700} fontSize="0.95rem">{displayLabel}</Typography>
                                     <Chip label={label} size="small"
                                         sx={{ bgcolor: `${color}18`, color, fontWeight: 600, fontSize: "0.7rem", border: "none" }} />
                                     <Chip label="Active" size="small"
@@ -1175,7 +1178,7 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI }) {
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl }) {
     const [tikTokOpen,  setTikTokOpen]  = useState(false);
     const [acendaOpen,  setAcendaOpen]  = useState(false);
     const [walmartOpen, setWalmartOpen] = useState(false);
@@ -1196,6 +1199,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const manageHref = (api) => {
         if (api.type === "walmart") return `/admin/integrations/walmart?connectionId=${api._id}`;
         if (api.type === "faire")   return `/admin/integrations/faire?connectionId=${api._id}`;
+        if (api.type === "shopify" || api.displayName?.startsWith("shopify-")) return "/admin/sales";
         return null;
     };
 
@@ -1224,11 +1228,18 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                 <Grid2 container spacing={2.5} sx={{ mt: 0.5, mb: 5 }}>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
                         <PlatformCard
+                            logoSrc="/Shopify_logo_2018.png" alt="Shopify"
+                            name="Shopify"
+                            description={PLATFORMS.shopify.description}
+                            href={shopifyAppUrl || "https://shopapp.pythiastechnologies.com"}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
                             logo={tiktok} alt="TikTok Shop"
                             name="TikTok Shop"
                             description={PLATFORMS.tiktok.description}
-                            connected={hasTikTok}
-                            onClick={hasTikTok ? undefined : () => setTikTokOpen(true)}
+                            comingSoon
                         />
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>

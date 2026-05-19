@@ -19,6 +19,8 @@ import InventoryIcon from "@mui/icons-material/Inventory2";
 import SettingsIcon from "@mui/icons-material/Settings";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 const QUICK_LINKS = [
     { label: "Print Labels",        description: "Print production labels for items",         href: "/print-labels",        icon: <LabelIcon sx={{ fontSize: 28 }} />,            accent: "#f59e0b" },
@@ -33,6 +35,7 @@ const QUICK_LINKS = [
     { label: "Sublimation",         description: "Manage sublimation production queue",        href: "/sublimation",         icon: <ColorLensIcon sx={{ fontSize: 28 }} />,           accent: "#06b6d4" },
     { label: "Inventory",           description: "Manage blank and product inventory",         href: "/inventory",           icon: <InventoryIcon sx={{ fontSize: 28 }} />,           accent: "#84cc16" },
     { label: "Line Settings",       description: "Heat press temperature & time settings",     href: "/production-settings", icon: <SettingsIcon sx={{ fontSize: 28 }} />,            accent: "#64748b" },
+    { label: "Sales",               description: "Manage Shopify sales and discounts",          href: "/admin/sales",         icon: <LocalOfferIcon sx={{ fontSize: 28 }} />,          accent: "#f59e0b" },
 ];
 
 export function Main() {

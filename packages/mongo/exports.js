@@ -31,3 +31,6 @@ export { default as UserActivity } from "./models/UserActivity";
 export { default as ChangeLog } from "./models/ChangeLog";
 export { default as ErrorLog } from "./models/ErrorLog";
 export { default as Message } from "./models/Message";export { default as Group } from './models/Group';
+export { default as Sale } from "./models/Sale";
+export { default as ShopifyUserData } from "./models/ShopifyUserData";
+export { default as ShopifyProducts } from "./models/ShopifyProducts";

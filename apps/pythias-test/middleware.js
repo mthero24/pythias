@@ -116,6 +116,21 @@ const protectedRoutes = [
     roles: ["admin", "production"],
   },
   {
+    path: "/admin/shopify",
+    roles: ["admin"],
+    permission: "integrations"
+  },
+  {
+    path: "/admin/sales",
+    roles: ["admin"],
+    permission: "integrations"
+  },
+  {
+    path: "/api/admin/shopify",
+    roles: ["admin"],
+    permission: "integrations"
+  },
+  {
     path: "/api/admin",
     roles: ["admin", "production"],
     permission: "charts"

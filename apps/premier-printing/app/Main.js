@@ -26,6 +26,8 @@ import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import StorageIcon from "@mui/icons-material/Storage";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 const QUICK_LINKS = [
     {
@@ -97,6 +99,13 @@ const QUICK_LINKS = [
         href: "/admin/integrations",
         icon: <IntegrationInstructionsIcon sx={{ fontSize: 28 }} />,
         accent: "#6366f1",
+    },
+    {
+        label: "Sales",
+        description: "Manage Shopify sales and discounts",
+        href: "/admin/sales",
+        icon: <LocalOfferIcon sx={{ fontSize: 28 }} />,
+        accent: "#f59e0b",
     },
 ];
 
