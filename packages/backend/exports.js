@@ -1,5 +1,8 @@
 import EditablePolygon from "./components/blanks/test";
 import Footer from "./components/reusable/Footer";
+export { isSingleItem, isShipped, canceled } from "./functions/itemFunctions.js";
+export { createImage } from "./functions/image.js";
+export { CreateSku } from "./functions/CreateSku.js";
 
 export {Main as UsersMain} from "./components/users/Main";
 export {Main as LoginMain} from "./components/login/Main";

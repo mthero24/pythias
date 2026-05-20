@@ -1,0 +1,775 @@
+"use client";
+
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import {
+    Box, Container, Stack, Typography, Alert, Button,
+    Card, CardContent, Grid2, Tabs, Tab, Table, TableHead, TableBody,
+    TableRow, TableCell, TableSortLabel, TablePagination, Chip,
+    CircularProgress, LinearProgress, Paper, Select, MenuItem,
+    TextField, FormControl,
+} from "@mui/material";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import DownloadIcon from "@mui/icons-material/Download";
+
+const fmt = (n) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
+const fmtDate = (d) =>
+    d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+const fmtN = (n) => (n ?? 0).toLocaleString();
+
+// ─── Shared components ────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, color = "text.primary" }) {
+    return (
+        <Card variant="outlined" sx={{ height: "100%" }}>
+            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, display: "block" }}
+                >
+                    {label}
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 700, color, mt: 0.5 }}>
+                    {value}
+                </Typography>
+            </CardContent>
+        </Card>
+    );
+}
+
+// Client-side sortable table — used for production items
+function SortableTable({ columns, rows, defaultSort, defaultDir = "desc" }) {
+    const [sortCol, setSortCol] = useState(defaultSort ?? columns[0]?.key);
+    const [sortDir, setSortDir] = useState(defaultDir);
+
+    const handleSort = (key) => {
+        setSortDir((prev) => (sortCol === key ? (prev === "asc" ? "desc" : "asc") : "desc"));
+        setSortCol(key);
+    };
+
+    const sorted = useMemo(() => {
+        const col = columns.find((c) => c.key === sortCol);
+        return [...rows].sort((a, b) => {
+            const av = col?.getValue ? col.getValue(a) : a[sortCol];
+            const bv = col?.getValue ? col.getValue(b) : b[sortCol];
+            if (av == null && bv == null) return 0;
+            if (av == null) return 1;
+            if (bv == null) return -1;
+            const cmp = typeof av === "string" ? av.localeCompare(bv) : av - bv;
+            return sortDir === "asc" ? cmp : -cmp;
+        });
+    }, [rows, sortCol, sortDir, columns]);
+
+    return (
+        <Box sx={{ overflow: "auto" }}>
+            <Table size="small" sx={{ minWidth: 600 }}>
+                <TableHead>
+                    <TableRow>
+                        {columns.map((col) => (
+                            <TableCell
+                                key={col.key}
+                                align={col.align ?? "left"}
+                                sx={{
+                                    fontWeight: 600, fontSize: 11, textTransform: "uppercase",
+                                    letterSpacing: 0.5, color: "text.secondary",
+                                    bgcolor: "grey.50", py: 1, whiteSpace: "nowrap",
+                                }}
+                            >
+                                <TableSortLabel
+                                    active={sortCol === col.key}
+                                    direction={sortCol === col.key ? sortDir : "asc"}
+                                    onClick={() => handleSort(col.key)}
+                                >
+                                    {col.label}
+                                </TableSortLabel>
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {sorted.map((row, i) => (
+                        <TableRow key={row._id ?? i} hover sx={{ "& td": { py: 0.75, fontSize: 13 } }}>
+                            {columns.map((col) => (
+                                <TableCell key={col.key} align={col.align ?? "left"}>
+                                    {col.render
+                                        ? col.render(row)
+                                        : (col.getValue ? col.getValue(row) : row[col.key]) ?? "—"}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    ))}
+                    {sorted.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={columns.length} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                No data for this period
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </Box>
+    );
+}
+
+// Server-side sortable + paginated table — used for order tabs
+function PaginatedOrderTable({ columns, rows, total, page, pageSize, loading, sortField, sortDir, onPageChange, onPageSizeChange, onSortChange }) {
+    return (
+        <Box sx={{ overflow: "auto", position: "relative" }}>
+            {loading && <LinearProgress sx={{ position: "absolute", top: 0, left: 0, right: 0 }} />}
+            <Table size="small" sx={{ minWidth: 600 }}>
+                <TableHead>
+                    <TableRow>
+                        {columns.map((col) => (
+                            <TableCell
+                                key={col.key}
+                                align={col.align ?? "left"}
+                                sx={{
+                                    fontWeight: 600, fontSize: 11, textTransform: "uppercase",
+                                    letterSpacing: 0.5, color: "text.secondary",
+                                    bgcolor: "grey.50", py: 1, whiteSpace: "nowrap",
+                                }}
+                            >
+                                {col.serverKey ? (
+                                    <TableSortLabel
+                                        active={sortField === col.serverKey}
+                                        direction={sortField === col.serverKey ? sortDir : "asc"}
+                                        onClick={() => onSortChange(col.serverKey)}
+                                    >
+                                        {col.label}
+                                    </TableSortLabel>
+                                ) : col.label}
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {rows.map((row, i) => (
+                        <TableRow key={row._id ?? i} hover sx={{ "& td": { py: 0.75, fontSize: 13 } }}>
+                            {columns.map((col) => (
+                                <TableCell key={col.key} align={col.align ?? "left"}>
+                                    {col.render
+                                        ? col.render(row)
+                                        : (col.getValue ? col.getValue(row) : row[col.key]) ?? "—"}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    ))}
+                    {rows.length === 0 && !loading && (
+                        <TableRow>
+                            <TableCell colSpan={columns.length} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                No data for this period
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+            <TablePagination
+                component="div"
+                count={total}
+                page={page - 1}
+                rowsPerPage={pageSize}
+                rowsPerPageOptions={[25, 50, 100, 200]}
+                onPageChange={(_, p) => onPageChange(p + 1)}
+                onRowsPerPageChange={(e) => onPageSizeChange(parseInt(e.target.value, 10))}
+            />
+        </Box>
+    );
+}
+
+// ─── Sales tab ────────────────────────────────────────────────────────────────
+
+const STATUS_MAP = {
+    shipped:  { label: "Shipped",  color: "success" },
+    complete: { label: "Complete", color: "success" },
+    canceled: { label: "Canceled", color: "error"   },
+    refunded: { label: "Refunded", color: "error"   },
+    pending:  { label: "Pending",  color: "warning" },
+    open:     { label: "Open",     color: "default" },
+};
+
+function orderChip(o) {
+    if (o.canceled) return <Chip size="small" label="Canceled" color="error" />;
+    if (o.refunded) return <Chip size="small" label="Refunded" color="error" />;
+    const key = (o.status || "").toLowerCase();
+    const { label, color } = STATUS_MAP[key] ?? { label: o.status || "Open", color: "default" };
+    return <Chip size="small" label={label} color={color} />;
+}
+
+function daysToShip(o) {
+    if (!o.date || !o.shippingInfo?.shippedAt) return null;
+    return (new Date(o.shippingInfo.shippedAt) - new Date(o.date)) / (1000 * 60 * 60 * 24);
+}
+
+function SalesTab({ summary, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir }) {
+    const { orders, total, page, pageSize, loading } = ordersData;
+    const avgOrder = summary.orderCount > 0 ? summary.totalRevenue / summary.orderCount : 0;
+
+    const columns = [
+        { key: "date",        serverKey: "date",        label: "Date",         getValue: (o) => new Date(o.date).getTime(), render: (o) => fmtDate(o.date) },
+        { key: "poNumber",    serverKey: "poNumber",    label: "PO #",         render: (o) => o.poNumber || o.orderId || "—" },
+        { key: "marketplace", serverKey: "marketplace", label: "Channel",      render: (o) => <Chip size="small" label={o.marketplace || "—"} variant="outlined" /> },
+        { key: "total",       serverKey: "total",       label: "Revenue",      align: "right", render: (o) => fmt(o.total) },
+        { key: "shipping",    label: "Shipping",        align: "right",        render: (o) => fmt(o.shippingCost) },
+        { key: "blanksCogs",  label: "Blank COGS",      align: "right",        render: (o) => fmt(o.blanksCogs) },
+        { key: "daysToShip",  label: "Days to Ship",    align: "right",        render: (o) => { const d = daysToShip(o); return d != null ? d.toFixed(1) : "—"; } },
+        { key: "status",      label: "Status",          getValue: (o) => o.canceled ? "Canceled" : o.status || "Open", render: orderChip },
+    ];
+
+    return (
+        <>
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 6, md: 3 }}><KpiCard label="Gross Revenue"       value={fmt(summary.totalRevenue)}    color="success.main" /></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><KpiCard label="Orders"              value={fmtN(summary.orderCount)} /></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><KpiCard label="Avg Order Value"     value={fmt(avgOrder)} /></Grid2>
+                <Grid2 size={{ xs: 6, md: 3 }}><KpiCard label="Canceled / Refunded" value={fmtN(summary.canceledCount)} color="error.main" /></Grid2>
+            </Grid2>
+            <Paper variant="outlined">
+                <PaginatedOrderTable
+                    columns={columns}
+                    rows={orders}
+                    total={total}
+                    page={page}
+                    pageSize={pageSize}
+                    loading={loading}
+                    sortField={sortField}
+                    sortDir={sortDir}
+                    onPageChange={onPageChange}
+                    onPageSizeChange={onPageSizeChange}
+                    onSortChange={onSortChange}
+                />
+            </Paper>
+        </>
+    );
+}
+
+// ─── Production tab ───────────────────────────────────────────────────────────
+
+const STAGE_COLOR = {
+    Shipped:   "success",
+    Folded:    "primary",
+    "Re-Pulled": "warning",
+    Treated:   "secondary",
+    Printed:   "info",
+    Pending:   "default",
+    Canceled:  "error",
+};
+
+function itemStage(i) {
+    if (i.canceled)  return "Canceled";
+    if (i.shipped)   return "Shipped";
+    if (i.folded)    return "Folded";
+    if (i.rePulled)  return "Re-Pulled";
+    if (i.treated)   return "Treated";
+    if (i.printed)   return "Printed";
+    return "Pending";
+}
+
+function avgDays(items, dateFn) {
+    const vals = items.map(dateFn).filter((d) => d != null && d >= 0);
+    return vals.length ? vals.reduce((s, d) => s + d, 0) / vals.length : null;
+}
+function fmtDays(val) { return val != null ? val.toFixed(1) + "d" : "—"; }
+function daysBetween(from, to) {
+    if (!from || !to) return null;
+    const d = (new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24);
+    return d >= 0 ? d : null;
+}
+
+function ProductionTab({ items }) {
+    const active  = useMemo(() => items.filter((i) => !i.canceled), [items]);
+    const rePulled = useMemo(() => active.filter((i) => i.rePulled).length,               [active]);
+    const printed  = useMemo(() => active.filter((i) => i.printed && !i.rePulled).length, [active]);
+    const folded   = useMemo(() => active.filter((i) => i.folded).length,                 [active]);
+    const shipped  = useMemo(() => active.filter((i) => i.shipped).length,                [active]);
+    const pending  = useMemo(() => active.filter((i) => !i.printed && !i.rePulled).length,[active]);
+
+    const avgToLabel = useMemo(() => avgDays(active, (i) => daysBetween(i.date, i.labelLastPrinted)), [active]);
+    const avgToPrint = useMemo(() => avgDays(active, (i) => daysBetween(i.date, i.printedDate)),      [active]);
+    const avgToShip  = useMemo(() => avgDays(active, (i) => daysBetween(i.date, i.shippedDate)),      [active]);
+
+    const columns = [
+        { key: "date",      label: "Date",  getValue: (i) => new Date(i.date).getTime(), render: (i) => fmtDate(i.date) },
+        { key: "styleCode", label: "Style" },
+        { key: "colorName", label: "Color" },
+        { key: "sizeName",  label: "Size"  },
+        { key: "batchID",   label: "Batch" },
+        { key: "stage",     label: "Stage", getValue: itemStage, render: (i) => {
+            const s = itemStage(i);
+            return <Chip size="small" label={s} color={STAGE_COLOR[s] ?? "default"} />;
+        }},
+    ];
+
+    return (
+        <>
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Total Items"       value={fmtN(items.length)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Pending"           value={fmtN(pending)}      color="text.secondary" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Printed"           value={fmtN(printed)}      color="info.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Re-Pulled"         value={fmtN(rePulled)}     color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Folded"            value={fmtN(folded)}       color="primary.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Shipped"           value={fmtN(shipped)}      color="success.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg Days to Label" value={fmtDays(avgToLabel)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg Days to Print" value={fmtDays(avgToPrint)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg Days to Ship"  value={fmtDays(avgToShip)}  /></Grid2>
+            </Grid2>
+            <Paper variant="outlined">
+                <SortableTable columns={columns} rows={items} defaultSort="date" />
+            </Paper>
+        </>
+    );
+}
+
+// ─── Costs tab ────────────────────────────────────────────────────────────────
+
+const MARKETPLACE_FEE_RATES = {
+    amazon:                       0.15,
+    ebay:                         0.13,
+    etsy:                         0.065,
+    walmart:                      0.15,
+    target:                       0.10,
+    "target plus us marketplace": 0.10,
+    faire:                        0.25,
+    tiktok:                       0.08,
+    "tik tok":                    0.08,
+    shopify:                      0.02,
+    kohls:                        0.15,
+    "kohl's":                     0.15,
+    acenda:                       0.15,
+    zulily:                       0.20,
+    tsc:                          0.15,
+};
+
+function estimateFee(order) {
+    const rate = MARKETPLACE_FEE_RATES[(order.marketplace || "").toLowerCase()] ?? 0;
+    return (order.total || 0) * rate;
+}
+
+function fmtRate(marketplace) {
+    const rate = MARKETPLACE_FEE_RATES[(marketplace || "").toLowerCase()];
+    return rate != null ? `~${(rate * 100).toFixed(1)}%` : "—";
+}
+
+function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, inventoryValue }) {
+    const { orders, total, page, pageSize, loading } = ordersData;
+
+    const totalFees = useMemo(() =>
+        byMarketplace.reduce((s, mp) => {
+            const rate = MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0;
+            return s + mp.revenue * rate;
+        }, 0),
+    [byMarketplace]);
+
+    const totalCogs = useMemo(() => Object.values(cogsByMarketplace).reduce((s, v) => s + v, 0), [cogsByMarketplace]);
+    const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs;
+
+    const mpRows = useMemo(() =>
+        byMarketplace.map((mp) => {
+            const rate  = MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0;
+            const fees  = mp.revenue * rate;
+            const cogs  = cogsByMarketplace[mp.marketplace] || 0;
+            return { ...mp, fees, cogs, net: mp.revenue - mp.shipping - fees - cogs };
+        }),
+    [byMarketplace, cogsByMarketplace]);
+
+    const mpColumns = [
+        { key: "marketplace", label: "Marketplace" },
+        { key: "orders",   label: "Orders",       align: "right" },
+        { key: "revenue",  label: "Revenue",      align: "right", render: (r) => fmt(r.revenue) },
+        { key: "shipping", label: "Shipping",     align: "right", render: (r) => fmt(r.shipping) },
+        { key: "rate",     label: "Fee Rate",     align: "right", getValue: (r) => MARKETPLACE_FEE_RATES[(r.marketplace || "").toLowerCase()] ?? -1, render: (r) => fmtRate(r.marketplace) },
+        { key: "fees",     label: "Est. MP Fees", align: "right", render: (r) => fmt(r.fees) },
+        { key: "cogs",     label: "Blank COGS",   align: "right", render: (r) => fmt(r.cogs) },
+        { key: "net",      label: "Net",          align: "right", render: (r) => (
+            <Typography variant="body2" sx={{ fontWeight: 600, color: r.net >= 0 ? "success.main" : "error.main" }}>
+                {fmt(r.net)}
+            </Typography>
+        )},
+    ];
+
+    const orderColumns = [
+        { key: "date",        serverKey: "date",        label: "Date",         render: (o) => fmtDate(o.date) },
+        { key: "poNumber",    serverKey: "poNumber",    label: "PO #",         render: (o) => o.poNumber || o.orderId || "—" },
+        { key: "marketplace", serverKey: "marketplace", label: "Channel",      render: (o) => o.marketplace || "—" },
+        { key: "total",       serverKey: "total",       label: "Revenue",      align: "right", render: (o) => fmt(o.total) },
+        { key: "shipping",    label: "Shipping",        align: "right",        render: (o) => fmt(o.shippingCost) },
+        { key: "fees",        label: "Est. MP Fees",    align: "right",        render: (o) => fmt(estimateFee(o)) },
+        { key: "blanksCogs",  label: "Blank COGS",      align: "right",        render: (o) => fmt(o.blanksCogs) },
+        { key: "net",         label: "Net",             align: "right",        render: (o) => {
+            const n = (o.total || 0) - (o.shippingCost || 0) - estimateFee(o) - (o.blanksCogs || 0);
+            return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
+        }},
+    ];
+
+    return (
+        <>
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Gross Revenue"     value={fmt(summary.totalRevenue)}  color="success.main" /></Grid2>
+                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Shipping Costs"    value={fmt(summary.totalShipping)} color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Est. MP Fees"      value={fmt(totalFees)}             color="error.main" /></Grid2>
+                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Blank COGS"        value={fmt(totalCogs)}             color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Net Revenue"       value={fmt(net)}                   color={net >= 0 ? "success.main" : "error.main"} /></Grid2>
+                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Inventory at Cost" value={fmt(inventoryValue)}        color="info.main" /></Grid2>
+            </Grid2>
+
+            <Paper variant="outlined" sx={{ mb: 3 }}>
+                <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>By Marketplace</Typography>
+                </Box>
+                <SortableTable columns={mpColumns} rows={mpRows} defaultSort="revenue" />
+            </Paper>
+
+            <Paper variant="outlined">
+                <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Order Detail</Typography>
+                </Box>
+                <PaginatedOrderTable
+                    columns={orderColumns}
+                    rows={orders}
+                    total={total}
+                    page={page}
+                    pageSize={pageSize}
+                    loading={loading}
+                    sortField={sortField}
+                    sortDir={sortDir}
+                    onPageChange={onPageChange}
+                    onPageSizeChange={onPageSizeChange}
+                    onSortChange={onSortChange}
+                />
+            </Paper>
+        </>
+    );
+}
+
+// ─── CSV download (client-side, for items) ────────────────────────────────────
+
+function downloadCsv(filename, headers, rows) {
+    const esc = (v) => {
+        const s = v == null ? "" : String(v);
+        return s.includes(",") || s.includes('"') || s.includes("\n")
+            ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [headers.map(esc).join(","), ...rows.map((r) => r.map(esc).join(","))].join("\r\n");
+    const a   = Object.assign(document.createElement("a"), {
+        href:     URL.createObjectURL(new Blob([csv], { type: "text/csv" })),
+        download: filename,
+    });
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+
+function isoDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function todayStr()  { return isoDate(new Date()); }
+function daysAgo(n)  { const d = new Date(); d.setDate(d.getDate() - n); return isoDate(d); }
+function startOfWeek()      { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return isoDate(d); }
+function startOfLastWeek()  { const d = new Date(); d.setDate(d.getDate() - d.getDay() - 7); return isoDate(d); }
+function endOfLastWeek()    { const d = new Date(); d.setDate(d.getDate() - d.getDay() - 1); return isoDate(d); }
+function startOfMonth()     { const d = new Date(); d.setDate(1); return isoDate(d); }
+function startOfLastMonth() { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return isoDate(d); }
+function endOfLastMonth()   { const d = new Date(); d.setDate(0); return isoDate(d); }
+function startOfYear()      { const d = new Date(); d.setMonth(0); d.setDate(1); return isoDate(d); }
+
+const PRESETS = [
+    { label: "Today",        getRange: () => [todayStr(), todayStr()] },
+    { label: "Yesterday",    getRange: () => [daysAgo(1), daysAgo(1)] },
+    { label: "This Week",    getRange: () => [startOfWeek(), todayStr()] },
+    { label: "Last Week",    getRange: () => [startOfLastWeek(), endOfLastWeek()] },
+    { label: "This Month",   getRange: () => [startOfMonth(), todayStr()] },
+    { label: "Last Month",   getRange: () => [startOfLastMonth(), endOfLastMonth()] },
+    { label: "Last 7 Days",  getRange: () => [daysAgo(7), todayStr()] },
+    { label: "Last 30 Days", getRange: () => [daysAgo(30), todayStr()] },
+    { label: "Last 90 Days", getRange: () => [daysAgo(90), todayStr()] },
+    { label: "This Year",    getRange: () => [startOfYear(), todayStr()] },
+    { label: "Custom",       custom: true },
+];
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function Admin() {
+    const [preset,     setPreset]     = useState("Last 30 Days");
+    const [from,       setFrom]       = useState(() => daysAgo(30));
+    const [to,         setTo]         = useState(() => todayStr());
+    const [tab,        setTab]        = useState(0);
+    const [data,       setData]       = useState(null);
+    const [loading,    setLoading]    = useState(true);
+    const [error,      setError]      = useState(null);
+    const [marketplace, setMarketplace] = useState("All");
+
+    // Paginated orders state
+    const [ordersRows,    setOrdersRows]    = useState([]);
+    const [ordersTotal,   setOrdersTotal]   = useState(0);
+    const [ordersPage,    setOrdersPage]    = useState(1);
+    const [ordersSize,    setOrdersSize]    = useState(50);
+    const [ordersSortField, setOrdersSortField] = useState("date");
+    const [ordersSortDir,   setOrdersSortDir]   = useState("desc");
+    const [ordersLoading, setOrdersLoading] = useState(false);
+    const [ordersError,   setOrdersError]   = useState(null);
+
+    const abortRef       = useRef(null);
+    const ordersAbortRef = useRef(null);
+
+    // ── Main dashboard data (KPIs, items, marketplace map) ──
+    const load = useCallback(async (f, t) => {
+        if (abortRef.current) abortRef.current.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+        setData(null);
+        setOrdersRows([]);
+        setOrdersTotal(0);
+        setLoading(true);
+        setError(null);
+        try {
+            const res  = await fetch(`/api/admin/dashboard?from=${f}&to=${t}`, { signal: controller.signal });
+            const json = await res.json();
+            if (!res.ok || json.error) throw new Error(json.msg || "Failed to load dashboard data");
+            setData(json);
+        } catch (e) {
+            if (e.name === "AbortError") return;
+            setError(e.message);
+        } finally {
+            if (abortRef.current === controller) setLoading(false);
+        }
+    }, []);
+
+    // ── Paginated orders ──
+    const loadOrders = useCallback(async (f, t, mp, page, size, sortField, sortDir) => {
+        if (ordersAbortRef.current) ordersAbortRef.current.abort();
+        const controller = new AbortController();
+        ordersAbortRef.current = controller;
+        setOrdersLoading(true);
+        setOrdersError(null);
+        try {
+            const mpParam = mp && mp !== "All" ? `&marketplace=${encodeURIComponent(mp)}` : "";
+            const url = `/api/admin/dashboard/orders?from=${f}&to=${t}${mpParam}&page=${page}&pageSize=${size}&sort=${sortField}&dir=${sortDir}`;
+            const res  = await fetch(url, { signal: controller.signal });
+            const json = await res.json();
+            if (!res.ok || json.error) throw new Error(json.msg || "Failed to load orders");
+            setOrdersRows(json.orders);
+            setOrdersTotal(json.total);
+        } catch (e) {
+            if (e.name === "AbortError") return;
+            setOrdersError(e.message);
+        } finally {
+            if (ordersAbortRef.current === controller) setOrdersLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { load(from, to); }, [from, to, load]);
+
+    // Reset to page 1 when date range or marketplace filter changes
+    useEffect(() => { setOrdersPage(1); }, [from, to, marketplace]);
+
+    useEffect(() => {
+        loadOrders(from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir);
+    }, [from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir, loadOrders]);
+
+    const handlePreset = (label) => {
+        setPreset(label);
+        const p = PRESETS.find((p) => p.label === label);
+        if (p && !p.custom) {
+            const [f, t] = p.getRange();
+            setFrom(f);
+            setTo(t);
+        }
+    };
+
+    const handleOrdersSort = useCallback((field) => {
+        setOrdersSortDir((prev) => (ordersSortField === field ? (prev === "asc" ? "desc" : "asc") : "desc"));
+        setOrdersSortField(field);
+        setOrdersPage(1);
+    }, [ordersSortField]);
+
+    const handleOrdersPageSizeChange = useCallback((size) => {
+        setOrdersSize(size);
+        setOrdersPage(1);
+    }, []);
+
+    // ── Derived data ──
+    const summary             = data?.summary             ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
+    const byMarketplace       = data?.byMarketplace       ?? [];
+    const orderMarketplaceMap = data?.orderMarketplaceMap ?? {};
+    const items               = data?.items               ?? [];
+    const inventoryValue      = data?.inventoryValue      ?? 0;
+
+    const marketplaces = useMemo(() =>
+        ["All", ...byMarketplace.map((mp) => mp.marketplace).filter(Boolean).sort()],
+    [byMarketplace]);
+
+    const filteredItems = useMemo(() => {
+        if (marketplace === "All") return items;
+        return items.filter((i) => i.order && orderMarketplaceMap[String(i.order)] === marketplace);
+    }, [items, marketplace, orderMarketplaceMap]);
+
+    // COGS per marketplace — computed from items (up to 5000) for the marketplace breakdown table
+    const cogsByMarketplace = useMemo(() => {
+        const map = {};
+        for (const i of items) {
+            if (i.canceled || !i.order) continue;
+            const mp = orderMarketplaceMap[String(i.order)] || "Unknown";
+            map[mp] = (map[mp] || 0) + (i.wholesaleCost || 0);
+        }
+        return map;
+    }, [items, orderMarketplaceMap]);
+
+    const ordersData = {
+        orders:   ordersRows,
+        total:    ordersTotal,
+        page:     ordersPage,
+        pageSize: ordersSize,
+        loading:  ordersLoading,
+        error:    ordersError,
+    };
+
+    // ── CSV download ──
+    const handleDownload = useCallback(() => {
+        const mpSlug = marketplace !== "All" ? `-${marketplace}` : "";
+        const slug   = ["sales", "production", "costs"][tab];
+        const name   = `${slug}${mpSlug}-${from}-to-${to}`;
+        if (tab === 1) {
+            downloadCsv(`${name}.csv`,
+                ["Date", "Order ID", "Style", "Color", "Size", "Batch", "Cost", "Stage"],
+                filteredItems.map((i) => [
+                    fmtDate(i.date),
+                    i.poNumber || i.orderId || "",
+                    i.styleCode     || "",
+                    i.colorName     || "",
+                    i.sizeName      || "",
+                    i.batchID       || "",
+                    i.wholesaleCost ?? 0,
+                    itemStage(i),
+                ])
+            );
+        } else {
+            // All orders in time frame, fetched server-side
+            const mpParam = marketplace !== "All" ? `&marketplace=${encodeURIComponent(marketplace)}` : "";
+            const url = `/api/admin/dashboard/orders?csv=1&from=${from}&to=${to}${mpParam}`;
+            Object.assign(document.createElement("a"), { href: url, download: `${name}.csv` }).click();
+        }
+    }, [tab, filteredItems, marketplace, from, to]);
+
+    const isInitialLoad = loading && !data;
+
+    return (
+        <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
+            <Container maxWidth="xl" sx={{ py: 3 }}>
+
+                {/* Header */}
+                <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        <DashboardIcon sx={{ color: "primary.main", fontSize: 28 }} />
+                        <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>Dashboard</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                {isInitialLoad ? "Loading…" : `${fmtN(summary.orderCount)} orders · ${fmtN(filteredItems.length)} items`}
+                            </Typography>
+                        </Box>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<DownloadIcon />}
+                            onClick={handleDownload}
+                            disabled={isInitialLoad || !data}
+                        >
+                            CSV
+                        </Button>
+                        <FormControl size="small" sx={{ minWidth: 140 }} disabled={isInitialLoad || !data}>
+                            <Select
+                                value={marketplace}
+                                onChange={(e) => setMarketplace(e.target.value)}
+                                displayEmpty
+                            >
+                                {marketplaces.map((mp) => (
+                                    <MenuItem key={mp} value={mp}>{mp}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 150 }}>
+                            <Select
+                                value={preset}
+                                onChange={(e) => handlePreset(e.target.value)}
+                                displayEmpty
+                            >
+                                {PRESETS.map((p) => (
+                                    <MenuItem key={p.label} value={p.label}>{p.label}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            size="small"
+                            type="date"
+                            value={from}
+                            onChange={(e) => { setFrom(e.target.value); setPreset("Custom"); }}
+                            inputProps={{ max: to }}
+                            sx={{ width: 150 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">–</Typography>
+                        <TextField
+                            size="small"
+                            type="date"
+                            value={to}
+                            onChange={(e) => { setTo(e.target.value); setPreset("Custom"); }}
+                            inputProps={{ min: from, max: todayStr() }}
+                            sx={{ width: 150 }}
+                        />
+                    </Stack>
+                </Stack>
+
+                {/* Tabs */}
+                <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+                    <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+                        <Tab icon={<TrendingUpIcon fontSize="small" />}             iconPosition="start" label="Sales" />
+                        <Tab icon={<PrecisionManufacturingIcon fontSize="small" />} iconPosition="start" label="Production" />
+                        <Tab icon={<AttachMoneyIcon fontSize="small" />}            iconPosition="start" label="Costs" />
+                    </Tabs>
+                </Box>
+
+                {/* Content */}
+                {isInitialLoad ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+                        <CircularProgress />
+                    </Box>
+                ) : error ? (
+                    <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+                ) : (
+                    <>
+                        {tab === 0 && (
+                            <SalesTab
+                                summary={summary}
+                                ordersData={ordersData}
+                                sortField={ordersSortField}
+                                sortDir={ordersSortDir}
+                                onPageChange={setOrdersPage}
+                                onPageSizeChange={handleOrdersPageSizeChange}
+                                onSortChange={handleOrdersSort}
+                            />
+                        )}
+                        {tab === 1 && <ProductionTab items={filteredItems} />}
+                        {tab === 2 && (
+                            <CostsTab
+                                summary={summary}
+                                byMarketplace={byMarketplace}
+                                cogsByMarketplace={cogsByMarketplace}
+                                ordersData={ordersData}
+                                sortField={ordersSortField}
+                                sortDir={ordersSortDir}
+                                onPageChange={setOrdersPage}
+                                onPageSizeChange={handleOrdersPageSizeChange}
+                                onSortChange={handleOrdersSort}
+                                inventoryValue={inventoryValue}
+                            />
+                        )}
+                    </>
+                )}
+
+            </Container>
+        </Box>
+    );
+}

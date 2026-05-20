@@ -1,7 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import Blanks from "@/models/Blanks";
-import Inventory from "@/models/inventory";
-import Color from "@/models/Color";
+import { Blank as Blanks, Inventory, Color } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 

@@ -13,7 +13,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            shippingType: "Standard",
+            marketplace: {$nin: ["Faire", "faire", "fashiongo", "fashion go", "FashionGo"]},
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
         Items.find({
             blank: { $ne: undefined },
@@ -24,7 +24,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            shippingType: { $ne: "Standard" },
+            marketplace: {$in: ["Faire", "faire", "fashiongo", "fashion go", "FashionGo"]},
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
         Items.find({
             blank: { $ne: undefined },
@@ -36,7 +36,7 @@ export async function LabelsData(){
             paid: true,
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
     ]);
-    let labels = { Standard: [...standardItems, ...blankItems], Expedited: expeditedItems };
+    let labels = { Standard: [...standardItems, ...blankItems], WholeSale: expeditedItems };
     let rePulls = 0
     for(let k of Object.keys(labels)){
         const orderIds = labels[k].map(s=> s.order)

@@ -1,6 +1,5 @@
 import { serialize } from "@/functions/serialize";
-import SkuToUpc from "@/models/skuUpcConversion";
-import Blank from "@/models/Blanks"
+import { SkuToUpc, Blank } from "@pythias/mongo";
 import { Main } from "./Main";
 export const dynamic = 'force-dynamic';
 export default async function FixeUpc(){

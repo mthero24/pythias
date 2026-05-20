@@ -1,7 +1,4 @@
-import Item from "@/models/Items";
-import Temps from "@/models/Temps";
-import Colors from "@/models/Color";
-import Style from "@/models/Blanks";
+import { Item, Temps, Color as Colors, Blank as Style } from "@pythias/mongo";
 import { createImage } from "@/functions/image";
 import { NextApiRequest, NextResponse, useParams } from "next/server";
 

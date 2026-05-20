@@ -1,6 +1,6 @@
-import {NextApiRequest, NextResponse} from "next/server";
-import User from "@/models/User";
-import { findOneAndDelete } from "@/models/PrintPricing";
+﻿import {NextApiRequest, NextResponse} from "next/server";
+import { User } from "@pythias/mongo";
+import { PrintPricing } from "@pythias/mongo";
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()

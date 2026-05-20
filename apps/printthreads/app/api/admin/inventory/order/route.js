@@ -1,8 +1,8 @@
-import {NextApiRequest, NextResponse} from "next/server";
-import InventoryOrders from "@/models/InventoryOrders";
-import Inventory from "@/models/inventory";
-import Blanks from "@/models/Blanks";
-import Items from "@/models/Items";
+﻿import {NextApiRequest, NextResponse} from "next/server";
+import { InventoryOrders } from "@pythias/mongo";
+import { Inventory } from "@pythias/mongo";
+import { Blank as Blanks } from "@pythias/mongo";
+import { Items } from "@pythias/mongo";
 import axios from "axios";
 export async function GET(){
     let orders = await InventoryOrders.find({}).populate("locations.items.inventory")

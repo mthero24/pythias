@@ -116,6 +116,7 @@ const schema = new mongoose.Schema({
       },
     ],
     shippingCost: { type: Number, default: 0 },
+    shippedAt: { type: Date },
   },
   notes: [
     {

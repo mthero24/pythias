@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import User from "@/models/User";
+import { User } from "@pythias/mongo";
 
 const ONLINE_MS = 5 * 60 * 1000;
 

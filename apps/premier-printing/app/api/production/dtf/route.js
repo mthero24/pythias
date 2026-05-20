@@ -1,6 +1,6 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import {Item as Items} from "@pythias/mongo";
-import Color from "@/models/Color"
+import { Color } from "@pythias/mongo";
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
 import { getToken } from "next-auth/jwt";

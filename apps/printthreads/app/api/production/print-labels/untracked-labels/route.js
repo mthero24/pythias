@@ -1,6 +1,6 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
-import Inventory from "@/models/inventory";
+﻿import { Items } from "@pythias/mongo";
+import { Order } from "@pythias/mongo";
+import { Inventory } from "@pythias/mongo";
 import {NextApiResponse, NextResponse} from "next/server";
 
 export async function GET(req=NextApiResponse){

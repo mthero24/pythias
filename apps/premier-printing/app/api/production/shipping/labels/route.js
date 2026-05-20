@@ -1,10 +1,9 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import {buyLabel} from "@pythias/shipping";
 import {getRefund} from "@pythias/shipping"
-import Order from "../../../../../models/Order";
-import manifest from "../../../../../models/manifest";
+import { Order, Manifest as manifest } from "@pythias/mongo";
 import axios from "axios"
-import Bin from "../../../../../models/Bin";
+import { Bin } from "@pythias/mongo";
 import {updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart} from "@pythias/integrations";
 import {ApiKeyIntegrations, Item as Items} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
@@ -78,6 +77,7 @@ export async function POST(req= NextApiRequest){
             } catch(e) { console.error("ShipStation update failed:", e.message); }
             order.shippingInfo.label = label.label
             order.shippingInfo.shippingCost += parseFloat(label.cost);
+            order.shippingInfo.shippedAt = new Date();
             order.status = "Shipped"
             order.shippingInfo.labels.push({
                 trackingNumber: label.trackingNumber,

@@ -5,7 +5,6 @@ import { pullOrders, updateInventory} from "@/functions/pullOrders"
 import { getOrders, generatePieceID, getPages, getPageOrders } from "@pythias/integrations";
 import { canceled } from "@/functions/itemFunctions";
 import { style } from "@mui/system";
-import inventory from "@/models/inventory";
 import { runTrackingAll, runTracking } from "@/functions/tracking";
 
 export default async function Test(){

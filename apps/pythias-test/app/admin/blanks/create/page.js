@@ -1,8 +1,8 @@
-
+﻿
 import {Blank as Blanks, Color, PrintPricing, Vendors, Departments, Categories, Brands, Suppliers, PrintTypes} from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import {CreateBlank} from "@pythias/backend";
-import PrintLocations from "@/models/printLocations";
+import { PrintLocations } from "@pythias/mongo";
 export const dynamic = 'force-dynamic'; 
 export default async function Create(req,res) {
     let colors = await Color.find().sort({ _id: -1 }).lean();

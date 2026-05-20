@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Order from "@/models/Order";
+import { Order } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 

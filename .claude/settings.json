@@ -16,7 +16,14 @@
       "Bash(python3 -c ' *)",
       "Bash(node -e ' *)",
       "Bash(curl -s --max-time 5 http://localhost:3004/api/admin/inventory -X PATCH -H \"Content-Type: application/json\" -w \"\\\\nHTTP Status: %{http_code}\\\\n\")",
-      "Bash(curl -s --max-time 90 http://localhost:3004/api/admin/inventory -X PATCH -H \"Content-Type: application/json\" -w \"\\\\nHTTP Status: %{http_code}\\\\n\")"
+      "Bash(curl -s --max-time 90 http://localhost:3004/api/admin/inventory -X PATCH -H \"Content-Type: application/json\" -w \"\\\\nHTTP Status: %{http_code}\\\\n\")",
+      "WebFetch(domain:plus.target.com)",
+      "WebFetch(domain:help.daasity.com)",
+      "WebFetch(domain:help.zentail.com)",
+      "WebFetch(domain:goflow.com)",
+      "WebFetch(domain:support.channelengine.com)",
+      "WebFetch(domain:www.acenda.com)",
+      "WebFetch(domain:www.postman.com)"
     ]
   }
 }

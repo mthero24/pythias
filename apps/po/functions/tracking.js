@@ -46,7 +46,7 @@ export const trackOrder = async (orderId) => {
         if (expectedDelivery) lbl.expectedDelivery = expectedDelivery;
         const latest = events[0]?.toLowerCase() || "";
 
-        if (latest.includes("delivered") && !latest.includes("out for")) {
+        if ((latest.includes("delivered") && !latest.includes("out for")) || latest.includes("picked up")) {
             lbl.delivered = true;
         } else if (latest.includes("out for delivery")) {
             order.status = "Out For Delivery";

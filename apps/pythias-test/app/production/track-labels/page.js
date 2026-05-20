@@ -1,4 +1,4 @@
-import Items from "@/models/Items";
+﻿import { Items } from "@pythias/mongo";
 import { TrackLabels as TrackLabelsComponent, serialize } from "@pythias/backend";
 
 export default async function TrackLabels() {

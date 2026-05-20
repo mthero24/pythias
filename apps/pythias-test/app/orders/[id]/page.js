@@ -1,6 +1,6 @@
-import { serialize } from "@/functions/serialize";
-import Order from "@/models/Order";
-import Blank from "@/models/Blanks"
+﻿import { serialize } from "@/functions/serialize";
+import { Order } from "@pythias/mongo";
+import { Blank } from "@pythias/mongo"
 import {OrderMain} from "@pythias/backend";
 import Blanks from "@/app/admin/blanks/page";
 

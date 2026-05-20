@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { Message, Group } from "@pythias/mongo";
-import User from "@/models/User";
+import { User } from "@pythias/mongo";
 
 export async function GET(req) {
     const token = await getToken({ req });

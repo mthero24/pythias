@@ -54,7 +54,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
             if (!sc.includes(lab.styleCode)) sc.push(lab.styleCode);
             if (!mp.includes(lab.order.marketplace)) mp.push(lab.order.marketplace);
         }
-        for (let lab of labels["Expedited"]) {
+        for (let lab of labels["Expedited"] || labels["WholeSale"]) {
             if (!pt.includes(lab.type?.toUpperCase())) pt.push(lab.type?.toUpperCase());
             if (!sc.includes(lab.styleCode)) sc.push(lab.styleCode);
             if (!mp.includes(lab.order.marketplace)) mp.push(lab.order.marketplace);

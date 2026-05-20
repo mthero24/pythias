@@ -5,9 +5,13 @@
     "private": true,
     "exports": {
         ".": "./exports",
-        "./server": "./server"
+        "./server": "./server",
+        "./functions": "./functions/index.js"
     },
     "scripts": {},
+    "peerDependencies": {
+        "mongoose": "*"
+    },
     "dependencies": {
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.0",

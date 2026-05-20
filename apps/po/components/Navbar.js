@@ -72,6 +72,7 @@ const NAV_GROUPS = [
             { label: "Edit Data",       href: "/edit-data",           icon: <EditIcon fontSize="small" /> },
             { label: "Clockwise",       href: "/clockwise",           icon: <AccessTimeIcon fontSize="small" /> },
             { label: "Sales",           href: "/admin/sales",         icon: <LocalOfferIcon fontSize="small" />,        adminOnly: true },
+            { label: "Reports",         href: "/admin/reports",       icon: <BarChartIcon fontSize="small" />,          adminOnly: true },
             { label: "Line Settings",   href: "/production-settings", icon: <SettingsIcon fontSize="small" />,          adminOnly: true },
             { label: "Activity",        href: "/activity",            icon: <BarChartIcon fontSize="small" />,          adminOnly: true },
             { label: "Analytics",       href: "/analytics",           icon: <TrendingUpIcon fontSize="small" />,        adminOnly: true },

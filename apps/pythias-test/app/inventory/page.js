@@ -1,6 +1,6 @@
-import Inventory from "@/models/inventory";
-import Blanks from "@/models/Blanks";
-import Items from "@/models/Items";
+﻿import { Inventory } from "@pythias/mongo";
+import { Blank as Blanks } from "@pythias/mongo";
+import { Items } from "@pythias/mongo";
 import {serialize} from "@/functions/serialize";
 import {Main} from "@pythias/inventory";
 import {getInv} from "@pythias/inventory"

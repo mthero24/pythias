@@ -1,7 +1,7 @@
-import { NextApiRequest, NextResponse } from "next/server";
-import Items from "@/models/Items";
-import ReturnBins from "@/models/returnBins"
-import Batches from "@/models/batches";
+﻿import { NextApiRequest, NextResponse } from "next/server";
+import { Items } from "@pythias/mongo";
+import { ReturnBins } from "@pythias/mongo"
+import { Batches } from "@pythias/mongo";
 import { LabelsData } from "@/functions/labels";
 import btoa from "btoa";
 import axios from "axios";

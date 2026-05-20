@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { runTracking, runTrackingAll, trackOrder } from "@/functions/tracking";
-import Order from "@/models/Order";
+import { Order } from "@pythias/mongo";
 
 export const dynamic = "force-dynamic";
 

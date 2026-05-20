@@ -1,6 +1,6 @@
-"use server";
+﻿"use server";
 import {Main} from "@pythias/shipping";
-import Bins from "@/models/Bin"
+import { Bin as Bins } from "@pythias/mongo"
 export default async function Shipping(req,res){
     await Bins
     let stations = JSON.parse(process.env.shipping).shipStations

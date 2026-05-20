@@ -21,7 +21,6 @@ export {default as Items} from "./models/Items";
 export {SkuToUpc, SkuToUpcOld} from "./models/skuUpcConversion";
 export {default as ReturnBins} from "./models/returnBins";
 export {default as Products} from "./models/Products";
-export {default as AvailableUPC} from "./models/AvailableUPC";
 export {default as Manifest} from "./models/manifest";
 export {default as ApiKeyIntegrations} from "./models/ApiKeyIntegrations";
 export {default as Temps} from "./models/Temps";
@@ -34,3 +33,7 @@ export { default as Message } from "./models/Message";export { default as Group 
 export { default as Sale } from "./models/Sale";
 export { default as ShopifyUserData } from "./models/ShopifyUserData";
 export { default as ShopifyProducts } from "./models/ShopifyProducts";
+export { PageView, Session } from "./models/Analytics";
+export { addCogs } from "./functions/addCogs";
+export { default as BlankForecastCache } from "./models/BlankForecastCache";
+export { default as ForecastCache } from "./models/ForecastCache";

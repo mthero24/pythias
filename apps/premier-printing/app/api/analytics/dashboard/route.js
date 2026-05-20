@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { PageView, Session } from "@/models/Analytics";
+import { PageView, Session } from "@pythias/mongo";
 
 export async function GET(req) {
     const token = await getToken({ req });

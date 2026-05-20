@@ -1,6 +1,6 @@
-import { NextApiRequest, NextResponse } from "next/server";
-import Items from "../../../../models/Items";
-import Color from "@/models/Color"
+﻿import { NextApiRequest, NextResponse } from "next/server";
+import { Items } from "@pythias/mongo";
+import { Color } from "@pythias/mongo"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
 const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, style, item, source)=>{

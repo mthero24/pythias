@@ -1,4 +1,4 @@
-import Blanks from "@/models/Blanks";
+import { Blank as Blanks } from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import { Main } from "./Main";
 export default async function Settings(req) {

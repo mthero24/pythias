@@ -1,7 +1,7 @@
-import Items from "@/models/Items";
-import SkuToUpc from "@/models/skuUpcConversion"
+﻿import { Items } from "@pythias/mongo";
+import { SkuToUpc } from "@pythias/mongo"
 import {NextApiRequest, NextResponse} from "next/server";
-import Bins from "@/models/returnBins"
+import { ReturnBins as Bins } from "@pythias/mongo"
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()

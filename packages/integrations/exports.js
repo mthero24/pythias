@@ -45,6 +45,10 @@ export {generateRedirectURI, getToken, refreshToken, createDraftListing, updateL
 export { getAmazonAccessToken, getOrdersAmazon, getOrderItemsAmazon, confirmShipmentAmazon, createListingAmazon, getCatalogItemsAmazon } from "./functions/amazon";
 export { handleAmazonTestPOST, handleAmazonGET, handleAmazonOrdersGET, handleAmazonOrdersPOST, handleAmazonSendPOST } from "./handlers/amazon";
 
+// target
+export { testTargetConnection, getOrdersTarget, acknowledgeOrderTarget, shipOrderTarget, getShippingMethodsTarget } from "./functions/target";
+export { handleTargetTestPOST, handleTargetOrdersGET, handleTargetOrdersPOST } from "./handlers/target";
+
 // shein
 export { sheinHeaders, sheinRequest, convertImageShein, getOrdersShein, shipOrderShein } from "./functions/shein";
 

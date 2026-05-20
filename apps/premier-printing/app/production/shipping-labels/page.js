@@ -1,4 +1,4 @@
-import Order from "@/models/Order";
+import { Order } from "@pythias/mongo";
 import { Refund } from "@pythias/shipping";
 
 export const dynamic = "force-dynamic";

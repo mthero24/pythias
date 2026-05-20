@@ -1,8 +1,8 @@
-import {NextApiRequest, NextResponse} from "next/server"
-import TikTokAuth from "@/models/tiktok";
-import SkuToUpc from "@/models/skuUpcConversion";
-import Design from "@/models/Design";
-import Blanks from "@/models/Blanks"
+﻿import {NextApiRequest, NextResponse} from "next/server"
+import { TikTokAuth } from "@pythias/mongo";
+import { SkuToUpc } from "@pythias/mongo";
+import { Design } from "@pythias/mongo";
+import { Blank as Blanks } from "@pythias/mongo"
 import { createTikTokProduct } from "@/functions/tikTok";
 
 

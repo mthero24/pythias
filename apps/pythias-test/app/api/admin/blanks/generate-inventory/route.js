@@ -1,5 +1,5 @@
-import { generateInventory } from "@/functions/generateInventory";
-import Blanks from "@/models/Blanks";
+﻿import { generateInventory } from "@/functions/generateInventory";
+import { Blank as Blanks } from "@pythias/mongo";
 import { NextApiRequest, NextResponse } from "next/server";
 
 export async function POST(req= NextApiRequest){

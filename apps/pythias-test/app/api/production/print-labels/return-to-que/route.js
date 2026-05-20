@@ -1,7 +1,7 @@
-import { NextApiRequest, NextResponse } from "next/server";
+﻿import { NextApiRequest, NextResponse } from "next/server";
 import { LabelsData } from "../../../../../functions/labels";
-import Items from "../../../../../models/Items";
-import Inventory from "../../../../../models/inventory";
+import { Items } from "@pythias/mongo";
+import { Inventory } from "@pythias/mongo";
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     try{

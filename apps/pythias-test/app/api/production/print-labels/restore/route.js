@@ -1,11 +1,11 @@
-import Items from "@/models/Items";
-import Order from "@/models/Order";
+﻿import { Items } from "@pythias/mongo";
+import { Order } from "@pythias/mongo";
 import {NextApiResponse, NextResponse} from "next/server";
 import {Sort} from "@pythias/labels";
 import { buildLabelData } from "@/functions/labelString";
 import axios from "axios"
 import { LabelsData } from "@/functions/labels";
-import Inventory from "@/models/inventory";
+import { Inventory } from "@pythias/mongo";
 import btoa from "btoa"
 export async function POST(req=NextApiResponse) {
     let data = await req.json()

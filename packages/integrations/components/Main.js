@@ -18,7 +18,8 @@ import { FaireModal }   from "./FaireModal";
 import { SheinModal }   from "./SheinModal";
 import { TemuModal }    from "./TemuModal";
 import { AmazonModal }  from "./AmazonModal";
-import { MiraklModal } from "./MiraklModal";
+import { MiraklModal }  from "./MiraklModal";
+import { TargetModal }  from "./TargetModal";
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import AddIcon from "@mui/icons-material/Add";
@@ -40,7 +41,8 @@ const PLATFORMS = {
     faire:   { label: "Faire",        color: "#10305A", description: "Wholesale marketplace connecting brands with independent retailers." },
     shein:   { label: "SHEIN",        color: "#000000", description: "List products on SHEIN's global marketplace via the Open Platform API." },
     temu:    { label: "Temu",         color: "#ff6500", description: "List products on Temu's global marketplace via the Partner Open Platform API." },
-    mirakl:  { label: "Mirakl",      color: "#1d4ed8", description: "Sell on any Mirakl-powered marketplace (Target Plus, Carrefour, Best Buy Canada, and others) with order sync and fulfillment." },
+    mirakl:  { label: "Mirakl",      color: "#1d4ed8", description: "Sell on any Mirakl-powered marketplace (Carrefour, Best Buy Canada, and others) with order sync and fulfillment." },
+    target:  { label: "Target Plus", color: "#CC0000", description: "Sell on Target Plus marketplace with order sync, fulfillment confirmation, and direct SP-API integration." },
 };
 
 function platformColor(type) {
@@ -48,7 +50,7 @@ function platformColor(type) {
 }
 
 // ─── Platform card in the gallery ────────────────────────────────────────────
-function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, comingSoon, connected }) {
+function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, comingSoon, connected, logoBg }) {
     const inner = (
         <Box sx={{
             display: "flex", flexDirection: "column", alignItems: "center",
@@ -56,7 +58,8 @@ function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, co
         }}>
             <Box sx={{
                 height: 64, display: "flex", alignItems: "center", justifyContent: "center",
-                width: "100%",
+                width: "100%", borderRadius: logoBg ? 1.5 : 0, bgcolor: logoBg ?? "transparent",
+                px: logoBg ? 1.5 : 0,
             }}>
                 {logo
                     ? <Image src={logo} alt={alt} width={200} height={64}
@@ -1207,6 +1210,168 @@ function MiraklOrdersPanel({ connectionId }) {
     );
 }
 
+// ─── Target Orders Panel ─────────────────────────────────────────────────────
+const TARGET_SHIPPING_METHODS = [
+    "UPSGround", "UPSNextDayAir", "UPS2ndDayAir",
+    "FedExGround", "FedExExpressSaver", "FedExPriorityOvernight",
+    "USPSPriorityMail", "USPSFirstClassMail", "USPSParcelSelect",
+];
+
+function TargetOrdersPanel({ connectionId }) {
+    const [orders, setOrders]         = useState([]);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState("");
+    const [fetched, setFetched]       = useState(false);
+    const [acking, setAcking]         = useState(null);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [shippingMethod, setShippingMethod] = useState("UPSGround");
+    const [tracking, setTracking]     = useState("");
+    const [shipping, setShipping]     = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/target/orders?connectionId=${connectionId}`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const acknowledge = async (orderId) => {
+        setAcking(orderId);
+        try {
+            await axios.post("/api/integrations/target/orders", { connectionId, orderId, action: "acknowledge" });
+            setOrders(prev => prev.map(o => o.id === orderId
+                ? { ...o, status: "ACKNOWLEDGED_BY_SELLER" }
+                : o));
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Acknowledge failed");
+        } finally { setAcking(null); }
+    };
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/target/orders", {
+                connectionId,
+                orderId:        shipTarget.id,
+                action:         "ship",
+                trackingNumber: tracking.trim(),
+                shippingMethod,
+                items: (shipTarget.order_lines ?? []).map(l => ({
+                    order_line_number: l.order_line_number,
+                    quantity:          l.quantity ?? 1,
+                })),
+            });
+            setOrders(prev => prev.filter(o => o.id !== shipTarget.id));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Open Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#fff5f5" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.order_number} ({(shipTarget.order_lines ?? []).length} line{(shipTarget.order_lines ?? []).length !== 1 ? "s" : ""})
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        <Select size="small" value={shippingMethod} onChange={e => setShippingMethod(e.target.value)} sx={{ minWidth: 160 }}>
+                            {TARGET_SHIPPING_METHODS.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1, minWidth: 160 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#CC0000", "&:hover": { bgcolor: "#aa0000" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Lines</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Ship By</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.id} hover selected={shipTarget?.id === o.id}>
+                                    <TableCell><Typography variant="body2" fontWeight={500}>{o.order_number ?? o.id}</Typography></TableCell>
+                                    <TableCell>
+                                        <Chip label={o.status ?? "—"} size="small"
+                                            sx={{
+                                                bgcolor: o.status === "RELEASED_FOR_SHIPMENT" ? "#fef3c7" : "#dbeafe",
+                                                color:   o.status === "RELEASED_FOR_SHIPMENT" ? "#92400e" : "#1e40af",
+                                                fontWeight: 600, fontSize: "0.7rem",
+                                            }} />
+                                    </TableCell>
+                                    <TableCell><Typography variant="body2">{(o.order_lines ?? []).length}</Typography></TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.requested_shipment_date ? new Date(o.requested_shipment_date).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={0.5}>
+                                            {o.status === "RELEASED_FOR_SHIPMENT" && (
+                                                <Button size="small" variant="outlined" color="success"
+                                                    startIcon={acking === o.id ? <CircularProgress size={12} /> : <CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                                                    disabled={acking === o.id}
+                                                    onClick={() => acknowledge(o.id)}>
+                                                    Ack
+                                                </Button>
+                                            )}
+                                            {o.status === "ACKNOWLEDGED_BY_SELLER" && (
+                                                <Button size="small" variant="outlined"
+                                                    startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                                    onClick={() => { setShipTarget(o); setTracking(""); }}
+                                                    sx={{ borderColor: "#CC0000", color: "#CC0000" }}>
+                                                    Ship
+                                                </Button>
+                                            )}
+                                        </Stack>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No open orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
 // ─── Acenda Dashboard Panel ───────────────────────────────────────────────────
 function AcendaDashboardPanel({ connectionId, manageHref }) {
     const [data, setData]       = useState(null);
@@ -1262,8 +1427,9 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
     const displayLabel = isShopify ? name.replace(/^shopify-/, "") : name;
     const isAmazon  = normalizedType === "amazon";
     const isMirakl  = normalizedType === "mirakl";
-    const isAcenda  = !isShopify && !isAmazon && !isMirakl && (normalizedType === "acenda" ||
-        (!normalizedType && !!organization && !["walmart","faire","tiktok","etsy","shein","temu","amazon","mirakl"].includes(normalizedType)));
+    const isTarget  = normalizedType === "target";
+    const isAcenda  = !isShopify && !isAmazon && !isMirakl && !isTarget && (normalizedType === "acenda" ||
+        (!normalizedType && !!organization && !["walmart","faire","tiktok","etsy","shein","temu","amazon","mirakl","target"].includes(normalizedType)));
     const isEtsy    = normalizedType === "etsy";
     const isWalmart = normalizedType === "walmart";
     const isFaire   = normalizedType === "faire";
@@ -1368,10 +1534,10 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     </Box>
 
                     {/* ── Pull Orders toggle strip ── */}
-                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu || isAmazon || isMirakl) && (() => {
-                        const accentColor  = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : isAmazon ? "#FF9900" : isMirakl ? "#1d4ed8" : "#1565C0";
-                        const bgEnabled    = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : isAmazon ? "#fff8f0" : isMirakl ? "#eff6ff" : "#eff6ff";
-                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : isAmazon ? "Amazon" : isMirakl ? "Mirakl" : "Acenda";
+                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu || isAmazon || isMirakl || isTarget) && (() => {
+                        const accentColor  = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : isAmazon ? "#FF9900" : isMirakl ? "#1d4ed8" : isTarget ? "#CC0000" : "#1565C0";
+                        const bgEnabled    = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : isAmazon ? "#fff8f0" : isMirakl ? "#eff6ff" : isTarget ? "#fff5f5" : "#eff6ff";
+                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : isAmazon ? "Amazon" : isMirakl ? "Mirakl" : isTarget ? "Target Plus" : "Acenda";
                         return (
                             <Box sx={{
                                 borderTop: "1px solid #f1f5f9",
@@ -1443,6 +1609,11 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     {isMirakl && (
                         <Collapse in={pullEnabled}>
                             <MiraklOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isTarget && (
+                        <Collapse in={pullEnabled}>
+                            <TargetOrdersPanel connectionId={id} />
                         </Collapse>
                     )}
                 </Box>
@@ -1537,6 +1708,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const [temuOpen,    setTemuOpen]    = useState(false);
     const [amazonOpen,  setAmazonOpen]  = useState(false);
     const [miraklOpen,  setMiraklOpen]  = useState(false);
+    const [targetOpen,  setTargetOpen]  = useState(false);
     const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || []);
     const [tiktokConnections, setTiktokConnections] = useState(tiktokShops || []);
 
@@ -1661,11 +1833,21 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
                         <PlatformCard
-                            logoSrc="/mirakl.svg" alt="Mirakl"
+                            logoSrc="/mirakl.png" alt="Mirakl"
                             name="Mirakl"
                             description={PLATFORMS.mirakl.description}
                             connected={connectedTypes.has("mirakl")}
                             onClick={connectedTypes.has("mirakl") ? undefined : () => setMiraklOpen(true)}
+                            logoBg="#03182f"
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/target-logo.png" alt="Target Plus"
+                            name="Target Plus"
+                            description={PLATFORMS.target.description}
+                            connected={connectedTypes.has("target")}
+                            onClick={connectedTypes.has("target") ? undefined : () => setTargetOpen(true)}
                         />
                     </Grid2>
                 </Grid2>
@@ -1715,6 +1897,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             <TemuModal    open={temuOpen}    setOpen={setTemuOpen}    provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <AmazonModal  open={amazonOpen}  setOpen={setAmazonOpen}  provider={provider} setConnections={setApiConnections} />
             <MiraklModal  open={miraklOpen}  setOpen={setMiraklOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <TargetModal  open={targetOpen}  setOpen={setTargetOpen}  provider={provider} setConnections={setApiConnections} />
         </Box>
     );
 }
