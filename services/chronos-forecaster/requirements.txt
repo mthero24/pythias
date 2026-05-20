@@ -3,3 +3,5 @@ uvicorn[standard]>=0.24
 chronos-forecasting>=1.3
 torch>=2.0
 numpy>=1.24
+prophet>=1.1
+pandas>=1.5

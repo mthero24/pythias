@@ -737,6 +737,7 @@ const MODEL_META = {
     exponentialSmoothing: { label: "Exp. Smoothing (Holt)", color: "#7b1fa2" },
     movingAverage:        { label: "Moving Average",        color: "#2e7d32" },
     chronos:              { label: "Chronos (AI)",          color: "#0277bd" },
+    prophet:              { label: "Prophet (Seasonal)",    color: "#c62828" },
 };
 
 const HORIZON_OPTIONS = [
@@ -750,7 +751,7 @@ const HORIZON_OPTIONS = [
 ];
 
 const YEAR_LABELS = { 365: "Year 1", 730: "Year 2", 1825: "Year 5" };
-const bestModelKey = (best) => best === "linearRegression" ? "linear" : best === "exponentialSmoothing" ? "ema" : best === "chronos" ? "chronos" : "ma";
+const bestModelKey = (best) => best === "linearRegression" ? "linear" : best === "exponentialSmoothing" ? "ema" : best === "chronos" ? "chronos" : best === "prophet" ? "prophet" : "ma";
 
 function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefresh }) {
     if (loading && !forecastData) {
@@ -782,11 +783,21 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
     const bKey         = bestModelKey(best);        // "linear" | "ema" | "ma"
     const bNetKey      = bKey + "Net";              // "linearNet" | "emaNet" | "maNet"
 
-    // Table: show every day up to 14, then weekly; for long horizons show monthly
-    const fcRows    = combined.filter(d => d.actual == null);
-    const tableRows = useMonthly
-        ? combinedMonthly.filter(d => d.actual == null)
-        : fcRows.filter((_, i) => i < 14 || (i + 1) % 7 === 0);
+    const [tablePage, setTablePage] = useState(0);
+    useEffect(() => { setTablePage(0); }, [horizon]);
+
+    const fcRows       = combined.filter(d => d.actual == null);
+    const fcOrders     = combinedOrders.filter(d => d.actual == null);
+    const rowsPerPage  = 14;
+    const allTableRows = useMonthly ? combinedMonthly.filter(d => d.actual == null) : fcRows;
+    const tableRows    = allTableRows.slice(tablePage * rowsPerPage, (tablePage + 1) * rowsPerPage);
+
+    const sumKey = (arr, key, n) => Math.round(arr.slice(0, n).reduce((a, d) => a + (d[key] || 0), 0));
+    const projOrders  = { week: sumKey(fcOrders, bKey, 7),  month: sumKey(fcOrders, bKey, 30),  quarter: sumKey(fcOrders, bKey, 90),  year: sumKey(fcOrders, bKey, 365) };
+    const projRevenue = { week: sumKey(fcRows,   bKey, 7),  month: sumKey(fcRows,   bKey, 30),  quarter: sumKey(fcRows,   bKey, 90),  year: sumKey(fcRows,   bKey, 365) };
+    const ordDisplayMap = useMonthly
+        ? combinedOrders.reduce((m, o) => { const k = o.date.slice(0, 7); m[k] = (m[k] || 0) + Math.round(o[bKey] || 0); return m; }, {})
+        : Object.fromEntries(combinedOrders.map(o => [o.date, Math.round(o[bKey] || 0)]));
 
     return (
         <>
@@ -837,6 +848,28 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                 })}
             </Grid2>
 
+            {/* Projected Orders */}
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                Projected Orders — {MODEL_META[best]?.label ?? "Best Model"}
+            </Typography>
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                {[
+                    { label: "Next Week",    orders: projOrders.week,    revenue: projRevenue.week    },
+                    { label: "Next Month",   orders: projOrders.month,   revenue: projRevenue.month   },
+                    { label: "Next Quarter", orders: projOrders.quarter, revenue: projRevenue.quarter },
+                    { label: "Next Year",    orders: projOrders.year,    revenue: projRevenue.year    },
+                ].map(({ label, orders, revenue }) => (
+                    <Grid2 key={label} size={{ xs: 6, sm: 3 }}>
+                        <KpiCard
+                            label={label}
+                            value={`${fmtN(orders)} orders`}
+                            sub={fmt(revenue)}
+                            color={best ? MODEL_META[best].color : "text.primary"}
+                        />
+                    </Grid2>
+                ))}
+            </Grid2>
+
             {/* Trend + per-model horizon KPIs */}
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
                 <Grid2 size={{ xs: 6, md: 2 }}>
@@ -872,7 +905,8 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                                     { dataKey: "linear",    label: "Linear Regr.",   color: MODEL_META.linearRegression.color,     connectNulls: false, showMark: false },
                                     { dataKey: "ema",       label: "Exp. Smoothing", color: MODEL_META.exponentialSmoothing.color, connectNulls: false, showMark: false },
                                     { dataKey: "ma",        label: "Moving Avg",     color: MODEL_META.movingAverage.color,        connectNulls: false, showMark: false },
-                                    ...(models.chronos ? [{ dataKey: "chronos", label: "Chronos (AI)", color: MODEL_META.chronos.color, connectNulls: false, showMark: false }] : []),
+                                    ...(models.chronos ? [{ dataKey: "chronos", label: "Chronos (AI)",      color: MODEL_META.chronos.color,  connectNulls: false, showMark: false }] : []),
+                                    ...(models.prophet ? [{ dataKey: "prophet", label: "Prophet (Seasonal)", color: MODEL_META.prophet.color, connectNulls: false, showMark: false }] : []),
                                 ]}
                                 height={300}
                                 margin={{ left: 76, right: 16, top: 16, bottom: 40 }}
@@ -894,7 +928,8 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                                     { dataKey: "linearNet",  label: "Linear Regr.",    color: MODEL_META.linearRegression.color,     connectNulls: false, showMark: false },
                                     { dataKey: "emaNet",     label: "Exp. Smoothing",  color: MODEL_META.exponentialSmoothing.color, connectNulls: false, showMark: false },
                                     { dataKey: "maNet",      label: "Moving Avg",      color: MODEL_META.movingAverage.color,        connectNulls: false, showMark: false },
-                                    ...(models.chronos ? [{ dataKey: "chronosNet", label: "Chronos (AI)", color: MODEL_META.chronos.color, connectNulls: false, showMark: false }] : []),
+                                    ...(models.chronos ? [{ dataKey: "chronosNet", label: "Chronos (AI)",      color: MODEL_META.chronos.color,  connectNulls: false, showMark: false }] : []),
+                                    ...(models.prophet ? [{ dataKey: "prophetNet", label: "Prophet (Seasonal)", color: MODEL_META.prophet.color, connectNulls: false, showMark: false }] : []),
                                 ]}
                                 height={260}
                                 margin={{ left: 76, right: 16, top: 16, bottom: 40 }}
@@ -916,7 +951,8 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                                     { dataKey: "linear", label: "Linear Regr.",   color: MODEL_META.linearRegression.color,     connectNulls: false, showMark: false },
                                     { dataKey: "ema",    label: "Exp. Smoothing", color: MODEL_META.exponentialSmoothing.color, connectNulls: false, showMark: false },
                                     { dataKey: "ma",     label: "Moving Avg",     color: MODEL_META.movingAverage.color,        connectNulls: false, showMark: false },
-                                    ...(models.chronos ? [{ dataKey: "chronos", label: "Chronos (AI)", color: MODEL_META.chronos.color, connectNulls: false, showMark: false }] : []),
+                                    ...(models.chronos ? [{ dataKey: "chronos", label: "Chronos (AI)",      color: MODEL_META.chronos.color,  connectNulls: false, showMark: false }] : []),
+                                    ...(models.prophet ? [{ dataKey: "prophet", label: "Prophet (Seasonal)", color: MODEL_META.prophet.color, connectNulls: false, showMark: false }] : []),
                                 ]}
                                 height={240}
                                 margin={{ left: 48, right: 16, top: 16, bottom: 40 }}
@@ -926,28 +962,47 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                 </Grid2>
 
                 {/* Forecast table */}
-                <Grid2 size={{ xs: 12, md: 6 }}>
-                    <ChartCard title="Forecast Values (Best Model)" minH={240}>
-                        <Box sx={{ overflow: "auto" }}>
-                            <Table size="small">
+                <Grid2 size={{ xs: 12 }}>
+                    <ChartCard title="Forecast Values" minH={240}>
+                        <Box sx={{ overflowX: "auto" }}>
+                            <Table size="small" sx={{ minWidth: 620 }}>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50" }}>Date</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: MODEL_META[best]?.color }}>Gross</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: "#00695c" }}>Net</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", whiteSpace: "nowrap" }}>Date</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: MODEL_META.linearRegression.color,     whiteSpace: "nowrap" }}>Linear</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: MODEL_META.exponentialSmoothing.color, whiteSpace: "nowrap" }}>EMA</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: MODEL_META.movingAverage.color,        whiteSpace: "nowrap" }}>MA</TableCell>
+                                        {models.chronos && <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: MODEL_META.chronos.color,  whiteSpace: "nowrap" }}>Chronos</TableCell>}
+                                        {models.prophet && <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: MODEL_META.prophet.color, whiteSpace: "nowrap" }}>Prophet</TableCell>}
+                                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", color: "#00695c", whiteSpace: "nowrap" }}>Net (Best)</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 600, fontSize: 11, bgcolor: "grey.50", whiteSpace: "nowrap" }}>Orders</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {tableRows.map((row) => (
                                         <TableRow key={row.date} hover sx={{ "& td": { py: 0.5, fontSize: 12 } }}>
-                                            <TableCell>{fmtDate(row.date)}</TableCell>
-                                            <TableCell align="right" sx={{ color: MODEL_META[best]?.color, fontWeight: 600 }}>{revFormatter(row[bKey])}</TableCell>
+                                            <TableCell sx={{ whiteSpace: "nowrap" }}>{fmtDate(row.date)}</TableCell>
+                                            <TableCell align="right" sx={{ color: MODEL_META.linearRegression.color     }}>{revFormatter(row.linear)}</TableCell>
+                                            <TableCell align="right" sx={{ color: MODEL_META.exponentialSmoothing.color }}>{revFormatter(row.ema)}</TableCell>
+                                            <TableCell align="right" sx={{ color: MODEL_META.movingAverage.color        }}>{revFormatter(row.ma)}</TableCell>
+                                            {models.chronos && <TableCell align="right" sx={{ color: MODEL_META.chronos.color  }}>{revFormatter(row.chronos)}</TableCell>}
+                                            {models.prophet && <TableCell align="right" sx={{ color: MODEL_META.prophet.color }}>{revFormatter(row.prophet)}</TableCell>}
                                             <TableCell align="right" sx={{ color: "#00695c" }}>{revFormatter(row[bNetKey])}</TableCell>
+                                            <TableCell align="right">{ordDisplayMap[row.date] != null ? fmtN(ordDisplayMap[row.date]) : "—"}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
                         </Box>
+                        <TablePagination
+                            component="div"
+                            count={allTableRows.length}
+                            page={tablePage}
+                            onPageChange={(_, p) => setTablePage(p)}
+                            rowsPerPage={rowsPerPage}
+                            rowsPerPageOptions={[rowsPerPage]}
+                            sx={{ borderTop: 1, borderColor: "divider" }}
+                        />
                     </ChartCard>
                 </Grid2>
 
@@ -1002,6 +1057,16 @@ function BlankForecastTab({ forecastBlanksData, loading, onRefresh }) {
         .filter(r => filter === "all" || r.needsReorder)
         .filter(r => !search || lc(r.styleCode).includes(lc(search)) || lc(r.colorName).includes(lc(search)) || lc(r.sizeName).includes(lc(search)));
 
+    const mkOrd  = (demand, r) => Math.max(0, demand - (r.onHand || 0) - (r.pending || 0));
+    const wkOrd  = r => mkOrd(Math.ceil((r.avgMonthly || 0) / 4.33), r);
+    const moOrd  = r => mkOrd(Math.ceil(r.avgMonthly || 0), r);
+    const qtrOrd = r => mkOrd(Math.ceil((r.avgMonthly || 0) * 3), r);
+    const yrOrd  = r => mkOrd(r.proj12mo || 0, r);
+    const totalWkOrd  = rows.reduce((a, r) => a + wkOrd(r),  0);
+    const totalMoOrd  = rows.reduce((a, r) => a + moOrd(r),  0);
+    const totalQtrOrd = rows.reduce((a, r) => a + qtrOrd(r), 0);
+    const totalYrOrd  = rows.reduce((a, r) => a + yrOrd(r),  0);
+
     const chartRows = [...rows].filter(r => (r.suggested || 0) > 0).sort((a, b) => b.suggested - a.suggested).slice(0, 15);
 
     const columns = [
@@ -1020,6 +1085,10 @@ function BlankForecastTab({ forecastBlanksData, loading, onRefresh }) {
         ) : "—" },
         { key: "unitCost",   label: "Unit Cost",   align: "right", render: (r) => fmt(r.unitCost) },
         { key: "orderValue", label: "Order Value", align: "right", render: (r) => r.orderValue != null ? fmt(r.orderValue) : "—" },
+        { key: "wkOrd",  label: "Wk Ord",  align: "right", getValue: r => wkOrd(r),  render: r => { const v = wkOrd(r);  return v > 0 ? <Typography variant="body2" sx={{ fontWeight: 600, color: "warning.main" }}>{fmtN(v)}</Typography> : "—"; } },
+        { key: "moOrd",  label: "Mo Ord",  align: "right", getValue: r => moOrd(r),  render: r => { const v = moOrd(r);  return v > 0 ? fmtN(v) : "—"; } },
+        { key: "qtrOrd", label: "Qtr Ord", align: "right", getValue: r => qtrOrd(r), render: r => { const v = qtrOrd(r); return v > 0 ? fmtN(v) : "—"; } },
+        { key: "yrOrd",  label: "Yr Ord",  align: "right", getValue: r => yrOrd(r),  render: r => { const v = yrOrd(r);  return v > 0 ? fmtN(v) : "—"; } },
     ];
 
     return (
@@ -1036,6 +1105,23 @@ function BlankForecastTab({ forecastBlanksData, loading, onRefresh }) {
                 <Grid2 size={{ xs: 12, sm: 4 }}>
                     <KpiCard label="Est. Order Value" value={fmt(totalOrderValue)} color="primary.main" />
                 </Grid2>
+            </Grid2>
+
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                Inventory to Order (projected demand − on hand − pending)
+            </Typography>
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                {[
+                    { label: "Next Week",    value: totalWkOrd  },
+                    { label: "Next Month",   value: totalMoOrd  },
+                    { label: "Next Quarter", value: totalQtrOrd },
+                    { label: "Next Year",    value: totalYrOrd  },
+                ].map(({ label, value }) => (
+                    <Grid2 key={label} size={{ xs: 6, sm: 3 }}>
+                        <KpiCard label={label} value={`${fmtN(value)} units`}
+                            color={value > 0 ? "warning.main" : "success.main"} />
+                    </Grid2>
+                ))}
             </Grid2>
 
             {chartRows.length > 0 && (
@@ -1076,7 +1162,7 @@ function BlankForecastTab({ forecastBlanksData, loading, onRefresh }) {
                 </Button>
             </Stack>
 
-            <SortableTable columns={columns} rows={filtered} defaultSort="proj12mo" />
+            <SortableTable columns={columns} rows={filtered} defaultSort="styleCode" defaultDir="asc" />
         </>
     );
 }
