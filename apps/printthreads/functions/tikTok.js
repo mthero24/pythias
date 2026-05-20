@@ -1,4 +1,4 @@
-import TikTokAuth from "@/models/tiktok"
+import { TikTokAuth, Order, SkuToUpc, Products as Product, Color as Colors, Blank as Blanks, Item } from "@pythias/mongo";
 import {
   getAuthorizedShops,
   getAccessTokenFromRefreshToken,
@@ -8,9 +8,8 @@ import {
   getAttributes,
   createProduct,
   getOrdersTikTok,
+  generatePieceID,
 } from "@pythias/integrations";
-import {Order, SkuToUpc, Products as Product, Color as Colors, Blank as Blanks, Item} from "@pythias/mongo"
-import {generatePieceID } from "@pythias/integrations";
 const refresh = async (creds, cipher) =>{
     let credentials = await TikTokAuth.findOne({ _id: creds._id });
     console.log("refresh +++++")
