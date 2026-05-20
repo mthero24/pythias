@@ -72,6 +72,15 @@ function generateResponse(payload, horizon) {
     const lNF=predictLinear(linNet,n,horizon), hNF=predictHolt(holtNet,horizon), mNF=predictMA(maNet,horizon);
     const lOF=predictLinear(linOrd,n,horizon), hOF=predictHolt(holtOrd,horizon), mOF=predictMA(maOrd,horizon);
 
+    const maxProj = Math.max(horizon, 365);
+    const lOFP=predictLinear(linOrd,n,maxProj), hOFP=predictHolt(holtOrd,maxProj), mOFP=predictMA(maOrd,maxProj);
+    const lRFP=predictLinear(linRev,n,maxProj), hRFP=predictHolt(holtRev,maxProj), mRFP=predictMA(maRev,maxProj);
+    const PROJ_BUCKETS = { week:7, month:30, quarter:90, year:365 };
+    const makeProj = (ordArr, revArr) => Object.fromEntries(Object.entries(PROJ_BUCKETS).map(([k,d]) => [k, { orders: Math.round(sum(ordArr.slice(0,d))), revenue: Math.round(sum(revArr.slice(0,d))) }]));
+    const projections = { linear: makeProj(lOFP,lRFP), ema: makeProj(hOFP,hRFP), ma: makeProj(mOFP,mRFP) };
+    if (chronos) projections.chronos = makeProj(chronos.ord.median.slice(0,maxProj), chronos.rev.median.slice(0,maxProj));
+    if (prophet) projections.prophet = makeProj(prophet.ord.forecast.slice(0,maxProj), prophet.rev.forecast.slice(0,maxProj));
+
     const combined = [
         ...historical.map((d,i)=>{ const linear=Math.round(Math.max(0,linRev.intercept+linRev.slope*i)),ema=Math.round(holtRev.fitted[i]),ma=Math.round(maRev.fitted[i]); return {date:d.date,actual:d.revenue,actualNet:d.net,linear,ema,ma,chronos:null,prophet:null,linearNet:Math.min(linear,Math.round(Math.max(0,linNet.intercept+linNet.slope*i))),emaNet:Math.min(ema,Math.round(holtNet.fitted[i])),maNet:Math.min(ma,Math.round(maNet.fitted[i])),chronosNet:null,prophetNet:null}; }),
         ...forecastDates.map((date,h)=>{ const linear=Math.round(lRF[h]),ema=Math.round(hRF[h]),ma=Math.round(mRF[h]); const chr=chronos?Math.round(Math.max(0,chronos.rev.median[h]??0)):null,chrN=chronos?Math.round(Math.max(0,chronos.net.median[h]??0)):null; const pro=prophet?Math.round(Math.max(0,prophet.rev.forecast[h]??0)):null,proN=prophet?Math.round(Math.max(0,prophet.net.forecast[h]??0)):null; return {date,actual:null,actualNet:null,linear,ema,ma,chronos:chr,prophet:pro,linearNet:Math.min(linear,Math.round(lNF[h])),emaNet:Math.min(ema,Math.round(hNF[h])),maNet:Math.min(ma,Math.round(mNF[h])),chronosNet:chrN,prophetNet:proN}; }),
@@ -92,7 +101,7 @@ function generateResponse(payload, horizon) {
     if (prophet) {
         models.prophet = { label:"Prophet (Seasonal)", color:"#c62828", rmseRev:prophet.rev.rmse!=null?Math.round(prophet.rev.rmse):null, forecastTotal:Math.round(sum(prophet.rev.forecast.slice(0,horizon))), forecastOrders:Math.round(sum(prophet.ord.forecast.slice(0,horizon))) };
     }
-    return { historical, combined, combinedOrders, combinedMonthly, annualProjections, models, best, horizon, trendPct };
+    return { historical, combined, combinedOrders, combinedMonthly, annualProjections, projections, models, best, horizon, trendPct };
 }
 
 function fitPayload(historical) {
@@ -105,7 +114,7 @@ function fitPayload(historical) {
         const lN=predictLinear(linNet,n,days),hN=predictHolt(holtNet,days),mN=predictMA(maNet,days);
         const gL=Math.round(sum(lR)),gE=Math.round(sum(hR)),gM=Math.round(sum(mR)); return{days,gross:{linear:gL,ema:gE,ma:gM},net:{linear:Math.min(gL,Math.round(sum(lN))),ema:Math.min(gE,Math.round(sum(hN))),ma:Math.min(gM,Math.round(sum(mN)))}};
     });
-    const trendPct=revVals.length>7?((revVals.slice(-7).reduce((a,b)=>a+b,0)/7)-(revVals.slice(0,7).reduce((a,b)=>a+b,0)/7))/(revVals.slice(0,7).reduce((a,b)=>a+b,0)/7||1):0;
+    const recentAvg=revVals.slice(-30).reduce((a,b)=>a+b,0)/Math.min(30,revVals.length); const priorSlice=revVals.slice(-60,-30); const priorAvg=priorSlice.length?priorSlice.reduce((a,b)=>a+b,0)/priorSlice.length:0; const trendPct=priorAvg>1?(recentAvg-priorAvg)/priorAvg:0;
     const best=Object.entries({linearRegression:linRev.rmse,exponentialSmoothing:holtRev.rmse,movingAverage:maRev.rmse}).sort((a,b)=>a[1]-b[1])[0][0];
     return { historical, linRev, holtRev, maRev, linNet, holtNet, maNet, linOrd, holtOrd, maOrd, annualProjections, best, trendPct };
 }

@@ -777,7 +777,7 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
         );
     }
 
-    const { combined = [], combinedOrders = [], combinedMonthly = [], annualProjections = [], models = {}, best, trendPct, minDataWarning, computedAt } = forecastData;
+    const { combined = [], combinedOrders = [], combinedMonthly = [], annualProjections = [], projections = {}, models = {}, best, trendPct, minDataWarning, computedAt } = forecastData;
     const revFormatter = (v) => v == null ? "" : `$${(v).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
     const trendColor   = trendPct >= 0 ? "success.main" : "error.main";
     const trendSign    = trendPct >= 0 ? "+" : "";
@@ -785,8 +785,8 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
     const modelKeys    = Object.keys(MODEL_META).filter(k => models[k]);
     const useMonthly   = horizon > 90;
     const chartData    = useMonthly ? combinedMonthly : combined;
-    const bKey         = bestModelKey(best);        // "linear" | "ema" | "ma"
-    const bNetKey      = bKey + "Net";              // "linearNet" | "emaNet" | "maNet"
+    const bKey         = bestModelKey(best);
+    const bNetKey      = bKey + "Net";
 
     const [tablePage, setTablePage] = useState(0);
     useEffect(() => { setTablePage(0); }, [horizon]);
@@ -798,8 +798,9 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
     const tableRows    = allTableRows.slice(tablePage * rowsPerPage, (tablePage + 1) * rowsPerPage);
 
     const sumKey = (arr, key, n) => Math.round(arr.slice(0, n).reduce((a, d) => a + (d[key] || 0), 0));
-    const projOrders  = { week: sumKey(fcOrders, bKey, 7),  month: sumKey(fcOrders, bKey, 30),  quarter: sumKey(fcOrders, bKey, 90),  year: sumKey(fcOrders, bKey, 365) };
-    const projRevenue = { week: sumKey(fcRows,   bKey, 7),  month: sumKey(fcRows,   bKey, 30),  quarter: sumKey(fcRows,   bKey, 90),  year: sumKey(fcRows,   bKey, 365) };
+    const projData     = projections[bKey] ?? projections.linear ?? {};
+    const projOrders  = { week: projData.week?.orders ?? 0,   month: projData.month?.orders ?? 0,   quarter: projData.quarter?.orders ?? 0,   year: projData.year?.orders ?? 0   };
+    const projRevenue = { week: projData.week?.revenue ?? 0,  month: projData.month?.revenue ?? 0,  quarter: projData.quarter?.revenue ?? 0,  year: projData.year?.revenue ?? 0  };
     const ordDisplayMap = useMonthly
         ? combinedOrders.reduce((m, o) => { const k = o.date.slice(0, 7); m[k] = (m[k] || 0) + Math.round(o[bKey] || 0); return m; }, {})
         : Object.fromEntries(combinedOrders.map(o => [o.date, Math.round(o[bKey] || 0)]));
@@ -838,8 +839,9 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
             </Typography>
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
                 {annualProjections.map(yr => {
-                    const gross = yr.gross?.[bKey] ?? 0;
-                    const net   = yr.net?.[bKey]   ?? 0;
+                    const resolveKey = (obj) => obj?.[bKey] ?? obj?.linear ?? obj?.ema ?? obj?.ma ?? 0;
+                    const gross = resolveKey(yr.gross);
+                    const net   = resolveKey(yr.net);
                     return (
                         <Grid2 key={yr.days} size={{ xs: 12, sm: 4 }}>
                             <KpiCard
