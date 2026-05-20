@@ -842,9 +842,9 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
             </Typography>
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
                 {annualProjections.map(yr => {
-                    const resolveKey = (obj) => obj?.[bKey] ?? obj?.linear ?? obj?.ema ?? obj?.ma ?? 0;
-                    const gross = resolveKey(yr.gross);
-                    const net   = resolveKey(yr.net);
+                    const pickBest = (obj) => { const v = obj?.[bKey] ?? 0; if (v > 0) return v; return Math.max(obj?.ema ?? 0, obj?.ma ?? 0, obj?.linear ?? 0); };
+                    const gross = pickBest(yr.gross);
+                    const net   = Math.min(gross, pickBest(yr.net));
                     return (
                         <Grid2 key={yr.days} size={{ xs: 12, sm: 4 }}>
                             <KpiCard
