@@ -257,8 +257,8 @@ module.exports = {
     {
       name: "chronos-forecaster",
       cwd: "services/chronos-forecaster",
-      script: "server.py",
-      interpreter: "venv/bin/python3",
+      script: "start.sh",
+      interpreter: "bash",
       exec_mode: "fork",
       instances: 1,
       autorestart: true,
