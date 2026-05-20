@@ -35,5 +35,6 @@ export { default as ShopifyUserData } from "./models/ShopifyUserData";
 export { default as ShopifyProducts } from "./models/ShopifyProducts";
 export { PageView, Session } from "./models/Analytics";
 export { addCogs } from "./functions/addCogs";
+export { addLicenceFees } from "./functions/addLicenceFees";
 export { default as BlankForecastCache } from "./models/BlankForecastCache";
 export { default as ForecastCache } from "./models/ForecastCache";

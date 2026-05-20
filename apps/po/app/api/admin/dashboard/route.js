@@ -3,6 +3,7 @@ import Order from "@/models/Order";
 import Items from "@/models/Items";
 import Inventory from "@/models/inventory";
 import StyleV2 from "@/models/StyleV2";
+import { Design, LicenseHolders } from "@pythias/mongo";
 
 const activeExpr = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
 const shipCostExpr = { $ifNull: ["$selectedShipping.cost", { $ifNull: ["$shippingInfo.shippingCost", 0] }] };
@@ -17,6 +18,32 @@ async function addCogs(items) {
     return items.map(i => ({ ...i, wholesaleCost: costMap[i.styleCode]?.[i.sizeName] ?? 0 }));
 }
 
+async function addLicenceFees(items) {
+    if (!items.length) return items.map(i => ({ ...i, licenceFee: 0 }));
+    const designIds = [...new Set(items.map(i => i.designRef).filter(Boolean).map(String))];
+    if (!designIds.length) return items.map(i => ({ ...i, licenceFee: 0 }));
+    const designs = await Design.find({ _id: { $in: designIds }, licenseHolder: { $ne: null } }).select("_id licenseHolder").lean();
+    if (!designs.length) return items.map(i => ({ ...i, licenceFee: 0 }));
+    const holderIds = [...new Set(designs.map(d => d.licenseHolder).filter(Boolean).map(String))];
+    const holders = await LicenseHolders.find({ _id: { $in: holderIds } }).lean();
+    const holderMap = Object.fromEntries(holders.map(h => [String(h._id), h]));
+    const designHolderMap = {};
+    for (const d of designs) { if (d.licenseHolder) designHolderMap[String(d._id)] = holderMap[String(d.licenseHolder)]; }
+    const styleCodes = [...new Set(items.map(i => i.styleCode).filter(Boolean))];
+    const styles = styleCodes.length ? await StyleV2.find({ code: { $in: styleCodes } }).select("code sizes").lean() : [];
+    const retailMap = {};
+    for (const s of styles) { retailMap[s.code] = {}; for (const sz of s.sizes ?? []) retailMap[s.code][sz.name] = sz.retailPrice ?? 0; }
+    return items.map(i => {
+        const holder = i.designRef ? designHolderMap[String(i.designRef)] : null;
+        if (!holder) return { ...i, licenceFee: 0 };
+        const basePrice = i.price || retailMap[i.styleCode]?.[i.sizeName] || 0;
+        const adjPrice = basePrice + (holder.additionalFees || 0);
+        const fee = adjPrice * (holder.paymentType === "Percentage Per Unit" ? (holder.amount / 100) : 1)
+            + (holder.paymentType === "Flat Per Unit" || holder.paymentType === "One Time" ? holder.amount : 0);
+        return { ...i, licenceFee: fee || 0 };
+    });
+}
+
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
@@ -27,7 +54,7 @@ export async function GET(req) {
         const until = toParam   ? new Date(toParam   + "T23:59:59") : new Date();
         const dateFilter = { $gte: since, $lte: until };
 
-        const [summaryAgg, byMarketplaceAgg, rawItems, invResult, itemCount, revenueByDayAgg, itemsByDayAgg] = await Promise.all([
+        const [summaryAgg, byMarketplaceAgg, rawItems, invResult, itemCount, revenueByDayAgg, itemsByDayAgg, rawLicencedItems] = await Promise.all([
             Order.aggregate([
                 { $match: { date: dateFilter } },
                 { $group: {
@@ -64,19 +91,36 @@ export async function GET(req) {
                 { $project: { _id: 0, date: "$_id", count: 1 } },
                 { $sort: { date: 1 } },
             ]),
+            // All licensed items in range — no cap — only fields needed for fee calculation
+            Items.find({ date: dateFilter, designRef: { $ne: null }, canceled: { $ne: true } })
+                .select("designRef price styleCode sizeName order")
+                .lean(),
         ]);
 
         const items = await addCogs(rawItems);
 
-        const itemOrderIds = [...new Set(rawItems.map(i => i.order).filter(Boolean))];
-        const orderMpDocs  = await Order.find({ _id: { $in: itemOrderIds } }).select("marketplace").lean();
+        // Build order→marketplace map covering both regular items and licensed items
+        const allOrderIds = [...new Set([
+            ...rawItems.map(i => i.order),
+            ...rawLicencedItems.map(i => i.order),
+        ].filter(Boolean))];
+        const orderMpDocs  = await Order.find({ _id: { $in: allOrderIds } }).select("marketplace").lean();
         const orderMarketplaceMap = Object.fromEntries(orderMpDocs.map(o => [String(o._id), o.marketplace || "Unknown"]));
+
+        // Compute licence fees across ALL licensed items (no 5000 cap)
+        const licencedItemsWithFees = await addLicenceFees(rawLicencedItems);
+        const licenceFeeByMarketplace = {};
+        for (const i of licencedItemsWithFees) {
+            if (!i.order) continue;
+            const mp = orderMarketplaceMap[String(i.order)] || "Unknown";
+            licenceFeeByMarketplace[mp] = (licenceFeeByMarketplace[mp] || 0) + (i.licenceFee || 0);
+        }
 
         const summary        = summaryAgg[0] ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
         const byMarketplace  = byMarketplaceAgg;
         const inventoryValue = invResult[0]?.totalValue ?? 0;
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg });
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({ error: true, msg: e.message, summary: { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 }, byMarketplace: [], orderMarketplaceMap: {}, items: [], inventoryValue: 0 }, { status: 500 });

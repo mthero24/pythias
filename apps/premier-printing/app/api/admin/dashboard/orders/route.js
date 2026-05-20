@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Order, Items, addCogs } from "@pythias/mongo";
+import { Order, Items, addCogs, addLicenceFees } from "@pythias/mongo";
 
 const VALID_SORT_FIELDS = new Set(["date", "poNumber", "marketplace", "total"]);
 
@@ -36,23 +36,27 @@ export async function GET(req) {
 
         const orderIds  = orders.map(o => o._id);
         const rawItems  = await Items.find({ order: { $in: orderIds }, canceled: { $ne: true } })
-            .select("order styleCode sizeName").lean();
+            .select("order styleCode sizeName designRef price").lean();
         const itemsWithCogs = await addCogs(rawItems);
+        const itemsEnriched = await addLicenceFees(itemsWithCogs);
 
         const cogsByOrder = {};
-        for (const i of itemsWithCogs) {
+        const licenceFeeByOrder = {};
+        for (const i of itemsEnriched) {
             const key = String(i.order);
             cogsByOrder[key] = (cogsByOrder[key] || 0) + (i.wholesaleCost || 0);
+            licenceFeeByOrder[key] = (licenceFeeByOrder[key] || 0) + (i.licenceFee || 0);
         }
 
         const enriched = orders.map(o => ({
             ...o,
             blanksCogs: cogsByOrder[String(o._id)] || 0,
+            licenceFee: licenceFeeByOrder[String(o._id)] || 0,
             shippingCost: shipCostExpr(o),
         }));
 
         if (csvMode) {
-            const headers = ["Date", "PO Number", "Order ID", "Marketplace", "Status", "Revenue", "Shipping Cost", "Blank COGS"];
+            const headers = ["Date", "PO Number", "Order ID", "Marketplace", "Status", "Revenue", "Shipping Cost", "Blank COGS", "Licence Fee"];
             const rows = enriched.map(o => [
                 o.date ? new Date(o.date).toLocaleDateString() : "",
                 o.poNumber || "",
@@ -62,6 +66,7 @@ export async function GET(req) {
                 (o.total ?? 0).toFixed(2),
                 (o.shippingCost ?? 0).toFixed(2),
                 (o.blanksCogs ?? 0).toFixed(2),
+                (o.licenceFee ?? 0).toFixed(2),
             ]);
             const escape = (v) => {
                 const s = String(v ?? "");

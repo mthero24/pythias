@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { Order, Items, Inventory, addCogs } from "@pythias/mongo";
+import { Order, Items, Inventory, addCogs, addLicenceFees } from "@pythias/mongo";
+
 
 const activeExpr = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
 const shipCostExpr = { $ifNull: ["$selectedShipping.cost", { $ifNull: ["$shippingInfo.shippingCost", 0] }] };
@@ -14,7 +15,7 @@ export async function GET(req) {
         const until = toParam   ? new Date(toParam   + "T23:59:59") : new Date();
         const dateFilter = { $gte: since, $lte: until };
 
-        const [summaryAgg, byMarketplaceAgg, rawItems, invResult, itemCount, revenueByDayAgg, itemsByDayAgg] = await Promise.all([
+        const [summaryAgg, byMarketplaceAgg, rawItems, invResult, itemCount, revenueByDayAgg, itemsByDayAgg, rawLicencedItems] = await Promise.all([
             Order.aggregate([
                 { $match: { date: dateFilter } },
                 { $group: {
@@ -58,14 +59,30 @@ export async function GET(req) {
                 { $project: { _id: 0, date: "$_id", count: 1 } },
                 { $sort: { date: 1 } },
             ]),
+            // All licensed items in range — no cap — only fields needed for fee calculation
+            Items.find({ date: dateFilter, designRef: { $ne: null }, canceled: { $ne: true } })
+                .select("designRef price styleCode sizeName order")
+                .lean(),
         ]);
 
         const items = await addCogs(rawItems);
 
-        // Lightweight map: order _id → marketplace (only for orders that have items in this range)
-        const itemOrderIds = [...new Set(rawItems.map(i => i.order).filter(Boolean))];
-        const orderMpDocs  = await Order.find({ _id: { $in: itemOrderIds } }).select("marketplace").lean();
+        // Build order→marketplace map covering both regular items and licensed items
+        const allOrderIds = [...new Set([
+            ...rawItems.map(i => i.order),
+            ...rawLicencedItems.map(i => i.order),
+        ].filter(Boolean))];
+        const orderMpDocs  = await Order.find({ _id: { $in: allOrderIds } }).select("marketplace").lean();
         const orderMarketplaceMap = Object.fromEntries(orderMpDocs.map(o => [String(o._id), o.marketplace || "Unknown"]));
+
+        // Compute licence fees across ALL licensed items (no 5000 cap)
+        const licencedItemsWithFees = await addLicenceFees(rawLicencedItems);
+        const licenceFeeByMarketplace = {};
+        for (const i of licencedItemsWithFees) {
+            if (!i.order) continue;
+            const mp = orderMarketplaceMap[String(i.order)] || "Unknown";
+            licenceFeeByMarketplace[mp] = (licenceFeeByMarketplace[mp] || 0) + (i.licenceFee || 0);
+        }
 
         const summary        = summaryAgg[0] ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
         const byMarketplace  = byMarketplaceAgg;
@@ -73,7 +90,7 @@ export async function GET(req) {
 
         console.log(`[dashboard] ${since.toISOString()} → ${until.toISOString()} | orders: ${summary.orderCount} | items: ${itemCount} (fetched: ${items.length})`);
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg });
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({

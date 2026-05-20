@@ -341,11 +341,12 @@ function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeC
         { key: "date",        serverKey: "date",        label: "Date",        render: (o) => fmtDate(o.date) },
         { key: "poNumber",    serverKey: "poNumber",    label: "PO #",        render: (o) => o.poNumber || o.orderId || "—" },
         { key: "marketplace", serverKey: "marketplace", label: "Channel",     render: (o) => <Chip size="small" label={o.marketplace || "—"} variant="outlined" /> },
-        { key: "total",       serverKey: "total",       label: "Revenue",     align: "right", render: (o) => fmt(o.total) },
-        { key: "shipping",    label: "Shipping",        align: "right",       render: (o) => fmt(o.shippingCost) },
-        { key: "blanksCogs",  label: "Blank COGS",      align: "right",       render: (o) => fmt(o.blanksCogs) },
-        { key: "daysToShip",  label: "Days to Ship",    align: "right",       render: (o) => { const d = daysToShip(o); return d != null ? d.toFixed(1) : "—"; } },
-        { key: "status",      label: "Status",          render: orderChip },
+        { key: "total",       serverKey: "total",       label: "Revenue",      align: "right", render: (o) => fmt(o.total) },
+        { key: "shipping",    label: "Shipping",         align: "right",       render: (o) => fmt(o.shippingCost) },
+        { key: "blanksCogs",  label: "Blank COGS",       align: "right",       render: (o) => fmt(o.blanksCogs) },
+        { key: "licenceFee",  label: "Licence Fees",     align: "right",       render: (o) => fmt(o.licenceFee) },
+        { key: "daysToShip",  label: "Days to Ship",     align: "right",       render: (o) => { const d = daysToShip(o); return d != null ? d.toFixed(1) : "—"; } },
+        { key: "status",      label: "Status",           render: orderChip },
     ];
 
     const revFormatter = (v) => `$${(v ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -532,23 +533,25 @@ function fmtRate(marketplace) {
     return rate != null ? `~${(rate * 100).toFixed(1)}%` : "—";
 }
 
-function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, inventoryValue }) {
+function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, inventoryValue }) {
     const { orders, total, page, pageSize, loading } = ordersData;
 
     const totalFees = useMemo(() =>
         byMarketplace.reduce((s, mp) => s + mp.revenue * (MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0), 0),
     [byMarketplace]);
     const totalCogs = useMemo(() => Object.values(cogsByMarketplace).reduce((s, v) => s + v, 0), [cogsByMarketplace]);
-    const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs;
+    const totalLicenceFees = useMemo(() => Object.values(licenceFeeByMarketplace ?? {}).reduce((s, v) => s + v, 0), [licenceFeeByMarketplace]);
+    const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs - totalLicenceFees;
 
     const mpRows = useMemo(() =>
         byMarketplace.map((mp) => {
             const rate = MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0;
             const fees = mp.revenue * rate;
             const cogs = cogsByMarketplace[mp.marketplace] || 0;
-            return { ...mp, fees, cogs, net: mp.revenue - mp.shipping - fees - cogs };
+            const licenceFee = (licenceFeeByMarketplace ?? {})[mp.marketplace] || 0;
+            return { ...mp, fees, cogs, licenceFee, net: mp.revenue - mp.shipping - fees - cogs - licenceFee };
         }),
-    [byMarketplace, cogsByMarketplace]);
+    [byMarketplace, cogsByMarketplace, licenceFeeByMarketplace]);
 
     const revFormatter = (v) => `$${(v ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
     const netHeight = Math.max(240, mpRows.length * 36 + 60);
@@ -559,9 +562,10 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         { key: "revenue",  label: "Revenue",      align: "right", render: (r) => fmt(r.revenue) },
         { key: "shipping", label: "Shipping",     align: "right", render: (r) => fmt(r.shipping) },
         { key: "rate",     label: "Fee Rate",     align: "right", getValue: (r) => MARKETPLACE_FEE_RATES[(r.marketplace || "").toLowerCase()] ?? -1, render: (r) => fmtRate(r.marketplace) },
-        { key: "fees",     label: "Est. MP Fees", align: "right", render: (r) => fmt(r.fees) },
-        { key: "cogs",     label: "Blank COGS",   align: "right", render: (r) => fmt(r.cogs) },
-        { key: "net",      label: "Net",          align: "right", render: (r) => (
+        { key: "fees",       label: "Est. MP Fees",  align: "right", render: (r) => fmt(r.fees) },
+        { key: "cogs",       label: "Blank COGS",    align: "right", render: (r) => fmt(r.cogs) },
+        { key: "licenceFee", label: "Licence Fees",  align: "right", render: (r) => fmt(r.licenceFee) },
+        { key: "net",        label: "Net",            align: "right", render: (r) => (
             <Typography variant="body2" sx={{ fontWeight: 600, color: r.net >= 0 ? "success.main" : "error.main" }}>{fmt(r.net)}</Typography>
         )},
     ];
@@ -574,8 +578,9 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         { key: "shipping",    label: "Shipping",        align: "right",       render: (o) => fmt(o.shippingCost) },
         { key: "fees",        label: "Est. MP Fees",    align: "right",       render: (o) => fmt(estimateFee(o)) },
         { key: "blanksCogs",  label: "Blank COGS",      align: "right",       render: (o) => fmt(o.blanksCogs) },
+        { key: "licenceFee",  label: "Licence Fees",    align: "right",       render: (o) => fmt(o.licenceFee) },
         { key: "net",         label: "Net",             align: "right",       render: (o) => {
-            const n = (o.total || 0) - (o.shippingCost || 0) - estimateFee(o) - (o.blanksCogs || 0);
+            const n = (o.total || 0) - (o.shippingCost || 0) - estimateFee(o) - (o.blanksCogs || 0) - (o.licenceFee || 0);
             return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
         }},
     ];
@@ -583,12 +588,13 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
     return (
         <>
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
-                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Gross Revenue"     value={fmt(summary.totalRevenue)}  color="success.main" /></Grid2>
-                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Shipping Costs"    value={fmt(summary.totalShipping)} color="warning.main" /></Grid2>
-                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Est. MP Fees"      value={fmt(totalFees)}             color="error.main" /></Grid2>
-                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Blank COGS"        value={fmt(totalCogs)}             color="warning.main" /></Grid2>
-                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Net Revenue"       value={fmt(net)}                   color={net >= 0 ? "success.main" : "error.main"} /></Grid2>
-                <Grid2 size={{ xs: 6, md: 2 }}><KpiCard label="Inventory at Cost" value={fmt(inventoryValue)}        color="info.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Gross Revenue"     value={fmt(summary.totalRevenue)}   color="success.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Shipping Costs"    value={fmt(summary.totalShipping)}  color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Est. MP Fees"      value={fmt(totalFees)}              color="error.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Blank COGS"        value={fmt(totalCogs)}              color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Licence Fees"      value={fmt(totalLicenceFees)}       color="secondary.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Net Revenue"       value={fmt(net)}                    color={net >= 0 ? "success.main" : "error.main"} /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Inventory at Cost" value={fmt(inventoryValue)}         color="info.main" /></Grid2>
             </Grid2>
 
             {/* Cost breakdown chart */}
@@ -598,10 +604,11 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
                         {summary.totalRevenue > 0 ? (
                             <PieChart
                                 series={[{ data: [
-                                    { id: 0, value: summary.totalShipping, label: "Shipping",   color: "#ff9800" },
-                                    { id: 1, value: totalFees,             label: "MP Fees",    color: "#f44336" },
-                                    { id: 2, value: totalCogs,             label: "Blank COGS", color: "#9c27b0" },
-                                    { id: 3, value: Math.max(0, net),      label: "Net",        color: "#4caf50" },
+                                    { id: 0, value: summary.totalShipping,   label: "Shipping",     color: "#ff9800" },
+                                    { id: 1, value: totalFees,               label: "MP Fees",      color: "#f44336" },
+                                    { id: 2, value: totalCogs,               label: "Blank COGS",   color: "#9c27b0" },
+                                    { id: 3, value: totalLicenceFees,        label: "Licence Fees", color: "#e91e63" },
+                                    { id: 4, value: Math.max(0, net),        label: "Net",          color: "#4caf50" },
                                 ].filter(d => d.value > 0), innerRadius: 40, outerRadius: 80, paddingAngle: 2 }]}
                                 height={220}
                                 slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}
@@ -1333,6 +1340,8 @@ export default function Admin() {
         return map;
     }, [items, orderMarketplaceMap]);
 
+    const licenceFeeByMarketplace = data?.licenceFeeByMarketplace ?? {};
+
     const ordersData = { orders: ordersRows, total: ordersTotal, page: ordersPage, pageSize: ordersSize, loading: ordersLoading };
     const itemsData  = { items: itemsRows,   total: itemsTotal,  page: itemsPage,  pageSize: itemsSize,  loading: itemsLoading  };
 
@@ -1451,6 +1460,7 @@ export default function Admin() {
                         {tab === 3 && (
                             <CostsTab
                                 summary={summary} byMarketplace={byMarketplace} cogsByMarketplace={cogsByMarketplace}
+                                licenceFeeByMarketplace={licenceFeeByMarketplace}
                                 ordersData={ordersData} sortField={ordersSortField} sortDir={ordersSortDir}
                                 onPageChange={setOrdersPage} onPageSizeChange={handleOrdersPageSizeChange} onSortChange={handleOrdersSort}
                                 inventoryValue={inventoryValue}

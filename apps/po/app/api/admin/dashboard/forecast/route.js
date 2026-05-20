@@ -3,6 +3,7 @@ import Order from "@/models/Order";
 import Items from "@/models/Items";
 import StyleV2 from "@/models/StyleV2";
 import ForecastCache from "@/models/ForecastCache";
+import { Design, LicenseHolders } from "@pythias/mongo";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -106,9 +107,10 @@ async function fetchHistorical(extraMatch) {
     const since = new Date(); since.setMonth(since.getMonth()-18); since.setHours(0,0,0,0);
     const dateFilter = { date:{$gte:since,$lte:until} };
 
-    const [rawDaily, dailyItemsAgg] = await Promise.all([
+    const [rawDaily, dailyItemsAgg, licencedItemsAgg] = await Promise.all([
         Order.aggregate([{$match:{...dateFilter,...extraMatch}},{$group:{_id:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},revenue:{$sum:{$ifNull:["$productCost",0]}},orders:{$sum:1}}},{$project:{_id:0,date:"$_id",revenue:1,orders:1}},{$sort:{date:1}}]),
         Items.aggregate([{$match:{...dateFilter,canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1}}},{$project:{_id:0,date:"$_id.date",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1}}]),
+        Items.aggregate([{$match:{...dateFilter,designRef:{$ne:null},canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},designRef:{$toString:"$designRef"},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1},totalPrice:{$sum:{$ifNull:["$price",0]}}}},{$project:{_id:0,date:"$_id.date",designRef:"$_id.designRef",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1,totalPrice:1}}]),
     ]);
 
     const styleCodes=[...new Set(dailyItemsAgg.map(r=>r.styleCode).filter(Boolean))];
@@ -118,7 +120,33 @@ async function fetchHistorical(extraMatch) {
     const cogsByDate={};
     for(const r of dailyItemsAgg){const cost=costMap[r.styleCode]?.[r.sizeName]??0;cogsByDate[r.date]=(cogsByDate[r.date]||0)+cost*r.qty;}
 
-    return fillDays(since, until, rawDaily).map(d=>({...d,cogs:cogsByDate[d.date]||0,net:Math.max(0,d.revenue-(cogsByDate[d.date]||0))}));
+    const licenceFeeByDate={};
+    if(licencedItemsAgg.length){
+        const designIds=[...new Set(licencedItemsAgg.map(r=>r.designRef).filter(Boolean))];
+        const designs=await Design.find({_id:{$in:designIds},licenseHolder:{$ne:null}}).select("_id licenseHolder").lean();
+        if(designs.length){
+            const holderIds=[...new Set(designs.map(d=>d.licenseHolder).filter(Boolean).map(String))];
+            const holders=await LicenseHolders.find({_id:{$in:holderIds}}).lean();
+            const holderMap=Object.fromEntries(holders.map(h=>[String(h._id),h]));
+            const designHolderMap={};
+            for(const d of designs){if(d.licenseHolder)designHolderMap[String(d._id)]=holderMap[String(d.licenseHolder)];}
+            const licStyleCodes=[...new Set(licencedItemsAgg.map(r=>r.styleCode).filter(Boolean))];
+            const licStyles=licStyleCodes.length?await StyleV2.find({code:{$in:licStyleCodes}}).select("code sizes").lean():[];
+            const retailMap={};
+            for(const s of licStyles){retailMap[s.code]={};for(const sz of s.sizes??[])retailMap[s.code][sz.name]=sz.retailPrice??0;}
+            for(const r of licencedItemsAgg){
+                const holder=designHolderMap[r.designRef];
+                if(!holder)continue;
+                const avgPrice=r.qty>0?r.totalPrice/r.qty:0;
+                const basePrice=avgPrice||retailMap[r.styleCode]?.[r.sizeName]||0;
+                const adjPrice=basePrice+(holder.additionalFees||0);
+                const feePerUnit=adjPrice*(holder.paymentType==="Percentage Per Unit"?(holder.amount/100):1)+(holder.paymentType==="Flat Per Unit"||holder.paymentType==="One Time"?holder.amount:0);
+                licenceFeeByDate[r.date]=(licenceFeeByDate[r.date]||0)+feePerUnit*r.qty;
+            }
+        }
+    }
+
+    return fillDays(since, until, rawDaily).map(d=>({...d,cogs:cogsByDate[d.date]||0,net:Math.max(0,d.revenue-(cogsByDate[d.date]||0)-(licenceFeeByDate[d.date]||0))}));
 }
 
 export async function GET(req) {
