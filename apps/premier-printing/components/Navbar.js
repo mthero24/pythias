@@ -164,7 +164,7 @@ export default function ButtonAppBar() {
             </IconButton>
           </Tooltip>
 
-          <Link href="/admin" style={{ display: "flex", alignItems: "center" }}>
+          <Link href="/" style={{ display: "flex", alignItems: "center" }}>
             <Image width={110} height={40} alt="Premier Printing" src={Logo} style={{ objectFit: "contain" }} />
           </Link>
 
@@ -239,7 +239,7 @@ const NavDrawer = ({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) 
     >
       {/* Logo header */}
       <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <Link href="/admin" onClick={() => handleNav(false)} style={{ display: "block" }}>
+        <Link href="/" onClick={() => handleNav(false)} style={{ display: "block" }}>
           <Image width={130} height={46} alt="Premier Printing" src={Logo} style={{ objectFit: "contain", filter: "brightness(0) invert(1)" }} />
         </Link>
       </Box>

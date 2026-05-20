@@ -14,10 +14,27 @@ export const csvFunctions = {
     productSku: (product) => {
         return product.sku ? product.sku : product.name.replace(/ /g, "-").toLowerCase();
     },
-    productTitle: (product, index, mp) => {
-        if (mp?.name.toLowerCase().includes("kohl's") && product.title && product.title.length > 100) {
-            return product.title ? product.title.slice(0, 100) : product.sku;
-        } else return product.title ? product.title : product.sku;
+    productTitle: (product, index, mp, variant) => {
+        let title = product.title ? product.title : product.sku;
+        if (mp?.name?.toLowerCase().includes("kohl's") && title && title.length > 100) title = title.slice(0, 100);
+        if (mp?.name?.toLowerCase().includes("zulily") && variant?.color) {
+            const parts = [
+                title,
+                product.brand,
+                product.gender,
+                product.category,
+                variant.size?.name,
+                variant.color?.name,
+            ].filter(Boolean);
+            return parts.join(" ");
+        }
+        if (mp?.variantTitle && variant?.color) {
+            const parts = [title];
+            if (variant.color?.name) parts.push(variant.color.name);
+            if (variant.size?.name) parts.push(variant.size.name);
+            return parts.join(" - ");
+        }
+        return title;
     },
     productCategory: (product) => {
         return product.category ? product.category : "N/A";
@@ -804,7 +821,7 @@ export const HeaderList = ({ product, mp, variant, blankOverRides, headerLabel, 
             if (headerLabel == "Image Alt Text" && index >= product.productImages.length) {
                 value = "N/A";
             }
-            else value = csvFunctions[mp.defaultValues[headerLabel]](product, index, mp);
+            else value = csvFunctions[mp.defaultValues[headerLabel]](product, index, mp, variant);
         }
         else if (mp.defaultValues && mp.defaultValues[headerLabel] && mp.defaultValues[headerLabel].includes("variant") && csvFunctions[mp.defaultValues[headerLabel].split(",")[0]]) {
             value = csvFunctions[mp.defaultValues[headerLabel].split(",")[0]](variant, mp.sizeConverter, numBlanks, blankName, mp.defaultValues[headerLabel].split(",")[1], mp.name, mp.colorFamilyConverter, sizeGuide);

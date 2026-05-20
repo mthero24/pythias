@@ -140,7 +140,7 @@ export default function ButtonAppBar() {
           </IconButton>
 
           <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
-            <Link href="/admin" style={{ display: "flex", alignItems: "center" }}>
+            <Link href="/" style={{ display: "flex", alignItems: "center" }}>
               <Image alt="logo" src={logo} width={110} height={40} style={{ objectFit: "contain" }} />
             </Link>
           </Box>
@@ -206,7 +206,7 @@ function NavDrawer({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) 
           flexShrink: 0,
         }}
       >
-        <Link href="/admin" onClick={() => handleNav(false)}>
+        <Link href="/" onClick={() => handleNav(false)}>
           <Image alt="logo" src={logo} width={130} height={44} style={{ objectFit: "contain" }} />
         </Link>
       </Box>

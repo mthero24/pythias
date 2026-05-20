@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ApiKeyIntegrations, Products, Blank } from "@pythias/mongo";
+import { ApiKeyIntegrations, Products, Blank, MarketPlaces } from "@pythias/mongo";
 import { randomUUID } from "crypto";
 import {
     getItemsWalmart, retireItemWalmart,
@@ -129,7 +129,7 @@ function allProductImages(product) {
     ].filter(isValidUrl);
 }
 
-function buildMPItem(product, blank, variant, isPrimary, variantAttrs, productImagePool, productOverrides = {}) {
+function buildMPItem(product, blank, variant, isPrimary, variantAttrs, productImagePool, productOverrides = {}, variantTitle = false) {
     const colorName = variant.color?.name?.trim() || "Default";
     const sizeObj  = (blank?.sizes ?? []).find(s => s._id?.toString() === String(variant.size));
     const sizeName = sizeObj?.name?.trim() || (variantAttrs.includes("size") ? "One Size" : "");
@@ -160,8 +160,11 @@ function buildMPItem(product, blank, variant, isPrimary, variantAttrs, productIm
         ...((variant.images ?? []).map(cleanUrl)),
     ])].filter(isValidUrl).filter(u => u !== mainImage).slice(0, 8);
 
-    const nameParts = [title, colorName];
-    if (variantAttrs.includes("size") && sizeName && sizeName !== "One Size") nameParts.push(sizeName);
+    const nameParts = [title];
+    if (variantTitle) {
+        nameParts.push(colorName);
+        if (variantAttrs.includes("size") && sizeName && sizeName !== "One Size") nameParts.push(sizeName);
+    }
     const productName = nameParts.filter(Boolean).join(" - ").trim();
 
     const missing = [];
@@ -277,9 +280,10 @@ export async function handleWalmartSendPOST(req) {
         return NextResponse.json({ error: "productId and connectionId are required" }, { status: 400 });
     }
 
-    const [connection, product] = await Promise.all([
+    const [connection, product, mp] = await Promise.all([
         ApiKeyIntegrations.findById(connectionId).lean(),
         Products.findById(productId).populate("blanks").populate("variantsArray.color").lean(),
+        MarketPlaces.findOne({ connections: connectionId }).lean(),
     ]);
 
     if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
@@ -315,7 +319,7 @@ export async function handleWalmartSendPOST(req) {
     const productImagePool = allProductImages(product);
     const productOverrides = product.marketplaceValues?.[connectionId] ?? product.marketplaceValues?.[String(connectionId)] ?? {};
 
-    const MPItem = validVariants.map((v, i) => buildMPItem(product, blank, v, i === 0, variantAttrs, productImagePool, productOverrides));
+    const MPItem = validVariants.map((v, i) => buildMPItem(product, blank, v, i === 0, variantAttrs, productImagePool, productOverrides, mp?.variantTitle === true));
 
     const itemWarnings = MPItem.flatMap((item, i) => {
         const required = ["sku", "productType", "productName", "shortDescription", "brand", "color", "mainImageUrl", "variantGroupId"];

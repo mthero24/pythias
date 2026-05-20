@@ -3,6 +3,7 @@ import {
     Grid2, Box, Container, Typography, TextField, Button,
     Dialog, DialogTitle, DialogContent, DialogActions,
     IconButton, Paper, Stack, Chip, Divider, InputAdornment, Tooltip,
+    FormControlLabel, Checkbox,
 } from '@mui/material';
 import AddIcon    from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -30,6 +31,11 @@ export function Main({ marketplaces }) {
     const saveTitleField = async (m, field, value, isPrompt = false) => {
         if (!value?.trim()) return;
         const res = await axios.put("/api/marketplaces", { marketplace: m._id, category: "titleGenerator", value, isPrompt });
+        if (res.status === 200) setMarkets(res.data.marketplaces);
+    };
+
+    const toggleVariantTitle = async (m, checked) => {
+        const res = await axios.patch("/api/marketplaces", { marketplace: m._id, variantTitle: checked });
         if (res.status === 200) setMarkets(res.data.marketplaces);
     };
 
@@ -110,6 +116,16 @@ export function Main({ marketplaces }) {
                                             </Typography>
                                         </Stack>
                                         <Stack spacing={1.5}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        size="small"
+                                                        checked={!!m.variantTitle}
+                                                        onChange={(e) => toggleVariantTitle(m, e.target.checked)}
+                                                    />
+                                                }
+                                                label={<Typography variant="body2">Append color &amp; size to variant listing title</Typography>}
+                                            />
                                             <TextField
                                                 size="small" fullWidth label="Label"
                                                 value={titleGeneratorValues[m.name]?.label ?? titleGen.label ?? ""}

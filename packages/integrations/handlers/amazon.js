@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ApiKeyIntegrations, Products, Blank } from "@pythias/mongo";
+import { ApiKeyIntegrations, Products, Blank, MarketPlaces } from "@pythias/mongo";
 import {
     getAmazonAccessToken,
     getOrdersAmazon,
@@ -114,9 +114,10 @@ export async function handleAmazonSendPOST(req) {
         return NextResponse.json({ error: "connectionId and productId required" }, { status: 400 });
     }
 
-    const [connection, product] = await Promise.all([
+    const [connection, product, mp] = await Promise.all([
         ApiKeyIntegrations.findById(connectionId).lean(),
         Products.findById(productId).populate("blanks").populate("variantsArray.color").lean(),
+        MarketPlaces.findOne({ connections: connectionId }).lean(),
     ]);
 
     if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
@@ -137,7 +138,7 @@ export async function handleAmazonSendPOST(req) {
             .map(bp => ({ value: `${bp.title}: ${bp.description}`, language_tag: "en_US" }));
 
         const attributes = {
-            item_name:   [{ value: `${product.title} - ${colorName} - ${sizeName}`, language_tag: "en_US" }],
+            item_name:   [{ value: mp?.variantTitle ? [product.title, colorName, sizeName].filter(Boolean).join(" - ") : product.title || product.sku, language_tag: "en_US" }],
             brand:       [{ value: product.brand || "Simply Sage Market" }],
             list_price:  [{ value: price, currency: "USD" }],
             color:       [{ value: colorName }],

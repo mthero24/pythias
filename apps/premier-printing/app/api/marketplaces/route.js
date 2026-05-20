@@ -2,7 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import { MarketPlaces } from "@pythias/mongo";
 
 export async function GET(req = NextApiRequest) {
-    let marketplaces = await MarketPlaces.find().select("_id name productDropDowns required").lean();
+    let marketplaces = await MarketPlaces.find().select("_id name productDropDowns required variantTitle").lean();
     return NextResponse.json({ error: false, marketplaces });
 }
 export async function PUT(req = NextApiRequest) {
@@ -54,6 +54,16 @@ export async function PUT(req = NextApiRequest) {
     let marketplaces = await MarketPlaces.find().lean();
     return NextResponse.json({ error: false, marketplaces, message: "Category added successfully" });
     
+}
+
+export async function PATCH(req = NextApiRequest) {
+    const data = await req.json();
+    const marketplace = await MarketPlaces.findById(data.marketplace);
+    if (!marketplace) return NextResponse.json({ error: true, message: "Marketplace not found" });
+    if (data.variantTitle !== undefined) marketplace.variantTitle = data.variantTitle;
+    await marketplace.save();
+    const marketplaces = await MarketPlaces.find().select("_id name productDropDowns required variantTitle").lean();
+    return NextResponse.json({ error: false, marketplaces });
 }
 
 export async function POST(req = NextApiRequest) {
