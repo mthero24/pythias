@@ -70,8 +70,8 @@ function generateResponse(payload, horizon) {
     const lOF=predictLinear(linOrd,n,horizon), hOF=predictHolt(holtOrd,horizon), mOF=predictMA(maOrd,horizon);
 
     const combined = [
-        ...historical.map((d,i)=>({date:d.date,actual:d.revenue,actualNet:d.net,linear:Math.round(Math.max(0,linRev.intercept+linRev.slope*i)),ema:Math.round(holtRev.fitted[i]),ma:Math.round(maRev.fitted[i]),linearNet:Math.round(Math.max(0,linNet.intercept+linNet.slope*i)),emaNet:Math.round(holtNet.fitted[i]),maNet:Math.round(maNet.fitted[i])})),
-        ...forecastDates.map((date,h)=>({date,actual:null,actualNet:null,linear:Math.round(lRF[h]),ema:Math.round(hRF[h]),ma:Math.round(mRF[h]),linearNet:Math.round(lNF[h]),emaNet:Math.round(hNF[h]),maNet:Math.round(mNF[h])})),
+        ...historical.map((d,i)=>{ const linear=Math.round(Math.max(0,linRev.intercept+linRev.slope*i)),ema=Math.round(holtRev.fitted[i]),ma=Math.round(maRev.fitted[i]); return {date:d.date,actual:d.revenue,actualNet:d.net,linear,ema,ma,linearNet:Math.min(linear,Math.round(Math.max(0,linNet.intercept+linNet.slope*i))),emaNet:Math.min(ema,Math.round(holtNet.fitted[i])),maNet:Math.min(ma,Math.round(maNet.fitted[i]))}; }),
+        ...forecastDates.map((date,h)=>{ const linear=Math.round(lRF[h]),ema=Math.round(hRF[h]),ma=Math.round(mRF[h]); return {date,actual:null,actualNet:null,linear,ema,ma,linearNet:Math.min(linear,Math.round(lNF[h])),emaNet:Math.min(ema,Math.round(hNF[h])),maNet:Math.min(ma,Math.round(mNF[h]))}; }),
     ];
     const combinedOrders = [
         ...historical.map((d,i)=>({date:d.date,actual:d.orders,linear:Math.max(0,Math.round(linOrd.intercept+linOrd.slope*i)),ema:Math.max(0,Math.round(holtOrd.fitted[i])),ma:Math.max(0,Math.round(maOrd.fitted[i]))})),
@@ -94,7 +94,7 @@ function fitPayload(historical) {
     const annualProjections=[365,730,1825].map(days=>{
         const lR=predictLinear(linRev,n,days),hR=predictHolt(holtRev,days),mR=predictMA(maRev,days);
         const lN=predictLinear(linNet,n,days),hN=predictHolt(holtNet,days),mN=predictMA(maNet,days);
-        return{days,gross:{linear:Math.round(sum(lR)),ema:Math.round(sum(hR)),ma:Math.round(sum(mR))},net:{linear:Math.round(sum(lN)),ema:Math.round(sum(hN)),ma:Math.round(sum(mN))}};
+        const gL=Math.round(sum(lR)),gE=Math.round(sum(hR)),gM=Math.round(sum(mR)); return{days,gross:{linear:gL,ema:gE,ma:gM},net:{linear:Math.min(gL,Math.round(sum(lN))),ema:Math.min(gE,Math.round(sum(hN))),ma:Math.min(gM,Math.round(sum(mN)))}};
     });
     const trendPct=revVals.length>7?((revVals.slice(-7).reduce((a,b)=>a+b,0)/7)-(revVals.slice(0,7).reduce((a,b)=>a+b,0)/7))/(revVals.slice(0,7).reduce((a,b)=>a+b,0)/7||1):0;
     const best=Object.entries({linearRegression:linRev.rmse,exponentialSmoothing:holtRev.rmse,movingAverage:maRev.rmse}).sort((a,b)=>a[1]-b[1])[0][0];
