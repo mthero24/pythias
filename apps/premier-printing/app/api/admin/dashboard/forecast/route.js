@@ -20,11 +20,12 @@ function groupByMonth(rows) {
     const map = {};
     for (const r of rows) {
         const m = r.date.slice(0, 7);
-        if (!map[m]) map[m] = { date: m, _hasActual: false, actual: 0, actualNet: 0, linear: 0, ema: 0, ma: 0, linearNet: 0, emaNet: 0, maNet: 0 };
+        if (!map[m]) map[m] = { date: m, _hasActual: false, actual: 0, actualNet: 0, linear: 0, ema: 0, ma: 0, chronos: 0, linearNet: 0, emaNet: 0, maNet: 0, chronosNet: 0 };
         const e = map[m];
         if (r.actual != null) { e.actual += r.actual; e.actualNet += (r.actualNet ?? 0); e._hasActual = true; }
         e.linear += r.linear || 0; e.ema += r.ema || 0; e.ma += r.ma || 0;
         e.linearNet += r.linearNet || 0; e.emaNet += r.emaNet || 0; e.maNet += r.maNet || 0;
+        e.chronos += r.chronos || 0; e.chronosNet += r.chronosNet || 0;
     }
     return Object.values(map).sort((a, b) => a.date.localeCompare(b.date)).map(({ _hasActual, ...r }) => ({ ...r, actual: _hasActual ? r.actual : null, actualNet: _hasActual ? r.actualNet : null }));
 }
@@ -59,7 +60,7 @@ const sum = arr => arr.reduce((a,b)=>a+b,0);
 // ─── Build response from cached payload for a given horizon ───────────────────
 
 function generateResponse(payload, horizon) {
-    const { historical, linRev, holtRev, maRev, linNet, holtNet, maNet, linOrd, holtOrd, maOrd, annualProjections, best, trendPct } = payload;
+    const { historical, linRev, holtRev, maRev, linNet, holtNet, maNet, linOrd, holtOrd, maOrd, annualProjections, best, trendPct, chronos } = payload;
     if (!historical || historical.length < 14) return { historical:historical||[], combined:[], combinedOrders:[], combinedMonthly:[], annualProjections:[], models:{}, horizon, minDataWarning:true };
 
     const n = historical.length;
@@ -71,12 +72,12 @@ function generateResponse(payload, horizon) {
     const lOF=predictLinear(linOrd,n,horizon), hOF=predictHolt(holtOrd,horizon), mOF=predictMA(maOrd,horizon);
 
     const combined = [
-        ...historical.map((d,i)=>{ const linear=Math.round(Math.max(0,linRev.intercept+linRev.slope*i)),ema=Math.round(holtRev.fitted[i]),ma=Math.round(maRev.fitted[i]); return {date:d.date,actual:d.revenue,actualNet:d.net,linear,ema,ma,linearNet:Math.min(linear,Math.round(Math.max(0,linNet.intercept+linNet.slope*i))),emaNet:Math.min(ema,Math.round(holtNet.fitted[i])),maNet:Math.min(ma,Math.round(maNet.fitted[i]))}; }),
-        ...forecastDates.map((date,h)=>{ const linear=Math.round(lRF[h]),ema=Math.round(hRF[h]),ma=Math.round(mRF[h]); return {date,actual:null,actualNet:null,linear,ema,ma,linearNet:Math.min(linear,Math.round(lNF[h])),emaNet:Math.min(ema,Math.round(hNF[h])),maNet:Math.min(ma,Math.round(mNF[h]))}; }),
+        ...historical.map((d,i)=>{ const linear=Math.round(Math.max(0,linRev.intercept+linRev.slope*i)),ema=Math.round(holtRev.fitted[i]),ma=Math.round(maRev.fitted[i]); return {date:d.date,actual:d.revenue,actualNet:d.net,linear,ema,ma,chronos:null,linearNet:Math.min(linear,Math.round(Math.max(0,linNet.intercept+linNet.slope*i))),emaNet:Math.min(ema,Math.round(holtNet.fitted[i])),maNet:Math.min(ma,Math.round(maNet.fitted[i])),chronosNet:null}; }),
+        ...forecastDates.map((date,h)=>{ const linear=Math.round(lRF[h]),ema=Math.round(hRF[h]),ma=Math.round(mRF[h]); const chr=chronos?Math.round(Math.max(0,chronos.rev.median[h]??0)):null,chrN=chronos?Math.round(Math.max(0,chronos.net.median[h]??0)):null; return {date,actual:null,actualNet:null,linear,ema,ma,chronos:chr,linearNet:Math.min(linear,Math.round(lNF[h])),emaNet:Math.min(ema,Math.round(hNF[h])),maNet:Math.min(ma,Math.round(mNF[h])),chronosNet:chrN}; }),
     ];
     const combinedOrders = [
-        ...historical.map((d,i)=>({date:d.date,actual:d.orders,linear:Math.max(0,Math.round(linOrd.intercept+linOrd.slope*i)),ema:Math.max(0,Math.round(holtOrd.fitted[i])),ma:Math.max(0,Math.round(maOrd.fitted[i]))})),
-        ...forecastDates.map((date,h)=>({date,actual:null,linear:Math.max(0,Math.round(lOF[h])),ema:Math.max(0,Math.round(hOF[h])),ma:Math.max(0,Math.round(mOF[h]))})),
+        ...historical.map((d,i)=>({date:d.date,actual:d.orders,linear:Math.max(0,Math.round(linOrd.intercept+linOrd.slope*i)),ema:Math.max(0,Math.round(holtOrd.fitted[i])),ma:Math.max(0,Math.round(maOrd.fitted[i])),chronos:null})),
+        ...forecastDates.map((date,h)=>({date,actual:null,linear:Math.max(0,Math.round(lOF[h])),ema:Math.max(0,Math.round(hOF[h])),ma:Math.max(0,Math.round(mOF[h])),chronos:chronos?Math.round(Math.max(0,chronos.ord.median[h]??0)):null})),
     ];
     const combinedMonthly = groupByMonth(combined);
     const models = {
@@ -84,6 +85,9 @@ function generateResponse(payload, horizon) {
         exponentialSmoothing: { label:"Exp. Smoothing (Holt)", color:"#7b1fa2", rmseRev:Math.round(holtRev.rmse), forecastTotal:Math.round(sum(hRF)), forecastOrders:Math.round(sum(hOF)) },
         movingAverage:        { label:"Moving Average",        color:"#2e7d32", rmseRev:Math.round(maRev.rmse),   forecastTotal:Math.round(sum(mRF)), forecastOrders:Math.round(sum(mOF)) },
     };
+    if (chronos) {
+        models.chronos = { label:"Chronos (AI)", color:"#0277bd", rmseRev:chronos.rev.rmse!=null?Math.round(chronos.rev.rmse):null, forecastTotal:Math.round(sum(chronos.rev.median.slice(0,horizon))), forecastOrders:Math.round(sum(chronos.ord.median.slice(0,horizon))) };
+    }
     return { historical, combined, combinedOrders, combinedMonthly, annualProjections, models, best, horizon, trendPct };
 }
 
@@ -153,6 +157,37 @@ async function fetchHistorical(matchFilter) {
     return fillDays(since, until, rawDaily).map(d=>({...d,cogs:cogsByDate[d.date]||0,net:Math.max(0,d.revenue-(cogsByDate[d.date]||0)-(licenceFeeByDate[d.date]||0))}));
 }
 
+// ─── Chronos sidecar ─────────────────────────────────────────────────────────
+
+async function callChronos(historical) {
+    try {
+        const res = await fetch("http://127.0.0.1:5050/forecast", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ rev: historical.map(d=>d.revenue), net: historical.map(d=>d.net), ord: historical.map(d=>d.orders), horizon: 1825 }),
+            signal: AbortSignal.timeout(120000),
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch(e) {
+        console.warn("[forecast] Chronos unavailable:", e.message);
+        return null;
+    }
+}
+
+async function augmentWithChronos(payload, historical) {
+    const chronos = await callChronos(historical);
+    if (!chronos) return payload;
+    payload.chronos = chronos;
+    for (const proj of payload.annualProjections) {
+        proj.gross.chronos = Math.round(sum(chronos.rev.median.slice(0, proj.days)));
+        proj.net.chronos   = Math.round(sum(chronos.net.median.slice(0, proj.days)));
+    }
+    const rmses = { linearRegression: payload.linRev.rmse, exponentialSmoothing: payload.holtRev.rmse, movingAverage: payload.maRev.rmse, chronos: chronos.rev.rmse };
+    payload.best = Object.entries(rmses).filter(([,v]) => v != null).sort((a,b) => a[1]-b[1])[0][0];
+    return payload;
+}
+
 // ─── Route handlers ───────────────────────────────────────────────────────────
 
 export async function GET(req) {
@@ -164,7 +199,8 @@ export async function GET(req) {
         if (marketplace && marketplace !== "All") {
             const historical = await fetchHistorical({ canceled:{$ne:true}, refunded:{$ne:true}, marketplace });
             if (historical.length < 14) return NextResponse.json({historical,combined:[],combinedOrders:[],combinedMonthly:[],annualProjections:[],models:{},horizon,minDataWarning:true});
-            return NextResponse.json(generateResponse(fitPayload(historical), horizon));
+            const payload = await augmentWithChronos(fitPayload(historical), historical);
+            return NextResponse.json(generateResponse(payload, horizon));
         }
 
         const cached = await ForecastCache.findOne({ appKey: APP_KEY }).select("-_id -__v -appKey").lean();
@@ -181,7 +217,7 @@ export async function POST() {
     try {
         const historical = await fetchHistorical({ canceled:{$ne:true}, refunded:{$ne:true} });
         if (historical.length < 14) return NextResponse.json({ ok:false, msg:"Not enough data" });
-        const payload = fitPayload(historical);
+        const payload = await augmentWithChronos(fitPayload(historical), historical);
         const computedAt = new Date();
         await ForecastCache.findOneAndUpdate(
             { appKey: APP_KEY },

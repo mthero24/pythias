@@ -254,6 +254,25 @@ module.exports = {
       merge_logs: false,
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
+    {
+      name: "chronos-forecaster",
+      cwd: "services/chronos-forecaster",
+      script: "server.py",
+      interpreter: "python3",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+      },
+      out_file: "logs/chronos-out.log",
+      error_file: "logs/chronos-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+      min_uptime: "60s",
+      max_restarts: 5,
+    },
   ],
 };
   

@@ -736,6 +736,7 @@ const MODEL_META = {
     linearRegression:     { label: "Linear Regression",     color: "#e65100" },
     exponentialSmoothing: { label: "Exp. Smoothing (Holt)", color: "#7b1fa2" },
     movingAverage:        { label: "Moving Average",        color: "#2e7d32" },
+    chronos:              { label: "Chronos (AI)",          color: "#0277bd" },
 };
 
 const HORIZON_OPTIONS = [
@@ -749,7 +750,7 @@ const HORIZON_OPTIONS = [
 ];
 
 const YEAR_LABELS = { 365: "Year 1", 730: "Year 2", 1825: "Year 5" };
-const bestModelKey = (best) => best === "linearRegression" ? "linear" : best === "exponentialSmoothing" ? "ema" : "ma";
+const bestModelKey = (best) => best === "linearRegression" ? "linear" : best === "exponentialSmoothing" ? "ema" : best === "chronos" ? "chronos" : "ma";
 
 function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefresh }) {
     if (loading && !forecastData) {
@@ -775,7 +776,7 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
     const trendColor   = trendPct >= 0 ? "success.main" : "error.main";
     const trendSign    = trendPct >= 0 ? "+" : "";
 
-    const modelKeys    = Object.keys(MODEL_META);
+    const modelKeys    = Object.keys(MODEL_META).filter(k => models[k]);
     const useMonthly   = horizon > 90;
     const chartData    = useMonthly ? combinedMonthly : combined;
     const bKey         = bestModelKey(best);        // "linear" | "ema" | "ma"
@@ -867,10 +868,11 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                                 dataset={chartData}
                                 xAxis={[{ dataKey: "date", scaleType: "band", tickLabelStyle: { fontSize: 9 }, tickMinStep: 1 }]}
                                 series={[
-                                    { dataKey: "actual",    label: "Actual Gross",   color: "#1565c0", connectNulls: false, showMark: false },
+                                    { dataKey: "actual",    label: "Actual Gross",   color: "#1565c0",                             connectNulls: false, showMark: false },
                                     { dataKey: "linear",    label: "Linear Regr.",   color: MODEL_META.linearRegression.color,     connectNulls: false, showMark: false },
                                     { dataKey: "ema",       label: "Exp. Smoothing", color: MODEL_META.exponentialSmoothing.color, connectNulls: false, showMark: false },
                                     { dataKey: "ma",        label: "Moving Avg",     color: MODEL_META.movingAverage.color,        connectNulls: false, showMark: false },
+                                    ...(models.chronos ? [{ dataKey: "chronos", label: "Chronos (AI)", color: MODEL_META.chronos.color, connectNulls: false, showMark: false }] : []),
                                 ]}
                                 height={300}
                                 margin={{ left: 76, right: 16, top: 16, bottom: 40 }}
@@ -888,10 +890,11 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                                 dataset={chartData}
                                 xAxis={[{ dataKey: "date", scaleType: "band", tickLabelStyle: { fontSize: 9 }, tickMinStep: 1 }]}
                                 series={[
-                                    { dataKey: "actualNet", label: "Actual Net",      color: "#00695c", connectNulls: false, showMark: false },
-                                    { dataKey: "linearNet", label: "Linear Regr.",    color: MODEL_META.linearRegression.color,     connectNulls: false, showMark: false },
-                                    { dataKey: "emaNet",    label: "Exp. Smoothing",  color: MODEL_META.exponentialSmoothing.color, connectNulls: false, showMark: false },
-                                    { dataKey: "maNet",     label: "Moving Avg",      color: MODEL_META.movingAverage.color,        connectNulls: false, showMark: false },
+                                    { dataKey: "actualNet",  label: "Actual Net",      color: "#00695c",                             connectNulls: false, showMark: false },
+                                    { dataKey: "linearNet",  label: "Linear Regr.",    color: MODEL_META.linearRegression.color,     connectNulls: false, showMark: false },
+                                    { dataKey: "emaNet",     label: "Exp. Smoothing",  color: MODEL_META.exponentialSmoothing.color, connectNulls: false, showMark: false },
+                                    { dataKey: "maNet",      label: "Moving Avg",      color: MODEL_META.movingAverage.color,        connectNulls: false, showMark: false },
+                                    ...(models.chronos ? [{ dataKey: "chronosNet", label: "Chronos (AI)", color: MODEL_META.chronos.color, connectNulls: false, showMark: false }] : []),
                                 ]}
                                 height={260}
                                 margin={{ left: 76, right: 16, top: 16, bottom: 40 }}
@@ -909,10 +912,11 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                                 dataset={combinedOrders}
                                 xAxis={[{ dataKey: "date", scaleType: "band", tickLabelStyle: { fontSize: 9 } }]}
                                 series={[
-                                    { dataKey: "actual", label: "Actual",         color: "#1565c0", connectNulls: false, showMark: false },
+                                    { dataKey: "actual", label: "Actual",         color: "#1565c0",                             connectNulls: false, showMark: false },
                                     { dataKey: "linear", label: "Linear Regr.",   color: MODEL_META.linearRegression.color,     connectNulls: false, showMark: false },
                                     { dataKey: "ema",    label: "Exp. Smoothing", color: MODEL_META.exponentialSmoothing.color, connectNulls: false, showMark: false },
                                     { dataKey: "ma",     label: "Moving Avg",     color: MODEL_META.movingAverage.color,        connectNulls: false, showMark: false },
+                                    ...(models.chronos ? [{ dataKey: "chronos", label: "Chronos (AI)", color: MODEL_META.chronos.color, connectNulls: false, showMark: false }] : []),
                                 ]}
                                 height={240}
                                 margin={{ left: 48, right: 16, top: 16, bottom: 40 }}
@@ -952,7 +956,7 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
                     <ChartCard title="Model RMSE Comparison (lower = better fit to historical data)" minH={160}>
                         {Object.keys(models).length > 0 ? (
                             <BarChart
-                                dataset={modelKeys.map(k => ({ model: MODEL_META[k].label, rmse: models[k]?.rmseRev ?? 0 }))}
+                                dataset={modelKeys.map(k => ({ model: MODEL_META[k]?.label ?? k, rmse: models[k]?.rmseRev ?? 0 }))}
                                 xAxis={[{ dataKey: "model", scaleType: "band" }]}
                                 series={[{ dataKey: "rmse", label: "RMSE ($)", color: "#546e7a",
                                     valueFormatter: (v) => `$${(v || 0).toLocaleString()}` }]}
