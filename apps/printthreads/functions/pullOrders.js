@@ -1,7 +1,5 @@
 import { Design, Items as Item, Blank, Color, Order, Products, SkuToUpc } from "@pythias/mongo";
 import { getOrders, generatePieceID } from "@pythias/integrations";
-import Blanks from "@/models/Blanks";
-import { options } from "pdfkit";
 export async function pullOrders(){
     console.log("pull orders")
     let orders = await getOrders({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`})
