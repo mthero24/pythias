@@ -883,8 +883,8 @@ function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefres
             {/* Trend + per-model horizon KPIs */}
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
                 <Grid2 size={{ xs: 6, md: 2 }}>
-                    <KpiCard label="365d Trend" value={`${trendSign}${(trendPct * 100).toFixed(1)}%`}
-                        color={trendColor} sub="avg last 7d vs first 7d" />
+                    <KpiCard label="30d Trend" value={`${trendSign}${(trendPct * 100).toFixed(1)}%`}
+                        color={trendColor} sub="last 30d vs prior 30d" />
                 </Grid2>
                 {modelKeys.map(k => {
                     const m = models[k];
