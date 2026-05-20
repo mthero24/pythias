@@ -63,9 +63,11 @@ export function Blank({bla, mPs, blanks}){
             <Button color="error" onClick={handleDelete}>
               Delete
             </Button>
-            <a href={`/admin/blanks/production/${style._id}`}>
-              <Button>Change Production Settings</Button>
-            </a>
+            {style.type !== "alias" && (
+              <a href={`/admin/blanks/production/${style._id}`}>
+                <Button>Change Production Settings</Button>
+              </a>
+            )}
             <Button
               onClick={() => {
                 setHeadingModal(true);

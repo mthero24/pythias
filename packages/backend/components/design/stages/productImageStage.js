@@ -1,4 +1,4 @@
-import { Box, Grid2, Button, Typography, Checkbox, Modal, Card, CardContent, Chip, Stack, IconButton, Tooltip } from "@mui/material";
+import { Box, Grid2, Button, Typography, Checkbox, Modal, Card, CardContent, Chip, Stack, IconButton, Tooltip, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
 import { Uploader } from "../../reusable/premier/uploader";
 import { useState, useEffect } from "react";
@@ -59,6 +59,7 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
         <Box sx={{ padding: { xs: 1, sm: 1.5 }, background: "linear-gradient(180deg, #f4f6fa 0%, #eceff5 100%)", minHeight: "100%", borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 1.5, color: "text.primary" }}>Select Product Images</Typography>
             {products.map((product, i) => {
+                const productImageGroups = [...new Set(product.blanks.flatMap(b => (b.images || []).map(img => img.imageGroup || "default")))];
                 const allImages = [...(images[product.id] || []), ...(product.tempImages || [])];
                 const groups = {};
                 const noColor = [];
@@ -122,6 +123,23 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
                                     <Typography variant="caption" color="text.secondary">{product.blanks.map(b => b.code).join(" · ")}</Typography>
                                 </Box>
                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                    {productImageGroups.length > 1 && (
+                                        <FormControl size="small" sx={{ minWidth: 110 }}>
+                                            <InputLabel sx={{ fontSize: "0.75rem" }}>Theme</InputLabel>
+                                            <Select
+                                                value={product.imageGroup || "default"}
+                                                label="Theme"
+                                                sx={{ fontSize: "0.75rem" }}
+                                                onChange={e => {
+                                                    let prods = [...products];
+                                                    prods.find(p => p.id === product.id).imageGroup = e.target.value;
+                                                    setProducts([...prods]);
+                                                }}
+                                            >
+                                                {productImageGroups.map(g => <MenuItem key={g} value={g} sx={{ fontSize: "0.75rem" }}>{g}</MenuItem>)}
+                                            </Select>
+                                        </FormControl>
+                                    )}
                                     <Chip label={`${totalSelected}/${totalAvailable} selected`} color={totalSelected > 0 ? "primary" : "default"} variant="outlined" size="small" />
                                     <Button variant="contained" size="small" startIcon={<AddPhotoAlternateIcon />} sx={{ textTransform: "none" }} onClick={() => { setImageOpen(true); setProd(product); }}>Add Image</Button>
                                 </Box>

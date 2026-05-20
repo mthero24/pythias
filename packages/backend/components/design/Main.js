@@ -107,17 +107,12 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             d.brands = d.brands.map(br => brands.filter(b => b?._id.toString() == (br?._id ? br?._id.toString() : br?.toString()))[0]);
             d.blanks = d.blanks.filter(b => b.blank != undefined);
             setDesign({ ...d });
-            let imGr = [];
-            blanks.map(b => {
-                if (b.multiImages) {
-                    Object.keys(b.multiImages).map(i => {
-                        b.multiImages[i].map(im => {
-                            im.imageGroup?.map(g => {
-                                if (!imGr.includes(g)) imGr.push(g);
-                            });
-                        });
-                    });
-                }
+            let imGr = ["default"];
+            blanks.forEach(b => {
+                (b.images || []).forEach(img => {
+                    const g = img.imageGroup || "default";
+                    if (!imGr.includes(g)) imGr.push(g);
+                });
             });
             setImageGroups(imGr);
             setLoading(false);

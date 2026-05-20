@@ -177,7 +177,7 @@ export function BlanksComponent({blanks, mPs, source}){
                                         <Stack spacing={0.75} sx={{ marginTop: "auto", pt: 1 }}>
                                             <Stack direction="row" spacing={0.75}>
                                                 <Button fullWidth size="small" variant="contained" startIcon={<StorefrontIcon />} onClick={() => { setBlank(b); setMarketplaceModal(true) }}>Markets</Button>
-                                                <Button fullWidth size="small" variant="outlined" startIcon={<BuildIcon />} href={`/admin/blanks/production/${b._id}`} target="_blank">Production</Button>
+                                                {b.type !== "alias" && <Button fullWidth size="small" variant="outlined" startIcon={<BuildIcon />} href={`/admin/blanks/production/${b._id}`} target="_blank">Production</Button>}
                                             </Stack>
                                             <Button fullWidth size="small" variant="outlined" startIcon={<EditIcon />} href={`/admin/blanks/create?id=${b._id}`} target="_blank">Edit</Button>
                                         </Stack>

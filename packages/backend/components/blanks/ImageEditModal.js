@@ -4,8 +4,9 @@ import {
     Box, Button, Typography, Stack, Chip, Divider, Paper,
     Dialog, DialogTitle, DialogContent, DialogActions,
     IconButton, TextField, CircularProgress, Switch, FormControlLabel,
-    Tooltip, Alert, Badge,
+    Tooltip, Alert,
 } from "@mui/material";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import React, { useEffect, useRef, useState } from "react";
 import { Uploader2 } from "../reusable/uploader2";
 import useImage from "use-image";
@@ -66,9 +67,9 @@ function URLImage({ src, ...rest }) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function ImageEditModal({ open, onClose, blank, setBlank, update, color, printLocations, selectedImageSrc, setSelectedImageSrc }) {
+export function ImageEditModal({ open, onClose, blank, setBlank, update, color, printLocations, selectedImageSrc, setSelectedImageSrc, defaultGroup = "default" }) {
     // ── image & canvas state ──────────────────────────────────────────────────
-    const [image, setImage]               = useState({ color: color?._id, image: null, boxes: {} });
+    const [image, setImage]               = useState({ color: color?._id, image: null, boxes: {}, imageGroup: "default" });
     const [originalImage, setOriginalImage] = useState(null);
     const [rectangles, setRectangles]     = useState([]);
     const [active, setActive]             = useState(""); // active print-location id
@@ -108,7 +109,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     useEffect(() => {
         if (!open) return;
         const src = selectedImageSrc;
-        let img = src ? { ...src } : { color: color?._id, image: null, boxes: {} };
+        let img = src ? { ...src } : { color: color?._id, image: null, boxes: {}, imageGroup: defaultGroup || "default" };
+        if (!img.imageGroup) img.imageGroup = defaultGroup || "default";
         if (!img.sublimationBoxes) img.sublimationBoxes = emptyFeatures();
         for (const k of SUBLIMATION_FEATURES) {
             if (!img.sublimationBoxes[k]) img.sublimationBoxes[k] = { layers: [] };
@@ -725,6 +727,43 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             </Stack>
                         </Paper>
                     )}
+
+                    <Divider />
+
+                    {/* Theme */}
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={700} mb={1} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <LocalOfferIcon sx={{ fontSize: "1rem" }} /> Theme
+                        </Typography>
+                        {(() => {
+                            const allGroups = [...new Set(["default", ...(blank.images || []).map(img => img.imageGroup || "default")])];
+                            return (
+                                <>
+                                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
+                                        {allGroups.map(g => (
+                                            <Chip
+                                                key={g}
+                                                label={g}
+                                                size="small"
+                                                variant={image.imageGroup === g ? "filled" : "outlined"}
+                                                color={image.imageGroup === g ? "primary" : "default"}
+                                                onClick={() => setImage(prev => ({ ...prev, imageGroup: g }))}
+                                                sx={{ cursor: "pointer", fontSize: "0.72rem" }}
+                                            />
+                                        ))}
+                                    </Box>
+                                    <TextField
+                                        size="small"
+                                        label="Group"
+                                        value={image.imageGroup || "default"}
+                                        onChange={e => setImage(prev => ({ ...prev, imageGroup: e.target.value.toLowerCase().trim() || "default" }))}
+                                        fullWidth
+                                        helperText='Type a new group name or click an existing one above. "default" always shows when no theme is selected.'
+                                    />
+                                </>
+                            );
+                        })()}
+                    </Box>
 
                     <Divider />
 

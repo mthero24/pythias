@@ -88,8 +88,9 @@ const SchemaObj = new Schema(
     images: [{
       boxes: Object,
       sublimationBoxes: Object,
-      url: String,
+      image: String,
       color: String,
+      imageGroup: { type: String, default: "default" },
     }],
     multiImages: Object,
     //box.default['garment]

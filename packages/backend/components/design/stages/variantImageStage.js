@@ -1,4 +1,4 @@
-import { Box, Grid2, Button, Typography, Card, CardContent, Chip, IconButton, Tooltip, Modal, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, Grid2, Button, Typography, Card, CardContent, Chip, IconButton, Tooltip, Modal, ToggleButton, ToggleButtonGroup, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import { useState } from "react";
 import CloseIcon from '@mui/icons-material/Close';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
@@ -81,15 +81,16 @@ export const VariantImageStage = ({ products, setProducts, design, source, setSt
 const CreateVariantImages = ({ product, products, setProducts, design, threadColors, source }) => {
     const [mainImage, setMainImage] = useState(true);
     const [zoomImage, setZoomImage] = useState(null);
-    console.log(design, "design in CreateVariantImages");
     const cdn = (url) => url.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");
+    const activeGroup = product.imageGroup || "default";
+    const availableGroups = [...new Set(product.blanks.flatMap(b => (b.images || []).map(img => img.imageGroup || "default")))];
+
     let imgs = {}
     if (!threadColors) {
-        // images without boxes — plain product photos, no design overlay
         for (let blank of product.blanks) {
             if (!(blank.images && blank.images.length > 0)) continue;
             for (let color of product.colors) {
-                for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length)) {
+                for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length && (i.imageGroup || "default") === activeGroup)) {
                     if (!imgs[blank.code]) imgs[blank.code] = {};
                     if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = [];
                     const rawUrl = `${cdn(img.image)}?width=400`;
@@ -104,33 +105,27 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
         for (let side of Object.keys(design ? design : {})) {
             for (let blank of product.blanks) {
                 for (let color of product.colors) {
-                    if(blank.images && blank.images.length > 0){
-                        for (let img of blank.images?.filter(i => i.color.toString() == color._id.toString() && (Object.keys(i.boxes ? i.boxes : {}).includes(side) || (Object.keys(i.boxes ? i.boxes : {}).includes("back") && !Object.keys(design ? design : {}).includes("back"))))) {
-                            if (!imgs[blank.code]) imgs[blank.code] = {}
-                            if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
-                            if(imgs[blank.code][color.name].filter(i => i.sku == `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}`).length == 0){
-                                imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}` })
-                            }
-
-                        }
-                    }else{
-                        for (let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)).length > 0 ? blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)) : blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes("default"))) {
-                            if (!imgs[blank.code]) imgs[blank.code] = {}
-                            if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = []
-                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}` })
-
+                    for (let img of (blank.images || []).filter(i =>
+                        i.color.toString() == color._id.toString() &&
+                        (i.imageGroup || "default") === activeGroup &&
+                        (Object.keys(i.boxes ? i.boxes : {}).includes(side) || (Object.keys(i.boxes ? i.boxes : {}).includes("back") && !Object.keys(design ? design : {}).includes("back")))
+                    )) {
+                        if (!imgs[blank.code]) imgs[blank.code] = {};
+                        if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = [];
+                        const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}`;
+                        if (!imgs[blank.code][color.name].find(i => i.sku === imgKey)) {
+                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}.jpg?width=400`), sku: imgKey });
                         }
                     }
                 }
             }
         }
     } else {
-        // images without boxes — plain product photos, no design overlay
         for (let threadColor of Object.keys(design ? design : {}).filter(tc => product.threadColors.find(t => t.name == tc))) {
             for (let blank of product.blanks) {
                 if (!(blank.images && blank.images.length > 0)) continue;
                 for (let color of product.colors) {
-                    for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length)) {
+                    for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length && (i.imageGroup || "default") === activeGroup)) {
                         if (!imgs[blank.code]) imgs[blank.code] = {};
                         if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {};
                         if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
@@ -144,28 +139,21 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                 }
             }
         }
-        for (let threadColor of Object.keys(design? design : {}).filter(tc=> product.threadColors.find(t => t.name == tc))) {
+        for (let threadColor of Object.keys(design ? design : {}).filter(tc => product.threadColors.find(t => t.name == tc))) {
             for (let side of Object.keys(design[threadColor])) {
                 for (let blank of product.blanks) {
                     for (let color of product.colors) {
-                        if(blank.images && blank.images.length > 0){
-                            for (let img of blank.images?.filter(i => i.color.toString() == color._id.toString() && Object.keys(i.boxes ? i.boxes : {}).includes(side))) {
-                                if (!imgs[blank.code]) imgs[blank.code] = {}
-                            
-                                if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
-                                if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
-                                if(imgs[blank.code][threadColor][color.name].filter(i => i.sku == `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`).length == 0){
-                                    imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
-                                }
-
-                            }
-                        }else{
-                            for (let img of blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)).length > 0 ? blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes(product.imageGroup)) : blank.multiImages[side]?.filter(i => i.color.toString() == color._id.toString() && i.imageGroup?.includes("default"))) {
-                                if (!imgs[blank.code]) imgs[blank.code] = {}
-                                if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {}
-                                if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = []
-                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/")[img.image.split("/").length - 1].split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}` })
-
+                        for (let img of (blank.images || []).filter(i =>
+                            i.color.toString() == color._id.toString() &&
+                            (i.imageGroup || "default") === activeGroup &&
+                            Object.keys(i.boxes ? i.boxes : {}).includes(side)
+                        )) {
+                            if (!imgs[blank.code]) imgs[blank.code] = {};
+                            if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {};
+                            if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
+                            const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`;
+                            if (!imgs[blank.code][threadColor][color.name].find(i => i.sku === imgKey)) {
+                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: imgKey });
                             }
                         }
                     }
@@ -297,6 +285,23 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{product.design?.sku}</Typography>
                         <Typography variant="caption" color="text.secondary">{blankKeys.join(" · ")}</Typography>
+                        {availableGroups.length > 1 && (
+                            <FormControl size="small" sx={{ minWidth: 110 }}>
+                                <InputLabel sx={{ fontSize: "0.75rem" }}>Theme</InputLabel>
+                                <Select
+                                    value={activeGroup}
+                                    label="Theme"
+                                    sx={{ fontSize: "0.75rem" }}
+                                    onChange={e => {
+                                        const prods = [...products];
+                                        prods.find(p => p.id === product.id).imageGroup = e.target.value;
+                                        setProducts([...prods]);
+                                    }}
+                                >
+                                    {availableGroups.map(g => <MenuItem key={g} value={g} sx={{ fontSize: "0.75rem" }}>{g}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                        )}
                     </Box>
                     {ModeToggle}
                 </Box>

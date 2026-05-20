@@ -108,7 +108,11 @@ export async function POST(req = NextApiRequest) {
       if (blank.sizes.length > 0 && blank.type !== "alias") blank = updateFold(blank);
       const beforeBlank = before ?? await Blanks.findById(blank._id).lean();
       newBlank = await Blanks.findByIdAndUpdate(blank._id, blank, { new: true }).populate("printLocations");
-      if (blank.type !== "alias") updateInventory(blank); // fire-and-forget
+      if (blank.type === "alias") {
+        Inventory.deleteMany({ blank: blank._id }); // fire-and-forget
+      } else {
+        updateInventory(blank); // fire-and-forget
+      }
       const logAction = action || "blank_update";
       logActivity({ action: logAction, entity: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", userName, email });
       await logChange({ entityType: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", action: logAction, before: beforeBlank, after: blank, userName, email, provider: "premierPrinting" });

@@ -16,6 +16,11 @@ import {
     Divider,
     FormControlLabel,
     Switch,
+    Tabs,
+    Tab,
+    Tooltip,
+    Menu,
+    MenuItem,
 } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import "cropperjs/dist/cropper.css";
@@ -35,6 +40,8 @@ import CreatableSelect from "react-select/creatable";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import {Footer} from "../reusable/Footer";
 import { ImageEditModal } from "./ImageEditModal";
 import Image from "next/image";
@@ -60,8 +67,287 @@ const SectionCard = ({ title, icon, children, action, collapsible, open, onToggl
     </Box>
 );
 
+const ColorImageCard = ({ blank, color, allColors, setAllColors, setBlank, update, setImageColor, setIsImageEditModalOpen, setSelectedImageSrc, setDefaultGroup, setImageToDelete, setDeleteModalOpen, extraGroups, onThemeAdd, onThemeRemove }) => {
+    const images = blank.images?.filter(img => img.color?.toString() === color._id?.toString()) ?? [];
+    const isHidden = blank.hiddenColors?.includes(color._id?.toString());
+    const [activeGroup, setActiveGroup] = useState("default");
+    const [addingTheme, setAddingTheme] = useState(false);
+    const [newTheme, setNewTheme] = useState("");
+    const [dragOverGroup, setDragOverGroup] = useState(null);
+    const [moveMenuAnchor, setMoveMenuAnchor] = useState(null);
+    const [moveMenuImg, setMoveMenuImg] = useState(null);
+
+    const groups = ["default", ...new Set([
+        ...images.map(img => img.imageGroup || "default").filter(g => g !== "default"),
+        ...extraGroups,
+    ])];
+    const filteredImages = images.filter(img => (img.imageGroup || "default") === activeGroup);
+
+    const commitNewTheme = () => {
+        const t = newTheme.trim().toLowerCase();
+        if (t) {
+            onThemeAdd(t);
+            setActiveGroup(t);
+        }
+        setNewTheme("");
+        setAddingTheme(false);
+    };
+
+    const handleRemoveTheme = (g) => {
+        if (activeGroup === g) setActiveGroup("default");
+        const hasImages = blank.images?.some(img => img.color?.toString() === color._id?.toString() && (img.imageGroup || "default") === g);
+        if (hasImages) {
+            const updated = { ...blank, images: blank.images.map(img =>
+                img.color?.toString() === color._id?.toString() && (img.imageGroup || "default") === g
+                    ? { ...img, imageGroup: "default" }
+                    : img
+            )};
+            setBlank(updated);
+            update({ blank: updated });
+        }
+        onThemeRemove(g);
+    };
+
+    const reassignImage = (imageUrl, targetGroup) => {
+        const current = blank.images?.find(i => i.image === imageUrl && i.color?.toString() === color._id?.toString());
+        if (!current || (current.imageGroup || "default") === targetGroup) return;
+        const updated = { ...blank, images: blank.images.map(i => i.image === imageUrl ? { ...i, imageGroup: targetGroup } : i) };
+        setBlank(updated);
+        update({ blank: updated });
+    };
+
+    const handleDragStart = (e, img) => {
+        e.dataTransfer.setData("moveImageUrl", img.image);
+        e.dataTransfer.effectAllowed = "move";
+    };
+
+    const handleDropOnTab = (targetGroup, e) => {
+        e.preventDefault();
+        const imageUrl = e.dataTransfer.getData("moveImageUrl");
+        if (imageUrl) reassignImage(imageUrl, targetGroup);
+        setDragOverGroup(null);
+    };
+
+    return (
+        <Card variant="outlined" sx={{ mb: 1.5, borderRadius: 2, "&:last-child": { mb: 0 } }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5, borderBottom: "1px solid #f5f5f5" }}>
+                <Box sx={{ width: 22, height: 22, backgroundColor: color.hexcode, border: "1px solid #ccc", borderRadius: "4px", flexShrink: 0 }} />
+                <Typography variant="subtitle2" fontWeight={600} sx={{ flexGrow: 1 }}>{color.name}</Typography>
+                <Chip label={`${images.length} image${images.length !== 1 ? "s" : ""}`} size="small" variant="outlined" sx={{ fontSize: "0.7rem", height: 20 }} />
+                <EyeDropper onColorChange={async (hex) => {
+                    let bla = { ...blank };
+                    let cols = bla.colors;
+                    for (let c of cols) {
+                        if (c._id === color._id) {
+                            let res = await axios.post("/api/admin/colors", { color: { ...c, hexcode: hex } });
+                            setAllColors(allColors.map(ac => ac._id === c._id ? res.data.color : ac));
+                            c.hexcode = hex;
+                        }
+                    }
+                    bla.colors = cols;
+                    setBlank(bla);
+                    update({ blank: bla });
+                }} />
+                <FormControlLabel
+                    control={
+                        <Switch size="small" defaultChecked={!isHidden} onChange={(e) => {
+                            let bla = { ...blank };
+                            if (!e.target.checked) {
+                                bla.hiddenColors.push(color._id.toString());
+                            } else {
+                                bla.hiddenColors = bla.hiddenColors.filter(id => id !== color._id.toString());
+                            }
+                            setBlank(bla);
+                            update({ blank: bla });
+                        }} />
+                    }
+                    label={<Typography variant="caption" color="text.secondary">{isHidden ? "Hidden" : "Visible"}</Typography>}
+                    labelPlacement="start"
+                    sx={{ mx: 0 }}
+                />
+            </Box>
+
+            {/* Theme tabs row — always visible */}
+            <Box sx={{ display: "flex", alignItems: "center", borderBottom: "1px solid #f5f5f5", minHeight: 40 }}>
+                <Tabs
+                    value={activeGroup}
+                    onChange={(_, v) => setActiveGroup(v)}
+                    sx={{ flex: 1, minHeight: 40 }}
+                    TabIndicatorProps={{ style: { height: 2 } }}
+                >
+                    {groups.map(g => (
+                        <Tab
+                            key={g}
+                            value={g}
+                            onDragOver={e => { e.preventDefault(); setDragOverGroup(g); setActiveGroup(g); }}
+                            onDragLeave={() => setDragOverGroup(null)}
+                            onDrop={e => handleDropOnTab(g, e)}
+                            sx={{
+                                minHeight: 40, textTransform: "none", fontSize: "0.78rem", py: 0.5,
+                                ...(dragOverGroup === g && { bgcolor: "primary.50", outline: "2px dashed", outlineColor: "primary.main", borderRadius: 1 }),
+                            }}
+                            label={g === "default" ? "default" : (
+                                <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                                    {g}
+                                    <Box
+                                        component="span"
+                                        onClick={e => { e.stopPropagation(); handleRemoveTheme(g); }}
+                                        sx={{ display: "inline-flex", alignItems: "center", ml: 0.25, borderRadius: "50%", p: 0.125, "&:hover": { backgroundColor: "rgba(0,0,0,0.1)" } }}
+                                    >
+                                        <CloseIcon sx={{ fontSize: 12 }} />
+                                    </Box>
+                                </Box>
+                            )}
+                        />
+                    ))}
+                </Tabs>
+                {addingTheme ? (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, flexShrink: 0 }}>
+                        <TextField
+                            size="small"
+                            autoFocus
+                            placeholder="Theme name"
+                            value={newTheme}
+                            onChange={e => setNewTheme(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === "Enter") commitNewTheme();
+                                if (e.key === "Escape") { setAddingTheme(false); setNewTheme(""); }
+                            }}
+                            sx={{ width: 130, "& .MuiInputBase-input": { py: 0.5, fontSize: "0.78rem" } }}
+                        />
+                        <Button size="small" onClick={commitNewTheme} sx={{ minWidth: 0, px: 1, fontSize: "0.72rem" }}>Add</Button>
+                        <IconButton size="small" onClick={() => { setAddingTheme(false); setNewTheme(""); }}>
+                            <CloseIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                    </Box>
+                ) : (
+                    <Tooltip title="Add theme tab">
+                        <IconButton size="small" sx={{ mx: 0.75, flexShrink: 0 }} onClick={() => setAddingTheme(true)}>
+                            <AddIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Box>
+
+            <Box sx={{ p: 1.5 }}>
+                <Grid2 container spacing={1.5}>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <Box
+                            onClick={() => { setSelectedImageSrc(null); setImageColor(color); setDefaultGroup(activeGroup); setIsImageEditModalOpen(true); }}
+                            sx={{
+                                width: 160, height: 160,
+                                border: "2px dashed #1989df",
+                                borderRadius: 2,
+                                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer", gap: 0.5,
+                                transition: "background-color 0.15s",
+                                "&:hover": { backgroundColor: "#f0f7ff" },
+                            }}
+                        >
+                            <AddPhotoAlternateIcon sx={{ color: "#1989df", fontSize: 28 }} />
+                            <Typography variant="caption" color="primary" fontWeight={500}>Add Image</Typography>
+                        </Box>
+                    </Grid2>
+                    {filteredImages.map((img, imgIdx) => (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }} key={imgIdx}>
+                            <Box
+                                draggable
+                                onDragStart={e => handleDragStart(e, img)}
+                                sx={{
+                                    position: "relative", width: 160, height: 160, borderRadius: 2, overflow: "hidden", border: "1px solid #e0e0e0",
+                                    cursor: "grab",
+                                    "&:hover .tile-move": { opacity: 1 },
+                                    "&:active": { cursor: "grabbing" },
+                                }}
+                            >
+                                <Box
+                                    onClick={() => { setSelectedImageSrc({ ...img }); setImageColor(color); setDefaultGroup(img.imageGroup || "default"); setIsImageEditModalOpen(true); }}
+                                    sx={{ width: "100%", height: "100%", cursor: "pointer" }}
+                                >
+                                    <Image
+                                        src={img.image ? `${img.image.replace('images1.pythiastechnologies.com', 'images2.pythiastechnologies.com/origin')}?width=200&height=200` : ''}
+                                        alt={img.name ?? "blank image"}
+                                        width={160}
+                                        height={160}
+                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                    />
+                                    <Stage width={160} height={160} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
+                                        {Object.keys(img.boxes ?? {}).map((key, i) => {
+                                            const rect = img.boxes[key];
+                                            if (!rect) return null;
+                                            const s = 160 / 400;
+                                            return (
+                                                <Layer key={i}>
+                                                    <Rect x={rect.x * s} y={rect.y * s} width={rect.width * s} height={rect.height * s} rotation={rect.rotation} stroke="#ffffff" strokeWidth={1.5} dash={[4, 4]} />
+                                                </Layer>
+                                            );
+                                        })}
+                                    </Stage>
+                                </Box>
+                                <IconButton
+                                    size="small"
+                                    sx={{
+                                        position: "absolute", top: 4, right: 4,
+                                        backgroundColor: "rgba(255,255,255,0.85)",
+                                        "&:hover": { backgroundColor: "rgba(211,47,47,0.9)", color: "#fff" },
+                                    }}
+                                    onClick={(e) => { e.stopPropagation(); setImageToDelete(img.image); setDeleteModalOpen(true); }}
+                                >
+                                    <DeleteIcon fontSize="small" />
+                                </IconButton>
+                                {groups.length > 1 && (
+                                    <Tooltip title="Move to theme">
+                                        <IconButton
+                                            className="tile-move"
+                                            size="small"
+                                            sx={{
+                                                position: "absolute", top: 4, left: 4,
+                                                backgroundColor: "rgba(255,255,255,0.85)",
+                                                opacity: 0, transition: "opacity 150ms",
+                                                "&:hover": { backgroundColor: "rgba(255,255,255,1)" },
+                                            }}
+                                            onClick={e => { e.stopPropagation(); setMoveMenuAnchor(e.currentTarget); setMoveMenuImg(img); }}
+                                        >
+                                            <SwapHorizIcon sx={{ fontSize: 16 }} />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
+                            </Box>
+                            {img.name && (
+                                <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 0.5, color: "text.secondary" }}>
+                                    {img.name}
+                                </Typography>
+                            )}
+                        </Grid2>
+                    ))}
+                    <Menu
+                        anchorEl={moveMenuAnchor}
+                        open={Boolean(moveMenuAnchor)}
+                        onClose={() => { setMoveMenuAnchor(null); setMoveMenuImg(null); }}
+                    >
+                        <Typography variant="caption" sx={{ px: 2, py: 0.5, display: "block", color: "text.secondary", fontWeight: 600 }}>Move to theme</Typography>
+                        {groups.filter(g => g !== (moveMenuImg?.imageGroup || "default")).map(g => (
+                            <MenuItem
+                                key={g}
+                                onClick={() => {
+                                    if (moveMenuImg) reassignImage(moveMenuImg.image, g);
+                                    setMoveMenuAnchor(null);
+                                    setMoveMenuImg(null);
+                                }}
+                                sx={{ fontSize: "0.85rem" }}
+                            >
+                                {g}
+                            </MenuItem>
+                        ))}
+                    </Menu>
+                </Grid2>
+            </Box>
+        </Card>
+    );
+};
+
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
-    const [imageGroups, setImageGroups] = useState([])
+    const [extraGroups, setExtraGroups] = useState([])
     const [allColors, setAllColors] = useState(colors)
     const [blank, setBlank] = useState(bla? {...bla}: {});
     const originalBlank = useRef(bla ? { ...bla } : {});
@@ -72,6 +358,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [isImageEditModalOpen, setIsImageEditModalOpen] = useState(false);
     const [selectedImageSrc, setSelectedImageSrc] = useState(null);
     const [imageColor, setImageColor] = useState({id: null, name: null, hexcode: null});
+    const [defaultGroup, setDefaultGroup] = useState("default");
     const [bulletModalOpen, setBulletModalOpen] = useState(false);
     const [sizesModalOpen, setSizesModalOpen] = useState(false);
     const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
@@ -101,7 +388,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const update = async ({blank, action})=>{
         let res = await axios.post("/api/admin/blanks", { blank, before: blank._id ? originalBlank.current : null, action });
         if(res.data.error){
-            alert("Error saving blank")
+            alert("Error saving blank: " + (res.data.message || "Unknown error"))
         } else {
             originalBlank.current = { ...blank };
         }
@@ -517,125 +804,33 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                 <Typography variant="body2">Add colors above to manage images per color.</Typography>
                             </Box>
                         ) : (
-                            blank.colors.map((color, idx) => {
-                                const images = blank.images?.filter(img => img.color?.toString() === color._id?.toString()) ?? [];
-                                const isHidden = blank.hiddenColors?.includes(color._id?.toString());
-                                return (
-                                    <Card key={idx} variant="outlined" sx={{ mb: 1.5, borderRadius: 2, "&:last-child": { mb: 0 } }}>
-                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5, borderBottom: "1px solid #f5f5f5" }}>
-                                            <Box sx={{ width: 22, height: 22, backgroundColor: color.hexcode, border: "1px solid #ccc", borderRadius: "4px", flexShrink: 0 }} />
-                                            <Typography variant="subtitle2" fontWeight={600} sx={{ flexGrow: 1 }}>{color.name}</Typography>
-                                            <Chip label={`${images.length} image${images.length !== 1 ? "s" : ""}`} size="small" variant="outlined" sx={{ fontSize: "0.7rem", height: 20 }} />
-                                            <EyeDropper onColorChange={async (hex) => {
-                                                let bla = {...blank};
-                                                let cols = bla.colors;
-                                                for (let c of cols) {
-                                                    if (c._id === color._id) {
-                                                        let res = await axios.post("/api/admin/colors", { color: { ...c, hexcode: hex } });
-                                                        setAllColors(allColors.map(ac => ac._id === c._id ? res.data.color : ac));
-                                                        c.hexcode = hex;
-                                                    }
-                                                }
-                                                bla.colors = cols;
-                                                setBlank(bla);
-                                                update({blank: bla});
-                                            }} />
-                                            <FormControlLabel
-                                                control={
-                                                    <Switch size="small" defaultChecked={!isHidden} onChange={(e) => {
-                                                        let bla = {...blank};
-                                                        if (!e.target.checked) {
-                                                            bla.hiddenColors.push(color._id.toString());
-                                                        } else {
-                                                            bla.hiddenColors = bla.hiddenColors.filter(id => id !== color._id.toString());
-                                                        }
-                                                        setBlank(bla);
-                                                        update({blank: bla});
-                                                    }} />
-                                                }
-                                                label={<Typography variant="caption" color="text.secondary">{isHidden ? "Hidden" : "Visible"}</Typography>}
-                                                labelPlacement="start"
-                                                sx={{ mx: 0 }}
-                                            />
-                                        </Box>
-                                        <Box sx={{ p: 1.5 }}>
-                                            <Grid2 container spacing={1.5}>
-                                                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
-                                                    <Box
-                                                        onClick={() => { setSelectedImageSrc(null); setImageColor(color); setIsImageEditModalOpen(true); }}
-                                                        sx={{
-                                                            width: 160, height: 160,
-                                                            border: "2px dashed #1989df",
-                                                            borderRadius: 2,
-                                                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                                                            cursor: "pointer", gap: 0.5,
-                                                            transition: "background-color 0.15s",
-                                                            "&:hover": { backgroundColor: "#f0f7ff" },
-                                                        }}
-                                                    >
-                                                        <AddPhotoAlternateIcon sx={{ color: "#1989df", fontSize: 28 }} />
-                                                        <Typography variant="caption" color="primary" fontWeight={500}>Add Image</Typography>
-                                                    </Box>
-                                                </Grid2>
-                                                {images.map((img, imgIdx) => (
-                                                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }} key={imgIdx}>
-                                                        <Box sx={{ position: "relative", width: 160, height: 160, borderRadius: 2, overflow: "hidden", border: "1px solid #e0e0e0" }}>
-                                                            <Box
-                                                                onClick={() => { setSelectedImageSrc({ ...img }); setImageColor(color); setIsImageEditModalOpen(true); }}
-                                                                sx={{ width: "100%", height: "100%", cursor: "pointer" }}
-                                                            >
-                                                                <Image
-                                                                    src={img.image ? `${img.image.replace('images1.pythiastechnologies.com', 'images2.pythiastechnologies.com/origin')}?width=200&height=200` : ''}
-                                                                    alt={img.name ?? "blank image"}
-                                                                    width={160}
-                                                                    height={160}
-                                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                                                />
-                                                                <Stage width={160} height={160} style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
-                                                                    {Object.keys(img.boxes ?? {}).map((key, i) => {
-                                                                        const rect = img.boxes[key];
-                                                                        if (!rect) return null;
-                                                                        // boxes stored at 400px edit canvas → scale to 160px thumbnail
-                                                                        const s = 160 / 400;
-                                                                        return (
-                                                                            <Layer key={i}>
-                                                                                <Rect x={rect.x * s} y={rect.y * s} width={rect.width * s} height={rect.height * s} rotation={rect.rotation} stroke="#ffffff" strokeWidth={1.5} dash={[4, 4]} />
-                                                                            </Layer>
-                                                                        );
-                                                                    })}
-                                                                </Stage>
-                                                            </Box>
-                                                            <IconButton
-                                                                size="small"
-                                                                sx={{
-                                                                    position: "absolute", top: 4, right: 4,
-                                                                    backgroundColor: "rgba(255,255,255,0.85)",
-                                                                    "&:hover": { backgroundColor: "rgba(211,47,47,0.9)", color: "#fff" },
-                                                                }}
-                                                                onClick={(e) => { e.stopPropagation(); setImageToDelete(img.image); setDeleteModalOpen(true); }}
-                                                            >
-                                                                <DeleteIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Box>
-                                                        {img.name && (
-                                                            <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 0.5, color: "text.secondary" }}>
-                                                                {img.name}
-                                                            </Typography>
-                                                        )}
-                                                    </Grid2>
-                                                ))}
-                                            </Grid2>
-                                        </Box>
-                                    </Card>
-                                );
-                            })
+                            blank.colors.map((color, idx) => (
+                                <ColorImageCard
+                                    key={idx}
+                                    blank={blank}
+                                    color={color}
+                                    allColors={allColors}
+                                    setAllColors={setAllColors}
+                                    setBlank={setBlank}
+                                    update={update}
+                                    setImageColor={setImageColor}
+                                    setIsImageEditModalOpen={setIsImageEditModalOpen}
+                                    setSelectedImageSrc={setSelectedImageSrc}
+                                    setDefaultGroup={setDefaultGroup}
+                                    setImageToDelete={setImageToDelete}
+                                    setDeleteModalOpen={setDeleteModalOpen}
+                                    extraGroups={extraGroups}
+                                    onThemeAdd={t => setExtraGroups(prev => prev.includes(t) ? prev : [...prev, t])}
+                                    onThemeRemove={t => setExtraGroups(prev => prev.filter(g => g !== t))}
+                                />
+                            ))
                         )}
                     </Box>
                 </Box>
 
             </Container>
 
-            <ImageEditModal open={isImageEditModalOpen} color={imageColor} blank={blank} setBlank={setBlank} onClose={() => setIsImageEditModalOpen(false)} imageSrc={selectedImageSrc} onSave={handleImageSave} printLocations={blank.printLocations} update={update} selectedImageSrc={{...selectedImageSrc}} setSelectedImageSrc={setSelectedImageSrc} />
+            <ImageEditModal open={isImageEditModalOpen} color={imageColor} blank={blank} setBlank={setBlank} onClose={() => setIsImageEditModalOpen(false)} imageSrc={selectedImageSrc} onSave={handleImageSave} printLocations={blank.printLocations} update={update} selectedImageSrc={{...selectedImageSrc}} setSelectedImageSrc={setSelectedImageSrc} defaultGroup={defaultGroup} />
             <BulletModal open={bulletModalOpen} onClose={() => setBulletModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
             <SizesModal open={sizesModalOpen} onClose={() => setSizesModalOpen(false)} blank={blank} setBlank={setBlank} update={update} />
             <UploadSizeGuide open={sizeGuideModalOpen} setOpen={setSizeGuideModalOpen} blank={blank} setBlank={setBlank} update={update} />
