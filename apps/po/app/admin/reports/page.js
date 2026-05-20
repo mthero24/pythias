@@ -164,7 +164,7 @@ function PaginatedTable({ columns, rows, total, page, pageSize, loading, sortFie
 const STAGE_PIE_COLORS = ["#9e9e9e", "#00bcd4", "#ff9800", "#2196f3", "#4caf50"];
 
 const EMPTY_PROD = {
-    total: 0, active: 0, shipped: 0, folded: 0, rePulled: 0, printed: 0, pending: 0,
+    total: 0, active: 0, shipped: 0, rePulled: 0, treated: 0, labelPrinted: 0, dtfLoad: 0, dtfFind: 0,
     avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null,
     modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null,
 };
@@ -173,11 +173,12 @@ function OverviewTab({ revenueByDay, byMarketplace, productionSummary, blanks, i
     const ps = productionSummary ?? EMPTY_PROD;
 
     const stageData = useMemo(() => [
-        { id: 0, value: ps.pending,  label: "Pending"   },
-        { id: 1, value: ps.printed,  label: "Printed"   },
-        { id: 2, value: ps.rePulled, label: "Re-Pulled" },
-        { id: 3, value: ps.folded,   label: "Folded"    },
-        { id: 4, value: ps.shipped,  label: "Shipped"   },
+        { id: 0, value: ps.dtfFind,      label: "DTF Find"      },
+        { id: 1, value: ps.dtfLoad,      label: "DTF Load"      },
+        { id: 2, value: ps.labelPrinted, label: "Label Printed" },
+        { id: 3, value: ps.treated,      label: "Treated"       },
+        { id: 4, value: ps.rePulled,     label: "Re-Pulled"     },
+        { id: 5, value: ps.shipped,      label: "Shipped"       },
     ].filter(d => d.value > 0).map((d, i) => ({ ...d, color: STAGE_PIE_COLORS[d.id] })), [ps]);
 
     const topMp      = byMarketplace.slice(0, 10);
@@ -403,19 +404,24 @@ function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeC
 
 // ─── Production tab ───────────────────────────────────────────────────────────
 
-const STAGE_COLOR = {
-    Shipped: "success", Folded: "primary", "Re-Pulled": "warning",
-    Treated: "secondary", Printed: "info", Pending: "default", Canceled: "error",
-};
-
 function itemStage(i) {
-    if (i.canceled)  return "Canceled";
-    if (i.shipped)   return "Shipped";
-    if (i.folded)    return "Folded";
-    if (i.rePulled)  return "Re-Pulled";
-    if (i.treated)   return "Treated";
-    if (i.printed)   return "Printed";
-    return "Pending";
+    if (!i.steps?.length) return "Pending";
+    const latest = [...i.steps].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const s = latest?.status || "Pending";
+    return s.startsWith("In Bin") ? "In Bin" : s;
+}
+
+function stageColor(status) {
+    if (!status || status === "Pending")                             return "default";
+    if (status === "Canceled")                                       return "error";
+    if (status === "Shipped" || status === "PreShipped")             return "success";
+    if (status === "Folded"  || status.startsWith("In Bin"))         return "primary";
+    if (status === "Re-Pulled")                                      return "warning";
+    if (status === "Treated" || status === "Treatment Machine")      return "secondary";
+    if (status === "Printed" || status === "DTF Load"
+        || status === "Embroidery Load")                             return "info";
+    if (status === "DTF Find")                                       return "warning";
+    return "default";
 }
 
 function fmtDays(val)     { return val != null ? val.toFixed(1) + "d" : "—"; }
@@ -426,11 +432,12 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
     const { items, total, page, pageSize, loading } = itemsData;
 
     const stageData = useMemo(() => [
-        { id: 0, value: ps.pending,  label: "Pending"   },
-        { id: 1, value: ps.printed,  label: "Printed"   },
-        { id: 2, value: ps.rePulled, label: "Re-Pulled" },
-        { id: 3, value: ps.folded,   label: "Folded"    },
-        { id: 4, value: ps.shipped,  label: "Shipped"   },
+        { id: 0, value: ps.dtfFind,      label: "DTF Find"      },
+        { id: 1, value: ps.dtfLoad,      label: "DTF Load"      },
+        { id: 2, value: ps.labelPrinted, label: "Label Printed" },
+        { id: 3, value: ps.treated,      label: "Treated"       },
+        { id: 4, value: ps.rePulled,     label: "Re-Pulled"     },
+        { id: 5, value: ps.shipped,      label: "Shipped"       },
     ].filter(d => d.value > 0).map(d => ({ ...d, color: STAGE_PIE_COLORS[d.id] })), [ps]);
 
     const columns = [
@@ -438,22 +445,23 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
         { key: "styleCode", serverKey: "styleCode", label: "Style" },
         { key: "colorName", serverKey: "colorName", label: "Color" },
         { key: "sizeName",  serverKey: "sizeName",  label: "Size"  },
-        { key: "batchID",   serverKey: "batchID",   label: "Piece ID" },
+        { key: "pieceId",   serverKey: "pieceId",   label: "Piece ID" },
         { key: "stage",     label: "Stage", render: (i) => {
             const s = itemStage(i);
-            return <Chip size="small" label={s} color={STAGE_COLOR[s] ?? "default"} />;
+            return <Chip size="small" label={s} color={stageColor(s)} />;
         }},
     ];
 
     return (
         <>
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Total Items"  value={fmtN(ps.total)} /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Pending"      value={fmtN(ps.pending)}   color="text.secondary" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Printed"      value={fmtN(ps.printed)}   color="info.main" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Re-Pulled"    value={fmtN(ps.rePulled)}  color="warning.main" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Folded"       value={fmtN(ps.folded)}    color="primary.main" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Shipped"      value={fmtN(ps.shipped)}   color="success.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Total Items"   value={fmtN(ps.total)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="DTF Find"     value={fmtN(ps.dtfFind)}      color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="DTF Load"     value={fmtN(ps.dtfLoad)}      color="info.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Label Printed" value={fmtN(ps.labelPrinted)} color="info.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Treated"      value={fmtN(ps.treated)}      color="secondary.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Re-Pulled"    value={fmtN(ps.rePulled)}     color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Shipped"      value={fmtN(ps.shipped)}      color="success.main" /></Grid2>
             </Grid2>
 
             <Grid2 container spacing={2} sx={{ mb: 3 }}>

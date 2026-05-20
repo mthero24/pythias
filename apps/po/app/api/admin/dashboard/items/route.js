@@ -3,7 +3,7 @@ import Order from "@/models/Order";
 import Items from "@/models/Items";
 import StyleV2 from "@/models/StyleV2";
 
-const VALID_SORT_FIELDS = new Set(["date", "styleCode", "colorName", "sizeName", "batchID"]);
+const VALID_SORT_FIELDS = new Set(["date", "styleCode", "colorName", "sizeName", "pieceId"]);
 
 async function addCogs(items) {
     if (!items.length) return items;
@@ -31,9 +31,12 @@ export async function GET(req) {
         const until = toParam   ? new Date(toParam   + "T23:59:59") : new Date();
         const dateFilter = { $gte: since, $lte: until };
 
-        const filter = { date: dateFilter };
+        const excludedOrders = await Order.find({ date: dateFilter, status: { $in: ["Canceled", "Payment Failed"] } }).select("_id").lean();
+        const excludedIds = excludedOrders.map(o => o._id);
+
+        const filter = { date: dateFilter, ...(excludedIds.length ? { order: { $nin: excludedIds } } : {}) };
         if (marketplace && marketplace !== "All") {
-            const orderDocs = await Order.find({ date: dateFilter, marketplace }).select("_id").lean();
+            const orderDocs = await Order.find({ date: dateFilter, marketplace, status: { $nin: ["Canceled", "Payment Failed"] } }).select("_id").lean();
             filter.order = { $in: orderDocs.map(o => o._id) };
         }
 
@@ -54,7 +57,7 @@ export async function GET(req) {
 
         const [rawItems, total, summaryAgg, dtfModeAgg, printModeAgg, shipModeAgg] = await Promise.all([
             Items.find(filter)
-                .select("date status printed treated folded shipped canceled rePulled colorName sizeName styleCode batchID orderId poNumber order printedDate shippedDate")
+                .select("date status steps printed treated folded shipped canceled rePulled inBin colorName sizeName styleCode pieceId batchID orderId poNumber order printedDate shippedDate")
                 .sort({ [sortField]: sortDir })
                 .skip(csvMode ? 0 : (page - 1) * pageSize)
                 .limit(pageSize)
@@ -64,13 +67,14 @@ export async function GET(req) {
                 { $match: filter },
                 { $group: {
                     _id: null,
-                    total:    { $sum: 1 },
-                    active:   { $sum: { $cond: [{ $ne: ["$canceled", true] }, 1, 0] } },
-                    shipped:  { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$shipped",  true] }] }, then: 1, else: 0 } } },
-                    folded:   { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$folded",   true] }] }, then: 1, else: 0 } } },
-                    rePulled: { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$rePulled", true] }] }, then: 1, else: 0 } } },
-                    printed:  { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$printed",  true] }, { $ne: ["$rePulled", true] }] }, then: 1, else: 0 } } },
-                    pending:  { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$printed",  true] }, { $ne: ["$rePulled", true] }] }, then: 1, else: 0 } } },
+                    total:        { $sum: 1 },
+                    active:       { $sum: { $cond: [{ $ne: ["$canceled", true] }, 1, 0] } },
+                    shipped:      { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$shipped",  true] }] }, then: 1, else: 0 } } },
+                    rePulled:     { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$rePulled", true] }] }, then: 1, else: 0 } } },
+                    treated:      { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$treated",  true] }] }, then: 1, else: 0 } } },
+                    labelPrinted: { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$labelPrinted", true] }] }, then: 1, else: 0 } } },
+                    dtfLoad:      { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$status", "DTF Load"]       }] }, then: 1, else: 0 } } },
+                    dtfFind:      { $sum: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $eq: ["$status", "DTF Find"]       }] }, then: 1, else: 0 } } },
                     avgDaysToLabel: { $avg: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $gt: [dtfStepDate, null] }] }, then: { $divide: [{ $subtract: [dtfStepDate, "$date"] }, 86400000] }, else: null } } },
                     avgDaysToPrint: { $avg: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $gt: ["$printedDate",  null] }] }, then: { $divide: [{ $subtract: ["$printedDate",  "$date"] }, 86400000] }, else: null } } },
                     avgDaysToShip:  { $avg: { $cond: { if: { $and: [{ $ne: ["$canceled", true] }, { $gt: ["$shippedDate",  null] }] }, then: { $divide: [{ $subtract: ["$shippedDate",  "$date"] }, 86400000] }, else: null } } },
@@ -92,7 +96,7 @@ export async function GET(req) {
         const items = await addCogs(rawItems);
 
         const productionSummary = {
-            ...(summaryAgg[0] ?? { total: 0, active: 0, shipped: 0, folded: 0, rePulled: 0, printed: 0, pending: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null }),
+            ...(summaryAgg[0] ?? { total: 0, active: 0, shipped: 0, rePulled: 0, treated: 0, labelPrinted: 0, dtfLoad: 0, dtfFind: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null }),
             modeDtfLoad:     dtfModeAgg[0]?._id   ?? null,
             modePrintLabels: printModeAgg[0]?._id ?? null,
             modeDaysToShip:  shipModeAgg[0]?._id  ?? null,
@@ -100,8 +104,8 @@ export async function GET(req) {
 
         if (csvMode) {
             const headers = ["Date", "PO Number", "Style", "Color", "Size", "Piece ID", "Wholesale Cost", "Stage"];
-            const stageOf = (i) => { if (i.canceled) return "Canceled"; if (i.shipped) return "Shipped"; if (i.folded) return "Folded"; if (i.rePulled) return "Re-Pulled"; if (i.treated) return "Treated"; if (i.printed) return "Printed"; return "Pending"; };
-            const rows = items.map(i => [i.date ? new Date(i.date).toLocaleDateString() : "", i.poNumber || i.orderId || "", i.styleCode || "", i.colorName || "", i.sizeName || "", i.batchID || "", (i.wholesaleCost ?? 0).toFixed(2), stageOf(i)]);
+            const stageOf = (i) => { if (!i.steps?.length) return "Pending"; const s = [...i.steps].sort((a, b) => new Date(b.date) - new Date(a.date))[0]; return s.status || "Pending"; };
+            const rows = items.map(i => [i.date ? new Date(i.date).toLocaleDateString() : "", i.poNumber || i.orderId || "", i.styleCode || "", i.colorName || "", i.sizeName || "", i.pieceId || "", (i.wholesaleCost ?? 0).toFixed(2), stageOf(i)]);
             const esc = (v) => { const s = String(v ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
             const csv = [headers, ...rows].map(r => r.map(esc).join(",")).join("\r\n");
             return new Response(csv, { headers: { "Content-Type": "text/csv", "Content-Disposition": `attachment; filename="production.csv"` } });
@@ -110,6 +114,6 @@ export async function GET(req) {
         return NextResponse.json({ items, total, page, pageSize, pages: Math.ceil(total / pageSize), productionSummary });
     } catch (e) {
         console.error("[dashboard/items] error:", e);
-        return NextResponse.json({ error: true, msg: e.message, items: [], total: 0, page: 1, pageSize: 50, pages: 0, productionSummary: { total: 0, active: 0, shipped: 0, folded: 0, rePulled: 0, printed: 0, pending: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null, modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null } }, { status: 500 });
+        return NextResponse.json({ error: true, msg: e.message, items: [], total: 0, page: 1, pageSize: 50, pages: 0, productionSummary: { total: 0, active: 0, shipped: 0, rePulled: 0, treated: 0, labelPrinted: 0, dtfLoad: 0, dtfFind: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null, modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null } }, { status: 500 });
     }
 }
