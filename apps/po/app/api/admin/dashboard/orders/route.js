@@ -5,7 +5,7 @@ import StyleV2 from "@/models/StyleV2";
 import { Design, LicenseHolders } from "@pythias/mongo";
 
 const VALID_SORT_FIELDS = new Set(["date", "poNumber", "marketplace", "productCost"]);
-const shipCostExpr = (o) => o.selectedShipping?.cost ?? o.shippingInfo?.shippingCost ?? 0;
+const shipCostExpr = (o) => o.shippingInfo?.shippingCost ?? 0;
 
 async function addCogs(items) {
     if (!items.length) return items;
@@ -58,12 +58,12 @@ export async function GET(req) {
         const since = fromParam ? new Date(fromParam + "T00:00:00") : (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d; })();
         const until = toParam   ? new Date(toParam   + "T23:59:59") : new Date();
 
-        const filter = { date: { $gte: since, $lte: until } };
+        const filter = { date: { $gte: since, $lte: until }, status: { $nin: ["Canceled", "Payment Failed"] } };
         if (marketplace && marketplace !== "All") filter.marketplace = marketplace;
 
         const [orders, total] = await Promise.all([
             Order.find(filter)
-                .select("date poNumber orderId marketplace productCost status selectedShipping canceled refunded shippingInfo")
+                .select("date poNumber orderId marketplace productCost shippingCost discountAmount status selectedShipping canceled refunded shippingInfo")
                 .sort({ [sortField]: sortDir })
                 .skip(csvMode ? 0 : (page - 1) * pageSize)
                 .limit(pageSize)
@@ -84,7 +84,7 @@ export async function GET(req) {
             licenceFeeByOrder[key] = (licenceFeeByOrder[key] || 0) + (i.licenceFee || 0);
         }
 
-        const enriched = orders.map(o => ({ ...o, blanksCogs: cogsByOrder[String(o._id)] || 0, licenceFee: licenceFeeByOrder[String(o._id)] || 0, shippingCost: shipCostExpr(o) }));
+        const enriched = orders.map(o => ({ ...o, blanksCogs: cogsByOrder[String(o._id)] || 0, licenceFee: licenceFeeByOrder[String(o._id)] || 0, shippingPaid: shipCostExpr(o) }));
 
         if (csvMode) {
             const headers = ["Date", "PO Number", "Order ID", "Marketplace", "Status", "Revenue", "Shipping Cost", "Blank COGS", "Licence Fee"];
@@ -92,7 +92,7 @@ export async function GET(req) {
                 o.date ? new Date(o.date).toLocaleDateString() : "",
                 o.poNumber || "", o.orderId || "", o.marketplace || "Unknown",
                 o.canceled ? "Canceled" : o.refunded ? "Refunded" : (o.status || ""),
-                (o.productCost ?? 0).toFixed(2), (o.shippingCost ?? 0).toFixed(2), (o.blanksCogs ?? 0).toFixed(2), (o.licenceFee ?? 0).toFixed(2),
+                ((o.productCost ?? 0) + (o.shippingCost ?? 0) - (o.discountAmount ?? 0)).toFixed(2), (o.shippingPaid ?? 0).toFixed(2), (o.blanksCogs ?? 0).toFixed(2), (o.licenceFee ?? 0).toFixed(2),
             ]);
             const escape = (v) => { const s = String(v ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
             const csv = [headers, ...rows].map(r => r.map(escape).join(",")).join("\r\n");

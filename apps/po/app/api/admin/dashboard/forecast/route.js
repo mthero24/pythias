@@ -152,7 +152,7 @@ async function fetchHistorical(extraMatch) {
     const dateFilter = { date:{$gte:since,$lte:until} };
 
     const [rawDaily, dailyItemsAgg, licencedItemsAgg] = await Promise.all([
-        Order.aggregate([{$match:{...dateFilter,...extraMatch}},{$group:{_id:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},revenue:{$sum:{$ifNull:["$productCost",0]}},orders:{$sum:1}}},{$project:{_id:0,date:"$_id",revenue:1,orders:1}},{$sort:{date:1}}]),
+        Order.aggregate([{$match:{...dateFilter,...extraMatch}},{$group:{_id:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},revenue:{$sum:{$subtract:[{$add:[{$ifNull:["$productCost",0]},{$ifNull:["$shippingCost",0]}]},{$ifNull:["$discountAmount",0]}]}},orders:{$sum:1}}},{$project:{_id:0,date:"$_id",revenue:1,orders:1}},{$sort:{date:1}}]),
         Items.aggregate([{$match:{...dateFilter,canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1}}},{$project:{_id:0,date:"$_id.date",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1}}]),
         Items.aggregate([{$match:{...dateFilter,designRef:{$ne:null},canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},designRef:{$toString:"$designRef"},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1},totalPrice:{$sum:{$ifNull:["$price",0]}}}},{$project:{_id:0,date:"$_id.date",designRef:"$_id.designRef",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1,totalPrice:1}}]),
     ]);

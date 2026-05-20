@@ -341,8 +341,8 @@ function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeC
         { key: "date",        serverKey: "date",        label: "Date",        render: (o) => fmtDate(o.date) },
         { key: "poNumber",    serverKey: "poNumber",    label: "PO #",        render: (o) => o.poNumber || o.orderId || "—" },
         { key: "marketplace", serverKey: "marketplace", label: "Channel",     render: (o) => <Chip size="small" label={o.marketplace || "—"} variant="outlined" /> },
-        { key: "productCost",  serverKey: "productCost", label: "Revenue",      align: "right", render: (o) => fmt(o.productCost) },
-        { key: "shipping",    label: "Shipping",         align: "right",       render: (o) => fmt(o.shippingCost) },
+        { key: "productCost",  serverKey: "productCost", label: "Revenue",      align: "right", render: (o) => fmt((o.productCost||0) + (o.shippingCost||0) - (o.discountAmount||0)) },
+        { key: "shipping",    label: "Shipping Paid",    align: "right",       render: (o) => fmt(o.shippingPaid) },
         { key: "blanksCogs",  label: "Blank COGS",       align: "right",       render: (o) => fmt(o.blanksCogs) },
         { key: "licenceFee",  label: "Licence Fees",     align: "right",       render: (o) => fmt(o.licenceFee) },
         { key: "daysToShip",  label: "Days to Ship",     align: "right",       render: (o) => { const d = daysToShip(o); return d != null ? d.toFixed(1) : "—"; } },
@@ -574,13 +574,13 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarke
         { key: "date",        serverKey: "date",        label: "Date",        render: (o) => fmtDate(o.date) },
         { key: "poNumber",    serverKey: "poNumber",    label: "PO #",        render: (o) => o.poNumber || o.orderId || "—" },
         { key: "marketplace", serverKey: "marketplace", label: "Channel",     render: (o) => o.marketplace || "—" },
-        { key: "productCost", serverKey: "productCost", label: "Revenue",     align: "right", render: (o) => fmt(o.productCost) },
-        { key: "shipping",    label: "Shipping",        align: "right",       render: (o) => fmt(o.shippingCost) },
+        { key: "productCost", serverKey: "productCost", label: "Revenue",     align: "right", render: (o) => fmt((o.productCost||0) + (o.shippingCost||0) - (o.discountAmount||0)) },
+        { key: "shipping",    label: "Shipping Paid",   align: "right",       render: (o) => fmt(o.shippingPaid) },
         { key: "fees",        label: "Est. MP Fees",    align: "right",       render: (o) => fmt(estimateFee(o)) },
         { key: "blanksCogs",  label: "Blank COGS",      align: "right",       render: (o) => fmt(o.blanksCogs) },
         { key: "licenceFee",  label: "Licence Fees",    align: "right",       render: (o) => fmt(o.licenceFee) },
         { key: "net",         label: "Net",             align: "right",       render: (o) => {
-            const n = (o.productCost || 0) - (o.shippingCost || 0) - estimateFee(o) - (o.blanksCogs || 0) - (o.licenceFee || 0);
+            const n = (o.productCost||0) + (o.shippingCost||0) - (o.discountAmount||0) - (o.shippingPaid||0) - estimateFee(o) - (o.blanksCogs||0) - (o.licenceFee||0);
             return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
         }},
     ];

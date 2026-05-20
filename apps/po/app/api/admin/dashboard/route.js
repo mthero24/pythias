@@ -5,8 +5,9 @@ import Inventory from "@/models/inventory";
 import StyleV2 from "@/models/StyleV2";
 import { Design, LicenseHolders } from "@pythias/mongo";
 
-const activeExpr = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
-const shipCostExpr = { $ifNull: ["$selectedShipping.cost", { $ifNull: ["$shippingInfo.shippingCost", 0] }] };
+const activeExpr   = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
+const shipCostExpr = { $ifNull: ["$shippingInfo.shippingCost", 0] };
+const revenueExpr  = { $subtract: [{ $add: [{ $ifNull: ["$productCost", 0] }, { $ifNull: ["$shippingCost", 0] }] }, { $ifNull: ["$discountAmount", 0] }] };
 
 async function addCogs(items) {
     if (!items.length) return items;
@@ -59,7 +60,7 @@ export async function GET(req) {
                 { $match: { date: dateFilter } },
                 { $group: {
                     _id:           null,
-                    totalRevenue:  { $sum: { $cond: { if: activeExpr, then: { $ifNull: ["$productCost", 0] }, else: 0 } } },
+                    totalRevenue:  { $sum: { $cond: { if: activeExpr, then: revenueExpr, else: 0 } } },
                     orderCount:    { $sum: { $cond: { if: activeExpr, then: 1, else: 0 } } },
                     canceledCount: { $sum: { $cond: { if: activeExpr, then: 0, else: 1 } } },
                     totalShipping: { $sum: { $cond: { if: activeExpr, then: shipCostExpr, else: 0 } } },
@@ -67,7 +68,7 @@ export async function GET(req) {
             ]),
             Order.aggregate([
                 { $match: { date: dateFilter, canceled: { $ne: true }, refunded: { $ne: true } } },
-                { $group: { _id: { $ifNull: ["$marketplace", "Unknown"] }, orders: { $sum: 1 }, revenue: { $sum: { $ifNull: ["$productCost", 0] } }, shipping: { $sum: shipCostExpr } } },
+                { $group: { _id: { $ifNull: ["$marketplace", "Unknown"] }, orders: { $sum: 1 }, revenue: { $sum: revenueExpr }, shipping: { $sum: shipCostExpr } } },
                 { $project: { _id: 0, marketplace: "$_id", orders: 1, revenue: 1, shipping: 1 } },
                 { $sort: { revenue: -1 } },
             ]),
@@ -81,7 +82,7 @@ export async function GET(req) {
             Items.countDocuments({ date: dateFilter }),
             Order.aggregate([
                 { $match: { date: dateFilter, canceled: { $ne: true }, refunded: { $ne: true } } },
-                { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, revenue: { $sum: { $ifNull: ["$productCost", 0] } }, orders: { $sum: 1 } } },
+                { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, revenue: { $sum: revenueExpr }, orders: { $sum: 1 } } },
                 { $project: { _id: 0, date: "$_id", revenue: 1, orders: 1 } },
                 { $sort: { date: 1 } },
             ]),
