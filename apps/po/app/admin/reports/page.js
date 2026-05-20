@@ -758,7 +758,7 @@ const HORIZON_OPTIONS = [
     { value: 1825, label: "5yr"  },
 ];
 
-const YEAR_LABELS = { 365: "Year 1", 730: "Year 2", 1825: "Year 5" };
+const YEAR_LABELS = { 365: "Yr 1 Revenue", 730: "Yr 2 Revenue", 1825: "Yr 5 Revenue" };
 const bestModelKey = (best) => best === "linearRegression" ? "linear" : best === "exponentialSmoothing" ? "ema" : best === "chronos" ? "chronos" : best === "prophet" ? "prophet" : "ma";
 
 function ForecastTab({ forecastData, loading, horizon, onHorizonChange, onRefresh }) {

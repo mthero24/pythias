@@ -111,10 +111,11 @@ function fitPayload(historical) {
     const linRev=fitLinear(revVals), holtRev=fitHolt(revVals), maRev=fitMA(revVals);
     const linNet=fitLinear(netVals), holtNet=fitHolt(netVals), maNet=fitMA(netVals);
     const linOrd=fitLinear(ordVals), holtOrd=fitHolt(ordVals), maOrd=fitMA(ordVals);
-    const annualProjections=[365,730,1825].map(days=>{
-        const lR=predictLinear(linRev,n,days),hR=predictHolt(holtRev,days),mR=predictMA(maRev,days);
-        const lN=predictLinear(linNet,n,days),hN=predictHolt(holtNet,days),mN=predictMA(maNet,days);
-        const gL=Math.round(sum(lR)),gE=Math.round(sum(hR)),gM=Math.round(sum(mR)); return{days,gross:{linear:gL,ema:gE,ma:gM},net:{linear:Math.min(gL,Math.round(sum(lN))),ema:Math.min(gE,Math.round(sum(hN))),ma:Math.min(gM,Math.round(sum(mN)))}};
+    const lRevFull=predictLinear(linRev,n,1825),hRevFull=predictHolt(holtRev,1825),mRevFull=predictMA(maRev,1825);
+    const lNetFull=predictLinear(linNet,n,1825),hNetFull=predictHolt(holtNet,1825),mNetFull=predictMA(maNet,1825);
+    const annualProjections=[{days:365,from:0},{days:730,from:365},{days:1825,from:1460}].map(({days,from})=>{
+        const gL=Math.round(sum(lRevFull.slice(from,days))),gE=Math.round(sum(hRevFull.slice(from,days))),gM=Math.round(sum(mRevFull.slice(from,days)));
+        return{days,from,gross:{linear:gL,ema:gE,ma:gM},net:{linear:Math.min(gL,Math.round(sum(lNetFull.slice(from,days)))),ema:Math.min(gE,Math.round(sum(hNetFull.slice(from,days)))),ma:Math.min(gM,Math.round(sum(mNetFull.slice(from,days))))}};
     });
     const recentAvg=revVals.slice(-30).reduce((a,b)=>a+b,0)/Math.min(30,revVals.length); const priorSlice=revVals.slice(-60,-30); const priorAvg=priorSlice.length?priorSlice.reduce((a,b)=>a+b,0)/priorSlice.length:0; const trendPct=priorAvg>1?(recentAvg-priorAvg)/priorAvg:0;
     const best=Object.entries({linearRegression:linRev.rmse,exponentialSmoothing:holtRev.rmse,movingAverage:maRev.rmse}).sort((a,b)=>a[1]-b[1])[0][0];
@@ -194,8 +195,9 @@ async function augmentWithChronos(payload, historical) {
     if (result.rev)         { payload.chronos = { rev: result.rev, net: result.net, ord: result.ord }; }
     if (result.prophet_rev) { payload.prophet = { rev: result.prophet_rev, net: result.prophet_net, ord: result.prophet_ord }; }
     for (const proj of payload.annualProjections) {
-        if (result.rev)         { proj.gross.chronos = Math.round(sum(result.rev.median.slice(0, proj.days)));         proj.net.chronos = Math.round(sum(result.net.median.slice(0, proj.days))); }
-        if (result.prophet_rev) { proj.gross.prophet = Math.round(sum(result.prophet_rev.forecast.slice(0, proj.days))); proj.net.prophet = Math.round(sum(result.prophet_net.forecast.slice(0, proj.days))); }
+        const f = proj.from ?? 0;
+        if (result.rev)         { proj.gross.chronos = Math.round(sum(result.rev.median.slice(f, proj.days)));         proj.net.chronos = Math.round(sum(result.net.median.slice(f, proj.days))); }
+        if (result.prophet_rev) { proj.gross.prophet = Math.round(sum(result.prophet_rev.forecast.slice(f, proj.days))); proj.net.prophet = Math.round(sum(result.prophet_net.forecast.slice(f, proj.days))); }
     }
     const rmses = { linearRegression: payload.linRev.rmse, exponentialSmoothing: payload.holtRev.rmse, movingAverage: payload.maRev.rmse };
     if (result.rev?.rmse         != null) rmses.chronos = result.rev.rmse;
