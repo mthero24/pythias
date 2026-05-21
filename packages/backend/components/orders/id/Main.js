@@ -2,7 +2,7 @@
 import {
     Box, Typography, Button, Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
     Link, TextField, IconButton, Container, Stack, Card, CardContent, Chip,
-    Divider, Collapse, Tooltip, Avatar, CircularProgress,
+    Divider, Collapse, Tooltip, Avatar, CircularProgress, Snackbar, Alert,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState, useEffect } from "react";
@@ -26,6 +26,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import StickyNote2Icon from "@mui/icons-material/StickyNote2";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CancelIcon from "@mui/icons-material/Cancel";
+import ReplayIcon from "@mui/icons-material/Replay";
 
 const selectMenuPortalProps = {
     menuPortalTarget: typeof document !== "undefined" ? document.body : null,
@@ -86,6 +87,8 @@ export function Main({ ord, blanks, source }) {
     const [cancelOpen, setCancelOpen] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [cancelErr, setCancelErr] = useState("");
+    const [repulling, setRepulling] = useState(false);
+    const [repullSnack, setRepullSnack] = useState({ open: false, msg: "", severity: "success" });
 
     useEffect(() => {
         const shippedStatuses = ["Shipped", "shipped", "Out For Delivery"];
@@ -147,6 +150,23 @@ export function Main({ ord, blanks, source }) {
             setCancelErr(e.response?.data?.error ?? "Failed to cancel order");
         } finally {
             setCancelling(false);
+        }
+    };
+
+    const repullOrder = async () => {
+        setRepulling(true);
+        try {
+            const res = await axios.post("/api/admin/orders/repull", { poNumber: order.poNumber });
+            if (res.data.error) {
+                setRepullSnack({ open: true, msg: res.data.msg ?? "Repull failed", severity: "error" });
+            } else {
+                setRepullSnack({ open: true, msg: `Pulled ${res.data.count} item(s) from ShipStation`, severity: "success" });
+                setTimeout(() => window.location.reload(), 1500);
+            }
+        } catch (e) {
+            setRepullSnack({ open: true, msg: e.response?.data?.msg ?? "Request failed", severity: "error" });
+        } finally {
+            setRepulling(false);
         }
     };
 
@@ -576,6 +596,16 @@ export function Main({ ord, blanks, source }) {
                                         <Button fullWidth variant="outlined" startIcon={<NoteAddIcon />} onClick={() => setNote(true)}>
                                             Add Note
                                         </Button>
+                                        <Button
+                                            fullWidth
+                                            variant="outlined"
+                                            color="warning"
+                                            startIcon={repulling ? <CircularProgress size={14} color="inherit" /> : <ReplayIcon />}
+                                            onClick={repullOrder}
+                                            disabled={repulling}
+                                        >
+                                            {repulling ? "Pulling…" : "Repull from ShipStation"}
+                                        </Button>
                                         {canMarkShipped && (
                                             <Button fullWidth variant="contained" startIcon={<LocalShippingIcon />} onClick={() => setShipped(true)}>
                                                 Mark Shipped
@@ -611,6 +641,17 @@ export function Main({ ord, blanks, source }) {
             <ShippedModal open={shipped} setOpen={setShipped} order={order} setOrder={setOrder} />
             <NoteModal open={note} setOpen={setNote} order={order} setOrder={setOrder} />
             <Repull />
+
+            <Snackbar
+                open={repullSnack.open}
+                autoHideDuration={4000}
+                onClose={() => setRepullSnack(s => ({ ...s, open: false }))}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert severity={repullSnack.severity} variant="filled" onClose={() => setRepullSnack(s => ({ ...s, open: false }))}>
+                    {repullSnack.msg}
+                </Alert>
+            </Snackbar>
 
             {/* Cancel confirmation dialog */}
             <Dialog open={cancelOpen} onClose={() => !cancelling && setCancelOpen(false)} maxWidth="xs" fullWidth>

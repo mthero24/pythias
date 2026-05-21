@@ -7,101 +7,91 @@ import {
     getWarehouseAcenda,
 } from "../functions/acenda.js";
 
-const getFields = ({product,variant, defaultValues, marketplaceOverRides }) => {
-    //console.log("getFields called with:", { product, variant, defaultValues, marketplaceOverRides });
-    let convertValues = {
-        variantSku: variant?.sku,
-        variantUpc: variant?.upc,
-        variantGtin: variant?.gtin,
-        variantPrice: variant?.price,
-        variantColor: product.colors?.find(c => c._id.toString() === variant.color?.toString())?.Name ?? variant.color?.Name ?? variant.color?.name,
-        variantSize: variant?.size?.Name ?? variant?.size?.name,
-        variantColorFamily: variant?.color?.family,
-        variantThreadColor: product.threadColors?.find(tc => tc._id.toString() === variant.threadColor?.toString())?.Name ?? variant.threadColor?.Name ?? variant.threadColor?.name,
-        variantWeight: variant?.weight,
-        productSku: product?.sku,
-        productTitle: product?.title,
-        productVendor: product?.brand,
-        productSeason: product?.season,
-        productSportUsedFor: product?.sportUsedFor,
-        productDescription: product?.description,
-        productGender: product?.gender,
-        productTags: product?.tags?.join(", "),
-        productDescriptionHtml: product?.descriptionHtml,
-        ...Object.fromEntries(
-            Object.entries(product?.fields ?? {})
-                .filter(([k]) => k.startsWith("bullet_"))
-                .map(([k, v]) => [`product_${k}`, v])
-        ),
-    }
-    console.log(convertValues.productSeason, convertValues.productSportUsedFor)
-    let fields = {};
-    let defaultFields = Object.keys(defaultValues).filter(key => key.includes("field"));
-    let marketplaceFields = Object.keys(marketplaceOverRides).filter(key => key.includes("field"));
-    for(let key of defaultFields){ 
-        if(key !== "field")
-        defaultFields.map(key => {
-            fields[key.split(".")[1]] = convertValues[defaultValues[key]] ?? defaultValues[key]
-        })
-        marketplaceFields.map(key => {
-            console.log(`${key.split(".")[1].split("_")[0]}: ${marketplaceOverRides[key]}`)
-            fields[key.split(".")[1]] = marketplaceOverRides[key]
-        })
-    }
+function getFields({ defaultValues, marketplaceOverRides }) {
+    const fields = {};
+    const dv = defaultValues ?? {};
+    const mo = marketplaceOverRides ?? {};
+    Object.keys(dv).filter(k => k.includes("field")).forEach(k => {
+        fields[k.split(".")[1].split("_")[0]] = dv[k];
+    });
+    Object.keys(mo).filter(k => k.includes("field")).forEach(k => {
+        fields[k.split(".")[1].split("_")[0]] = mo[k];
+    });
     return fields;
-};
+}
 
-const buildAcendaCatalogItems = (product, mp) => {
-    const overrides = product.blanks?.[0]?.marketPlaceOverrides?.[mp?.name] ?? {};
+function buildVariantRecord(product, variant) {
+    return {
+        Name: `${product.title} - ${variant.size?.Name ?? variant.size?.name ?? ""} ${variant.color?.Name ?? variant.color?.name ?? ""}`,
+        sku: variant.sku,
+        options: [],
+        group: "variant",
+        upc: variant.upc,
+        gtin: variant.gtin,
+        pricing_item: {
+            msrp: { amount: variant.price ?? variant.size?.retailPrice },
+            price: { amount: variant.price ?? variant.size?.retailPrice },
+        },
+        group_skus: [product.sku],
+        fields: getFields({
+            defaultValues: variant.defaultValues ?? {},
+            marketplaceOverRides: product.blanks?.[0]?.marketplaceOverRides ?? {},
+        }),
+        images: {
+            default: {
+                main: { url: variant.image?.replace("width=400", "width=2400") },
+                alternate: (variant.images ?? []).map(img => ({ url: img.src?.replace("width=400", "width=2400") })),
+            },
+        },
+        quantity: 1000,
+        id: variant.ids?.acenda,
+    };
+}
 
-    const productItem = {
+function buildProductRecord(product) {
+    const v = product.variantsArray?.[0] ?? {};
+    return {
+        Name: product.title ?? product.sku ?? "",
         sku: product.sku,
-        Name: product.title,
-        group: "product",
         options: ["size", "color"],
-        id: product.ids?.acenda,
+        group: "product",
         upc: "",
         gtin: "",
-    };
-
-    const variantItems = (product.variantsArray ?? []).map(variant => {
-        const colorName = product.colors?.find(c => c._id.toString() === variant.color?.toString())?.name
-            ?? variant.color?.name ?? "";
-        const sizeName = product.sizes?.find(s => s._id.toString() === variant.size?.toString())?.name ?? variant.size?.name ?? "";
-        const price = variant.price ?? variant.size?.retailPrice ?? 0;
-        return {
-            sku: variant.sku,
-            Name: `${product.title} - ${sizeName} ${colorName}`.trim(),
-            group: "variant",
-            options: [],
-            upc: variant.upc ?? "",
-            gtin: variant.gtin ?? "",
-            group_skus: [product.sku],
-            fields: getFields({ product, variant, defaultValues: variant.defaultValues ?? {}, marketplaceOverRides: overrides }),
-           
-            id: variant.ids?.acenda,
-            pricing_item: {
-                msrp: { amount: price },
-                price: { amount: price },
+        fields: getFields({
+            defaultValues: v.defaultValues ?? {},
+            marketplaceOverRides: product.blanks?.[0]?.marketplaceOverRides ?? {},
+        }),
+        images: {
+            default: {
+                main: { url: v.image },
+                alternate: (v.images ?? []).map(img => ({ url: img.src })),
             },
-        };
-    });
+        },
+        id: product.ids?.acenda,
+    };
+}
 
-    return [productItem, ...variantItems];
-};
+function buildAcendaCatalogItems(product) {
+    const productRecord = buildProductRecord(product);
+    const variantRecords = (product.variantsArray ?? []).map(v => buildVariantRecord(product, v));
+    return [productRecord, ...variantRecords];
+}
 
 async function syncProductToAcenda(creds, productId, connId) {
     let product = await Products.findOne({ _id: productId })
-        .populate("design colors productImages.blank productImages.color productImages.threadColor threadColors")
-        .populate({ path: "blanks", populate: "colors" });
+        .populate({ path: "blanks", populate: { path: "colors" } });
 
     if (!product) throw new Error(`Product not found: ${productId}`);
 
     const mp = connId ? await MarketPlaces.findOne({ connections: connId.toString() }).lean() : null;
 
-    const items = buildAcendaCatalogItems(product, mp);
-    const catalogResult = await createCatalogItemAcenda({ ...creds, items });
-    if (catalogResult.error) console.error("[Acenda] catalog/bulk error:", catalogResult.error);
+    const existing = await getSkuAcenda({ ...creds, sku: product.sku });
+    if (!existing || !existing[0]) {
+        const items = buildAcendaCatalogItems(product, mp);
+        console.log("[Acenda] createCatalogItem payload:", JSON.stringify(items.slice(0, 2), null, 2));
+        const result = await createCatalogItemAcenda({ ...creds, items });
+        if (result.error) console.error("[Acenda] catalog create error:", result.error);
+    }
 
     let acendaProductSku;
     for (const variant of product.variantsArray) {
@@ -137,8 +127,7 @@ async function syncProductToAcenda(creds, productId, connId) {
     const inventory = product.variantsArray.map(v => ({ quantity: 1000, sku: v.sku, tracking: "basic", warehouse_id: 1 }));
     await addInventoryAcenda({ ...creds, inventory });
 
-    product.markModified("variantsArray");
-    product.markModified("ids");
+    product.markModified("variantsArray ids");
     return product.save();
 }
 
@@ -163,8 +152,7 @@ export async function handleAcendaPOST(req) {
         const product = await syncProductToAcenda(creds, body.product._id, connDoc?._id);
         return NextResponse.json({ error: false, product }, { status: 200 });
     } catch (e) {
-        console.error("[Acenda] syncProductToAcenda error:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e.message }, { status: 404 });
     }
 }
 

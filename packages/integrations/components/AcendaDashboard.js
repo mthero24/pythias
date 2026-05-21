@@ -13,6 +13,8 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import InventoryIcon from "@mui/icons-material/Inventory2";
 import CategoryIcon from "@mui/icons-material/Category";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import SyncIcon from "@mui/icons-material/Sync";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -189,6 +191,208 @@ function OrdersTab({ connectionId }) {
     );
 }
 
+// ─── Feed Status Tab ──────────────────────────────────────────────────────────
+const FEED_PAGE_SIZE = 50;
+
+function FeedStatusTab({ connection }) {
+    const connectionId = connection._id ?? connection.id;
+    const [data, setData]       = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError]     = useState("");
+    const [filter, setFilter]   = useState("all");
+    const [page, setPage]       = useState(0);
+    const [syncing, setSyncing] = useState(null);
+
+    const load = useCallback(async (pg = 0, f = filter) => {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await axios.get(
+                `/api/integrations/acenda/feed?connectionId=${connectionId}&page=${pg}&limit=${FEED_PAGE_SIZE}&filter=${f}`
+            );
+            setData(res.data);
+        } catch (e) {
+            setError(errMsg(e));
+        } finally {
+            setLoading(false);
+        }
+    }, [connectionId, filter]);
+
+    useEffect(() => { load(0, filter); }, [connectionId]); // eslint-disable-line
+
+    const applyFilter = (f) => { setFilter(f); setPage(0); load(0, f); };
+    const goToPage    = (pg) => { setPage(pg); load(pg, filter); };
+
+    const syncProduct = async (productId) => {
+        setSyncing(productId);
+        try {
+            await axios.post("/api/integrations/acenda", {
+                product:      { _id: productId },
+                connectionId: connectionId,
+            });
+            await load(page, filter);
+        } catch (e) {
+            setError(errMsg(e));
+        } finally {
+            setSyncing(null);
+        }
+    };
+
+    const rows         = data?.products ?? [];
+    const filteredTotal = data?.filteredTotal ?? 0;
+    const totalPages   = Math.ceil(filteredTotal / FEED_PAGE_SIZE);
+
+    return (
+        <Box>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">Feed Status</Typography>
+                <IconButton onClick={() => load(page, filter)} disabled={loading}><RefreshIcon /></IconButton>
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
+
+            {/* KPI cards */}
+            {data && (
+                <Grid2 container spacing={2} mb={3}>
+                    {[
+                        { label: "Total Products",    value: data.total,          color: "#1565C0", bg: "#dbeafe" },
+                        { label: "Synced",            value: data.synced,         color: "#065f46", bg: "#d1fae5" },
+                        { label: "Pending",           value: data.pending,        color: "#92400e", bg: "#fef3c7" },
+                        { label: "Variants Synced",   value: `${data.syncedVariants} / ${data.totalVariants}`, color: "#374151", bg: "#f3f4f6" },
+                    ].map(({ label, value, color, bg }) => (
+                        <Grid2 key={label} size={{ xs: 6, sm: 3 }}>
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, textAlign: "center", bgcolor: bg }}>
+                                <Typography variant="h5" fontWeight={700} sx={{ color }}>{value}</Typography>
+                                <Typography variant="caption" color="text.secondary">{label}</Typography>
+                            </Paper>
+                        </Grid2>
+                    ))}
+                </Grid2>
+            )}
+
+            {/* Filter toggle */}
+            <Stack direction="row" spacing={1} mb={2}>
+                {["all", "synced", "pending"].map(f => (
+                    <Chip
+                        key={f}
+                        label={f.charAt(0).toUpperCase() + f.slice(1)}
+                        onClick={() => applyFilter(f)}
+                        variant={filter === f ? "filled" : "outlined"}
+                        sx={filter === f ? { bgcolor: "#1565C0", color: "#fff", fontWeight: 700 } : {}}
+                    />
+                ))}
+            </Stack>
+
+            {loading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress /></Box>
+            ) : (
+                <Box>
+                <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Product</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Variants</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Acenda ID</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Last Updated</TableCell>
+                                <TableCell />
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {rows.map(p => (
+                                <TableRow key={p._id} hover>
+                                    <TableCell>
+                                        <Typography variant="body2" fontWeight={500}>{p.title}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" sx={{ fontFamily: "monospace" }}>{p.sku}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={p.synced ? "Synced" : "Pending"}
+                                            size="small"
+                                            icon={p.synced
+                                                ? <CheckCircleOutlineIcon sx={{ fontSize: 13 }} />
+                                                : <CloudUploadIcon sx={{ fontSize: 13 }} />}
+                                            sx={{
+                                                bgcolor: p.synced ? "#d1fae5" : "#fef3c7",
+                                                color:   p.synced ? "#065f46" : "#92400e",
+                                                fontWeight: 600, fontSize: "0.7rem",
+                                                "& .MuiChip-icon": { color: "inherit" },
+                                            }}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2">
+                                            {p.syncedVariants} / {p.totalVariants}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" sx={{ fontFamily: "monospace", color: "text.secondary" }}>
+                                            {p.acendaId ?? "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {p.lastUpdated ? new Date(p.lastUpdated).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button
+                                            size="small" variant="outlined"
+                                            disabled={syncing === p._id}
+                                            startIcon={syncing === p._id
+                                                ? <CircularProgress size={11} />
+                                                : <SyncIcon sx={{ fontSize: 14 }} />}
+                                            onClick={() => syncProduct(p._id)}
+                                            sx={{ borderColor: "#1565C0", color: "#1565C0", whiteSpace: "nowrap" }}
+                                        >
+                                            {p.synced ? "Re-sync" : "Sync"}
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            {rows.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={7} align="center">
+                                        <Typography variant="body2" color="text.secondary" py={3}>No products found</Typography>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                {/* Pagination controls */}
+                {filteredTotal > FEED_PAGE_SIZE && (
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" mt={2}>
+                        <Typography variant="caption" color="text.secondary">
+                            {page * FEED_PAGE_SIZE + 1}-{Math.min((page + 1) * FEED_PAGE_SIZE, filteredTotal)} of {filteredTotal}
+                        </Typography>
+                        <Stack direction="row" spacing={1}>
+                            <Button size="small" variant="outlined" disabled={page === 0 || loading}
+                                onClick={() => goToPage(page - 1)}
+                                sx={{ borderRadius: 1.5, minWidth: 72 }}>
+                                Previous
+                            </Button>
+                            <Typography variant="body2" sx={{ px: 1, lineHeight: "30px", color: "text.secondary" }}>
+                                {page + 1} / {totalPages}
+                            </Typography>
+                            <Button size="small" variant="outlined" disabled={page >= totalPages - 1 || loading}
+                                onClick={() => goToPage(page + 1)}
+                                sx={{ borderRadius: 1.5, minWidth: 72 }}>
+                                Next
+                            </Button>
+                        </Stack>
+                    </Stack>
+                )}
+                </Box>
+            )}
+        </Box>
+    );
+}
+
 // ─── Dashboard data hook ──────────────────────────────────────────────────────
 function useDashboard(connectionId) {
     const [data, setData]     = useState(null);
@@ -291,57 +495,162 @@ function WarehousesTab({ warehouses, loading, error }) {
 }
 
 // ─── Catalog Tab ─────────────────────────────────────────────────────────────
-function CatalogTab({ catalog, loading, error }) {
-    if (loading) return <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress /></Box>;
-    if (error) return <Alert severity="error">{error}</Alert>;
+const CATALOG_PAGE_SIZE = 50;
+
+function CatalogTab({ connectionId }) {
+    const [items, setItems]       = useState([]);
+    const [total, setTotal]       = useState(0);
+    const [page, setPage]         = useState(0);
+    const [search, setSearch]     = useState("");
+    const [input, setInput]       = useState("");
+    const [loading, setLoading]   = useState(false);
+    const [error, setError]       = useState("");
+
+    const load = useCallback(async (pg = 0, q = search) => {
+        setLoading(true);
+        setError("");
+        try {
+            const params = new URLSearchParams({
+                connectionId,
+                page:  pg,
+                limit: CATALOG_PAGE_SIZE,
+                ...(q ? { search: q } : {}),
+            });
+            const res = await axios.get(`/api/integrations/acenda/catalog?${params}`);
+            const fetched = res.data.items ?? [];
+            setItems(fetched);
+            // Use API total if provided; otherwise infer from page size
+            setTotal(res.data.total > 0 ? res.data.total : fetched.length === CATALOG_PAGE_SIZE ? (pg + 2) * CATALOG_PAGE_SIZE : (pg * CATALOG_PAGE_SIZE) + fetched.length);
+        } catch (e) {
+            setError(errMsg(e));
+        } finally {
+            setLoading(false);
+        }
+    }, [connectionId, search]);
+
+    useEffect(() => { load(0, ""); }, [connectionId]); // eslint-disable-line
+
+    const doSearch = () => { setSearch(input); setPage(0); load(0, input); };
+    const clearSearch = () => { setInput(""); setSearch(""); setPage(0); load(0, ""); };
+    const goToPage = (pg) => { setPage(pg); load(pg, search); };
+
+    const hasMore    = items.length === CATALOG_PAGE_SIZE;
+    const totalPages = total > 0 ? Math.ceil(total / CATALOG_PAGE_SIZE) : page + (hasMore ? 2 : 1);
 
     return (
         <Box>
-            <Typography variant="h6" mb={2}>Catalog ({catalog.length} items)</Typography>
-            <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                    <TableHead>
-                        <TableRow sx={{ bgcolor: "#f8fafc" }}>
-                            <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Variants</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {catalog.map((item, i) => (
-                            <TableRow key={item.id ?? i} hover>
-                                <TableCell>
-                                    <Typography variant="caption" sx={{ fontFamily: "monospace" }}>
-                                        {item.sku ?? item.id}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2">{item.name ?? item.title ?? "—"}</Typography>
-                                </TableCell>
-                                <TableCell>
-                                    {item.status && (
-                                        <Chip label={item.status} size="small"
-                                            sx={{ bgcolor: "#f3f4f6", color: "#374151", fontWeight: 600, fontSize: "0.7rem" }} />
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2">
-                                        {item.group_skus?.length ?? item.variants?.length ?? "—"}
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                        {!loading && catalog.length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={4} align="center">
-                                    <Typography variant="body2" color="text.secondary" py={3}>No catalog items found</Typography>
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                    Catalog{total > 0 ? ` (${total.toLocaleString()} items)` : ""}
+                </Typography>
+                <IconButton onClick={() => load(page, search)} disabled={loading}><RefreshIcon /></IconButton>
+            </Stack>
+
+            {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
+
+            {/* Search */}
+            <Stack direction="row" spacing={1} mb={2}>
+                <TextField
+                    size="small"
+                    placeholder="Search by name or SKU..."
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && doSearch()}
+                    sx={{ flexGrow: 1, maxWidth: 400 }}
+                />
+                <Button variant="contained" size="small" onClick={doSearch} disabled={loading}
+                    sx={{ bgcolor: "#1565C0", "&:hover": { bgcolor: "#0d47a1" } }}>
+                    Search
+                </Button>
+                {search && (
+                    <Button size="small" variant="outlined" onClick={clearSearch}>Clear</Button>
+                )}
+            </Stack>
+
+            {loading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress /></Box>
+            ) : (
+                <Box>
+                    <TableContainer component={Paper} variant="outlined">
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                    <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Group</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Variants</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {items.map((item, i) => (
+                                    <TableRow key={item.id ?? i} hover>
+                                        <TableCell>
+                                            <Typography variant="caption" sx={{ fontFamily: "monospace" }}>
+                                                {item.sku ?? item.id}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">{item.name ?? item.title ?? "—"}</Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            {item.group && (
+                                                <Chip label={item.group} size="small"
+                                                    sx={{ bgcolor: item.group === "product" ? "#dbeafe" : "#f3f4f6",
+                                                          color:   item.group === "product" ? "#1e40af" : "#374151",
+                                                          fontWeight: 600, fontSize: "0.7rem" }} />
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {item.status && (
+                                                <Chip label={item.status} size="small"
+                                                    sx={{ bgcolor: "#f3f4f6", color: "#374151", fontWeight: 600, fontSize: "0.7rem" }} />
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">
+                                                {item.group_skus?.length ?? item.variants?.length ?? "—"}
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {items.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={5} align="center">
+                                            <Typography variant="body2" color="text.secondary" py={3}>
+                                                {search ? `No results for "${search}"` : "No catalog items found"}
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    {(page > 0 || hasMore) && (
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" mt={2}>
+                            <Typography variant="caption" color="text.secondary">
+                                {total > 0
+                                    ? `${page * CATALOG_PAGE_SIZE + 1}-${Math.min((page + 1) * CATALOG_PAGE_SIZE, total)} of ${total.toLocaleString()}`
+                                    : `Page ${page + 1}`}
+                            </Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Button size="small" variant="outlined" disabled={page === 0}
+                                    onClick={() => goToPage(page - 1)} sx={{ borderRadius: 1.5, minWidth: 72 }}>
+                                    Previous
+                                </Button>
+                                <Typography variant="body2" sx={{ px: 1, lineHeight: "30px", color: "text.secondary" }}>
+                                    {page + 1}{totalPages > 1 ? ` / ${totalPages}` : ""}
+                                </Typography>
+                                <Button size="small" variant="outlined" disabled={!hasMore}
+                                    onClick={() => goToPage(page + 1)} sx={{ borderRadius: 1.5, minWidth: 72 }}>
+                                    Next
+                                </Button>
+                            </Stack>
+                        </Stack>
+                    )}
+                </Box>
+            )}
         </Box>
     );
 }
@@ -443,13 +752,6 @@ export function AcendaDashboard({ connection }) {
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 3 }}>
                         <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, textAlign: "center" }}>
-                            <CategoryIcon sx={{ color: "#1565C0", mb: 0.5 }} />
-                            <Typography variant="h5" fontWeight={700}>{data.catalog.length}</Typography>
-                            <Typography variant="caption" color="text.secondary">Catalog Items</Typography>
-                        </Paper>
-                    </Grid2>
-                    <Grid2 size={{ xs: 6, sm: 3 }}>
-                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, textAlign: "center" }}>
                             <InventoryIcon sx={{ color: "#1565C0", mb: 0.5 }} />
                             <Typography variant="h5" fontWeight={700}>{data.inventoryTotal}</Typography>
                             <Typography variant="caption" color="text.secondary">Inventory SKUs</Typography>
@@ -464,6 +766,7 @@ export function AcendaDashboard({ connection }) {
                     onChange={(_, v) => setTab(v)}
                     sx={{ borderBottom: 1, borderColor: "divider", px: 2 }}
                 >
+                    <Tab label="Feed Status" />
                     <Tab label="Orders" />
                     <Tab label="Sales Channels" />
                     <Tab label="Warehouses" />
@@ -473,18 +776,21 @@ export function AcendaDashboard({ connection }) {
 
                 <Box sx={{ px: 3 }}>
                     <TabPanel value={tab} index={0}>
-                        <OrdersTab connectionId={connectionId} />
+                        <FeedStatusTab connection={connection} />
                     </TabPanel>
                     <TabPanel value={tab} index={1}>
-                        <ChannelsTab channels={data?.channels ?? []} loading={loading} error={error} />
+                        <OrdersTab connectionId={connectionId} />
                     </TabPanel>
                     <TabPanel value={tab} index={2}>
-                        <WarehousesTab warehouses={data?.warehouses ?? []} loading={loading} error={error} />
+                        <ChannelsTab channels={data?.channels ?? []} loading={loading} error={error} />
                     </TabPanel>
                     <TabPanel value={tab} index={3}>
-                        <CatalogTab catalog={data?.catalog ?? []} loading={loading} error={error} />
+                        <WarehousesTab warehouses={data?.warehouses ?? []} loading={loading} error={error} />
                     </TabPanel>
                     <TabPanel value={tab} index={4}>
+                        <CatalogTab connectionId={connectionId} />
+                    </TabPanel>
+                    <TabPanel value={tab} index={5}>
                         <InventoryTab
                             inventory={data?.inventory ?? []}
                             inventoryTotal={data?.inventoryTotal ?? 0}

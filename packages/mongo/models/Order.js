@@ -9,6 +9,9 @@ const schema = new mongoose.Schema({
   },
   bulk: { type: Boolean, default: false },
   total: Number,
+  productCost: Number,
+  shippingCost: Number,
+  discountAmount: { type: Number, default: 0 },
   status: {
     type: String,
     required: true,

@@ -7,7 +7,7 @@ export {getOrders as getOrderKohls} from "./functions/kohls"
 export { NextGTIN, CreateUpdateUPC, createTempUpcs, updateTempUpc } from "./functions/gs1";
 
 //acenda
-export {getTokenAcenda, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda, getShipAdviceAcenda, acknowledgeShipAdviceAcenda, fulfillShipAdviceAcenda, getSalesChannelsAcenda, getInventoryDetailAcenda} from "./functions/acenda"
+export {getTokenAcenda, getWarehouseAcenda, getCatalogAcenda, getSkuAcenda, addInventoryAcenda, createCatalogItemAcenda, getShipAdviceAcenda, acknowledgeShipAdviceAcenda, fulfillShipAdviceAcenda, getSalesChannelsAcenda, getInventoryDetailAcenda} from "./functions/acenda"
 export {createTargetCsv} from "./functions/csvfunctions/acenda";
 //walmart
 export {
@@ -69,7 +69,7 @@ export {
 } from "./functions/faire";
 
 // handlers — thin route wrappers call these; shared across all apps
-export { handleAcendaPOST, handleAcendaGET, handleAcendaOrdersGET, handleAcendaOrdersPOST, handleAcendaDashboardGET } from "./handlers/acenda";
+export { handleAcendaPOST, handleAcendaPUT, handleAcendaGET, handleAcendaOrdersGET, handleAcendaOrdersPOST, handleAcendaDashboardGET, handleAcendaFeedStatusGET, handleAcendaCatalogGET } from "./handlers/acenda";
 export { handleEtsyGET, handleEtsyPOST, handleEtsyPUT, handleEtsyOrdersGET, handleEtsyOrdersPOST, handleAdminEtsyGET, handleAdminEtsyPOST, handleAdminEtsyPUT, makeEtsyOAuthRedirectGET } from "./handlers/etsy";
 export {
     handleFaireSendPOST,
@@ -107,6 +107,10 @@ export {
     handleShopifyAdminProductsGET,
     handleShopifyOrdersGET,
 } from "./handlers/shopifySales";
+
+// ebay
+export { generateEbayAuthUrl, exchangeCodeEbay, refreshEbayToken, getOrdersEbay, shipOrderEbay, createInventoryItemEbay, createOfferEbay, getAccountPoliciesEbay } from "./functions/ebay";
+export { handleEbayGET, handleEbaySendPOST, handleEbayPoliciesGET, handleEbayOrdersGET, handleEbayOrdersPOST, makeEbayOAuthRedirectGET, handleEbayOAuthInitGET } from "./handlers/ebay";
 
 // mirakl
 export { getOrdersMirakl, getOrderMirakl, acceptOrderMirakl, shipOrderMirakl, cancelOrderMirakl, getOffersMirakl } from "./functions/mirakl";

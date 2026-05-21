@@ -43,6 +43,7 @@ const PLATFORMS = {
     temu:    { label: "Temu",         color: "#ff6500", description: "List products on Temu's global marketplace via the Partner Open Platform API." },
     mirakl:  { label: "Mirakl",      color: "#1d4ed8", description: "Sell on any Mirakl-powered marketplace (Carrefour, Best Buy Canada, and others) with order sync and fulfillment." },
     target:  { label: "Target Plus", color: "#CC0000", description: "Sell on Target Plus marketplace with order sync, fulfillment confirmation, and direct SP-API integration." },
+    ebay:    { label: "eBay",        color: "#E53238", description: "List products on eBay and automatically pull orders and confirm shipments via the eBay Sell API." },
 };
 
 function platformColor(type) {
@@ -1721,11 +1722,12 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const hasTikTok = tiktokConnections.length > 0;
 
     const manageHref = (api) => {
-        if (api.type === "walmart") return `/admin/integrations/walmart?connectionId=${api._id}`;
-        if (api.type === "faire")   return `/admin/integrations/faire?connectionId=${api._id}`;
-        if (api.type === "acenda")  return `/admin/integrations/acenda?connectionId=${api._id}`;
-        if (api.type === "shopify" || api.displayName?.startsWith("shopify-")) return `/admin/integrations/shopify?connectionId=${api._id}`;
-        if (api.type === "mirakl")  return `/admin/integrations/mirakl?connectionId=${api._id}`;
+        const t = api.type?.toLowerCase();
+        if (t === "walmart") return `/admin/integrations/walmart?connectionId=${api._id}`;
+        if (t === "faire")   return `/admin/integrations/faire?connectionId=${api._id}`;
+        if (t === "acenda" || (!t && !!api.organization)) return `/admin/integrations/acenda?connectionId=${api._id}`;
+        if (t === "shopify" || api.displayName?.startsWith("shopify-")) return `/admin/integrations/shopify?connectionId=${api._id}`;
+        if (t === "mirakl")  return `/admin/integrations/mirakl?connectionId=${api._id}`;
         return null;
     };
 
@@ -1847,7 +1849,16 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             name="Target Plus"
                             description={PLATFORMS.target.description}
                             connected={connectedTypes.has("target")}
-                            onClick={connectedTypes.has("target") ? undefined : () => setTargetOpen(true)}
+                            comingSoon={!connectedTypes.has("target")}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/ebay.svg" alt="eBay"
+                            name="eBay"
+                            description={PLATFORMS.ebay.description}
+                            connected={connectedTypes.has("ebay")}
+                            comingSoon={!connectedTypes.has("ebay")}
                         />
                     </Grid2>
                 </Grid2>

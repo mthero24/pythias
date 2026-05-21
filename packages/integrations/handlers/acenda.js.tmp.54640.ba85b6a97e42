@@ -7,88 +7,110 @@ import {
     getWarehouseAcenda,
 } from "../functions/acenda.js";
 
-const getFields = ({product,variant, defaultValues, marketplaceOverRides }) => {
-    //console.log("getFields called with:", { product, variant, defaultValues, marketplaceOverRides });
-    let convertValues = {
-        variantSku: variant?.sku,
-        variantUpc: variant?.upc,
-        variantGtin: variant?.gtin,
-        variantPrice: variant?.price,
-        variantColor: product.colors?.find(c => c._id.toString() === variant.color?.toString())?.Name ?? variant.color?.Name ?? variant.color?.name,
-        variantSize: variant?.size?.Name ?? variant?.size?.name,
-        variantColorFamily: variant?.color?.family,
-        variantThreadColor: product.threadColors?.find(tc => tc._id.toString() === variant.threadColor?.toString())?.Name ?? variant.threadColor?.Name ?? variant.threadColor?.name,
-        variantWeight: variant?.weight,
-        productSku: product?.sku,
-        productTitle: product?.title,
-        productVendor: product?.brand,
-        productSeason: product?.season,
-        productSportUsedFor: product?.sportUsedFor,
-        productDescription: product?.description,
-        productGender: product?.gender,
-        productTags: product?.tags?.join(", "),
-        productDescriptionHtml: product?.descriptionHtml,
-        ...Object.fromEntries(
-            Object.entries(product?.fields ?? {})
-                .filter(([k]) => k.startsWith("bullet_"))
-                .map(([k, v]) => [`product_${k}`, v])
-        ),
+function resolveValue(fnKey, product, variant, mp) {
+    if (!fnKey) return "";
+    switch (fnKey) {
+        case "productSku":             return product.sku ?? "";
+        case "productTitle":           return product.title ?? product.sku ?? "";
+        case "productDescription":     return product.description ?? "";
+        case "productDescriptionHtml": return product.description ? `<p>${product.description}</p>` : "";
+        case "productVendor":          return product.brand ?? "";
+        case "productGender":          return product.gender ?? "";
+        case "productSeason":          return product.season ?? "";
+        case "productTheme":           return product.theme ?? "";
+        case "productTags":            return product.tags?.join(", ") ?? "";
+        case "variantSku":             return variant?.sku ?? "";
+        case "variantColor":           return variant?.color?.name ?? "";
+        case "variantSize":            return variant?.size ? (mp?.sizeConverter?.[variant.size.name] ?? variant.size.name) : "";
+        case "variantPrice":           return variant?.size?.retailPrice?.toFixed(2) ?? "";
+        case "variantWeight":          return variant?.size?.weight?.toFixed(2) ?? "";
+        case "variantUpc":             return variant?.upc ?? "";
+        case "variantGtin":            return variant?.gtin ?? "";
+        case "variantThreadColor":     return variant?.threadColor?.name ?? "";
+        default:                       return fnKey;
     }
-    console.log(convertValues.productSeason, convertValues.productSportUsedFor)
-    let fields = {};
-    let defaultFields = Object.keys(defaultValues).filter(key => key.includes("field"));
-    let marketplaceFields = Object.keys(marketplaceOverRides).filter(key => key.includes("field"));
-    for(let key of defaultFields){ 
-        if(key !== "field")
-        defaultFields.map(key => {
-            fields[key.split(".")[1]] = convertValues[defaultValues[key]] ?? defaultValues[key]
-        })
-        marketplaceFields.map(key => {
-            console.log(`${key.split(".")[1].split("_")[0]}: ${marketplaceOverRides[key]}`)
-            fields[key.split(".")[1]] = marketplaceOverRides[key]
-        })
+}
+
+function expandDotKeys(flat) {
+    const result = {};
+    for (const [key, value] of Object.entries(flat)) {
+        const parts = key.split(".");
+        let node = result;
+        for (let i = 0; i < parts.length - 1; i++) {
+            const part = parts[i];
+            const nextIsIndex = /^\d+$/.test(parts[i + 1]);
+            if (!(part in node)) node[part] = nextIsIndex ? [] : {};
+            node = node[part];
+        }
+        const last = parts[parts.length - 1];
+        if (/^\d+$/.test(last)) {
+            node[parseInt(last)] = value;
+        } else {
+            node[last] = value;
+        }
     }
-    return fields;
-};
+    return result;
+}
 
-const buildAcendaCatalogItems = (product, mp) => {
-    const overrides = product.blanks?.[0]?.marketPlaceOverrides?.[mp?.name] ?? {};
+const SKIP_LABELS = new Set(["id", "listing_action", "product_sku", "subscription_id", "warehouse_id", "quantity", "sport_used_for", "theme"]);
+const SKIP_FNKEYS = new Set(["productSportUsedFor", "productTheme"]);
 
-    const productItem = {
-        sku: product.sku,
-        Name: product.title,
-        group: "product",
+function buildFieldsFromDefaults(defaultValues, product, variant, mp) {
+    const rawFields = {};
+    const imageUrls = {};
+
+    for (const [rawLabel, fnKey] of Object.entries(defaultValues ?? {})) {
+        const label = rawLabel.trim();
+        if (!fnKey || SKIP_LABELS.has(label) || SKIP_FNKEYS.has(fnKey)) continue;
+
+        if (/image/i.test(fnKey)) {
+            const parts = fnKey.split(",");
+            const idx = parts[1] !== undefined ? parseInt(parts[1]) : 0;
+            const url = variant?.images?.[idx];
+            if (url) imageUrls[idx] = url;
+            continue;
+        }
+
+        const value = resolveValue(fnKey, product, variant, mp);
+        if (value !== "" && value !== "N/A") rawFields[label] = value;
+    }
+
+    const expanded = expandDotKeys(rawFields);
+
+    if (Object.keys(imageUrls).length) {
+        const sorted = Object.keys(imageUrls).sort((a, b) => a - b);
+        expanded.images = {
+            default: sorted.map(i => ({ alternate: { url: imageUrls[i] } })),
+        };
+    }
+
+    return expanded;
+}
+
+function buildAcendaCatalogItems(product, mp) {
+    const productFields = buildFieldsFromDefaults(mp?.productDefaultValues, product, null, mp);
+    const productRecord = {
+        Name:    product.title ?? product.sku,
+        sku:     product.sku,
+        group:   "product",
         options: ["size", "color"],
-        id: product.ids?.acenda,
-        upc: "",
-        gtin: "",
+        ...productFields,
     };
 
-    const variantItems = (product.variantsArray ?? []).map(variant => {
-        const colorName = product.colors?.find(c => c._id.toString() === variant.color?.toString())?.name
-            ?? variant.color?.name ?? "";
-        const sizeName = product.sizes?.find(s => s._id.toString() === variant.size?.toString())?.name ?? variant.size?.name ?? "";
-        const price = variant.price ?? variant.size?.retailPrice ?? 0;
-        return {
-            sku: variant.sku,
-            Name: `${product.title} - ${sizeName} ${colorName}`.trim(),
-            group: "variant",
-            options: [],
-            upc: variant.upc ?? "",
-            gtin: variant.gtin ?? "",
+    const variantRecords = (product.variantsArray ?? []).map(v => {
+        const variantFields = buildFieldsFromDefaults(mp?.defaultValues, product, v, mp);
+        const record = {
+            sku:        v.sku,
+            group:      "variant",
             group_skus: [product.sku],
-            fields: getFields({ product, variant, defaultValues: variant.defaultValues ?? {}, marketplaceOverRides: overrides }),
-           
-            id: variant.ids?.acenda,
-            pricing_item: {
-                msrp: { amount: price },
-                price: { amount: price },
-            },
+            ...variantFields,
         };
+        if (v.upc) record.upc = v.upc;
+        return record;
     });
 
-    return [productItem, ...variantItems];
-};
+    return [productRecord, ...variantRecords];
+}
 
 async function syncProductToAcenda(creds, productId, connId) {
     let product = await Products.findOne({ _id: productId })
@@ -99,9 +121,13 @@ async function syncProductToAcenda(creds, productId, connId) {
 
     const mp = connId ? await MarketPlaces.findOne({ connections: connId.toString() }).lean() : null;
 
-    const items = buildAcendaCatalogItems(product, mp);
-    const catalogResult = await createCatalogItemAcenda({ ...creds, items });
-    if (catalogResult.error) console.error("[Acenda] catalog/bulk error:", catalogResult.error);
+    const existing = await getSkuAcenda({ ...creds, sku: product.sku });
+    if (!existing || !existing[0]) {
+        const items = buildAcendaCatalogItems(product, mp);
+        console.log("[Acenda] createCatalogItem payload:", JSON.stringify([items[0], items[1]], null, 2));
+        const result = await createCatalogItemAcenda({ ...creds, items });
+        if (result.error) console.error("[Acenda] catalog create error:", result.error);
+    }
 
     let acendaProductSku;
     for (const variant of product.variantsArray) {
@@ -137,8 +163,7 @@ async function syncProductToAcenda(creds, productId, connId) {
     const inventory = product.variantsArray.map(v => ({ quantity: 1000, sku: v.sku, tracking: "basic", warehouse_id: 1 }));
     await addInventoryAcenda({ ...creds, inventory });
 
-    product.markModified("variantsArray");
-    product.markModified("ids");
+    product.markModified("variantsArray ids");
     return product.save();
 }
 
@@ -163,8 +188,7 @@ export async function handleAcendaPOST(req) {
         const product = await syncProductToAcenda(creds, body.product._id, connDoc?._id);
         return NextResponse.json({ error: false, product }, { status: 200 });
     } catch (e) {
-        console.error("[Acenda] syncProductToAcenda error:", e);
-        return NextResponse.json({ error: e.message }, { status: 500 });
+        return NextResponse.json({ error: e.message }, { status: 404 });
     }
 }
 

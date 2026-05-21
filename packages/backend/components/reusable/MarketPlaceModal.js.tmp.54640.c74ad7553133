@@ -207,12 +207,8 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                // console.log(c, "c", m.connections)
                                 if (c.displayName.toLowerCase().includes("acenda") && m.connections && (m.connections.includes(c._id.toString()) || m.connections.filter(co=> co._id?.toString() == c._id?.toString())[0])) {
                                     //console.log("here")
-                                    try {
-                                        let res = await axios.post("/api/integrations/acenda", { connection: c, product });
-                                        prod = res.data.product;
-                                    } catch (e) {
-                                        console.error("Acenda sync error:", e);
-                                    }
+                                    let res = await axios.post("/api/integrations/acenda", { connection: c, product });
+                                    prod = res.data.product;
                                 }
                             }
                         }

@@ -14,7 +14,8 @@ const ITEM_PROJECT = {
 };
 
 const ORDER_PROJECT = {
-    poNumber: 1, orderId: 1, marketplace: 1, items: 1, status: 1, date: 1, total: 1, shippingAddress: 1,
+    poNumber: 1, orderId: 1, marketplace: 1, items: 1, status: 1, date: 1,
+    total: 1, productCost: 1, shippingCost: 1, discountAmount: 1, shippingAddress: 1,
 };
 
 function pickHint(statusFilter) {

@@ -67,7 +67,7 @@ export const getCatalogAcenda = async ({ clientId, clientSecret, organization, l
     const res = await axios.get("https://api.acenda.io/v1/catalog", { params, headers })
         .catch(e => { errorRes = e.response?.data; console.log(e.response); });
     if (errorRes) return { items: [], numResults: 0, error: errorRes };
-const items = res?.data?.result ?? res?.data?.results ?? [];
+    const items = res?.data?.result ?? res?.data?.results ?? [];
     // Acenda returns num_results (items in this page) but no grand total across all pages.
     // Callers must use items.length === limit to detect whether more pages exist.
     return { items, numResults: res?.data?.num_results ?? items.length };
@@ -147,20 +147,15 @@ export const getInventoryDetailAcenda = async ({ clientId, clientSecret, organiz
     return { inventory: res?.data?.results ?? [], total: res?.data?.total ?? 0 };
 };
 
+// Create or update catalog items (product group + variant records) in bulk.
+// `items` is an array matching the Acenda catalog schema.
 export const createCatalogItemAcenda = async ({ clientId, clientSecret, organization, items }) => {
     const token = await getTokenAcenda({ clientId, clientSecret });
     if (!token) return { error: "Auth failed" };
-    if (!items?.length) return { results: [] };
-    const config = {
-        headers: {
-            "X-Astur-Organization": organization,
-            AUTHORIZATION: `Bearer ${token}`,
-        }
-    };
-    console.log("[Acenda] catalog/bulk payload:", JSON.stringify(items, null, 2));
+    const headers = { "X-Astur-Organization": organization, AUTHORIZATION: `Bearer ${token}` };
     let errorRes;
-    const res = await axios.post("https://api.acenda.io/v1/catalog/bulk", items, config)
-        .catch(e => { errorRes = e.response?.data ?? e.message; });
-    if (errorRes) { console.error("[Acenda] catalog/bulk error:", errorRes); return { error: errorRes }; }
+    const res = await axios.post("https://api.acenda.io/v1/catalog/bulk", items, { headers })
+        .catch(e => { errorRes = e.response?.data ?? e.message; console.error("[Acenda] createCatalog error:", errorRes); });
+    if (errorRes) return { error: errorRes };
     return { results: res?.data?.results ?? res?.data?.result ?? [] };
 };

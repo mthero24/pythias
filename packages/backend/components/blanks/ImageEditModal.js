@@ -22,6 +22,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PanToolIcon from "@mui/icons-material/PanTool";
 import ZoomInMapIcon from "@mui/icons-material/ZoomInMap";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 
 const CANVAS = 400;
 
@@ -43,6 +44,44 @@ const SUBLIMATION_FEATURES = [
 
 const emptyFeatures = () => Object.fromEntries(SUBLIMATION_FEATURES.map(k => [k, { layers: [] }]));
 const EMPTY_BOX = { x: 10, y: 10, width: 300, height: 300, rotation: 0 };
+
+// Back-calculate the front box from any derived box by inverting the deriveFromFront formulas.
+const frontFromDerived = (side, box) => {
+    const rot = box.rotation ?? 0;
+    let fw, fh, fx, fy;
+    switch (side) {
+        case "center":     fw = box.width / 0.90; fh = box.height / 0.35; fx = box.x - fw * 0.05; fy = box.y; break;
+        case "centermini": fw = box.width / 0.35; fh = box.height / 0.35; fx = box.x - fw * 0.325; fy = box.y; break;
+        case "pocket":     fw = box.width / 0.35; fh = box.height / 0.35; fx = box.x - fw * 0.65; fy = box.y; break;
+        case "embfull":    fw = box.width / 0.50; fh = box.height / 0.50; fx = box.x - fw * 0.25; fy = box.y; break;
+        case "centerfull": fw = box.width;        fh = box.height / 0.35; fx = box.x;             fy = box.y; break;
+        default: return null;
+    }
+    return { x: Math.round(fx), y: Math.round(fy), width: Math.round(fw), height: Math.round(fh), rotation: rot };
+};
+
+// Derive center/centerMini/pocket directly from the front box dimensions.
+const deriveFromFront = (side, front) => {
+    const { x: fx, y: fy, width: fw, height: fh, rotation: rot = 0 } = front;
+    switch (side) {
+        case "center":
+            return { x: Math.round(fx + fw * 0.05), y: fy, width: Math.round(fw * 0.90), height: Math.round(fh * 0.35), rotation: rot };
+        case "centermini":
+            // Same height as center, 35% of front width, centered horizontally
+            return { x: Math.round(fx + fw * 0.325), y: fy, width: Math.round(fw * 0.35), height: Math.round(fh * 0.35), rotation: rot };
+        case "pocket":
+            // Right side, 35% of front width and height
+            return { x: Math.round(fx + fw * 0.65), y: fy, width: Math.round(fw * 0.35), height: Math.round(fh * 0.35), rotation: rot };
+        case "embfull":
+            // Centered, 50% of front width and height
+            return { x: Math.round(fx + fw * 0.25), y: fy, width: Math.round(fw * 0.50), height: Math.round(fh * 0.50), rotation: rot };
+        case "centerfull":
+            // Full front width, 35% of front height
+            return { x: fx, y: fy, width: fw, height: Math.round(fh * 0.35), rotation: rot };
+        default:
+            return null;
+    }
+};
 
 const degToRad = (a) => (a / 180) * Math.PI;
 const getCorner = (px, py, dx, dy, angle) => {
@@ -95,6 +134,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     // ── misc ──────────────────────────────────────────────────────────────────
     const [copyBoxesOpen, setCopyBoxesOpen] = useState(false);
     const [reloadUploader, setReloadUploader] = useState(false);
+    const [aiLoading, setAiLoading] = useState(false);
 
     // ── konva refs ────────────────────────────────────────────────────────────
     const stageRef       = useRef();
@@ -257,7 +297,24 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         const box = rect
             ? { x: Math.round(rect.x), y: Math.round(rect.y), width: Math.round(rect.width), height: Math.round(rect.height), rotation: Math.round(rect.rotation || 0) }
             : activeBox;
-        setImage(prev => ({ ...prev, boxes: { ...(prev.boxes || {}), [active]: box } }));
+        setImage(prev => {
+            const boxes = { ...(prev.boxes || {}), [active]: box };
+            const configured = new Set((printLocations || []).map(l => l.name));
+            const DERIVED = ["center", "centermini", "pocket", "embfull", "centerfull"];
+
+            // Re-derive all other dependent boxes from front (skip the one just saved)
+            const frontBox = active === "front" ? box : boxes.front;
+            if (frontBox) {
+                DERIVED.filter(side => side !== active).forEach(side => {
+                    if (configured.has(side)) {
+                        const d = deriveFromFront(side, frontBox);
+                        if (d) boxes[side] = d;
+                    }
+                });
+            }
+
+            return { ...prev, boxes };
+        });
         setRectangles([]);
         setStep("");
         setActive("");
@@ -270,6 +327,62 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
             return { ...prev, boxes };
         });
         setActive(""); setRectangles([]); setStep("");
+    };
+
+    const handleAiPredict = async () => {
+        if (!image.image || !active) return;
+
+        // center / centerMini / pocket are always derived from front — no API call needed
+        const front = image.boxes?.front;
+        if (front && ["center", "centermini", "pocket", "embfull", "centerfull"].includes(active)) {
+            const derived = deriveFromFront(active, front);
+            if (derived) {
+                setActiveBox(derived);
+                setRectangles([{
+                    ...derived, id: active, name: "rect",
+                    fill: "rgba(99,102,241,0.12)", stroke: "#6366f1",
+                    strokeWidth: 2, dash: [8, 4], draggable: true,
+                }]);
+                return;
+            }
+        }
+
+        setAiLoading(true);
+        try {
+            // Gather sibling images that already have this location's box set — send as few-shot examples
+            const examples = (blank.images || [])
+                .filter(img => img.image && img.image !== image.image && img.boxes?.[active])
+                .slice(0, 3)
+                .map(img => ({
+                    imageUrl: img.image,
+                    box: {
+                        x:        img.boxes[active].x        / CANVAS,
+                        y:        img.boxes[active].y        / CANVAS,
+                        width:    img.boxes[active].width    / CANVAS,
+                        height:   img.boxes[active].height   / CANVAS,
+                        rotation: img.boxes[active].rotation ?? 0,
+                    },
+                }));
+
+            const res = await fetch("/api/admin/blanks/predict-box", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ imageUrl: image.image, side: active, examples }),
+            });
+            const data = await res.json();
+            if (data.error) { console.error("[AI predict]", data.error); return; }
+            const predicted = { x: data.x, y: data.y, width: data.width, height: data.height, rotation: data.rotation ?? 0 };
+            setActiveBox(predicted);
+            setRectangles([{
+                ...predicted, id: active, name: "rect",
+                fill: "rgba(99,102,241,0.12)", stroke: "#6366f1",
+                strokeWidth: 2, dash: [8, 4], draggable: true,
+            }]);
+        } catch (e) {
+            console.error("[AI predict]", e);
+        } finally {
+            setAiLoading(false);
+        }
     };
 
     // ── crop ──────────────────────────────────────────────────────────────────
@@ -634,9 +747,26 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                     {/* Active location editor */}
                     {step === "location" && active && (
                         <Paper variant="outlined" sx={{ p: 2, borderColor: "primary.main", borderRadius: 2 }}>
-                            <Typography variant="subtitle2" fontWeight={700} color="primary.main" mb={1.5}>
-                                Editing: <em>{active}</em>
-                            </Typography>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                                <Typography variant="subtitle2" fontWeight={700} color="primary.main">
+                                    Editing: <em>{active}</em>
+                                </Typography>
+                                <Tooltip title="AI predict print area">
+                                    <span>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            color="secondary"
+                                            startIcon={aiLoading ? <CircularProgress size={14} color="inherit" /> : <AutoFixHighIcon fontSize="small" />}
+                                            onClick={handleAiPredict}
+                                            disabled={aiLoading || !image.image}
+                                            sx={{ minWidth: 0, fontSize: "0.72rem" }}
+                                        >
+                                            {aiLoading ? "Predicting…" : "AI Predict"}
+                                        </Button>
+                                    </span>
+                                </Tooltip>
+                            </Stack>
                             <Stack spacing={1.5}>
                                 <Stack direction="row" spacing={1}>
                                     <TextField

@@ -8,6 +8,5 @@ import { style } from "@mui/system";
 import { runTrackingAll, runTracking } from "@/functions/tracking";
 
 export default async function Test(){
-    //await runTracking()
     return <h1>test</h1>
 }
