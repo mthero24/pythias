@@ -34,9 +34,7 @@ const nextConfig = {
     };
     return config;
   },
-  experimental: {
-    serverComponentsExternalPackages: ["pdfkit"],
-  },
+  serverExternalPackages: ["sharp", "pdfkit"],
 };
 
 export default nextConfig;
