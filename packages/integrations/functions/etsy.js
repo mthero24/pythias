@@ -810,7 +810,7 @@ const updateListing = async (
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    const videoUrl = product.blanks?.[0]?.videos?.[0];
+    const videoUrl = product.video || product.blanks?.[0]?.videos?.[0];
     if (videoUrl) {
         try {
             await uploadListingVideo(credentials, listing_id, videoUrl);
