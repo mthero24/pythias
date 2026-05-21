@@ -1,6 +1,11 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import {PrintLocations} from "@pythias/mongo";
 
+export async function GET() {
+    const printLocations = await PrintLocations.find({}).lean();
+    return NextResponse.json({ printLocations });
+}
+
 export async function POST(req = NextApiRequest) {
     let data = await req.json();
     console.log(data)

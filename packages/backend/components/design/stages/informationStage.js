@@ -1,5 +1,6 @@
-import { Grid2, TextField, Button, Typography, Divider, Card, CardContent } from "@mui/material";
+import { Grid2, TextField, Button, Typography, Divider, Card, CardContent, Stack, CircularProgress } from "@mui/material";
 import CreatableSelect from "react-select/creatable";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
@@ -9,9 +10,25 @@ const selectMenuPortalProps = {
     styles: { menuPortal: (base) => ({ ...base, zIndex: 9999 }) },
 };
 
-export const InformationStage = ({products, setProducts, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes, licenses, showToast }) => {
-    console.log(sportUsedFor, "Themes in InformationStage");
+export const InformationStage = ({products, setProducts, product, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes, licenses, showToast }) => {
     const [markets, setMarkets] = useState([]);
+    const [aiDescLoading, setAiDescLoading] = useState({});
+
+    // One-time: merge AI-pre-filled product data (title, description, etc.) into the wizard's products array
+    useEffect(() => {
+        if (!product || !products.length) return;
+        const hasAiData = product.title || product.description || product.gender || (product.marketplaceValues && Object.keys(product.marketplaceValues).length > 0);
+        if (!hasAiData) return;
+        setProducts(prev => prev.map(p => ({
+            ...p,
+            title: p.title || product.title || "",
+            description: p.description || product.description || "",
+            gender: p.gender || product.gender || "",
+            category: p.category?.length ? p.category : (product.category ?? []),
+            marketplaceValues: Object.keys(p.marketplaceValues ?? {}).length ? p.marketplaceValues : (product.marketplaceValues ?? {}),
+        })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [products.length]);
     useEffect(() => {
        const fetchMarkets = async () => {
             let res = await axios.get("/api/marketplaces");
@@ -48,6 +65,34 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                                             p.description = e.target.value
                                             setProducts([...prods])
                                         }} />
+                                        <Button
+                                            size="small"
+                                            startIcon={aiDescLoading[product.id] ? <CircularProgress size={12} color="inherit" /> : <AutoAwesomeIcon />}
+                                            disabled={!!aiDescLoading[product.id]}
+                                            onClick={async () => {
+                                                setAiDescLoading(prev => ({ ...prev, [product.id]: true }));
+                                                try {
+                                                    const imageUrl = design.images?.front ?? Object.values(design.images ?? {}).find(v => typeof v === "string" && v.startsWith("http"));
+                                                    const blankDesc = (product.blanks || []).map(b => b.description).filter(Boolean).join(" ");
+                                                    const res = await axios.post("/api/ai", {
+                                                        imageUrl: imageUrl || undefined,
+                                                        prompt: `You are writing product copy for a print-on-demand item.${imageUrl ? " A design image is attached — observe the artwork carefully." : ""}\n\nDesign description: "${design.description || ""}"\nGarment info: "${blankDesc}"\n\nWrite a product description of at least 4 sentences that is tailored to this specific product, blending the design theme with the garment. Appeal to buyers. No generic filler phrases.\n\nReturn ONLY the plain text description.`,
+                                                    });
+                                                    const text = typeof res.data === "string" ? res.data.replace(/^"|"$/g, "") : res.data;
+                                                    let prods = [...products];
+                                                    let p = prods.find(p => p.id == product.id);
+                                                    p.description = text;
+                                                    setProducts([...prods]);
+                                                } catch {
+                                                    showToast("AI generation failed", "error");
+                                                } finally {
+                                                    setAiDescLoading(prev => ({ ...prev, [product.id]: false }));
+                                                }
+                                            }}
+                                            sx={{ mt: 0.75, fontSize: "0.72rem" }}
+                                        >
+                                            AI Generate Description
+                                        </Button>
                                     </Grid2>
                                     <Grid2 size={12}>
                                         <Typography variant="caption" sx={{ display: "block", marginBottom: .5 }}>Tags</Typography>
@@ -91,70 +136,89 @@ export const InformationStage = ({products, setProducts, design, setStage, brand
                     </Grid2>
 
                     {markets.map((market, k) => {
-                        if(market.productDropDowns && Object.keys(market.productDropDowns).length > 0) {
-                            return (
-                                <Grid2 key={k} size={12}>
-                                    <Card variant="outlined">
-                                        <CardContent>
-                                            <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Marketplace · {market.name}</Typography>
-
-                                    <Grid2 container spacing={2}>
-                                        {market.productDropDowns && Object.keys(market.productDropDowns).map((category, l) =>{
-                                            if(category == "titleGenerator") {
-                                                if(!product.marketplaceValues ){
-                                                    product.marketplaceValues = {};
-                                                }
-                                                if(!product.marketplaceValues[market._id]){
-                                                    product.marketplaceValues[market._id] = {};
-                                                }
-                                                
-                                                product.marketplaceValues[market._id][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
-                                                
-                                                for(let key of Object.keys(product.marketplaceValues[market._id])){
-                                                     if(key != "titleGenerator" && key != "name"){
-                                                        if(!market.productDropDowns[key] ){
-                                                            delete product.marketplaceValues[market._id][key];
-                                                        }
-                                                    }
-                                                }
-                                                console.log(product.brand, product.marketplaceValues[market._id][category], "titleGenerator value in InformationStage")
-                                                return <Grid2 key={l} size={12} sx={{ display: "flex", alignItems: "center" }}>
-                                                    <TextField fullWidth label={`Product Title`} variant="outlined" value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category]  ? product.marketplaceValues[market._id][category] : ""} onChange={async (e) => {
-                                                        let prods = [...products]
-                                                        let p = prods.filter(p => p.id == product.id)[0]
-                                                        if(!p.marketplaceValues) p.marketplaceValues = {};
-                                                        if(!p.marketplaceValues[market._id]) p.marketplaceValues[market._id] = {};
-                                                        p.marketplaceValues[market._id][category] = e.target.value
-                                                        setProducts([...prods])
-                                                     }} />
-                                                </Grid2>
-                                            }else return null;
-                                        })}
-                                        {market.productDropDowns && Object.keys(market.productDropDowns).map((category, l) =>{
-                                            if(market.required ){
-                                                console.log(market.required[category] == true? "Required" : "Recommended", "market.required[category] in InformationStage")
-                                            }
-                                            if(category == "titleGenerator" || category == "required") return null;
-                                            return <Grid2 key={l} size={4}>
-                                                <CreatableSelect {...selectMenuPortalProps} placeholder={`Select ${category}`} value={product.marketplaceValues && product.marketplaceValues[market._id] && product.marketplaceValues[market._id][category] ? { value: product.marketplaceValues[market._id][category], label: product.marketplaceValues[market._id][category] } : null} options={[{value: null, label: `Select ${category}`}, ...(market.productDropDowns[category] || []).map(option => ({ value: option, label: option }))]} onChange={async (newValue) => {
-                                                    let prods = [...products]
-                                                    let p = prods.filter(p => p.id == product.id)[0]
-                                                    if(!p.marketplaceValues) p.marketplaceValues = {};
-                                                    if(!p.marketplaceValues[market._id]) p.marketplaceValues[market._id] = {};
-                                                    p.marketplaceValues[market._id].name = market.name;
-                                                    if((market.productDropDowns[category] || []).filter(o => o == newValue.value)[0] || newValue.value == null)p.marketplaceValues[market._id][category] = newValue.value
-                                                setProducts([...prods])
-                                            }} />
-                                            <Typography variant="caption" color="#c73333">{market.required && market.required[category] == true ? "Required" : "Recommended"}</Typography>
+                        const mpId = market._id?.toString();
+                        const mpVals = product.marketplaceValues?.[mpId] ?? {};
+                        const setMpField = (field, value) => {
+                            let prods = [...products];
+                            let p = prods.find(p => p.id == product.id);
+                            if (!p.marketplaceValues) p.marketplaceValues = {};
+                            if (!p.marketplaceValues[mpId]) p.marketplaceValues[mpId] = { name: market.name };
+                            p.marketplaceValues[mpId][field] = value;
+                            setProducts([...prods]);
+                        };
+                        const hasDDs = market.productDropDowns && Object.keys(market.productDropDowns).length > 0;
+                        return (
+                            <Grid2 key={k} size={12}>
+                                <Card variant="outlined">
+                                    <CardContent>
+                                        <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Marketplace · {market.name}</Typography>
+                                        <Grid2 container spacing={2}>
+                                            {/* Title */}
+                                            <Grid2 size={12}>
+                                                <TextField fullWidth size="small" label="Marketplace Title" variant="outlined"
+                                                    value={mpVals.title ?? ""}
+                                                    onChange={e => setMpField("title", e.target.value)} />
+                                            </Grid2>
+                                            {/* Description */}
+                                            <Grid2 size={12}>
+                                                <TextField fullWidth size="small" label="Marketplace Description" multiline minRows={2} variant="outlined"
+                                                    value={mpVals.description ?? ""}
+                                                    onChange={e => setMpField("description", e.target.value)} />
+                                            </Grid2>
+                                            {/* Tags */}
+                                            <Grid2 size={12}>
+                                                <Typography variant="caption" sx={{ display: "block", mb: .5 }}>Marketplace Tags</Typography>
+                                                <CreatableSelect {...selectMenuPortalProps} isMulti placeholder="Tags"
+                                                    value={(mpVals.tags ?? []).map(t => ({ value: t, label: t }))}
+                                                    onChange={newValue => setMpField("tags", newValue.map(v => v.value))} />
+                                            </Grid2>
+                                            {/* titleGenerator */}
+                                            {hasDDs && Object.keys(market.productDropDowns).map((category, l) => {
+                                                if (category !== "titleGenerator") return null;
+                                                if (!product.marketplaceValues) product.marketplaceValues = {};
+                                                if (!product.marketplaceValues[mpId]) product.marketplaceValues[mpId] = {};
+                                                product.marketplaceValues[mpId][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
+                                                return (
+                                                    <Grid2 key={l} size={12}>
+                                                        <TextField fullWidth label="Product Title (template)" variant="outlined"
+                                                            value={product.marketplaceValues?.[mpId]?.[category] ?? ""}
+                                                            onChange={e => {
+                                                                let prods = [...products];
+                                                                let p = prods.find(p => p.id == product.id);
+                                                                if (!p.marketplaceValues) p.marketplaceValues = {};
+                                                                if (!p.marketplaceValues[mpId]) p.marketplaceValues[mpId] = {};
+                                                                p.marketplaceValues[mpId][category] = e.target.value;
+                                                                setProducts([...prods]);
+                                                            }} />
+                                                    </Grid2>
+                                                );
+                                            })}
+                                            {/* dropdown fields */}
+                                            {hasDDs && Object.keys(market.productDropDowns).map((category, l) => {
+                                                if (category === "titleGenerator" || category === "required") return null;
+                                                return (
+                                                    <Grid2 key={l} size={4}>
+                                                        <CreatableSelect {...selectMenuPortalProps} placeholder={`Select ${category}`}
+                                                            value={mpVals[category] ? { value: mpVals[category], label: mpVals[category] } : null}
+                                                            options={[{ value: null, label: `Select ${category}` }, ...(market.productDropDowns[category] || []).map(o => ({ value: o, label: o }))]}
+                                                            onChange={newValue => {
+                                                                let prods = [...products];
+                                                                let p = prods.find(p => p.id == product.id);
+                                                                if (!p.marketplaceValues) p.marketplaceValues = {};
+                                                                if (!p.marketplaceValues[mpId]) p.marketplaceValues[mpId] = {};
+                                                                p.marketplaceValues[mpId].name = market.name;
+                                                                if ((market.productDropDowns[category] || []).includes(newValue.value) || newValue.value == null) p.marketplaceValues[mpId][category] = newValue.value;
+                                                                setProducts([...prods]);
+                                                            }} />
+                                                        <Typography variant="caption" color="#c73333">{market.required?.[category] ? "Required" : "Recommended"}</Typography>
+                                                    </Grid2>
+                                                );
+                                            })}
                                         </Grid2>
-                                    })}
-
-                                    </Grid2>
-                                        </CardContent>
-                                    </Card>
-                                </Grid2>
-                            )
-                        }
+                                    </CardContent>
+                                </Card>
+                            </Grid2>
+                        );
                     })}
                 </Grid2>
             ))}

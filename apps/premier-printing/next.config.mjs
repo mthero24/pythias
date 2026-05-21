@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ["sharp"],
+    serverExternalPackages: ["sharp", "fluent-ffmpeg", "ffmpeg-static"],
     images: {
         remotePatterns: [
             {

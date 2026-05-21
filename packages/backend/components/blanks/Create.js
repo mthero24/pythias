@@ -374,8 +374,16 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const handleImageSave = () => {};
 
     const generateDescription = async () => {
+        const parts = [
+            `Product: ${blank.name}`,
+            blank.brand       && `Brand: ${blank.brand}`,
+            blank.category?.length && `Category: ${blank.category.join(", ")}`,
+            blank.department  && `Department: ${blank.department}`,
+            blank.bulletPoints?.length && `Key features: ${blank.bulletPoints.map(b => `${b.title} — ${b.description}`).join("; ")}`,
+            blank.description && `Notes: ${blank.description}`,
+        ].filter(Boolean).join("\n");
         let result = await axios.post("/api/ai/", {
-            prompt: `generate me a description for a ${blank.name} using this data: ${blank.description}. limit to under 300 characters.`,
+            prompt: `Write a 2-sentence product description for a wholesale garment blank used in print-on-demand fulfillment. Highlight the fabric, fit, and key selling points. Be specific and avoid generic filler. Keep it under 300 characters. Return plain text only.\n\n${parts}`,
         });
         let bla = {...blank};
         bla.description = result.data;

@@ -69,17 +69,22 @@ export const createTempUpcs = async () => {
             })
             let res = await CreateUpdateUPC({auth:{apiKey: process.env.gs1PrimaryProductKey, accountNumber: process.env.gs1AccountNumber}, body: data})
             if(!res.error){
-                await SkuToUpc.create({
-                    sku: `SKU-${newUpc.gtin}`,
-                    upc: newUpc.gtin.substring(2, newUpc.gtin.length),
-                    color: null,
-                    size: null,
-                    blank: null,
-                    design: null,
-                    gtin: newUpc.gtin,
-                    recycle: false,
-                    temp: true
-                })
+                try {
+                    await SkuToUpc.create({
+                        sku: `SKU-${newUpc.gtin}`,
+                        upc: newUpc.gtin.substring(2, newUpc.gtin.length),
+                        color: null,
+                        size: null,
+                        blank: null,
+                        design: null,
+                        gtin: newUpc.gtin,
+                        recycle: false,
+                        temp: true
+                    })
+                } catch (e) {
+                    if (e.code !== 11000) throw e;
+                    // concurrent createTempUpcs already inserted this GTIN — skip
+                }
             }else{
                 break;
             }

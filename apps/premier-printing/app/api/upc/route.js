@@ -16,7 +16,8 @@ export async function GET(req){
     let upcSku = req.nextUrl.searchParams.get("sku")?.trim()
     let sku
     if(upcSku){
-        sku = await UpcToSku.find({$or: [{sku: upcSku}, {upc: upcSku}]}).populate("design", "name").populate("color", "name").populate({path: "blank", select:"code name sizes colors", populate: "colors"})
+        const skuList = upcSku.split(",").map(s => s.trim()).filter(Boolean);
+        sku = await UpcToSku.find({$or: [{sku: {$in: skuList}}, {upc: {$in: skuList}}]}).populate("design", "name").populate("color", "name").populate({path: "blank", select:"code name sizes colors", populate: "colors"})
     }else{
         sku = await UpcToSku.find({design: design, blank: blank}).populate("blank", "name code").populate("design", "name sku").populate("color", "name")
     }

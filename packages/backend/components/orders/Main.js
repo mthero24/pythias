@@ -679,10 +679,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
 
                                     {/* Total */}
                                     <Typography variant="body2" sx={{ fontWeight: 500, display: { xs: "none", md: "block" } }}>
-                                        ${(o.productCost != null
-                                            ? (o.productCost ?? 0) + (o.shippingCost ?? 0) - (o.discountAmount ?? 0)
-                                            : (o.total ?? 0)
-                                        ).toFixed(2)}
+                                        ${(o.total ?? 0).toFixed(2)}
                                     </Typography>
 
                                     {/* Expand toggle — stop propagation so click doesn't navigate */}
@@ -704,10 +701,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                         <Stack direction="row" spacing={1} sx={{ mb: 1.5, display: { xs: "flex", md: "none" }, flexWrap: "wrap", alignItems: "center" }}>
                                             <Chip label={statusInfo.label} color={statusInfo.color} size="small" variant="outlined" sx={{ fontSize: "0.65rem", height: 20 }} />
                                             <Typography variant="caption" color="text.secondary">
-                                                {new Date(o.date).toLocaleDateString("en-US")} · ${(o.productCost != null
-                                                ? (o.productCost ?? 0) + (o.shippingCost ?? 0) - (o.discountAmount ?? 0)
-                                                : (o.total ?? 0)
-                                            ).toFixed(2)}
+                                                {new Date(o.date).toLocaleDateString("en-US")} · ${(o.total ?? 0).toFixed(2)}
                                             </Typography>
                                         </Stack>
 

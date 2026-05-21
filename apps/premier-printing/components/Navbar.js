@@ -37,6 +37,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import FindInPageIcon from "@mui/icons-material/FindInPage";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
 import FolderIcon from "@mui/icons-material/Folder";
 import StorageIcon from "@mui/icons-material/Storage";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
@@ -87,6 +88,7 @@ const NAV_SECTIONS = [
       { label: "Products", href: "/admin/products", icon: <InventoryIcon fontSize="small" />,  showCSV: true  },
       { label: "Fix UPC",  href: "/admin/fix-upc",    icon: <QrCode2Icon fontSize="small" />,  showCSV: false },
       { label: "AI Blacklist", href: "/admin/ai-blacklist", icon: <BlockIcon fontSize="small" />, showCSV: false },
+      { label: "Music Tracks", href: "/admin/music",       icon: <MusicNoteIcon fontSize="small" />, showCSV: false },
     ],
   },
   {

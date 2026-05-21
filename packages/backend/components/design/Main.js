@@ -1,7 +1,7 @@
 "use client";
 import {
     Box, Grid2, TextField, Button, Typography, Card, CardContent, Container,
-    Snackbar, Dialog, DialogTitle, DialogContent, DialogActions, Divider,
+    Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Divider,
     Stack, Chip, IconButton, Tooltip,
 } from "@mui/material";
 import axios from "axios";
@@ -15,6 +15,7 @@ import LoaderOverlay from "../reusable/LoaderOverlay";
 import DeleteModal from "../reusable/DeleteModal";
 import { Footer } from "../reusable/Footer";
 import { CreateProductModal } from "./CreateProductModal";
+import { AiProductModal } from "./AiProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import { ProductCard } from "../reusable/ProductCard";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -73,6 +74,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [deleteFunction, setDeleeFunction] = useState({});
     const [deleteTitle, setDeleteTitle] = useState("");
     const [createProduct, setCreateProduct] = useState(false);
+    const [aiProductModal, setAiProductModal] = useState(false);
+    const [aiToast, setAiToast] = useState({ open: false, message: "", severity: "success" });
     const [genders, setGenders] = useState(gen ?? []);
     const [seasons, setSeasons] = useState(seas ?? []);
     const [themes, setThemes] = useState(them ?? []);
@@ -122,9 +125,25 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const getAiDescription = async () => {
         let d = { ...des };
         try {
-            let title = des.name;
+            const blankNames = (des.blanks || []).map(b => b.blank?.name).filter(Boolean);
+            const brandNames = (des.brands || []).map(b => b.name).filter(Boolean);
+            const context = [
+                blankNames.length  && `Garment types: ${blankNames.join(", ")}`,
+                brandNames.length  && `Brands: ${brandNames.join(", ")}`,
+                des.gender         && `Target gender: ${des.gender}`,
+                des.season         && `Season: ${des.season}`,
+                des.printType      && `Print method: ${des.printType}`,
+            ].filter(Boolean).join("\n");
+            // Prefer front image, fall back to first available
+            const imageUrl = des.images?.front || (des.images && Object.values(des.images).find(v => typeof v === "string" && v.startsWith("http")));
+
+            const imageInstruction = imageUrl
+                ? "A design image is attached. Carefully observe the artwork — its subject, style, colors, mood, and visual theme — and base your description and tags on what you actually see."
+                : "Base your description and tags on the design name and context below.";
+
             let result = await axios.post("/api/ai", {
-                prompt: `Generate a 100 word description & 10 tags for a print on demand design. The print on demand design is called: "${title}". The products it is printed on are dynamic so do not be specific and mention a product name, do not mention t-shirt. Return the data as a json object {tags:[],description}.`,
+                imageUrl: imageUrl || undefined,
+                prompt: `You are writing marketplace copy for a print-on-demand product. ${imageInstruction}\n\nDesign name: "${des.name}"\n${context}\n\nGenerate:\n- A description of at least 4 sentences that captures the design theme and appeals to buyers. Do not name specific garment types or use generic filler phrases.\n- 10 search-optimized tags that mix design theme, style, occasion, mood, and audience keywords. Tags should be 1–3 words each.\n\nReturn ONLY valid JSON with no extra text: {"tags":[],"description":""}`,
             });
             let { tags, description } = await JSON.parse(result.data);
             d.tags = tags;
@@ -133,6 +152,159 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             updateDesign({ ...d });
         } catch (err) {
             alert("Something went wrong...");
+        }
+    };
+
+    const handleAiProductConfirm = async (aiProducts) => {
+        setLoading(true);
+        const allSaved = [];
+        try {
+            for (const aiProduct of aiProducts) {
+                const productBlanks = aiProduct.blanks.map(bs => bs.blank);
+
+                // Generate all SKUs first so we can look up existing UPCs in one batch
+                const variantMeta = []; // { blank, color, size, sku, varImages }
+                for (const bs of aiProduct.blanks) {
+                    const blank = bs.blank;
+                    for (const color of bs.colors) {
+                        const colorImages = aiProduct._variantUrls?.[`${blank.code}__${color.name}`] ?? [];
+                        for (const size of blank.sizes ?? []) {
+                            const sku = await CreateSku({ blank, color, size, design: des });
+                            variantMeta.push({ blank, color, size, sku, varImages: colorImages });
+                        }
+                    }
+                }
+
+                // Batch look up which SKUs already have a UPC assigned
+                const allSkus = variantMeta.map(v => v.sku).filter(Boolean);
+                const existingUpcMap = {};
+                if (allSkus.length > 0) {
+                    const lookupRes = await axios.get(`/api/upc?sku=${allSkus.join(",")}`);
+                    for (const record of lookupRes.data.upc ?? []) {
+                        if (record.sku) existingUpcMap[record.sku] = record;
+                    }
+                }
+
+                // Only fetch temp UPCs for variants that don't have one yet
+                const needsTempUpc = variantMeta.filter(v => !existingUpcMap[v.sku]);
+                let tempUpcs = [];
+                if (needsTempUpc.length > 0) {
+                    const upcRes = await axios.post("/api/upc", { count: needsTempUpc.length });
+                    tempUpcs = upcRes.data.upcs ?? [];
+                }
+                let tempIdx = 0;
+
+                // Build nested variants structure expected by saveProduct.js
+                const variants = {};
+                for (const { blank, color, size, sku, varImages } of variantMeta) {
+                    const existing = existingUpcMap[sku];
+                    const upcRecord = existing ?? tempUpcs[tempIdx++];
+                    if (!variants[blank.code]) variants[blank.code] = {};
+                    if (!variants[blank.code][color.name]) variants[blank.code][color.name] = [];
+                    variants[blank.code][color.name].push({
+                        image: varImages[0] ?? null,
+                        images: varImages.slice(1).map(url => ({ image: url })),
+                        size, color, sku, blank,
+                        upc: upcRecord?.upc ?? null,
+                        gtin: upcRecord?.gtin ?? null,
+                        price: size.retailPrice ?? 0,
+                    });
+                }
+
+                const { _variantUrls, ...aiProductData } = aiProduct;
+                const productToSave = {
+                    ...aiProductData,
+                    blanks: productBlanks,
+                    sku: `${des.sku}-${productBlanks.map(b => b.code).join("-")}`,
+                    variants,
+                    design: des._id ?? des,
+                    productImages: aiProduct.productImages ?? [],
+                };
+
+                const res = await axios.post("/api/admin/products", { products: [productToSave] });
+                if (res.data?.error) {
+                    setAiToast({ open: true, message: res.data.msg || "Failed to create product", severity: "error" });
+                } else {
+                    allSaved.push(...(res.data.products ?? []));
+                }
+            }
+
+            if (allSaved.length > 0) {
+                // Auto-send to API-connected marketplaces
+                try {
+                    const provider = source.includes("test") ? "pythias-test" : source === "simplesage" ? "premierPrinting" : source;
+                    const intRes = await axios.get("/api/admin/integrations", { params: { provider } });
+                    const connections = intRes.data.integration ?? [];
+
+                    for (let i = 0; i < allSaved.length; i++) {
+                        let savedProduct = allSaved[i];
+                        const savedMpIds = (savedProduct.marketPlacesArray ?? []).map(m => m._id?.toString() ?? m.toString());
+                        if (savedMpIds.length === 0 || connections.length === 0) continue;
+
+                        const selectedMps = marketPlaces.filter(mp => savedMpIds.includes(mp._id.toString()));
+                        for (const mp of selectedMps) {
+                            const mpConnIds = (mp.connections ?? []).map(c => c._id?.toString() ?? c.toString());
+                            const mpConns = connections.filter(c => mpConnIds.includes(c._id?.toString()));
+                            for (const conn of mpConns) {
+                                try {
+                                    if (conn.displayName?.toLowerCase().includes("shopify")) {
+                                        const r = await axios.post("/api/integrations/shopify/send", { product: savedProduct, connection: conn }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${conn.apiKey}` } });
+                                        if (r.data) {
+                                            if (!savedProduct.ids) savedProduct.ids = {};
+                                            savedProduct.ids[conn.displayName] = r.data.productId;
+                                            for (const v of savedProduct.variantsArray ?? []) {
+                                                if (!v.ids) v.ids = {};
+                                                v.ids[conn.displayName] = r.data.variantIds?.find(vi => vi.sku === v.sku)?.id;
+                                            }
+                                            await axios.post("/api/admin/products", { products: [savedProduct] });
+                                        }
+                                    } else if (conn.displayName?.toLowerCase().includes("etsy")) {
+                                        const r = await axios.post("/api/admin/integrations/etsy", { product: savedProduct, connection: conn });
+                                        if (r.data) {
+                                            if (!savedProduct.ids) savedProduct.ids = {};
+                                            savedProduct.ids[conn.displayName] = r.data.productId;
+                                            await axios.post("/api/admin/products", { products: [savedProduct] });
+                                        }
+                                    } else if (conn.displayName?.toLowerCase().includes("acenda") || conn.type === "acenda") {
+                                        const r = await axios.post("/api/integrations/acenda", { connectionId: conn._id, product: savedProduct });
+                                        if (r.data && !r.data.error) savedProduct = r.data.product ?? savedProduct;
+                                    } else if (conn.type === "walmart") {
+                                        const r = await axios.post("/api/integrations/walmart/send", { product: savedProduct, connectionId: conn._id });
+                                        if (r.data && !r.data.error) {
+                                            if (!savedProduct.ids) savedProduct.ids = {};
+                                            savedProduct.ids[conn.displayName] = r.data.feedId;
+                                            await axios.post("/api/admin/products", { products: [savedProduct] });
+                                        }
+                                    } else if (conn.type === "faire") {
+                                        const r = await axios.post("/api/integrations/faire/send", { product: savedProduct, connectionId: conn._id });
+                                        if (r.data && !r.data.error) {
+                                            if (!savedProduct.ids) savedProduct.ids = {};
+                                            savedProduct.ids[conn.displayName] = r.data.faireProductId;
+                                            await axios.post("/api/admin/products", { products: [savedProduct] });
+                                        }
+                                    }
+                                } catch (sendErr) {
+                                    console.error(`Auto-send to ${conn.displayName} failed:`, sendErr);
+                                }
+                            }
+                        }
+                        allSaved[i] = savedProduct;
+                    }
+                } catch (sendErr) {
+                    console.error("Marketplace auto-send lookup failed:", sendErr);
+                }
+
+                setDesign(d => ({
+                    ...d,
+                    products: [...(d.products ?? []).filter(p => !allSaved.some(sp => sp._id?.toString() === p._id?.toString())), ...allSaved],
+                }));
+                setAiToast({ open: true, message: `${allSaved.length} product${allSaved.length !== 1 ? "s" : ""} created!`, severity: "success" });
+            }
+        } catch (e) {
+            console.error("AI product save failed", e);
+            setAiToast({ open: true, message: "Failed to create product", severity: "error" });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -276,6 +448,15 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                 sx={{ fontSize: "0.75rem" }}
                             >
                                 Delete
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<AutoAwesomeIcon />}
+                                onClick={() => setAiProductModal(true)}
+                                sx={{ fontSize: "0.75rem" }}
+                            >
+                                AI Create
                             </Button>
                             <Button
                                 variant="contained"
@@ -493,17 +674,27 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                         title="Products"
                         subtitle={`${des.products?.length ?? 0} product${des.products?.length === 1 ? "" : "s"} linked to this design`}
                         action={canEdit && (
-                            <Button
-                                size="small"
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => {
-                                    setProduct({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
-                                    setCreateProduct(true);
-                                }}
-                            >
-                                Create Product
-                            </Button>
+                            <Stack direction="row" spacing={1}>
+                                <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={<AutoAwesomeIcon />}
+                                    onClick={() => setAiProductModal(true)}
+                                >
+                                    AI Create
+                                </Button>
+                                <Button
+                                    size="small"
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
+                                    onClick={() => {
+                                        setProduct({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
+                                        setCreateProduct(true);
+                                    }}
+                                >
+                                    Create Product
+                                </Button>
+                            </Stack>
                         )}
                     >
                         {(!des.products || des.products.length === 0) ? (
@@ -530,6 +721,32 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 </Stack>
             </Container>
 
+            <AiProductModal
+                open={aiProductModal}
+                onClose={() => setAiProductModal(false)}
+                design={des}
+                blanks={blanks}
+                colors={colors}
+                marketPlaces={marketPlaces}
+                brands={bran}
+                onConfirm={handleAiProductConfirm}
+                source={source}
+            />
+            <Snackbar
+                open={aiToast.open}
+                autoHideDuration={4000}
+                onClose={() => setAiToast(t => ({ ...t, open: false }))}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert
+                    onClose={() => setAiToast(t => ({ ...t, open: false }))}
+                    severity={aiToast.severity}
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    {aiToast.message}
+                </Alert>
+            </Snackbar>
             <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} />
             <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
             <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} product={product} />

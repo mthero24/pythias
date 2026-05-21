@@ -1,4 +1,4 @@
-import {Design, User} from "@pythias/mongo";
+import {Design, Products, User} from "@pythias/mongo";
 import { DesignsMain as Main } from "@pythias/backend";
 import { DesignSearch } from "@/functions/designSearch";
 import { headers } from "next/headers";
@@ -26,5 +26,19 @@ export default async function Designs(req) {
         }
     }
     let count = designs[0]?.meta?.count?.total ? designs[0]?.meta?.count?.total : await Design.find({}).countDocuments()
+
+    // Attach product counts
+    const designIds = designs.map(d => d._id ?? d.id).filter(Boolean)
+    const productCounts = await Products.aggregate([
+        { $match: { design: { $in: designIds } } },
+        { $group: { _id: "$design", count: { $sum: 1 } } }
+    ])
+    const countMap = Object.fromEntries(productCounts.map(p => [p._id.toString(), p.count]))
+    designs = designs.map(d => {
+        const plain = d.toJSON ? d.toJSON() : { ...d }
+        plain.productCount = countMap[plain._id?.toString()] ?? 0
+        return plain
+    })
+
     return <Main designs={JSON.parse(JSON.stringify(designs))} ct={count} pa={page} query={query.q} canEdit={canEdit} />
-}   
+}

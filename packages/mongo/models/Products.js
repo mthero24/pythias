@@ -104,6 +104,11 @@ const schema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     lastUpdated: { type: Date, default: Date.now },
     tempImages: [Object],
-    marketplaceValues: Object
+    marketplaceValues: Object,
+    video: String,
+    pendingVideoTask: {
+        taskId: String,
+        musicUrl: String,
+    },
 });
 export default PremierPrinting.model("Products", schema);

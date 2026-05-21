@@ -6,7 +6,6 @@ const csv = require("csvtojson");
 let zones = {}
 let rates = {}
 import jsPDF from 'jspdf';
-import sharp from "sharp"
 
 let getZones = async ()=>{
   let zo = await csv().fromFile('./functions/zone.csv')
@@ -287,6 +286,7 @@ export async function ship({address, poNumber, weight, selectedShipping, dimensi
       let pdf = new jsPDF('l', 'in', [4, 6]);
       let buf = Buffer.from(data.ShipmentResponse.ShipmentResults.PackageResults.ShippingLabel.GraphicImage, "base64")
       console.log(buf, "buff")
+      const { default: sharp } = await import("sharp");
       let image = sharp(buf)
       image = await image.png({ quality: 100 }).toBuffer();
       let trimmedBase64 = `data:image/png;base64,${image.toString("base64")}`;
@@ -361,6 +361,9 @@ export async function getRatesUPS({address, businessAddress, service, descriptio
               CountryCode: businessAddress.country
             }
           },
+          ShipmentRatingOptions: {
+            NegotiatedRatesIndicator: ""
+          },
           PaymentDetails: {
             ShipmentCharge: {
               Type: '01',
@@ -409,12 +412,16 @@ export async function getRatesUPS({address, businessAddress, service, descriptio
     );
   
     const data = await resp.json();
+    console.log("[UPS getRates] full response:", JSON.stringify(data, null, 2));
     if(data.response){
-      console.log(data.response);
+      console.log("[UPS getRates] error response:", data.response);
       return 5000
     }else{
-      console.log(data.RateResponse.RatedShipment.TotalCharges.MonetaryValue);
-      return data.RateResponse.RatedShipment.TotalCharges.MonetaryValue
+      const shipment = data.RateResponse.RatedShipment;
+      const negotiated = shipment.NegotiatedRateCharges?.TotalCharge?.MonetaryValue;
+      const list = shipment.TotalCharges.MonetaryValue;
+      console.log("[UPS getRates] list rate:", list, "| negotiated rate:", negotiated ?? "(none returned)");
+      return negotiated ?? list;
     }
   }
 

@@ -1,7 +1,8 @@
 "use client";
 import {
     Box, Grid2, Typography, Card, CardContent, CardActionArea, Button,
-    Container, Pagination, Stack, InputAdornment, TextField, Chip, Divider, Tooltip
+    Container, Pagination, Stack, InputAdornment, TextField, Chip, Divider, Tooltip,
+    Dialog, DialogTitle, DialogContent, DialogActions, Alert, CircularProgress,
 } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
@@ -11,6 +12,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import BrushIcon from "@mui/icons-material/Brush";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import DownloadIcon from "@mui/icons-material/Download";
 
 const MAX_THUMBS = 5;
 
@@ -21,12 +24,69 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
     const [count, setCount] = useState(ct);
     const [searching, setSearching] = useState(false);
     const searchInitRef = useRef(true);
+    const [csvOpen, setCsvOpen] = useState(false);
+    const [csvFile, setCsvFile] = useState(null);
+    const [csvLoading, setCsvLoading] = useState(false);
+    const [csvResult, setCsvResult] = useState(null);
+    const [csvLocations, setCsvLocations] = useState([]);
+    const csvInputRef = useRef(null);
 
     useEffect(() => {
         if (searchInitRef.current) { searchInitRef.current = false; return; }
         const t = setTimeout(runSearch, 400);
         return () => clearTimeout(t);
     }, [search]);
+
+    const openCsvDialog = async () => {
+        setCsvFile(null);
+        setCsvResult(null);
+        setCsvOpen(true);
+        try {
+            const res = await axios.get("/api/admin/print-locations");
+            setCsvLocations(res.data.printLocations.map(l => l.name));
+        } catch {
+            setCsvLocations(["front", "back"]);
+        }
+    };
+    const closeCsvDialog = () => { if (!csvLoading) setCsvOpen(false); };
+
+    const downloadTemplate = () => {
+        const locations = csvLocations.length > 0 ? csvLocations : ["front", "back"];
+        const imageColumns = locations.map(l => `image_${l}`);
+        const headers = ["sku", "title", "printType", ...imageColumns];
+        const example = [
+            "ABC123DEFG",
+            "My Design Title",
+            "DTF",
+            ...imageColumns.map((_, i) => i === 0 ? "https://example.com/my-design.png" : ""),
+        ];
+        const csv = [headers, example]
+            .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))
+            .join("\r\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "design-import-template.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const uploadCSV = async () => {
+        if (!csvFile) return;
+        setCsvLoading(true);
+        setCsvResult(null);
+        try {
+            const form = new FormData();
+            form.append("file", csvFile);
+            const res = await axios.post("/api/admin/designs/csv-ingest", form);
+            setCsvResult(res.data);
+        } catch (e) {
+            setCsvResult({ error: true, msg: e?.response?.data?.msg || e.message });
+        } finally {
+            setCsvLoading(false);
+        }
+    };
 
     const createDesign = async () => {
         let res = await axios.post("/api/admin/designs", {});
@@ -71,9 +131,14 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
                         </Box>
                     </Stack>
                     {canEdit && (
-                        <Button variant="contained" startIcon={<AddIcon />} onClick={createDesign}>
-                            Create Design
-                        </Button>
+                        <Stack direction="row" spacing={1}>
+                            <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={openCsvDialog}>
+                                Import CSV
+                            </Button>
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={createDesign}>
+                                Create Design
+                            </Button>
+                        </Stack>
                     )}
                 </Box>
 
@@ -197,14 +262,12 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
                                             <Typography variant="caption" color="text.secondary" sx={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                                 {d.sku}
                                             </Typography>
-                                            {d.products?.length > 0 && (
-                                                <Chip
-                                                    size="small"
-                                                    label={`${d.products.length} product${d.products.length === 1 ? "" : "s"}`}
-                                                    sx={{ mt: 0.75, fontSize: "0.62rem", height: 18 }}
-                                                    variant="outlined"
-                                                />
-                                            )}
+                                            <Chip
+                                                size="small"
+                                                label={`${d.productCount ?? 0} product${(d.productCount ?? 0) === 1 ? "" : "s"}`}
+                                                sx={{ mt: 0.75, fontSize: "0.62rem", height: 18 }}
+                                                variant="outlined"
+                                            />
                                         </CardContent>
                                     </Link>
                                 </Card>
@@ -227,6 +290,84 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
 
             </Container>
             <Footer />
+
+            {/* CSV Import Dialog */}
+            <Dialog open={csvOpen} onClose={closeCsvDialog} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700 }}>Import Designs from CSV</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        {/* Template download */}
+                        <Box sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider", backgroundColor: "background.default" }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                Download the template to see the required format. Required: <strong>sku, title</strong>. Optional: <strong>printType</strong>, then one column per print location (e.g. <strong>image_front, image_back</strong>) — add as many as needed.
+                            </Typography>
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<DownloadIcon />}
+                                onClick={downloadTemplate}
+                            >
+                                Download Template
+                            </Button>
+                        </Box>
+
+                        {/* File picker */}
+                        <Box
+                            onClick={() => csvInputRef.current?.click()}
+                            sx={{
+                                p: 3, borderRadius: 2, border: "2px dashed", borderColor: csvFile ? "primary.main" : "divider",
+                                backgroundColor: csvFile ? "primary.50" : "background.default",
+                                textAlign: "center", cursor: "pointer",
+                                transition: "border-color 150ms, background-color 150ms",
+                                "&:hover": { borderColor: "primary.main" },
+                            }}
+                        >
+                            <UploadFileIcon sx={{ fontSize: 36, color: csvFile ? "primary.main" : "text.disabled", mb: 1 }} />
+                            <Typography variant="body2" color={csvFile ? "primary.main" : "text.secondary"} sx={{ fontWeight: 600 }}>
+                                {csvFile ? csvFile.name : "Click to select a CSV file"}
+                            </Typography>
+                            <input
+                                ref={csvInputRef}
+                                type="file"
+                                accept=".csv,text/csv"
+                                style={{ display: "none" }}
+                                onChange={e => { setCsvFile(e.target.files?.[0] ?? null); setCsvResult(null); }}
+                            />
+                        </Box>
+
+                        {/* Result */}
+                        {csvResult && !csvResult.error && (
+                            <Alert severity="success">
+                                <strong>{csvResult.created}</strong> created · <strong>{csvResult.updated}</strong> updated
+                                {csvResult.errors?.length > 0 && (
+                                    <Box sx={{ mt: 1 }}>
+                                        <Typography variant="caption" color="error.main" sx={{ display: "block", fontWeight: 600 }}>
+                                            {csvResult.errors.length} row{csvResult.errors.length !== 1 ? "s" : ""} skipped:
+                                        </Typography>
+                                        {csvResult.errors.map((e, i) => (
+                                            <Typography key={i} variant="caption" sx={{ display: "block" }}>{e}</Typography>
+                                        ))}
+                                    </Box>
+                                )}
+                            </Alert>
+                        )}
+                        {csvResult?.error && (
+                            <Alert severity="error">{csvResult.msg}</Alert>
+                        )}
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={closeCsvDialog} disabled={csvLoading}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        onClick={uploadCSV}
+                        disabled={!csvFile || csvLoading}
+                        startIcon={csvLoading ? <CircularProgress size={16} color="inherit" /> : <UploadFileIcon />}
+                    >
+                        {csvLoading ? "Importing…" : "Import"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

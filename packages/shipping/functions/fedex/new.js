@@ -137,7 +137,9 @@ export async function getRatesFeNew({address, businessAddress, weight, service, 
     //console.log(send? send.data.output.rateReplyDetails[0].ratedShipmentDetails[0] : resData)
     if(resData) return {error:true, msg: `${resData.errors && resData.errors[0].message} ${resData.errors && resData.errors
       [0].code}`}
-    return {error: false, rate: send.data.output.rateReplyDetails[0].ratedShipmentDetails[0].totalNetFedExCharge}
+    const ratedDetails = send.data.output.rateReplyDetails[0].ratedShipmentDetails;
+    const accountRate = ratedDetails.find(d => d.rateType === "PAYOR_ACCOUNT_SHIPMENT") ?? ratedDetails[0];
+    return {error: false, rate: accountRate.totalNetFedExCharge}
     
 }
 export async function TrackPackageFedEx({ tn, credentials }) {

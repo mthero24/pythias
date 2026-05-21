@@ -38,3 +38,4 @@ export { addCogs } from "./functions/addCogs";
 export { addLicenceFees } from "./functions/addLicenceFees";
 export { default as BlankForecastCache } from "./models/BlankForecastCache";
 export { default as ForecastCache } from "./models/ForecastCache";
+export { default as MusicTrack } from "./models/MusicTrack";

@@ -8,9 +8,14 @@ export default function DeleteModal({open, setOpen, onDelete, title, deleteImage
 
     const handleDelete = async () => {
         setLoading(true);
-        await onDelete(deleteImage);
-        setLoading(false);
-        setOpen(false);
+        try {
+            await onDelete(deleteImage);
+        } catch (e) {
+            console.error("Delete failed:", e);
+        } finally {
+            setLoading(false);
+            setOpen(false);
+        }
     };
 
     return (

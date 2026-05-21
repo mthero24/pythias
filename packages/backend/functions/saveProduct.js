@@ -41,7 +41,7 @@ export const saveProducts = async ({products, Products, Inventory}) => {
         if(variantsArray.length > 0) {
             product.variantsArray = variantsArray
         }
-        for (let v of product.variantsArray) {
+        for (let v of product.variantsArray ?? []) {
             v.inventory = await Inventory.findOne({ blank: v.blank._id ? v.blank._id : v.blank, color: v.color._id ? v.color._id : v.color, sizeId: v.size._id ? v.size._id : v.size });
         }
         product.variants = null; // Clear variants to avoid duplication
