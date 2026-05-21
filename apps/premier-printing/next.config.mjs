@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     serverExternalPackages: ["sharp", "fluent-ffmpeg", "ffmpeg-static"],
+    transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
     images: {
         remotePatterns: [
             {

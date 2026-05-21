@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     serverExternalPackages: ["sharp"],
+    transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
     images: {
         remotePatterns: [
             {

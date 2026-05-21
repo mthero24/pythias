@@ -35,6 +35,7 @@ const nextConfig = {
     return config;
   },
   serverExternalPackages: ["sharp", "pdfkit"],
+  transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
 };
 
 export default nextConfig;
