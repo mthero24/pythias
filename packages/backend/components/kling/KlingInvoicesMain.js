@@ -11,8 +11,14 @@ import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function isMonthComplete(month, year) {
+    const now = new Date();
+    return year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth() + 1);
+}
 
 function VideoRow({ video }) {
     return (
@@ -95,6 +101,19 @@ function InvoiceRow({ invoice, onStatusChange }) {
                     >
                         {invoice.status === "paid" ? "Mark Open" : "Mark Paid"}
                     </Button>
+                    {isMonthComplete(invoice.month, invoice.year) && (
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<PictureAsPdfIcon fontSize="small" />}
+                            href={`/api/admin/kling-invoices/pdf?month=${invoice.month}&year=${invoice.year}`}
+                            download
+                            sx={{ whiteSpace: "nowrap", ml: 1 }}
+                        >
+                            PDF
+                        </Button>
+                    )}
                 </TableCell>
             </TableRow>
             <TableRow>
