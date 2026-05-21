@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { Products } from "@pythias/mongo";
+import { Products, KlingVideo, KlingInvoice } from "@pythias/mongo";
 import crypto from "crypto";
 import { writeFile, readFile, unlink, mkdir } from "fs/promises";
 import { tmpdir } from "os";
@@ -224,6 +224,24 @@ export async function POST(req) {
                 $set: { pendingVideoTask: { taskId, musicUrl: musicUrl ?? null } },
             }).catch(() => {});
         }
+
+        // Track video and update monthly invoice
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const year = now.getFullYear();
+        const RATE = 8;
+        try {
+            const product = productId ? await Products.findById(productId).select("sku").lean() : null;
+            await KlingVideo.create({ taskId, productId: productId ?? null, productSku: product?.sku ?? null, month, year, cost: RATE });
+            await KlingInvoice.findOneAndUpdate(
+                { month, year },
+                { $inc: { videoCount: 1, totalAmount: RATE }, $set: { updatedAt: now } },
+                { upsert: true, new: true }
+            );
+        } catch (e) {
+            console.log("[KlingInvoice] tracking error:", e.message);
+        }
+
         return NextResponse.json({ taskId });
     }
 

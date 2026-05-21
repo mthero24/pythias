@@ -39,3 +39,5 @@ export { addLicenceFees } from "./functions/addLicenceFees";
 export { default as BlankForecastCache } from "./models/BlankForecastCache";
 export { default as ForecastCache } from "./models/ForecastCache";
 export { default as MusicTrack } from "./models/MusicTrack";
+export { default as KlingVideo } from "./models/KlingVideo";
+export { default as KlingInvoice } from "./models/KlingInvoice";

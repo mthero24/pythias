@@ -46,3 +46,4 @@ export { AnalyticsDashboard } from "./components/analytics/Dashboard";
 export { AnalyticsTracker } from "./components/analytics/Tracker";
 export { ShopifyDashboard } from "./components/shopify/ShopifyDashboard";
 export { ShopifySalesPage } from "./components/shopify/ShopifySalesPage";
+export { KlingInvoicesMain } from "./components/kling/KlingInvoicesMain";
