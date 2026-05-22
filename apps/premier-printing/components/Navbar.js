@@ -28,6 +28,7 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CheckroomIcon from "@mui/icons-material/Checkroom";
 import BrushIcon from "@mui/icons-material/Brush";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import BlockIcon from "@mui/icons-material/Block";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import QrCode2Icon from "@mui/icons-material/QrCode2";
@@ -48,6 +49,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
+import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 
 const DRAWER_WIDTH = 268;
 
@@ -75,6 +77,7 @@ const NAV_SECTIONS = [
       { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false, permission: "integrations" },
       { label: "Sales",           href: "/admin/sales",          icon: <AttachMoneyIcon fontSize="small" />,            showCSV: false, permission: "integrations" },
       { label: "Pricing",          href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
+      { label: "Kling Invoices",   href: "/admin/kling-invoices", icon: <OndemandVideoIcon fontSize="small" />,           showCSV: false },
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
       { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },
@@ -85,6 +88,7 @@ const NAV_SECTIONS = [
     items: [
       { label: "Blanks",   href: "/admin/blanks",   icon: <CheckroomIcon fontSize="small" />,  showCSV: false },
       { label: "Designs",  href: "/admin/designs",  icon: <BrushIcon fontSize="small" />,      showCSV: false },
+      { label: "Design Templates", href: "/admin/design-templates", icon: <AutoAwesomeIcon fontSize="small" />, showCSV: false },
       { label: "Products", href: "/admin/products", icon: <InventoryIcon fontSize="small" />,  showCSV: true  },
       { label: "Fix UPC",  href: "/admin/fix-upc",    icon: <QrCode2Icon fontSize="small" />,  showCSV: false },
       { label: "AI Blacklist", href: "/admin/ai-blacklist", icon: <BlockIcon fontSize="small" />, showCSV: false },

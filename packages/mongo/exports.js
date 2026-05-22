@@ -10,6 +10,7 @@ export { default as Color } from "./models/Color";
 export { default as User } from "./models/User";
 export {default as Batches} from "./models/batches";
 export {default as Design} from "./models/Design";
+export {default as DesignTemplate} from "./models/DesignTemplate";
 export {default as LicenseHolders} from "./models/LicenseHolders";
 export {default as ProductImages} from "./models/ProductImages";
 export {default as TikTokAuth} from "./models/tiktok";

@@ -23,7 +23,7 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
     const [page, setPage] = useState(pa ? parseInt(pa) : 1);
     const [count, setCount] = useState(ct);
     const [searching, setSearching] = useState(false);
-    const searchInitRef = useRef(true);
+    const initialQueryRef = useRef(query ?? "");
     const [csvOpen, setCsvOpen] = useState(false);
     const [csvFile, setCsvFile] = useState(null);
     const [csvLoading, setCsvLoading] = useState(false);
@@ -32,7 +32,7 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
     const csvInputRef = useRef(null);
 
     useEffect(() => {
-        if (searchInitRef.current) { searchInitRef.current = false; return; }
+        if (search === initialQueryRef.current) return;
         const t = setTimeout(runSearch, 400);
         return () => clearTimeout(t);
     }, [search]);
@@ -279,7 +279,7 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
                 {/* Pagination */}
                 <Stack spacing={2} sx={{ mt: 3, mb: 2, display: "flex", alignItems: "center" }}>
                     <Pagination
-                        count={Math.ceil(count / 50)}
+                        count={Math.ceil(count / 48)}
                         page={page}
                         onChange={handlePageChange}
                         shape="rounded"

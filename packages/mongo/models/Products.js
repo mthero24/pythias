@@ -110,5 +110,6 @@ const schema = new mongoose.Schema({
         taskId: String,
         musicUrl: String,
     },
+    designTemplateId: { type: mongoose.Schema.Types.ObjectId, ref: "DesignTemplate" },
 });
 export default PremierPrinting.model("Products", schema);

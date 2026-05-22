@@ -296,7 +296,16 @@ export const downloadProduct = async ({ products, marketPlace, header, disableDe
                                         }
 
                                     })
-                                } 
+                                }
+                                // variantTitle: append "- Color - Size" AFTER marketplace values so they don't overwrite it
+                                if (marketPlace.variantTitle && v.color?.name) {
+                                    const titleHeader = Object.keys(marketPlace.defaultValues ?? {}).find(k => marketPlace.defaultValues[k] === "productTitle");
+                                    if (titleHeader && thisHead[titleHeader] && !String(thisHead[titleHeader]).includes(` - ${v.color.name}`)) {
+                                        const parts = [String(thisHead[titleHeader]), v.color.name];
+                                        if (v.size?.name) parts.push(v.size.name);
+                                        thisHead[titleHeader] = parts.join(" - ");
+                                    }
+                                }
                                 index++
                                 sendVarianrts.push(thisHead);
                             }
@@ -346,7 +355,16 @@ export const downloadProduct = async ({ products, marketPlace, header, disableDe
                                     }
 
                                 })
-                            } 
+                            }
+                            // variantTitle: append "- Color - Size" AFTER marketplace values so they don't overwrite it
+                            if (marketPlace.variantTitle && v.color?.name) {
+                                const titleHeader = Object.keys(marketPlace.defaultValues ?? {}).find(k => marketPlace.defaultValues[k] === "productTitle");
+                                if (titleHeader && thisHead[titleHeader] && !String(thisHead[titleHeader]).includes(` - ${v.color.name}`)) {
+                                    const parts = [String(thisHead[titleHeader]), v.color.name];
+                                    if (v.size?.name) parts.push(v.size.name);
+                                    thisHead[titleHeader] = parts.join(" - ");
+                                }
+                            }
                             index++
                             sendVarianrts.push(thisHead);
                         }

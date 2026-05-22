@@ -19,10 +19,10 @@ export async function GET(req){
         if(!query.q && !query == ""){
             if(query.page == undefined || query.page == 1){
                 console.log("page = 1 or undefined")
-                designs = await Design.find({}).sort({date: -1}).limit(48)
+                designs = await Design.find({}).sort({_id: -1}).limit(48)
             }else{
                 console.log("page > 1", (query.page - 1) * 48)
-                designs = await Design.find({}).sort({date: -1}).skip((query.page - 1) * 48).limit(48)
+                designs = await Design.find({}).sort({_id: -1}).skip((query.page - 1) * 48).limit(48)
             }
         }else{
             if(query.page == 1){
@@ -33,10 +33,23 @@ export async function GET(req){
                 if(designs.length == 0) designs = await DesignSearch({q: query.q, page: query.page, productsPerPage: 48})
             }
         }
-        return NextResponse.json({error: false, designs})
+        // Attach product counts
+        const designIds = designs.map(d => d._id ?? d.id).filter(Boolean)
+        const productCounts = await Products.aggregate([
+            { $match: { design: { $in: designIds } } },
+            { $group: { _id: "$design", count: { $sum: 1 } } }
+        ])
+        const countMap = Object.fromEntries(productCounts.map(p => [p._id.toString(), p.count]))
+        designs = designs.map(d => {
+            const plain = d.toJSON ? d.toJSON() : { ...d }
+            plain.productCount = countMap[plain._id?.toString()] ?? 0
+            return plain
+        })
+
+        return NextResponse.json({error: false, designs, count: designs.length})
     }catch(e){
         console.log(e)
-        return NextResponse.json({error: true, msg: JSON.stringify(e)})
+        return NextResponse.json({error: true, msg: e?.message || String(e)})
     }
 }
 export async function POST(req=NextApiRequest){
@@ -66,8 +79,8 @@ export async function POST(req=NextApiRequest){
         logChange({ entityType: "design", entityId: design._id, entityName: design.sku, action: "create", userName, email, provider: "premierPrinting" });
         return NextResponse.json({error: false, design})
     }catch(e){
-        console.log(e)
-        return NextResponse.json({error: true, msg: JSON.stringify(e)})
+        console.error("[designs POST]", e)
+        return NextResponse.json({error: true, msg: e?.message || String(e)})
     }
 }
 export async function PUT(req=NextApiRequest){
@@ -138,7 +151,7 @@ export async function PUT(req=NextApiRequest){
         return NextResponse.json({error: false, design})
     }catch(e){
         console.log(e)
-        return NextResponse.json({error: true, msg: JSON.stringify(e)})
+        return NextResponse.json({error: true, msg: e?.message || String(e)})
     }
 }
 
