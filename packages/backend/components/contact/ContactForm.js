@@ -102,7 +102,7 @@ export function ContactForm({
 
               <Divider sx={{ borderColor: "rgba(255,255,255,.2)", my: 4 }} />
               <Typography variant="body2" sx={{ opacity: 0.75 }}>
-                Mon – Fri &nbsp;·&nbsp; 8am – 5pm CT
+                Mon – Fri &nbsp;·&nbsp; 8am – 5pm EST
               </Typography>
             </Paper>
           </Box>
