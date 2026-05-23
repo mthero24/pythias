@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ContactMessage } from "@/models/ContactMessage";
+import ContactMessage from "@pythias/mongo/models/ContactMessage";
 
 export async function POST(req) {
     try {

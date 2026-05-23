@@ -14,5 +14,5 @@ function makeNewConnection(uri) {
     return db;
 }
 export const PremierPrinting = makeNewConnection(process.env.mongoURL);
-export const Pythias = makeNewConnection(process.env.pythiasMongoUrl)
+export const Pythias = makeNewConnection(process.env.pythiasMongoURL)
 

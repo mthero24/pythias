@@ -50,7 +50,6 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
-import ContactMailIcon from "@mui/icons-material/ContactMail";
 
 const DRAWER_WIDTH = 268;
 
@@ -81,7 +80,6 @@ const NAV_SECTIONS = [
       { label: "Kling Invoices",   href: "/admin/kling-invoices", icon: <OndemandVideoIcon fontSize="small" />,           showCSV: false },
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
-      { label: "Contact Messages", href: "/admin/contact-messages", icon: <ContactMailIcon fontSize="small" />,         showCSV: false, charts: true },
       { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },
     ],
   },
@@ -178,15 +176,6 @@ export default function ButtonAppBar() {
 
           <Box sx={{ flex: 1 }} />
 
-          <Tooltip title="Contact Us">
-            <IconButton
-              component={Link} href="/contact" size="small"
-              sx={{ mr: 1, color: "text.secondary", border: "1px solid", borderColor: "rgba(0,0,0,0.12)", borderRadius: 1.5, px: 1.25, py: 0.6, gap: 0.75, "&:hover": { backgroundColor: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.2)" } }}
-            >
-              <ContactMailIcon sx={{ fontSize: 16 }} />
-              <Typography variant="caption" sx={{ fontWeight: 600, fontSize: "0.72rem" }}>Contact</Typography>
-            </IconButton>
-          </Tooltip>
 
           <Tooltip title="My account">
             <IconButton component={Link} href="/account" size="small" sx={{ mr: 1, p: 0.25 }}>
