@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import {NextApiRequest, NextResponse} from "next/server"
 import { getProductInfoByBrand } from "@pythias/inventory";
 import {Blank, Color,Suppliers} from "@pythias/mongo"

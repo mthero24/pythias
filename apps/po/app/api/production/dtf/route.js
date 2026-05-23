@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextApiRequest, NextResponse } from "next/server";
 import Items from "@/models/Items";
 import Style from "@/models/StyleV2";

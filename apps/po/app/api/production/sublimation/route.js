@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import {setConfig, createMug} from "@pythias/sublimation";
 import {NextApiRequest, NextResponse} from "next/server";
 import { getToken } from "next-auth/jwt";

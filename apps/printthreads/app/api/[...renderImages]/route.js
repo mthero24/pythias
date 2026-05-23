@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import sharp from "sharp"
 import { NextResponse } from "next/server"
 import { Blank, Design } from "@pythias/mongo";

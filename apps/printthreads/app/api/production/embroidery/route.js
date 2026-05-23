@@ -1,4 +1,5 @@
-﻿import { NextApiRequest, NextResponse } from "next/server";
+﻿export const dynamic = "force-dynamic";
+import { NextApiRequest, NextResponse } from "next/server";
 import { Items } from "@pythias/mongo";
 import { Color } from "@pythias/mongo"
 import {sendFile} from "@pythias/embroidery"

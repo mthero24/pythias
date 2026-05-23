@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import sharp from "sharp"
 import { NextApiRequest, NextResponse } from "next/server"
 import axios from "axios"
