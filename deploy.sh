@@ -67,18 +67,20 @@ ok "Dependencies installed"
 
 # ── Fix sharp for Linux ───────────────────────────────────────────────────────
 log "Cleaning and reinstalling sharp for Linux..."
-# Remove all existing sharp installs (workspace root + any package-level copies)
+# Remove all existing sharp installs: root, apps/, and packages/
 rm -rf node_modules/sharp node_modules/@img
-find packages -maxdepth 3 -type d -name "sharp" -path "*/node_modules/sharp" -exec rm -rf {} + 2>/dev/null || true
-find packages -maxdepth 3 -type d -name "@img" -path "*/node_modules/@img" -exec rm -rf {} + 2>/dev/null || true
+find apps packages -maxdepth 4 -type d -name "sharp" -path "*/node_modules/sharp" -exec rm -rf {} + 2>/dev/null || true
+find apps packages -maxdepth 4 -type d -name "@img" -path "*/node_modules/@img" -exec rm -rf {} + 2>/dev/null || true
 # Reinstall with correct Linux x64 binary
 npm install --include=optional 2>&1 | tail -3
 npm install --os=linux --cpu=x64 sharp@0.34.2 2>&1 | tail -3
 ok "sharp binary ready (0.34.2 linux-x64)"
 
 # ── Set library path so sharp can find bundled libvips ───────────────────────
-export LD_LIBRARY_PATH="/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib:${LD_LIBRARY_PATH}"
-log "LD_LIBRARY_PATH set for sharp/libvips"
+# Find all libvips lib dirs that were installed and add them all to LD_LIBRARY_PATH
+LIBVIPS_DIRS=$(find "$REPO_DIR/node_modules" -maxdepth 4 -name "libvips-cpp.so*" -exec dirname {} \; 2>/dev/null | sort -u | tr '\n' ':')
+export LD_LIBRARY_PATH="${LIBVIPS_DIRS}${LD_LIBRARY_PATH}"
+log "LD_LIBRARY_PATH set: ${LIBVIPS_DIRS}"
 
 # ── Build each app with .next backup/restore ──────────────────────────────────
 echo ""
