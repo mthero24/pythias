@@ -34,7 +34,7 @@ const nextConfig = {
     };
     return config;
   },
-  serverExternalPackages: ["sharp", "pdfkit"],
+  serverExternalPackages: ["sharp", "pdfkit", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64"],
   transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
 };
 

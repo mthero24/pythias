@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ["sharp"],
+    serverExternalPackages: ["sharp", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64"],
     transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
     images: {
         remotePatterns: [
