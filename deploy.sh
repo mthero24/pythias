@@ -67,7 +67,7 @@ ok "Dependencies installed"
 
 # ── Fix sharp for Linux ───────────────────────────────────────────────────────
 log "Ensuring sharp Linux binary is installed..."
-npm install --os=linux --cpu=x64 sharp --include=optional 2>&1 | tail -3
+npm install --os=linux --cpu=x64 sharp@0.33.5 --include=optional 2>&1 | tail -3
 ok "sharp binary ready"
 
 # ── Build each app with .next backup/restore ──────────────────────────────────
