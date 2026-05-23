@@ -15,6 +15,21 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 const PREV_W = 240;
 const PREV_H = Math.round(560 * (PREV_W / 480));
 
+function imgStyle(o, sx, sy) {
+  const w = (o.width  || 480) * (o.scaleX || 1) * sx;
+  const h = (o.height || 560) * (o.scaleY || 1) * sy;
+  const cx = o.originX === "center";
+  const cy = o.originY === "center";
+  return {
+    position: "absolute",
+    left:  (o.left || 0) * sx - (cx ? w / 2 : 0),
+    top:   (o.top  || 0) * sy - (cy ? h / 2 : 0),
+    width:  w,
+    height: h,
+    pointerEvents: "none",
+  };
+}
+
 function TemplatePreview({ canvasJson }) {
   if (!canvasJson) {
     return (
@@ -24,52 +39,59 @@ function TemplatePreview({ canvasJson }) {
     );
   }
 
-  const bg = canvasJson.backgroundImage;
-  const objects = (canvasJson.objects || []).filter(o =>
-    ["i-text", "text", "textbox"].includes(o.type)
-  );
+  const allObjects = canvasJson.objects || [];
+  // Images may be canvas objects (new) or the legacy backgroundImage field (old saves)
+  const imageObjs = allObjects.filter(o => o.type === "image" && o.src);
+  const legacyBg  = !imageObjs.length && canvasJson.backgroundImage?.src
+    ? [canvasJson.backgroundImage]
+    : [];
+  const allImages = [...imageObjs, ...legacyBg];
+
+  const textObjs = allObjects.filter(o => ["i-text", "text", "textbox"].includes(o.type));
   const sx = PREV_W / 480;
   const sy = PREV_H / 560;
 
+  const hasContent = allImages.length > 0 || textObjs.length > 0;
+
   return (
     <Box sx={{ position: "relative", width: PREV_W, height: PREV_H, overflow: "hidden", flexShrink: 0 }}>
-      {bg?.src ? (
-        <img
-          src={bg.src}
-          alt=""
-          style={{
-            position: "absolute",
-            left:   (bg.left   || 0) * sx,
-            top:    (bg.top    || 0) * sy,
-            width:  (bg.width  || 480) * (bg.scaleX || 1) * sx,
-            height: (bg.height || 560) * (bg.scaleY || 1) * sy,
-            pointerEvents: "none",
-          }}
-        />
-      ) : (
+      {!hasContent && (
         <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <BrushIcon sx={{ color: "#cbd5e1", fontSize: 48 }} />
         </Box>
       )}
-      {objects.map((o, i) => (
-        <Box key={i} component="span" sx={{
-          position: "absolute",
-          left:      (o.left     || 0) * sx,
-          top:       (o.top      || 0) * sy,
-          fontSize:  (o.fontSize || 24) * sx,
-          color:     o.fill       || "#000",
-          fontFamily: o.fontFamily || "sans-serif",
-          fontWeight: o.fontWeight || "normal",
-          fontStyle:  o.fontStyle  || "normal",
-          whiteSpace: "pre",
-          lineHeight: 1.2,
-          pointerEvents: "none",
-          userSelect: "none",
-          display: "block",
-        }}>
-          {o.text}
-        </Box>
+      {allImages.map((o, i) => (
+        <img key={i} src={o.src} alt="" style={imgStyle(o, sx, sy)} />
       ))}
+      {textObjs.map((o, i) => {
+        const fill = typeof o.fill === "string" ? o.fill : "#000000";
+        const cx = o.originX === "center";
+        const cy = o.originY === "center";
+        const transforms = [
+          cx ? "translateX(-50%)" : "",
+          cy ? "translateY(-50%)" : "",
+        ].filter(Boolean).join(" ");
+        return (
+          <Box key={i} component="span" sx={{
+            position: "absolute",
+            left:      (o.left || 0) * sx,
+            top:       (o.top  || 0) * sy,
+            transform: transforms || undefined,
+            fontSize:  (o.fontSize || 24) * sx,
+            color:     fill,
+            fontFamily: o.fontFamily || "sans-serif",
+            fontWeight: o.fontWeight || "normal",
+            fontStyle:  o.fontStyle  || "normal",
+            whiteSpace: "pre",
+            lineHeight: 1.2,
+            pointerEvents: "none",
+            userSelect: "none",
+            display: "block",
+          }}>
+            {o.text}
+          </Box>
+        );
+      })}
     </Box>
   );
 }
@@ -198,6 +220,15 @@ export function DesignTemplatesList({ templates: initial }) {
                     <Typography variant="caption" color="text.disabled" sx={{ fontStyle: "italic" }}>
                       No customizable fields
                     </Typography>
+                  )}
+
+                  {(t.printType || []).length > 0 && (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {(Array.isArray(t.printType) ? t.printType : [t.printType]).map(pt => (
+                        <Chip key={pt} label={pt} size="small"
+                          sx={{ fontSize: "0.6rem", height: 18, background: "#e0f2fe", color: "#0369a1", border: "1px solid #bae6fd" }} />
+                      ))}
+                    </Box>
                   )}
 
                   <Divider sx={{ my: 0.25 }} />

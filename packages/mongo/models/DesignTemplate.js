@@ -20,7 +20,8 @@ const schema = new mongoose.Schema({
   customizableFields: [customFieldSchema],
   blanks:             [{ type: mongoose.Schema.Types.ObjectId, ref: Blank }],
   defaultColor:       String,
-  printType:          { type: String, default: "DTF" },
+  printType:          { type: [String], default: ["DTF"] },
+  stitchType:         { type: String, default: "satin" },
   category:           String,
   active:             { type: Boolean, default: true },
 }, { timestamps: true });

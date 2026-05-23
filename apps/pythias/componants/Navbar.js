@@ -13,10 +13,11 @@ import Logo from "../public/logo_vertical.png";
 const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 const NAV_LINKS = [
-  { label: "Services",    href: "/services" },
-  { label: "Features",    action: () => scrollTo("features-section") },
-  { label: "How It Works", action: () => scrollTo("how-it-works-section") },
-  { label: "FAQ",         action: () => scrollTo("faq-section") },
+  { label: "Services",     href: "/services" },
+  { label: "Features",     href: "/features" },
+  { label: "How It Works", href: "/how-it-works" },
+  { label: "About Us",     href: "/about" },
+  { label: "Contact Us",   href: "/contact" },
 ];
 
 export default function Navbar() {

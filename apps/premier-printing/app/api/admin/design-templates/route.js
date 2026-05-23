@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { DesignTemplate } from "@pythias/mongo";
+import { DesignTemplate, Design, Products } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { userFromToken } from "@pythias/backend/server";
+import { deleteFromS3, designImageUrls, productImageUrls } from "@/lib/s3";
 
 export const dynamic = "force-dynamic";
 
@@ -36,10 +37,13 @@ export async function POST(req) {
       canvasWidth: data.canvasWidth || 480,
       canvasHeight: data.canvasHeight || 560,
       customizableFields: data.customizableFields || [],
+      printType:  data.printType  || ["DTF"],
+      stitchType: data.stitchType || "satin",
       provider: data.provider || "premierPrinting",
     });
     return NextResponse.json({ error: false, template });
   } catch (e) {
+    console.error("[design-templates POST]", e);
     return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
   }
 }
@@ -61,11 +65,14 @@ export async function PUT(req) {
         canvasWidth: data.canvasWidth,
         canvasHeight: data.canvasHeight,
         customizableFields: data.customizableFields || [],
+        printType:  data.printType  || ["DTF"],
+        stitchType: data.stitchType || "satin",
       },
       { new: true }
     );
     return NextResponse.json({ error: false, template });
   } catch (e) {
+    console.error("[design-templates PUT]", e);
     return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
   }
 }
@@ -78,9 +85,35 @@ export async function DELETE(req) {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: true, msg: "Missing id" }, { status: 400 });
   try {
-    await DesignTemplate.findByIdAndDelete(id);
+    // Find every product linked to this template
+    const products = await Products.find({ designTemplateId: id })
+      .select("design productImages variantImages variantSecondaryImages")
+      .lean();
+
+    // Unique design IDs referenced by those products
+    const designIds = [...new Set(products.map(p => p.design?.toString()).filter(Boolean))];
+
+    // Collect S3 URLs from products
+    const productUrls = products.flatMap(productImageUrls);
+
+    // Collect S3 URLs from designs
+    const designs = designIds.length
+      ? await Design.find({ _id: { $in: designIds } })
+          .select("images sublimationImages embroideryFiles threadImages")
+          .lean()
+      : [];
+    const designUrls = designs.flatMap(designImageUrls);
+
+    await Promise.all([
+      deleteFromS3([...productUrls, ...designUrls]),
+      Products.deleteMany({ designTemplateId: id }),
+      designIds.length ? Design.deleteMany({ _id: { $in: designIds } }) : Promise.resolve(),
+      DesignTemplate.findByIdAndDelete(id),
+    ]);
+
     return NextResponse.json({ error: false });
   } catch (e) {
+    console.error("[design-templates DELETE]", e);
     return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
   }
 }

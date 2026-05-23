@@ -49,3 +49,5 @@ export { ShopifySalesPage } from "./components/shopify/ShopifySalesPage";
 export { KlingInvoicesMain } from "./components/kling/KlingInvoicesMain";
 export { DesignTemplateEditor } from "./components/design/DesignTemplateEditor";
 export { DesignTemplatesList } from "./components/design/DesignTemplatesList";
+export { ContactForm } from "./components/contact/ContactForm";
+export { ContactMessages } from "./components/contact/ContactMessages";

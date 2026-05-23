@@ -3,6 +3,7 @@ import {Design, Products} from "@pythias/mongo";
 import { headers } from 'next/headers'
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { deleteFromS3, designImageUrls } from "@/lib/s3";
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 import { DesignSearch } from "@/functions/designSearch";
 const createSku = ()=>{
@@ -162,8 +163,8 @@ export async function DELETE(req, res){
         return NextResponse.json({error: true, msg: "You do not have permission to edit designs."}, {status: 403})
     }
     const designId = req.nextUrl.searchParams.get("design");
-    console.log(designId)
-    let design = await Design.findByIdAndDelete(designId)
+    const design = await Design.findByIdAndDelete(designId).lean();
+    if (design) await deleteFromS3(designImageUrls(design));
     logActivity({ action: "design_delete", entity: "design", entityId: designId, entityName: design?.sku || design?.name || "", userName, email });
     logChange({ entityType: "design", entityId: designId, entityName: design?.sku || design?.name || "", action: "delete", userName, email, provider: "premierPrinting" });
     return NextResponse.json({error: false})

@@ -14,6 +14,7 @@ import {
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import Link from "next/link";
 
 const NAV_ITEMS = [
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
         icon: <FiberManualRecordIcon fontSize="small" sx={{ color: "#22c55e" }} />,
     },
     { label: "Analytics", href: "/admin/analytics", icon: <BarChartIcon fontSize="small" /> },
+    { label: "Contact Messages", href: "/admin/contact-messages", icon: <MailOutlineIcon fontSize="small" /> },
 ];
 
 export default function AdminSidebar() {

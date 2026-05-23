@@ -84,7 +84,7 @@ export function AnalyticsTracker() {
     useWebVitals(vitalsRef);
 
     useEffect(() => {
-        if (pathname.startsWith("/api/") || pathname.startsWith("/admin/")) return;
+        if (pathname.startsWith("/api/") || pathname === "/admin" || pathname.startsWith("/admin/")) return;
 
         const sid = getSessionId();
         const page = pathname;

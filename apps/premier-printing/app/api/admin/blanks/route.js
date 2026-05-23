@@ -2,6 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import { Blank as Blanks, Inventory, Color } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { deleteFromS3, blankImageUrls } from "@/lib/s3";
 
 export async function GET() {
   try {
@@ -137,6 +138,7 @@ export async function DELETE(req = NextApiRequest) {
   const { userName, email } = userFromToken(token);
   const id = req.nextUrl.searchParams.get("id");
   const deleted = await Blanks.findOneAndDelete({ _id: id }).lean();
+  if (deleted) await deleteFromS3(blankImageUrls(deleted));
   logActivity({ action: "blank_delete", entity: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", userName, email });
   logChange({ entityType: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", action: "delete", before: deleted, after: null, userName, email, provider: "premierPrinting" });
   return NextResponse.json({ error: false });

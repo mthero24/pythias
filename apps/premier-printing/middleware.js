@@ -148,15 +148,17 @@ export async function middleware(req=NextRequest, res) {
       req.nextUrl.pathname.startsWith(route.path)
     );
   const requestHeaders = new Headers(req.headers)
-  const token = await getToken({ req });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   if (protectedRoute) {
-    let permissions = token && token.permissions? token.permissions: {}
-    if(token) {
-      permissions.account = true
-      permissions.inventory = true
-      permissions.designsView = true
-    }
-    if (!permissions[protectedRoute.permission ]) {
+    // Unauthenticated users are always redirected
+    if (!token) return NextResponse.redirect(new URL("/login", req.url));
+    const permissions = { ...(token.permissions || {}) };
+    // Grants available to all authenticated users
+    permissions.account = true;
+    permissions.inventory = true;
+    permissions.designsView = true;
+    // Only check permission when the route actually requires one
+    if (protectedRoute.permission && !permissions[protectedRoute.permission]) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
   }

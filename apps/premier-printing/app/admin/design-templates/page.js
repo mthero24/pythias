@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DesignTemplatesPage() {
   const templates = await DesignTemplate.find({})
-    .select("name active customizableFields canvasJson createdAt updatedAt")
+    .select("name active customizableFields canvasJson printType createdAt updatedAt")
     .sort({ _id: -1 })
     .lean();
 

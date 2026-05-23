@@ -26,7 +26,7 @@ export async function POST(req) {
   }
 
   try {
-    const { dataUrl, name } = await req.json();
+    const { dataUrl, name, printType } = await req.json();
     if (!dataUrl) {
       return NextResponse.json({ error: true, msg: "dataUrl required" }, { status: 400 });
     }
@@ -52,7 +52,7 @@ export async function POST(req) {
       sku,
       name: designName,
       images: { front: cdnUrl },
-      printType: "DTF",
+      printType: Array.isArray(printType) ? printType[0] : (printType || "DTF"),
     });
 
     logActivity({ action: "design_create", entity: "design", entityId: design._id, entityName: sku, userName, email });

@@ -42,3 +42,5 @@ export { default as ForecastCache } from "./models/ForecastCache";
 export { default as MusicTrack } from "./models/MusicTrack";
 export { default as KlingVideo } from "./models/KlingVideo";
 export { default as KlingInvoice } from "./models/KlingInvoice";
+export { default as ActiveSession } from "./models/ActiveSession";
+export { default as ContactMessage } from "./models/ContactMessage";

@@ -2,10 +2,45 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { User } from "@pythias/mongo";
 import bcrypt from "bcryptjs";
 
+const secureCookies = process.env.NEXTAUTH_URL?.startsWith("https://");
+const cookieDomain  = process.env.NEXTAUTH_COOKIE_DOMAIN || undefined;
+
 export const authOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  // Secure, domain-scoped cookies in production; plain cookies in dev
+  cookies: {
+    sessionToken: {
+      name: secureCookies ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: !!secureCookies,
+        domain: cookieDomain,
+      },
+    },
+    callbackUrl: {
+      name: secureCookies ? "__Secure-next-auth.callback-url" : "next-auth.callback-url",
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: !!secureCookies,
+        domain: cookieDomain,
+      },
+    },
+    csrfToken: {
+      name: secureCookies ? "__Secure-next-auth.csrf-token" : "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: !!secureCookies,
+        domain: cookieDomain,
+      },
+    },
   },
   providers: [
     CredentialsProvider({
@@ -55,6 +90,6 @@ export const authOptions = {
   },
   pages: {
     signIn: "/login",
-    error: "/login?error=afddsa",
+    error: "/login",
   },
 };

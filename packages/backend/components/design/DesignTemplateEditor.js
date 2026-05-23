@@ -9,6 +9,21 @@ import axios from "axios";
 
 const CANVAS_W = 480;
 const CANVAS_H = 560;
+
+const PRINT_TYPES = [
+  { value: "DTF",  label: "Printed" },
+  { value: "EMB",  label: "Embroidery" },
+  { value: "VIN",  label: "Vinyl" },
+  { value: "PUFF", label: "Puff" },
+];
+
+const STITCH_TYPES = [
+  { value: "satin",   label: "Satin",   desc: "Angled parallel lines" },
+  { value: "fill",    label: "Fill",    desc: "Flat horizontal rows" },
+  { value: "cross",   label: "Cross",   desc: "X-pattern grid" },
+  { value: "running", label: "Running", desc: "Dashed outline" },
+];
+
 const FONTS = [
   { label: "Bebas Neue",       value: "Bebas Neue" },
   { label: "Anton",            value: "Anton" },
@@ -36,13 +51,15 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
   const historyRef = useRef([]);
   const histIdxRef = useRef(-1);
   const histPausedRef = useRef(false);
-  const customFieldsRef = useRef([]); // keeps in sync with state for callbacks
+  const customFieldsRef = useRef([]);
+  const containerRef = useRef(null);
 
   const [fabricLoaded, setFabricLoaded] = useState(false);
   const [templateName, setTemplateName] = useState("Untitled Template");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!templateId && templateId !== "new");
   const [snack, setSnack] = useState({ open: false, msg: "", sev: "success" });
+  const [canvasScale, setCanvasScale] = useState(1);
 
   // Selection state
   const [selType, setSelType] = useState(null); // "text" | "image" | null
@@ -66,6 +83,10 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
 
   // All defined customizable fields
   const [customFields, setCustomFields] = useState([]);
+
+  const [printTypes, setPrintTypes]   = useState(["DTF"]);
+  const [stitchType, setStitchType]   = useState("satin");
+  const embOriginalsRef = useRef({});  // stores per-object original fills/filters
 
   // OCR state
   const ocrImageRef = useRef(null); // { url, naturalWidth, naturalHeight }
@@ -143,6 +164,9 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
       const fields = t.customizableFields || [];
       setCustomFields(fields);
       customFieldsRef.current = fields;
+      const pt = t.printType;
+      setPrintTypes(Array.isArray(pt) ? pt : pt ? [pt] : ["DTF"]);
+      setStitchType(t.stitchType || "satin");
 
       // Strip expired blob: URLs — Fabric never calls its callback when an image
       // src fails to load, which hangs the canvas indefinitely.
@@ -160,6 +184,34 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
         const timer = setTimeout(() => { c.renderAll(); resolve(); }, 10000);
         c.loadFromJSON(json, () => {
           clearTimeout(timer);
+          // Migrate old templates: move backgroundImage to a canvas object
+          if (c.backgroundImage) {
+            const bgImg = c.backgroundImage;
+            c.backgroundImage = null;
+            bgImg.set({ selectable: true, evented: true, hasControls: true, hasBorders: true, lockUniScaling: true });
+            bgImg.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+            c.add(bgImg);
+            c.sendToBack(bgImg);
+          }
+          // Enforce uniform scaling on all image objects
+          // Also migrate old templates: the bottom-most image that fills the canvas
+          // is a reference background — mark it so export can skip it
+          const allImgs = c.getObjects("image");
+          const hasAnyMarked = allImgs.some(o => o.isBackground);
+          if (!hasAnyMarked && allImgs.length > 0) {
+            // The bottom image (index 0 in z-order) that covers ≥60% of the
+            // shorter canvas dimension is the reference shirt/background
+            const bottom = allImgs[0];
+            const scaledW = (bottom.width  || 0) * (bottom.scaleX || 1);
+            const scaledH = (bottom.height || 0) * (bottom.scaleY || 1);
+            if (scaledW >= CANVAS_W * 0.6 || scaledH >= CANVAS_H * 0.6) {
+              bottom.isBackground = true;
+            }
+          }
+          allImgs.forEach(o => {
+            o.set({ lockUniScaling: true });
+            o.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+          });
           c.renderAll();
           resolve();
         });
@@ -175,7 +227,7 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
   // ── History ───────────────────────────────────────────────────────────────
   function pushHistory() {
     if (histPausedRef.current || !fabricRef.current) return;
-    const json = fabricRef.current.toJSON(["fieldId", "isCustomizable", "defaultValue"]);
+    const json = fabricRef.current.toJSON(["fieldId", "isCustomizable", "defaultValue", "isBackground"]);
     const hist = historyRef.current.slice(0, histIdxRef.current + 1);
     hist.push(json);
     historyRef.current = hist;
@@ -361,7 +413,9 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
           originX: "center", originY: "center",
           selectable: true, evented: true,
           hasControls: true, hasBorders: true,
+          lockUniScaling: true,
         });
+        img.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
         fabricRef.current?.add(img);
         fabricRef.current?.setActiveObject(img);
         fabricRef.current?.renderAll();
@@ -378,14 +432,22 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
     reader.onload = ev => {
       const url = ev.target.result;
       window.fabric.Image.fromURL(url, img => {
-        const scale  = Math.min(CANVAS_W / img.width, CANVAS_H / img.height);
-        const bgLeft = Math.round((CANVAS_W - img.width  * scale) / 2);
-        const bgTop  = Math.round((CANVAS_H - img.height * scale) / 2);
-        ocrImageRef.current = { url, naturalWidth: img.width, naturalHeight: img.height, fabricObj: null, bgLeft, bgTop };
+        const scale = Math.min(CANVAS_W / img.width, CANVAS_H / img.height);
+        ocrImageRef.current = { url, naturalWidth: img.width, naturalHeight: img.height, fabricObj: img };
         setHasOcrImage(true);
-        fabricRef.current?.setBackgroundImage(img, fabricRef.current.renderAll.bind(fabricRef.current), {
-          scaleX: scale, scaleY: scale, left: bgLeft, top: bgTop, originX: "left", originY: "top",
+        img.isBackground = true;
+        img.set({
+          left: CANVAS_W / 2, top: CANVAS_H / 2,
+          originX: "center", originY: "center",
+          scaleX: scale, scaleY: scale,
+          selectable: true, evented: true,
+          hasControls: true, hasBorders: true,
+          lockUniScaling: true,
         });
+        img.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+        fabricRef.current?.add(img);
+        fabricRef.current?.sendToBack(img);
+        fabricRef.current?.renderAll();
       });
     };
     reader.readAsDataURL(file);
@@ -494,7 +556,7 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
           bh = b.h_pct * nH;
         }
 
-        const fontSize = Math.max(12, Math.round(bh * uniformScale * 1.3));
+        const fontSize = Math.max(12, Math.round((bh / nH) * CANVAS_H));
         const fontFamily = fontStyleMap[b.font_style] ?? "Montserrat";
         return { text: b.text, fill: b.color_hex || "#000000", x0, y0, bw, bh, fontSize, fontFamily, isBold: b.is_bold, isItalic: b.is_italic };
       });
@@ -515,7 +577,7 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
         );
       }
 
-      // ── Erase text + remove background → transparent ball PNG ───────────
+      // Resize image + mask for upload (Stability erase, max 1024px)
       const MAX_AI = 1024;
       const aiScale = Math.min(1, MAX_AI / Math.max(nW, nH));
       const aiW = Math.round(nW * aiScale);
@@ -527,24 +589,6 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
         return new Promise(res => rc.toBlob(res, "image/png"));
       }
 
-      // Helper: draw a source image (by URL) onto a CANVAS_W×CANVAS_H canvas at
-      // the correct bgLeft/bgTop/uniformScale position → returns a small data URL
-      // that persists across sessions (no blob: URLs in saved JSON).
-      async function buildCanvasSizedDataUrl(srcUrl) {
-        const cs = document.createElement("canvas");
-        cs.width = CANVAS_W; cs.height = CANVAS_H;
-        const ctx = cs.getContext("2d");
-        await new Promise(resolve => {
-          const img = new Image();
-          img.onload = () => {
-            ctx.drawImage(img, bgLeft, bgTop, Math.round(nW * uniformScale), Math.round(nH * uniformScale));
-            resolve();
-          };
-          img.src = srcUrl;
-        });
-        return cs.toDataURL("image/png");
-      }
-
       let bgUrl = null;
       try {
         const [imageBlob, maskBlob] = await Promise.all([resizedBlob(srcCanvas), resizedBlob(maskCanvas)]);
@@ -554,7 +598,7 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
         const rebuildRes  = await fetch(`${apiBase}/rebuild-background`, { method: "POST", body: fd });
         const rebuildData = await rebuildRes.json();
         if (!rebuildData.error) {
-          bgUrl = await buildCanvasSizedDataUrl(rebuildData.image);
+          bgUrl = rebuildData.image; // raw AI result — Fabric scales it to fit
         } else {
           console.warn("[rebuild-bg]", rebuildData.msg);
         }
@@ -562,48 +606,116 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
         console.warn("[rebuild-bg] failed, using original:", e.message);
       }
 
-      // Fallback: render the original image at canvas size
-      if (!bgUrl) bgUrl = await buildCanvasSizedDataUrl(ocr.url);
+      // Fallback: use original image unchanged
+      if (!bgUrl) bgUrl = ocr.url;
 
-      // ── Set canvas-sized background (scale=1, pos=(0,0)) + IText layers ──
+      // ── Place image as canvas element + IText layers ──────────────────────
       const addedCount = await new Promise(resolve => {
         F.Image.fromURL(bgUrl, img => {
+          // Remove old image objects and clear any legacy background
           (fabricRef.current?.getObjects("image") ?? []).forEach(o => fabricRef.current.remove(o));
-          fabricRef.current?.setBackgroundImage(img, () => {
-            let count = 0;
-            for (const layer of textLayers) {
-              // Text coords are already in canvas space (bgLeft/bgTop baked into buildCanvasSizedDataUrl)
-              const textLeft = bgLeft + layer.x0 * uniformScale;
-              const textTop  = bgTop  + layer.y0 * uniformScale;
-              const availableW   = CANVAS_W - textLeft;
-              const textWidthEst = layer.text.length * layer.fontSize * 0.65;
-              const fontScale    = textWidthEst > availableW ? availableW / textWidthEst : 1;
-              fabricRef.current.add(new F.IText(layer.text, {
-                left: Math.max(0, textLeft), top: Math.max(0, textTop),
-                fontSize:   Math.round(layer.fontSize * fontScale),
-                fontFamily: layer.fontFamily,
-                fontWeight: layer.isBold ? "bold" : "normal",
-                fontStyle:  layer.isItalic ? "italic" : "normal",
-                fill: layer.fill,
-                textAlign: "left",
-                selectable: true, evented: true,
-              }));
-              count++;
-            }
-            fabricRef.current?.discardActiveObject();
-            fabricRef.current?.renderAll();
-            resolve(count);
-          }, { scaleX: 1, scaleY: 1, left: 0, top: 0, originX: "left", originY: "top" });
+          fabricRef.current.backgroundImage = null;
+
+          const scale = Math.min(CANVAS_W / img.width, CANVAS_H / img.height);
+          img.isBackground = true;
+          img.set({
+            left: CANVAS_W / 2, top: CANVAS_H / 2,
+            originX: "center", originY: "center",
+            scaleX: scale, scaleY: scale,
+            selectable: true, evented: true,
+            hasControls: true, hasBorders: true,
+            lockUniScaling: true,
+          });
+          img.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
+          fabricRef.current.add(img);
+          fabricRef.current.sendToBack(img);
+
+          let count = 0;
+          for (const layer of textLayers) {
+            const imgS    = Math.min(CANVAS_W / nW, CANVAS_H / nH);
+            const imgW    = Math.round(nW * imgS);
+            const imgH    = Math.round(nH * imgS);
+            const imgLeft = Math.round((CANVAS_W - imgW) / 2);
+            const imgTop  = Math.round((CANVAS_H - imgH) / 2);
+            const textCenterX = imgLeft + (layer.x0 + layer.bw / 2) * imgS;
+            const textLeft    = Math.max(0, Math.min(CANVAS_W, textCenterX));
+            const textTop     = imgTop  + layer.y0 * imgS;
+            const scaledBh = layer.bh * imgS;
+            const scaledBw = layer.bw * imgS;
+            const sizeByHeight = Math.round(scaledBh * 0.85);
+            const sizeByWidth  = layer.text.length > 0 ? Math.floor(scaledBw / (layer.text.length * 0.55)) : sizeByHeight;
+            const finalFontSize = Math.max(12, Math.min(sizeByHeight, sizeByWidth));
+            fabricRef.current.add(new F.IText(layer.text, {
+              left: textLeft, top: Math.max(0, textTop),
+              originX: "center",
+              fontSize: finalFontSize,
+              fontFamily: layer.fontFamily,
+              fontWeight: layer.isBold ? "bold" : "normal",
+              fontStyle:  layer.isItalic ? "italic" : "normal",
+              fill: layer.fill,
+              textAlign: "center",
+              selectable: true, evented: true,
+            }));
+            count++;
+          }
+          fabricRef.current.discardActiveObject();
+          fabricRef.current.renderAll();
+          resolve(count);
         });
       });
 
-      ocrImageRef.current = { url: bgUrl, naturalWidth: CANVAS_W, naturalHeight: CANVAS_H, fabricObj: null, bgLeft: 0, bgTop: 0 };
+      ocrImageRef.current = { url: bgUrl, naturalWidth: nW, naturalHeight: nH, fabricObj: null };
       showSnack(`Extracted ${addedCount} text block${addedCount !== 1 ? "s" : ""}`, "success");
     } catch (e) {
       showSnack("OCR failed: " + (e?.message || String(e)), "error");
     } finally {
       setOcrProcessing(false);
     }
+  }
+
+  // Flood-fill from all edges, making connected near-white pixels transparent.
+  // This removes canvas background white while keeping white pixels inside designs.
+  function makeTransparentBackground(dataUrl, tolerance = 28) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const tmp = document.createElement("canvas");
+        tmp.width = img.width; tmp.height = img.height;
+        const ctx = tmp.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const id = ctx.getImageData(0, 0, tmp.width, tmp.height);
+        const data = id.data;
+        const w = tmp.width, h = tmp.height;
+
+        const visited = new Uint8Array(w * h);
+        const stack = [];
+
+        const seed = (x, y) => {
+          const i = y * w + x;
+          if (!visited[i]) { visited[i] = 1; stack.push(i); }
+        };
+        for (let x = 0; x < w; x++) { seed(x, 0); seed(x, h - 1); }
+        for (let y = 1; y < h - 1; y++) { seed(0, y); seed(w - 1, y); }
+
+        while (stack.length) {
+          const i = stack.pop();
+          const di = i * 4;
+          const r = data[di], g = data[di + 1], b = data[di + 2], a = data[di + 3];
+          if (a > 0 && r >= 255 - tolerance && g >= 255 - tolerance && b >= 255 - tolerance) {
+            data[di + 3] = 0;
+            const x = i % w, y = (i / w) | 0;
+            if (x > 0)     seed(x - 1, y);
+            if (x < w - 1) seed(x + 1, y);
+            if (y > 0)     seed(x, y - 1);
+            if (y < h - 1) seed(x, y + 1);
+          }
+        }
+
+        ctx.putImageData(id, 0, 0);
+        resolve(tmp.toDataURL("image/png"));
+      };
+      img.src = dataUrl;
+    });
   }
 
   function trimTransparentPixels(srcDataUrl) {
@@ -645,17 +757,22 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
       c.discardActiveObject();
       // Strip any strokes (customizable-field indicator) so they don't appear in the exported image
       c.getObjects().forEach(o => { if (o.stroke) o.set({ stroke: null, strokeWidth: 0 }); });
+      // Hide reference/background images only, keep design artwork visible
+      const bgObjs = c.getObjects("image").filter(o => o.isBackground);
+      bgObjs.forEach(o => { o._savedOpacity = o.opacity ?? 1; o.set({ opacity: 0 }); });
       const prevBg = c.backgroundColor;
-      c.backgroundColor = "";
+      c.backgroundColor = null;
       c.renderAll();
       const raw = c.toDataURL({ format: "png", multiplier: 1 });
+      bgObjs.forEach(o => o.set({ opacity: o._savedOpacity }));
       c.backgroundColor = prevBg;
       c.renderAll();
-      const dataUrl = await trimTransparentPixels(raw);
+      const transparent = await makeTransparentBackground(raw);
+      const dataUrl = await trimTransparentPixels(transparent);
       const res = await fetch(`${apiBase}/create-design`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dataUrl, name: templateName }),
+        body: JSON.stringify({ dataUrl, name: templateName, printType: printTypes }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.msg);
@@ -710,7 +827,7 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
       tmpCanvas.height = CANVAS_H;
       const tmpFabric = new window.fabric.StaticCanvas(tmpCanvas);
       await new Promise(resolve => {
-        tmpFabric.loadFromJSON({ objects: [obj.toJSON(["fieldId","isCustomizable","defaultValue"])] }, () => {
+        tmpFabric.loadFromJSON({ objects: [obj.toJSON(["fieldId","isCustomizable","defaultValue","isBackground"])] }, () => {
           tmpFabric.renderAll();
           resolve();
         });
@@ -738,19 +855,279 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
   function bringForward() { fabricRef.current?.getActiveObject()?.bringForward(); fabricRef.current?.renderAll(); }
   function sendBackward() { fabricRef.current?.getActiveObject()?.sendBackwards(); fabricRef.current?.renderAll(); }
 
+  // ── Embroidery ────────────────────────────────────────────────────────────
+  function applyStitchToImageData(data, width, height, type) {
+    // Pull white pixels out so the effect only hits colored design areas.
+    const wasWhite = new Uint8Array(width * height);
+    for (let p = 0; p < width * height; p++) {
+      const i = p * 4;
+      if (data[i+3] > 0 && data[i] > 230 && data[i+1] > 230 && data[i+2] > 230) {
+        wasWhite[p] = 1;
+        data[i+3] = 0;
+      }
+    }
+
+    if (type === "PUFF") {
+      // Pass 1: mark pixels adjacent to white/transparent as edge pixels
+      const edge = new Uint8Array(width * height);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const p = y * width + x;
+          if (wasWhite[p] || data[p*4+3] === 0) continue;
+          const top    = y > 0          ? (y-1)*width+x : -1;
+          const bottom = y < height - 1 ? (y+1)*width+x : -1;
+          const left   = x > 0          ? y*width+(x-1) : -1;
+          const right  = x < width - 1  ? y*width+(x+1) : -1;
+          if (
+            (top    < 0 || wasWhite[top]    || data[top*4+3]    === 0) ||
+            (bottom < 0 || wasWhite[bottom] || data[bottom*4+3] === 0) ||
+            (left   < 0 || wasWhite[left]   || data[left*4+3]   === 0) ||
+            (right  < 0 || wasWhite[right]  || data[right*4+3]  === 0)
+          ) edge[p] = 1;
+        }
+      }
+      // Pass 2: highlight top-left edges, shadow bottom-right edges, brighten interior
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const p = y * width + x;
+          const i = p * 4;
+          if (wasWhite[p] || data[i+3] === 0) continue;
+          if (edge[p]) {
+            const adjTop  = y === 0 || wasWhite[(y-1)*width+x]   || data[((y-1)*width+x)*4+3]   === 0;
+            const adjLeft = x === 0 || wasWhite[y*width+(x-1)]   || data[(y*width+(x-1))*4+3]   === 0;
+            if (adjTop || adjLeft) {
+              data[i]   = Math.min(255, Math.round(data[i]   * 1.55 + 25));
+              data[i+1] = Math.min(255, Math.round(data[i+1] * 1.55 + 25));
+              data[i+2] = Math.min(255, Math.round(data[i+2] * 1.55 + 25));
+            } else {
+              data[i]   = Math.round(data[i]   * 0.4);
+              data[i+1] = Math.round(data[i+1] * 0.4);
+              data[i+2] = Math.round(data[i+2] * 0.4);
+            }
+          } else {
+            data[i]   = Math.min(255, Math.round(data[i]   * 1.1));
+            data[i+1] = Math.min(255, Math.round(data[i+1] * 1.1));
+            data[i+2] = Math.min(255, Math.round(data[i+2] * 1.1));
+          }
+        }
+      }
+    } else {
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          if (data[i + 3] === 0) continue;
+          switch (type) {
+            case "satin": {
+              const f = (x + y) % 6 < 3 ? 1.18 : 0.65;
+              data[i]   = Math.min(255, Math.round(data[i]   * f));
+              data[i+1] = Math.min(255, Math.round(data[i+1] * f));
+              data[i+2] = Math.min(255, Math.round(data[i+2] * f));
+              break;
+            }
+            case "fill": {
+              const f = y % 5 < 3 ? 1.12 : 0.6;
+              data[i]   = Math.min(255, Math.round(data[i]   * f));
+              data[i+1] = Math.min(255, Math.round(data[i+1] * f));
+              data[i+2] = Math.min(255, Math.round(data[i+2] * f));
+              break;
+            }
+            case "cross": {
+              const CELL = 10;
+              const cx = x % CELL, cy = y % CELL;
+              const onX = (cx === cy) || (cx === CELL - 1 - cy);
+              if (onX) {
+                data[i]   = Math.max(0, data[i]   - 30);
+                data[i+1] = Math.max(0, data[i+1] - 30);
+                data[i+2] = Math.max(0, data[i+2] - 30);
+              } else {
+                const b = 0.35;
+                data[i]   = Math.round(data[i]   * (1-b) + 235 * b);
+                data[i+1] = Math.round(data[i+1] * (1-b) + 220 * b);
+                data[i+2] = Math.round(data[i+2] * (1-b) + 195 * b);
+              }
+              break;
+            }
+            case "running": {
+              const inDash = Math.floor(x / 9) % 2 === 0 && y % 5 < 2;
+              if (!inDash) {
+                data[i]   = Math.round(data[i]   * 0.35 + 235 * 0.65);
+                data[i+1] = Math.round(data[i+1] * 0.35 + 220 * 0.65);
+                data[i+2] = Math.round(data[i+2] * 0.35 + 195 * 0.65);
+                data[i+3] = Math.round(data[i+3] * 0.4);
+              }
+              break;
+            }
+            case "VIN": {
+              // Posterize to 4 levels for flat heat-transfer vinyl look
+              const step = 85;
+              data[i]   = Math.round(data[i]   / step) * step;
+              data[i+1] = Math.round(data[i+1] / step) * step;
+              data[i+2] = Math.round(data[i+2] / step) * step;
+              // Diagonal gloss (simulates light from upper-left)
+              const nx = x / width, ny = y / height;
+              const diagDist = (1 - nx - ny) / 2;
+              if (diagDist > 0) {
+                const g = Math.round(Math.min(0.35, diagDist) * 255);
+                data[i]   = Math.min(255, data[i]   + g);
+                data[i+1] = Math.min(255, data[i+1] + g);
+                data[i+2] = Math.min(255, data[i+2] + g);
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Restore white pixels
+    for (let p = 0; p < width * height; p++) {
+      if (wasWhite[p]) {
+        const i = p * 4;
+        data[i] = 255; data[i+1] = 255; data[i+2] = 255; data[i+3] = 255;
+      }
+    }
+  }
+
+  function makeStitchPattern(color, type) {
+    const F = window.fabric;
+    const sz = type === "cross" ? 10 : type === "running" ? 18 : 6;
+    const pc = document.createElement("canvas");
+    pc.width = sz; pc.height = sz;
+    const ctx = pc.getContext("2d");
+    ctx.strokeStyle = color;
+    ctx.lineCap = "round";
+    switch (type) {
+      case "satin":
+        ctx.lineWidth = 1.8;
+        for (let d = -sz; d <= sz * 2; d += 4) {
+          ctx.beginPath(); ctx.moveTo(d, 0); ctx.lineTo(d + sz, sz); ctx.stroke();
+        }
+        break;
+      case "fill":
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, 1.5); ctx.lineTo(sz, 1.5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, 4.5); ctx.lineTo(sz, 4.5); ctx.stroke();
+        break;
+      case "cross":
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(1, 1); ctx.lineTo(sz-1, sz-1);
+        ctx.moveTo(sz-1, 1); ctx.lineTo(1, sz-1);
+        ctx.stroke();
+        break;
+      case "running":
+        ctx.lineWidth = 2;
+        ctx.setLineDash([7, 5]);
+        ctx.beginPath(); ctx.moveTo(0, sz/2); ctx.lineTo(sz, sz/2); ctx.stroke();
+        break;
+    }
+    return new F.Pattern({ source: pc, repeat: "repeat" });
+  }
+
+  async function applyPrintEffectToCanvas(effect, stitch) {
+    const c = fabricRef.current;
+    if (!c || !window.fabric) return;
+    const originals = embOriginalsRef.current;
+    const F = window.fabric;
+
+    await Promise.all(c.getObjects().map((obj, idx) => {
+      const key = obj.fieldId || `__i${idx}`;
+
+      if (["i-text", "text", "textbox"].includes(obj.type)) {
+        if (!originals[key]) originals[key] = { fill: obj.fill, shadow: obj.shadow ?? null };
+        if (effect === "EMB") {
+          const color = typeof originals[key].fill === "string" ? originals[key].fill : "#000000";
+          obj.set({ fill: makeStitchPattern(color, stitch), shadow: null });
+        } else if (effect === "PUFF") {
+          obj.set({
+            fill: originals[key].fill,
+            shadow: new F.Shadow({ color: "rgba(0,0,0,0.45)", blur: 0, offsetX: 3, offsetY: 3 }),
+          });
+        } else {
+          obj.set({ fill: originals[key].fill, shadow: null });
+        }
+        return Promise.resolve();
+      }
+
+      if (obj.type === "image") {
+        if (!originals[key]) originals[key] = { element: obj.getElement() };
+        const originalEl = originals[key].element;
+        const w = originalEl.naturalWidth || originalEl.width;
+        const h = originalEl.naturalHeight || originalEl.height;
+        const tmp = document.createElement("canvas");
+        tmp.width = w; tmp.height = h;
+        const ctx = tmp.getContext("2d");
+        ctx.drawImage(originalEl, 0, 0);
+        const imageData = ctx.getImageData(0, 0, w, h);
+        applyStitchToImageData(imageData.data, w, h, effect === "EMB" ? stitch : effect);
+        ctx.putImageData(imageData, 0, 0);
+        return new Promise(resolve => {
+          const newImg = new Image();
+          newImg.onload = () => { obj.setElement(newImg); resolve(); };
+          newImg.src = tmp.toDataURL("image/png");
+        });
+      }
+
+      return Promise.resolve();
+    }));
+
+    embOriginalsRef.current = originals;
+    c.renderAll();
+  }
+
+  function removePrintEffectFromCanvas() {
+    const c = fabricRef.current;
+    if (!c) return;
+    const originals = embOriginalsRef.current;
+    c.getObjects().forEach((obj, idx) => {
+      const key = obj.fieldId || `__i${idx}`;
+      const orig = originals[key];
+      if (!orig) return;
+      if (orig.fill    !== undefined) obj.set({ fill: orig.fill });
+      if (orig.shadow  !== undefined) obj.set({ shadow: orig.shadow });
+      if (orig.element !== undefined) obj.setElement(orig.element);
+    });
+    embOriginalsRef.current = {};
+    c.renderAll();
+  }
+
+  const prevEffectRef = useRef({ effect: null, stitchType: "satin" });
+  useEffect(() => {
+    if (!fabricRef.current || !fabricLoaded || loading) return;
+    const effect = ["EMB", "PUFF", "VIN"].find(e => printTypes.includes(e)) ?? null;
+    const prev = prevEffectRef.current;
+    if (!effect && prev.effect) {
+      removePrintEffectFromCanvas();
+    } else if (effect) {
+      // Remove old effect (and its originals) only when switching to a different effect type
+      if (prev.effect && prev.effect !== effect) removePrintEffectFromCanvas();
+      applyPrintEffectToCanvas(effect, stitchType);
+    }
+    prevEffectRef.current = { effect, stitchType };
+  }, [printTypes, stitchType, fabricLoaded, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Save ──────────────────────────────────────────────────────────────────
   async function save() {
     const c = fabricRef.current;
     if (!c) return;
     setSaving(true);
+    const activeEffect = ["EMB", "PUFF", "VIN"].find(e => printTypes.includes(e)) ?? null;
     try {
-      const canvasJson = c.toJSON(["fieldId", "isCustomizable", "defaultValue"]);
+      const savedOriginals = { ...embOriginalsRef.current };
+      if (activeEffect) removePrintEffectFromCanvas();
+      const canvasJson = c.toJSON(["fieldId", "isCustomizable", "defaultValue", "isBackground"]);
+      if (activeEffect) {
+        embOriginalsRef.current = savedOriginals;
+        applyPrintEffectToCanvas(activeEffect, stitchType);
+      }
       const payload = {
         name: templateName,
         canvasJson,
         customizableFields: customFieldsRef.current,
         canvasWidth: CANVAS_W,
         canvasHeight: CANVAS_H,
+        printType:  printTypes,
+        stitchType: stitchType,
       };
       if (templateId && templateId !== "new") {
         await axios.put(`${apiBase}?id=${templateId}`, payload);
@@ -763,7 +1140,8 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
         }
       }
     } catch (e) {
-      showSnack("Save failed: " + e.message, "error");
+      const msg = e.response?.data?.msg || e.message;
+      showSnack("Save failed: " + msg, "error");
     } finally {
       setSaving(false);
     }
@@ -772,6 +1150,18 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
   function showSnack(msg, sev = "success") {
     setSnack({ open: true, msg, sev });
   }
+
+  // ── Scale canvas to fill container ───────────────────────────────────────
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      const scale = Math.min((el.clientWidth - 48) / CANVAS_W, (el.clientHeight - 48) / CANVAS_H);
+      setCanvasScale(Math.max(0.2, scale));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
@@ -906,7 +1296,62 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
           )}
 
           {!selType && (
-            <Typography variant="body2" color="text.secondary">Select an object on the canvas to edit its properties.</Typography>
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 0.75, display: "block", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  Print Type
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                  {PRINT_TYPES.map(pt => {
+                    const active = printTypes[0] === pt.value;
+                    return (
+                      <Chip
+                        key={pt.value}
+                        label={pt.label}
+                        size="small"
+                        onClick={() => setPrintTypes([pt.value])}
+                        color={active ? "primary" : "default"}
+                        variant={active ? "filled" : "outlined"}
+                        sx={{ cursor: "pointer", fontWeight: active ? 700 : 400 }}
+                      />
+                    );
+                  })}
+                </Box>
+              </Box>
+
+              {printTypes.includes("EMB") && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 0.75, display: "block", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Stitch Type
+                  </Typography>
+                  <Stack spacing={0.5}>
+                    {STITCH_TYPES.map(st => (
+                      <Box
+                        key={st.value}
+                        onClick={() => setStitchType(st.value)}
+                        sx={{
+                          px: 1.25, py: 0.75, borderRadius: 1.5, cursor: "pointer",
+                          border: "1.5px solid",
+                          borderColor: stitchType === st.value ? "#7c3aed" : "divider",
+                          background: stitchType === st.value ? "#f5f3ff" : "transparent",
+                          display: "flex", flexDirection: "column",
+                          transition: ".12s",
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight={stitchType === st.value ? 700 : 400} color={stitchType === st.value ? "#6d28d9" : "text.primary"} sx={{ fontSize: "0.8rem" }}>
+                          {st.label}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled" sx={{ fontSize: "0.68rem" }}>
+                          {st.desc}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              <Typography variant="body2" color="text.secondary">Select an object on the canvas to edit its properties.</Typography>
+            </Stack>
           )}
         </Box>
 
@@ -943,19 +1388,113 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
           </Box>
 
           {/* Canvas */}
-          <Box sx={{ flex: 1, overflow: "auto", display: "flex", alignItems: "center", justifyContent: "center", p: 3 }}>
-            <Box sx={{ position: "relative", boxShadow: "0 8px 40px rgba(0,0,0,.14)", borderRadius: 2 }}>
-              <canvas id="dt-canvas" />
-              {loading && (
-                <Box sx={{
-                  position: "absolute", inset: 0, display: "flex", alignItems: "center",
-                  justifyContent: "center", gap: 2, background: "rgba(255,255,255,0.85)",
-                  borderRadius: 2, zIndex: 10,
-                }}>
-                  <CircularProgress size={28} />
-                  <Typography>Loading template…</Typography>
-                </Box>
-              )}
+          <Box
+            ref={containerRef}
+            sx={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", p: 3 }}
+          >
+            {/* Outer box reserves scaled layout space so the flex container centers correctly */}
+            <Box sx={{ width: CANVAS_W * canvasScale, height: CANVAS_H * canvasScale, position: "relative", flexShrink: 0 }}>
+              <Box sx={{
+                position: "absolute", top: 0, left: 0,
+                transformOrigin: "top left",
+                transform: `scale(${canvasScale})`,
+                boxShadow: "0 8px 40px rgba(0,0,0,.14)", borderRadius: 2,
+              }}>
+                <canvas id="dt-canvas" />
+                {loading && (
+                  <Box sx={{
+                    position: "absolute", inset: 0, zIndex: 10, borderRadius: 2,
+                    background: "linear-gradient(160deg,#f5f3ff 0%,#ede9fe 60%,#ddd6fe 100%)",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", gap: 3,
+                  }}>
+                    {/* Spinning ring */}
+                    <Box sx={{ position: "relative", width: 88, height: 88 }}>
+                      {/* Track */}
+                      <Box sx={{
+                        position: "absolute", inset: 0, borderRadius: "50%",
+                        border: "4px solid #ddd6fe",
+                      }} />
+                      {/* Spinner arc */}
+                      <Box sx={{
+                        position: "absolute", inset: 0, borderRadius: "50%",
+                        border: "4px solid transparent",
+                        borderTopColor: "#7c3aed",
+                        borderRightColor: "#a78bfa",
+                        animation: "dt-spin 0.9s linear infinite",
+                        "@keyframes dt-spin": { to: { transform: "rotate(360deg)" } },
+                      }} />
+                      {/* Centre icon — paintbrush shape made from Box elements */}
+                      <Box sx={{
+                        position: "absolute", inset: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Box sx={{
+                          width: 36, height: 36, borderRadius: "50%",
+                          background: "linear-gradient(135deg,#7c3aed,#6d28d9)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          boxShadow: "0 4px 14px rgba(124,58,237,.4)",
+                          animation: "dt-pulse 1.8s ease-in-out infinite",
+                          "@keyframes dt-pulse": {
+                            "0%,100%": { boxShadow: "0 4px 14px rgba(124,58,237,.4)" },
+                            "50%":     { boxShadow: "0 4px 22px rgba(124,58,237,.7)" },
+                          },
+                        }}>
+                          {/* Simple paintbrush SVG inline */}
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3z" fill="#fff"/>
+                            <path d="M20.71 4.63l-1.34-1.34a1 1 0 00-1.41 0L9 12.25 11.75 15l8.96-8.96a1 1 0 000-1.41z" fill="#e9d5ff"/>
+                          </svg>
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {/* Text */}
+                    <Stack alignItems="center" spacing={0.5}>
+                      <Typography
+                        variant="h6" fontWeight={800} letterSpacing={-0.5}
+                        sx={{ color: "#4c1d95" }}
+                      >
+                        Loading Template
+                      </Typography>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <Typography variant="body2" sx={{ color: "#7c3aed", opacity: 0.8 }}>
+                          Preparing your canvas
+                        </Typography>
+                        {/* Animated dots */}
+                        {[0, 0.3, 0.6].map((delay, i) => (
+                          <Box key={i} sx={{
+                            width: 4, height: 4, borderRadius: "50%", background: "#7c3aed",
+                            animation: "dt-dot 1.2s ease-in-out infinite",
+                            animationDelay: `${delay}s`,
+                            "@keyframes dt-dot": {
+                              "0%,80%,100%": { opacity: 0.25, transform: "scale(0.8)" },
+                              "40%":          { opacity: 1,    transform: "scale(1.2)" },
+                            },
+                          }} />
+                        ))}
+                      </Stack>
+                    </Stack>
+
+                    {/* Shimmer skeleton bars */}
+                    <Stack spacing={1} sx={{ width: 160 }}>
+                      {[1, 0.75, 0.5].map((w, i) => (
+                        <Box key={i} sx={{
+                          height: 7, borderRadius: 99, width: `${w * 100}%`,
+                          background: "linear-gradient(90deg,#ddd6fe 25%,#c4b5fd 50%,#ddd6fe 75%)",
+                          backgroundSize: "200% 100%",
+                          animation: "dt-shimmer 1.6s ease-in-out infinite",
+                          animationDelay: `${i * 0.15}s`,
+                          "@keyframes dt-shimmer": {
+                            "0%":   { backgroundPosition: "200% 0" },
+                            "100%": { backgroundPosition: "-200% 0" },
+                          },
+                        }} />
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
+              </Box>
             </Box>
           </Box>
         </Box>
