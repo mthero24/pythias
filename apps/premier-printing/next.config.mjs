@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ["sharp", "fluent-ffmpeg", "ffmpeg-static", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64"],
+    serverExternalPackages: ["sharp", "fluent-ffmpeg", "ffmpeg-static", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns"],
     transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
     images: {
         remotePatterns: [
