@@ -13,6 +13,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "sharp": "^0.33.5"
+    "sharp": "^0.34.2"
   }
 }

@@ -23,8 +23,8 @@
     "packages/*"
   ],
   "optionalDependencies": {
-    "@img/sharp-linux-x64": "^0.33.5",
-    "@img/sharp-win32-x64": "^0.33.5"
+    "@img/sharp-linux-x64": "^0.34.2",
+    "@img/sharp-win32-x64": "^0.34.2"
   },
   "dependencies": {
     "@aws-sdk/client-iam": "^3.744.0",
@@ -84,7 +84,7 @@
     "react-player": "^2.16.0",
     "react-select": "^5.10.0",
     "react-transition-group": "^4.4.5",
-    "sharp": "^0.33.5",
+    "sharp": "^0.34.2",
     "text-to-image": "^8.0.1",
     "tiktok-shop": "^1.1.2",
     "use-eye-dropper": "^1.7.1",

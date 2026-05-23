@@ -66,9 +66,15 @@ npm install --include=optional 2>&1 | tail -5
 ok "Dependencies installed"
 
 # ── Fix sharp for Linux ───────────────────────────────────────────────────────
-log "Ensuring sharp Linux binary is installed..."
-npm install --os=linux --cpu=x64 sharp@0.33.5 --include=optional 2>&1 | tail -3
-ok "sharp binary ready"
+log "Cleaning and reinstalling sharp for Linux..."
+# Remove all existing sharp installs (workspace root + any package-level copies)
+rm -rf node_modules/sharp node_modules/@img
+find packages -maxdepth 3 -type d -name "sharp" -path "*/node_modules/sharp" -exec rm -rf {} + 2>/dev/null || true
+find packages -maxdepth 3 -type d -name "@img" -path "*/node_modules/@img" -exec rm -rf {} + 2>/dev/null || true
+# Reinstall with correct Linux x64 binary
+npm install --include=optional 2>&1 | tail -3
+npm install --os=linux --cpu=x64 sharp@0.34.2 2>&1 | tail -3
+ok "sharp binary ready (0.34.2 linux-x64)"
 
 # ── Build each app with .next backup/restore ──────────────────────────────────
 echo ""
