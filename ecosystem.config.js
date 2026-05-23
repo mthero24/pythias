@@ -2,13 +2,14 @@ module.exports = {
   apps: [
     {
       name: "nextjs-premier",
-      cwd: "apps/premier-printing", // Point to the web app's directory
-      script: "node_modules/next/dist/bin/next", // Use Next.js binary
-      args: "start -p 3000", // Start on port 3000
-      exec_mode: "cluster", // Enable cluster mode to use multiple CPUs
-      instances: "5", // Use all available CPU cores
+      cwd: "apps/premier-printing",
+      script: "node_modules/next/dist/bin/next",
+      args: "start -p 3000",
+      exec_mode: "cluster",
+      instances: "5",
       env: {
-        NODE_ENV: "production", // Set production environment
+        NODE_ENV: "production",
+        LD_LIBRARY_PATH: "/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib",
       },
       output: null, // Output log file
       error: null, // Error log file
@@ -25,13 +26,14 @@ module.exports = {
     },
     {
       name: "nextjs-pythias",
-      cwd: "apps/pythias", // Point to the web app's directory
-      script: "node_modules/next/dist/bin/next", // Use Next.js binary
-      args: "start -p 3002", // Start on port 3000
-      exec_mode: "cluster", // Enable cluster mode to use multiple CPUs
-      instances: "1", // Use all available CPU cores
+      cwd: "apps/pythias",
+      script: "node_modules/next/dist/bin/next",
+      args: "start -p 3002",
+      exec_mode: "cluster",
+      instances: "1",
       env: {
-        NODE_ENV: "production", // Set production environment
+        NODE_ENV: "production",
+        LD_LIBRARY_PATH: "/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib",
       },
       output: null, // Output log file
       error: null, // Error log file
@@ -48,13 +50,14 @@ module.exports = {
     },
     {
       name: "nextjs-printthreads",
-      cwd: "apps/printthreads", // Point to the web app's directory
-      script: "node_modules/next/dist/bin/next", // Use Next.js binary
-      args: "start -p 3003", // Start on port 3000
-      exec_mode: "cluster", // Enable cluster mode to use multiple CPUs
-      instances: "1", // Use all available CPU cores
+      cwd: "apps/printthreads",
+      script: "node_modules/next/dist/bin/next",
+      args: "start -p 3003",
+      exec_mode: "cluster",
+      instances: "1",
       env: {
-        NODE_ENV: "production", // Set production environment
+        NODE_ENV: "production",
+        LD_LIBRARY_PATH: "/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib",
       },
       output: null, // Output log file
       error: null, // Error log file
@@ -71,13 +74,14 @@ module.exports = {
     },
     {
       name: "nextjs-po",
-      cwd: "apps/po", // Point to the web app's directory
-      script: "node_modules/next/dist/bin/next", // Use Next.js binary
-      args: "start -p 3001", // Start on port 3000
-      exec_mode: "cluster", // Enable cluster mode to use multiple CPUs
-      instances: "5", // Use all available CPU cores
+      cwd: "apps/po",
+      script: "node_modules/next/dist/bin/next",
+      args: "start -p 3001",
+      exec_mode: "cluster",
+      instances: "5",
       env: {
-        NODE_ENV: "production", // Set production environment
+        NODE_ENV: "production",
+        LD_LIBRARY_PATH: "/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib",
       },
       output: null, // Output log file
       error: null, // Error log file

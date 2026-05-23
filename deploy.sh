@@ -76,6 +76,10 @@ npm install --include=optional 2>&1 | tail -3
 npm install --os=linux --cpu=x64 sharp@0.34.2 2>&1 | tail -3
 ok "sharp binary ready (0.34.2 linux-x64)"
 
+# ── Set library path so sharp can find bundled libvips ───────────────────────
+export LD_LIBRARY_PATH="/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib:${LD_LIBRARY_PATH}"
+log "LD_LIBRARY_PATH set for sharp/libvips"
+
 # ── Build each app with .next backup/restore ──────────────────────────────────
 echo ""
 log "Building apps (current .next backed up — sites stay live if build fails)..."
