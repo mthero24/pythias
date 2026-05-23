@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import ContactMessage from "@pythias/mongo/models/ContactMessage";
+import { ContactMessage } from "@pythias/mongo";
 
 // Google sends a google_key you configure in Google Ads — set GOOGLE_LEAD_WEBHOOK_KEY in .env
 const WEBHOOK_KEY = process.env.GOOGLE_LEAD_WEBHOOK_KEY;
