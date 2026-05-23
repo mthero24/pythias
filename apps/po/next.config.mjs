@@ -28,10 +28,18 @@ const nextConfig = {
   env: {
     localKey: "$2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy",
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.node = {
       __dirname: true,
     };
+    if (isServer) {
+      config.externals.push(({ request }, callback) => {
+        if (request === "sharp" || (request && request.startsWith("@img/sharp"))) {
+          return callback(null, `commonjs ${request}`);
+        }
+        callback();
+      });
+    }
     return config;
   },
   serverExternalPackages: ["sharp", "pdfkit", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns"],
