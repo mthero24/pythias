@@ -1,30 +1,72 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Container, Typography } from "@mui/material";
 
+const POLL_INTERVAL = 15_000;
+
+async function fetchUids() {
+  try {
+    const res = await fetch("/api/calendar/appointments", { cache: "no-store" });
+    if (!res.ok) return null;
+    const { events } = await res.json();
+    return new Set((events ?? []).map((e) => e.uid));
+  } catch {
+    return null;
+  }
+}
+
+function fireBookingEvent() {
+  try {
+    window.gtag?.("event", "demo_booked", {
+      event_category: "engagement",
+      event_label: "google_calendar",
+    });
+    // Google Ads conversion
+    window.gtag?.("event", "conversion", {
+      send_to: "AW-18171939038",
+      event_category: "demo",
+    });
+  } catch {}
+}
+
 export default function CalendarBookingSection() {
-  const router = useRouter();
+  const router     = useRouter();
+  const baseUids   = useRef(null);   // UIDs present when the page loaded
+  const intervalId = useRef(null);
+  const redirected = useRef(false);
 
   useEffect(() => {
-    function onMessage(event) {
-      if (!event.origin.includes("google.com")) return;
-      try {
-        const raw  = typeof event.data === "string" ? event.data : JSON.stringify(event.data ?? "");
-        const lower = raw.toLowerCase();
-        // Google Calendar sends various message shapes on booking confirmation
-        if (
-          lower.includes("appointment") ||
-          lower.includes("scheduled")   ||
-          lower.includes("confirmed")   ||
-          lower.includes("booked")
-        ) {
-          router.push("/demo-confirmed");
+    let cancelled = false;
+
+    async function init() {
+      const initial = await fetchUids();
+      if (cancelled) return;
+      baseUids.current = initial ?? new Set();
+
+      intervalId.current = setInterval(async () => {
+        if (redirected.current) return;
+        const current = await fetchUids();
+        if (!current || !baseUids.current) return;
+
+        for (const uid of current) {
+          if (!baseUids.current.has(uid)) {
+            redirected.current = true;
+            clearInterval(intervalId.current);
+            fireBookingEvent();
+            router.push("/demo-confirmed");
+            return;
+          }
         }
-      } catch {}
+      }, POLL_INTERVAL);
     }
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
+
+    init();
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId.current);
+    };
   }, [router]);
 
   return (
