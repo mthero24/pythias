@@ -8,7 +8,7 @@ import LeadCaptureSection from "./LeadCaptureSection";
 import FAQSection from "./FAQSection";
 import FinalCTASection from "./FinalCTASection";
 
-const CalendarBookingSection = dynamic(() => import("./CalendarBookingSection"), { ssr: false });
+const CalendarBookingSection = dynamic(() => import("./CalendarBookingSection"));
 
 export default function Home() {
   return (
