@@ -3,12 +3,28 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Button, Stack, Alert, CircularProgress, IconButton,
     Accordion, AccordionSummary, AccordionDetails,
-    Typography, Box,
+    Typography, Box, Select, MenuItem, FormControl, InputLabel,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useState } from "react";
 import axios from "axios";
+
+const KNOWN_MARKETPLACES = [
+    { label: "— Custom marketplace —",  value: "" },
+    { label: "Best Buy (US)",            value: "https://marketplace.bestbuy.com" },
+    { label: "Best Buy (Canada)",        value: "https://marketplace.bestbuy.ca" },
+    { label: "Bloomingdale's",           value: "https://seller.bloomingdales.com" },
+    { label: "Bunnings",                 value: "https://marketplace.bunnings.com.au" },
+    { label: "B&Q",                      value: "https://seller.diy.com" },
+    { label: "Boulanger",                value: "https://marketplace.boulanger.com" },
+    { label: "Carrefour",                value: "https://marketplacepro.carrefour.fr" },
+    { label: "Castorama",                value: "https://marketplace.castorama.fr" },
+    { label: "Conforama",                value: "https://marketplace.conforama.fr" },
+    { label: "Conrad",                   value: "https://marketplace.conrad.fr" },
+    { label: "Fnac",                     value: "https://marketplace.fnac.com" },
+    { label: "Bauhaus",                  value: "https://marketplace.bauhaus.com" },
+];
 
 const SETUP_STEPS = [
     {
@@ -99,11 +115,31 @@ export function MiraklModal({ open, setOpen, provider, setConnections }) {
 
                 <Stack spacing={2} sx={{ pt: 2, px: 3, pb: 1 }}>
                     {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
+                    <FormControl fullWidth size="small">
+                        <InputLabel>Quick Select Marketplace</InputLabel>
+                        <Select
+                            value={KNOWN_MARKETPLACES.find(m => m.value === baseUrl)?.value ?? ""}
+                            label="Quick Select Marketplace"
+                            onChange={e => {
+                                const m = KNOWN_MARKETPLACES.find(x => x.value === e.target.value);
+                                if (m && m.value) {
+                                    setBaseUrl(m.value);
+                                    if (!displayName) setDisplayName(m.label);
+                                } else {
+                                    setBaseUrl("");
+                                }
+                            }}
+                        >
+                            {KNOWN_MARKETPLACES.map(m => (
+                                <MenuItem key={m.label} value={m.value}>{m.label}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                     <TextField
                         fullWidth size="small" label="Display Name"
                         value={displayName}
                         onChange={e => setDisplayName(e.target.value)}
-                        placeholder="e.g. Target Plus"
+                        placeholder="e.g. Best Buy US"
                     />
                     <TextField
                         fullWidth size="small" label="Marketplace Base URL"

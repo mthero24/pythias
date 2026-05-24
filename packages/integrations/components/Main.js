@@ -20,6 +20,9 @@ import { TemuModal }    from "./TemuModal";
 import { AmazonModal }  from "./AmazonModal";
 import { MiraklModal }  from "./MiraklModal";
 import { TargetModal }  from "./TargetModal";
+import { EbayModal }    from "./EbayModal";
+import { NoonModal }    from "./NoonModal";
+import { BolModal }     from "./BolModal";
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import AddIcon from "@mui/icons-material/Add";
@@ -44,6 +47,8 @@ const PLATFORMS = {
     mirakl:  { label: "Mirakl",      color: "#1d4ed8", description: "Sell on any Mirakl-powered marketplace (Carrefour, Best Buy Canada, and others) with order sync and fulfillment." },
     target:  { label: "Target Plus", color: "#CC0000", description: "Sell on Target Plus marketplace with order sync, fulfillment confirmation, and direct SP-API integration." },
     ebay:    { label: "eBay",        color: "#E53238", description: "List products on eBay and automatically pull orders and confirm shipments via the eBay Sell API." },
+    noon:    { label: "Noon",        color: "#f59e0b", description: "Sell on Noon marketplace across UAE, Saudi Arabia, and Egypt with order sync and fulfillment." },
+    bol:     { label: "bol.com",     color: "#0062B1", description: "Sell on bol.com, the leading marketplace in the Netherlands and Belgium, with order sync and fulfillment." },
 };
 
 function platformColor(type) {
@@ -1373,6 +1378,386 @@ function TargetOrdersPanel({ connectionId }) {
     );
 }
 
+// ─── eBay Orders Panel ────────────────────────────────────────────────────────
+const EBAY_CARRIERS = ["USPS", "UPS", "FedEx", "DHL", "OnTrac", "Other"];
+
+function EbayOrdersPanel({ connectionId }) {
+    const [orders, setOrders]         = useState([]);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState("");
+    const [fetched, setFetched]       = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier]       = useState("USPS");
+    const [tracking, setTracking]     = useState("");
+    const [shipping, setShipping]     = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/ebay/orders?connectionId=${connectionId}`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            const lineItemIds = (shipTarget.lineItems ?? []).map(l => l.lineItemId);
+            await axios.post("/api/integrations/ebay/orders", {
+                connectionId,
+                orderId: shipTarget.orderId,
+                trackingNumber: tracking.trim(),
+                carrier,
+                lineItemIds,
+            });
+            setOrders(prev => prev.filter(o => o.orderId !== shipTarget.orderId));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Awaiting Fulfillment</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#fff8f0" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.orderId}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {EBAY_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#E53238", "&:hover": { bgcolor: "#c0282d" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Buyer</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.orderId} hover selected={shipTarget?.orderId === o.orderId}>
+                                    <TableCell><Typography variant="body2" fontWeight={500}>{o.orderId}</Typography></TableCell>
+                                    <TableCell><Typography variant="body2">{o.buyer?.username ?? "—"}</Typography></TableCell>
+                                    <TableCell><Typography variant="body2">{(o.lineItems ?? []).length}</Typography></TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.creationDate ? new Date(o.creationDate).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button size="small" variant="outlined"
+                                            startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                            onClick={() => { setShipTarget(o); setTracking(""); }}
+                                            sx={{ borderColor: "#E53238", color: "#E53238" }}>
+                                            Ship
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No orders awaiting fulfillment.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Noon Orders Panel ────────────────────────────────────────────────────────
+const NOON_CARRIERS = ["USPS", "UPS", "FedEx", "DHL", "Aramex", "Other"];
+
+function NoonOrdersPanel({ connectionId }) {
+    const [orders, setOrders]         = useState([]);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState("");
+    const [fetched, setFetched]       = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier]       = useState("Aramex");
+    const [tracking, setTracking]     = useState("");
+    const [shipping, setShipping]     = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/noon/orders?connectionId=${connectionId}`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            await axios.post("/api/integrations/noon/orders", {
+                connectionId,
+                orderId: shipTarget.id ?? shipTarget.order_id,
+                trackingNumber: tracking.trim(),
+                carrier,
+            });
+            const key = shipTarget.id ?? shipTarget.order_id;
+            setOrders(prev => prev.filter(o => (o.id ?? o.order_id) !== key));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Pending Orders</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#fdf4e7" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.id ?? shipTarget.order_id}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {NOON_CARRIERS.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Tracking Number" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#f59e0b", color: "#111", "&:hover": { bgcolor: "#d97706" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => {
+                                const key = o.id ?? o.order_id;
+                                return (
+                                    <TableRow key={key} hover selected={(shipTarget?.id ?? shipTarget?.order_id) === key}>
+                                        <TableCell><Typography variant="body2" fontWeight={500}>{key}</Typography></TableCell>
+                                        <TableCell>
+                                            <Chip label={o.status ?? "—"} size="small"
+                                                sx={{ bgcolor: "#fdf4e7", color: "#92400e", fontWeight: 600, fontSize: "0.7rem" }} />
+                                        </TableCell>
+                                        <TableCell><Typography variant="body2">{(o.items ?? o.order_items ?? []).length}</Typography></TableCell>
+                                        <TableCell>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button size="small" variant="outlined"
+                                                startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                                onClick={() => { setShipTarget(o); setTracking(""); }}
+                                                sx={{ borderColor: "#f59e0b", color: "#92400e" }}>
+                                                Ship
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No pending orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
+// ─── Bol Orders Panel ─────────────────────────────────────────────────────────
+// transporterCode values are bol.com specific carrier codes
+const BOL_CARRIERS = [
+    { label: "PostNL",  value: "TNT" },
+    { label: "DPD",     value: "DPD-NL" },
+    { label: "DHL",     value: "DHL" },
+    { label: "UPS",     value: "UPS" },
+    { label: "FedEx",   value: "FEDEX-NL" },
+    { label: "GLS",     value: "GLS" },
+];
+
+function BolOrdersPanel({ connectionId }) {
+    const [orders, setOrders]         = useState([]);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState("");
+    const [fetched, setFetched]       = useState(false);
+    const [shipTarget, setShipTarget] = useState(null);
+    const [carrier, setCarrier]       = useState("TNT");
+    const [tracking, setTracking]     = useState("");
+    const [shipping, setShipping]     = useState(false);
+
+    const pull = useCallback(async () => {
+        setLoading(true); setError(""); setFetched(true);
+        try {
+            const res = await axios.get(`/api/integrations/bol/orders?connectionId=${connectionId}`);
+            setOrders(res.data.orders ?? []);
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    }, [connectionId]);
+
+    const ship = async () => {
+        if (!tracking.trim() || !shipTarget) return;
+        setShipping(true);
+        try {
+            // bol. ships ALL items on the order in one shipment; send all orderItemIds
+            const orderItems = (shipTarget.orderItems ?? []).map(i => i.orderItemId);
+            await axios.post("/api/integrations/bol/orders", {
+                connectionId,
+                trackingNumber: tracking.trim(),
+                transporterCode: carrier,
+                orderItems,
+            });
+            setOrders(prev => prev.filter(o => o.orderId !== shipTarget.orderId));
+            setShipTarget(null); setTracking("");
+        } catch (e) {
+            setError(e.response?.data?.error ?? "Ship failed");
+        } finally { setShipping(false); }
+    };
+
+    return (
+        <Box sx={{ px: 2.5, pb: 2 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Stack direction="row" alignItems="center" spacing={2} mb={1.5}>
+                <Typography variant="body2" fontWeight={600} color="text.secondary">Open Orders (FBR)</Typography>
+                <Button size="small" variant="outlined"
+                    startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
+                    onClick={pull} disabled={loading}>
+                    {fetched ? "Refresh" : "Pull Now"}
+                </Button>
+                {fetched && !loading && (
+                    <Chip label={`${orders.length} order${orders.length !== 1 ? "s" : ""}`} size="small"
+                        sx={{ bgcolor: orders.length > 0 ? "#fef3c7" : "#d1fae5", color: orders.length > 0 ? "#92400e" : "#065f46", fontWeight: 600 }} />
+                )}
+            </Stack>
+            {error && <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setError("")}>{error}</Alert>}
+            {shipTarget && (
+                <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 1.5, bgcolor: "#eff6ff" }}>
+                    <Typography variant="body2" fontWeight={600} mb={1}>
+                        Ship Order {shipTarget.orderId} — {(shipTarget.orderItems ?? []).length} item{(shipTarget.orderItems ?? []).length !== 1 ? "s" : ""}
+                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Select size="small" value={carrier} onChange={e => setCarrier(e.target.value)} sx={{ minWidth: 110 }}>
+                            {BOL_CARRIERS.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                        </Select>
+                        <TextField size="small" label="Track & Trace" value={tracking}
+                            onChange={e => setTracking(e.target.value)}
+                            onKeyDown={e => e.key === "Enter" && ship()} sx={{ flexGrow: 1 }} />
+                        <Button variant="contained" size="small" onClick={ship} disabled={shipping || !tracking.trim()}
+                            startIcon={shipping ? <CircularProgress size={12} color="inherit" /> : <LocalShippingIcon sx={{ fontSize: 14 }} />}
+                            sx={{ bgcolor: "#0062B1", "&:hover": { bgcolor: "#00509a" } }}>
+                            Ship
+                        </Button>
+                        <Button size="small" onClick={() => { setShipTarget(null); setTracking(""); }}>Cancel</Button>
+                    </Stack>
+                </Paper>
+            )}
+            {fetched && !loading && orders.length > 0 && (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Order ID</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Items</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders.map(o => (
+                                <TableRow key={o.orderId} hover selected={shipTarget?.orderId === o.orderId}>
+                                    <TableCell><Typography variant="body2" fontWeight={500}>{o.orderId}</Typography></TableCell>
+                                    <TableCell><Typography variant="body2">{(o.orderItems ?? []).length}</Typography></TableCell>
+                                    <TableCell>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {o.orderPlacedDateTime ? new Date(o.orderPlacedDateTime).toLocaleDateString() : "—"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button size="small" variant="outlined"
+                                            startIcon={<LocalShippingIcon sx={{ fontSize: 14 }} />}
+                                            onClick={() => { setShipTarget(o); setTracking(""); }}
+                                            sx={{ borderColor: "#0062B1", color: "#0062B1" }}>
+                                            Ship
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+            {fetched && !loading && orders.length === 0 && !error && (
+                <Typography variant="body2" color="text.secondary">No open orders found.</Typography>
+            )}
+        </Box>
+    );
+}
+
 // ─── Acenda Dashboard Panel ───────────────────────────────────────────────────
 function AcendaDashboardPanel({ connectionId, manageHref }) {
     const [data, setData]       = useState(null);
@@ -1436,6 +1821,9 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
     const isFaire   = normalizedType === "faire";
     const isShein   = normalizedType === "shein";
     const isTemu    = normalizedType === "temu";
+    const isEbay    = normalizedType === "ebay";
+    const isNoon    = normalizedType === "noon";
+    const isBol     = normalizedType === "bol";
 
     const [pullEnabled, setPullEnabled] = useState(!!initialPullEnabled);
     const [toggling, setToggling]       = useState(false);
@@ -1535,10 +1923,10 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     </Box>
 
                     {/* ── Pull Orders toggle strip ── */}
-                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu || isAmazon || isMirakl || isTarget) && (() => {
-                        const accentColor  = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : isAmazon ? "#FF9900" : isMirakl ? "#1d4ed8" : isTarget ? "#CC0000" : "#1565C0";
-                        const bgEnabled    = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : isAmazon ? "#fff8f0" : isMirakl ? "#eff6ff" : isTarget ? "#fff5f5" : "#eff6ff";
-                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : isAmazon ? "Amazon" : isMirakl ? "Mirakl" : isTarget ? "Target Plus" : "Acenda";
+                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu || isAmazon || isMirakl || isTarget || isEbay || isNoon || isBol) && (() => {
+                        const accentColor  = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : isAmazon ? "#FF9900" : isMirakl ? "#1d4ed8" : isTarget ? "#CC0000" : isEbay ? "#E53238" : isNoon ? "#f59e0b" : isBol ? "#0062B1" : "#1565C0";
+                        const bgEnabled    = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : isAmazon ? "#fff8f0" : isMirakl ? "#eff6ff" : isTarget ? "#fff5f5" : isEbay ? "#fff8f0" : isNoon ? "#fdf4e7" : isBol ? "#eff6ff" : "#eff6ff";
+                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : isAmazon ? "Amazon" : isMirakl ? "Mirakl" : isTarget ? "Target Plus" : isEbay ? "eBay" : isNoon ? "Noon" : isBol ? "bol.com" : "Acenda";
                         return (
                             <Box sx={{
                                 borderTop: "1px solid #f1f5f9",
@@ -1615,6 +2003,21 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     {isTarget && (
                         <Collapse in={pullEnabled}>
                             <TargetOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isEbay && (
+                        <Collapse in={pullEnabled}>
+                            <EbayOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isNoon && (
+                        <Collapse in={pullEnabled}>
+                            <NoonOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isBol && (
+                        <Collapse in={pullEnabled}>
+                            <BolOrdersPanel connectionId={id} />
                         </Collapse>
                     )}
                 </Box>
@@ -1710,6 +2113,9 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const [amazonOpen,  setAmazonOpen]  = useState(false);
     const [miraklOpen,  setMiraklOpen]  = useState(false);
     const [targetOpen,  setTargetOpen]  = useState(false);
+    const [ebayOpen,    setEbayOpen]    = useState(false);
+    const [noonOpen,    setNoonOpen]    = useState(false);
+    const [bolOpen,     setBolOpen]     = useState(false);
     const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || []);
     const [tiktokConnections, setTiktokConnections] = useState(tiktokShops || []);
 
@@ -1858,7 +2264,25 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             name="eBay"
                             description={PLATFORMS.ebay.description}
                             connected={connectedTypes.has("ebay")}
-                            comingSoon={!connectedTypes.has("ebay")}
+                            onClick={connectedTypes.has("ebay") ? undefined : () => setEbayOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/noon.svg" alt="Noon"
+                            name="Noon"
+                            description={PLATFORMS.noon.description}
+                            connected={connectedTypes.has("noon")}
+                            onClick={connectedTypes.has("noon") ? undefined : () => setNoonOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/bol.svg" alt="bol.com"
+                            name="bol.com"
+                            description={PLATFORMS.bol.description}
+                            connected={connectedTypes.has("bol")}
+                            onClick={connectedTypes.has("bol") ? undefined : () => setBolOpen(true)}
                         />
                     </Grid2>
                 </Grid2>
@@ -1909,6 +2333,9 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             <AmazonModal  open={amazonOpen}  setOpen={setAmazonOpen}  provider={provider} setConnections={setApiConnections} />
             <MiraklModal  open={miraklOpen}  setOpen={setMiraklOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <TargetModal  open={targetOpen}  setOpen={setTargetOpen}  provider={provider} setConnections={setApiConnections} />
+            <EbayModal    open={ebayOpen}    setOpen={setEbayOpen} />
+            <NoonModal    open={noonOpen}    setOpen={setNoonOpen}    provider={provider} setConnections={setApiConnections} />
+            <BolModal     open={bolOpen}     setOpen={setBolOpen}     provider={provider} setConnections={setApiConnections} />
         </Box>
     );
 }

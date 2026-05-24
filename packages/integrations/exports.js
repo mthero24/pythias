@@ -117,3 +117,13 @@ export { getOrdersMirakl, getOrderMirakl, acceptOrderMirakl, shipOrderMirakl, ca
 export { handleMiraklGET, handleMiraklOrdersGET, handleMiraklOrdersPOST, handleMiraklOffersGET } from "./handlers/mirakl";
 export { MiraklDashboard } from "./components/MiraklDashboard";
 export { MiraklModal } from "./components/MiraklModal";
+
+// noon
+export { getOrdersNoon, shipOrderNoon } from "./functions/noon";
+export { handleNoonOrdersGET, handleNoonOrdersPOST } from "./handlers/noon";
+export { NoonModal } from "./components/NoonModal";
+
+// bol.com
+export { getOrdersBol, getOrderBol, shipOrderBol } from "./functions/bol";
+export { handleBolOrdersGET, handleBolOrdersPOST } from "./handlers/bol";
+export { BolModal } from "./components/BolModal";

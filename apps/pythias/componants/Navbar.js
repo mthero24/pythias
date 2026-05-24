@@ -11,13 +11,14 @@ import Image from "next/image";
 import Logo from "../public/logo_vertical.png";
 
 const NAV_LINKS = [
-  { label: "Services",     href: "/services" },
-  { label: "Features",     href: "/features" },
-  { label: "How It Works", href: "/how-it-works" },
-  { label: "Blog",         href: "/blog" },
-  { label: "Tutorials",    href: "/tutorials" },
-  { label: "About Us",     href: "/about" },
-  { label: "Contact Us",   href: "/contact" },
+  { label: "Services",      href: "/services" },
+  { label: "Features",      href: "/features" },
+  { label: "Integrations",  href: "/integrations" },
+  { label: "How It Works",  href: "/how-it-works" },
+  { label: "Blog",          href: "/blog" },
+  { label: "Tutorials",     href: "/tutorials" },
+  { label: "About Us",      href: "/about" },
+  { label: "Contact Us",    href: "/contact" },
 ];
 
 export default function Navbar() {
