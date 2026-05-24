@@ -17,6 +17,9 @@ export default function IframeBreaker() {
             event_label: "demo_confirmed_page",
         });
 
+        // Google Ads conversion event
+        window.gtag?.("event", "ads_conversion_Book_appointment_1");
+
         // Internal analytics conversion event
         try {
             let sid = sessionStorage.getItem("_psid");

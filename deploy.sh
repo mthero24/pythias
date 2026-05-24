@@ -54,13 +54,13 @@ cd "$REPO_DIR"
 
 # ── Git pull ──────────────────────────────────────────────────────────────────
 log "Pulling latest code..."
-git stash
+git stash -u
 if ! git pull; then
   fail "git pull failed — aborting, no changes made"
-  git stash pop
+  git stash pop 2>/dev/null || true
   exit 1
 fi
-git stash pop
+git stash pop 2>/dev/null || true
 ok "Code updated"
 
 # ── Install dependencies ──────────────────────────────────────────────────────
