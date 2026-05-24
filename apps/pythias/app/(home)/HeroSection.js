@@ -1,4 +1,3 @@
-"use client";
 import { Box, Container, Typography, Button, Stack, Chip } from "@mui/material";
 import { RocketLaunch, CalendarMonth } from "@mui/icons-material";
 import Image from "next/image";
@@ -9,8 +8,6 @@ const STATS = [
   { value: "24/7", label: "Support" },
   { value: "< 2 wks", label: "Onboarding" },
 ];
-
-const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 export default function HeroSection() {
   return (
@@ -77,10 +74,11 @@ export default function HeroSection() {
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent={{ xs: "center", md: "flex-start" }} sx={{ mb: 6 }}>
               <Button
+                component="a"
+                href="#calendar-booking-section"
                 variant="contained"
                 size="large"
                 startIcon={<CalendarMonth />}
-                onClick={() => scrollTo("calendar-booking-section")}
                 sx={{
                   bgcolor: "#D3A73D",
                   color: "#111",
@@ -95,10 +93,11 @@ export default function HeroSection() {
                 Book a Demo
               </Button>
               <Button
+                component="a"
+                href="#lead-capture-section"
                 variant="outlined"
                 size="large"
                 startIcon={<RocketLaunch />}
-                onClick={() => scrollTo("lead-capture-section")}
                 sx={{
                   borderColor: "rgba(255,255,255,0.25)",
                   color: "#fff",

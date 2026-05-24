@@ -19,16 +19,15 @@
 }
 
 /* Base styles that work with MUI */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: #fafafa;
   color: var(--foreground);
   font-family: var(--font-urbanist), sans-serif;
   margin: 0;
-}
-
-/* Ensure MUI components use Urbanist font */
-* {
-  font-family: var(--font-urbanist), sans-serif;
 }
 
 /* MUI integration styles */

@@ -2,7 +2,10 @@
 const nextConfig = {
   transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
   images: {
-    domains: ["images.unsplash.com"],
+    remotePatterns: [],
+  },
+  experimental: {
+    optimizePackageImports: ["@mui/material", "@mui/icons-material"],
   },
 };
 

@@ -1,13 +1,14 @@
+import dynamic from "next/dynamic";
 import HeroSection from "./HeroSection";
 import BenefitsSection from "./BenefitsSection";
 import HowItWorksSection from "./HowItWorksSection";
 import FeaturesSection from "./FeaturesSection";
 import TestimonialsSection from "./TestimonialsSection";
 import LeadCaptureSection from "./LeadCaptureSection";
-import CalendarBookingSection from "./CalendarBookingSection";
 import FAQSection from "./FAQSection";
 import FinalCTASection from "./FinalCTASection";
-import { Divider } from "@mui/material";
+
+const CalendarBookingSection = dynamic(() => import("./CalendarBookingSection"), { ssr: false });
 
 export default function Home() {
   return (

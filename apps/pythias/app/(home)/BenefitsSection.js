@@ -1,5 +1,4 @@
-"use client";
-import { Box, Container, Typography, Card, CardContent, Stack } from "@mui/material";
+import { Box, Container, Typography, Card, CardContent } from "@mui/material";
 import { AutoAwesome, LocalShipping, Inventory, Store } from "@mui/icons-material";
 
 const benefits = [

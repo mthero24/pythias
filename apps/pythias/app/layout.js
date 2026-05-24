@@ -11,6 +11,7 @@ import Script from "next/script";
 const urbanist = Urbanist({
   variable: "--font-urbanist",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata = {

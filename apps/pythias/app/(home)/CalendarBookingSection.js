@@ -50,6 +50,8 @@ export default function CalendarBookingSection() {
           <Box
             component="iframe"
             src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2V9w52W8h2JOJYdAnFCczT6MVLIbWNyCuO9GyGrOZvzPL87MDGYb-YSWfL0NPcXWRuIMJ436LU?gv=true&redirect_url=https%3A%2F%2Fpythiastechnologies.com%2Fdemo-confirmed"
+            loading="lazy"
+            title="Book a demo with Pythias Technologies"
             sx={{
               border: 0,
               width: "100%",
