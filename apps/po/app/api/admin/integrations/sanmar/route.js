@@ -1,11 +1,9 @@
 export const dynamic = "force-dynamic";
-import {NextApiRequest, NextResponse} from "next/server"
+import { NextResponse } from "next/server";
 import { getProductInfoByBrand } from "@pythias/inventory";
-import {Blank, Color,Suppliers} from "@pythias/mongo"
+import { Blank, Color } from "@pythias/mongo";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import sharp from "sharp";
 import axios from "axios";
-import { ControlPointDuplicateOutlined } from "@mui/icons-material";
 const s3 = new S3Client({
     credentials: {
         accessKeyId: 'XWHXU4FP7MT2V842ITN9',
@@ -25,7 +23,7 @@ const readImage = async (url) => {
     }
     return null
 }
-export async function POST(req=NextApiRequest){
+export async function POST(req) {
     let data = await req.json();
     console.log(data, "data from sanmar route");
     let productInfo = await getProductInfoByBrand(data.brandName);
@@ -33,7 +31,7 @@ export async function POST(req=NextApiRequest){
     return NextResponse.json({error: false, productInfo})
 }
 
-export async function PUT(req=NextApiRequest){
+export async function PUT(req) {
     let data = await req.json();
     console.log(data, "data from sanmar route - put");
     console.log(data.product, "product to add from sanmar");
