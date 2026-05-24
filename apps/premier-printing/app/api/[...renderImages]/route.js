@@ -1,10 +1,8 @@
 export const dynamic = "force-dynamic";
-import sharp from "sharp"
-import { NextApiRequest, NextResponse } from "next/server"
-import axios from "axios"
+import sharp from "sharp";
+import { NextResponse } from "next/server";
+import axios from "axios";
 import { Blank, Design } from "@pythias/mongo";
-import "jimp"
-import { Barlow_Semi_Condensed } from "next/font/google";
 const readImage = async (url) => {
     const response = await axios.get(
         url,
@@ -190,7 +188,7 @@ export async function GET(req) {
         })
     }
 }
-export async function POST(req = NextApiRequest) {
+export async function POST(req) {
     let data = await req.json()
     let base64 = await createImage(data)
     return NextResponse.json({ error: false, base64 })

@@ -24,7 +24,6 @@ const schema = new mongoose.Schema(
     { timestamps: true }
 );
 
-schema.index({ slug: 1 }, { unique: true });
 schema.index({ published: 1, publishedAt: -1 });
 schema.index({ tags: 1 });
 schema.index({ externalId: 1 });

@@ -69,13 +69,12 @@ npm install --include=optional 2>&1 | tail -5
 ok "Dependencies installed"
 
 # ── Fix sharp for Linux ───────────────────────────────────────────────────────
-log "Cleaning and reinstalling sharp for Linux..."
-# Remove all existing sharp installs: root, apps/, and packages/
+# npm install above may have placed per-package sharp copies (e.g. packages/sublimation/node_modules/sharp)
+# that lack their companion libvips. Remove every sharp install across the tree so only the
+# root-level install remains — workspace packages will walk up to it via Node resolution.
+log "Cleaning all sharp installs and reinstalling linux-x64 at root..."
 rm -rf node_modules/sharp node_modules/@img
-find apps packages -maxdepth 4 -type d -name "sharp" -path "*/node_modules/sharp" -exec rm -rf {} + 2>/dev/null || true
-find apps packages -maxdepth 4 -type d -name "@img" -path "*/node_modules/@img" -exec rm -rf {} + 2>/dev/null || true
-# Reinstall with correct Linux x64 binary
-npm install --include=optional 2>&1 | tail -3
+find apps packages -maxdepth 6 -type d \( -name "sharp" -o -name "@img" \) -path "*/node_modules/*" -exec rm -rf {} + 2>/dev/null || true
 npm install --os=linux --cpu=x64 sharp@0.34.2 2>&1 | tail -3
 ok "sharp binary ready (0.34.2 linux-x64)"
 
