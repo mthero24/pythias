@@ -1,0 +1,31 @@
+# Pythias Technologies
+
+> All-in-one print-on-demand automation platform for custom apparel and merchandise businesses.
+
+Pythias Technologies helps print shops, DTF studios, embroidery operations, and multi-marketplace sellers automate their entire fulfillment workflow — from order ingestion to shipping label generation.
+
+## What We Do
+
+- **Production Queue Management**: Automated job routing for DTF, embroidery, sublimation, and screen printing
+- **Multi-Marketplace Order Sync**: Connects Shopify, Amazon, Etsy, Walmart, TikTok Shop, and more into a single production queue
+- **Shipping Automation**: Generate USPS, FedEx, and UPS labels automatically based on order rules
+- **Blank Inventory Tracking**: Real-time stock levels across all garment sizes, colors, and styles
+- **Analytics & Reporting**: Production throughput, fulfillment rates, revenue by channel
+- **Team Management**: Role-based access for production staff, shipping teams, and managers
+- **Label & Barcode Printing**: Job tickets, shipping labels, and barcodes from one system
+
+## Who Uses Pythias
+
+Small to mid-size print-on-demand businesses that sell across multiple marketplaces and need to coordinate production, inventory, and shipping without manual data entry.
+
+## Pages
+
+- `/` — Home: platform overview, features, testimonials, pricing CTA
+- `/blog` — Blog: articles on print-on-demand operations, automation, and marketplace strategy
+- `/demo` — Book a demo call with the Pythias team
+- `/login` — Sign in to the Pythias platform
+
+## Contact
+
+- Website: https://pythiastechnologies.com
+- Demo: https://pythiastechnologies.com/demo

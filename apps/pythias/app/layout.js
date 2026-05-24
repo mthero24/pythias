@@ -18,7 +18,7 @@ export const metadata = {
     default: "Pythias Technologies — Print-on-Demand Automation Platform",
     template: "%s | Pythias Technologies",
   },
-  description: "Pythias Technologies is an all-in-one print-on-demand software platform for custom apparel businesses. Automate production queues, shipping, inventory, marketplace sync, analytics, and team management.",
+  description: "Pythias Technologies: all-in-one print-on-demand platform automating production queues, shipping, inventory, marketplace sync, and analytics. Book a demo.",
   keywords: "print on demand software, custom apparel automation, DTF production management, multi-marketplace fulfillment, Shopify fulfillment software, Amazon seller tools, print shop management, embroidery job management, shipping label automation",
   authors: [{ name: "Pythias Technologies", url: "https://pythiastechnologies.com" }],
   creator: "Pythias Technologies",
@@ -42,6 +42,9 @@ export const metadata = {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true, "max-video-preview": -1, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  alternates: {
+    canonical: "https://pythiastechnologies.com",
   },
 };
 

@@ -13,9 +13,9 @@ import Image from "next/image";
 const testimonials = [
   {
     name: "Mason Katty",
+    initials: "MK",
+    color: "#6366f1",
     company: "TShirtPalace",
-    image:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b589?w=150&h=150&fit=crop&auto=format",
     rating: 5,
     quote:
       "Pythias Technologies cut our shipping time by 40% and eliminated manual order processing. Our team can now focus on growing the business instead of managing chaos.",
@@ -23,9 +23,9 @@ const testimonials = [
   },
   {
     name: "Mike Rodriguez",
+    initials: "MR",
+    color: "#0ea5e9",
     company: "Print Plus Solutions",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&auto=format",
     rating: 5,
     quote:
       "The Brother GTX integration was seamless. We went from manual job tracking to fully automated production in just one week. Game changer for our POD business.",
@@ -33,9 +33,9 @@ const testimonials = [
   },
   {
     name: "Emily Chen",
+    initials: "EC",
+    color: "#ec4899",
     company: "Marketplace Masters",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&auto=format",
     rating: 5,
     quote:
       "Managing orders from Etsy, Amazon, and Walmart used to be a nightmare. Now everything flows automatically through one system. Revenue up 60% in 3 months.",
@@ -43,9 +43,9 @@ const testimonials = [
   },
   {
     name: "David Thompson",
+    initials: "DT",
+    color: "#10b981",
     company: "Quick Print Pro",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&auto=format",
     rating: 5,
     quote:
       "The inventory management alone saved us thousands in overstock and stockouts. Real-time tracking across all our products has transformed our operations.",
@@ -171,10 +171,11 @@ export default function TestimonialsSection() {
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Avatar
-                      src={testimonial.image}
                       alt={testimonial.name}
-                      sx={{ width: 50, height: 50 }}
-                    />
+                      sx={{ width: 50, height: 50, bgcolor: testimonial.color, fontWeight: 700, fontSize: 16 }}
+                    >
+                      {testimonial.initials}
+                    </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Typography
                         variant="subtitle1"
