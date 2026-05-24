@@ -14,6 +14,7 @@ const ROUTES = [
     { url: "/services/labels",        priority: 0.8, changeFrequency: "monthly" },
     { url: "/services/design",        priority: 0.8, changeFrequency: "monthly" },
     { url: "/services/image-creation",priority: 0.8, changeFrequency: "monthly" },
+    { url: "/blog",               priority: 0.85, changeFrequency: "weekly" },
     { url: "/about",              priority: 0.75, changeFrequency: "monthly" },
     { url: "/contact",            priority: 0.75, changeFrequency: "yearly" },
     { url: "/privacy",            priority: 0.3,  changeFrequency: "yearly" },

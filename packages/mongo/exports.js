@@ -44,3 +44,5 @@ export { default as KlingVideo } from "./models/KlingVideo";
 export { default as KlingInvoice } from "./models/KlingInvoice";
 export { default as ActiveSession } from "./models/ActiveSession";
 export { default as ContactMessage } from "./models/ContactMessage";
+export { default as Article } from "./models/Article";
+export { default as WebhookToken } from "./models/WebhookToken";
