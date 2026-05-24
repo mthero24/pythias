@@ -10,13 +10,12 @@ import Link from "next/link";
 import Image from "next/image";
 import Logo from "../public/logo_vertical.png";
 
-const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-
 const NAV_LINKS = [
   { label: "Services",     href: "/services" },
   { label: "Features",     href: "/features" },
   { label: "How It Works", href: "/how-it-works" },
   { label: "Blog",         href: "/blog" },
+  { label: "Tutorials",    href: "/tutorials" },
   { label: "About Us",     href: "/about" },
   { label: "Contact Us",   href: "/contact" },
 ];
@@ -61,7 +60,8 @@ export default function Navbar() {
               Login
             </Button>
             <Button
-              onClick={() => scrollTo("calendar-booking-section")}
+              component={Link}
+              href="/#calendar-booking-section"
               variant="contained"
               sx={{ ml: 1.5, px: 2.5, py: 1, bgcolor: "#D3A73D", color: "#111", fontWeight: 700, "&:hover": { bgcolor: "#b8860b", boxShadow: "0 4px 16px rgba(211,167,61,0.4)" }, boxShadow: "none" }}
             >
@@ -108,8 +108,10 @@ export default function Navbar() {
           <ListItem sx={{ pt: 2 }}>
             <Button
               fullWidth
+              component={Link}
+              href="/#calendar-booking-section"
               variant="contained"
-              onClick={() => { scrollTo("calendar-booking-section"); setMobileOpen(false); }}
+              onClick={() => setMobileOpen(false)}
               sx={{ bgcolor: "#D3A73D", color: "#111", fontWeight: 700, "&:hover": { bgcolor: "#b8860b" } }}
             >
               Book a Demo

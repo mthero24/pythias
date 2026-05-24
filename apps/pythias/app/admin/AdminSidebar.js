@@ -15,6 +15,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import ArticleIcon from "@mui/icons-material/Article";
 import KeyIcon from "@mui/icons-material/Key";
+import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import Link from "next/link";
 
 const DRAWER_WIDTH = 240;
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
     { label: "Analytics",        href: "/admin/analytics",        icon: <BarChartIcon fontSize="small" /> },
     { label: "Contact Messages", href: "/admin/contact-messages", icon: <MailOutlineIcon fontSize="small" /> },
     { label: "Articles",         href: "/admin/articles",         icon: <ArticleIcon fontSize="small" /> },
+    { label: "Tutorials",        href: "/admin/tutorials",        icon: <PlayCircleIcon fontSize="small" /> },
     { label: "API Tokens",       href: "/admin/api-tokens",       icon: <KeyIcon fontSize="small" /> },
 ];
 

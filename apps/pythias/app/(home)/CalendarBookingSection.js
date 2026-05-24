@@ -1,6 +1,32 @@
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Box, Container, Typography } from "@mui/material";
 
 export default function CalendarBookingSection() {
+  const router = useRouter();
+
+  useEffect(() => {
+    function onMessage(event) {
+      if (!event.origin.includes("google.com")) return;
+      try {
+        const raw  = typeof event.data === "string" ? event.data : JSON.stringify(event.data ?? "");
+        const lower = raw.toLowerCase();
+        // Google Calendar sends various message shapes on booking confirmation
+        if (
+          lower.includes("appointment") ||
+          lower.includes("scheduled")   ||
+          lower.includes("confirmed")   ||
+          lower.includes("booked")
+        ) {
+          router.push("/demo-confirmed");
+        }
+      } catch {}
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [router]);
+
   return (
     <Box
       component="section"

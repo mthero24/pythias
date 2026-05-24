@@ -46,3 +46,4 @@ export { default as ActiveSession } from "./models/ActiveSession";
 export { default as ContactMessage } from "./models/ContactMessage";
 export { default as Article } from "./models/Article";
 export { default as WebhookToken } from "./models/WebhookToken";
+export { default as Tutorial } from "./models/Tutorial";
