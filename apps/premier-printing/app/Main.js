@@ -5,16 +5,16 @@ import {
     Box, Container, Typography, Grid2, Card, CardActionArea,
     Stack, Chip, Divider,
 } from "@mui/material";
-import * as logo from "@/public/premierprinting-logo.png";
-import * as target from "@/public/target-logo.png";
-import * as tsc from "@/public/TSC-logo.jpeg";
-import * as shopify from "@/public/Shopify_logo_2018.png";
-import * as amazon from "@/public/amazon.png";
-import * as faire from "@/public/faire.png";
-import * as fashion from "@/public/fashiongo.png";
-import * as kohls from "@/public/kohls.png";
-import * as walmart from "@/public/walmart.png";
-import * as shien from "@/public/shien.png";
+const logo    = "/premierprinting-logo.png";
+const target  = "/target-logo.png";
+const tsc     = "/TSC-logo.jpeg";
+const shopify = "/Shopify_logo_2018.png";
+const amazon  = "/amazon.png";
+const faire   = "/faire.png";
+const fashion = "/fashiongo.png";
+const kohls   = "/kohls.png";
+const walmart = "/walmart.png";
+const shien   = "/shien.png";
 
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
