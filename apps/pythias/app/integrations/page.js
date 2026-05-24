@@ -449,7 +449,7 @@ export default function IntegrationsPage() {
                         Ready to connect your channels?
                     </Typography>
                     <Typography sx={{ color: "rgba(255,255,255,0.58)", mb: 4, lineHeight: 1.7 }}>
-                        Book a 30-minute demo and we'll show you how Pythias handles your specific marketplaces from day one.
+                        {`Book a 30-minute demo and we'll show you how Pythias handles your specific marketplaces from day one.`}
                     </Typography>
                     <Button
                         component={Link} href="/#calendar-booking-section"
