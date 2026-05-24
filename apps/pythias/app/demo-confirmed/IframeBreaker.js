@@ -11,14 +11,8 @@ export default function IframeBreaker() {
             return;
         }
 
-        // GA4 conversion event
-        window.gtag?.("event", "demo_booked", {
-            event_category: "conversion",
-            event_label: "demo_confirmed_page",
-        });
-
-        // Google Ads conversion event
-        window.gtag?.("event", "ads_conversion_Book_appointment_1");
+        window.gtag?.("event", "conversion_event_book_appointment");
+        window.gtag?.("event", "conversion", { send_to: "AW-18171939038" });
 
         // Internal analytics conversion event
         try {

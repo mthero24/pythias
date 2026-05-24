@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Container, Typography, Button } from "@mui/material";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
-const POLL_INTERVAL = 15_000;
+const POLL_INTERVAL = 8_000; // 8 seconds — short enough to catch most iCal updates
 
 async function fetchUids() {
   try {
@@ -16,25 +17,21 @@ async function fetchUids() {
   }
 }
 
-function fireBookingEvent() {
+function fireBookingEvents() {
   try {
-    window.gtag?.("event", "demo_booked", {
-      event_category: "engagement",
-      event_label: "google_calendar",
-    });
-    // Google Ads conversion
+    window.gtag?.("event", "conversion_event_book_appointment");
     window.gtag?.("event", "conversion", {
       send_to: "AW-18171939038",
-      event_category: "demo",
     });
   } catch {}
 }
 
 export default function CalendarBookingSection() {
-  const router     = useRouter();
-  const baseUids   = useRef(null);   // UIDs present when the page loaded
-  const intervalId = useRef(null);
-  const redirected = useRef(false);
+  const router        = useRouter();
+  const baseUids      = useRef(null);
+  const intervalId    = useRef(null);
+  const redirected    = useRef(false);
+  const [showButton, setShowButton] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +40,11 @@ export default function CalendarBookingSection() {
       const initial = await fetchUids();
       if (cancelled) return;
       baseUids.current = initial ?? new Set();
+
+      // Show the manual fallback button after 10 s — the user has had time to book
+      const showTimer = setTimeout(() => {
+        if (!redirected.current) setShowButton(true);
+      }, 10_000);
 
       intervalId.current = setInterval(async () => {
         if (redirected.current) return;
@@ -53,12 +55,15 @@ export default function CalendarBookingSection() {
           if (!baseUids.current.has(uid)) {
             redirected.current = true;
             clearInterval(intervalId.current);
-            fireBookingEvent();
+            clearTimeout(showTimer);
+            fireBookingEvents();
             router.push("/demo-confirmed");
             return;
           }
         }
       }, POLL_INTERVAL);
+
+      return () => clearTimeout(showTimer);
     }
 
     init();
@@ -68,6 +73,14 @@ export default function CalendarBookingSection() {
       clearInterval(intervalId.current);
     };
   }, [router]);
+
+  function handleManualConfirm() {
+    if (redirected.current) return;
+    redirected.current = true;
+    clearInterval(intervalId.current);
+    fireBookingEvents();
+    router.push("/demo-confirmed");
+  }
 
   return (
     <Box
@@ -117,7 +130,7 @@ export default function CalendarBookingSection() {
         >
           <Box
             component="iframe"
-            src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2V9w52W8h2JOJYdAnFCczT6MVLIbWNyCuO9GyGrOZvzPL87MDGYb-YSWfL0NPcXWRuIMJ436LU?gv=true&redirect_url=https%3A%2F%2Fpythiastechnologies.com%2Fdemo-confirmed"
+            src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ2V9w52W8h2JOJYdAnFCczT6MVLIbWNyCuO9GyGrOZvzPL87MDGYb-YSWfL0NPcXWRuIMJ436LU?gv=true"
             loading="lazy"
             title="Book a demo with Pythias Technologies"
             sx={{
@@ -130,16 +143,40 @@ export default function CalendarBookingSection() {
           />
         </Box>
 
-        <Box sx={{ textAlign: "center", marginTop: 3 }}>
+        {/* Manual confirm — appears ~10 s after page load so a just-booked visitor can proceed immediately */}
+        <Box
+          sx={{
+            textAlign: "center",
+            marginTop: 3,
+            minHeight: 56,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 1.5,
+          }}
+        >
+          {showButton && (
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<CheckCircleOutlineIcon />}
+              onClick={handleManualConfirm}
+              sx={{
+                bgcolor: "#6366f1",
+                fontWeight: 700,
+                px: 4,
+                borderRadius: 2,
+                "&:hover": { bgcolor: "#4f46e5" },
+              }}
+            >
+              {"I just booked my demo →"}
+            </Button>
+          )}
           <Typography
             variant="body2"
-            sx={{
-              color: "#666666",
-              fontStyle: "italic",
-            }}
+            sx={{ color: "#666666", fontStyle: "italic" }}
           >
-            {`Can't find a suitable time? Contact us directly and we'll arrange a
-            demo at your convenience.`}
+            {`Can't find a suitable time? Contact us directly and we'll arrange a demo at your convenience.`}
           </Typography>
         </Box>
       </Container>
