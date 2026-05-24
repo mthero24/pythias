@@ -96,6 +96,7 @@ export default function RootLayout({ children }) {
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'G-Q27ZSTSXVH', { send_page_view: false });
+          gtag('config', 'AW-18171939038');
         `}</Script>
       </body>
     </html>
