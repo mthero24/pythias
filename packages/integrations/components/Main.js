@@ -2031,6 +2031,19 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
     const color = "#010101";
     const [confirming, setConfirming]     = useState(false);
     const [deactivating, setDeactivating] = useState(false);
+    const [authorizing, setAuthorizing]   = useState(false);
+
+    const authorize = async () => {
+        setAuthorizing(true);
+        try {
+            const res = await axios.post("/api/admin/integrations", { type: "tiktok", seller_name: shop.seller_name, provider: shop.provider });
+            if (res.data?.url) window.location.href = res.data.url;
+        } catch (e) {
+            console.error("Authorize failed", e);
+        } finally {
+            setAuthorizing(false);
+        }
+    };
 
     const deactivate = async () => {
         setDeactivating(true);
@@ -2082,6 +2095,9 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
                         )}
                         {!confirming && (
                             <Button variant="outlined" size="small"
+                                onClick={authorize}
+                                disabled={authorizing}
+                                startIcon={authorizing ? <CircularProgress size={12} color="inherit" /> : null}
                                 sx={{ borderColor: "#69C9D0", color: "#000", "&:hover": { bgcolor: "#e0fafa" }, borderRadius: 1.5 }}>
                                 {shop.access_token ? "Reauthorize" : "Authorize"}
                             </Button>
