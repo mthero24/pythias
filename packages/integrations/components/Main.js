@@ -19,6 +19,15 @@ import { SheinModal }   from "./SheinModal";
 import { TemuModal }    from "./TemuModal";
 import { AmazonModal }  from "./AmazonModal";
 import { MiraklModal }  from "./MiraklModal";
+import { WixModal }         from "./WixModal";
+import { WooCommerceModal } from "./WooCommerceModal";
+import { SquarespaceModal } from "./SquarespaceModal";
+import { MetaModal }        from "./MetaModal";
+import { PinterestModal }   from "./PinterestModal";
+import { OnBuyModal }       from "./OnBuyModal";
+import { RakutenModal }     from "./RakutenModal";
+import { WayfairModal }     from "./WayfairModal";
+import { RithumModal }     from "./RithumModal";
 import { TargetModal }  from "./TargetModal";
 import { EbayModal }    from "./EbayModal";
 import { NoonModal }    from "./NoonModal";
@@ -48,7 +57,16 @@ const PLATFORMS = {
     target:  { label: "Target Plus", color: "#CC0000", description: "Sell on Target Plus marketplace with order sync, fulfillment confirmation, and direct SP-API integration." },
     ebay:    { label: "eBay",        color: "#E53238", description: "List products on eBay and automatically pull orders and confirm shipments via the eBay Sell API." },
     noon:    { label: "Noon",        color: "#f59e0b", description: "Sell on Noon marketplace across UAE, Saudi Arabia, and Egypt with order sync and fulfillment." },
-    bol:     { label: "bol.com",     color: "#0062B1", description: "Sell on bol.com, the leading marketplace in the Netherlands and Belgium, with order sync and fulfillment." },
+    wix:         { label: "Wix",              color: "#0C6EFC", description: "Sync products and pull orders from your Wix Store." },
+    woocommerce: { label: "WooCommerce",      color: "#7f54b3", description: "Sync products and pull orders from your WooCommerce store via the REST API." },
+    squarespace: { label: "Squarespace",      color: "#111827", description: "Pull orders and sync products with your Squarespace Commerce store." },
+    bol:         { label: "bol.com",          color: "#0062B1", description: "Sell on bol.com, the leading marketplace in the Netherlands and Belgium, with order sync and fulfillment." },
+    meta:        { label: "Meta Shops",       color: "#0866FF", description: "Sync your product catalog and pull orders from Facebook and Instagram Shops via the Meta Commerce Platform API." },
+    pinterest:   { label: "Pinterest",        color: "#E60023", description: "Sync your product catalog to Pinterest Shopping via the Pinterest Catalog API. Orders happen on your storefront." },
+    onbuy:       { label: "OnBuy",            color: "#5D11D4", description: "Pull orders and list products on OnBuy, the UK's fastest-growing marketplace." },
+    rakuten:     { label: "Rakuten",          color: "#BF0000", description: "List products and pull orders on Rakuten Ichiba, Japan's leading marketplace, via the RMS API." },
+    wayfair:     { label: "Wayfair",          color: "#7B2D8B", description: "Pull purchase orders from Wayfair and confirm shipments via the Wayfair Supplier GraphQL API." },
+    rithum:      { label: "Rithum",           color: "#1a1a2e", description: "Formerly ChannelAdvisor/DSCO — pull orders and sync products across Zulily and other Rithum-powered channels." },
 };
 
 function platformColor(type) {
@@ -57,6 +75,7 @@ function platformColor(type) {
 
 // ─── Platform card in the gallery ────────────────────────────────────────────
 function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, comingSoon, connected, logoBg }) {
+    const hasImage = logo || logoSrc;
     const inner = (
         <Box sx={{
             display: "flex", flexDirection: "column", alignItems: "center",
@@ -64,14 +83,18 @@ function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, co
         }}>
             <Box sx={{
                 height: 64, display: "flex", alignItems: "center", justifyContent: "center",
-                width: "100%", borderRadius: logoBg ? 1.5 : 0, bgcolor: logoBg ?? "transparent",
-                px: logoBg ? 1.5 : 0,
+                width: "100%", borderRadius: 1.5, bgcolor: logoBg ?? (hasImage ? "transparent" : "#f3f4f6"),
+                px: 1.5,
             }}>
                 {logo
                     ? <Image src={logo} alt={alt} width={200} height={64}
                         style={{ maxWidth: "100%", maxHeight: 64, width: "auto", height: "auto", objectFit: "contain" }} />
-                    : <img src={logoSrc} alt={alt}
-                        style={{ maxWidth: "100%", maxHeight: 64, width: "auto", height: "auto", objectFit: "contain" }} />
+                    : logoSrc
+                        ? <img src={logoSrc} alt={alt}
+                            style={{ maxWidth: "100%", maxHeight: 64, width: "auto", height: "auto", objectFit: "contain" }} />
+                        : <Typography sx={{ fontSize: "1.6rem", fontWeight: 900, color: logoBg ? "#fff" : "#9ca3af", lineHeight: 1 }}>
+                            {name?.charAt(0)?.toUpperCase()}
+                          </Typography>
                 }
             </Box>
             <Typography variant="subtitle1" fontWeight={700}>{name}</Typography>
@@ -1803,6 +1826,211 @@ function AcendaDashboardPanel({ connectionId, manageHref }) {
     );
 }
 
+// ─── WooCommerce Orders Panel ─────────────────────────────────────────────────
+function WooCommerceOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/woocommerce/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) {
+            setError(e.response?.data?.msg ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    };
+
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#7f54b3", color: "#7f54b3", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
+// ─── Squarespace Orders Panel ─────────────────────────────────────────────────
+function SquarespaceOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/squarespace/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) {
+            setError(e.response?.data?.msg ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    };
+
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#111827", color: "#111827", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
+// ─── Meta Orders Panel ────────────────────────────────────────────────────────
+function MetaOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/meta/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) { setError(e.response?.data?.msg ?? "Failed to pull orders"); }
+        finally { setLoading(false); }
+    };
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#0866FF", color: "#0866FF", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
+// ─── OnBuy Orders Panel ───────────────────────────────────────────────────────
+function OnBuyOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/onbuy/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) { setError(e.response?.data?.msg ?? "Failed to pull orders"); }
+        finally { setLoading(false); }
+    };
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#5D11D4", color: "#5D11D4", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
+// ─── Rakuten Orders Panel ─────────────────────────────────────────────────────
+function RakutenOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/rakuten/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) { setError(e.response?.data?.msg ?? "Failed to pull orders"); }
+        finally { setLoading(false); }
+    };
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#BF0000", color: "#BF0000", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
+// ─── Wayfair Orders Panel ─────────────────────────────────────────────────────
+function WayfairOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/wayfair/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) { setError(e.response?.data?.msg ?? "Failed to pull orders"); }
+        finally { setLoading(false); }
+    };
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#7B2D8B", color: "#7B2D8B", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Purchase Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
+// ─── Wix Orders Panel ─────────────────────────────────────────────────────────
+function WixOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/wix/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) {
+            setError(e.response?.data?.msg ?? "Failed to pull orders");
+        } finally { setLoading(false); }
+    };
+
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#0C6EFC", color: "#0C6EFC", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
 // ─── Connection row ────────────────────────────────────────────────────────────
 function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pullOrdersEnabled: initialPullEnabled, onDeactivate }) {
     const normalizedType = type?.toLowerCase() ?? "";
@@ -1824,6 +2052,15 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
     const isEbay    = normalizedType === "ebay";
     const isNoon    = normalizedType === "noon";
     const isBol     = normalizedType === "bol";
+    const isWix         = normalizedType === "wix";
+    const isWooCommerce = normalizedType === "woocommerce";
+    const isSquarespace = normalizedType === "squarespace";
+    const isMeta        = normalizedType === "meta";
+    const isPinterest   = normalizedType === "pinterest";
+    const isOnBuy       = normalizedType === "onbuy";
+    const isRakuten     = normalizedType === "rakuten";
+    const isWayfair     = normalizedType === "wayfair";
+    const isRithum      = normalizedType === "rithum";
 
     const [pullEnabled, setPullEnabled] = useState(!!initialPullEnabled);
     const [toggling, setToggling]       = useState(false);
@@ -1923,10 +2160,10 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     </Box>
 
                     {/* ── Pull Orders toggle strip ── */}
-                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu || isAmazon || isMirakl || isTarget || isEbay || isNoon || isBol) && (() => {
-                        const accentColor  = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : isAmazon ? "#FF9900" : isMirakl ? "#1d4ed8" : isTarget ? "#CC0000" : isEbay ? "#E53238" : isNoon ? "#f59e0b" : isBol ? "#0062B1" : "#1565C0";
-                        const bgEnabled    = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : isAmazon ? "#fff8f0" : isMirakl ? "#eff6ff" : isTarget ? "#fff5f5" : isEbay ? "#fff8f0" : isNoon ? "#fdf4e7" : isBol ? "#eff6ff" : "#eff6ff";
-                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : isAmazon ? "Amazon" : isMirakl ? "Mirakl" : isTarget ? "Target Plus" : isEbay ? "eBay" : isNoon ? "Noon" : isBol ? "bol.com" : "Acenda";
+                    {(isAcenda || isEtsy || isWalmart || isFaire || isShein || isTemu || isAmazon || isMirakl || isTarget || isEbay || isNoon || isBol || isWix || isWooCommerce || isSquarespace || isMeta || isOnBuy || isRakuten || isWayfair || isRithum) && (() => {
+                        const accentColor  = isEtsy ? "#F56400" : isWalmart ? "#0071CE" : isFaire ? "#10305A" : isShein ? "#000000" : isTemu ? "#ff6500" : isAmazon ? "#FF9900" : isMirakl ? "#1d4ed8" : isTarget ? "#CC0000" : isEbay ? "#E53238" : isNoon ? "#f59e0b" : isBol ? "#0062B1" : isWix ? "#0C6EFC" : isWooCommerce ? "#7f54b3" : isSquarespace ? "#111827" : isMeta ? "#0866FF" : isOnBuy ? "#5D11D4" : isRakuten ? "#BF0000" : isWayfair ? "#7B2D8B" : isRithum ? "#1a1a2e" : "#1565C0";
+                        const bgEnabled    = isEtsy ? "#fff7ed" : isWalmart ? "#e0f2fe" : isFaire ? "#eef2f8" : isShein ? "#f3f4f6" : isTemu ? "#fff5ee" : isAmazon ? "#fff8f0" : isMirakl ? "#eff6ff" : isTarget ? "#fff5f5" : isEbay ? "#fff8f0" : isNoon ? "#fdf4e7" : isBol ? "#eff6ff" : isWix ? "#eef4ff" : isWooCommerce ? "#f5f0ff" : isSquarespace ? "#f3f4f6" : isMeta ? "#eff6ff" : isOnBuy ? "#f5f3ff" : isRakuten ? "#fff5f5" : isWayfair ? "#faf5ff" : isRithum ? "#f0f0f8" : "#eff6ff";
+                        const platformName = isEtsy ? "Etsy" : isWalmart ? "Walmart" : isFaire ? "Faire" : isShein ? "SHEIN" : isTemu ? "Temu" : isAmazon ? "Amazon" : isMirakl ? "Mirakl" : isTarget ? "Target Plus" : isEbay ? "eBay" : isNoon ? "Noon" : isBol ? "bol.com" : isWix ? "Wix" : isWooCommerce ? "WooCommerce" : isSquarespace ? "Squarespace" : isMeta ? "Meta Shops" : isOnBuy ? "OnBuy" : isRakuten ? "Rakuten" : isWayfair ? "Wayfair" : isRithum ? "Rithum" : "Acenda";
                         return (
                             <Box sx={{
                                 borderTop: "1px solid #f1f5f9",
@@ -2018,6 +2255,41 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                     {isBol && (
                         <Collapse in={pullEnabled}>
                             <BolOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isWix && (
+                        <Collapse in={pullEnabled}>
+                            <WixOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isWooCommerce && (
+                        <Collapse in={pullEnabled}>
+                            <WooCommerceOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isSquarespace && (
+                        <Collapse in={pullEnabled}>
+                            <SquarespaceOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isMeta && (
+                        <Collapse in={pullEnabled}>
+                            <MetaOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isOnBuy && (
+                        <Collapse in={pullEnabled}>
+                            <OnBuyOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isRakuten && (
+                        <Collapse in={pullEnabled}>
+                            <RakutenOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
+                    {isWayfair && (
+                        <Collapse in={pullEnabled}>
+                            <WayfairOrdersPanel connectionId={id} />
                         </Collapse>
                     )}
                 </Box>
@@ -2133,6 +2405,15 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const [acendaOpen,  setAcendaOpen]  = useState(false);
     const [walmartOpen, setWalmartOpen] = useState(false);
     const [faireOpen,   setFaireOpen]   = useState(false);
+    const [wixOpen,          setWixOpen]          = useState(false);
+    const [wooCommerceOpen,  setWooCommerceOpen]  = useState(false);
+    const [squarespaceOpen,  setSquarespaceOpen]  = useState(false);
+    const [metaOpen,         setMetaOpen]         = useState(false);
+    const [pinterestOpen,    setPinterestOpen]    = useState(false);
+    const [onbuyOpen,        setOnBuyOpen]        = useState(false);
+    const [rakutenOpen,      setRakutenOpen]      = useState(false);
+    const [wayfairOpen,      setWayfairOpen]      = useState(false);
+    const [rithumOpen,       setRithumOpen]       = useState(false);
     const [sheinOpen,   setSheinOpen]   = useState(false);
     const [temuOpen,    setTemuOpen]    = useState(false);
     const [amazonOpen,  setAmazonOpen]  = useState(false);
@@ -2311,6 +2592,87 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             onClick={connectedTypes.has("bol") ? undefined : () => setBolOpen(true)}
                         />
                     </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/wix.svg" alt="Wix"
+                            name="Wix"
+                            description={PLATFORMS.wix.description}
+                            connected={connectedTypes.has("wix")}
+                            onClick={connectedTypes.has("wix") ? undefined : () => setWixOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/woocommerce.svg" alt="WooCommerce"
+                            name="WooCommerce"
+                            description={PLATFORMS.woocommerce.description}
+                            connected={connectedTypes.has("woocommerce")}
+                            onClick={connectedTypes.has("woocommerce") ? undefined : () => setWooCommerceOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/squarespace.svg" alt="Squarespace"
+                            name="Squarespace"
+                            description={PLATFORMS.squarespace.description}
+                            connected={connectedTypes.has("squarespace")}
+                            onClick={connectedTypes.has("squarespace") ? undefined : () => setSquarespaceOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/meta.svg" alt="Meta Shops"
+                            name="Meta Shops"
+                            description={PLATFORMS.meta.description}
+                            connected={connectedTypes.has("meta")}
+                            onClick={connectedTypes.has("meta") ? undefined : () => setMetaOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/pinterest.svg" alt="Pinterest"
+                            name="Pinterest"
+                            description={PLATFORMS.pinterest.description}
+                            connected={connectedTypes.has("pinterest")}
+                            onClick={connectedTypes.has("pinterest") ? undefined : () => setPinterestOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/onbuy.svg" alt="OnBuy"
+                            name="OnBuy"
+                            description={PLATFORMS.onbuy.description}
+                            connected={connectedTypes.has("onbuy")}
+                            onClick={connectedTypes.has("onbuy") ? undefined : () => setOnBuyOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/rakuten.svg" alt="Rakuten"
+                            name="Rakuten"
+                            description={PLATFORMS.rakuten.description}
+                            connected={connectedTypes.has("rakuten")}
+                            onClick={connectedTypes.has("rakuten") ? undefined : () => setRakutenOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/wayfair.svg" alt="Wayfair"
+                            name="Wayfair"
+                            description={PLATFORMS.wayfair.description}
+                            connected={connectedTypes.has("wayfair")}
+                            onClick={connectedTypes.has("wayfair") ? undefined : () => setWayfairOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/rithum.svg" alt="Rithum"
+                            name="Rithum"
+                            description={PLATFORMS.rithum.description}
+                            connected={connectedTypes.has("rithum")}
+                            onClick={connectedTypes.has("rithum") ? undefined : () => setRithumOpen(true)}
+                        />
+                    </Grid2>
                 </Grid2>
 
                 {/* ── Active connections ── */}
@@ -2354,6 +2716,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             <AcendaModal  open={acendaOpen}  setOpen={setAcendaOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <WalmartModal open={walmartOpen} setOpen={setWalmartOpen} provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <FaireModal   open={faireOpen}   setOpen={setFaireOpen}   provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <WixModal     open={wixOpen}     setOpen={setWixOpen}     provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <SheinModal   open={sheinOpen}   setOpen={setSheinOpen}   provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <TemuModal    open={temuOpen}    setOpen={setTemuOpen}    provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <AmazonModal  open={amazonOpen}  setOpen={setAmazonOpen}  provider={provider} setConnections={setApiConnections} />
@@ -2361,7 +2724,15 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             <TargetModal  open={targetOpen}  setOpen={setTargetOpen}  provider={provider} setConnections={setApiConnections} />
             <EbayModal    open={ebayOpen}    setOpen={setEbayOpen} />
             <NoonModal    open={noonOpen}    setOpen={setNoonOpen}    provider={provider} setConnections={setApiConnections} />
-            <BolModal     open={bolOpen}     setOpen={setBolOpen}     provider={provider} setConnections={setApiConnections} />
+            <BolModal          open={bolOpen}          setOpen={setBolOpen}          provider={provider} setConnections={setApiConnections} />
+            <WooCommerceModal  open={wooCommerceOpen}  setOpen={setWooCommerceOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <SquarespaceModal  open={squarespaceOpen}  setOpen={setSquarespaceOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <MetaModal         open={metaOpen}         setOpen={setMetaOpen}         provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <PinterestModal    open={pinterestOpen}    setOpen={setPinterestOpen}    provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <OnBuyModal        open={onbuyOpen}        setOpen={setOnBuyOpen}        provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <RakutenModal      open={rakutenOpen}      setOpen={setRakutenOpen}      provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <WayfairModal      open={wayfairOpen}      setOpen={setWayfairOpen}      provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <RithumModal       open={rithumOpen}       setOpen={setRithumOpen}       provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
         </Box>
     );
 }
