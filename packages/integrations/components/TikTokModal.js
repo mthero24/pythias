@@ -1,31 +1,41 @@
-import {Modal, Box, Typography, TextField,Button} from "@mui/material";
-import {useState} from "react"
-import axios from "axios"
-import { redirect } from "next/navigation";
-export function TikTokModal({open, setOpen, provider}){
-    const [sellerName, setSellerName] = useState("")
+import { Modal, Box, Typography, TextField, Button, CircularProgress } from "@mui/material";
+import { useState } from "react";
+import axios from "axios";
+
+export function TikTokModal({ open, setOpen, provider }) {
+    const [sellerName, setSellerName] = useState("");
+    const [loading, setLoading] = useState(false);
+
     const style = {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
         width: "80%",
-        height: "80%",
-        bgcolor: 'background.paper',
-        border: '2px solid #000',
+        maxWidth: 480,
+        bgcolor: "background.paper",
+        border: "2px solid #000",
         boxShadow: 24,
         p: 4,
-        overflow: "auto"
+        borderRadius: 2,
     };
-    const sub = async ()=>{
-        if(sellerName != ""){
-            let res = await axios.post("/api/admin/integrations", {type: "tiktok", seller_name: sellerName, provider})
-            if(res && !res.data.error) redirect(res.data.url)
-            else(alert("something went wrong please try again later!"))
-        }else{
-            alert("Seller Name Required")
+
+    const sub = async () => {
+        if (!sellerName.trim()) { alert("Seller Name Required"); return; }
+        setLoading(true);
+        try {
+            const res = await axios.post("/api/admin/integrations", { type: "tiktok", seller_name: sellerName.trim(), provider });
+            if (res?.data?.url) {
+                window.location.href = res.data.url;
+            } else {
+                alert("Something went wrong, please try again later.");
+            }
+        } catch {
+            alert("Something went wrong, please try again later.");
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
     return (
         <Box>
@@ -36,9 +46,11 @@ export function TikTokModal({open, setOpen, provider}){
                 aria-describedby="modal-modal-description"
             >
                 <Box sx={style}>
-                    <Typography textAlign={"center"} fontSize={"1.4rem"} margin="2%">New Tik Tok Connection</Typography>
-                    <TextField fullWidth label="Seller Name" value={sellerName} onChange={()=>{setSellerName(event.target.value)}}/>
-                    <Button fullWidth sx={{background: "#0066CC", color: "#fff", marginTop: "2%"}} onClick={sub}>Connect</Button>
+                    <Typography textAlign="center" fontSize="1.4rem" mb={2}>New TikTok Connection</Typography>
+                    <TextField fullWidth label="Seller Name" value={sellerName} onChange={e => setSellerName(e.target.value)} />
+                    <Button fullWidth disabled={loading} sx={{ background: "#0066CC", color: "#fff", mt: 2, "&:hover": { background: "#0052a3" } }} onClick={sub}>
+                        {loading ? <CircularProgress size={20} color="inherit" /> : "Connect"}
+                    </Button>
                 </Box>
             </Modal>
         </Box>

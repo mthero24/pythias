@@ -43,7 +43,7 @@ export function createTracking({ Order, uspsCredentials, fedexCredentials, upsCr
             if (expectedDelivery) lbl.expectedDelivery = expectedDelivery;
             const latest = (typeof events[0] === "string" ? events[0] : "").toLowerCase();
 
-            if ((latest.includes("delivered") && !latest.includes("out for")) || latest.includes("picked up")) {
+            if (latest.startsWith("delivered")) {
                 lbl.delivered = true;
             } else if (latest.includes("out for delivery")) {
                 order.status = "Out For Delivery";

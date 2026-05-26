@@ -8,10 +8,10 @@ export async function GET(req){
     let decipher = atob(authorizationHeader.split(" ")[1])
     let userName = decipher.split(":")[0]
     let password = decipher.split(":")[1]
-    if(userName == process.env.userName && password== process.env.password){
+    if(userName == process.env.userName && password == process.env.password){
         let config = {
-            app_key: process.env.tiktok_app_key,
-            app_secret: process.env.tiktok_app_secret
+            app_key: process.env.tiktok_app_key || process.env.Tik_Tok_AppKey,
+            app_secret: process.env.tiktok_app_secret || process.env.Tik_Tok_AppSecret,
         }
         return NextResponse.json({error: false, config})
     }

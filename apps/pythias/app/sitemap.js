@@ -17,7 +17,17 @@ const ROUTES = [
     { url: "/blog",               priority: 0.85, changeFrequency: "weekly" },
     { url: "/about",              priority: 0.75, changeFrequency: "monthly" },
     { url: "/contact",            priority: 0.75, changeFrequency: "yearly" },
-    { url: "/privacy",            priority: 0.3,  changeFrequency: "yearly" },
+    { url: "/privacy",                             priority: 0.3, changeFrequency: "yearly" },
+    { url: "/data-protection",                    priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/network-security",          priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/endpoint-security",         priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/security-baseline",         priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/access-control",            priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/data-classification",       priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/incident-response",         priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/vulnerability-management",  priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/personal-data-protection",  priority: 0.3, changeFrequency: "yearly" },
+    { url: "/policies/data-deletion",             priority: 0.3, changeFrequency: "yearly" },
 ];
 
 export default function sitemap() {

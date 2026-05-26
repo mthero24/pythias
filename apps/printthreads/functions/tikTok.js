@@ -3,6 +3,7 @@ import {
   getAuthorizedShops,
   getAccessTokenFromRefreshToken,
   uploadProductImage,
+  uploadProductVideo,
   getRecommendedCategory,
   getWarehouses,
   getAttributes,
@@ -10,20 +11,17 @@ import {
   getOrdersTikTok,
   generatePieceID,
 } from "@pythias/integrations";
-const refresh = async (creds, cipher) =>{
+const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
+const refresh = async (creds, cipher) => {
     let credentials = await TikTokAuth.findOne({ _id: creds._id });
-    console.log("refresh +++++")
-    let access_token = await getAccessTokenFromRefreshToken(
-        credentials.refresh_token
-    );
-    //console.log(access_token, "access token");
-    for (let key of Object.keys(access_token)) {
-        credentials[key] = access_token[key];
+    const tokens = await getAccessTokenFromRefreshToken(credentials.refresh_token);
+    for (const key of TOKEN_FIELDS) {
+        if (tokens[key] !== undefined) credentials[key] = tokens[key];
     }
     credentials.date = new Date(Date.now());
     credentials = await credentials.save();
-    credentials.shop_cipher = cipher;
-    return credentials
+    if (cipher) credentials.shop_cipher = cipher;
+    return credentials;
 }
 const stateAbbreviations = {
     Alabama: "AL",
@@ -83,9 +81,10 @@ export async function getShops(credentials){
     if(shop.error && shop.msg == "refresh"){
         credentials = await refresh(credentials)
         shop = await getAuthorizedShops(credentials)
-    } 
-    credentials.shop_list = shop.shop_list
+    }
+    credentials.shop_list = shop.shop_list ?? []
     await credentials.save()
+    return credentials.shop_list
 }
 
 export async function uploadTikTokImage({image, type, credentials}){
@@ -96,7 +95,7 @@ export async function uploadTikTokImage({image, type, credentials}){
     }
     return res
 }
-export async function createTikTokProduct({product, credentials}){
+export async function createTikTokProduct({product, credentials, marketplaceName}){
     product = await Product.findOne({ _id: product._id }).populate("blanks design variantsArray.color variantsArray.threadColor");
     //console.log(credentials, "credentials")
     let tiktokProduct = {
@@ -119,80 +118,93 @@ export async function createTikTokProduct({product, credentials}){
         category_version: "v2",
         idempotency_key: `${product.sku}`
     }
-    let categories = await getRecommendedCategory(product.title, credentials)
-    //console.log(categories)
-    if(categories.error && categories.msg == "refresh"){
+    // Step 1: category + warehouses in parallel
+    let [categories, warehouses] = await Promise.all([
+        getRecommendedCategory(product.title, credentials),
+        getWarehouses(credentials),
+    ]);
+    if (categories.error && categories.msg === "refresh") {
         credentials = await refresh(credentials);
-        categories = await getRecommendedCategory(product.title, credentials)
+        [categories, warehouses] = await Promise.all([
+            getRecommendedCategory(product.title, credentials),
+            getWarehouses(credentials),
+        ]);
     }
-    //console.log(categories)
-    tiktokProduct.category_id = categories.categories.filter(c=> c.is_leaf == true)[0].id
-    let warehouses = await getWarehouses(credentials)
-    if(warehouses.error && warehouses.msg == "refresh"){
+    tiktokProduct.category_id = categories.categories.filter(c => c.is_leaf)[0].id;
+    const warehouse = warehouses.warehouses.filter(w => w.is_default)[0];
+
+    // Step 2: attributes + all image uploads in parallel
+    // Cache by URL so same-color variants don't re-upload the same image
+    const uploadCache = new Map();
+    const uploadCached = (url) => {
+        const key = url.replace("=400", "=2400");
+        if (!uploadCache.has(key)) {
+            uploadCache.set(key, uploadTikTokImage({ image: key, type: "MAIN_IMAGE", credentials })
+                .then(r => r.error ? null : { uri: r.uri }));
+        }
+        return uploadCache.get(key);
+    };
+
+    const uploadVariantImages = async (v) => {
+        const [mainImage, ...extraImages] = await Promise.all([
+            uploadCached(v.image),
+            ...(v.images ?? []).map(im => uploadCached(im)),
+        ]);
+        return { mainImage, images: extraImages.filter(Boolean) };
+    };
+
+    let [attributes, variantImageResults, sizeChartRes, videoRes] = await Promise.all([
+        getAttributes(tiktokProduct.category_id, credentials),
+        Promise.all(product.variantsArray.map(uploadVariantImages)),
+        product.blanks[0].sizeGuide?.images[0]
+            ? uploadTikTokImage({ image: product.blanks[0].sizeGuide.images[0], type: "SIZE_CHART_IMAGE", credentials })
+            : Promise.resolve(null),
+        product.video
+            ? uploadProductVideo(product.video, credentials)
+            : Promise.resolve(null),
+    ]);
+
+    if (attributes.error && attributes.msg === "refresh") {
         credentials = await refresh(credentials);
-        warehouses = await await getWarehouses(credentials)
+        attributes = await getAttributes(tiktokProduct.category_id, credentials);
     }
-    let warehouse = warehouses.warehouses.filter(w=> w.is_default)[0]
-    for(let im of product.productImages){
-        let res = await uploadTikTokImage({ image: im.image.replace("=400", "=2400"), type:"MAIN_IMAGE", credentials})
-        if(!res.error) tiktokProduct.main_images.push({uri:res.uri})
+
+    // Use variant main images for both main_images and sku_img (de-duped, capped at 9)
+    const seenUris = new Set();
+    tiktokProduct.main_images = variantImageResults
+        .map(({ mainImage }) => mainImage)
+        .filter(img => {
+            if (!img?.uri || seenUris.has(img.uri)) return false;
+            seenUris.add(img.uri);
+            return true;
+        })
+        .slice(0, 9);
+
+    if (sizeChartRes && !sizeChartRes.error) {
+        tiktokProduct.size_chart = { image: { uri: sizeChartRes.uri } };
     }
-    for(let v of product.variantsArray){
-        let attributes = []
-        let mainImage
-        let images = []
-        let identifier_code
-        let res = await uploadTikTokImage({ image: v.image.replace("=400", "=2400"), type: "MAIN_IMAGE", credentials })
-        mainImage = { uri: res.uri }
-        for(let im of v.images){
-            let res = await uploadTikTokImage({ image: im.replace("=400", "=2400"), type:"MAIN_IMAGE", credentials })
-            //console.log(res)
-            if(!res.error && mainImage == undefined) mainImage = {uri: res.uri}
-            else if(!res.error) images.push({uri: res.uri})
+
+    if (videoRes && !videoRes.error && videoRes.video_id) {
+        tiktokProduct.video = { id: videoRes.video_id };
+    }
+
+    for (let i = 0; i < product.variantsArray.length; i++) {
+        const v = product.variantsArray[i];
+        const { mainImage, images: variantImages } = variantImageResults[i];
+        const skuAttrs = [];
+        skuAttrs.push({ name: "Color", value_name: v.color.name, sku_img: mainImage });
+        skuAttrs.push({ name: "Size", value_name: product.sizes.filter(s => s._id.toLowerCase() === v.size.toLowerCase())[0].name });
+        if (v.threadColor && v.threadColor.length > 0) {
+            skuAttrs.push({ name: "Thread Color", value_name: v.threadColor.name });
         }
-        if(v.upc){
-            identifier_code= {
-                code: v.upc,
-                type: "UPC"
-            }
-        }
-        attributes.push({
-            name: "Color",
-            value_name: v.color.name,
-            sku_image:  mainImage,
-        })
-        //console.log(v.size, "size")
-        attributes.push({
-            name: "Size",
-            value_name: product.sizes.filter(s=> s._id.toLowerCase() == v.size.toLowerCase())[0].name,
-        })
-        if(v.threadColor && v.threadColor.length > 0){
-            attributes.push({
-                name: "Thread Color",
-                value_name: v.threadColor.name
-            })
-        }
-        //console.log(attributes)
+        const identifier_code = v.upc ? { code: v.upc, type: "UPC" } : undefined;
         tiktokProduct.skus.push({
-            sales_attributes: attributes,
-            inventory: [{
-                warehouse_id: warehouse.id,
-                quantity: 1000
-            }],
+            sales_attributes: skuAttrs,
+            inventory: [{ warehouse_id: warehouse.id, quantity: 1000 }],
             seller_sku: v.sku,
             identifier_code,
-            price: {
-                amount: `${v.price? v.price.toFixed(2): v.size.retailPrice.toFixed(2)}`,
-                currency: "USD"
-            },
-        })
-    }
-    //console.log(tiktokProduct)
-    let attributes = await getAttributes(tiktokProduct.category_id, credentials)
-    if(attributes.error && attributes.msg == "refresh"){
-        console.log("refreshing credentials", credentials)
-        credentials = await refresh(credentials);
-        attributes = await getAttributes(tiktokProduct.category_id, credentials)
+            price: { amount: `${v.price ? v.price.toFixed(2) : v.size.retailPrice.toFixed(2)}`, currency: "USD" },
+        });
     }
     let attrs = []
     if(product.season){
@@ -217,52 +229,76 @@ export async function createTikTokProduct({product, credentials}){
             name: "No"
         }]
     })
-    console.log(attributes.attributes.filter(a=> a.is_requried == true))
-    for(let blank of product.blanks){
-        if(blank.tikTokHeader){
-            for(let key of Object.keys(product.blank.tikTokHeader)){
-                if(key.toLowerCase() != "CA Prop 65: Repro. Chems".toLowerCase() && key.toLowerCase() != "CA Prop 65: Carcinogens".toLowerCase()){
-                    let at = attributes.attributes.filter(a=> a.name.toLowerCase() == key.toLowerCase())[0]
-                    if(at){
-                        attrs.push({
-                            id: at.id,
-                            values: [{
-                                name: product.blank.tikTokHeader[key]
-                            }]
-                        })
-                    }
-                }
-            }
+    const regionAttr = attributes.attributes.find(a => a.name === "Region Of Origin" || a.id === "100336");
+    if (regionAttr) {
+        attrs.push({ id: regionAttr.id, values: [{ name: "United States" }] });
+    } else {
+        attrs.push({ id: "100336", values: [{ name: "United States" }] });
+    }
+    const manufacturerAttr = attributes.attributes.find(a => a.name === "Manufacturer" || a.id === "100492");
+    const brandName = product.brand?.name ?? product.blanks?.[0]?.brand?.name ?? "Pythias";
+    if (manufacturerAttr) {
+        attrs.push({ id: manufacturerAttr.id, values: [{ name: brandName }] });
+    } else {
+        attrs.push({ id: "100492", values: [{ name: brandName }] });
+    }
+    const cpsiaAttr = attributes.attributes.find(a => a.name === "CPSIA Tracking Label" || a.id === "101200");
+    if (cpsiaAttr) {
+        const yesValue = cpsiaAttr.values?.find(v => v.name?.toLowerCase() === "yes") ?? cpsiaAttr.values?.[0];
+        if (yesValue) attrs.push({ id: cpsiaAttr.id, values: [{ id: yesValue.id, name: yesValue.name }] });
+    }
+    const ageAttr = attributes.attributes.find(a => a.name === "Recommended Age" || a.id === "100433");
+    if (ageAttr) {
+        const adultValue = ageAttr.values?.find(v => /adult|18|14/i.test(v.name)) ?? ageAttr.values?.[0];
+        if (adultValue) attrs.push({ id: ageAttr.id, values: [{ id: adultValue.id, name: adultValue.name }] });
+    } else {
+        attrs.push({ id: "100433", values: [{ name: "Adult" }] });
+    }
+    // Attributes already handled explicitly — don't add twice
+    const handledAttrs = new Set(attrs.map(a => a.id?.toString()));
+    const tryAddAttr = (key, value) => {
+        if (!key || !value) return;
+        const at = attributes.attributes.find(a => a.name.toLowerCase() === key.toLowerCase());
+        if (!at || handledAttrs.has(at.id?.toString())) return;
+        handledAttrs.add(at.id.toString());
+        const matchedValue = at.values?.find(v => v.name?.toLowerCase() === value.toLowerCase());
+        attrs.push({ id: at.id, values: [matchedValue ? { id: matchedValue.id, name: matchedValue.name } : { name: value }] });
+    };
+
+    // blank.tikTokHeader and blank.marketPlaceOverrides["TikTok" / "tiktok"]
+    for (const blank of product.blanks) {
+        const sources = [blank.tikTokHeader, blank.marketPlaceOverrides?.["TikTok"], blank.marketPlaceOverrides?.["tiktok"]].filter(Boolean);
+        for (const source of sources) {
+            for (const key of Object.keys(source)) tryAddAttr(key, source[key]);
         }
     }
-    console.log(attrs)
+
+    // product.marketplaceValues — all marketplace entries, match by attribute name
+    if (product.marketplaceValues) {
+        for (const mpValues of Object.values(product.marketplaceValues)) {
+            if (typeof mpValues !== "object") continue;
+            for (const key of Object.keys(mpValues)) tryAddAttr(key, mpValues[key]);
+        }
+    }
     
     tiktokProduct.product_attributes = attrs
-    //console.log(product.blank.sizeGuide)
-    if(product.blanks[0].sizeGuide?.images[0]){
-        let res = await uploadTikTokImage({image:product.blanks[0].sizeGuide?.images[0], type:"SIZE_CHART_IMAGE", credentials})
-        //console.log(res)
-        if(!res.error ){
-            tiktokProduct.size_chart = {}
-            tiktokProduct.size_chart.image = {uri: res.uri}
-        }
-    }
     let res = await createProduct({tiktokProduct, credentials})
     if(res.error && res.msg == "refresh"){
         credentials = await refresh(credentials);
         res = await createProduct({tiktokProduct, credentials})
     }
-    console.log(res.product?.skus[0].sales_attributes)
-    console.log(res.product, res.product.product_id)
-    product.ids[`tiktok-${credentials.seller_name}`] = res.product.product_id
-    console.log(product._id)
-    for(let v of product.variantsArray){
-        if(!v.ids) v.ids = {}
-        v.ids[`tiktok-${credentials.seller_name}`] = res.product.skus.filter(s=> s.seller_sku == v.sku)[0]?.sku_id
+    console.log("createProduct res:", JSON.stringify(res))
+    if(res.error || !res.product) throw new Error(`TikTok createProduct failed: ${res.msg ?? "no product returned"}`)
+    const tiktokKey = marketplaceName ?? credentials.seller_name;
+    const tiktokProductId = res.product.product_id;
+    const $set = { [`ids.${tiktokKey}`]: tiktokProductId };
+    for (let i = 0; i < product.variantsArray.length; i++) {
+        const sku_id = res.product.skus?.find(s => s.seller_sku === product.variantsArray[i].sku)?.sku_id;
+        if (sku_id) $set[`variantsArray.${i}.ids.${tiktokKey}`] = sku_id;
     }
-    product.markModified("ids variantsArray");
-    await product.save()
-    return product    
+    console.log("[TikTok] saving under key:", tiktokKey, "product._id:", product._id);
+    await Product.findByIdAndUpdate(product._id, { $set });
+    return { tiktokProductId };
 }
 
 export const getOrders = async (auths)=>{

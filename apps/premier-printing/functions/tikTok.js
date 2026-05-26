@@ -10,20 +10,17 @@ import {
   getOrdersTikTok,
   generatePieceID,
 } from "@pythias/integrations";
-const refresh = async (creds, cipher) =>{
+const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
+const refresh = async (creds, cipher) => {
     let credentials = await TikTokAuth.findOne({ _id: creds._id });
-    console.log("refresh +++++")
-    let access_token = await getAccessTokenFromRefreshToken(
-        credentials.refresh_token
-    );
-    //console.log(access_token, "access token");
-    for (let key of Object.keys(access_token)) {
-        credentials[key] = access_token[key];
+    const tokens = await getAccessTokenFromRefreshToken(credentials.refresh_token);
+    for (const key of TOKEN_FIELDS) {
+        if (tokens[key] !== undefined) credentials[key] = tokens[key];
     }
     credentials.date = new Date(Date.now());
     credentials = await credentials.save();
-    credentials.shop_cipher = cipher;
-    return credentials
+    if (cipher) credentials.shop_cipher = cipher;
+    return credentials;
 }
 const stateAbbreviations = {
     Alabama: "AL",
@@ -158,7 +155,7 @@ export async function createTikTokProduct({product}){
         attributes.push({
             name: "Color",
             value_name: v.color.name,
-            sku_image:  mainImage,
+            sku_img: mainImage,
         })
         attributes.push({
             name: "Size",
@@ -279,7 +276,7 @@ export const getOrders = async (auths)=>{
             if(!res.error) {
                 let ords = [];
                 for (let o of res.orders) {
-                    o.tikTikShop = {
+                    o.tikTokShop = {
                         sellerName: credentials.seller_name,
                         sellerId: credentials._id,
                         shopId: store.shop_id,
@@ -443,9 +440,8 @@ export const processOrders = async (orders)=>{
                         name: i.name,
                         date: order.date,
                     });
-                    //console.log(item)
-                // await item.save();
-                    //await shirtItem.save();
+                    await item.save();
+                    await shirtItem.save();
                     items.push(item);
                     items.push(shirtItem);
                 } else if (blank && blank.code == "LGDSET") {
@@ -492,12 +488,11 @@ export const processOrders = async (orders)=>{
                         name: i.name,
                         date: order.date,
                     });
-                    //console.log(item)
-                    //await item.save();
-                    //await shirtItem.save();
+                    await item.save();
+                    await shirtItem.save();
                     items.push(item);
                     items.push(shirtItem);
-                } else if (blank && blank.code == "LGDSET") {
+                } else if (blank && blank.code == "GDTSET") {
                     let sb = await Blanks.findOne({ code: "GDT" });
                     let shirtItem = new Item({
                         pieceId: await generatePieceID(),
@@ -541,9 +536,8 @@ export const processOrders = async (orders)=>{
                         name: i.name,
                         date: order.date,
                     });
-                    //console.log(item)
-                    //await item.save();
-                    // await shirtItem.save();
+                    await item.save();
+                    await shirtItem.save();
                     items.push(item);
                     items.push(shirtItem);
                 } else {
@@ -568,31 +562,30 @@ export const processOrders = async (orders)=>{
                         name: i.name,
                         date: order.date,
                     });
-                    console.log(item)
-                    //await item.save();
+                    await item.save();
                     items.push(item);
                 }
             }
-            console.log(items)
-            order.items = items;
+            order.items = items.map(i => i._id);
+            await order.save();
         } else {
             order.status = o.orderStatus;
             if (order.status == "shipped") {
-                order.items.map(async (i) => {
-                i.status = order.status;
-                i.labelPrinted = true;
-                i = await i.save();
-                });
+                await Promise.all(order.items.map(async (i) => {
+                    i.status = order.status;
+                    i.labelPrinted = true;
+                    await i.save();
+                }));
             }
             if (order.status == "CANCELLED") {
-              order.items.map(async (i) => {
-                i.status = order.status;
-                i.canceled = true;
-                await i.save();
-              });
+                await Promise.all(order.items.map(async (i) => {
+                    i.status = order.status;
+                    i.canceled = true;
+                    await i.save();
+                }));
             }
+            await order.save();
         }
-        console.log(order)
     }
     return {error: false}
 }

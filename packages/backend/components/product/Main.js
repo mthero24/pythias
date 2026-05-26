@@ -1,6 +1,6 @@
 "use client";
-import {Box, Grid2, Typography, Button, InputAdornment, TextField, Container, Stack, Pagination, Badge, Chip} from "@mui/material";
-import {useState, useEffect} from "react";
+import {Box, Grid2, Typography, Button, InputAdornment, TextField, Container, Stack, Pagination, Badge, Chip, Skeleton, CircularProgress} from "@mui/material";
+import {useState, useEffect, useCallback} from "react";
 import { ProductCard } from "../reusable/ProductCard";
 import {Footer} from "../reusable/Footer";
 import SearchIcon from '@mui/icons-material/Search';
@@ -13,14 +13,14 @@ import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import {useCSV} from "../reusable/CSVProvider";
 import {CreateNFProduct} from "./CreateNFProduct";
 import LoaderOverlay from "../reusable/LoaderOverlay";
-export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts, printTypes, licenses, canManageMarketplaces }) => {
-    console.log(printTypes, licenses)
-    const [products, setProducts] = useState(prods? prods : []);
-    const [count, setCount] = useState(co);
-    const [page, setPage] = useState(pa);
-    const [search, setSearch] = useState(query? query: "");
+export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts, printTypes, licenses, canManageMarketplaces, searchUrl }) => {
+    const [products, setProducts] = useState(prods ?? []);
+    const [count, setCount] = useState(co ?? 0);
+    const [page, setPage] = useState(pa ?? 1);
+    const [search, setSearch] = useState(query ?? "");
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState(filter || {});
+    const [productsLoading, setProductsLoading] = useState(!!searchUrl);
     const [createProduct, setCreateProduct] = useState(false);
     const [marketplaceModal, setMarketplaceModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState({blanks: [], colors: [], productImages: [], variants: []});
@@ -70,16 +70,52 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
             setDesign({...selectedProduct.design, products: [{...selectedProduct}]});
         }
     }, [selectedProduct]);
+
+    const fetchProducts = useCallback(async (p, q, f) => {
+        if (!searchUrl) return;
+        setProductsLoading(true);
+        try {
+            const params = new URLSearchParams({ page: String(p) });
+            if (q) params.set("q", q);
+            if (f && Object.keys(f).length) params.set("filters", JSON.stringify(f));
+            const res = await fetch(`${searchUrl}?${params}`);
+            const data = await res.json();
+            setProducts(data.products ?? []);
+            setCount(data.count ?? 0);
+        } catch (e) {
+            console.error("Failed to fetch products", e);
+        } finally {
+            setProductsLoading(false);
+        }
+    }, [searchUrl]);
+
+    useEffect(() => {
+        if (searchUrl) fetchProducts(pa ?? 1, query ?? "", filter || {});
+    }, []);
+
     const handlePageChange = (event, value) => {
-        console.log(value)
-        location.href = `/admin/products?page=${value}${search ? `&q=${search}` : ''}${filters ? `&filters=${JSON.stringify(filters)}` : ''}`;
-        // You would typically fetch new data for the selected page here
-        // based on the 'value' (new page number)
-        console.log(`Navigating to page: ${value}`);
+        if (searchUrl) {
+            setPage(value);
+            fetchProducts(value, search, filters);
+            const params = new URLSearchParams({ page: String(value) });
+            if (search) params.set("q", search);
+            if (Object.keys(filters).length) params.set("filters", JSON.stringify(filters));
+            window.history.pushState({}, "", `/admin/products?${params}`);
+        } else {
+            location.href = `/admin/products?page=${value}${search ? `&q=${search}` : ''}${filters ? `&filters=${JSON.stringify(filters)}` : ''}`;
+        }
     };
     const applyFilters = () => {
-        console.log(search, filters, "Applying filters");
-        location.href = `/admin/products?page=1${search ? `&q=${search}` : ''}${filters ? `&filters=${JSON.stringify(filters)}` : ''}`;
+        if (searchUrl) {
+            setPage(1);
+            fetchProducts(1, search, filters);
+            const params = new URLSearchParams({ page: "1" });
+            if (search) params.set("q", search);
+            if (Object.keys(filters).length) params.set("filters", JSON.stringify(filters));
+            window.history.pushState({}, "", `/admin/products?${params}`);
+        } else {
+            location.href = `/admin/products?page=1${search ? `&q=${search}` : ''}${filters ? `&filters=${JSON.stringify(filters)}` : ''}`;
+        }
     }
     let updateDesign = async (des) => {
         return null;
@@ -126,7 +162,15 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                             </Button>
                         </Badge>
                         {Object.keys(filters).length > 0 && (
-                            <Button size="small" color="error" onClick={() => { setFilters({}); location.href = `/admin/products?page=1${search ? `&q=${search}` : ''}`; }}>
+                            <Button size="small" color="error" onClick={() => {
+                                setFilters({});
+                                if (searchUrl) {
+                                    fetchProducts(1, search, {});
+                                    window.history.pushState({}, "", `/admin/products?page=1${search ? `&q=${search}` : ""}`);
+                                } else {
+                                    location.href = `/admin/products?page=1${search ? `&q=${search}` : ''}`;
+                                }
+                            }}>
                                 Clear All Filters
                             </Button>
                         )}
@@ -253,44 +297,55 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                 </Box>
                 
                 <Grid2 container spacing={2}>
-                    {products.length === 0 && <Typography sx={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem" }}>No products found</Typography>}
-                    {products.map((p, i) => {
-                        return <ProductCard 
-                            key={p._id} 
-                            p={p} 
-                            setProduct={setSelectedProduct} 
-                            setCreateProduct={setCreateProduct}
-                            setMarketplaceModal={setMarketplaceModal} 
-                            design={{...p.design}} 
-                            setDesign={setDesign} 
-                            setPreview={setPreview} 
-                            updateDesign={updateDesign}
-                            blanks={blanks}
-                            colors={colors}
-                            imageGroups={imageGroups}
-                            brands={bran}
-                            genders={gen}
-                            seasons={seas} 
-                            setBrands={setBrands}
-                            setGenders={setGenders}
-                            setSeasons={setSeasons}
-                            CreateSku={CreateSku} 
-                            themes={them}
-                            sportUsedFor={sport}
-                            setThemes={setThemes}
-                            setSportUsedFor={setSportUsedFor}
-                            setProducts={setProducts}
-                            marketPlaces={marketplaces}
-                            setNFProduct={setNFProduct}
-                            setStart={setStart}
-                            source={source}
-                            printTypes={printTypes}
-                            licenses={licenses}
-                        />
-                    })}
+                    {productsLoading
+                        ? Array.from({ length: 8 }).map((_, i) => (
+                            <Grid2 key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+                                <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+                            </Grid2>
+                        ))
+                        : products.length === 0
+                            ? <Typography sx={{ textAlign: "center", width: "100%", fontWeight: "bold", fontSize: "1.5rem" }}>No products found</Typography>
+                            : products.map((p) => (
+                                <ProductCard
+                                    key={p._id}
+                                    p={p}
+                                    setProduct={setSelectedProduct}
+                                    setCreateProduct={setCreateProduct}
+                                    setMarketplaceModal={setMarketplaceModal}
+                                    design={{...p.design}}
+                                    setDesign={setDesign}
+                                    setPreview={setPreview}
+                                    updateDesign={updateDesign}
+                                    blanks={blanks}
+                                    colors={colors}
+                                    imageGroups={imageGroups}
+                                    brands={bran}
+                                    genders={gen}
+                                    seasons={seas}
+                                    setBrands={setBrands}
+                                    setGenders={setGenders}
+                                    setSeasons={setSeasons}
+                                    CreateSku={CreateSku}
+                                    themes={them}
+                                    sportUsedFor={sport}
+                                    setThemes={setThemes}
+                                    setSportUsedFor={setSportUsedFor}
+                                    setProducts={setProducts}
+                                    marketPlaces={marketplaces}
+                                    setNFProduct={setNFProduct}
+                                    setStart={setStart}
+                                    source={source}
+                                    printTypes={printTypes}
+                                    licenses={licenses}
+                                />
+                            ))
+                    }
                 </Grid2>
                 <Stack spacing={2} sx={{ margin: "1% 0%", display: "flex", alignItems: "center" }}>
-                    <Pagination count={Math.ceil((count || 0) / 24)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
+                    {productsLoading && searchUrl
+                        ? <CircularProgress size={28} />
+                        : <Pagination count={Math.ceil((count || 0) / 24)} page={page} onChange={handlePageChange} shape="rounded" showFirstButton showLastButton />
+                    }
                 </Stack>
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={selectedProduct} setProduct={setSelectedProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={gen} seasons={seas} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={them} sportUsedFor={sport} setThemes={setThemes} setSportUsedFor={setSportUsedFor} pageProducts={products} setPageProducts={setProducts} printTypes={printTypes} licenses={licenses} />
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} source={source} setProducts={setProducts} products={products} canManage={canManageMarketplaces} />

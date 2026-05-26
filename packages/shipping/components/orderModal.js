@@ -43,7 +43,7 @@ export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, 
             if (res.data.error) alert(res.data.msg);
             else setShippingPrices(res.data.rates.rates);
         };
-        if (show && order && weight > 0 && dimensions) getShippingRates();
+        if (show && order && weight > 0 && dimensions && dimensions.width > 0 && dimensions.length > 0 && dimensions.height > 0) getShippingRates();
     }, [dimensions, weight]);
 
     useEffect(() => {

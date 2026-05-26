@@ -20,7 +20,7 @@ export {saveProducts} from "./functions/saveProduct";
 export {designPage} from "./functions/designPage";
 export {saveOneOffs} from "./functions/saveOneOffs";
 export { ProductsMain } from "./components/product/Main";
-export { getProducts } from "./functions/getProducts";
+export { getProducts, searchProducts } from "./functions/getProducts";
 export { CSVProvider, useCSV } from "./components/reusable/CSVProvider";
 export {Create as CreateBlank} from "./components/blanks/Create";
 export { Edit } from "./components/edit/Edit";

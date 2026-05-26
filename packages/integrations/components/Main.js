@@ -2071,9 +2071,18 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
                         </Box>
                     </Stack>
                     <Stack direction="row" spacing={1} flexShrink={0} alignItems="center">
+                        {!confirming && shop.access_token && (
+                            <Button
+                                component={Link} href="/admin/integrations/tiktok"
+                                variant="contained" size="small"
+                                endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                                sx={{ bgcolor: "#010101", color: "#fff", "&:hover": { bgcolor: "#333" }, borderRadius: 1.5 }}>
+                                Manage
+                            </Button>
+                        )}
                         {!confirming && (
-                            <Button variant="contained" size="small"
-                                sx={{ bgcolor: "#69C9D0", color: "#000", "&:hover": { bgcolor: "#50b8bf" }, borderRadius: 1.5 }}>
+                            <Button variant="outlined" size="small"
+                                sx={{ borderColor: "#69C9D0", color: "#000", "&:hover": { bgcolor: "#e0fafa" }, borderRadius: 1.5 }}>
                                 {shop.access_token ? "Reauthorize" : "Authorize"}
                             </Button>
                         )}
@@ -2173,7 +2182,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             logo={tiktok} alt="TikTok Shop"
                             name="TikTok Shop"
                             description={PLATFORMS.tiktok.description}
-                            comingSoon
+                            connected={hasTikTok}
+                            onClick={hasTikTok ? undefined : () => setTikTokOpen(true)}
                         />
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>

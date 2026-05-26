@@ -82,7 +82,7 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
 
     const updateDimensions = (field, value) => {
         setShippingPrices();
-        setDimensions(prev => ({ ...prev, [field]: value }));
+        setDimensions(prev => ({ ...prev, [field]: parseFloat(value) || 0 }));
     };
 
     return (

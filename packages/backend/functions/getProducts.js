@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
     const project = {
         meta: "$$SEARCH_META",
@@ -126,30 +127,44 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
     return products;
 }
 
-export const getProducts = async ({ Products, Blanks, page, query, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, PrintTypes, LicenseHolders, filters }) => {
-    let products
-    let count = 0
-    const searchResults = await search({ Products, q: query, page, filters, productsPerPage: 24, skip: (page - 1) * 24 });
-    if(searchResults && searchResults.length > 0){
-        count = searchResults[0].meta.count.total
-        const orderedIds = searchResults.map(p => p._id.toString());
-        products = await Products.find({ _id: { $in: searchResults.map(p => p._id) } }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.productInventory").populate({ path: "blanks", populate: "colors" }).lean();
-        if (query) {
-            products.sort((a, b) => orderedIds.indexOf(a._id.toString()) - orderedIds.indexOf(b._id.toString()));
-        } else {
-            products.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
-        }
+// Product-only search — no inventory populate, used by the API search route and getProducts
+export const searchProducts = async ({ Products, q, page, filters }) => {
+    const searchResults = await search({ Products, q, page, filters, productsPerPage: 24, skip: (page - 1) * 24 });
+    if (!searchResults?.length) return { products: [], count: 0 };
+
+    const count = searchResults[0].meta.count.total;
+    const orderedIds = searchResults.map(p => p._id.toString());
+    let products = await Products.find({ _id: { $in: searchResults.map(p => p._id) } })
+        .populate("design colors productImages.blank productImages.color productImages.threadColor threadColors")
+        .populate({ path: "blanks", populate: "colors" })
+        .lean();
+
+    if (q) {
+        products.sort((a, b) => orderedIds.indexOf(a._id.toString()) - orderedIds.indexOf(b._id.toString()));
+    } else {
+        products.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
     }
-    const blanks = await Blanks.find().populate("colors");
-    const seasons = await Seasons.find();
-    const genders = await Genders.find();
-    const sportsUsedFor = await SportUsedFor.find();
-    const brands = await Brands.find();
-    const marketplaces = await MarketPlaces.find();
-    const themes = await Themes.find();
-    const colors = await Color.find();
-    const licenses = await LicenseHolders.find();
-    const printTypes = await PrintTypes.find();
-    const totalProducts = await Products.countDocuments();
+    return { products, count };
+};
+
+// Full page load — search and all filter lookups run in parallel
+export const getProducts = async ({ Products, Blanks, page, query, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, PrintTypes, LicenseHolders, filters }) => {
+    const [
+        { products, count },
+        blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, licenses, printTypes, totalProducts,
+    ] = await Promise.all([
+        searchProducts({ Products, q: query, page, filters: filters ?? {} }),
+        Blanks.find().populate("colors").lean(),
+        Seasons.find().lean(),
+        Genders.find().lean(),
+        SportUsedFor.find().lean(),
+        Brands.find().lean(),
+        MarketPlaces.find().lean(),
+        Themes.find().lean(),
+        Color.find().lean(),
+        LicenseHolders.find().lean(),
+        PrintTypes.find().lean(),
+        Products.countDocuments(),
+    ]);
     return { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts, printTypes, licenses };
-}
+};

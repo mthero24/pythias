@@ -190,7 +190,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         setSize(sizeArray);
         const getConnections = async () => {
             console.log("getConnections called");
-            let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test")? "pythias-test": source == "simplesage"? "premierPrinting":  source } });
+            let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test") ? "pythias-test" : source === "simplysage" ? "premierPrinting" : source } });
             console.log(res?.data, "res in getConnections");
             if(res.data && res.data.integration) {
                 setLoading(true);
@@ -205,7 +205,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                             //console.log("here")
                             for( let c of connections) {
                                // console.log(c, "c", m.connections)
-                                if (c.displayName.toLowerCase().includes("acenda") && m.connections && (m.connections.includes(c._id.toString()) || m.connections.filter(co=> co._id?.toString() == c._id?.toString())[0])) {
+                                if (c.displayName?.toLowerCase().includes("acenda") && m.connections && (m.connections.includes(c._id.toString()) || m.connections.filter(co=> co._id?.toString() == c._id?.toString())[0])) {
                                     //console.log("here")
                                     try {
                                         let res = await axios.post("/api/integrations/acenda", { connection: c, product });
@@ -277,7 +277,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                     let prod = { ...product }
                     for (let m of mp) {
                         for (let c of connections) {
-                            if (c.displayName.toLowerCase().includes("acenda") && m.connections && m.connections.includes(c._id.toString())) {
+                            if (c.displayName?.toLowerCase().includes("acenda") && m.connections && m.connections.includes(c._id.toString())) {
                                 let res = await axios.post("/api/integrations/acenda", { connection: c, product });
                                 prod = res.data.product;
                             }
@@ -302,7 +302,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         setLoading(true);
         let p = { ...product };
         if (mp.connections && mp.connections.length > 0) {
-            let shopifyConnections = mp.connections.filter(c => c.displayName.toLowerCase().includes("shopify"))[0];
+            let shopifyConnections = mp.connections.filter(c => c.displayName?.toLowerCase().includes("shopify"))[0];
             if (shopifyConnections) {
                 const headers = {
                     headers: {
@@ -353,7 +353,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         }
     };
     const [addMarketPlace, setAddMarketPlace] = useState(false);
-    const sendToConnection = async (c) => {
+    const sendToConnection = async (c, mpName) => {
         if (c.displayName?.includes("shopify")) {
             setLoading(true);
             const res = await axios.post("/api/integrations/shopify/send", { product, connection: c }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${c.apiKey}` } }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
@@ -479,13 +479,11 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             setLoading(false);
         } else if (c.seller_name) {
             setLoading(true);
-            const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
-            if (res?.data) {
+            const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c, marketplaceName: mpName }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong. Please try again."); setLoading(false); });
+            if (res?.data && !res.data.error) {
                 let p = { ...product };
                 if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.productId;
-                for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = res.data.variantIds?.find(vId => vId.sku === v.sku)?.id; }
-                await axios.post("/api/admin/products", { products: [p] });
+                p.ids[mpName] = res.data.tiktokProductId;
                 setProduct({ ...p });
                 if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }
@@ -547,15 +545,19 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                         </Box>
 
                                         <Box sx={{ flex: 1, overflowY: "auto", px: 1, py: 0.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
-                                            {product && mp.connections?.map((c) => (
-                                                <Button key={`${c?._id}`} fullWidth size="small"
-                                                    variant={product.ids?.[c?.displayName] ? "contained" : "outlined"}
-                                                    color={product.ids?.[c?.displayName] ? "success" : "primary"}
-                                                    sx={{ fontSize: "0.62rem", py: 0.4, textTransform: "none" }}
-                                                    onClick={() => sendToConnection(c)}>
-                                                    {product.ids?.[c?.displayName] ? "↺ Update — " : "→ Send — "}{c?.displayName || c?.seller_name || "Connection"}
-                                                </Button>
-                                            ))}
+                                            {product && mp.connections?.map((c) => {
+                                                const connKey = c?.seller_name ? mp.name : (c?.displayName ?? c?.seller_name);
+                                                const hasSent = !!product.ids?.[connKey];
+                                                return (
+                                                    <Button key={`${c?._id}`} fullWidth size="small"
+                                                        variant={hasSent ? "contained" : "outlined"}
+                                                        color={hasSent ? "success" : "primary"}
+                                                        sx={{ fontSize: "0.62rem", py: 0.4, textTransform: "none" }}
+                                                        onClick={() => sendToConnection(c, mp.name)}>
+                                                        {hasSent ? "↺ Update — " : "→ Send — "}{c?.displayName || c?.seller_name || "Connection"}
+                                                    </Button>
+                                                );
+                                            })}
                                         </Box>
 
                                         <Divider />
@@ -608,8 +610,8 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                             {marketPlace.headers.map((header, index) => (
                                                 <Box key={marketPlace._id + "-" + index} sx={{ p: 2, borderBottom: index < marketPlace.headers.length - 1 ? "1px solid" : "none", borderColor: "divider" }}>
                                                     <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 1.5 }}>
-                                                        {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda")[0])) && (
-                                                            <Button variant="outlined" size="small" onClick={async () => { await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName.toLowerCase().includes("acenda"))[0])[0]?._id, productId: product._id } }); }}>Add Inventory</Button>
+                                                        {marketPlace.connections?.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName?.toLowerCase().includes("acenda")[0])) && (
+                                                            <Button variant="outlined" size="small" onClick={async () => { await axios.get("/api/integrations/acenda", { params: { connectionId: marketPlace.connections.map(c => connections.filter(conn => conn._id.toString() === c.toString()).filter(c => c.displayName?.toLowerCase().includes("acenda"))[0])[0]?._id, productId: product._id } }); }}>Add Inventory</Button>
                                                         )}
                                                         <Button variant="outlined" size="small" href={`/api/download?marketPlace=${marketPlace._id}&product=${product._id}&header=${index}&disableDefault=${marketPlace.disableProductDefaults ? marketPlace.disableProductDefaults[index] : false}`} target="_blank">Download CSV</Button>
                                                     </Box>
@@ -653,6 +655,16 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                             <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "temu")[0].displayName}</Typography>
                                                             <Divider sx={{ my: 0.75 }} />
                                                             {product.ids?.[marketPlace.connections.filter(c => c?.type === "temu")[0].displayName] && <Typography variant="body2" color="text.secondary">Temu Goods ID: {product.ids[marketPlace.connections.filter(c => c?.type === "temu")[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.seller_name) && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.name}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.name]
+                                                                ? <Typography variant="body2" color="text.secondary">TikTok ID: {product.ids[marketPlace.name]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
                                                         </Card>
                                                     )}
                                                     {header.length > 0 && (

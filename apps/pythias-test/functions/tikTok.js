@@ -159,7 +159,7 @@ export async function createTikTokProduct({product, credentials}){
         attributes.push({
             name: "Color",
             value_name: v.color.name,
-            sku_image:  mainImage,
+            sku_img: mainImage,
         })
         //console.log(v.size, "size")
         attributes.push({

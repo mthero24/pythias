@@ -31,13 +31,20 @@ export {
   getAccessTokenFromRefreshToken,
   getAccessTokenUsingAuthCode,
   uploadProductImage,
+  uploadProductVideo,
   generateAuthorizationUrl,
   getRecommendedCategory,
   getWarehouses,
   getAttributes,
   createProduct,
   getOrders as getOrdersTikTok,
+  searchProducts as searchProductsTikTok,
+  updateInventory as updateInventoryTikTok,
+  updateProductPrice as updateProductPriceTikTok,
+  getShippingProvidersTikTok,
+  fulfillOrderTikTok,
 } from "./functions/tiktokpy";
+export { TikTokDashboard } from "./components/TikTokDashboard";
 
 export {generateRedirectURI, getToken, refreshToken, createDraftListing, updateListingFrom, fetchOrders, createReceiptShipment, getOpenReceiptsEtsy} from "./functions/etsy";
 

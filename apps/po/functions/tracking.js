@@ -46,7 +46,7 @@ export const trackOrder = async (orderId) => {
         if (expectedDelivery) lbl.expectedDelivery = expectedDelivery;
         const latest = events[0]?.toLowerCase() || "";
 
-        if ((latest.includes("delivered") && !latest.includes("out for")) || latest.includes("picked up")) {
+        if (latest.startsWith("delivered")) {
             lbl.delivered = true;
         } else if (latest.includes("out for delivery")) {
             order.status = "Out For Delivery";
@@ -55,7 +55,7 @@ export const trackOrder = async (orderId) => {
     }
 
     if (changed) {
-        if (order.shippingInfo.labels.every(l => l.delivered)) order.status = "Delivered";
+        if (order.shippingInfo.labels.every(l => l.delivered || l.refunded)) order.status = "Delivered";
         order.markModified("shippingInfo.labels");
         await order.save();
     }
@@ -99,7 +99,7 @@ export const runTracking = async () => {
             if (expectedDelivery) lbl.expectedDelivery = expectedDelivery;
             const latest = events[0]?.toLowerCase() || "";
 
-            if (latest.includes("delivered") && !latest.includes("out for")) {
+            if (latest.startsWith("delivered")) {
                 lbl.delivered = true;
             } else if (latest.includes("out for delivery")) {
                 order.status = "Out For Delivery";
@@ -109,7 +109,7 @@ export const runTracking = async () => {
         }
 
         if (orderChanged) {
-            if (order.shippingInfo.labels.length > 0 && order.shippingInfo.labels.every(l => l.delivered)) {
+            if (order.shippingInfo.labels.length > 0 && order.shippingInfo.labels.every(l => l.delivered || l.refunded)) {
                 order.status = "Delivered";
             }
             order.markModified("shippingInfo.labels");

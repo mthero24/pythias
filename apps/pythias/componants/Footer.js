@@ -14,8 +14,10 @@ const LINKS = [
     { label: "Tutorials",     href: "/tutorials" },
     { label: "About Us",      href: "/about" },
     { label: "Contact Us",    href: "/contact" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Sitemap",        href: "/sitemap.xml" },
+    { label: "Privacy Policy",  href: "/privacy" },
+    { label: "Data Protection", href: "/data-protection" },
+    { label: "Security Policies", href: "/policies/security-baseline" },
+    { label: "Sitemap",         href: "/sitemap.xml" },
 ];
 
 export default function Footer() {

@@ -6,8 +6,14 @@ const ALLOWED_SETTINGS_FIELDS = new Set(["pullOrdersEnabled"]);
 
 export async function handleAdminIntegrationsGET(req) {
     try {
-        let integration = await ApiKeyIntegrations.find();
-        return NextResponse.json({ error: false, integration });
+        const { searchParams } = new URL(req.url);
+        const provider = searchParams.get("provider");
+        const filter = provider ? { provider } : {};
+        const [integration, tiktokAuth] = await Promise.all([
+            ApiKeyIntegrations.find(filter),
+            TikTokAuth.find(filter),
+        ]);
+        return NextResponse.json({ error: false, integration, tiktokAuth });
     } catch (err) {
         console.error("Error fetching integration:", err);
         return NextResponse.json({ error: true, message: "Error fetching integration" });
@@ -17,15 +23,12 @@ export async function handleAdminIntegrationsGET(req) {
 export async function handleAdminIntegrationsPOST(req) {
     let data = await req.json();
     if (data.type == "tiktok") {
-        let auth = await TikTokAuth.findOne({ seller_name: data.seller_name });
+        let auth = await TikTokAuth.findOne({ seller_name: data.seller_name, provider: data.provider });
         if (!auth) {
             auth = new TikTokAuth({ seller_name: data.seller_name, provider: data.provider });
             await auth.save();
-        } else if (!auth.provider) {
-            auth.provider = data.provider;
-            await auth.save();
         }
-        let url = await generateAuthorizationUrl();
+        let url = await generateAuthorizationUrl(auth._id.toString());
         return NextResponse.json({ error: false, url });
     } else if (data.type == "acenda" || data.type == "walmart" || data.type == "faire" || data.type == "shein" || data.type == "temu") {
         let integration = await ApiKeyIntegrations.findOne({ displayName: data.displayName, provider: data.provider });

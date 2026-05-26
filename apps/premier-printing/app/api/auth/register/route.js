@@ -4,10 +4,7 @@ import { User, Inventory as inventory } from "@pythias/mongo";
 
 export async function POST(request) {
   try {
-    const { email, password, firstName, lastName, userName, permissions } = await request.json();
-    if(!permissions) permissions = {
-      production: true,
-    }
+    const { email, password, firstName, lastName, userName, permissions = { production: true } } = await request.json();
     const newUser = new User({
         userName: userName,
         email: email.toLowerCase(),
