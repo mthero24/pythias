@@ -30,7 +30,7 @@ export async function handleAdminIntegrationsPOST(req) {
         }
         let url = await generateAuthorizationUrl(auth._id.toString());
         return NextResponse.json({ error: false, url });
-    } else if (data.type == "acenda" || data.type == "walmart" || data.type == "faire" || data.type == "shein" || data.type == "temu") {
+    } else if (["acenda","walmart","faire","shein","temu","wix","woocommerce","squarespace","meta","pinterest","onbuy","rakuten","wayfair","rithum"].includes(data.type)) {
         let integration = await ApiKeyIntegrations.findOne({ displayName: data.displayName, provider: data.provider });
         if (!integration) {
             integration = new ApiKeyIntegrations({
@@ -39,6 +39,7 @@ export async function handleAdminIntegrationsPOST(req) {
                 apiSecret: data.apiSecret,
                 organization: data.organization,
                 refreshToken: data.refreshToken,
+                shopId: data.shopId,
                 provider: data.provider,
                 type: data.type,
             });
@@ -49,6 +50,7 @@ export async function handleAdminIntegrationsPOST(req) {
             integration.apiSecret = data.apiSecret;
             integration.organization = data.organization;
             if (data.refreshToken !== undefined) integration.refreshToken = data.refreshToken;
+            if (data.shopId !== undefined) integration.shopId = data.shopId;
             integration.type = data.type;
             await integration.save();
         }

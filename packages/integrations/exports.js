@@ -115,6 +115,46 @@ export {
     handleShopifyOrdersGET,
 } from "./handlers/shopifySales";
 
+// wix
+export { createWixProduct, updateWixProduct, getWixOrders } from "./functions/wix";
+export { handleWixSendPOST, handleWixOrdersGET, handleWixOrdersPOST } from "./handlers/wix";
+export { WixModal } from "./components/WixModal";
+
+// woocommerce
+export { createWooProduct, updateWooProduct, getWooOrders } from "./functions/woocommerce";
+export { handleWooSendPOST, handleWooOrdersGET, handleWooOrdersPOST } from "./handlers/woocommerce";
+export { WooCommerceModal } from "./components/WooCommerceModal";
+
+// squarespace
+export { createSquarespaceProduct, updateSquarespaceProduct, getSquarespaceOrders } from "./functions/squarespace";
+export { handleSquarespaceSendPOST, handleSquarespaceOrdersGET, handleSquarespaceOrdersPOST } from "./handlers/squarespace";
+export { SquarespaceModal } from "./components/SquarespaceModal";
+
+// meta
+export { getMetaOrders, acknowledgeMetaOrders, createMetaProduct, updateMetaProduct } from "./functions/meta";
+export { handleMetaSendPOST, handleMetaOrdersGET, handleMetaOrdersPOST } from "./handlers/meta";
+export { MetaModal } from "./components/MetaModal";
+
+// pinterest
+export { createPinterestCatalogItems, updatePinterestCatalogItems } from "./functions/pinterest";
+export { handlePinterestSendPOST, handlePinterestOrdersGET, handlePinterestOrdersPOST } from "./handlers/pinterest";
+export { PinterestModal } from "./components/PinterestModal";
+
+// onbuy
+export { getOnBuyOrders, createOnBuyListing, updateOnBuyListing } from "./functions/onbuy";
+export { handleOnBuySendPOST, handleOnBuyOrdersGET, handleOnBuyOrdersPOST } from "./handlers/onbuy";
+export { OnBuyModal } from "./components/OnBuyModal";
+
+// rakuten
+export { getRakutenOrders, createRakutenItem, updateRakutenItem } from "./functions/rakuten";
+export { handleRakutenSendPOST, handleRakutenOrdersGET, handleRakutenOrdersPOST } from "./handlers/rakuten";
+export { RakutenModal } from "./components/RakutenModal";
+
+// wayfair
+export { getWayfairOrders, acceptWayfairOrder, shipWayfairOrder } from "./functions/wayfair";
+export { handleWayfairOrdersGET, handleWayfairOrdersPOST } from "./handlers/wayfair";
+export { WayfairModal } from "./components/WayfairModal";
+
 // ebay
 export { generateEbayAuthUrl, exchangeCodeEbay, refreshEbayToken, getOrdersEbay, shipOrderEbay, createInventoryItemEbay, createOfferEbay, getAccountPoliciesEbay } from "./functions/ebay";
 export { handleEbayGET, handleEbaySendPOST, handleEbayPoliciesGET, handleEbayOrdersGET, handleEbayOrdersPOST, makeEbayOAuthRedirectGET, handleEbayOAuthInitGET } from "./handlers/ebay";
@@ -134,3 +174,8 @@ export { NoonModal } from "./components/NoonModal";
 export { getOrdersBol, getOrderBol, shipOrderBol } from "./functions/bol";
 export { handleBolOrdersGET, handleBolOrdersPOST } from "./handlers/bol";
 export { BolModal } from "./components/BolModal";
+
+// rithum (formerly ChannelAdvisor/DSCO)
+export { getRithumOrders, shipRithumOrder, createRithumProduct, updateRithumProduct } from "./functions/rithum";
+export { handleRithumSendPOST, handleRithumOrdersGET, handleRithumOrdersPOST } from "./handlers/rithum";
+export { RithumModal } from "./components/RithumModal";

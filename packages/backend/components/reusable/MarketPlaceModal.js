@@ -477,6 +477,117 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }
             setLoading(false);
+        } else if (c.type === "wix") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/wix/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Wix."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.wixProductId;
+                for (let v of p.variantsArray) {
+                    if (!v.ids) v.ids = {};
+                    const wv = res.data.variantIds?.find(vi => vi.sku === v.sku);
+                    if (wv) v.ids[c.displayName] = wv.id;
+                }
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.type === "woocommerce") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/woocommerce/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to WooCommerce."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.wooProductId;
+                for (let v of p.variantsArray) {
+                    if (!v.ids) v.ids = {};
+                    const wv = res.data.variantIds?.find(vi => vi.sku === v.sku);
+                    if (wv) v.ids[c.displayName] = wv.id;
+                }
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.type === "squarespace") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/squarespace/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Squarespace."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.squarespaceProductId;
+                for (let v of p.variantsArray) {
+                    if (!v.ids) v.ids = {};
+                    const sv = res.data.variantIds?.find(vi => vi.sku === v.sku);
+                    if (sv) v.ids[c.displayName] = sv.id;
+                }
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.type === "meta") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/meta/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Meta Shops."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.metaProductId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.type === "pinterest") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/pinterest/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Pinterest."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.pinterestBatchId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.type === "onbuy") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/onbuy/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to OnBuy."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.onbuyListingId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.type === "rakuten") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/rakuten/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Rakuten."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.rakutenItemId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
+        } else if (c.type === "rithum") {
+            setLoading(true);
+            const res = await axios.post("/api/integrations/rithum/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Rithum."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.rithumProductId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
         } else if (c.seller_name) {
             setLoading(true);
             const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c, marketplaceName: mpName }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong. Please try again."); setLoading(false); });
@@ -655,6 +766,86 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                             <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.filter(c => c?.type === "temu")[0].displayName}</Typography>
                                                             <Divider sx={{ my: 0.75 }} />
                                                             {product.ids?.[marketPlace.connections.filter(c => c?.type === "temu")[0].displayName] && <Typography variant="body2" color="text.secondary">Temu Goods ID: {product.ids[marketPlace.connections.filter(c => c?.type === "temu")[0].displayName]}</Typography>}
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "wix") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "wix").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "wix").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">Wix Product ID: {product.ids[marketPlace.connections.find(c => c?.type === "wix").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "woocommerce") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "woocommerce").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "woocommerce").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">WooCommerce ID: {product.ids[marketPlace.connections.find(c => c?.type === "woocommerce").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "squarespace") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "squarespace").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "squarespace").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">Squarespace ID: {product.ids[marketPlace.connections.find(c => c?.type === "squarespace").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "meta") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "meta").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "meta").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">Meta Catalog ID: {product.ids[marketPlace.connections.find(c => c?.type === "meta").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "pinterest") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "pinterest").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "pinterest").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">Pinterest Batch ID: {product.ids[marketPlace.connections.find(c => c?.type === "pinterest").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "onbuy") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "onbuy").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "onbuy").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">OnBuy Listing ID: {product.ids[marketPlace.connections.find(c => c?.type === "onbuy").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "rakuten") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "rakuten").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "rakuten").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">Rakuten Manage #: {product.ids[marketPlace.connections.find(c => c?.type === "rakuten").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "rithum") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "rithum").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "rithum").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">Rithum Product ID: {product.ids[marketPlace.connections.find(c => c?.type === "rithum").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
                                                         </Card>
                                                     )}
                                                     {marketPlace.connections?.some(c => c?.seller_name) && (
