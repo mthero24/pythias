@@ -33,8 +33,9 @@ export async function POST(req) {
 
     const blankColorList = blanks.map(b =>
         `Blank "${b.blankName}" (id: ${b.blankId}):\n` +
-        b.colors.map(c => `  - ${c.name}${c.hexcode ? ` (#${c.hexcode.replace("#", "")})` : ""} [id: ${c._id}]`).join("\n")
+        b.colors.map(c => `  - ${c.name}${c.hexcode ? ` (#${c.hexcode.replace("#", "")})` : ""} [id: ${c._id}] (compatibility score: ${c.score ?? "?"})`).join("\n")
     ).join("\n\n");
+
 
     const marketplaceSection = marketplaces.length > 0
         ? `\nMarketplaces needing listings:\n${marketplaces.map(m => {
@@ -70,15 +71,17 @@ Max colors per blank: ${maxColors}
 Available blanks and their colors:
 ${blankColorList}${marketplaceSection}
 
-Color selection rules:
-- Carefully analyze the design's dominant colors, contrast levels, and overall tone
-- AVOID colors where the design would disappear or be hard to read (e.g., a black design on a black or very dark garment)
-- For light/white designs or text: prefer dark garments (black, navy, charcoal, forest green)
-- For dark/black designs or text: prefer light garments (white, light gray, cream, light blue)
-- For vibrant multicolor designs: prefer neutral garments (white, gray, heather gray) so the design pops
-- Pick exactly ${maxColors} colors per blank (or fewer if fewer are available), ordered best to worst fit
+Color selection rules (HARD RULES — never violate):
+- Analyze the design image carefully and identify ALL significant colors present (not just the dominant one)
+- NEVER select a garment color that matches or is very similar to ANY significant color in the design — if green appears anywhere prominently in the design, do not select a green garment; if red appears, avoid red garments; and so on
+- NEVER select a dark or black garment when the design is predominantly dark or black
+- NEVER select a white or near-white garment when the design is predominantly white or very light
+- For light/white designs: ONLY pick dark garments (black, navy, charcoal, forest green, dark gray)
+- For dark/black designs: ONLY pick light garments (white, light gray, cream, light blue, natural)
+- For multicolor designs: avoid any garment color that appears as a significant portion of the design; prefer neutral garments (white, black, gray, navy) so all design colors pop
+- Each color has a pre-computed compatibility score (1–10). Strongly prefer colors with the highest scores — only pick a lower-scored color if higher-scored options are exhausted or too similar to each other
+- Pick exactly ${maxColors} colors per blank (or fewer if fewer are available), ordered best to worst score
 - Prefer variety — don't pick 4 similar shades of the same color family
-
 Return ONLY a valid JSON object, no markdown:
 {
   "blanks": [

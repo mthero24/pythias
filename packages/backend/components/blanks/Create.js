@@ -314,7 +314,7 @@ const ColorImageCard = ({ blank, color, allColors, setAllColors, setBlank, updat
                                 )}
                             </Box>
                             {img.name && (
-                                <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 0.5, color: "text.secondary" }}>
+                                <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 0.25, color: "text.secondary" }}>
                                     {img.name}
                                 </Typography>
                             )}

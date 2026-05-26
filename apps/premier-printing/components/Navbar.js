@@ -50,6 +50,8 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import AppsIcon from "@mui/icons-material/Apps";
 
 const DRAWER_WIDTH = 268;
 
@@ -77,7 +79,9 @@ const NAV_SECTIONS = [
       { label: "Integrations",    href: "/admin/integrations",  icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false, permission: "integrations" },
       { label: "Sales",           href: "/admin/sales",          icon: <AttachMoneyIcon fontSize="small" />,            showCSV: false, permission: "integrations" },
       { label: "Pricing",          href: "/admin/pricing",        icon: <AttachMoneyIcon fontSize="small" />,             showCSV: false },
-      { label: "Kling Invoices",   href: "/admin/kling-invoices", icon: <OndemandVideoIcon fontSize="small" />,           showCSV: false },
+      { label: "Kling Invoices",    href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" />, showCSV: false },
+      { label: "Service Plans",    href: "/admin/service-plans",    icon: <AppsIcon fontSize="small" />,         showCSV: false },
+      { label: "Service Invoices", href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" />,      showCSV: false },
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
       { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },

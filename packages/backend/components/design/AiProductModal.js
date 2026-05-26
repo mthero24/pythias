@@ -14,6 +14,108 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { useState, useRef, useEffect } from "react";
 import { MUSIC_TRACKS } from "../shared/videoTracks";
 
+function hexLuminance(hex) {
+    const h = (hex ?? "").replace("#", "");
+    if (h.length < 6) return 0.5;
+    const r = parseInt(h.slice(0, 2), 16) / 255;
+    const g = parseInt(h.slice(2, 4), 16) / 255;
+    const b = parseInt(h.slice(4, 6), 16) / 255;
+    const lin = c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+// Perceptual RGB distance (0–441). Values below ~80 are visually similar colors.
+function colorDistance(hex1, hex2) {
+    const p = h => { const s = (h ?? "").replace("#", ""); return [parseInt(s.slice(0,2),16)||0, parseInt(s.slice(2,4),16)||0, parseInt(s.slice(4,6),16)||0]; };
+    const [r1,g1,b1] = p(hex1), [r2,g2,b2] = p(hex2);
+    // Weight channels by human perception (same weights as luminance)
+    return Math.sqrt(2*(r1-r2)**2 + 4*(g1-g2)**2 + 3*(b1-b2)**2);
+}
+
+// Samples the design image and returns { tone, dominantHex, palette }.
+// palette = up to 5 distinct prominent colors found in the design.
+async function analyzeDesignImage(url) {
+    const fallback = { tone: "unknown", dominantHex: null, palette: [] };
+    if (!url || typeof document === "undefined") return fallback;
+    return new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+            try {
+                const canvas = document.createElement("canvas");
+                const scale = Math.min(1, 80 / Math.max(img.naturalWidth, img.naturalHeight));
+                canvas.width = Math.round(img.naturalWidth * scale);
+                canvas.height = Math.round(img.naturalHeight * scale);
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let lumSum = 0, rSum = 0, gSum = 0, bSum = 0, count = 0;
+                // Bucket pixels into 6-bit color bins (64 levels per channel) for palette extraction
+                const bins = {};
+                for (let i = 0; i < data.length; i += 4) {
+                    if (data[i + 3] < 30) continue;
+                    const r = data[i], g = data[i + 1], b = data[i + 2];
+                    const lin = c => { const n = c / 255; return n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4); };
+                    lumSum += 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+                    rSum += r; gSum += g; bSum += b;
+                    count++;
+                    // Quantize to 5-bit per channel for binning
+                    const key = `${r >> 3},${g >> 3},${b >> 3}`;
+                    bins[key] = (bins[key] ?? { r: 0, g: 0, b: 0, n: 0 });
+                    bins[key].r += r; bins[key].g += g; bins[key].b += b; bins[key].n++;
+                }
+                if (count === 0) return resolve(fallback);
+                const avg = lumSum / count;
+                const tone = avg < 0.25 ? "dark" : avg > 0.65 ? "light" : "unknown";
+                const toHex = n => Math.round(n / count).toString(16).padStart(2, "0");
+                const dominantHex = `#${toHex(rSum)}${toHex(gSum)}${toHex(bSum)}`;
+
+                // Build palette: pick top bins by pixel count, ensuring each is visually distinct
+                const sorted = Object.values(bins).sort((a, b) => b.n - a.n);
+                const palette = [];
+                for (const bin of sorted) {
+                    if (palette.length >= 5) break;
+                    const hex = `#${Math.round(bin.r/bin.n).toString(16).padStart(2,"0")}${Math.round(bin.g/bin.n).toString(16).padStart(2,"0")}${Math.round(bin.b/bin.n).toString(16).padStart(2,"0")}`;
+                    if (palette.every(p => colorDistance(p, hex) > 40)) palette.push(hex);
+                }
+
+                resolve({ tone, dominantHex, palette });
+            } catch { resolve(fallback); }
+        };
+        img.onerror = () => resolve(fallback);
+        img.src = url;
+    });
+}
+
+// Score a garment hex against the design palette (1–10).
+// Uses luminance contrast + minimum color distance from all prominent design colors.
+function scoreGarmentColor(garmentHex, designTone, palette) {
+    const hex = garmentHex ? `#${garmentHex.replace("#", "")}` : null;
+    if (!hex || hex.replace("#", "").length < 6) return null;
+    const garmentLum = hexLuminance(hex);
+
+    // Hard fails — design tone vs garment lightness
+    if (designTone === "dark"  && garmentLum < 0.12) return 1;
+    if (designTone === "light" && garmentLum > 0.72) return 1;
+
+    if (palette.length === 0) return null;
+
+    // Closest design color to this garment — if too close, it will clash
+    const minDist = Math.min(...palette.map(p => colorDistance(p, hex)));
+    if (minDist < 50) return 2; // garment color appears in the design
+
+    // Average distance from all design palette colors (higher = more neutral/safe)
+    const avgDist = palette.reduce((s, p) => s + colorDistance(p, hex), 0) / palette.length;
+
+    // Luminance contrast against the closest design palette color
+    const closestPaletteHex = palette.reduce((best, p) => colorDistance(p, hex) < colorDistance(best, hex) ? p : best, palette[0]);
+    const lumContrast = Math.abs(garmentLum - hexLuminance(closestPaletteHex));
+
+    // Weighted score: 55% lum contrast, 45% avg color distance
+    const raw = lumContrast * 0.55 + Math.min(avgDist / 300, 1) * 0.45;
+    return Math.max(3, Math.min(10, Math.round(raw * 7) + 3));
+}
+
 // Resolve a color ref (ObjectId string or populated object) against a colors array
 const resolveColor = (ref, allColors) => {
     if (!ref) return null;
@@ -22,14 +124,15 @@ const resolveColor = (ref, allColors) => {
     return allColors?.find(c => c._id?.toString() === id) ?? null;
 };
 
-function ColorSwatch({ color, selected, onClick }) {
+function ColorSwatch({ color, selected, onClick, score }) {
     const hex = color.hexcode ? `#${color.hexcode.replace("#", "")}` : "#cccccc";
+    const scoreBg = score == null ? null : score >= 8 ? "#22c55e" : score >= 5 ? "#f59e0b" : "#ef4444";
     return (
-        <Tooltip title={color.name}>
+        <Tooltip title={score != null ? `${color.name} — ${score}/10` : color.name}>
             <Box
                 onClick={onClick}
                 sx={{
-                    width: 32, height: 32, borderRadius: "50%",
+                    width: 36, height: 36, borderRadius: "50%",
                     background: hex,
                     border: selected ? "3px solid #6366f1" : "2px solid #e2e8f0",
                     cursor: "pointer",
@@ -45,6 +148,19 @@ function ColorSwatch({ color, selected, onClick }) {
                         fontSize: 14, color: "#6366f1", background: "#fff", borderRadius: "50%",
                     }} />
                 )}
+                {score != null && (
+                    <Box sx={{
+                        position: "absolute", top: -6, right: -6,
+                        minWidth: 18, height: 18, borderRadius: "9px",
+                        background: scoreBg, border: "1.5px solid #fff",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        px: "3px",
+                        fontSize: "0.6rem", fontWeight: 800, color: "#fff", lineHeight: 1,
+                        pointerEvents: "none",
+                    }}>
+                        {score}
+                    </Box>
+                )}
             </Box>
         </Tooltip>
     );
@@ -53,6 +169,7 @@ function ColorSwatch({ color, selected, onClick }) {
 export function AiProductModal({ open, onClose, design, blanks, colors, marketPlaces, brands, onConfirm, source }) {
     const [selectedBlankIds, setSelectedBlankIds] = useState([]);
     const [maxColors, setMaxColors] = useState(4);
+    const [selectedTheme, setSelectedTheme] = useState("default");
     const [selectedBrand, setSelectedBrand] = useState(null);
     const [selectedMarketplaceIds, setSelectedMarketplaceIds] = useState([]);
     const [filterDepartment, setFilterDepartment] = useState(null);
@@ -70,6 +187,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
     const [videoError, setVideoError] = useState("");
     const [selectedVideoTrackId, setSelectedVideoTrackId] = useState("none");
     const [videoTracks, setVideoTracks] = useState(MUSIC_TRACKS);
+    const [includeBack, setIncludeBack] = useState(true);
     const contentRef = useRef(null);
     const videoPollRef = useRef(null);
 
@@ -172,12 +290,28 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                 return result || null;
             };
 
+            const { tone: designTone, dominantHex: designHex, palette: designPalette } = await analyzeDesignImage(imageUrl);
+
+            const filterColorsForDesign = (cols) => cols.filter(c => {
+                const score = scoreGarmentColor(c.hexcode, designTone, designPalette);
+                return score == null || score >= 7;
+            });
+
+            // Compute algorithmic color scores for all colors in a blank using the design palette
+            const computeScores = (blank) =>
+                getBlankColors(blank).map(c => {
+                    const score = scoreGarmentColor(c.hexcode, designTone, designPalette);
+                    return score != null ? { colorId: c._id.toString(), score } : null;
+                }).filter(Boolean);
+
             if (combined || selectedBlanks.length <= 1) {
                 // Combined mode: one API call for all blanks
                 const blanksPayload = selectedBlanks.map(b => ({
                     blankId: b._id.toString(),
                     blankName: b.name,
-                    colors: getBlankColors(b).map(c => ({ _id: c._id.toString(), name: c.name, hexcode: c.hexcode ?? "" })),
+                    colors: filterColorsForDesign(getBlankColors(b))
+                        .map(c => ({ _id: c._id.toString(), name: c.name, hexcode: c.hexcode ?? "", score: scoreGarmentColor(c.hexcode, designTone, designPalette) ?? 7 }))
+                        .sort((a, b) => b.score - a.score),
                 }));
                 const res = await fetch("/api/admin/ai-product", {
                     method: "POST",
@@ -196,6 +330,12 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
 
+                // Inject algorithmic color scores
+                (data.blanks ?? []).forEach(rb => {
+                    const blank = selectedBlanks.find(b => b._id.toString() === rb.blankId);
+                    if (blank) rb.colorScores = computeScores(blank);
+                });
+
                 const marketplaceData = { ...(data.marketplaceData ?? {}) };
                 const firstBlank = selectedBlanks[0];
                 (marketPlaces ?? []).filter(mp => selectedMarketplaceIds.includes(mp._id?.toString())).forEach(mp => {
@@ -204,7 +344,11 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                 });
 
                 const toggled = {};
-                (data.blanks ?? []).forEach(b => { toggled[b.blankId] = new Set(b.selectedColorIds ?? []); });
+                (data.blanks ?? []).forEach(rb => {
+                    const blank = selectedBlanks.find(b => b._id.toString() === rb.blankId);
+                    const validIds = new Set(getBlankColors(blank ?? {}).map(c => c._id.toString()));
+                    toggled[rb.blankId] = new Set((rb.selectedColorIds ?? []).filter(id => validIds.has(id)));
+                });
                 setToggledColors(toggled);
                 setResults({ ...data, marketplaceData });
                 setEditedProduct({ ...data.product, tags: data.product?.tags ?? [] });
@@ -223,7 +367,9 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                                 blanks: [{
                                     blankId: b._id.toString(),
                                     blankName: b.name,
-                                    colors: getBlankColors(b).map(c => ({ _id: c._id.toString(), name: c.name, hexcode: c.hexcode ?? "" })),
+                                    colors: filterColorsForDesign(getBlankColors(b))
+                                        .map(c => ({ _id: c._id.toString(), name: c.name, hexcode: c.hexcode ?? "", score: scoreGarmentColor(c.hexcode, designTone, designPalette) ?? 7 }))
+                                        .sort((a, b) => b.score - a.score),
                                 }],
                                 maxColors,
                                 brand: selectedBrand?.name ?? "",
@@ -245,8 +391,11 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
 
                 for (const { blankId, blank, data } of calls) {
                     if (data.blanks?.[0]) {
-                        allBlanksResult.push(data.blanks[0]);
-                        toggled[blankId] = new Set(data.blanks[0].selectedColorIds ?? []);
+                        const rb = data.blanks[0];
+                        rb.colorScores = computeScores(blank);
+                        allBlanksResult.push(rb);
+                        const validIds = new Set(getBlankColors(blank).map(c => c._id.toString()));
+                        toggled[blankId] = new Set((rb.selectedColorIds ?? []).filter(id => validIds.has(id)));
                     }
                     const mpData = { ...(data.marketplaceData ?? {}) };
                     (marketPlaces ?? []).filter(mp => selectedMarketplaceIds.includes(mp._id?.toString())).forEach(mp => {
@@ -274,6 +423,13 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
 
     const blankDepartments = [...new Set(allBlanks.map(b => b.department).filter(Boolean))];
     const blankCategories = [...new Set(allBlanks.flatMap(b => b.category ?? []).filter(Boolean))];
+
+    // Themes available across currently-selected blanks (excluding "model" and "default" which are structural)
+    const availableThemes = [...new Set(
+        allBlanks
+            .filter(b => selectedBlankIds.includes(b._id?.toString()))
+            .flatMap(b => (b.images ?? []).map(img => img.imageGroup).filter(g => g && g !== "default"))
+    )].sort();
     const filteredBlanks = allBlanks.filter(b =>
         (!filterDepartment || b.department === filterDepartment) &&
         (!filterCategory || (b.category ?? []).includes(filterCategory))
@@ -325,43 +481,81 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
         return { image, blank: blank._id, color: color._id, sku, side: sides };
     };
 
-    // Select rendered product images for a color using blank.images only (must have print-placement boxes).
-    // Prefers one non-model image + one model image when both are available.
-    const selectImagesForColor = (blank, colorId, color) => {
+    // Select up to 3 rendered product images per color: (1) model/lifestyle front, (2) garment/flat front, (3) back.
+    // globalUsed tracks images already picked across all colors/blanks so each gets different images where possible.
+    const selectImagesForColor = (blank, colorId, color, globalUsed) => {
         const picked = [];
-        const usedFiles = new Set();
+        const usedLocal = new Set();
 
         const primarySides = designSides.length > 0 ? designSides : ["front"];
-        const colorImages = (blank.images ?? []).filter(m =>
-            m.color && (m.color._id ?? m.color).toString() === colorId
-        );
+        const frontSide = primarySides.includes("front") ? "front" : primarySides[0] ?? "front";
+
+        const matchesColor = m => !m.color || (m.color._id ?? m.color).toString() === colorId;
+        const isColorSpecific = m => m.color && (m.color._id ?? m.color).toString() === colorId;
+
+        const allImages   = blank.images ?? [];
+        const colorImages = allImages.filter(m => isColorSpecific(m));
+        const anyImages   = allImages.filter(m => matchesColor(m));
+
         const hasBoxForSide = (m, side) => Object.keys(m.boxes ?? {}).includes(side);
+        const isModel   = m => m.isModel === true || m.imageGroup === "model";
+        const isGarment = m => !isModel(m);
 
-        const nonModelPool = colorImages.filter(m => m.imageGroup !== "model" && primarySides.some(s => hasBoxForSide(m, s)));
-        const modelPool = colorImages.filter(m => m.imageGroup === "model" && primarySides.some(s => hasBoxForSide(m, s)));
-
-        const tryPick = (pool, sides) => {
-            const bm = pool.find(m => !usedFiles.has(m.image));
+        // Prefer globally unused images; fall back to globally used if pool is exhausted.
+        const pick = (pool, sides) => {
+            const fresh = pool.find(m => !usedLocal.has(m.image) && !globalUsed.has(m.image));
+            const bm    = fresh ?? pool.find(m => !usedLocal.has(m.image));
             if (bm) {
-                usedFiles.add(bm.image);
+                usedLocal.add(bm.image);
+                globalUsed.add(bm.image);
                 picked.push(makeRenderUrl(blank, bm, color, sides));
             }
         };
 
-        // Non-model first (primary listing image), model second (lifestyle shot)
-        tryPick(nonModelPool, sidesStr);
-        tryPick(modelPool, sidesStr);
+        // Slot 1 — model/lifestyle: color-specific first, then unassigned
+        const modelPool = [
+            ...colorImages.filter(m => isModel(m) && hasBoxForSide(m, frontSide)),
+            ...anyImages.filter(m => isModel(m) && hasBoxForSide(m, frontSide) && !isColorSpecific(m)),
+        ];
+        pick(modelPool, sidesStr);
 
-        // Fill a remaining slot with back view if design has no back side
-        if (!designSides.includes("back") && picked.length < 2) {
-            const bm = colorImages.find(m => hasBoxForSide(m, "back") && !usedFiles.has(m.image));
-            if (bm) {
-                usedFiles.add(bm.image);
-                picked.push(makeRenderUrl(blank, bm, color, "back"));
+        // Slot 2 — garment/flat: color-specific, prefer selected theme then default; fall back to a second model image
+        const garmentByTheme = colorImages.filter(m => isGarment(m) && m.imageGroup === selectedTheme && primarySides.some(s => hasBoxForSide(m, s)));
+        const garmentPool = garmentByTheme.length > 0
+            ? garmentByTheme
+            : colorImages.filter(m => isGarment(m) && (!m.imageGroup || m.imageGroup === "default") && primarySides.some(s => hasBoxForSide(m, s)));
+        if (garmentPool.length > 0) {
+            pick(garmentPool, sidesStr);
+        } else {
+            const modelFallback = [
+                ...colorImages.filter(m => isModel(m) && hasBoxForSide(m, frontSide)),
+                ...anyImages.filter(m => isModel(m) && hasBoxForSide(m, frontSide) && !isColorSpecific(m)),
+            ];
+            pick(modelFallback, sidesStr);
+        }
+
+        // Slot 3 — back: model back first, then themed flat, then any.
+        // Images with only a back box use "back"; images with front+back boxes use sidesStr (join).
+        if (includeBack) {
+            const backPool = [
+                ...colorImages.filter(m => isModel(m)   && hasBoxForSide(m, "back")),
+                ...anyImages.filter(m  => isModel(m)    && hasBoxForSide(m, "back") && !isColorSpecific(m)),
+                ...colorImages.filter(m => isGarment(m) && hasBoxForSide(m, "back") && m.imageGroup === selectedTheme),
+                ...colorImages.filter(m => isGarment(m) && hasBoxForSide(m, "back")),
+                ...anyImages.filter(m  => isGarment(m)  && hasBoxForSide(m, "back") && !isColorSpecific(m)),
+            ];
+            const backImg = backPool.find(m => !usedLocal.has(m.image) && !globalUsed.has(m.image))
+                ?? backPool.find(m => !usedLocal.has(m.image));
+            if (backImg) {
+                const backBoxes = Object.keys(backImg.boxes ?? {});
+                const backSide = backBoxes.some(b => b !== "back" && primarySides.includes(b)) ? sidesStr : "back";
+                usedLocal.add(backImg.image);
+                globalUsed.add(backImg.image);
+                picked.push(makeRenderUrl(blank, backImg, color, backSide));
             }
         }
 
-        return picked.slice(0, 3);
+        return picked;
     };
 
     const handleConfirm = () => {
@@ -372,10 +566,14 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
             const allBlankColors = getBlankColors(blank);
             const selectedIds = toggledColors[rb.blankId] ?? new Set();
             const selectedColors = allBlankColors.filter(c => selectedIds.has(c._id.toString()));
+            const scoreMap = Object.fromEntries((rb.colorScores ?? []).map(s => [s.colorId, s.score]));
+            const defaultColor = [...selectedColors].sort((a, b) =>
+                (scoreMap[b._id.toString()] ?? 0) - (scoreMap[a._id.toString()] ?? 0)
+            )[0] ?? null;
             return {
                 blank,
                 colors: selectedColors,
-                defaultColor: selectedColors[0] ?? null,
+                defaultColor,
             };
         }).filter(Boolean);
 
@@ -385,13 +583,14 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
         const _variantUrls = {};            // internal: "blankCode__colorName" → [url, ...]
         const productImages = [];
         const productImageSet = new Set();
+        const globalUsed = new Set();       // tracks images used across all colors/blanks
         blankSelections.forEach(bs => {
             const bCode = bs.blank.code;
             if (!variantImages[bCode]) variantImages[bCode] = {};
             if (!variantSecondaryImages[bCode]) variantSecondaryImages[bCode] = {};
             bs.colors.forEach(c => {
                 const cid = c._id.toString();
-                const imgObjs = selectImagesForColor(bs.blank, cid, c);
+                const imgObjs = selectImagesForColor(bs.blank, cid, c, globalUsed);
                 if (imgObjs.length > 0) {
                     variantImages[bCode][c.name] = { image: imgObjs[0].image, sku: imgObjs[0].sku };
                 }
@@ -455,11 +654,18 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                 .filter((c, i, arr) => arr.findIndex(x => x._id.toString() === c._id.toString()) === i);
             const allSizes = blankSelections.flatMap(b => b.blank.sizes ?? [])
                 .filter((s, i, arr) => arr.findIndex(x => x.name === s.name) === i);
+            // Build a combined score map across all blanks to pick the best default color
+            const combinedScoreMap = Object.fromEntries(
+                (results.blanks ?? []).flatMap(rb => (rb.colorScores ?? []).map(s => [s.colorId, s.score]))
+            );
+            const defaultColor = [...allSelectedColors].sort((a, b) =>
+                (combinedScoreMap[b._id.toString()] ?? 0) - (combinedScoreMap[a._id.toString()] ?? 0)
+            )[0] ?? null;
             products = [{
                 ...baseProduct,
                 blanks: blankSelections,
                 colors: allSelectedColors,
-                defaultColor: allSelectedColors[0] ?? null,
+                defaultColor,
                 sizes: allSizes,
                 video: videoUrl ?? undefined,
                 productImages,
@@ -538,6 +744,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
         setSelectedBlankIds([]);
         setSelectedMarketplaceIds([]);
         setSelectedBrand(null);
+        setSelectedTheme("default");
         setFilterDepartment(null);
         setFilterCategory(null);
         setError("");
@@ -547,6 +754,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
         setVideoUploading(false);
         setVideoError("");
         setSelectedVideoTrackId("none");
+        setIncludeBack(true);
         onClose();
     };
 
@@ -561,7 +769,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
             toggled.slice(0, 2).forEach(colorId => {
                 const color = (blank.colors ?? []).map(c => resolveColor(c, colors)).find(c => c?._id?.toString() === colorId);
                 if (!color) return;
-                selectImagesForColor(blank, colorId, color).forEach(o => {
+                selectImagesForColor(blank, colorId, color, new Set()).forEach(o => {
                     if (!seen.has(o.image)) { seen.add(o.image); urls.push(o.image); }
                 });
             });
@@ -801,6 +1009,64 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
 
                         <Divider />
 
+                        {/* Image theme */}
+                        {availableThemes.length > 0 && (
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={700} mb={1}>
+                                    Image Theme
+                                    <Typography component="span" variant="caption" color="text.secondary" ml={1}>(optional)</Typography>
+                                </Typography>
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                                    <Chip
+                                        label="default"
+                                        size="small"
+                                        variant={selectedTheme === "default" ? "filled" : "outlined"}
+                                        color={selectedTheme === "default" ? "secondary" : "default"}
+                                        onClick={() => setSelectedTheme("default")}
+                                        sx={{ cursor: "pointer" }}
+                                    />
+                                    {availableThemes.map(t => (
+                                        <Chip
+                                            key={t}
+                                            label={t}
+                                            size="small"
+                                            variant={selectedTheme === t ? "filled" : "outlined"}
+                                            color={selectedTheme === t ? "secondary" : "default"}
+                                            onClick={() => setSelectedTheme(t)}
+                                            sx={{ cursor: "pointer" }}
+                                        />
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
+
+                        <Divider />
+
+                        {/* Image options */}
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight={700} mb={1}>Image Options</Typography>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={includeBack}
+                                        onChange={e => setIncludeBack(e.target.checked)}
+                                        size="small"
+                                        color="secondary"
+                                    />
+                                }
+                                label={
+                                    <Box>
+                                        <Typography variant="body2" fontWeight={500}>Include back image</Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Adds a back-view image as a secondary gallery image per color
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
+                        </Box>
+
+                        <Divider />
+
                         {/* Brand selection */}
                         {(brands ?? []).length > 0 && (
                             <>
@@ -808,7 +1074,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                                 <Box>
                                     <Typography variant="subtitle2" fontWeight={700} mb={1}>
                                         Brand
-                                        <Typography component="span" variant="caption" color="text.secondary" ml={1}>(optional)</Typography>
+                                        <Typography component="span" variant="caption" color="error.main" ml={1}>*required</Typography>
                                     </Typography>
                                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
                                         {(brands ?? []).map(b => {
@@ -880,15 +1146,18 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                                             <Chip label={`${toggled.size} color${toggled.size !== 1 ? "s" : ""}`} size="small" color="secondary" variant="outlined" />
                                         </Stack>
                                         <Typography variant="caption" color="text.disabled" display="block" mb={1}>
-                                            Click to toggle. AI-selected shown with ring.
+                                            Click to toggle. AI-selected shown with ring. Score dot: <Box component="span" sx={{ color: "#22c55e", fontWeight: 700 }}>green</Box> = great, <Box component="span" sx={{ color: "#f59e0b", fontWeight: 700 }}>amber</Box> = ok, <Box component="span" sx={{ color: "#ef4444", fontWeight: 700 }}>red</Box> = poor.
                                         </Typography>
                                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2 }}>
-                                            {allColors.map(c => {
-                                                const cid = c._id.toString();
-                                                return (
-                                                    <ColorSwatch key={cid} color={c} selected={toggled.has(cid)} onClick={() => toggleColor(bIdStr, cid)} />
-                                                );
-                                            })}
+                                            {(() => {
+                                                const scoreMap = Object.fromEntries((rb.colorScores ?? []).map(s => [s.colorId, s.score]));
+                                                return [...allColors].sort((a, b) => (scoreMap[b._id.toString()] ?? 0) - (scoreMap[a._id.toString()] ?? 0)).map(c => {
+                                                    const cid = c._id.toString();
+                                                    return (
+                                                        <ColorSwatch key={cid} color={c} selected={toggled.has(cid)} onClick={() => toggleColor(bIdStr, cid)} score={scoreMap[cid] ?? null} />
+                                                    );
+                                                });
+                                            })()}
                                         </Box>
 
                                         <Divider sx={{ mb: 2 }} />
@@ -981,15 +1250,18 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                                             <Chip label={`${toggled.size} color${toggled.size !== 1 ? "s" : ""}`} size="small" color="secondary" variant="outlined" />
                                         </Stack>
                                         <Typography variant="caption" color="text.disabled" display="block" mb={1}>
-                                            Click to toggle. AI-selected shown with ring.
+                                            Click to toggle. AI-selected shown with ring. Score dot: <Box component="span" sx={{ color: "#22c55e", fontWeight: 700 }}>green</Box> = great, <Box component="span" sx={{ color: "#f59e0b", fontWeight: 700 }}>amber</Box> = ok, <Box component="span" sx={{ color: "#ef4444", fontWeight: 700 }}>red</Box> = poor.
                                         </Typography>
                                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
-                                            {allColors.map(c => {
-                                                const cid = c._id.toString();
-                                                return (
-                                                    <ColorSwatch key={cid} color={c} selected={toggled.has(cid)} onClick={() => toggleColor(rb.blankId, cid)} />
-                                                );
-                                            })}
+                                            {(() => {
+                                                const scoreMap = Object.fromEntries((rb.colorScores ?? []).map(s => [s.colorId, s.score]));
+                                                return [...allColors].sort((a, b) => (scoreMap[b._id.toString()] ?? 0) - (scoreMap[a._id.toString()] ?? 0)).map(c => {
+                                                    const cid = c._id.toString();
+                                                    return (
+                                                        <ColorSwatch key={cid} color={c} selected={toggled.has(cid)} onClick={() => toggleColor(rb.blankId, cid)} score={scoreMap[cid] ?? null} />
+                                                    );
+                                                });
+                                            })()}
                                         </Box>
                                     </CardContent>
                                 </Card>
@@ -1187,7 +1459,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                         variant="contained" color="secondary"
                         startIcon={generating ? <CircularProgress size={14} color="inherit" /> : <AutoAwesomeIcon />}
                         onClick={handleGenerate}
-                        disabled={generating || selectedBlankIds.length === 0}
+                        disabled={generating || selectedBlankIds.length === 0 || ((brands ?? []).length > 0 && !selectedBrand)}
                     >
                         {generating ? "Analyzing…" : "Generate"}
                     </Button>

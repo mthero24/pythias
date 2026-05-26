@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
-import { PremierPrinting } from "../lib/connection";
+import { PremierPrintingDB } from "../lib/connection";
 
 const schema = new mongoose.Schema({
+    client: { type: String, default: "premier-printing" },
     month: { type: Number, required: true },
     year: { type: Number, required: true },
     videoCount: { type: Number, default: 0 },
@@ -13,6 +14,6 @@ const schema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now },
 });
 
-schema.index({ month: 1, year: 1 }, { unique: true });
+schema.index({ client: 1, month: 1, year: 1 }, { unique: true });
 
-export default PremierPrinting.model("KlingInvoice", schema);
+export default PremierPrintingDB.model("KlingInvoice", schema);

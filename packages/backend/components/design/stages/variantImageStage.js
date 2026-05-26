@@ -106,15 +106,19 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             for (let blank of product.blanks) {
                 for (let color of product.colors) {
                     for (let img of (blank.images || []).filter(i =>
-                        i.color.toString() == color._id.toString() &&
-                        (i.imageGroup || "default") === activeGroup &&
+                        (!i.color || i.color.toString() == color._id.toString()) &&
+                        (i.isModel === true || i.imageGroup === "model" || (i.imageGroup || "default") === activeGroup) &&
                         (Object.keys(i.boxes ? i.boxes : {}).includes(side) || (Object.keys(i.boxes ? i.boxes : {}).includes("back") && !Object.keys(design ? design : {}).includes("back")))
                     )) {
                         if (!imgs[blank.code]) imgs[blank.code] = {};
                         if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = [];
-                        const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}`;
+                        const imgBoxes = Object.keys(img.boxes ?? {});
+                        const imgSide = imgBoxes.includes("back") && !imgBoxes.some(b => b !== "back" && Object.keys(design ?? {}).includes(b))
+                            ? "back"
+                            : Object.keys(design ? design : {}).join("_");
+                        const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}`;
                         if (!imgs[blank.code][color.name].find(i => i.sku === imgKey)) {
-                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${Object.keys(design ? design : {}).join("_")}.jpg?width=400`), sku: imgKey });
+                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}.jpg?width=400`), sku: imgKey });
                         }
                     }
                 }

@@ -6,7 +6,7 @@ import ThemeProvider from "@/componants/ThemeProvider";
 import AnalyticsTracker from "@/componants/AnalyticsTracker";
 import GtagTracker from "@/componants/GtagTracker";
 import { PageTracker } from "@pythias/backend";
-import Script from "next/script";
+import GaScripts from "@/componants/GaScripts";
 
 const urbanist = Urbanist({
   variable: "--font-urbanist",
@@ -94,14 +94,7 @@ export default function RootLayout({ children }) {
           {children}
           <Footer />
         </ThemeProvider>
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-Q27ZSTSXVH" strategy="afterInteractive" />
-        <Script id="gtag-init" strategy="afterInteractive">{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-Q27ZSTSXVH', { send_page_view: false });
-          gtag('config', 'AW-18171939038');
-        `}</Script>
+        <GaScripts />
       </body>
     </html>
   );

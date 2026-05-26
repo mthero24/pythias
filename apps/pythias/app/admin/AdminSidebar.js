@@ -16,6 +16,10 @@ import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import ArticleIcon from "@mui/icons-material/Article";
 import KeyIcon from "@mui/icons-material/Key";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import AppsIcon from "@mui/icons-material/Apps";
+import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import Link from "next/link";
 
 const DRAWER_WIDTH = 240;
@@ -28,6 +32,10 @@ const NAV_ITEMS = [
     { label: "Articles",         href: "/admin/articles",         icon: <ArticleIcon fontSize="small" /> },
     { label: "Tutorials",        href: "/admin/tutorials",        icon: <PlayCircleIcon fontSize="small" /> },
     { label: "API Tokens",       href: "/admin/api-tokens",       icon: <KeyIcon fontSize="small" /> },
+    { label: "Service Plans",    href: "/admin/service-plans",    icon: <AppsIcon fontSize="small" /> },
+    { label: "Service Invoices", href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" /> },
+    { label: "Kling Invoices",   href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" /> },
+    { label: "Finance",          href: "/admin/finance",          icon: <TrendingUpIcon fontSize="small" /> },
 ];
 
 function SidebarContent({ onClose }) {

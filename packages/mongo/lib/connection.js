@@ -14,5 +14,7 @@ function makeNewConnection(uri) {
     return db;
 }
 export const PremierPrinting = makeNewConnection(process.env.mongoURL);
-export const Pythias = makeNewConnection(process.env.pythiasMongoURL)
+export const Pythias = makeNewConnection(process.env.pythiasMongoURL);
+// Falls back to mongoURL so premier-printing app works without the extra env var
+export const PremierPrintingDB = makeNewConnection(process.env.premierPrintingMongoURL ?? process.env.mongoURL);
 

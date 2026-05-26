@@ -1,0 +1,190 @@
+"""
+palettes.py — Standard embroidery thread color palettes.
+
+Each entry: { "id": "...", "name": "...", "hex": "#rrggbb" }
+Sources: Isacord 40, Madeira Rayon 40, Sulky Rayon 40
+"""
+
+ISACORD = [
+    {"id": "0020", "name": "White",          "hex": "#FFFFFF"},
+    {"id": "0101", "name": "Antique White",  "hex": "#F5F0E1"},
+    {"id": "0112", "name": "Ecru",           "hex": "#F0E2C8"},
+    {"id": "0120", "name": "Ivory",          "hex": "#FAF0DC"},
+    {"id": "0150", "name": "Silver",         "hex": "#C8C8C8"},
+    {"id": "0160", "name": "Light Silver",   "hex": "#DCDCDC"},
+    {"id": "0170", "name": "Pewter",         "hex": "#A0A0A0"},
+    {"id": "0232", "name": "Lemon",          "hex": "#FFF000"},
+    {"id": "0250", "name": "Yellow",         "hex": "#FFD700"},
+    {"id": "0311", "name": "Golden Yellow",  "hex": "#FFC200"},
+    {"id": "0352", "name": "Dark Gold",      "hex": "#C8820A"},
+    {"id": "0400", "name": "Harvest Gold",   "hex": "#D47A00"},
+    {"id": "0442", "name": "Copper",         "hex": "#B8520A"},
+    {"id": "0500", "name": "Pumpkin",        "hex": "#E05000"},
+    {"id": "0532", "name": "Tangerine",      "hex": "#FF5A00"},
+    {"id": "0542", "name": "Burnt Orange",   "hex": "#C84000"},
+    {"id": "0600", "name": "Scarlet",        "hex": "#CC1010"},
+    {"id": "0620", "name": "Christmas Red",  "hex": "#B80000"},
+    {"id": "0641", "name": "Deep Red",       "hex": "#8C0000"},
+    {"id": "0700", "name": "Burgundy",       "hex": "#780028"},
+    {"id": "0754", "name": "Mauve",          "hex": "#C86080"},
+    {"id": "0800", "name": "Hot Pink",       "hex": "#FF3080"},
+    {"id": "0840", "name": "Pink",           "hex": "#FF80A0"},
+    {"id": "0900", "name": "Baby Pink",      "hex": "#FFB8CC"},
+    {"id": "1060", "name": "Orchid",         "hex": "#C080C8"},
+    {"id": "1100", "name": "Lilac",          "hex": "#C8A0D0"},
+    {"id": "1200", "name": "Violet",         "hex": "#8040A0"},
+    {"id": "1245", "name": "Purple",         "hex": "#600090"},
+    {"id": "1306", "name": "Royal Blue",     "hex": "#1040C0"},
+    {"id": "1335", "name": "Cobalt Blue",    "hex": "#0050D0"},
+    {"id": "1400", "name": "Blue",           "hex": "#0060CC"},
+    {"id": "1501", "name": "Navy",           "hex": "#00207A"},
+    {"id": "1545", "name": "Dark Navy",      "hex": "#001050"},
+    {"id": "1600", "name": "Teal",           "hex": "#008890"},
+    {"id": "1645", "name": "Dark Teal",      "hex": "#005058"},
+    {"id": "1703", "name": "Kelly Green",    "hex": "#00880A"},
+    {"id": "1760", "name": "Green",          "hex": "#008000"},
+    {"id": "1800", "name": "Lime",           "hex": "#70C000"},
+    {"id": "1840", "name": "Bright Green",   "hex": "#40B000"},
+    {"id": "1900", "name": "Dark Green",     "hex": "#005000"},
+    {"id": "1970", "name": "Forest Green",   "hex": "#204800"},
+    {"id": "2050", "name": "Sage",           "hex": "#788C60"},
+    {"id": "2110", "name": "Olive",          "hex": "#606028"},
+    {"id": "2130", "name": "Dark Olive",     "hex": "#484820"},
+    {"id": "4010", "name": "Light Tan",      "hex": "#D8B888"},
+    {"id": "4110", "name": "Tan",            "hex": "#C09060"},
+    {"id": "4174", "name": "Beige",          "hex": "#C8A87A"},
+    {"id": "4230", "name": "Brown",          "hex": "#885020"},
+    {"id": "4410", "name": "Dark Brown",     "hex": "#502808"},
+    {"id": "4610", "name": "Chocolate",      "hex": "#3A1C00"},
+    {"id": "5000", "name": "Black",          "hex": "#080808"},
+    {"id": "5001", "name": "Dark Charcoal",  "hex": "#282828"},
+    {"id": "5002", "name": "Charcoal",       "hex": "#484848"},
+    {"id": "5003", "name": "Medium Gray",    "hex": "#787878"},
+    {"id": "5004", "name": "Light Gray",     "hex": "#B0B0B0"},
+    {"id": "0821", "name": "Salmon",         "hex": "#FF8870"},
+    {"id": "1710", "name": "Mint",           "hex": "#80D8B0"},
+    {"id": "1640", "name": "Aqua",           "hex": "#00C8C0"},
+    {"id": "1490", "name": "Sky Blue",       "hex": "#70C0E0"},
+    {"id": "0660", "name": "Rose",           "hex": "#E05080"},
+    {"id": "2500", "name": "Gold Metallic",  "hex": "#C8A830"},
+    {"id": "2600", "name": "Silver Metallic","hex": "#B8B8C8"},
+]
+
+MADEIRA = [
+    {"id": "1001", "name": "Black",          "hex": "#080808"},
+    {"id": "1002", "name": "Dark Charcoal",  "hex": "#303030"},
+    {"id": "1003", "name": "Charcoal Gray",  "hex": "#585858"},
+    {"id": "1004", "name": "Gray",           "hex": "#808080"},
+    {"id": "1005", "name": "Light Gray",     "hex": "#B8B8B8"},
+    {"id": "1006", "name": "White",          "hex": "#FFFFFF"},
+    {"id": "1007", "name": "Ivory",          "hex": "#F8F0D8"},
+    {"id": "1008", "name": "Ecru",           "hex": "#F0E0C0"},
+    {"id": "1070", "name": "Lemon",          "hex": "#FFF080"},
+    {"id": "1080", "name": "Yellow",         "hex": "#FFD800"},
+    {"id": "1090", "name": "Gold",           "hex": "#E8A800"},
+    {"id": "1100", "name": "Harvest Gold",   "hex": "#C87800"},
+    {"id": "1110", "name": "Orange",         "hex": "#E05800"},
+    {"id": "1120", "name": "Burnt Orange",   "hex": "#C04000"},
+    {"id": "1130", "name": "Red",            "hex": "#CC1010"},
+    {"id": "1140", "name": "Bright Red",     "hex": "#E00000"},
+    {"id": "1150", "name": "Dark Red",       "hex": "#980010"},
+    {"id": "1160", "name": "Burgundy",       "hex": "#700028"},
+    {"id": "1170", "name": "Maroon",         "hex": "#500020"},
+    {"id": "1200", "name": "Hot Pink",       "hex": "#FF2870"},
+    {"id": "1210", "name": "Pink",           "hex": "#FF80A0"},
+    {"id": "1220", "name": "Light Pink",     "hex": "#FFB0C8"},
+    {"id": "1230", "name": "Baby Pink",      "hex": "#FFCCD8"},
+    {"id": "1280", "name": "Lilac",          "hex": "#C890C8"},
+    {"id": "1290", "name": "Lavender",       "hex": "#D0A8E0"},
+    {"id": "1310", "name": "Purple",         "hex": "#700090"},
+    {"id": "1320", "name": "Violet",         "hex": "#5000A0"},
+    {"id": "1380", "name": "Royal Blue",     "hex": "#0840C0"},
+    {"id": "1390", "name": "Blue",           "hex": "#0060C8"},
+    {"id": "1400", "name": "Medium Blue",    "hex": "#0080D0"},
+    {"id": "1410", "name": "Sky Blue",       "hex": "#60B0E0"},
+    {"id": "1420", "name": "Baby Blue",      "hex": "#A0C8E8"},
+    {"id": "1440", "name": "Navy",           "hex": "#00187A"},
+    {"id": "1450", "name": "Dark Navy",      "hex": "#000A50"},
+    {"id": "1480", "name": "Teal",           "hex": "#008888"},
+    {"id": "1490", "name": "Dark Teal",      "hex": "#005060"},
+    {"id": "1510", "name": "Aqua",           "hex": "#00C8C0"},
+    {"id": "1540", "name": "Kelly Green",    "hex": "#008800"},
+    {"id": "1550", "name": "Green",          "hex": "#007800"},
+    {"id": "1560", "name": "Bright Green",   "hex": "#40B000"},
+    {"id": "1570", "name": "Lime",           "hex": "#88CC00"},
+    {"id": "1580", "name": "Dark Green",     "hex": "#005000"},
+    {"id": "1590", "name": "Forest Green",   "hex": "#184800"},
+    {"id": "1600", "name": "Sage",           "hex": "#709060"},
+    {"id": "1610", "name": "Olive",          "hex": "#686020"},
+    {"id": "1700", "name": "Tan",            "hex": "#C89860"},
+    {"id": "1710", "name": "Beige",          "hex": "#D0A878"},
+    {"id": "1720", "name": "Light Brown",    "hex": "#A07040"},
+    {"id": "1730", "name": "Brown",          "hex": "#804020"},
+    {"id": "1740", "name": "Dark Brown",     "hex": "#502010"},
+    {"id": "1750", "name": "Chocolate",      "hex": "#381800"},
+]
+
+SULKY = [
+    {"id": "1001", "name": "Bright White",   "hex": "#FFFFFF"},
+    {"id": "1002", "name": "Off White",      "hex": "#F8F0E0"},
+    {"id": "1005", "name": "Black",          "hex": "#080808"},
+    {"id": "1007", "name": "Dark Navy",      "hex": "#000A50"},
+    {"id": "1008", "name": "Navy",           "hex": "#001880"},
+    {"id": "1010", "name": "Royal Blue",     "hex": "#0840C0"},
+    {"id": "1013", "name": "Blue",           "hex": "#0060C8"},
+    {"id": "1017", "name": "Med Blue",       "hex": "#4090C0"},
+    {"id": "1019", "name": "Lt Blue",        "hex": "#80B8D8"},
+    {"id": "1021", "name": "Teal",           "hex": "#008888"},
+    {"id": "1028", "name": "Kelly Green",    "hex": "#009000"},
+    {"id": "1029", "name": "Christmas Green","hex": "#007800"},
+    {"id": "1030", "name": "Dk Avocado",     "hex": "#385010"},
+    {"id": "1035", "name": "Lime",           "hex": "#90CC00"},
+    {"id": "1037", "name": "Bright Yellow",  "hex": "#FFE000"},
+    {"id": "1038", "name": "Yellow",         "hex": "#FFD000"},
+    {"id": "1040", "name": "Gold",           "hex": "#E0A000"},
+    {"id": "1041", "name": "Dk Gold",        "hex": "#B87800"},
+    {"id": "1045", "name": "Orange",         "hex": "#E85800"},
+    {"id": "1046", "name": "Dk Orange",      "hex": "#C04000"},
+    {"id": "1047", "name": "Tangerine",      "hex": "#FF5020"},
+    {"id": "1049", "name": "Red",            "hex": "#D01010"},
+    {"id": "1050", "name": "Christmas Red",  "hex": "#B80000"},
+    {"id": "1055", "name": "Burgundy",       "hex": "#700030"},
+    {"id": "1056", "name": "Mauve",          "hex": "#C06080"},
+    {"id": "1060", "name": "Pink",           "hex": "#FF80A0"},
+    {"id": "1061", "name": "Hot Pink",       "hex": "#FF2878"},
+    {"id": "1067", "name": "Lavender",       "hex": "#D0A0E0"},
+    {"id": "1070", "name": "Purple",         "hex": "#680090"},
+    {"id": "1071", "name": "Violet",         "hex": "#5000A0"},
+    {"id": "1080", "name": "Tan",            "hex": "#C09060"},
+    {"id": "1082", "name": "Dk Brown",       "hex": "#502010"},
+    {"id": "1083", "name": "Brown",          "hex": "#804028"},
+    {"id": "1085", "name": "Copper",         "hex": "#A06030"},
+    {"id": "1090", "name": "Lt Gray",        "hex": "#C0C0C0"},
+    {"id": "1093", "name": "Gray",           "hex": "#808080"},
+    {"id": "1094", "name": "Charcoal",       "hex": "#484848"},
+]
+
+PALETTES = {
+    "isacord": ISACORD,
+    "madeira": MADEIRA,
+    "sulky":   SULKY,
+}
+
+
+def closest_thread(hex_color, palette_name="isacord"):
+    """Find the closest thread color in a palette to a given hex color."""
+    import math
+    palette = PALETTES.get(palette_name, ISACORD)
+
+    def parse(h):
+        h = h.lstrip("#")
+        return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+    r0, g0, b0 = parse(hex_color)
+    best, best_dist = None, float("inf")
+    for thread in palette:
+        r, g, b = parse(thread["hex"])
+        d = math.sqrt(2*(r-r0)**2 + 4*(g-g0)**2 + 3*(b-b0)**2)
+        if d < best_dist:
+            best_dist, best = d, thread
+    return best

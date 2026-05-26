@@ -7,12 +7,14 @@ import TestimonialsSection from "./TestimonialsSection";
 import LeadCaptureSection from "./LeadCaptureSection";
 import FAQSection from "./FAQSection";
 import FinalCTASection from "./FinalCTASection";
+import HomePopup from "./HomePopup";
 
 const CalendarBookingSection = dynamic(() => import("./CalendarBookingSection"));
 
 export default function Home() {
   return (
     <>
+      <HomePopup />
       <HeroSection />
       <BenefitsSection />
       <HowItWorksSection />

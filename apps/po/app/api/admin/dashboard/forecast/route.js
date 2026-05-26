@@ -3,7 +3,37 @@ import Order from "@/models/Order";
 import Items from "@/models/Items";
 import StyleV2 from "@/models/StyleV2";
 import ForecastCache from "@/models/ForecastCache";
-import { Design, LicenseHolders } from "@pythias/mongo";
+import { Design, LicenseHolders, ServiceInvoicePo, KlingInvoicePo } from "@pythias/mongo";
+
+function daysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+}
+
+function buildInvoiceCostByDate(invoices, since, until) {
+    const byDate = {};
+    const cur = new Date(since); cur.setDate(1); cur.setHours(0,0,0,0);
+    const end = new Date(until);
+    while (cur <= end) {
+        const y = cur.getFullYear(), m = cur.getMonth() + 1;
+        const inv = invoices.find(i => i.year === y && i.month === m);
+        if (inv?.totalAmount) {
+            const days = daysInMonth(y, m);
+            const costPerDay = inv.totalAmount / days;
+            const monthStart = new Date(y, m - 1, 1);
+            const monthEnd   = new Date(y, m, 0);
+            const rangeStart = monthStart > since ? monthStart : since;
+            const rangeEnd   = monthEnd   < until  ? monthEnd  : until;
+            const d = new Date(rangeStart);
+            while (d <= rangeEnd) {
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+                byDate[key] = (byDate[key] || 0) + costPerDay;
+                d.setDate(d.getDate() + 1);
+            }
+        }
+        cur.setMonth(cur.getMonth() + 1);
+    }
+    return byDate;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -162,10 +192,12 @@ async function fetchHistorical(extraMatch) {
     const since = new Date(); since.setMonth(since.getMonth()-18); since.setHours(0,0,0,0);
     const dateFilter = { date:{$gte:since,$lte:until} };
 
-    const [rawDaily, dailyItemsAgg, licencedItemsAgg] = await Promise.all([
+    const [rawDaily, dailyItemsAgg, licencedItemsAgg, serviceInvoices, klingInvoices] = await Promise.all([
         Order.aggregate([{$match:{...dateFilter,...extraMatch}},{$group:{_id:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},revenue:{$sum:{$subtract:[{$add:[{$ifNull:["$productCost",0]},{$ifNull:["$shippingCost",0]}]},{$ifNull:["$discountAmount",0]}]}},shippingPaid:{$sum:{$ifNull:["$shippingInfo.shippingCost",0]}},orders:{$sum:1}}},{$project:{_id:0,date:"$_id",revenue:1,shippingPaid:1,orders:1}},{$sort:{date:1}}]),
         Items.aggregate([{$match:{...dateFilter,canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1}}},{$project:{_id:0,date:"$_id.date",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1}}]),
         Items.aggregate([{$match:{...dateFilter,designRef:{$ne:null},canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},designRef:{$toString:"$designRef"},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1},totalPrice:{$sum:{$ifNull:["$price",0]}}}},{$project:{_id:0,date:"$_id.date",designRef:"$_id.designRef",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1,totalPrice:1}}]),
+        ServiceInvoicePo.find({ year: { $gte: since.getFullYear(), $lte: until.getFullYear() } }).lean(),
+        KlingInvoicePo.find({ year: { $gte: since.getFullYear(), $lte: until.getFullYear() } }).lean(),
     ]);
 
     const styleCodes=[...new Set(dailyItemsAgg.map(r=>r.styleCode).filter(Boolean))];
@@ -201,7 +233,9 @@ async function fetchHistorical(extraMatch) {
         }
     }
 
-    return fillDays(since, until, rawDaily).map(d=>({...d,cogs:cogsByDate[d.date]||0,net:Math.max(0,d.revenue-(cogsByDate[d.date]||0)-(licenceFeeByDate[d.date]||0)-(d.shippingPaid||0))}));
+    const servicesCostByDate = buildInvoiceCostByDate(serviceInvoices, since, until);
+    const klingCostByDate    = buildInvoiceCostByDate(klingInvoices, since, until);
+    return fillDays(since, until, rawDaily).map(d=>({...d,cogs:cogsByDate[d.date]||0,net:Math.max(0,d.revenue-(cogsByDate[d.date]||0)-(licenceFeeByDate[d.date]||0)-(d.shippingPaid||0)-(servicesCostByDate[d.date]||0)-(klingCostByDate[d.date]||0))}));
 }
 
 export async function GET(req) {

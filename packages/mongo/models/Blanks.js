@@ -9,7 +9,8 @@ let imageSchema = [{
   }],
   image: String,
   color: String,
-  imageGroup: {type: Array, default: ["default"]}
+  imageGroup: {type: Array, default: ["default"]},
+  isModel: { type: Boolean, default: false },
 }]
 const SchemaObj = new Schema(
   {

@@ -3,7 +3,7 @@ import Order from "@/models/Order";
 import Items from "@/models/Items";
 import Inventory from "@/models/inventory";
 import StyleV2 from "@/models/StyleV2";
-import { Design, LicenseHolders } from "@pythias/mongo";
+import { Design, LicenseHolders, ServiceInvoicePo, KlingInvoicePo } from "@pythias/mongo";
 
 const activeExpr   = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
 const shipCostExpr = { $ifNull: ["$shippingInfo.shippingCost", 0] };
@@ -121,7 +121,19 @@ export async function GET(req) {
         const byMarketplace  = byMarketplaceAgg;
         const inventoryValue = invResult[0]?.totalValue ?? 0;
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace });
+        const sinceYear = since.getFullYear(), untilYear = until.getFullYear();
+        const [serviceInvoicesForPeriod, klingInvoicesForPeriod] = await Promise.all([
+            ServiceInvoicePo.find({ year: { $gte: sinceYear, $lte: untilYear } }).lean(),
+            KlingInvoicePo.find({ year: { $gte: sinceYear, $lte: untilYear } }).lean(),
+        ]);
+        const inPeriod = inv => {
+            const invDate = new Date(inv.year, inv.month - 1, 1);
+            return invDate >= new Date(since.getFullYear(), since.getMonth(), 1) && invDate <= new Date(until.getFullYear(), until.getMonth(), 1);
+        };
+        const totalServiceCost = serviceInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
+        const totalKlingCost   = klingInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
+
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace, totalServiceCost, totalKlingCost });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({ error: true, msg: e.message, summary: { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 }, byMarketplace: [], orderMarketplaceMap: {}, items: [], inventoryValue: 0 }, { status: 500 });

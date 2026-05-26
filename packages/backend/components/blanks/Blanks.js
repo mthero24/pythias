@@ -1,5 +1,5 @@
 "use client";
-import {Box, Container, Typography, Grid2, Divider, TextField, MenuItem, Button, Modal, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, InputAdornment, Card, CardContent, Chip, Stack, Badge, Tooltip, IconButton} from "@mui/material";
+import {Box, Container, Typography, Grid2, Divider, TextField, MenuItem, Button, Modal, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, InputAdornment, Card, CardContent, Chip, Stack, Badge, Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, LinearProgress, List, ListItem, ListItemText} from "@mui/material";
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -11,9 +11,10 @@ import CheckroomIcon from '@mui/icons-material/Checkroom';
 import EditIcon from '@mui/icons-material/Edit';
 import BuildIcon from '@mui/icons-material/Build';
 import CloseIcon from '@mui/icons-material/Close';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CreatableSelect from "react-select/creatable";
 import {Footer} from "../reusable/Footer";
-import {useState, useMemo} from "react";
+import {useState, useMemo, useRef} from "react";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import axios from "axios"
 
@@ -25,6 +26,45 @@ export function BlanksComponent({blanks, mPs, source}){
     const [search, setSearch] = useState("")
     const [filtersOpen, setFiltersOpen] = useState(false)
     const [filters, setFilters] = useState({})
+    const [classifyOpen, setClassifyOpen] = useState(false)
+    const [classifyRunning, setClassifyRunning] = useState(false)
+    const [classifyLog, setClassifyLog] = useState([])
+    const [classifySummary, setClassifySummary] = useState(null)
+    const classifyLogRef = useRef(null)
+
+    const runClassify = async () => {
+        setClassifyLog([]);
+        setClassifySummary(null);
+        setClassifyRunning(true);
+        try {
+            const res = await fetch("/api/admin/backfill-model-images", { method: "POST" });
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = "";
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buf += decoder.decode(value, { stream: true });
+                const lines = buf.split("\n");
+                buf = lines.pop();
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    try {
+                        const msg = JSON.parse(line);
+                        if (msg.type === "progress") {
+                            setClassifyLog(prev => [...prev, `${msg.blank}: ${msg.updated} image(s) classified as model`]);
+                            setTimeout(() => classifyLogRef.current?.scrollTo(0, classifyLogRef.current.scrollHeight), 50);
+                        } else if (msg.type === "done") {
+                            setClassifySummary(msg);
+                        }
+                    } catch {}
+                }
+            }
+        } catch (e) {
+            setClassifyLog(prev => [...prev, `Error: ${e.message}`]);
+        }
+        setClassifyRunning(false);
+    };
 
     const departments = useMemo(() => [...new Set(blanks.map(b => b.department).filter(d => d))], [blanks])
     const categories = useMemo(() => [...new Set(blanks.map(b => b.category).flat().filter(c => c))], [blanks])
@@ -70,6 +110,7 @@ export function BlanksComponent({blanks, mPs, source}){
                     </Stack>
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                         <Button variant="outlined" onClick={() => setAliasOpen(true)}>Alias / Combined</Button>
+                        <Button variant="outlined" startIcon={<AutoAwesomeIcon />} onClick={() => { setClassifyOpen(true); setClassifyLog([]); setClassifySummary(null); runClassify(); }}>Classify Model Images</Button>
                         <Button variant="contained" color="primary" startIcon={<AddIcon />} href="/admin/blanks/create">Create Blank</Button>
                     </Box>
                 </Box>
@@ -190,6 +231,34 @@ export function BlanksComponent({blanks, mPs, source}){
 
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => b.sizes?.map(s => s.name))} blank={blank} setBlank={setBlank} source={source} canEdit />
                 <AliasModal open={aliasOpen} setOpen={setAliasOpen} blanks={blanks} />
+
+                <Dialog open={classifyOpen} onClose={() => !classifyRunning && setClassifyOpen(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle>Classify Model Images</DialogTitle>
+                    <DialogContent>
+                        {classifyRunning
+                            ? <LinearProgress sx={{ mb: 2, borderRadius: 1 }} />
+                            : <Box sx={{ mb: 2, height: 4 }} />
+                        }
+                        <Box ref={classifyLogRef} sx={{ minHeight: 80, maxHeight: 320, overflowY: "auto", bgcolor: "#f8fafc", borderRadius: 1, p: 1.5, fontFamily: "monospace", fontSize: 12 }}>
+                            {classifyLog.length === 0 && classifyRunning && (
+                                <Typography variant="caption" color="text.secondary">Scanning images…</Typography>
+                            )}
+                            {classifyLog.map((l, i) => <Box key={i}>{l}</Box>)}
+                        </Box>
+                        {classifySummary && (
+                            <Box sx={{ mt: 2, p: 1.5, bgcolor: "#f0fdf4", borderRadius: 1 }}>
+                                <Typography variant="body2" fontWeight={700} color="success.main">
+                                    Done — checked {classifySummary.totalChecked} images, updated {classifySummary.totalUpdated} to &ldquo;model&rdquo;
+                                </Typography>
+                            </Box>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setClassifyOpen(false)} disabled={classifyRunning}>
+                            {classifyRunning ? "Running…" : "Close"}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </Container>
             <Footer />
         </Box>

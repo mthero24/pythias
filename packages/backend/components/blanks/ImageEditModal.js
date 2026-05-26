@@ -550,6 +550,14 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 setImage(prev => ({ ...prev, image: data.url }));
                                 setOriginalImage(data.url);
                                 setStep("");
+                                // Auto-detect person → auto-set imageGroup to "model"
+                                fetch("/api/admin/classify-image", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ imageUrl: data.url }),
+                                }).then(r => r.json()).then(({ hasModel }) => {
+                                    if (hasModel) setImage(prev => ({ ...prev, imageGroup: "model" }));
+                                }).catch(() => {});
                             }
                         }} />
                     )}

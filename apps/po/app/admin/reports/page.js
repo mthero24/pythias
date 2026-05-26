@@ -541,7 +541,7 @@ function fmtRate(marketplace) {
     return rate != null ? `~${(rate * 100).toFixed(1)}%` : "—";
 }
 
-function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, inventoryValue }) {
+function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, inventoryValue, totalServiceCost = 0, totalKlingCost = 0 }) {
     const { orders, total, page, pageSize, loading } = ordersData;
 
     const totalFees = useMemo(() =>
@@ -549,7 +549,7 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarke
     [byMarketplace]);
     const totalCogs = useMemo(() => Object.values(cogsByMarketplace).reduce((s, v) => s + v, 0), [cogsByMarketplace]);
     const totalLicenceFees = useMemo(() => Object.values(licenceFeeByMarketplace ?? {}).reduce((s, v) => s + v, 0), [licenceFeeByMarketplace]);
-    const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs - totalLicenceFees;
+    const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs - totalLicenceFees - totalServiceCost - totalKlingCost;
 
     const mpRows = useMemo(() =>
         byMarketplace.map((mp) => {
@@ -601,6 +601,8 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarke
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Est. MP Fees"      value={fmt(totalFees)}              color="error.main" /></Grid2>
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Blank COGS"        value={fmt(totalCogs)}              color="warning.main" /></Grid2>
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Licence Fees"      value={fmt(totalLicenceFees)}       color="secondary.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Service Costs"     value={fmt(totalServiceCost)}       color="error.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Kling AI Costs"    value={fmt(totalKlingCost)}         color="error.main" /></Grid2>
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Net Revenue"       value={fmt(net)}                    color={net >= 0 ? "success.main" : "error.main"} /></Grid2>
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Inventory at Cost" value={fmt(inventoryValue)}         color="info.main" /></Grid2>
             </Grid2>
@@ -616,7 +618,9 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarke
                                     { id: 1, value: totalFees,               label: "MP Fees",      color: "#f44336" },
                                     { id: 2, value: totalCogs,               label: "Blank COGS",   color: "#9c27b0" },
                                     { id: 3, value: totalLicenceFees,        label: "Licence Fees", color: "#e91e63" },
-                                    { id: 4, value: Math.max(0, net),        label: "Net",          color: "#4caf50" },
+                                    { id: 4, value: totalServiceCost,        label: "Service Costs", color: "#ef5350" },
+                                    { id: 5, value: totalKlingCost,          label: "Kling AI",     color: "#b71c1c" },
+                                    { id: 6, value: Math.max(0, net),        label: "Net",          color: "#4caf50" },
                                 ].filter(d => d.value > 0), innerRadius: 40, outerRadius: 80, paddingAngle: 2 }]}
                                 height={220}
                                 slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}
@@ -1441,6 +1445,8 @@ export default function Admin() {
     }, [items, orderMarketplaceMap]);
 
     const licenceFeeByMarketplace = data?.licenceFeeByMarketplace ?? {};
+    const totalServiceCost        = data?.totalServiceCost ?? 0;
+    const totalKlingCost          = data?.totalKlingCost   ?? 0;
 
     const ordersData = { orders: ordersRows, total: ordersTotal, page: ordersPage, pageSize: ordersSize, loading: ordersLoading };
     const itemsData  = { items: itemsRows,   total: itemsTotal,  page: itemsPage,  pageSize: itemsSize,  loading: itemsLoading  };
@@ -1564,6 +1570,7 @@ export default function Admin() {
                                 ordersData={ordersData} sortField={ordersSortField} sortDir={ordersSortDir}
                                 onPageChange={setOrdersPage} onPageSizeChange={handleOrdersPageSizeChange} onSortChange={handleOrdersSort}
                                 inventoryValue={inventoryValue}
+                                totalServiceCost={totalServiceCost} totalKlingCost={totalKlingCost}
                             />
                         )}
                         {tab === 4 && <BlanksTab blanks={blanksRows} loading={blanksLoading} />}

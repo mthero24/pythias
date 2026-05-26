@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Order, Items, Inventory, addCogs, addLicenceFees } from "@pythias/mongo";
+import { Order, Items, Inventory, addCogs, addLicenceFees, ServiceInvoicePremier, KlingInvoicePremier } from "@pythias/mongo";
 
 
 const activeExpr = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
@@ -88,9 +88,22 @@ export async function GET(req) {
         const byMarketplace  = byMarketplaceAgg;
         const inventoryValue = invResult[0]?.totalValue ?? 0;
 
+        // Service and Kling invoice costs for the period
+        const sinceYear = since.getFullYear(), untilYear = until.getFullYear();
+        const [serviceInvoicesForPeriod, klingInvoicesForPeriod] = await Promise.all([
+            ServiceInvoicePremier.find({ year: { $gte: sinceYear, $lte: untilYear } }).lean(),
+            KlingInvoicePremier.find({ year: { $gte: sinceYear, $lte: untilYear } }).lean(),
+        ]);
+        const inPeriod = inv => {
+            const invDate = new Date(inv.year, inv.month - 1, 1);
+            return invDate >= new Date(since.getFullYear(), since.getMonth(), 1) && invDate <= new Date(until.getFullYear(), until.getMonth(), 1);
+        };
+        const totalServiceCost = serviceInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
+        const totalKlingCost   = klingInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
+
         console.log(`[dashboard] ${since.toISOString()} → ${until.toISOString()} | orders: ${summary.orderCount} | items: ${itemCount} (fetched: ${items.length})`);
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace });
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace, totalServiceCost, totalKlingCost });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({

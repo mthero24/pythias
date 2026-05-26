@@ -30,6 +30,9 @@ import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import AppsIcon from "@mui/icons-material/Apps";
+import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -78,6 +81,9 @@ const NAV_GROUPS = [
             { label: "Analytics",       href: "/analytics",           icon: <TrendingUpIcon fontSize="small" />,        adminOnly: true },
             { label: "Live Users",      href: "/live",                icon: <FiberManualRecordIcon fontSize="small" sx={{ color: "#22c55e" }} />, adminOnly: true },
             { label: "Downloads",       href: "/downloads",           icon: <SystemUpdateAltIcon fontSize="small" /> },
+            { label: "Service Plans",   href: "/admin/service-plans",    icon: <AppsIcon fontSize="small" />,     adminOnly: true },
+            { label: "Service Invoices",href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" />,  adminOnly: true },
+            { label: "Kling Invoices",  href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" />, adminOnly: true },
         ],
     },
 ];

@@ -23,7 +23,19 @@
       "WebFetch(domain:goflow.com)",
       "WebFetch(domain:support.channelengine.com)",
       "WebFetch(domain:www.acenda.com)",
-      "WebFetch(domain:www.postman.com)"
+      "WebFetch(domain:www.postman.com)",
+      "Bash(npm install *)",
+      "Read(//z/GitHub/helpinghands/helpinghands/apps/web/components/**)",
+      "Read(//z/GitHub/helpinghands/helpinghands/apps/web/**)",
+      "Read(//z/GitHub/helpinghands/helpinghands/**)",
+      "PowerShell(head -50)",
+      "Read(//z/GitHub/helpinghands/**)",
+      "Bash(find z:\\\\\\\\GitHub\\\\\\\\helpinghands -type d -name \"models\" -o -type d -name \"db\" -o -type d -name \"packages\")",
+      "Bash(ls -la z:\\\\\\\\GitHub\\\\\\\\helpinghands\\\\\\\\helpinghands)",
+      "Bash(ls -la z:\\\\\\\\GitHub\\\\\\\\helpinghands)"
+    ],
+    "additionalDirectories": [
+      "z:\\GitHub\\helpinghands\\helpinghands\\apps\\web\\components"
     ]
   }
 }

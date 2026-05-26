@@ -1,5 +1,17 @@
 import { NextResponse } from "next/server";
-import { Order, Items, Blank, ForecastCache, Design, LicenseHolders } from "@pythias/mongo";
+import { Order, Items, Blank, ForecastCache, Design, LicenseHolders, ServiceInvoicePremier, KlingInvoicePremier } from "@pythias/mongo";
+
+function daysInMonth(month, year) { return new Date(year, month, 0).getDate(); }
+function buildInvoiceCostByDate(invoices, since, until) {
+    const map = {};
+    for (const inv of invoices) {
+        const costPerDay = (inv.totalAmount || 0) / daysInMonth(inv.month, inv.year);
+        const cur = new Date(Math.max(new Date(inv.year, inv.month - 1, 1), since));
+        const end = new Date(Math.min(new Date(inv.year, inv.month, 0), until));
+        while (cur <= end) { const d = isoDate(cur); map[d] = (map[d] || 0) + costPerDay; cur.setDate(cur.getDate() + 1); }
+    }
+    return map;
+}
 
 const APP_KEY = "premier-printing";
 
@@ -129,10 +141,13 @@ async function fetchHistorical(matchFilter) {
     const since = new Date(); since.setMonth(since.getMonth()-18); since.setHours(0,0,0,0);
     const dateFilter = { date:{$gte:since,$lte:until} };
 
-    const [rawDaily, dailyItemsAgg, licencedItemsAgg] = await Promise.all([
+    const sinceYear = since.getFullYear(), untilYear = until.getFullYear();
+    const [rawDaily, dailyItemsAgg, licencedItemsAgg, serviceInvoices, klingInvoices] = await Promise.all([
         Order.aggregate([{$match:{...dateFilter,...matchFilter}},{$group:{_id:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},revenue:{$sum:{$ifNull:["$total",0]}},orders:{$sum:1}}},{$project:{_id:0,date:"$_id",revenue:1,orders:1}},{$sort:{date:1}}]),
         Items.aggregate([{$match:{...dateFilter,canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1}}},{$project:{_id:0,date:"$_id.date",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1}}]),
         Items.aggregate([{$match:{...dateFilter,designRef:{$ne:null},canceled:{$ne:true}}},{$group:{_id:{date:{$dateToString:{format:"%Y-%m-%d",date:"$date"}},designRef:{$toString:"$designRef"},styleCode:"$styleCode",sizeName:"$sizeName"},qty:{$sum:1},totalPrice:{$sum:{$ifNull:["$price",0]}}}},{$project:{_id:0,date:"$_id.date",designRef:"$_id.designRef",styleCode:"$_id.styleCode",sizeName:"$_id.sizeName",qty:1,totalPrice:1}}]),
+        ServiceInvoicePremier.find({ year: { $gte: sinceYear, $lte: untilYear } }).lean(),
+        KlingInvoicePremier.find({ year: { $gte: sinceYear, $lte: untilYear } }).lean(),
     ]);
 
     const styleCodes=[...new Set(dailyItemsAgg.map(r=>r.styleCode).filter(Boolean))];
@@ -168,7 +183,9 @@ async function fetchHistorical(matchFilter) {
         }
     }
 
-    return fillDays(since, until, rawDaily).map(d=>({...d,cogs:cogsByDate[d.date]||0,net:Math.max(0,d.revenue-(cogsByDate[d.date]||0)-(licenceFeeByDate[d.date]||0))}));
+    const servicesCostByDate = buildInvoiceCostByDate(serviceInvoices, since, until);
+    const klingCostByDate = buildInvoiceCostByDate(klingInvoices, since, until);
+    return fillDays(since, until, rawDaily).map(d=>({...d,cogs:cogsByDate[d.date]||0,net:Math.max(0,d.revenue-(cogsByDate[d.date]||0)-(licenceFeeByDate[d.date]||0)-(servicesCostByDate[d.date]||0)-(klingCostByDate[d.date]||0))}));
 }
 
 // ─── Chronos sidecar ─────────────────────────────────────────────────────────

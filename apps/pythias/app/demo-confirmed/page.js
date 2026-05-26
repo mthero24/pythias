@@ -5,6 +5,7 @@ import EmailIcon              from "@mui/icons-material/Email";
 import GroupsIcon             from "@mui/icons-material/Groups";
 import Link                   from "next/link";
 import IframeBreaker          from "./IframeBreaker";
+import BookingConversion      from "./BookingConversion";
 
 export const metadata = {
     title: "Demo Confirmed — Pythias Technologies",
@@ -35,6 +36,7 @@ export default function DemoConfirmedPage() {
         <>
             {/* Breaks out of Google Calendar iframe on redirect */}
             <IframeBreaker />
+            <BookingConversion />
 
             <Box sx={{ minHeight: "80vh", display: "flex", alignItems: "center", py: { xs: 6, md: 10 }, bgcolor: "#f8faff" }}>
                 <Container maxWidth="sm">

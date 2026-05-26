@@ -259,6 +259,24 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
+      name: "generate-invoices",
+      cwd: "apps/pythias",
+      script: "scripts/runGenerateInvoices.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "0 9 1 * *", // 1st of every month at 9am UTC (4am EST)
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3002,
+      },
+      out_file: "logs/generate-invoices-out.log",
+      error_file: "logs/generate-invoices-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "chronos-forecaster",
       cwd: "services/chronos-forecaster",
       script: "start.sh",

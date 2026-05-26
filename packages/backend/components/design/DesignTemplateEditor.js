@@ -94,6 +94,20 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Embroidery DST state
+  const EMB_SERVICE = "http://localhost:8765";
+  const [embSizeMm, setEmbSizeMm] = useState(100);
+  const [embVectorizing, setEmbVectorizing] = useState(false);
+  const [embJobId, setEmbJobId] = useState(null);
+  const [embLayers, setEmbLayers] = useState([]);       // [{index, color_hex, polygon_count, closest_thread}]
+  const [embPreviewSvg, setEmbPreviewSvg] = useState(null);
+  const [embPalette, setEmbPalette] = useState("isacord");
+  const [embColorMap, setEmbColorMap] = useState({});   // layer index → chosen thread hex
+  const [embPaletteData, setEmbPaletteData] = useState({});
+  const [embPaletteLoaded, setEmbPaletteLoaded] = useState(false);
+  const [embGenerating, setEmbGenerating] = useState(false);
+  const [embTextLayers, setEmbTextLayers] = useState([]); // {text, fontFamily, sizeMm, xMm, yMm, color, threadHex}
+
   // ── Load Fabric.js ────────────────────────────────────────────────────────
   useEffect(() => {
     let active = true; // prevent stale init if effect re-runs (Strict Mode)
@@ -769,10 +783,61 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
       c.renderAll();
       const transparent = await makeTransparentBackground(raw);
       const dataUrl = await trimTransparentPixels(transparent);
+      // If a vectorize job exists, generate and attach DST / vinyl SVG + persist polygon data
+      let embroideryFileBase64 = null;
+      let vinylSvgContent = null;
+      let polygonsJson = null;
+      if (embJobId) {
+        // Export polygon data first — used for persistent customer-order generation
+        try {
+          const polRes = await fetch(`${EMB_SERVICE}/job/${embJobId}/export-polygons`);
+          if (polRes.ok) polygonsJson = JSON.stringify(await polRes.json());
+        } catch {}
+      }
+      if (embJobId) {
+        const colors = embLayers.map((_, i) => embColorMap[i] || embLayers[i]?.color_hex);
+        const textPayload = embTextLayers.map(tl => ({
+          text: tl.text, font_family: tl.fontFamily, size_mm: tl.sizeMm,
+          color_hex: tl.color, thread_hex: tl.threadHex,
+          x_mm: tl.xMm, y_mm: tl.yMm, fill_angle: 0, letter_spacing_mm: 1.0,
+        }));
+        if (printTypes.includes("EMB")) {
+          try {
+            const dstRes = await fetch(`${EMB_SERVICE}/generate/from-job`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ job_id: embJobId, colors, fill_angle: 45, text_layers: textPayload }),
+            });
+            if (dstRes.ok) {
+              const blob = await dstRes.blob();
+              embroideryFileBase64 = await new Promise(resolve => {
+                const r = new FileReader();
+                r.onload = e => resolve(e.target.result.split(",")[1]);
+                r.readAsDataURL(blob);
+              });
+            }
+          } catch {}
+        }
+        if (printTypes.includes("VIN")) {
+          try {
+            const svgRes = await fetch(`${EMB_SERVICE}/generate/vinyl`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ job_id: embJobId, colors, text_layers: textPayload }),
+            });
+            if (svgRes.ok) vinylSvgContent = await svgRes.text();
+          } catch {}
+        }
+      }
+
       const res = await fetch(`${apiBase}/create-design`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dataUrl, name: templateName, printType: printTypes }),
+        body: JSON.stringify({
+          dataUrl, name: templateName, printType: printTypes,
+          embroideryFileBase64, vinylSvgContent, polygonsJson,
+          embTextLayersJson: embTextLayers.length > 0 ? JSON.stringify(embTextLayers) : null,
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.msg);
@@ -1144,6 +1209,171 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
       showSnack("Save failed: " + msg, "error");
     } finally {
       setSaving(false);
+    }
+  }
+
+  // ── Embroidery DST workflow ───────────────────────────────────────────────
+  async function vectorizeForEmb() {
+    const c = fabricRef.current;
+    if (!c) return;
+    setEmbVectorizing(true);
+    try {
+      const scaleMMperPX = embSizeMm / CANVAS_W;
+
+      // Collect text objects as separate layers before image export
+      const textObjs = c.getObjects().filter(o =>
+        ["i-text", "text", "textbox"].includes(o.type)
+      );
+      setEmbTextLayers(textObjs.map(o => ({
+        text: o.text || "",
+        fontFamily: o.fontFamily || "Arial",
+        color: typeof o.fill === "string" ? o.fill : "#000000",
+        threadHex: typeof o.fill === "string" ? o.fill : "#000000",
+        sizeMm: Math.max(3, Math.round((o.fontSize || 48) * (o.scaleX || 1) * scaleMMperPX)),
+        xMm: Math.round((o.left || 0) * scaleMMperPX * 10) / 10,
+        yMm: Math.round((o.top  || 0) * scaleMMperPX * 10) / 10,
+        fieldId: o.fieldId || null,
+      })));
+
+      // Export image-only (no text, no background reference, no stitch effect)
+      const savedOriginals = { ...embOriginalsRef.current };
+      removePrintEffectFromCanvas();
+      textObjs.forEach(o => o.set("visible", false));
+      const bgObjs = c.getObjects("image").filter(o => o.isBackground);
+      const savedBgOp = bgObjs.map(o => o.opacity ?? 1);
+      bgObjs.forEach(o => o.set("opacity", 0));
+      const savedBg = c.backgroundColor;
+      c.backgroundColor = null;
+      c.renderAll();
+
+      const pngDataUrl = c.toDataURL({ format: "png", multiplier: 1 });
+
+      // Restore canvas
+      textObjs.forEach(o => o.set("visible", true));
+      bgObjs.forEach((o, i) => o.set("opacity", savedBgOp[i]));
+      c.backgroundColor = savedBg;
+      embOriginalsRef.current = savedOriginals;
+      await applyPrintEffectToCanvas("EMB", stitchType);
+
+      // Send PNG to Python service
+      const pngRes = await fetch(pngDataUrl);
+      const blob   = await pngRes.blob();
+      const fd = new FormData();
+      fd.append("file",     blob,           "design.png");
+      fd.append("n_colors", "8");
+      fd.append("size_mm",  String(embSizeMm));
+      fd.append("palette",  embPalette);
+
+      const vRes = await fetch(`${EMB_SERVICE}/vectorize`, { method: "POST", body: fd });
+      if (!vRes.ok) throw new Error("Service returned " + vRes.status);
+      const data = await vRes.json();
+
+      setEmbJobId(data.job_id);
+      setEmbLayers(data.layers);
+      setEmbPreviewSvg(data.preview_svg);
+
+      // Auto-select closest thread per layer
+      const colorMap = {};
+      data.layers.forEach((layer, i) => {
+        colorMap[i] = layer.closest_thread?.hex || layer.color_hex;
+      });
+      setEmbColorMap(colorMap);
+
+      // Load palette data if not already loaded
+      if (!embPaletteLoaded) {
+        const pRes  = await fetch(`${EMB_SERVICE}/palettes`);
+        const pData = await pRes.json();
+        setEmbPaletteData(pData);
+        setEmbPaletteLoaded(true);
+      }
+    } catch (e) {
+      showSnack("Vectorize failed — is the embroidery service running on port 8765? " + (e.message || ""), "error");
+    } finally {
+      setEmbVectorizing(false);
+    }
+  }
+
+  async function downloadVinylSvg() {
+    if (!embJobId) return;
+    setEmbGenerating(true);
+    try {
+      const colors = embLayers.map((_, i) => embColorMap[i] || embLayers[i].color_hex);
+      const textLayersPayload = embTextLayers.map(tl => ({
+        text:              tl.text,
+        font_family:       tl.fontFamily,
+        size_mm:           tl.sizeMm,
+        color_hex:         tl.color,
+        thread_hex:        tl.threadHex,
+        x_mm:              tl.xMm,
+        y_mm:              tl.yMm,
+        fill_angle:        0,
+        letter_spacing_mm: 1.0,
+      }));
+      const res = await fetch(`${EMB_SERVICE}/generate/vinyl`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job_id: embJobId, colors, text_layers: textLayersPayload }),
+      });
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(detail.detail || res.statusText);
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `${templateName || "vinyl"}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      showSnack("SVG generation failed: " + (e.message || ""), "error");
+    } finally {
+      setEmbGenerating(false);
+    }
+  }
+
+  async function downloadDst() {
+    if (!embJobId) return;
+    setEmbGenerating(true);
+    try {
+      const colors = embLayers.map((_, i) => embColorMap[i] || embLayers[i].color_hex);
+      const textLayersPayload = embTextLayers.map(tl => ({
+        text:               tl.text,
+        font_family:        tl.fontFamily,
+        size_mm:            tl.sizeMm,
+        color_hex:          tl.color,
+        thread_hex:         tl.threadHex,
+        x_mm:               tl.xMm,
+        y_mm:               tl.yMm,
+        fill_angle:         0,
+        letter_spacing_mm:  1.0,
+      }));
+
+      const res = await fetch(`${EMB_SERVICE}/generate/from-job`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          job_id:      embJobId,
+          colors,
+          fill_angle:  45,
+          text_layers: textLayersPayload,
+        }),
+      });
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(detail.detail || res.statusText);
+      }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `${templateName || "embroidery"}.dst`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      showSnack("DST generation failed: " + (e.message || ""), "error");
+    } finally {
+      setEmbGenerating(false);
     }
   }
 
@@ -1532,6 +1762,147 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.6 }}>
             Customizable fields appear as text inputs on your Shopify product page. The customer's text replaces the original in the design, keeping the same font, size, and color.
           </Typography>
+
+          {/* ── Embroidery / Vinyl output panel ── */}
+          {(printTypes.includes("EMB") || printTypes.includes("VIN")) && (
+            <>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5 }}>
+                {printTypes.includes("VIN") ? "Generate Vinyl SVG" : "Generate DST File"}
+              </Typography>
+
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <TextField label="Width (mm)" type="number" size="small"
+                    value={embSizeMm} onChange={e => setEmbSizeMm(+e.target.value)}
+                    inputProps={{ min: 20, max: 300 }} sx={{ flex: 1 }} />
+                  <FormControl size="small" sx={{ flex: 1 }}>
+                    <InputLabel>Palette</InputLabel>
+                    <Select label="Palette" value={embPalette}
+                      onChange={e => { setEmbPalette(e.target.value); setEmbLayers([]); setEmbPreviewSvg(null); setEmbJobId(null); }}>
+                      <MenuItem value="isacord">Isacord 40</MenuItem>
+                      <MenuItem value="madeira">Madeira 40</MenuItem>
+                      <MenuItem value="sulky">Sulky 40</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
+
+                <Button variant="outlined" fullWidth onClick={vectorizeForEmb} disabled={embVectorizing}
+                  startIcon={embVectorizing ? <CircularProgress size={14} color="inherit" /> : null}
+                  sx={{ borderColor: "#6d28d9", color: "#6d28d9", "&:hover": { borderColor: "#5b21b6", background: "#f5f3ff" } }}>
+                  {embVectorizing ? "Vectorizing…" : embPreviewSvg ? "Re-Vectorize" : "Vectorize Design"}
+                </Button>
+
+                {/* SVG preview of vectorized image */}
+                {embPreviewSvg && (
+                  <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, overflow: "hidden" }}
+                    dangerouslySetInnerHTML={{ __html: embPreviewSvg }} />
+                )}
+
+                {/* Per-layer thread color pickers — image layers */}
+                {embLayers.length > 0 && embPaletteLoaded && (
+                  <>
+                    {embLayers.length > 0 && (
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                        Image Layers
+                      </Typography>
+                    )}
+                    {embLayers.map((layer, i) => (
+                      <Stack key={i} direction="row" spacing={0.75} alignItems="center">
+                        <Box sx={{ width: 20, height: 20, borderRadius: 0.5, flexShrink: 0,
+                          background: layer.color_hex, border: "1px solid #ccc" }} />
+                        <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
+                          <Select
+                            value={(embColorMap[i] || layer.closest_thread?.hex || layer.color_hex).toLowerCase()}
+                            onChange={e => setEmbColorMap(prev => ({ ...prev, [i]: e.target.value }))}
+                            renderValue={v => {
+                              const tc = (embPaletteData[embPalette] || []).find(t => t.hex.toLowerCase() === v.toLowerCase());
+                              return tc
+                                ? <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                                    <Box sx={{ width: 12, height: 12, borderRadius: 0.5, background: tc.hex, border: "1px solid #ccc", flexShrink: 0 }} />
+                                    <span style={{ fontSize: "0.75rem" }}>{tc.name}</span>
+                                  </Box>
+                                : <span style={{ fontSize: "0.75rem" }}>{v}</span>;
+                            }}>
+                            {(embPaletteData[embPalette] || []).map(tc => (
+                              <MenuItem key={tc.id} value={tc.hex.toLowerCase()}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                                  <Box sx={{ width: 14, height: 14, borderRadius: 0.5,
+                                    background: tc.hex, border: "1px solid #ccc", flexShrink: 0 }} />
+                                  <span style={{ fontSize: "0.8rem" }}>{tc.name} ({tc.id})</span>
+                                </Box>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Stack>
+                    ))}
+
+                    {/* Text layers — shown separately so customer-entered text can override */}
+                    {embTextLayers.filter(tl => tl.text.trim()).length > 0 && (
+                      <>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, mt: 0.5 }}>
+                          Text Layers
+                        </Typography>
+                        {embTextLayers.map((tl, i) => tl.text.trim() ? (
+                          <Box key={i} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, p: 1 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75, fontStyle: "italic" }}>
+                              "{tl.text}" · {tl.fontFamily} · {tl.sizeMm}mm
+                            </Typography>
+                            <Stack direction="row" spacing={0.75} alignItems="center">
+                              <Box sx={{ width: 20, height: 20, borderRadius: 0.5, flexShrink: 0,
+                                background: tl.color, border: "1px solid #ccc" }} />
+                              <FormControl size="small" sx={{ flex: 1, minWidth: 0 }}>
+                                <Select
+                                  value={(tl.threadHex || tl.color).toLowerCase()}
+                                  onChange={e => setEmbTextLayers(prev =>
+                                    prev.map((t, j) => j === i ? { ...t, threadHex: e.target.value } : t)
+                                  )}
+                                  renderValue={v => {
+                                    const tc = (embPaletteData[embPalette] || []).find(t => t.hex.toLowerCase() === v.toLowerCase());
+                                    return tc
+                                      ? <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                                          <Box sx={{ width: 12, height: 12, borderRadius: 0.5, background: tc.hex, border: "1px solid #ccc", flexShrink: 0 }} />
+                                          <span style={{ fontSize: "0.75rem" }}>{tc.name}</span>
+                                        </Box>
+                                      : <span style={{ fontSize: "0.75rem" }}>{v}</span>;
+                                  }}>
+                                  {(embPaletteData[embPalette] || []).map(tc => (
+                                    <MenuItem key={tc.id} value={tc.hex.toLowerCase()}>
+                                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                                        <Box sx={{ width: 14, height: 14, borderRadius: 0.5,
+                                          background: tc.hex, border: "1px solid #ccc", flexShrink: 0 }} />
+                                        <span style={{ fontSize: "0.8rem" }}>{tc.name} ({tc.id})</span>
+                                      </Box>
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Stack>
+                          </Box>
+                        ) : null)}
+                      </>
+                    )}
+
+                    {printTypes.includes("EMB") && (
+                      <Button variant="contained" fullWidth onClick={downloadDst} disabled={embGenerating}
+                        sx={{ background: "#6d28d9", "&:hover": { background: "#5b21b6" } }}
+                        startIcon={embGenerating ? <CircularProgress size={14} color="inherit" /> : null}>
+                        {embGenerating ? "Generating…" : "Download DST"}
+                      </Button>
+                    )}
+                    {printTypes.includes("VIN") && (
+                      <Button variant="contained" fullWidth onClick={downloadVinylSvg} disabled={embGenerating}
+                        sx={{ background: "#0f766e", "&:hover": { background: "#0d9488" } }}
+                        startIcon={embGenerating ? <CircularProgress size={14} color="inherit" /> : null}>
+                        {embGenerating ? "Generating…" : "Download SVG (Vinyl)"}
+                      </Button>
+                    )}
+                  </>
+                )}
+              </Stack>
+            </>
+          )}
         </Box>
 
       </Box>
