@@ -55,6 +55,16 @@ cd "$REPO_DIR"
 # ── Git pull ──────────────────────────────────────────────────────────────────
 log "Pulling latest code..."
 
+# Abort any in-progress rebase or merge so we start clean
+if [ -d ".git/rebase-merge" ] || [ -d ".git/rebase-apply" ]; then
+  warn "Rebase in progress — aborting it"
+  git rebase --abort || true
+fi
+if [ -f ".git/MERGE_HEAD" ]; then
+  warn "Merge in progress — aborting it"
+  git merge --abort || true
+fi
+
 # Auto-resolve any leftover package-lock.json conflict (it's generated, not hand-edited)
 if git ls-files --unmerged | grep -q "package-lock.json"; then
   warn "package-lock.json has unresolved conflict — accepting remote version"
@@ -64,7 +74,7 @@ if git ls-files --unmerged | grep -q "package-lock.json"; then
 fi
 
 git stash -u
-if ! git pull; then
+if ! git pull --no-rebase origin master; then
   fail "git pull failed — aborting, no changes made"
   git stash pop 2>/dev/null || true
   exit 1
