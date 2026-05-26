@@ -54,6 +54,15 @@ cd "$REPO_DIR"
 
 # ── Git pull ──────────────────────────────────────────────────────────────────
 log "Pulling latest code..."
+
+# Auto-resolve any leftover package-lock.json conflict (it's generated, not hand-edited)
+if git ls-files --unmerged | grep -q "package-lock.json"; then
+  warn "package-lock.json has unresolved conflict — accepting remote version"
+  git checkout --theirs package-lock.json
+  git add package-lock.json
+  git -c core.editor=true merge --continue || true
+fi
+
 git stash -u
 if ! git pull; then
   fail "git pull failed — aborting, no changes made"
