@@ -153,35 +153,25 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                                     <CardContent>
                                         <Typography variant="subtitle1" sx={{ marginBottom: 2, fontWeight: 600 }}>Marketplace · {market.name}</Typography>
                                         <Grid2 container spacing={2}>
-                                            {/* Title */}
-                                            <Grid2 size={12}>
-                                                <TextField fullWidth size="small" label="Marketplace Title" variant="outlined"
-                                                    value={mpVals.title ?? ""}
-                                                    onChange={e => setMpField("title", e.target.value)} />
-                                            </Grid2>
-                                            {/* Description */}
-                                            <Grid2 size={12}>
-                                                <TextField fullWidth size="small" label="Marketplace Description" multiline minRows={2} variant="outlined"
-                                                    value={mpVals.description ?? ""}
-                                                    onChange={e => setMpField("description", e.target.value)} />
-                                            </Grid2>
-                                            {/* Tags */}
-                                            <Grid2 size={12}>
-                                                <Typography variant="caption" sx={{ display: "block", mb: .5 }}>Marketplace Tags</Typography>
-                                                <CreatableSelect {...selectMenuPortalProps} isMulti placeholder="Tags"
-                                                    value={(mpVals.tags ?? []).map(t => ({ value: t, label: t }))}
-                                                    onChange={newValue => setMpField("tags", newValue.map(v => v.value))} />
-                                            </Grid2>
                                             {/* titleGenerator */}
                                             {hasDDs && Object.keys(market.productDropDowns).map((category, l) => {
                                                 if (category !== "titleGenerator") return null;
+                                                const tg = market.productDropDowns[category];
+                                                const resolved = (tg.prompt ?? "")
+                                                    .replace("{blank}", product.blanks?.[0]?.name ?? "")
+                                                    .replace("{design}", design?.name ?? "")
+                                                    .replace("{brand}", product.brand ?? "")
+                                                    .replace("{season}", product.season ?? "")
+                                                    .replace("{gender}", product.gender ?? "")
+                                                    .replace("{theme}", product.theme ?? "")
+                                                    .replace("{sportUsedFor}", product.sportUsedFor ?? "");
                                                 if (!product.marketplaceValues) product.marketplaceValues = {};
                                                 if (!product.marketplaceValues[mpId]) product.marketplaceValues[mpId] = {};
-                                                product.marketplaceValues[mpId][category] = market.productDropDowns[category].prompt.replace("{design}", design.name).replace("{brand}", product.brand).replace("{season}", product.season).replace("{gender}", product.gender).replace("{theme}", product.theme).replace("{sportUsedFor}", product.sportUsedFor).replace("{blank}", product.blanks[0].name);
+                                                if (!product.marketplaceValues[mpId][category]) product.marketplaceValues[mpId][category] = resolved;
                                                 return (
                                                     <Grid2 key={l} size={12}>
-                                                        <TextField fullWidth label="Product Title (template)" variant="outlined"
-                                                            value={product.marketplaceValues?.[mpId]?.[category] ?? ""}
+                                                        <TextField fullWidth size="small" label={tg.label ?? "Title Generator"} variant="outlined"
+                                                            value={product.marketplaceValues?.[mpId]?.[category] ?? resolved}
                                                             onChange={e => {
                                                                 let prods = [...products];
                                                                 let p = prods.find(p => p.id == product.id);
@@ -190,6 +180,11 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                                                                 p.marketplaceValues[mpId][category] = e.target.value;
                                                                 setProducts([...prods]);
                                                             }} />
+                                                        {tg.prompt && (
+                                                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                                                                Template: {tg.prompt}
+                                                            </Typography>
+                                                        )}
                                                     </Grid2>
                                                 );
                                             })}

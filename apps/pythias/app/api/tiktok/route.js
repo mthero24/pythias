@@ -3,8 +3,8 @@ import { TikTokAuth } from "@pythias/mongo";
 import { getAccessTokenUsingAuthCode } from "@pythias/integrations";
 
 const config = {
-    app_key: process.env.tiktok_app_key,
-    app_secret: process.env.tiktok_app_secret,
+    app_key: process.env.tiktok_app_key || process.env.TIK_TOK_APP_KEY || process.env.Tik_Tok_AppKey,
+    app_secret: process.env.tiktok_app_secret || process.env.Tik_Tok_AppSecret,
 };
 
 const PROVIDER_SUBDOMAINS = {
@@ -18,7 +18,19 @@ export async function GET(req) {
     const code  = req.nextUrl.searchParams.get("code");
     const state = req.nextUrl.searchParams.get("state");
 
-    let data = await getAccessTokenUsingAuthCode(config, code);
+    console.log("[TikTok OAuth] code:", code ? "present" : "MISSING", "state:", state, "config keys present:", !!config.app_key, !!config.app_secret);
+
+    if (!code) return NextResponse.json({ error: true, msg: "Missing auth code" }, { status: 400 });
+
+    let data;
+    try {
+        data = await getAccessTokenUsingAuthCode(config, code);
+    } catch (e) {
+        console.error("[TikTok OAuth] getAccessTokenUsingAuthCode failed:", e.message);
+        return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
+    }
+
+    console.log("[TikTok OAuth] token exchange result:", JSON.stringify(data));
 
     let auth = null;
 
