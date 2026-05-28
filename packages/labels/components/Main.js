@@ -42,6 +42,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
     const [styleCodes, setStyleCodes]    = useState([]);
     const [loading, setLoading]          = useState(false);
     const [pulling, setPulling]          = useState(false);
+    const [updatingInv, setUpdatingInv]  = useState(false);
     const [marketplaceSelected, setMarketplaceSelected] = useState("Select");
     const [marketplaces, setMarketplaces] = useState([]);
     const [confirmReturnToQue, setConfirmReturnToQue] = useState(false);
@@ -215,6 +216,24 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
         }
     };
 
+    const updateInventoryNow = async () => {
+        setUpdatingInv(true);
+        try {
+            const res = await axios.post("/api/internal/update-inventory");
+            if (res.data?.error) alert(`Update inventory failed: ${res.data.msg}`);
+            else {
+                setLabels(res.data.labels);
+                setBatches(res.data.batches);
+                setGiftLabels(res.data.giftMessages);
+                setRePulls(res.data.rePulls);
+            }
+        } catch (e) {
+            alert(`Update inventory error: ${e.message}`);
+        } finally {
+            setUpdatingInv(false);
+        }
+    };
+
     const totalLabels = Object.values(useLabels).reduce((sum, arr) => sum + arr.length, 0);
 
     return (
@@ -261,8 +280,15 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                             {source === "PP" && (
                                 <Button variant="outlined" size="small" color="secondary"
                                     startIcon={<SyncIcon sx={{ animation: pulling ? "spin 1s linear infinite" : "none", "@keyframes spin": { "100%": { transform: "rotate(360deg)" } } }} />}
-                                    onClick={pullOrdersNow} disabled={pulling}>
+                                    onClick={pullOrdersNow} disabled={pulling || updatingInv}>
                                     {pulling ? "Pulling…" : "Pull Orders Now"}
+                                </Button>
+                            )}
+                            {(source === "PP" || source === "po") && (
+                                <Button variant="outlined" size="small" color="secondary"
+                                    startIcon={<SyncIcon sx={{ animation: updatingInv ? "spin 1s linear infinite" : "none", "@keyframes spin": { "100%": { transform: "rotate(360deg)" } } }} />}
+                                    onClick={updateInventoryNow} disabled={pulling || updatingInv}>
+                                    {updatingInv ? "Updating…" : "Update Inventory"}
                                 </Button>
                             )}
                         </Stack>

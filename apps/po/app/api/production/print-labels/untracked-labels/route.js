@@ -25,12 +25,9 @@ export async function GET(req=NextApiResponse){
           .sort({ labelLastPrinted: -1 })
           .limit(1000)
           .lean();
-        console.log(items[1].labelLastPrinted, new Date(items[1].labelLastPrinted).getTime(), Date.now() - (3 * (24 * 60 * 60 * 1000)), new Date(items[1].labelLastPrinted).getTime() < Date.now() - (3 * (24 * 60 * 60 * 1000)))
-        items = items.filter(i=> new Date(i.labelLastPrinted).getTime() < Date.now() - (3 * (24 * 60 * 60 * 1000)))
-        let standardOrders = items.map(s=> s.order)
-        standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items").lean()
-        //console.log(standardOrders.length, "standatd orders", standardOrders[0], items[0].order.toString())
-        items = items.map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0]; console.log(s.order, "order map");  return {...s}})
+        const orderIds = items.map(s => s.order);
+        const standardOrders = await Order.find({ _id: { $in: orderIds } }).select("poNumber items").lean();
+        items = items.map(s => { s.order = standardOrders.find(o => o._id.toString() === s.order.toString()); return { ...s }; });
         //console.log(items.length, items[0].labelLastPrinted, "after map");
         return NextResponse.json(items);
       } catch (e) {

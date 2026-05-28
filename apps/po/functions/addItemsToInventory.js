@@ -1,4 +1,4 @@
-import { Inventory } from "@pythias/mongo";
+import { Inventory, InventoryOrders } from "@pythias/mongo";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
 
@@ -94,19 +94,31 @@ export async function addItemsToInventory() {
     // --- Group 1: inventory assigned, stockStatus missing ---
     if (hasInventory.length) {
         const invIds = [...new Set(hasInventory.map(i => i.inventory.inventory.toString()))];
-        const invDocs = await Inventory.find({ _id: { $in: invIds } }, "quantity allocated orders").lean();
-        const invMap = new Map(invDocs.map(inv => {
-            const orderedItemIds = new Set((inv.orders || []).flatMap(o => (o.items || []).map(String)));
-            const poSlotsRemaining = (inv.orders || []).reduce(
-                (sum, o) => sum + Math.max(0, (o.quantity ?? 0) - (o.items || []).length), 0
-            );
-            return [inv._id.toString(), {
-                available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
-                orderedItemIds,
-                poSlotsRemaining,
-                slotsUsed: 0, attachedAdded: 0,
-            }];
-        }));
+        const [invDocs, activeOrders1] = await Promise.all([
+            Inventory.find({ _id: { $in: invIds } }, "quantity allocated").lean(),
+            InventoryOrders.find(
+                { received: { $ne: true }, "locations.items.inventory": { $in: invIds } },
+                "locations"
+            ).lean(),
+        ]);
+
+        const orderedCapMap1 = new Map();
+        for (const po of activeOrders1) {
+            for (const loc of po.locations || []) {
+                if (loc.received) continue;
+                for (const item of loc.items || []) {
+                    const k = item.inventory?.toString();
+                    if (!k) continue;
+                    orderedCapMap1.set(k, (orderedCapMap1.get(k) ?? 0) + (item.quantity ?? 0));
+                }
+            }
+        }
+
+        const invMap = new Map(invDocs.map(inv => [inv._id.toString(), {
+            available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
+            orderedCapacity: orderedCapMap1.get(inv._id.toString()) ?? 0,
+            slotsUsed: 0, orderedUsed: 0, attachedAdded: 0,
+        }]));
 
         const itemOps = [];
         for (const item of hasInventory) {
@@ -114,8 +126,7 @@ export async function addItemsToInventory() {
             if (!data) continue;
             let status;
             if (data.slotsUsed < data.available) { status = "inStock"; data.slotsUsed++; }
-            else if (data.orderedItemIds.has(item._id.toString())) { status = "ordered"; }
-            else if (data.poSlotsRemaining > 0) { status = "ordered"; data.poSlotsRemaining--; }
+            else if (data.orderedUsed < data.orderedCapacity) { status = "ordered"; data.orderedUsed++; }
             else { status = "attached"; data.attachedAdded++; }
             itemOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: status } } } });
         }
@@ -173,18 +184,32 @@ export async function addItemsToInventory() {
             byInv[k].items.push(item);
         }
 
+        const g2InvIds = Object.keys(byInv);
+        const activeOrders2 = g2InvIds.length ? await InventoryOrders.find(
+            { received: { $ne: true }, "locations.items.inventory": { $in: g2InvIds } },
+            "locations"
+        ).lean() : [];
+        const orderedCapMap2 = new Map();
+        for (const po of activeOrders2) {
+            for (const loc of po.locations || []) {
+                if (loc.received) continue;
+                for (const item of loc.items || []) {
+                    const k = item.inventory?.toString();
+                    if (!k) continue;
+                    orderedCapMap2.set(k, (orderedCapMap2.get(k) ?? 0) + (item.quantity ?? 0));
+                }
+            }
+        }
+
         const itemOps = [], invOps = [];
         for (const { inv, items: invItems } of Object.values(byInv)) {
             const available = Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0));
-            // New items being assigned won't be in any existing PO's items[], so use unfilled slot count
-            let poSlotsRemaining = (inv.orders || []).reduce(
-                (sum, o) => sum + Math.max(0, (o.quantity ?? 0) - (o.items || []).length), 0
-            );
-            let slotsUsed = 0, attachedAdded = 0;
+            const orderedCapacity = orderedCapMap2.get(inv._id.toString()) ?? 0;
+            let slotsUsed = 0, orderedUsed = 0, attachedAdded = 0;
             for (const item of invItems) {
                 let status;
                 if (slotsUsed < available) { status = "inStock"; slotsUsed++; }
-                else if (poSlotsRemaining > 0) { status = "ordered"; poSlotsRemaining--; }
+                else if (orderedUsed < orderedCapacity) { status = "ordered"; orderedUsed++; }
                 else { status = "attached"; attachedAdded++; }
                 itemOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: {
                     "inventory.inventoryType": "inventory",
@@ -208,9 +233,67 @@ export async function addItemsToInventory() {
     await promoteAttached();
 }
 
+// Re-validates stockStatus for all active items with inventory assigned.
+// Runs on a schedule so page loads just read current DB values.
+export const recomputeStockStatus = async () => {
+    const allWithInv = await Items.find({
+        labelPrinted: false,
+        canceled: false,
+        shipped: false,
+        paid: true,
+        "inventory.inventory": { $exists: true, $ne: null },
+    }).select("_id inventory.inventory stockStatus date").sort({ date: 1 }).lean();
+
+    if (!allWithInv.length) return;
+
+    const allInvIds = [...new Set(allWithInv.map(i => i.inventory.inventory.toString()))];
+    const [allInvDocs, activeOrders] = await Promise.all([
+        Inventory.find({ _id: { $in: allInvIds } }, "quantity allocated").lean(),
+        InventoryOrders.find(
+            { received: { $ne: true }, "locations.items.inventory": { $in: allInvIds } },
+            "locations"
+        ).lean(),
+    ]);
+
+    const orderedCapMap = new Map();
+    for (const po of activeOrders) {
+        for (const loc of po.locations || []) {
+            if (loc.received) continue;
+            for (const item of loc.items || []) {
+                const k = item.inventory?.toString();
+                if (!k) continue;
+                orderedCapMap.set(k, (orderedCapMap.get(k) ?? 0) + (item.quantity ?? 0));
+            }
+        }
+    }
+
+    const invMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
+        available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
+        orderedCapacity: orderedCapMap.get(inv._id.toString()) ?? 0,
+        slotsUsed: 0,
+        orderedUsed: 0,
+    }]));
+
+    const updateOps = [];
+    for (const item of allWithInv) {
+        const invId = item.inventory.inventory.toString();
+        const data = invMap.get(invId);
+        if (!data) continue;
+        let computed;
+        if (data.slotsUsed < data.available) { computed = "inStock"; data.slotsUsed++; }
+        else if (data.orderedUsed < data.orderedCapacity) { computed = "ordered"; data.orderedUsed++; }
+        else { computed = "attached"; }
+        if (item.stockStatus !== computed) {
+            updateOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: computed } } } });
+        }
+    }
+    if (updateOps.length) await Items.bulkWrite(updateOps, { ordered: false });
+};
+
 setInterval(() => {
     if (process.env.pm_id == 9 || process.env.pm_id == "9") {
-        addItemsToInventory();
         reconcileAllocated();
+        addItemsToInventory();
+        recomputeStockStatus();
     }
 }, 1000 * 60 * 15);

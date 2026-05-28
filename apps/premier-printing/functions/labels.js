@@ -1,4 +1,4 @@
-import {Items, Order, Inventory, Batches} from "@pythias/mongo";
+import {Items, Order, Inventory, Batches, InventoryOrders} from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
@@ -69,25 +69,38 @@ export async function LabelsData(){
                 .map(l => (l.inventory?.inventory?._id ?? l.inventory?.inventory)?.toString())
                 .filter(Boolean)
         )];
-        // Use inStock array length — self-maintaining; allocated was never decremented so drifted wrong
-        const invDocs = invIds.length
-            ? await Inventory.find({ _id: { $in: invIds } }, "quantity inStock orders blank color sizeId").lean()
-            : [];
+        const [invDocs, activeOrders] = invIds.length
+            ? await Promise.all([
+                Inventory.find({ _id: { $in: invIds } }, "quantity inStock blank color sizeId").lean(),
+                InventoryOrders.find(
+                    { received: { $ne: true }, "locations.items.inventory": { $in: invIds } },
+                    "locations"
+                ).lean(),
+            ])
+            : [[], []];
+
+        // Sum ordered quantity per inventory from active (unreceived) POs
+        const orderedCapMap = new Map();
+        for (const po of activeOrders) {
+            for (const loc of po.locations || []) {
+                if (loc.received) continue;
+                for (const item of loc.items || []) {
+                    const k = item.inventory?.toString();
+                    if (!k) continue;
+                    orderedCapMap.set(k, (orderedCapMap.get(k) ?? 0) + (item.quantity ?? 0));
+                }
+            }
+        }
+
         const invMap = new Map(invDocs.map(inv => {
-            // Items explicitly listed in a PO are definitively "on order"
-            const orderedItemIds = new Set((inv.orders || []).flatMap(o => (o.items || []).map(String)));
-            // POs may have unfilled slots (quantity > items.length) — new items can claim them
-            const poSlotsRemaining = (inv.orders || []).reduce(
-                (sum, o) => sum + Math.max(0, (o.quantity ?? 0) - (o.items || []).length), 0
-            );
             return [inv._id.toString(), {
                 available: Math.max(0, (inv.quantity ?? 0) - (inv.inStock?.length ?? 0)),
-                orderedItemIds,
-                poSlotsRemaining,
+                orderedCapacity: orderedCapMap.get(inv._id.toString()) ?? 0,
                 blank: inv.blank?.toString(),
                 color: inv.color?.toString(),
                 sizeId: inv.sizeId,
                 slotsUsed: 0,
+                orderedUsed: 0,
             }];
         }));
 
@@ -116,12 +129,8 @@ export async function LabelsData(){
                     status = null;
                 } else if (data.slotsUsed < data.available) {
                     status = "inStock"; data.slotsUsed++;
-                } else if (data.orderedItemIds.has(l._id.toString())) {
-                    // Item is explicitly reserved in a PO
-                    status = "ordered";
-                } else if (data.poSlotsRemaining > 0) {
-                    // PO has unfilled slots — this item qualifies for one
-                    status = "ordered"; data.poSlotsRemaining--;
+                } else if (data.orderedUsed < data.orderedCapacity) {
+                    status = "ordered"; data.orderedUsed++;
                 } else {
                     status = "attached";
                 }

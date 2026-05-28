@@ -134,45 +134,6 @@ export async function LabelsData(){
         if (linkOps.length) Items.bulkWrite(linkOps, { ordered: false }); // fire-and-forget
     }
 
-    // Phase 5: recompute stockStatus fire-and-forget — doesn't block the response
-    // DB values (kept current by addItemsToInventory background job) are shown immediately
-    const allWithInv = [];
-    for (const k of Object.keys(labels)) {
-        for (const l of labels[k]) {
-            if (l.inventory?.inventory != null) allWithInv.push(l);
-        }
-    }
-    if (allWithInv.length > 0) {
-        (async () => {
-            try {
-                const allInvIds = [...new Set(allWithInv.map(l => (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString()).filter(Boolean))];
-                const allInvDocs = await Inventory.find({ _id: { $in: allInvIds } }, "quantity orders").lean();
-                const allInvMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
-                    quantity: inv.quantity ?? 0,
-                    hasActiveOrder: (inv.orders || []).length > 0,
-                    slotsUsed: 0,
-                }]));
-
-                allWithInv.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-
-                const updateOps = [];
-                for (const l of allWithInv) {
-                    const invId = (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString();
-                    const data = allInvMap.get(invId);
-                    if (!data) continue;
-                    let computed;
-                    if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
-                    else if (data.hasActiveOrder) { computed = "ordered"; }
-                    else { computed = "attached"; }
-                    if (l.stockStatus !== computed) {
-                        updateOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: computed } } } });
-                    }
-                }
-                if (updateOps.length) await Items.bulkWrite(updateOps, { ordered: false });
-            } catch {}
-        })();
-    }
-
     // Build gift messages
     const giftOrderMap = Object.fromEntries(giftOrderList.map(o => [o._id.toString(), o]));
     let giftMessages = giftItemsRaw
