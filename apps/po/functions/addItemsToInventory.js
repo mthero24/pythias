@@ -268,7 +268,7 @@ export const recomputeStockStatus = async () => {
     }
 
     const invMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
-        available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
+        quantity: Math.max(0, inv.quantity ?? 0),
         orderedCapacity: orderedCapMap.get(inv._id.toString()) ?? 0,
         slotsUsed: 0,
         orderedUsed: 0,
@@ -280,7 +280,7 @@ export const recomputeStockStatus = async () => {
         const data = invMap.get(invId);
         if (!data) continue;
         let computed;
-        if (data.slotsUsed < data.available) { computed = "inStock"; data.slotsUsed++; }
+        if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
         else if (data.orderedUsed < data.orderedCapacity) { computed = "ordered"; data.orderedUsed++; }
         else { computed = "attached"; }
         if (item.stockStatus !== computed) {

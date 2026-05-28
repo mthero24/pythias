@@ -1,4 +1,4 @@
-import {Items, Order, Inventory, Batches, InventoryOrders} from "@pythias/mongo";
+import {Items, Order, Batches} from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 export async function LabelsData(){
     // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
@@ -52,103 +52,6 @@ export async function LabelsData(){
         labels[k] = await Sort(labels[k])
     }
 
-    // Assign/validate stockStatus for items with inventory or a stale "ordered" tag.
-    // Always re-validate "ordered" items so incorrectly-set tags get cleared immediately.
-    const needsStatusCheck = [];
-    for (const k of Object.keys(labels)) {
-        for (const l of labels[k]) {
-            if (l.stockStatus === "ordered" || (l.inventory?.inventory != null && !l.stockStatus)) {
-                needsStatusCheck.push(l);
-            }
-        }
-    }
-
-    if (needsStatusCheck.length > 0) {
-        const invIds = [...new Set(
-            needsStatusCheck
-                .map(l => (l.inventory?.inventory?._id ?? l.inventory?.inventory)?.toString())
-                .filter(Boolean)
-        )];
-        const [invDocs, activeOrders] = invIds.length
-            ? await Promise.all([
-                Inventory.find({ _id: { $in: invIds } }, "quantity inStock blank color sizeId").lean(),
-                InventoryOrders.find(
-                    { received: { $ne: true }, "locations.items.inventory": { $in: invIds } },
-                    "locations"
-                ).lean(),
-            ])
-            : [[], []];
-
-        // Sum ordered quantity per inventory from active (unreceived) POs
-        const orderedCapMap = new Map();
-        for (const po of activeOrders) {
-            for (const loc of po.locations || []) {
-                if (loc.received) continue;
-                for (const item of loc.items || []) {
-                    const k = item.inventory?.toString();
-                    if (!k) continue;
-                    orderedCapMap.set(k, (orderedCapMap.get(k) ?? 0) + (item.quantity ?? 0));
-                }
-            }
-        }
-
-        const invMap = new Map(invDocs.map(inv => {
-            return [inv._id.toString(), {
-                available: Math.max(0, (inv.quantity ?? 0) - (inv.inStock?.length ?? 0)),
-                orderedCapacity: orderedCapMap.get(inv._id.toString()) ?? 0,
-                blank: inv.blank?.toString(),
-                color: inv.color?.toString(),
-                sizeId: inv.sizeId,
-                slotsUsed: 0,
-                orderedUsed: 0,
-            }];
-        }));
-
-        const statusOps = [];
-        const invPushOps = [];
-        for (const l of needsStatusCheck) {
-            const invId = (l.inventory?.inventory?._id ?? l.inventory?.inventory)?.toString();
-            const data = invId ? invMap.get(invId) : null;
-
-            let status;
-            if (!data) {
-                // No valid inventory — clear any stale "ordered" tag
-                status = null;
-            } else {
-                // Validate blank/color/size match to prevent cross-SKU false positives
-                const itemBlank = (l.blank?._id ?? l.blank)?.toString();
-                const itemColor = (l.color?._id ?? l.color)?.toString();
-                const itemSize  = (l.size?._id  ?? l.size)?.toString();
-                const inventoryMatches =
-                    (!data.blank  || !itemBlank || data.blank  === itemBlank) &&
-                    (!data.color  || !itemColor || data.color  === itemColor) &&
-                    (!data.sizeId || !itemSize  || data.sizeId === itemSize);
-
-                if (!inventoryMatches) {
-                    // Linked inventory is wrong SKU — clear so it shows as "No Inventory"
-                    status = null;
-                } else if (data.slotsUsed < data.available) {
-                    status = "inStock"; data.slotsUsed++;
-                } else if (data.orderedUsed < data.orderedCapacity) {
-                    status = "ordered"; data.orderedUsed++;
-                } else {
-                    status = "attached";
-                }
-            }
-
-            if (l.stockStatus === status) continue; // nothing changed
-            l.stockStatus = status;
-            statusOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: status } } } });
-            if (status === "inStock") {
-                invPushOps.push({ updateOne: { filter: { _id: invId }, update: { $addToSet: { inStock: l._id } } } });
-            }
-        }
-
-        await Promise.all([
-            statusOps.length ? Items.bulkWrite(statusOps, { ordered: false }) : Promise.resolve(),
-            invPushOps.length ? Inventory.bulkWrite(invPushOps, { ordered: false }) : Promise.resolve(),
-        ]);
-    }
     let giftMessages = await Items.find({
         labelPrinted: false,
         canceled: false,

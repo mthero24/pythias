@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { updateInventory } from "@/functions/pullOrders";
+import { updateInventory, recomputeStockStatus } from "@/functions/pullOrders";
 import { LabelsData } from "@/functions/labels";
 import { Inventory, Items } from "@pythias/mongo";
 
 export async function POST() {
     try {
-        // Rebuild inStock/attached arrays from current active items
+        // Rebuild inStock/attached arrays, then recompute every item's stockStatus
         await updateInventory();
+        await recomputeStockStatus();
 
-        // Recount and fix allocated + attachedCount counters
+        // Recount and fix allocated + attachedCount counters to match new stockStatus values
         const [inStockCounts, attachedCounts, allInvs] = await Promise.all([
             Items.aggregate([
                 { $match: { stockStatus: "inStock", canceled: false, shipped: false, paid: true, "inventory.inventory": { $exists: true, $ne: null } } },

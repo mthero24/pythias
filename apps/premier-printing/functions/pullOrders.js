@@ -1,4 +1,4 @@
-import { Design, Items as Item, Blank, Order, Products, Inventory, ProductInventory, Converters, ApiKeyIntegrations } from "@pythias/mongo";
+import { Design, Items as Item, Blank, Order, Products, Inventory, InventoryOrders, ProductInventory, Converters, ApiKeyIntegrations } from "@pythias/mongo";
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda, getOrdersEbay } from "@pythias/integrations";
 import { logActivity } from "@pythias/backend/server";
 
@@ -38,13 +38,12 @@ const CreateSku = async ({ blank, color, size, design, threadColor, designSku })
     return sku;
 }
 export const updateInventory = async () => {
-    // One query for all relevant items instead of one per inventory record
+    // Sort oldest first so FIFO slot assignment is correct
     const activeItems = await Item.find({
         "inventory.inventory": { $exists: true, $ne: null },
         labelPrinted: false, canceled: false, shipped: false, paid: true,
-    }).select("_id inventory.inventory").lean();
+    }).select("_id inventory.inventory date").sort({ date: 1 }).lean();
 
-    // Group item IDs by inventory ID
     const itemsByInvId = {};
     for (const item of activeItems) {
         const invId = String(item.inventory?.inventory);
@@ -52,40 +51,76 @@ export const updateInventory = async () => {
         itemsByInvId[invId].push(String(item._id));
     }
 
-    // Load all inventory as plain objects — avoid Mongoose Document overhead
     const inventories = await Inventory.find({}).lean();
 
     const ops = [];
     for (const inv of inventories) {
-        const invId = String(inv._id);
-        const itemIds = itemsByInvId[invId] || [];
-        const quantity = (inv.quantity < 0 || !inv.quantity) ? 0 : inv.quantity;
-
-        // Build a Set of item IDs already committed to orders — O(1) lookup instead of repeated .flat().includes()
-        const orderedIds = new Set((inv.orders || []).flatMap(o => (o.items || []).map(i => String(i))));
-
-        const inStock = [];
-        const attached = [];
-
-        for (const itemId of itemIds) {
-            if (orderedIds.has(itemId)) continue;
-            if (quantity > 0 && quantity - inStock.length > 0) {
-                inStock.push(itemId);
-            } else {
-                attached.push(itemId);
-            }
-        }
-
+        const itemIds = itemsByInvId[String(inv._id)] || [];
+        const quantity = Math.max(0, inv.quantity ?? 0);
+        // Pure FIFO: oldest items fill stock slots; the "ordered" distinction is
+        // handled separately by recomputeStockStatus using live InventoryOrders data.
         ops.push({
             updateOne: {
                 filter: { _id: inv._id },
-                update: { $set: { quantity, attached, inStock } },
+                update: { $set: { quantity, inStock: itemIds.slice(0, quantity), attached: itemIds.slice(quantity) } },
             },
         });
     }
 
     if (ops.length > 0) await Inventory.bulkWrite(ops, { ordered: false });
-}
+};
+
+export const recomputeStockStatus = async () => {
+    const allWithInv = await Item.find({
+        labelPrinted: false, canceled: false, shipped: false, paid: true,
+        "inventory.inventory": { $exists: true, $ne: null },
+    }).select("_id inventory.inventory stockStatus date").sort({ date: 1 }).lean();
+
+    if (!allWithInv.length) return;
+
+    const allInvIds = [...new Set(allWithInv.map(i => i.inventory.inventory.toString()))];
+    const [allInvDocs, activeOrders] = await Promise.all([
+        Inventory.find({ _id: { $in: allInvIds } }, "quantity allocated").lean(),
+        InventoryOrders.find(
+            { received: { $ne: true }, "locations.items.inventory": { $in: allInvIds } },
+            "locations"
+        ).lean(),
+    ]);
+
+    const orderedCapMap = new Map();
+    for (const po of activeOrders) {
+        for (const loc of po.locations || []) {
+            if (loc.received) continue;
+            for (const item of loc.items || []) {
+                const k = item.inventory?.toString();
+                if (!k) continue;
+                orderedCapMap.set(k, (orderedCapMap.get(k) ?? 0) + (item.quantity ?? 0));
+            }
+        }
+    }
+
+    const invMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
+        quantity: Math.max(0, inv.quantity ?? 0),
+        orderedCapacity: orderedCapMap.get(inv._id.toString()) ?? 0,
+        slotsUsed: 0,
+        orderedUsed: 0,
+    }]));
+
+    const updateOps = [];
+    for (const item of allWithInv) {
+        const invId = item.inventory.inventory.toString();
+        const data = invMap.get(invId);
+        if (!data) continue;
+        let computed;
+        if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
+        else if (data.orderedUsed < data.orderedCapacity) { computed = "ordered"; data.orderedUsed++; }
+        else { computed = "attached"; }
+        if (item.stockStatus !== computed) {
+            updateOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: computed } } } });
+        }
+    }
+    if (updateOps.length) await Item.bulkWrite(updateOps, { ordered: false });
+};
 const createItemVariant = async (variant, product, order, price) => {
     let item = new Item({
         pieceId: await generatePieceID(),
@@ -677,6 +712,7 @@ export async function pullOrders(){
         }
     }
     await updateInventory();
+    await recomputeStockStatus();
 }
 
 export async function repullOrderItems(poNumber) {
