@@ -4,7 +4,14 @@ import Items from "@/models/Items";
 import StyleV2 from "@/models/StyleV2";
 import { Design, LicenseHolders } from "@pythias/mongo";
 
-const VALID_SORT_FIELDS = new Set(["date", "styleCode", "colorName", "sizeName", "price"]);
+const VALID_SORT_FIELDS = new Set(["date", "styleCode", "colorName", "sizeName", "price", "marketplace"]);
+
+const MP_RATES = {
+    amazon: 0.15, ebay: 0.13, etsy: 0.065, walmart: 0.15, target: 0.10,
+    "target plus us marketplace": 0.10, faire: 0.25, tiktok: 0.08,
+    "tik tok": 0.08, shopify: 0.02, kohls: 0.15, "kohl's": 0.15,
+    acenda: 0.15, zulily: 0.20, tsc: 0.15,
+};
 
 async function addLicenceFees(items) {
     if (!items.length) return items.map(i => ({ ...i, licenceFee: 0 }));
@@ -37,8 +44,9 @@ export async function GET(req) {
         const { searchParams } = new URL(req.url);
         const fromParam = searchParams.get("from");
         const toParam   = searchParams.get("to");
+        const csvMode   = searchParams.get("csv") === "1";
         const page      = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-        const pageSize  = Math.min(200, Math.max(10, parseInt(searchParams.get("pageSize") || "50", 10)));
+        const pageSize  = csvMode ? 20000 : Math.min(200, Math.max(10, parseInt(searchParams.get("pageSize") || "50", 10)));
         const sortField = VALID_SORT_FIELDS.has(searchParams.get("sort")) ? searchParams.get("sort") : "date";
         const sortDir   = searchParams.get("dir") === "asc" ? 1 : -1;
 
@@ -48,15 +56,24 @@ export async function GET(req) {
 
         const filter = { date: dateFilter, canceled: { $ne: true } };
 
-        const [rawItems, total] = await Promise.all([
-            Items.find(filter)
-                .select("date styleCode sizeName colorName price designRef orderId poNumber order")
-                .sort({ [sortField]: sortDir })
-                .skip((page - 1) * pageSize)
-                .limit(pageSize)
-                .lean(),
-            Items.countDocuments(filter),
+        const basePipeline = [
+            { $match: filter },
+            { $lookup: { from: Order.collection.name, localField: "order", foreignField: "_id", as: "_ord" } },
+            { $addFields: { marketplace: { $ifNull: [{ $arrayElemAt: ["$_ord.marketplace", 0] }, "Unknown"] } } },
+            { $project: { _ord: 0 } },
+        ];
+
+        const [rawItems, countAgg] = await Promise.all([
+            Items.aggregate([
+                ...basePipeline,
+                { $sort: { [sortField]: sortDir, _id: 1 } },
+                ...(csvMode ? [] : [{ $skip: (page - 1) * pageSize }]),
+                { $limit: pageSize },
+                { $project: { date: 1, styleCode: 1, sizeName: 1, colorName: 1, price: 1, designRef: 1, orderId: 1, poNumber: 1, marketplace: 1 } },
+            ]),
+            csvMode ? Promise.resolve([]) : Items.aggregate([...basePipeline, { $count: "total" }]),
         ]);
+        const total = csvMode ? 0 : (countAgg[0]?.total ?? 0);
 
         const styleCodes = [...new Set(rawItems.map(i => i.styleCode).filter(Boolean))];
         const styles = styleCodes.length ? await StyleV2.find({ code: { $in: styleCodes } }).select("code sizes").lean() : [];
@@ -64,15 +81,19 @@ export async function GET(req) {
         for (const s of styles) { costMap[s.code] = {}; for (const sz of s.sizes ?? []) costMap[s.code][sz.name] = sz.wholesaleCost ?? 0; }
         const itemsWithCogs = rawItems.map(i => ({ ...i, wholesaleCost: costMap[i.styleCode]?.[i.sizeName] ?? 0 }));
 
-        const orderIds = [...new Set(rawItems.map(i => i.order).filter(Boolean).map(String))];
-        const orderDocs = orderIds.length ? await Order.find({ _id: { $in: orderIds } }).select("marketplace").lean() : [];
-        const orderMpMap = Object.fromEntries(orderDocs.map(o => [String(o._id), o.marketplace || "Unknown"]));
+        const items = await addLicenceFees(itemsWithCogs);
 
-        const itemsWithFees = await addLicenceFees(itemsWithCogs);
-        const items = itemsWithFees.map(i => ({
-            ...i,
-            marketplace: i.order ? (orderMpMap[String(i.order)] || "Unknown") : "Unknown",
-        }));
+        if (csvMode) {
+            const esc = (v) => { const s = String(v ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
+            const headers = ["Date", "Channel", "Blank Code", "Size", "Color", "Price Sold", "Blank COGS", "Licence Fees", "Est. MP Fees", "Net"];
+            const rows = items.map(i => {
+                const mpFee = (i.price || 0) * (MP_RATES[(i.marketplace || "").toLowerCase()] ?? 0);
+                const net = (i.price || 0) - (i.wholesaleCost || 0) - (i.licenceFee || 0) - mpFee;
+                return [i.date ? new Date(i.date).toLocaleDateString() : "", i.marketplace || "", i.styleCode || "", i.sizeName || "", i.colorName || "", (i.price ?? 0).toFixed(2), (i.wholesaleCost ?? 0).toFixed(2), (i.licenceFee ?? 0).toFixed(2), mpFee.toFixed(2), net.toFixed(2)];
+            });
+            const csv = [headers, ...rows].map(r => r.map(esc).join(",")).join("\r\n");
+            return new Response(csv, { headers: { "Content-Type": "text/csv", "Content-Disposition": `attachment; filename="cost-items.csv"` } });
+        }
 
         return NextResponse.json({ items, total, page, pageSize, pages: Math.ceil(total / pageSize) });
     } catch (e) {

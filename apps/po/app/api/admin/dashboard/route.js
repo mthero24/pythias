@@ -131,11 +131,17 @@ export async function GET(req) {
         const cogOrderDocs = cogOrderIds.length ? await Order.find({ _id: { $in: cogOrderIds } }).select("marketplace").lean() : [];
         const cogOrderMpMap = Object.fromEntries(cogOrderDocs.map(o => [String(o._id), o.marketplace || "Unknown"]));
         const cogsByMarketplace = {};
+        const itemCountByMarketplace = {};
+        const itemsByMarketplaceAndStyle = {};
         for (const row of cogItemsAgg) {
             if (!row.order) continue;
             const unitCost = cogCostMap[row.styleCode]?.[row.sizeName] ?? 0;
             const mp = cogOrderMpMap[String(row.order)] || "Unknown";
+            const style = row.styleCode || "Unknown";
             cogsByMarketplace[mp] = (cogsByMarketplace[mp] || 0) + unitCost * row.count;
+            itemCountByMarketplace[mp] = (itemCountByMarketplace[mp] || 0) + row.count;
+            if (!itemsByMarketplaceAndStyle[mp]) itemsByMarketplaceAndStyle[mp] = {};
+            itemsByMarketplaceAndStyle[mp][style] = (itemsByMarketplaceAndStyle[mp][style] || 0) + row.count;
         }
 
         const summary        = summaryAgg[0] ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
@@ -154,7 +160,7 @@ export async function GET(req) {
         const totalServiceCost = serviceInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
         const totalKlingCost   = klingInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace, totalServiceCost, totalKlingCost, cogsByMarketplace });
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace, totalServiceCost, totalKlingCost, cogsByMarketplace, itemCountByMarketplace, itemsByMarketplaceAndStyle });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({ error: true, msg: e.message, summary: { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 }, byMarketplace: [], orderMarketplaceMap: {}, items: [], inventoryValue: 0 }, { status: 500 });

@@ -532,9 +532,8 @@ function fmtRate(marketplace) {
     return rate != null ? `~${(rate * 100).toFixed(1)}%` : "—";
 }
 
-function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, costItemsData, costItemsSortField, costItemsSortDir, onCostItemsPageChange, onCostItemsPageSizeChange, onCostItemsSortChange, inventoryValue }) {
+function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, costItemsData, costItemsSortField, costItemsSortDir, onCostItemsPageChange, onCostItemsPageSizeChange, onCostItemsSortChange, detailView, onDetailViewChange, itemCountByMarketplace = {}, itemsByMarketplaceAndStyle = {}, inventoryValue }) {
     const { orders, total, page, pageSize, loading } = ordersData;
-    const [detailView, setDetailView] = useState("orders");
 
     const totalFees = useMemo(() =>
         byMarketplace.reduce((s, mp) => s + mp.revenue * (MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0), 0),
@@ -569,8 +568,8 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
 
     const itemColumns = [
         { key: "date",         serverKey: "date",      label: "Date",        render: (i) => fmtDate(i.date) },
-        { key: "marketplace",  label: "Channel" },
-        { key: "styleCode",    serverKey: "styleCode", label: "Blank Code" },
+        { key: "marketplace",  serverKey: "marketplace", label: "Channel" },
+        { key: "styleCode",    serverKey: "styleCode",   label: "Blank Code" },
         { key: "sizeName",     serverKey: "sizeName",  label: "Size" },
         { key: "colorName",    serverKey: "colorName", label: "Color" },
         { key: "price",        serverKey: "price",     label: "Price Sold",  align: "right", render: (i) => fmt(i.price) },
@@ -650,9 +649,64 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
                 <SortableTable columns={mpColumns} rows={mpRows} defaultSort="revenue" />
             </Paper>
 
+            {(() => {
+                const STYLE_COLORS = ["#2196f3","#4caf50","#ff9800","#e91e63","#9c27b0","#00bcd4","#f44336","#8bc34a","#ff5722"];
+                const styleTotals = {};
+                for (const [, styles] of Object.entries(itemsByMarketplaceAndStyle)) {
+                    for (const [style, count] of Object.entries(styles)) {
+                        styleTotals[style] = (styleTotals[style] || 0) + count;
+                    }
+                }
+                const topStyles = Object.entries(styleTotals).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([s]) => s);
+                const dataset = Object.entries(itemsByMarketplaceAndStyle)
+                    .map(([mp, styles]) => {
+                        const row = { marketplace: mp };
+                        let other = 0;
+                        for (const [style, count] of Object.entries(styles)) {
+                            if (topStyles.includes(style)) row[style] = count;
+                            else other += count;
+                        }
+                        if (other > 0) row.Other = other;
+                        return row;
+                    })
+                    .sort((a, b) => {
+                        const sum = (r) => topStyles.reduce((s, k) => s + (r[k] || 0), 0) + (r.Other || 0);
+                        return sum(b) - sum(a);
+                    });
+                const hasOther = dataset.some(r => r.Other > 0);
+                const seriesKeys = [...topStyles, ...(hasOther ? ["Other"] : [])];
+                const mpChartH = Math.max(200, dataset.length * 36 + 60);
+                return (
+                    <Paper variant="outlined" sx={{ mb: 3 }}>
+                        <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Items by Channel</Typography>
+                        </Box>
+                        {dataset.length > 0 ? (
+                            <Box sx={{ px: 1 }}>
+                                <BarChart
+                                    layout="horizontal"
+                                    dataset={dataset}
+                                    yAxis={[{ dataKey: "marketplace", scaleType: "band", tickLabelStyle: { fontSize: 11 } }]}
+                                    series={seriesKeys.map((k, i) => ({
+                                        dataKey: k,
+                                        label: k,
+                                        stack: "total",
+                                        color: STYLE_COLORS[i % STYLE_COLORS.length],
+                                        valueFormatter: (v) => v ? fmtN(v) : "",
+                                    }))}
+                                    height={mpChartH}
+                                    margin={{ left: 130, right: 16, top: 8, bottom: 30 }}
+                                    xAxis={[{ valueFormatter: (v) => fmtN(v) }]}
+                                />
+                            </Box>
+                        ) : <NoData />}
+                    </Paper>
+                );
+            })()}
+
             <Paper variant="outlined">
                 <Box sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
-                    <Tabs value={detailView} onChange={(_, v) => v && setDetailView(v)} sx={{ minHeight: 40 }} TabIndicatorProps={{ sx: { height: 2 } }}>
+                    <Tabs value={detailView} onChange={(_, v) => v && onDetailViewChange(v)} sx={{ minHeight: 40 }} TabIndicatorProps={{ sx: { height: 2 } }}>
                         <Tab label="Order Detail" value="orders" sx={{ minHeight: 40, py: 0.5, textTransform: "none", fontSize: "0.8125rem", fontWeight: 600 }} />
                         <Tab label="Items Detail" value="items"  sx={{ minHeight: 40, py: 0.5, textTransform: "none", fontSize: "0.8125rem", fontWeight: 600 }} />
                     </Tabs>
@@ -1172,6 +1226,7 @@ export default function Admin() {
     const [productionSummary, setProductionSummary] = useState(null);
 
     // Cost items state (CostsTab → Items Detail)
+    const [costDetailView,     setCostDetailView]     = useState("orders");
     const [costItemsRows,      setCostItemsRows]      = useState([]);
     const [costItemsTotal,     setCostItemsTotal]     = useState(0);
     const [costItemsPage,      setCostItemsPage]      = useState(1);
@@ -1387,7 +1442,9 @@ export default function Admin() {
         ["All", ...byMarketplace.map((mp) => mp.marketplace).filter(Boolean).sort()],
     [byMarketplace]);
 
-    const cogsByMarketplace = data?.cogsByMarketplace ?? {};
+    const cogsByMarketplace          = data?.cogsByMarketplace          ?? {};
+    const itemCountByMarketplace     = data?.itemCountByMarketplace     ?? {};
+    const itemsByMarketplaceAndStyle = data?.itemsByMarketplaceAndStyle ?? {};
 
     const ordersData    = { orders: ordersRows,   total: ordersTotal,    page: ordersPage,    pageSize: ordersSize,    loading: ordersLoading    };
     const itemsData     = { items: itemsRows,     total: itemsTotal,     page: itemsPage,     pageSize: itemsSize,     loading: itemsLoading     };
@@ -1412,12 +1469,13 @@ export default function Admin() {
                 rows.map(r => [r.styleCode||"", r.colorName||"", r.sizeName||"", r.last30, r.last90, r.avgMonthly, r.proj12mo, r.onHand??"", r.pending??"", r.reorderAt??"", r.suggested??"", (r.unitCost??0).toFixed(2), (r.orderValue??0).toFixed(2)])
             );
         } else {
-            const endpoint = tab === 2
-                ? `/api/admin/dashboard/items?csv=1&from=${from}&to=${to}${mpParam}`
-                : `/api/admin/dashboard/orders?csv=1&from=${from}&to=${to}${mpParam}`;
+            let endpoint;
+            if (tab === 2) endpoint = `/api/admin/dashboard/items?csv=1&from=${from}&to=${to}${mpParam}`;
+            else if (tab === 3 && costDetailView === "items") endpoint = `/api/admin/cost-items?csv=1&from=${from}&to=${to}`;
+            else endpoint = `/api/admin/dashboard/orders?csv=1&from=${from}&to=${to}${mpParam}`;
             Object.assign(document.createElement("a"), { href: endpoint, download: `${name}.csv` }).click();
         }
-    }, [tab, blanksRows, blankForecastData, marketplace, from, to]);
+    }, [tab, costDetailView, blanksRows, blankForecastData, marketplace, from, to]);
 
     const isInitialLoad = loading && !data;
 
@@ -1512,6 +1570,9 @@ export default function Admin() {
                                 onPageChange={setOrdersPage} onPageSizeChange={handleOrdersPageSizeChange} onSortChange={handleOrdersSort}
                                 costItemsData={costItemsData} costItemsSortField={costItemsSortField} costItemsSortDir={costItemsSortDir}
                                 onCostItemsPageChange={setCostItemsPage} onCostItemsPageSizeChange={handleCostItemsPageSizeChange} onCostItemsSortChange={handleCostItemsSort}
+                                detailView={costDetailView} onDetailViewChange={setCostDetailView}
+                                itemCountByMarketplace={itemCountByMarketplace}
+                                itemsByMarketplaceAndStyle={itemsByMarketplaceAndStyle}
                                 inventoryValue={inventoryValue}
                             />
                         )}
