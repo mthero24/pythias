@@ -4,15 +4,50 @@ import { generateAuthorizationUrl } from "../functions/tiktokpy.js";
 
 const ALLOWED_SETTINGS_FIELDS = new Set(["pullOrdersEnabled"]);
 
+const PROVIDER_DISPLAY_NAMES = {
+    premierPrinting: "Premier Printing",
+    printthreads: "Print Threads",
+    "pythias-test": "pythias test",
+};
+
 export async function handleAdminIntegrationsGET(req) {
     try {
         const { searchParams } = new URL(req.url);
         const provider = searchParams.get("provider");
         const filter = provider ? { provider } : {};
-        const [integration, tiktokAuth] = await Promise.all([
-            ApiKeyIntegrations.find(filter),
+
+        const [baseIntegrations, tiktokAuth] = await Promise.all([
+            ApiKeyIntegrations.find(filter).lean(),
             TikTokAuth.find(filter),
         ]);
+
+        if (!provider) {
+            const integration = baseIntegrations.map(a =>
+                (!a.type && a.displayName?.startsWith("shopify-")) ? { ...a, type: "shopify" } : a
+            );
+            return NextResponse.json({ error: false, integration, tiktokAuth });
+        }
+
+        // Split provider-filtered results into non-shopify and shopify
+        const nonShopify = baseIntegrations.filter(
+            a => a.type !== "shopify" && !a.displayName?.startsWith("shopify-")
+        );
+
+        // Fetch ALL shopify entries — legacy entries may have provider "pythias-test" or null
+        const allApiShopify = await ApiKeyIntegrations.find({ displayName: /^shopify-/ }).lean();
+
+        const providerDisplayName = PROVIDER_DISPLAY_NAMES[provider];
+        const shopifyIntegrations = allApiShopify
+            .filter(s =>
+                s.provider === provider ||
+                (providerDisplayName && s.provider === providerDisplayName) ||
+                !s.provider ||
+                s.provider === "pythias-test" ||
+                s.provider === "pythias test"
+            )
+            .map(s => ({ ...s, type: "shopify" }));
+
+        const integration = [...nonShopify, ...shopifyIntegrations];
         return NextResponse.json({ error: false, integration, tiktokAuth });
     } catch (err) {
         console.error("Error fetching integration:", err);

@@ -10,19 +10,19 @@ export default async function ShopifyPage({ searchParams }) {
 
     let connection = connectionId
         ? await ApiKeyIntegrations.findById(connectionId).lean()
-        : await ApiKeyIntegrations.findOne({ provider: "premierPrinting", displayName: /^shopify-/ }).lean();
+        : await ApiKeyIntegrations.findOne({ provider: "pythias-test", displayName: /^shopify-/ }).lean();
 
     if (!connection) {
         const shopifyUser = connectionId
             ? await ShopifyUserData.findById(connectionId).lean()
-            : await ShopifyUserData.findOne({ provider: "Premier Printing" }).lean();
+            : await ShopifyUserData.findOne({ provider: "pythias test" }).lean();
         if (shopifyUser) {
             connection = {
                 _id: shopifyUser._id,
                 displayName: `shopify-${shopifyUser.shop}`,
                 apiKey: shopifyUser.pythiasToken,
                 type: "shopify",
-                provider: "premierPrinting",
+                provider: "pythias-test",
             };
         }
     }

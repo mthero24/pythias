@@ -1,5 +1,5 @@
 import {Main} from "@pythias/integrations";
-import {TikTokAuth, ApiKeyIntegrations, ShopifyUserData} from "@pythias/mongo";
+import {TikTokAuth, ApiKeyIntegrations} from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import crypto from "crypto";
 export const dynamic = 'force-dynamic';
@@ -17,32 +17,26 @@ function buildEtsyRedirectURI() {
 
 export default async function Integrations(){
     let tiktokShops = await TikTokAuth.find({ provider: "premierPrinting" }).catch(e => { console.log(e) }) || []
-    let apiKeyIntegrations = await ApiKeyIntegrations.find({
-        $or: [
-            { provider: "premierPrinting" },
-            { provider: null },
-            { displayName: /^shopify-/ },
-        ]
-    })
-    const shopifyConnections = await ShopifyUserData.find({ provider: "Premier Printing" }).catch(() => [])
-    tiktokShops = serialize(tiktokShops)
+    const [providerIntegrations, allShopify] = await Promise.all([
+        ApiKeyIntegrations.find({ provider: "premierPrinting" }).lean(),
+        ApiKeyIntegrations.find({ displayName: /^shopify-/ }).lean(),
+    ]);
+    tiktokShops = serialize(tiktokShops);
 
-    // Normalize: ensure ApiKeyIntegrations shopify entries have type set
-    const serializedApiKeys = serialize(apiKeyIntegrations).map(a => {
-        if (!a.type && a.displayName?.startsWith("shopify-")) return { ...a, type: "shopify" };
-        return a;
-    });
+    const nonShopify = serialize(providerIntegrations).filter(
+        a => a.type !== "shopify" && !a.displayName?.startsWith("shopify-")
+    );
+    const shopifyIntegrations = serialize(allShopify)
+        .filter(a =>
+            a.provider === "premierPrinting" ||
+            a.provider === "Premier Printing" ||
+            !a.provider ||
+            a.provider === "pythias-test" ||
+            a.provider === "pythias test"
+        )
+        .map(a => ({ ...a, type: "shopify" }));
 
-    // Add any ShopifyUserData entries not already covered by ApiKeyIntegrations
-    const coveredShops = new Set(serializedApiKeys.filter(a => a.type === "shopify").map(a => a.displayName));
-    const extraShopify = serialize(shopifyConnections)
-        .filter(s => !coveredShops.has(`shopify-${s.shop}`))
-        .map(s => ({
-            _id: s._id, displayName: `shopify-${s.shop}`, type: "shopify",
-            apiKey: s.pythiasToken, pullOrdersEnabled: s.autoImportOrders,
-        }));
-
-    apiKeyIntegrations = [...serializedApiKeys, ...extraShopify];
+    const apiKeyIntegrations = [...nonShopify, ...shopifyIntegrations];
 
     const etsyRedirectURI = buildEtsyRedirectURI()
     return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI} shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"}/>

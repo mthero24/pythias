@@ -2471,7 +2471,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             logoSrc="/Shopify_logo_2018.png" alt="Shopify"
                             name="Shopify"
                             description={PLATFORMS.shopify.description}
-                            href="https://apps.shopify.com/pythias-app"
+                            connected={connectedTypes.has("shopify")}
+                            href={connectedTypes.has("shopify") ? undefined : "https://apps.shopify.com/pythias-app"}
                         />
                     </Grid2>
                     <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>

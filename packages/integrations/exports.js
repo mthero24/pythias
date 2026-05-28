@@ -101,7 +101,7 @@ export {
     handleAdminIntegrationsSettingsPATCH,
 } from "./handlers/admin";
 export {
-    handleShopifyPOST, handleShopifySendPOST, handleShopifyOrdersPOST,
+    createShopifyPOSTHandler, handleShopifyPOST, handleShopifySendPOST, handleShopifyOrdersPOST,
     handleShopifyDeletePOST, handleShopifyProductsDeletePOST,
     handleShopifyRemoveConnectionPOST, handleShopifyUninstallPOST,
     handleShopifyBrandsGET, handleShopifyProductsGET,

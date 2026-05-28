@@ -191,7 +191,7 @@ const theme = createTheme({
 
 export function AppThemeProvider({ children }) {
     return (
-        <SessionProvider>
+        <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 {children}

@@ -55,7 +55,7 @@ export function Main({ type, name = "Premier Printing", initials = "PP", tagline
                 });
                 if (response?.ok) {
                     if (onSuccess) onSuccess();
-                    else location.replace("/admin");
+                    else location.replace("/account");
                 } else {
                     setError(response?.error ?? "Invalid username or password.");
                 }

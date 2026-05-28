@@ -610,7 +610,7 @@ export async function pullOrders(){
                     state: o.shipTo.state? o.shipTo.state: "not provided",
                     country: o.shipTo.country? o.shipTo.country: "not provided"
                 },
-                shippingType: marketplace == "faire" || marketplace == "TSC" || marketplace == "Zulily"? "Expedited": "Standard",
+                shippingType: ["faire", "TSC", "Zulily", "fashiongo", "fashion go", "FashionGo"].includes(marketplace) ? "Expedited" : "Standard",
                 marketplace: o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name,
                 total: o.orderTotal,
                 shippingCost: o.shippingAmount ?? 0,

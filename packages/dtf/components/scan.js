@@ -69,14 +69,18 @@ function FindScan({ setSubmitted, auto, setAuto, onAction }) {
     );
 }
 
-// ── Send mode: rapid fire queue ────────────────────────────────────────────
+// ── Send mode: batched queue (max 5 in-flight at once) ─────────────────────
+const BATCH     = 5;
 const MAX_QUEUE = 30;
 
 function SendScan({ setSubmitted, auto, setAuto, printer, onAction }) {
-    const textFieldRef = useRef(null);
-    const [scan, setScan]   = useState("");
-    const [queue, setQueue] = useState([]); // [{ id, pieceId, status, msg }]
-    const nextId = useRef(0);
+    const textFieldRef    = useRef(null);
+    const [scan, setScan] = useState("");
+    const [queue, setQueue] = useState([]);
+    const nextId       = useRef(0);
+    const inFlightRef  = useRef(0);       // how many requests are currently active
+    const waitingRef   = useRef([]);      // [{ id, pieceId }] — scanned but not yet sent
+    const processRef   = useRef(null);    // always points to latest processQueue
 
     useEffect(() => {
         if (auto) { textFieldRef.current?.focus(); setAuto(false); }
@@ -86,6 +90,45 @@ function SendScan({ setSubmitted, auto, setAuto, printer, onAction }) {
         setQueue(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item));
     }, []);
 
+    // Re-assigned every render so closures inside always see current printer/callbacks
+    processRef.current = () => {
+        while (inFlightRef.current < BATCH && waitingRef.current.length > 0) {
+            const { id, pieceId, attempts } = waitingRef.current.shift();
+            inFlightRef.current++;
+            updateItem(id, { status: "pending", msg: attempts > 0 ? `Attempt ${attempts + 1}/3` : undefined });
+
+            (async () => {
+                let errMsg = null;
+                try {
+                    const res = await axios.post("/api/production/dtf", { pieceId, printer });
+                    if (res.data.error) {
+                        errMsg = res.data.msg || "Printer error";
+                    } else {
+                        updateItem(id, { status: "success", msg: res.data.msg || "Sent to printer" });
+                        setSubmitted(res.data);
+                        onAction?.();
+                    }
+                } catch {
+                    errMsg = "Request failed";
+                }
+
+                inFlightRef.current--;
+
+                if (errMsg !== null) {
+                    if (attempts + 1 < 3) {
+                        // put back at end of queue for another try
+                        updateItem(id, { status: "queued", msg: `Failed — retry ${attempts + 1}/3` });
+                        waitingRef.current.push({ id, pieceId, attempts: attempts + 1 });
+                    } else {
+                        updateItem(id, { status: "error", msg: errMsg });
+                    }
+                }
+
+                processRef.current();
+            })();
+        }
+    };
+
     const submit = () => {
         const pieceId = scan.trim().toUpperCase();
         if (!pieceId) return;
@@ -93,38 +136,13 @@ function SendScan({ setSubmitted, auto, setAuto, printer, onAction }) {
         textFieldRef.current?.focus();
 
         const id = ++nextId.current;
-        // Add to top of queue immediately — don't wait for response
-        setQueue(prev => [{ id, pieceId, status: "pending" }, ...prev].slice(0, MAX_QUEUE));
-
-        // Fire request in background — retry up to 2 times on failure
-        const attemptSend = async (attemptsLeft) => {
-            try {
-                const res = await axios.post("/api/production/dtf", { pieceId, printer });
-                if (res.data.error) {
-                    if (attemptsLeft > 0) {
-                        updateItem(id, { msg: `Retrying…` });
-                        await new Promise(r => setTimeout(r, 1000));
-                        return attemptSend(attemptsLeft - 1);
-                    }
-                    updateItem(id, { status: "error", msg: res.data.msg });
-                } else {
-                    updateItem(id, { status: "success", msg: res.data.msg || "Sent to printer" });
-                    setSubmitted(res.data);
-                    onAction?.();
-                }
-            } catch {
-                if (attemptsLeft > 0) {
-                    updateItem(id, { msg: `Retrying…` });
-                    await new Promise(r => setTimeout(r, 1000));
-                    return attemptSend(attemptsLeft - 1);
-                }
-                updateItem(id, { status: "error", msg: "Request failed" });
-            }
-        };
-        attemptSend(2);
+        setQueue(prev => [{ id, pieceId, status: "queued" }, ...prev].slice(0, MAX_QUEUE));
+        waitingRef.current.push({ id, pieceId, attempts: 0 });
+        processRef.current();
     };
 
     const pending = queue.filter(i => i.status === "pending").length;
+    const queued  = queue.filter(i => i.status === "queued").length;
     const errors  = queue.filter(i => i.status === "error").length;
 
     return (
@@ -141,11 +159,13 @@ function SendScan({ setSubmitted, auto, setAuto, printer, onAction }) {
                                 <QrCodeScannerIcon sx={{ color: "text.disabled" }} />
                             </InputAdornment>
                         ),
-                        endAdornment: pending > 0 && (
+                        endAdornment: (pending > 0 || queued > 0) && (
                             <InputAdornment position="end">
                                 <Stack direction="row" alignItems="center" spacing={0.75}>
                                     <CircularProgress size={14} />
-                                    <Typography variant="caption" color="text.secondary">{pending} sending…</Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {pending} sending{queued > 0 ? `, ${queued} queued` : "…"}
+                                    </Typography>
                                 </Stack>
                             </InputAdornment>
                         ),
@@ -166,7 +186,9 @@ function SendScan({ setSubmitted, auto, setAuto, printer, onAction }) {
                                 )}
                             </Stack>
                             <Tooltip title="Clear list">
-                                <IconButton size="small" onClick={() => setQueue([])}><DeleteSweepIcon fontSize="small" /></IconButton>
+                                <IconButton size="small" onClick={() => { setQueue([]); waitingRef.current = []; }}>
+                                    <DeleteSweepIcon fontSize="small" />
+                                </IconButton>
                             </Tooltip>
                         </Stack>
 
@@ -185,17 +207,17 @@ function SendScan({ setSubmitted, auto, setAuto, printer, onAction }) {
                                             ? <CircularProgress size={14} />
                                             : item.status === "success"
                                                 ? <CheckCircleIcon sx={{ fontSize: 16, color: "#16a34a" }} />
-                                                : <ErrorIcon sx={{ fontSize: 16, color: "#dc2626" }} />
+                                                : item.status === "queued"
+                                                    ? <CircularProgress size={14} sx={{ color: "#94a3b8" }} />
+                                                    : <ErrorIcon sx={{ fontSize: 16, color: "#dc2626" }} />
                                         }
                                     </Box>
                                     <Typography variant="caption" fontFamily="monospace" fontWeight={700} sx={{ flexShrink: 0 }}>
                                         {item.pieceId}
                                     </Typography>
-                                    {item.msg && (
-                                        <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>
-                                            {item.msg}
-                                        </Typography>
-                                    )}
+                                    <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>
+                                        {item.status === "queued" ? "waiting…" : item.msg}
+                                    </Typography>
                                 </Stack>
                             ))}
                         </Box>

@@ -656,7 +656,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                         </Box>
 
                                         <Box sx={{ flex: 1, overflowY: "auto", px: 1, py: 0.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
-                                            {product && mp.connections?.map((c) => {
+                                            {product && isSelected && mp.connections?.map((c) => {
                                                 const connKey = c?.seller_name ? mp.name : (c?.displayName ?? c?.seller_name);
                                                 const hasSent = !!product.ids?.[connKey];
                                                 return (
@@ -669,6 +669,11 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                     </Button>
                                                 );
                                             })}
+                                            {product && !isSelected && (
+                                                <Typography variant="caption" color="text.disabled" sx={{ px: 0.5, py: 0.5, fontSize: "0.65rem" }}>
+                                                    Select to enable sending
+                                                </Typography>
+                                            )}
                                         </Box>
 
                                         <Divider />

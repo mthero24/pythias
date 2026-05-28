@@ -98,22 +98,29 @@ const createItem = async ({ variant, design, order, inventoryType, name }) => {
 // Route handlers
 // ---------------------------------------------------------------------------
 
-export async function handleShopifyPOST(req) {
-    let data = await req.json();
-    let userName = atob(data.Basic).split(":")[0];
-    let password = atob(data.Basic).split(":")[1];
-    let user = await User.findOne({ $or: [{ email: userName }, { userName: userName }] });
-    if (user) {
-        if (await user.comparePassword(password)) {
-            let apiKey = new ApiKeyIntegrations({ displayName: `shopify-${data.shop}`, apiKey: data.pythiasToken, provider: "pythias-test" });
-            await apiKey.save();
-            return NextResponse.json({ error: false, token: user.password });
-        } else {
-            return NextResponse.json({ error: true, msg: "User Name or Password are incorrect!" });
+export function createShopifyPOSTHandler(provider) {
+    return async function handleShopifyPOST(req) {
+        let data = await req.json();
+        let userName = atob(data.Basic).split(":")[0];
+        let password = atob(data.Basic).split(":")[1];
+        let user = await User.findOne({ $or: [{ email: userName }, { userName: userName }] });
+        if (user) {
+            if (await user.comparePassword(password)) {
+                await ApiKeyIntegrations.findOneAndUpdate(
+                    { displayName: `shopify-${data.shop}` },
+                    { $set: { apiKey: data.pythiasToken, provider, type: "shopify" } },
+                    { upsert: true }
+                );
+                return NextResponse.json({ error: false, token: user.password });
+            } else {
+                return NextResponse.json({ error: true, msg: "User Name or Password are incorrect!" });
+            }
         }
-    }
-    return NextResponse.json({ error: true, msg: "User Name or Password are incorrect!" });
+        return NextResponse.json({ error: true, msg: "User Name or Password are incorrect!" });
+    };
 }
+
+export const handleShopifyPOST = createShopifyPOSTHandler("pythias-test");
 
 export async function handleShopifySendPOST(req) {
     const body = await req.json();

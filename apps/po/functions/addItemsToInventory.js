@@ -95,11 +95,18 @@ export async function addItemsToInventory() {
     if (hasInventory.length) {
         const invIds = [...new Set(hasInventory.map(i => i.inventory.inventory.toString()))];
         const invDocs = await Inventory.find({ _id: { $in: invIds } }, "quantity allocated orders").lean();
-        const invMap = new Map(invDocs.map(inv => [inv._id.toString(), {
-            available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
-            hasActiveOrder: (inv.orders || []).length > 0,
-            slotsUsed: 0, attachedAdded: 0,
-        }]));
+        const invMap = new Map(invDocs.map(inv => {
+            const orderedItemIds = new Set((inv.orders || []).flatMap(o => (o.items || []).map(String)));
+            const poSlotsRemaining = (inv.orders || []).reduce(
+                (sum, o) => sum + Math.max(0, (o.quantity ?? 0) - (o.items || []).length), 0
+            );
+            return [inv._id.toString(), {
+                available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
+                orderedItemIds,
+                poSlotsRemaining,
+                slotsUsed: 0, attachedAdded: 0,
+            }];
+        }));
 
         const itemOps = [];
         for (const item of hasInventory) {
@@ -107,7 +114,8 @@ export async function addItemsToInventory() {
             if (!data) continue;
             let status;
             if (data.slotsUsed < data.available) { status = "inStock"; data.slotsUsed++; }
-            else if (data.hasActiveOrder) { status = "ordered"; }
+            else if (data.orderedItemIds.has(item._id.toString())) { status = "ordered"; }
+            else if (data.poSlotsRemaining > 0) { status = "ordered"; data.poSlotsRemaining--; }
             else { status = "attached"; data.attachedAdded++; }
             itemOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: status } } } });
         }
@@ -168,12 +176,15 @@ export async function addItemsToInventory() {
         const itemOps = [], invOps = [];
         for (const { inv, items: invItems } of Object.values(byInv)) {
             const available = Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0));
-            const hasActiveOrder = (inv.orders || []).length > 0;
+            // New items being assigned won't be in any existing PO's items[], so use unfilled slot count
+            let poSlotsRemaining = (inv.orders || []).reduce(
+                (sum, o) => sum + Math.max(0, (o.quantity ?? 0) - (o.items || []).length), 0
+            );
             let slotsUsed = 0, attachedAdded = 0;
             for (const item of invItems) {
                 let status;
                 if (slotsUsed < available) { status = "inStock"; slotsUsed++; }
-                else if (hasActiveOrder) { status = "ordered"; }
+                else if (poSlotsRemaining > 0) { status = "ordered"; poSlotsRemaining--; }
                 else { status = "attached"; attachedAdded++; }
                 itemOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: {
                     "inventory.inventoryType": "inventory",

@@ -1,2 +1,2 @@
-import { handleShopifyPOST } from "@pythias/integrations";
-export const POST = handleShopifyPOST;
+import { createShopifyPOSTHandler } from "@pythias/integrations";
+export const POST = createShopifyPOSTHandler("premierPrinting");

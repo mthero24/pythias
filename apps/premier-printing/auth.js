@@ -8,7 +8,8 @@ const cookieDomain  = process.env.NEXTAUTH_COOKIE_DOMAIN || undefined;
 export const authOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge:    30 * 24 * 60 * 60, // 30 days
+    updateAge: 30 * 24 * 60 * 60, // only reissue token at expiry, not every 24h
   },
   // Secure, domain-scoped cookies in production; plain cookies in dev
   cookies: {

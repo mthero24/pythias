@@ -13,7 +13,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            marketplace: {$nin: ["Faire", "faire", "fashiongo", "fashion go", "FashionGo"]},
+            shippingType: { $ne: "Expedited" },
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
         Items.find({
             blank: { $ne: undefined },
@@ -24,7 +24,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            marketplace: {$in: ["Faire", "faire", "fashiongo", "fashion go", "FashionGo"]},
+            shippingType: "Expedited",
         }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
         Items.find({
             blank: { $ne: undefined },
@@ -52,48 +52,92 @@ export async function LabelsData(){
         labels[k] = await Sort(labels[k])
     }
 
-    // Assign stockStatus to PP items that have inventory but no status yet
-    const hasInvNoStatus = [];
+    // Assign/validate stockStatus for items with inventory or a stale "ordered" tag.
+    // Always re-validate "ordered" items so incorrectly-set tags get cleared immediately.
+    const needsStatusCheck = [];
     for (const k of Object.keys(labels)) {
         for (const l of labels[k]) {
-            if (l.inventory?.inventory != null && !l.stockStatus) hasInvNoStatus.push(l);
+            if (l.stockStatus === "ordered" || (l.inventory?.inventory != null && !l.stockStatus)) {
+                needsStatusCheck.push(l);
+            }
         }
     }
 
-    if (hasInvNoStatus.length > 0) {
-        const invIds = [...new Set(hasInvNoStatus.map(l => (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString()).filter(Boolean))];
-        const invDocs = await Inventory.find({ _id: { $in: invIds } }, "quantity allocated orders").lean();
-        const invMap = new Map(invDocs.map(inv => [inv._id.toString(), {
-            available: Math.max(0, (inv.quantity ?? 0) - (inv.allocated ?? 0)),
-            hasActiveOrder: (inv.orders || []).length > 0,
-            slotsUsed: 0, attachedAdded: 0,
-        }]));
+    if (needsStatusCheck.length > 0) {
+        const invIds = [...new Set(
+            needsStatusCheck
+                .map(l => (l.inventory?.inventory?._id ?? l.inventory?.inventory)?.toString())
+                .filter(Boolean)
+        )];
+        // Use inStock array length — self-maintaining; allocated was never decremented so drifted wrong
+        const invDocs = invIds.length
+            ? await Inventory.find({ _id: { $in: invIds } }, "quantity inStock orders blank color sizeId").lean()
+            : [];
+        const invMap = new Map(invDocs.map(inv => {
+            // Items explicitly listed in a PO are definitively "on order"
+            const orderedItemIds = new Set((inv.orders || []).flatMap(o => (o.items || []).map(String)));
+            // POs may have unfilled slots (quantity > items.length) — new items can claim them
+            const poSlotsRemaining = (inv.orders || []).reduce(
+                (sum, o) => sum + Math.max(0, (o.quantity ?? 0) - (o.items || []).length), 0
+            );
+            return [inv._id.toString(), {
+                available: Math.max(0, (inv.quantity ?? 0) - (inv.inStock?.length ?? 0)),
+                orderedItemIds,
+                poSlotsRemaining,
+                blank: inv.blank?.toString(),
+                color: inv.color?.toString(),
+                sizeId: inv.sizeId,
+                slotsUsed: 0,
+            }];
+        }));
 
         const statusOps = [];
-        for (const l of hasInvNoStatus) {
-            const invId = (l.inventory.inventory?._id ?? l.inventory.inventory)?.toString();
-            const data = invMap.get(invId);
-            if (!data) continue;
+        const invPushOps = [];
+        for (const l of needsStatusCheck) {
+            const invId = (l.inventory?.inventory?._id ?? l.inventory?.inventory)?.toString();
+            const data = invId ? invMap.get(invId) : null;
+
             let status;
-            if (data.slotsUsed < data.available) { status = "inStock"; data.slotsUsed++; }
-            else if (data.hasActiveOrder) { status = "ordered"; }
-            else { status = "attached"; data.attachedAdded++; }
+            if (!data) {
+                // No valid inventory — clear any stale "ordered" tag
+                status = null;
+            } else {
+                // Validate blank/color/size match to prevent cross-SKU false positives
+                const itemBlank = (l.blank?._id ?? l.blank)?.toString();
+                const itemColor = (l.color?._id ?? l.color)?.toString();
+                const itemSize  = (l.size?._id  ?? l.size)?.toString();
+                const inventoryMatches =
+                    (!data.blank  || !itemBlank || data.blank  === itemBlank) &&
+                    (!data.color  || !itemColor || data.color  === itemColor) &&
+                    (!data.sizeId || !itemSize  || data.sizeId === itemSize);
+
+                if (!inventoryMatches) {
+                    // Linked inventory is wrong SKU — clear so it shows as "No Inventory"
+                    status = null;
+                } else if (data.slotsUsed < data.available) {
+                    status = "inStock"; data.slotsUsed++;
+                } else if (data.orderedItemIds.has(l._id.toString())) {
+                    // Item is explicitly reserved in a PO
+                    status = "ordered";
+                } else if (data.poSlotsRemaining > 0) {
+                    // PO has unfilled slots — this item qualifies for one
+                    status = "ordered"; data.poSlotsRemaining--;
+                } else {
+                    status = "attached";
+                }
+            }
+
+            if (l.stockStatus === status) continue; // nothing changed
             l.stockStatus = status;
             statusOps.push({ updateOne: { filter: { _id: l._id }, update: { $set: { stockStatus: status } } } });
+            if (status === "inStock") {
+                invPushOps.push({ updateOne: { filter: { _id: invId }, update: { $addToSet: { inStock: l._id } } } });
+            }
         }
-
-        const invOps = [...invMap.entries()]
-            .filter(([, d]) => d.slotsUsed > 0 || d.attachedAdded > 0)
-            .map(([id, d]) => {
-                const inc = {};
-                if (d.slotsUsed) inc.allocated = d.slotsUsed;
-                if (d.attachedAdded) inc.attachedCount = d.attachedAdded;
-                return { updateOne: { filter: { _id: id }, update: { $inc: inc } } };
-            });
 
         await Promise.all([
             statusOps.length ? Items.bulkWrite(statusOps, { ordered: false }) : Promise.resolve(),
-            invOps.length ? Inventory.bulkWrite(invOps, { ordered: false }) : Promise.resolve(),
+            invPushOps.length ? Inventory.bulkWrite(invPushOps, { ordered: false }) : Promise.resolve(),
         ]);
     }
     let giftMessages = await Items.find({
