@@ -532,8 +532,9 @@ function fmtRate(marketplace) {
     return rate != null ? `~${(rate * 100).toFixed(1)}%` : "—";
 }
 
-function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, inventoryValue }) {
+function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, costItemsData, costItemsSortField, costItemsSortDir, onCostItemsPageChange, onCostItemsPageSizeChange, onCostItemsSortChange, inventoryValue }) {
     const { orders, total, page, pageSize, loading } = ordersData;
+    const [detailView, setDetailView] = useState("orders");
 
     const totalFees = useMemo(() =>
         byMarketplace.reduce((s, mp) => s + mp.revenue * (MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0), 0),
@@ -564,6 +565,20 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         { key: "net",      label: "Net",          align: "right", render: (r) => (
             <Typography variant="body2" sx={{ fontWeight: 600, color: r.net >= 0 ? "success.main" : "error.main" }}>{fmt(r.net)}</Typography>
         )},
+    ];
+
+    const itemColumns = [
+        { key: "date",         serverKey: "date",      label: "Date",        render: (i) => fmtDate(i.date) },
+        { key: "marketplace",  label: "Channel" },
+        { key: "styleCode",    serverKey: "styleCode", label: "Blank Code" },
+        { key: "sizeName",     serverKey: "sizeName",  label: "Size" },
+        { key: "colorName",    serverKey: "colorName", label: "Color" },
+        { key: "price",        serverKey: "price",     label: "Price Sold",  align: "right", render: (i) => fmt(i.price) },
+        { key: "wholesaleCost", label: "Blank COGS",   align: "right",       render: (i) => fmt(i.wholesaleCost) },
+        { key: "net",          label: "Net",           align: "right",       render: (i) => {
+            const n = (i.price || 0) - (i.wholesaleCost || 0);
+            return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
+        }},
     ];
 
     const orderColumns = [
@@ -634,14 +649,26 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
             </Paper>
 
             <Paper variant="outlined">
-                <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Order Detail</Typography>
+                <Box sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+                    <Tabs value={detailView} onChange={(_, v) => v && setDetailView(v)} sx={{ minHeight: 40 }} TabIndicatorProps={{ sx: { height: 2 } }}>
+                        <Tab label="Order Detail" value="orders" sx={{ minHeight: 40, py: 0.5, textTransform: "none", fontSize: "0.8125rem", fontWeight: 600 }} />
+                        <Tab label="Items Detail" value="items"  sx={{ minHeight: 40, py: 0.5, textTransform: "none", fontSize: "0.8125rem", fontWeight: 600 }} />
+                    </Tabs>
                 </Box>
-                <PaginatedTable
-                    columns={orderColumns} rows={orders} total={total} page={page} pageSize={pageSize}
-                    loading={loading} sortField={sortField} sortDir={sortDir}
-                    onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} onSortChange={onSortChange}
-                />
+                {detailView === "orders" ? (
+                    <PaginatedTable
+                        columns={orderColumns} rows={orders} total={total} page={page} pageSize={pageSize}
+                        loading={loading} sortField={sortField} sortDir={sortDir}
+                        onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} onSortChange={onSortChange}
+                    />
+                ) : (
+                    <PaginatedTable
+                        columns={itemColumns} rows={costItemsData?.items ?? []} total={costItemsData?.total ?? 0}
+                        page={costItemsData?.page ?? 1} pageSize={costItemsData?.pageSize ?? 50}
+                        loading={costItemsData?.loading ?? false} sortField={costItemsSortField} sortDir={costItemsSortDir}
+                        onPageChange={onCostItemsPageChange} onPageSizeChange={onCostItemsPageSizeChange} onSortChange={onCostItemsSortChange}
+                    />
+                )}
             </Paper>
         </>
     );
@@ -1142,6 +1169,15 @@ export default function Admin() {
     const [itemsLoading,      setItemsLoading]      = useState(false);
     const [productionSummary, setProductionSummary] = useState(null);
 
+    // Cost items state (CostsTab → Items Detail)
+    const [costItemsRows,      setCostItemsRows]      = useState([]);
+    const [costItemsTotal,     setCostItemsTotal]     = useState(0);
+    const [costItemsPage,      setCostItemsPage]      = useState(1);
+    const [costItemsSize,      setCostItemsSize]      = useState(50);
+    const [costItemsSortField, setCostItemsSortField] = useState("date");
+    const [costItemsSortDir,   setCostItemsSortDir]   = useState("desc");
+    const [costItemsLoading,   setCostItemsLoading]   = useState(false);
+
     // Blanks state
     const [blanksRows,    setBlanksRows]    = useState([]);
     const [blanksLoading, setBlanksLoading] = useState(false);
@@ -1158,6 +1194,7 @@ export default function Admin() {
     const abortRef             = useRef(null);
     const ordersAbortRef       = useRef(null);
     const itemsAbortRef        = useRef(null);
+    const costItemsAbortRef    = useRef(null);
     const blanksAbortRef       = useRef(null);
     const forecastAbortRef     = useRef(null);
     const blankForecastAbortRef = useRef(null);
@@ -1225,6 +1262,24 @@ export default function Admin() {
         }
     }, []);
 
+    const loadCostItems = useCallback(async (f, t, page, size, sortField, sortDir) => {
+        if (costItemsAbortRef.current) costItemsAbortRef.current.abort();
+        const controller = new AbortController();
+        costItemsAbortRef.current = controller;
+        setCostItemsLoading(true);
+        try {
+            const res  = await fetch(`/api/admin/cost-items?from=${f}&to=${t}&page=${page}&pageSize=${size}&sort=${sortField}&dir=${sortDir}`, { signal: controller.signal });
+            const json = await res.json();
+            if (!res.ok || json.error) throw new Error(json.msg);
+            setCostItemsRows(json.items);
+            setCostItemsTotal(json.total);
+        } catch (e) {
+            if (e.name !== "AbortError") console.error("[cost-items]", e.message);
+        } finally {
+            if (costItemsAbortRef.current === controller) setCostItemsLoading(false);
+        }
+    }, []);
+
     const loadForecast = useCallback(async (mp, h, force = false) => {
         if (forecastAbortRef.current) forecastAbortRef.current.abort();
         const controller = new AbortController();
@@ -1282,9 +1337,10 @@ export default function Admin() {
     }, []);
 
     useEffect(() => { load(from, to); }, [from, to, load]);
-    useEffect(() => { setOrdersPage(1); setItemsPage(1); }, [from, to, marketplace]);
+    useEffect(() => { setOrdersPage(1); setItemsPage(1); setCostItemsPage(1); }, [from, to, marketplace]);
     useEffect(() => { loadOrders(from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir); }, [from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir, loadOrders]);
     useEffect(() => { loadItems(from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir); }, [from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir, loadItems]);
+    useEffect(() => { loadCostItems(from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir); }, [from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir, loadCostItems]);
     useEffect(() => { loadBlanks(from, to, marketplace); }, [from, to, marketplace, loadBlanks]);
     useEffect(() => { loadForecast(marketplace, horizon); }, [marketplace, horizon, loadForecast]);
     useEffect(() => {
@@ -1309,6 +1365,12 @@ export default function Admin() {
     }, [itemsSortField]);
     const handleItemsPageSizeChange = useCallback((size) => { setItemsSize(size); setItemsPage(1); }, []);
 
+    const handleCostItemsSort = useCallback((field) => {
+        setCostItemsSortDir((prev) => (costItemsSortField === field ? (prev === "asc" ? "desc" : "asc") : "desc"));
+        setCostItemsSortField(field); setCostItemsPage(1);
+    }, [costItemsSortField]);
+    const handleCostItemsPageSizeChange = useCallback((size) => { setCostItemsSize(size); setCostItemsPage(1); }, []);
+
     // Derived data
     const summary             = data?.summary             ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
     const byMarketplace       = data?.byMarketplace       ?? [];
@@ -1323,18 +1385,11 @@ export default function Admin() {
         ["All", ...byMarketplace.map((mp) => mp.marketplace).filter(Boolean).sort()],
     [byMarketplace]);
 
-    const cogsByMarketplace = useMemo(() => {
-        const map = {};
-        for (const i of items) {
-            if (i.canceled || !i.order) continue;
-            const mp = orderMarketplaceMap[String(i.order)] || "Unknown";
-            map[mp] = (map[mp] || 0) + (i.wholesaleCost || 0);
-        }
-        return map;
-    }, [items, orderMarketplaceMap]);
+    const cogsByMarketplace = data?.cogsByMarketplace ?? {};
 
-    const ordersData = { orders: ordersRows, total: ordersTotal, page: ordersPage, pageSize: ordersSize, loading: ordersLoading };
-    const itemsData  = { items: itemsRows,   total: itemsTotal,  page: itemsPage,  pageSize: itemsSize,  loading: itemsLoading  };
+    const ordersData    = { orders: ordersRows,   total: ordersTotal,    page: ordersPage,    pageSize: ordersSize,    loading: ordersLoading    };
+    const itemsData     = { items: itemsRows,     total: itemsTotal,     page: itemsPage,     pageSize: itemsSize,     loading: itemsLoading     };
+    const costItemsData = { items: costItemsRows, total: costItemsTotal, page: costItemsPage, pageSize: costItemsSize, loading: costItemsLoading };
 
     const handleDownload = useCallback(() => {
         if (tab === 0 || tab === 5) return;
@@ -1453,6 +1508,8 @@ export default function Admin() {
                                 summary={summary} byMarketplace={byMarketplace} cogsByMarketplace={cogsByMarketplace}
                                 ordersData={ordersData} sortField={ordersSortField} sortDir={ordersSortDir}
                                 onPageChange={setOrdersPage} onPageSizeChange={handleOrdersPageSizeChange} onSortChange={handleOrdersSort}
+                                costItemsData={costItemsData} costItemsSortField={costItemsSortField} costItemsSortDir={costItemsSortDir}
+                                onCostItemsPageChange={setCostItemsPage} onCostItemsPageSizeChange={handleCostItemsPageSizeChange} onCostItemsSortChange={handleCostItemsSort}
                                 inventoryValue={inventoryValue}
                             />
                         )}

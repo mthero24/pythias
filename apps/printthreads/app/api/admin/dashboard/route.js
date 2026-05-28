@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Order, Items, Inventory, addCogs } from "@pythias/mongo";
+import { Order, Items, Inventory, Blank, addCogs } from "@pythias/mongo";
 
 const activeExpr = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
 const shipCostExpr = { $ifNull: ["$selectedShipping.cost", { $ifNull: ["$shippingInfo.shippingCost", 0] }] };
@@ -67,13 +67,34 @@ export async function GET(req) {
         const orderMpDocs  = await Order.find({ _id: { $in: itemOrderIds } }).select("marketplace").lean();
         const orderMarketplaceMap = Object.fromEntries(orderMpDocs.map(o => [String(o._id), o.marketplace || "Unknown"]));
 
+        // Compute cogsByMarketplace from ALL items in range (no 5000 cap)
+        const cogItemsAgg = await Items.aggregate([
+            { $match: { date: dateFilter, canceled: { $ne: true } } },
+            { $group: { _id: { styleCode: "$styleCode", sizeName: "$sizeName", order: "$order" }, count: { $sum: 1 } } },
+            { $project: { _id: 0, styleCode: "$_id.styleCode", sizeName: "$_id.sizeName", order: "$_id.order", count: 1 } },
+        ]);
+        const cogStyleCodes = [...new Set(cogItemsAgg.map(r => r.styleCode).filter(Boolean))];
+        const cogBlanks = cogStyleCodes.length ? await Blank.find({ code: { $in: cogStyleCodes } }).select("code sizes").lean() : [];
+        const cogCostMap = {};
+        for (const b of cogBlanks) { cogCostMap[b.code] = {}; for (const s of b.sizes ?? []) cogCostMap[b.code][s.name] = s.wholesaleCost ?? 0; }
+        const cogOrderIds = [...new Set(cogItemsAgg.map(r => r.order).filter(Boolean).map(String))];
+        const cogOrderDocs = cogOrderIds.length ? await Order.find({ _id: { $in: cogOrderIds } }).select("marketplace").lean() : [];
+        const cogOrderMpMap = Object.fromEntries(cogOrderDocs.map(o => [String(o._id), o.marketplace || "Unknown"]));
+        const cogsByMarketplace = {};
+        for (const row of cogItemsAgg) {
+            if (!row.order) continue;
+            const unitCost = cogCostMap[row.styleCode]?.[row.sizeName] ?? 0;
+            const mp = cogOrderMpMap[String(row.order)] || "Unknown";
+            cogsByMarketplace[mp] = (cogsByMarketplace[mp] || 0) + unitCost * row.count;
+        }
+
         const summary        = summaryAgg[0] ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
         const byMarketplace  = byMarketplaceAgg;
         const inventoryValue = invResult[0]?.totalValue ?? 0;
 
         console.log(`[dashboard] ${since.toISOString()} → ${until.toISOString()} | orders: ${summary.orderCount} | items: ${itemCount} (fetched: ${items.length})`);
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg });
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, cogsByMarketplace });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({

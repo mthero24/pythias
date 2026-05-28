@@ -117,6 +117,27 @@ export async function GET(req) {
             licenceFeeByMarketplace[mp] = (licenceFeeByMarketplace[mp] || 0) + (i.licenceFee || 0);
         }
 
+        // Compute cogsByMarketplace from ALL items in range (no 5000 cap)
+        const cogItemsAgg = await Items.aggregate([
+            { $match: { date: dateFilter, canceled: { $ne: true } } },
+            { $group: { _id: { styleCode: "$styleCode", sizeName: "$sizeName", order: "$order" }, count: { $sum: 1 } } },
+            { $project: { _id: 0, styleCode: "$_id.styleCode", sizeName: "$_id.sizeName", order: "$_id.order", count: 1 } },
+        ]);
+        const cogStyleCodes = [...new Set(cogItemsAgg.map(r => r.styleCode).filter(Boolean))];
+        const cogStyles = cogStyleCodes.length ? await StyleV2.find({ code: { $in: cogStyleCodes } }).select("code sizes").lean() : [];
+        const cogCostMap = {};
+        for (const s of cogStyles) { cogCostMap[s.code] = {}; for (const sz of s.sizes ?? []) cogCostMap[s.code][sz.name] = sz.wholesaleCost ?? 0; }
+        const cogOrderIds = [...new Set(cogItemsAgg.map(r => r.order).filter(Boolean).map(String))];
+        const cogOrderDocs = cogOrderIds.length ? await Order.find({ _id: { $in: cogOrderIds } }).select("marketplace").lean() : [];
+        const cogOrderMpMap = Object.fromEntries(cogOrderDocs.map(o => [String(o._id), o.marketplace || "Unknown"]));
+        const cogsByMarketplace = {};
+        for (const row of cogItemsAgg) {
+            if (!row.order) continue;
+            const unitCost = cogCostMap[row.styleCode]?.[row.sizeName] ?? 0;
+            const mp = cogOrderMpMap[String(row.order)] || "Unknown";
+            cogsByMarketplace[mp] = (cogsByMarketplace[mp] || 0) + unitCost * row.count;
+        }
+
         const summary        = summaryAgg[0] ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
         const byMarketplace  = byMarketplaceAgg;
         const inventoryValue = invResult[0]?.totalValue ?? 0;
@@ -133,7 +154,7 @@ export async function GET(req) {
         const totalServiceCost = serviceInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
         const totalKlingCost   = klingInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace, totalServiceCost, totalKlingCost });
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace, totalServiceCost, totalKlingCost, cogsByMarketplace });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({ error: true, msg: e.message, summary: { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 }, byMarketplace: [], orderMarketplaceMap: {}, items: [], inventoryValue: 0 }, { status: 500 });
