@@ -38,6 +38,7 @@ export default async function Integrations(){
 
     const apiKeyIntegrations = [...nonShopify, ...shopifyIntegrations];
 
-    const etsyRedirectURI = buildEtsyRedirectURI()
-    return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI} shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"}/>
+    const etsyRedirectURI = buildEtsyRedirectURI();
+    const hasChannelEngine = !!(process.env.ChannelEnginAPIURL && process.env.ChannelEnginAPIKey);
+    return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI} shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"} channelEngineConnected={hasChannelEngine} />;
 }

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import Blanks from "@/models/StyleV2";
-import { Inventory } from "@pythias/mongo";
+import { Inventory, InventoryOrders } from "@pythias/mongo";
 import Items from "@/models/Items";
 
 export async function GET() {
     const [unmetDemand, reorderInventory] = await Promise.all([
-        // Group unmet demand by style/color/size — catches items with or without inventory assigned
+        // Group by inventory ID — avoids string-matching issues between item.styleCode and inv.style_code
         Items.aggregate([
             {
                 $match: {
@@ -14,14 +14,12 @@ export async function GET() {
                     shipped: false,
                     labelPrinted: false,
                     stockStatus: { $nin: ["inStock", "ordered"] },
-                    styleCode: { $exists: true, $ne: null },
-                    colorName: { $exists: true, $ne: null },
-                    sizeName:  { $exists: true, $ne: null },
+                    "inventory.inventory": { $exists: true, $ne: null },
                 }
             },
             {
                 $group: {
-                    _id: { styleCode: "$styleCode", colorName: "$colorName", sizeName: "$sizeName" },
+                    _id: "$inventory.inventory",
                     count: { $sum: 1 },
                 }
             }
@@ -32,50 +30,45 @@ export async function GET() {
         ).lean(),
     ]);
 
-    // Build demand map keyed by "styleCode|colorName|sizeName"
-    const demandMap = new Map();
-    const demandStyleCodes = new Set();
-    for (const r of unmetDemand) {
-        const key = `${r._id.styleCode}|${r._id.colorName}|${r._id.sizeName}`;
-        demandMap.set(key, r.count);
-        demandStyleCodes.add(r._id.styleCode);
-    }
-
+    const demandMap = new Map(unmetDemand.map(r => [r._id.toString(), r.count]));
     const reorderIds = reorderInventory.map(r => r._id.toString());
+    const allInvIds = [...new Set([...demandMap.keys(), ...reorderIds])];
 
-    // Fetch inventory docs: by style_code for unmet demand, by _id for reorder threshold
-    const [demandInvDocs, reorderInvDocs] = await Promise.all([
-        demandStyleCodes.size
-            ? Inventory.find({ style_code: { $in: [...demandStyleCodes] } })
-                .populate("color")
-                .select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin allocated attachedCount sizeId skus orders")
-                .lean()
-            : [],
-        reorderIds.length
-            ? Inventory.find({ _id: { $in: reorderIds } })
-                .populate("color")
-                .select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin allocated attachedCount sizeId skus orders")
-                .lean()
-            : [],
+    if (!allInvIds.length) return NextResponse.json({ error: false, blanks: [] });
+
+    const [inventory, activeOrders] = await Promise.all([
+        Inventory.find({ _id: { $in: allInvIds } })
+            .populate("color")
+            .select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin allocated attachedCount sizeId skus")
+            .lean(),
+        InventoryOrders.find(
+            { received: { $ne: true }, "locations.items.inventory": { $in: allInvIds } },
+            "locations"
+        ).lean(),
     ]);
 
-    // Merge and deduplicate
-    const invMap = new Map();
-    for (const inv of [...demandInvDocs, ...reorderInvDocs]) {
-        invMap.set(inv._id.toString(), inv);
+    // Sum active (unreceived) PO quantity per inventory from authoritative InventoryOrders
+    const activeOnOrderMap = new Map();
+    for (const po of activeOrders) {
+        for (const loc of po.locations || []) {
+            if (loc.received) continue;
+            for (const item of loc.items || []) {
+                const k = item.inventory?.toString();
+                if (!k) continue;
+                activeOnOrderMap.set(k, (activeOnOrderMap.get(k) ?? 0) + (item.quantity ?? 0));
+            }
+        }
     }
-    const inventory = [...invMap.values()];
 
-    // Patch live attachedCount from demand aggregate and persist fire-and-forget
+    // Patch live demand counts and active-order quantity; persist attachedCount fire-and-forget
     const invOps = [];
     for (const inv of inventory) {
-        const key = `${inv.style_code}|${inv.color_name}|${inv.size_name}`;
-        inv.attachedCount = demandMap.get(key) ?? 0;
+        const id = inv._id.toString();
+        inv.attachedCount = demandMap.get(id) ?? 0;
+        inv.activeOnOrder = activeOnOrderMap.get(id) ?? 0;
         invOps.push({ updateOne: { filter: { _id: inv._id }, update: { $set: { attachedCount: inv.attachedCount } } } });
     }
     if (invOps.length) Inventory.bulkWrite(invOps, { ordered: false });
-
-    if (!inventory.length) return NextResponse.json({ error: false, blanks: [] });
 
     const blankCodes = [...new Set(inventory.map(i => i.style_code))];
     const blanks = await Blanks.find({ code: { $in: blankCodes } })

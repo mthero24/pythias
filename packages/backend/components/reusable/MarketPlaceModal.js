@@ -588,6 +588,18 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }
             setLoading(false);
+        } else if (c.type === "channelengine") {
+            setLoading(true);
+            const res = await axios.post("/api/admin/channelengine/products/send", { product }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to ChannelEngine."); setLoading(false); });
+            if (res?.data && !res.data.error) {
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = res.data.channelEngineProductId;
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            }
+            setLoading(false);
         } else if (c.seller_name) {
             setLoading(true);
             const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c, marketplaceName: mpName }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong. Please try again."); setLoading(false); });
@@ -849,6 +861,16 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                             <Divider sx={{ my: 0.75 }} />
                                                             {product.ids?.[marketPlace.connections.find(c => c?.type === "rithum").displayName]
                                                                 ? <Typography variant="body2" color="text.secondary">Rithum Product ID: {product.ids[marketPlace.connections.find(c => c?.type === "rithum").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "channelengine") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "channelengine").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "channelengine").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">ChannelEngine Product #: {product.ids[marketPlace.connections.find(c => c?.type === "channelengine").displayName]}</Typography>
                                                                 : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
                                                             }
                                                         </Card>

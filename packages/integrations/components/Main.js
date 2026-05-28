@@ -66,7 +66,8 @@ const PLATFORMS = {
     onbuy:       { label: "OnBuy",            color: "#5D11D4", description: "Pull orders and list products on OnBuy, the UK's fastest-growing marketplace." },
     rakuten:     { label: "Rakuten",          color: "#BF0000", description: "List products and pull orders on Rakuten Ichiba, Japan's leading marketplace, via the RMS API." },
     wayfair:     { label: "Wayfair",          color: "#7B2D8B", description: "Pull purchase orders from Wayfair and confirm shipments via the Wayfair Supplier GraphQL API." },
-    rithum:      { label: "Rithum",           color: "#1a1a2e", description: "Formerly ChannelAdvisor/DSCO — pull orders and sync products across Zulily and other Rithum-powered channels." },
+    rithum:          { label: "Rithum",        color: "#1a1a2e", description: "Formerly ChannelAdvisor/DSCO — pull orders and sync products across Zulily and other Rithum-powered channels." },
+    channelengine:   { label: "ChannelEngine", color: "#0078d7", description: "Omni-channel hub: sync products, pull orders, confirm shipments, and manage returns across all your channels via ChannelEngine." },
 };
 
 function platformColor(type) {
@@ -2400,7 +2401,7 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl }) {
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected }) {
     const [tikTokOpen,  setTikTokOpen]  = useState(false);
     const [acendaOpen,  setAcendaOpen]  = useState(false);
     const [walmartOpen, setWalmartOpen] = useState(false);
@@ -2674,14 +2675,25 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             onClick={connectedTypes.has("rithum") ? undefined : () => setRithumOpen(true)}
                         />
                     </Grid2>
+                    {channelEngineConnected !== undefined && (
+                        <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                            <PlatformCard
+                                name="ChannelEngine"
+                                description={PLATFORMS.channelengine.description}
+                                logoBg="#0078d7"
+                                connected={!!channelEngineConnected}
+                                href={channelEngineConnected ? "/admin/integrations/channelengine" : undefined}
+                            />
+                        </Grid2>
+                    )}
                 </Grid2>
 
                 {/* ── Active connections ── */}
                 <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2}>
-                    Active Connections ({allConnections.length})
+                    Active Connections ({allConnections.length + (channelEngineConnected ? 1 : 0)})
                 </Typography>
 
-                {allConnections.length === 0 ? (
+                {allConnections.length === 0 && !channelEngineConnected ? (
                     <Paper variant="outlined" sx={{
                         mt: 1, p: 5, borderRadius: 2, textAlign: "center",
                         border: "1px dashed #d1d5db",
@@ -2691,6 +2703,36 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     </Paper>
                 ) : (
                     <Stack spacing={1.5} sx={{ mt: 1 }}>
+                        {channelEngineConnected && (
+                            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                                <Box sx={{ display: "flex", alignItems: "stretch" }}>
+                                    <Box sx={{ width: 6, bgcolor: "#0078d7", flexShrink: 0 }} />
+                                    <Box sx={{ flexGrow: 1, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", px: 2.5, py: 2, gap: 2 }}>
+                                        <Stack direction="row" alignItems="center" spacing={2}>
+                                            <Avatar sx={{ bgcolor: "#0078d7", width: 38, height: 38, fontSize: "0.75rem", fontWeight: 700 }}>CE</Avatar>
+                                            <Box>
+                                                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                                    <Typography fontWeight={700} fontSize="0.95rem">ChannelEngine</Typography>
+                                                    <Chip label="ChannelEngine" size="small" sx={{ bgcolor: "#0078d718", color: "#0078d7", fontWeight: 600, fontSize: "0.7rem" }} />
+                                                    <Chip label="Active" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem" }} />
+                                                </Stack>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    Connected via environment variables
+                                                </Typography>
+                                            </Box>
+                                        </Stack>
+                                        <Button
+                                            component={Link} href="/admin/integrations/channelengine"
+                                            variant="contained" size="small"
+                                            endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                                            sx={{ bgcolor: "#0078d7", "&:hover": { bgcolor: "#0078d7", filter: "brightness(0.88)" }, borderRadius: 1.5 }}
+                                        >
+                                            Manage
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            </Paper>
+                        )}
                         {tiktokConnections.map(tt => (
                             <TikTokConnectionCard key={tt._id} shop={tt}
                                 onDeactivate={id => setTiktokConnections(prev => prev.filter(t => t._id !== id))} />

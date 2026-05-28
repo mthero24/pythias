@@ -5,6 +5,7 @@ import { Order, Manifest as manifest } from "@pythias/mongo";
 import axios from "axios"
 import { Bin } from "@pythias/mongo";
 import {updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart} from "@pythias/integrations";
+import { createShipment as ceCreateShipment } from "@/functions/channelEngine";
 import {ApiKeyIntegrations, Item as Items} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
@@ -132,6 +133,24 @@ export async function POST(req= NextApiRequest){
                         }
                     }
                 } catch (e) { console.error("Failed to update Walmart shipment:", e.message); }
+            }
+            if (order.marketplace?.toLowerCase() === "channelengine" && order.marketplaceOrderId) {
+                try {
+                    const CE_CARRIER = { usps: "PostNL", ups: "UPS", fedex: "FedEx", dhl: "DHL" };
+                    const ceCarrier = CE_CARRIER[data.selectedShipping.provider?.toLowerCase()] ?? data.selectedShipping.provider ?? "Other";
+                    const lines = (order.items ?? []).map((item, idx) => ({
+                        MerchantProductNo: item.sku || item.pieceId || String(idx + 1),
+                        Quantity: 1,
+                        ShipmentLineNo: String(idx + 1),
+                    }));
+                    await ceCreateShipment({
+                        MerchantOrderNo: `CE-${order.marketplaceOrderId}`,
+                        Lines: lines,
+                        TrackTraceNo: label.trackingNumber,
+                        Method: ceCarrier,
+                        ShippedAt: new Date().toISOString(),
+                    });
+                } catch (e) { console.error("Failed to update ChannelEngine shipment:", e.message); }
             }
             // print label
             let bin = await Bin.findOneAndUpdate({order: order._id},  {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})

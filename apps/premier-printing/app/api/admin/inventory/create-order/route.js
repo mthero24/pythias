@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Blank as Blanks, Inventory, Items } from "@pythias/mongo";
+import { Blank as Blanks, Inventory, InventoryOrders, Items } from "@pythias/mongo";
 
 export async function GET() {
     const [unmetDemand, reorderInventory] = await Promise.all([
@@ -34,17 +34,37 @@ export async function GET() {
 
     if (!allInvIds.length) return NextResponse.json({ error: false, blanks: [] });
 
-    const inventory = await Inventory.find({ _id: { $in: allInvIds } })
-        .populate("color")
-        .select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin allocated attachedCount sizeId skus orders")
-        .lean();
+    const [inventory, activeOrders] = await Promise.all([
+        Inventory.find({ _id: { $in: allInvIds } })
+            .populate("color")
+            .select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location row unit shelf bin allocated attachedCount sizeId skus")
+            .lean(),
+        InventoryOrders.find(
+            { received: { $ne: true }, "locations.items.inventory": { $in: allInvIds } },
+            "locations"
+        ).lean(),
+    ]);
 
-    // Patch live demand count and persist fire-and-forget
+    // Sum active (unreceived) PO quantity per inventory
+    const activeOnOrderMap = new Map();
+    for (const po of activeOrders) {
+        for (const loc of po.locations || []) {
+            if (loc.received) continue;
+            for (const item of loc.items || []) {
+                const k = item.inventory?.toString();
+                if (!k) continue;
+                activeOnOrderMap.set(k, (activeOnOrderMap.get(k) ?? 0) + (item.quantity ?? 0));
+            }
+        }
+    }
+
+    // Patch live demand count and active-order quantity; persist attachedCount fire-and-forget
     const invOps = [];
     for (const inv of inventory) {
-        const liveCount = demandMap.get(inv._id.toString()) ?? 0;
-        inv.attachedCount = liveCount;
-        invOps.push({ updateOne: { filter: { _id: inv._id }, update: { $set: { attachedCount: liveCount } } } });
+        const id = inv._id.toString();
+        inv.attachedCount = demandMap.get(id) ?? 0;
+        inv.activeOnOrder = activeOnOrderMap.get(id) ?? 0;
+        invOps.push({ updateOne: { filter: { _id: inv._id }, update: { $set: { attachedCount: inv.attachedCount } } } });
     }
     if (invOps.length) Inventory.bulkWrite(invOps, { ordered: false });
 
