@@ -182,6 +182,7 @@ const CATEGORIES = [
                 description: "A single Acenda connection reaches Kohl's, Target Plus, Macy's, Nordstrom, Bloomingdale's, Wayfair, Home Depot, Lowe's, Best Buy, Costco, Dick's Sporting Goods, and 150+ more channels.",
                 highlight: "150+ Channels",
             },
+<<<<<<< HEAD
             {
                 name: "Rithum",
                 logo: "/rithum.svg",
@@ -190,6 +191,8 @@ const CATEGORIES = [
                 description: "Formerly ChannelAdvisor/DSCO — a single Rithum connection unlocks Zulily and other Rithum-powered dropship channels.",
                 highlight: "Dropship Platform",
             },
+=======
+>>>>>>> e668654d13b7d158bded98808c2189e4119a830c
         ],
     },
     {
@@ -241,6 +244,17 @@ const CATEGORIES = [
                 status: "soon",
                 description: "Pull unfulfilled eBay orders and confirm shipments via the eBay Sell Fulfillment API. OAuth-based seller integration coming soon.",
                 highlight: "Sell API",
+<<<<<<< HEAD
+=======
+            },
+            {
+                name: "Rithum",
+                logo: "/rithum.svg",
+                logoBg: null,
+                status: "soon",
+                description: "Formerly ChannelAdvisor/DSCO — a single Rithum connection unlocks Zulily and other Rithum-powered dropship channels.",
+                highlight: "Dropship Platform",
+>>>>>>> e668654d13b7d158bded98808c2189e4119a830c
             },
         ],
     },
