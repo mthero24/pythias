@@ -59,6 +59,8 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
         <Box sx={{ padding: { xs: 1, sm: 1.5 }, background: "linear-gradient(180deg, #f4f6fa 0%, #eceff5 100%)", minHeight: "100%", borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 1.5, color: "text.primary" }}>Select Product Images</Typography>
             {products.map((product, i) => {
+                const normUrl = url => url ? url.replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
+                const imgMatch = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
                 const productImageGroups = [...new Set(product.blanks.flatMap(b => (b.images || []).map(img => img.imageGroup || "default")))];
                 const allImages = [...(images[product.id] || []), ...(product.tempImages || [])];
                 const groups = {};
@@ -72,29 +74,30 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
                         noColor.push(img);
                     }
                 }
+                const isSelected = (storedImg, candidateImg) => imgMatch(storedImg.image, candidateImg.image);
                 const totalSelected = product.productImages.length;
                 const totalAvailable = allImages.length;
                 const toggleImage = (i) => {
                     let prods = [...products];
                     let p = prods.filter(p => p.id == product.id)[0];
-                    if (!p.productImages.find(img => img.image == i.image)) p.productImages.push(i);
-                    else p.productImages = p.productImages.filter(img => img.image != i.image);
+                    if (!p.productImages.find(img => isSelected(img, i))) p.productImages.push(i);
+                    else p.productImages = p.productImages.filter(img => !isSelected(img, i));
                     setProducts([...prods]);
                 };
                 const setGroupSelection = (groupImages, select) => {
                     let prods = [...products];
                     let p = prods.filter(p => p.id == product.id)[0];
-                    const urls = new Set(groupImages.map(g => g.image));
                     if (select) {
-                        const existing = new Set(p.productImages.map(im => im.image));
-                        for (const g of groupImages) if (!existing.has(g.image)) p.productImages.push(g);
+                        for (const g of groupImages) {
+                            if (!p.productImages.find(im => isSelected(im, g))) p.productImages.push(g);
+                        }
                     } else {
-                        p.productImages = p.productImages.filter(im => !urls.has(im.image));
+                        p.productImages = p.productImages.filter(im => !groupImages.find(g => isSelected(im, g)));
                     }
                     setProducts([...prods]);
                 };
                 const renderGroup = (key, label, color, groupImages) => {
-                    const selectedInGroup = groupImages.filter(g => product.productImages.find(im => im.image == g.image)).length;
+                    const selectedInGroup = groupImages.filter(g => product.productImages.find(im => isSelected(im, g))).length;
                     const allSelected = selectedInGroup === groupImages.length;
                     return (
                         <Box key={key} sx={{ marginBottom: 1.5 }}>
@@ -108,7 +111,7 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
                             </Box>
                             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 0.5 }}>
                                 {groupImages.map((img, j) => (
-                                    <ImageTile key={`${img.sku || img.image}-${j}`} image={img} selected={!!product.productImages.find(im => im.image == img.image)} onClick={() => toggleImage(img)} onZoom={setZoomImage} />
+                                    <ImageTile key={`${img.sku || img.image}-${j}`} image={img} selected={!!product.productImages.find(im => isSelected(im, img))} onClick={() => toggleImage(img)} onZoom={setZoomImage} />
                                 ))}
                             </Box>
                         </Box>

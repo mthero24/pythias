@@ -56,4 +56,6 @@ export { default as ServiceInvoicePo } from "./models/ServiceInvoicePo";
 export { default as KlingInvoicePremier } from "./models/KlingInvoicePremier";
 export { default as KlingInvoicePo } from "./models/KlingInvoicePo";
 export { default as BillingCustomer } from "./models/BillingCustomer";
+export { default as AdditionalFees } from "./models/additionalFees";
 export { default as Expense } from "./models/Expense";
+export { default as CESale } from "./models/CESale";

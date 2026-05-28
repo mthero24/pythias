@@ -180,9 +180,9 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
 
   const addNewSize = () => {
     let currentSizes = getValues("sizes");
-    if (!currentSizes.length) return addSizes({ name: "", wholesaleCost: 0, retailPrice: 0, basePrice: 0, weight: 0 });
+    if (!currentSizes.length) return addSizes({ name: "", wholesaleCost: 0, wholesalePrice: 0, retailPrice: 0, basePrice: 0, weight: 0 });
     let last = currentSizes[currentSizes.length - 1];
-    return addSizes({ name: "", wholesaleCost: last.wholesaleCost, retailPrice: last.retailPrice, basePrice: last.basePrice, weight: last.weight });
+    return addSizes({ name: "", wholesaleCost: last.wholesaleCost, wholesalePrice: last.wholesalePrice ?? 0, retailPrice: last.retailPrice, basePrice: last.basePrice, weight: last.weight });
   };
 
   const overridePrintBox = ({ color_id, box, image, side }) => {
@@ -571,6 +571,7 @@ const SizeStack = ({ field, index, control, watch, sizeOptions, printPrice, remo
             <Controller render={({ field }) => <TextField {...field} fullWidth size="small" label="Blank Price" type="number" />} name={`sizes[${index}].basePrice`} control={control} defaultValue={field.basePrice} />
             <Chip size="small" label={`Cost + Print: $${defaultPrintPrice.toFixed(2)}`} color="primary" variant="outlined" sx={{ fontSize: "0.7rem" }} />
             <Controller render={({ field }) => <TextField {...field} fullWidth size="small" label="Retail Price" type="number" />} name={`sizes[${index}].retailPrice`} control={control} defaultValue={field.retailPrice} />
+            <Controller render={({ field }) => <TextField {...field} fullWidth size="small" label="Wholesale Price" type="number" />} name={`sizes[${index}].wholesalePrice`} control={control} defaultValue={field.wholesalePrice ?? 0} />
             <Controller render={({ field }) => <TextField {...field} fullWidth size="small" label="Weight (oz)" type="number" />} name={`sizes[${index}].weight`} control={control} defaultValue={field.weight} />
           </Stack>
         </CardContent>

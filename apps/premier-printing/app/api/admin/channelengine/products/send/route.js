@@ -4,15 +4,28 @@ import { listProducts, updateOffers } from "@/functions/channelEngine";
 const SKIP_KEYS = new Set(["titleGenerator"]);
 
 function buildCEProduct(product, blank, v, productOverrides, blankOverrides) {
+    // Resolve size: variantsArray.size is an ObjectId string; look it up in blank.sizes
+    const sizeObj  = (blank?.sizes ?? []).find(s => s._id?.toString() === String(v.size))
+        ?? (typeof v.size === "object" ? v.size : null);
+    const sizeName  = sizeObj?.name ?? (typeof v.size === "string" && v.size.length < 30 ? v.size : null);
+    const sizePrice = sizeObj?.retailPrice;
+    const colorName = v.color?.name ?? null;
+    const gtin      = v.upc || v.gtin || null;
+    const parentSku = product.sku || product._id?.toString() || undefined;
+
     const item = {
-        MerchantProductNo: v.sku,
-        Name: [product.title || product.name, v.color?.name, v.size?.name].filter(Boolean).join(" - "),
+        MerchantProductNo:       v.sku,
+        ParentMerchantProductNo: parentSku,
+        Name: [product.title || product.name, colorName, sizeName].filter(Boolean).join(" - "),
         Description: product.description || "",
-        Price: Number(v.price ?? v.size?.retailPrice ?? 0),
+        Price: Number(v.price ?? sizePrice ?? 0),
+        CatalogPrice: Number(v.price ?? sizePrice ?? 0),
         Stock: 999,
         VATRateType: "STANDARD",
-        GTIN: v.upc || undefined,
-        ImageUrl: v.images?.[0] || product.productImages?.[0]?.image || undefined,
+        GTIN:  gtin      || undefined,
+        Color: colorName || undefined,
+        Size:  sizeName  || undefined,
+        ImageUrl: v.images?.[0] || v.image || product.productImages?.[0]?.image || undefined,
     };
 
     if (Object.keys(blankOverrides).length > 0) Object.assign(item, blankOverrides);
@@ -30,7 +43,7 @@ export async function POST(req) {
         const { product, connectionId } = await req.json();
         if (!product) return NextResponse.json({ error: true, msg: "product is required" }, { status: 400 });
 
-        const blank = product.blank ?? {};
+        const blank = product.blank ?? product.blanks?.[0] ?? {};
         const blankOverrides = blank?.marketPlaceOverrides?.["ChannelEngine"]
             ?? blank?.marketPlaceOverrides?.["channelengine"]
             ?? {};

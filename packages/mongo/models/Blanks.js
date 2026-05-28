@@ -46,6 +46,7 @@ const SchemaObj = new Schema(
         name: { required: true, type: String },
         weight: { required: true, default: 0, type: Number },
         wholesaleCost: { default: 0, type: Number },
+        wholesalePrice: { default: 0, type: Number },
         retailPrice: { default: 0, type: Number },
         basePrice: { default: 0, type: Number },
         cost: { default: 0, type: Number },

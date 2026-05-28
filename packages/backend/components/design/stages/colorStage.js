@@ -309,13 +309,14 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                     console.log("Getting temp upcs", vLength - used)
                                 }
                             }
+                            const normUrl = url => url ? url.replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
+                            const imgMatch = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
                             let prods = [...products]
                             for(let p of prods){
                                 let pImages = []
-                                console.log(p.productImages, "product images before setting")
+                                const available = (imgs[p.id.toString()] || []).map(i => i.image);
                                 for(let im of p.productImages){
-                                    console.log("im", im)
-                                    if(imgs[p.id.toString()].map(i => i.image).includes(im.image)) pImages.push(im)
+                                    if(available.some(a => imgMatch(im.image, a))) pImages.push(im)
                                 }
                                 p.productImages = pImages
                             }

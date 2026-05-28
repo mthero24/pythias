@@ -65,3 +65,9 @@ export const listReturns = (params = {}) => {
 };
 
 export const getSettings = () => ceRequest("v2/settings");
+
+export const listChannels = () => ceRequest("v2/channels");
+
+// Update offers for a specific channel (CE channel-specific pricing)
+export const updateChannelOffers = (channelId, offers) =>
+    ceRequest(`v2/channels/${channelId}/offer`, { method: "PUT", body: JSON.stringify(offers) });

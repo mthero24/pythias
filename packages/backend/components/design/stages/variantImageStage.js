@@ -85,6 +85,9 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
     const activeGroup = product.imageGroup || "default";
     const availableGroups = [...new Set(product.blanks.flatMap(b => (b.images || []).map(img => img.imageGroup || "default")))];
 
+    const normUrl = url => url ? url.replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
+    const imgEq = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
+
     let imgs = {}
     if (!threadColors) {
         for (let blank of product.blanks) {
@@ -170,12 +173,12 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             if(threadColors){
                 for(let key3 of Object.keys(imgs[key][key2])){
                     if(product.variantSecondaryImages && product.variantSecondaryImages[key] && product.variantSecondaryImages[key][key2] && product.variantSecondaryImages[key][key2][key3]){
-                        product.variantSecondaryImages[key][key2][key3] = product.variantSecondaryImages[key][key2][key3].filter(i => imgs[key][key2][key3].find(si => si.image == i.image))
+                        product.variantSecondaryImages[key][key2][key3] = product.variantSecondaryImages[key][key2][key3].filter(i => imgs[key][key2][key3].find(si => imgEq(si.image, i.image)))
                     }
                 }
             }else{
                 if(product.variantSecondaryImages && product.variantSecondaryImages[key] && product.variantSecondaryImages[key][key2]){
-                    product.variantSecondaryImages[key][key2] = product.variantSecondaryImages[key][key2].filter(i => imgs[key][key2].find(si => si.image == i.image))
+                    product.variantSecondaryImages[key][key2] = product.variantSecondaryImages[key][key2].filter(i => imgs[key][key2].find(si => imgEq(si.image, i.image)))
                 }
             }
         }
@@ -206,17 +209,17 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
         if (!p.variantSecondaryImages[b][c]) p.variantSecondaryImages[b][c] = [];
         if (mainImage) {
             const currentMain = p.variantImages[b][c];
-            if (currentMain && currentMain.image === img.image) {
+            if (currentMain && imgEq(currentMain.image, img.image)) {
                 delete p.variantImages[b][c];
             } else {
-                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image);
+                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => !imgEq(i.image, img.image));
                 p.variantImages[b][c] = img;
             }
         } else {
-            if (!p.variantSecondaryImages[b][c].find(i => i.image == img.image)) {
+            if (!p.variantSecondaryImages[b][c].find(i => imgEq(i.image, img.image))) {
                 p.variantSecondaryImages[b][c].push(img);
             } else {
-                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => i.image != img.image);
+                p.variantSecondaryImages[b][c] = p.variantSecondaryImages[b][c].filter(i => !imgEq(i.image, img.image));
             }
         }
         setProducts([...prods]);
@@ -234,17 +237,17 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
         if (!p.variantSecondaryImages[b][tc][c]) p.variantSecondaryImages[b][tc][c] = [];
         if (mainImage) {
             const currentMain = p.variantImages[b][tc][c];
-            if (currentMain && currentMain.image === img.image) {
+            if (currentMain && imgEq(currentMain.image, img.image)) {
                 delete p.variantImages[b][tc][c];
             } else {
-                p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => i.image != img.image);
+                p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => !imgEq(i.image, img.image));
                 p.variantImages[b][tc][c] = img;
             }
         } else {
-            if (!p.variantSecondaryImages[b][tc][c].find(i => i.image == img.image)) {
+            if (!p.variantSecondaryImages[b][tc][c].find(i => imgEq(i.image, img.image))) {
                 p.variantSecondaryImages[b][tc][c].push(img);
             } else {
-                p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => i.image != img.image);
+                p.variantSecondaryImages[b][tc][c] = p.variantSecondaryImages[b][tc][c].filter(i => !imgEq(i.image, img.image));
             }
         }
         setProducts([...prods]);
@@ -263,8 +266,8 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                 <ColorHeader color={colorObj} name={c} mainCount={mainImg ? 1 : 0} extraCount={extras.length} />
                 <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 0.5 }}>
                     {tiles.map((img, k) => {
-                        const isMain = mainImg && mainImg.image === img.image;
-                        const extraIdx = extras.findIndex(e => e.image === img.image);
+                        const isMain = mainImg && imgEq(mainImg.image, img.image);
+                        const extraIdx = extras.findIndex(e => imgEq(e.image, img.image));
                         return (
                             <VariantTile
                                 key={`${img.sku || img.image}-${k}`}

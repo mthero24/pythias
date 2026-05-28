@@ -71,6 +71,7 @@ const schema = new mongoose.Schema({
             ref: ProductInventory,
         },
         price: Number,
+        wholesalePrice: { default: 0, type: Number },
         previousSkus: [String]
     }],
     variantImages: Object,

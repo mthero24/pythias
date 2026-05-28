@@ -14,6 +14,31 @@ export const InformationStage = ({products, setProducts, product, design, setSta
     const [markets, setMarkets] = useState([]);
     const [aiDescLoading, setAiDescLoading] = useState({});
 
+    // Re-resolve all titleGenerator fields when a template variable (brand, gender, etc.) changes.
+    const reResolveTitleGenerators = (p, overrides = {}) => {
+        for (const market of markets) {
+            const tg    = market.productDropDowns?.titleGenerator;
+            const mpId  = market._id?.toString();
+            if (!tg?.prompt || !mpId) continue;
+            const resolved = tg.prompt
+                .replace("{design}",        design?.name                              ?? "")
+                .replace("{blank}",         p.blanks?.[0]?.name                       ?? "")
+                .replace("{brand}",         overrides.brand         ?? p.brand        ?? "")
+                .replace("{gender}",        overrides.gender        ?? p.gender       ?? "")
+                .replace("{season}",        overrides.season        ?? p.season       ?? "")
+                .replace("{theme}",         overrides.theme         ?? p.theme        ?? "")
+                .replace("{sportUsedFor}",  overrides.sportUsedFor  ?? p.sportUsedFor ?? "")
+                .replace(/(\s*-\s*){2,}/g, " - ")
+                .replace(/^\s*-\s*/,        "")
+                .replace(/\s*-\s*$/,        "")
+                .replace(/\s{2,}/g,         " ")
+                .trim();
+            if (!p.marketplaceValues)        p.marketplaceValues        = {};
+            if (!p.marketplaceValues[mpId])  p.marketplaceValues[mpId]  = {};
+            p.marketplaceValues[mpId].titleGenerator = resolved;
+        }
+    };
+
     // One-time: merge AI-pre-filled product data (title, description, etc.) into the wizard's products array
     useEffect(() => {
         if (!product || !products.length) return;
@@ -117,7 +142,10 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                                         <CreatableSelect {...selectMenuPortalProps} placeholder="Select Brand" options={[{value: null, label: "Select Brand"}, ...brands.map(brand => ({ value: brand.name, label: brand.name }))]} value={product.brand ? { value: product.brand, label: product.brand } : null} onChange={async (newValue) => {
                                             let prods = [...products]
                                             let p = prods.filter(p => p.id == product.id)[0]
-                                            if (brands.filter(b => b.name == newValue.value)[0] || newValue.value == null) p.brand = newValue.value
+                                            if (brands.filter(b => b.name == newValue.value)[0] || newValue.value == null) {
+                                                p.brand = newValue.value;
+                                                reResolveTitleGenerators(p, { brand: newValue.value ?? "" });
+                                            }
                                             setProducts([...prods])
                                         }} />
                                     </Grid2>
@@ -126,7 +154,10 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                                         <CreatableSelect {...selectMenuPortalProps} placeholder="Select Gender" options={[{value: null, label: "Select Gender"}, ...genders.map(gender => ({ value: gender.name, label: gender.name }))]} value={product.gender ? { value: product.gender, label: product.gender } : null} onChange={async (newValue) => {
                                             let prods = [...products]
                                             let p = prods.filter(p => p.id == product.id)[0]
-                                            if(genders.filter(s => s.name == newValue.value)[0] || newValue.value == null) p.gender = newValue.value
+                                            if (genders.filter(s => s.name == newValue.value)[0] || newValue.value == null) {
+                                                p.gender = newValue.value;
+                                                reResolveTitleGenerators(p, { gender: newValue.value ?? "" });
+                                            }
                                             setProducts([...prods])
                                         }} />
                                     </Grid2>
@@ -258,7 +289,7 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                                                         if (!variants[blank.code]) variants[blank.code] = {}
                                                         if (!variants[blank.code][d]) variants[blank.code][d] = {}
                                                         if (!variants[blank.code][d][color.name]) variants[blank.code][d][color.name] = []
-                                                        variants[blank.code][d][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, threadColor: d }), threadColor: colors.filter(tc => tc.name == d)[0], blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0) + (license && license.additionalFees ? license.additionalFees : 0)})
+                                                        variants[blank.code][d][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, threadColor: d }), threadColor: colors.filter(tc => tc.name == d)[0], blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0) + (license && license.additionalFees ? license.additionalFees : 0), wholesalePrice: (size.wholesalePrice ?? 0) + (printType && printType.price ? printType.price : 0)})
                                                     }
                                                 }
                                             }
@@ -295,7 +326,7 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                                                     let images = product.variantSecondaryImages && product.variantSecondaryImages[blank.code] && product.variantSecondaryImages[blank.code][color.name] && product.variantSecondaryImages[blank.code][color.name]
                                                     if (!variants[blank.code]) variants[blank.code] = {}
                                                     if (!variants[blank.code][color.name]) variants[blank.code][color.name] = []
-                                                    variants[blank.code][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0) + (license && license.additionalFees ? license.additionalFees : 0) })
+                                                    variants[blank.code][color.name].push({ image: img, images: images, size: size, color: color, sku: await CreateSku({ blank, color, size, design, }), blank: blank, upc: upc?.upc, gtin: upc?.gtin, price: size.retailPrice + (printType && printType.price ? printType.price : 0) + (license && license.additionalFees ? license.additionalFees : 0), wholesalePrice: (size.wholesalePrice ?? 0) + (printType && printType.price ? printType.price : 0) })
                                                 }
                                             }
                                         }

@@ -422,7 +422,10 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                                     <ListItemText sx={{ cursor: "pointer" }} onClick={() => {setInventoryOpen(true); setVariant(variant);}} primary={`Inventory: ${variant.productInventory ? variant.productInventory.quantity : "N/A"}`} secondary={`On Hold: ${variant.productInventory.inStock ? variant.productInventory.inStock.length : "0"} location: ${variant.productInventory.location ? variant.productInventory.location : "N/A"}`} />
                                 )}
                                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                                    <Typography variant="body2" sx={{ marginRight: "10px" }}>Price: ${variant.price ? variant.price.toFixed(2) : variant.size && variant.size.retailPrice ? variant.size.retailPrice.toFixed(2) : product.blanks.filter(b => b._id.toString() === variant.blank.toString())[0].sizes.filter(s => s._id.toString() === variant.size.toString())[0] ? product.blanks.filter(b => b._id.toString() === variant.blank.toString())[0].sizes.filter(s => s._id.toString() === variant.size.toString())[0].retailPrice.toFixed(2) : "N/A"}</Typography>
+                                    <Box sx={{ display: "flex", flexDirection: "column", marginRight: "10px" }}>
+                                        <Typography variant="body2">Price: ${variant.price ? variant.price.toFixed(2) : variant.size && variant.size.retailPrice ? variant.size.retailPrice.toFixed(2) : product.blanks.filter(b => b._id.toString() === variant.blank.toString())[0].sizes.filter(s => s._id.toString() === variant.size.toString())[0] ? product.blanks.filter(b => b._id.toString() === variant.blank.toString())[0].sizes.filter(s => s._id.toString() === variant.size.toString())[0].retailPrice.toFixed(2) : "N/A"}</Typography>
+                                        {variant.wholesalePrice > 0 && <Typography variant="body2" sx={{ color: "text.secondary" }}>Wholesale: ${variant.wholesalePrice.toFixed(2)}</Typography>}
+                                    </Box>
                                     {preview &&<Button variant="outlined" color="primary" size="small" onClick={() => { setVariant({ ...variant }); setPriceUpdate(true); }}>Update</Button>}
                                 </Box>
                             </ListItem>
@@ -443,14 +446,14 @@ const UpdatePriceModal = ({ open, setOpen, variant, setVariant, product, setProd
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: "50%",
-        height: "23%",
+        width: "60%",
+        height: "auto",
         bgcolor: 'background.paper',
         border: '2px solid #000',
         boxShadow: 24,
         p: 4,
         overflowX: "auto",
-        overflowY: "none",
+        overflowY: "auto",
     };
     return (
         <Modal open={open} onClose={() => setOpen(false)}>
@@ -466,6 +469,18 @@ const UpdatePriceModal = ({ open, setOpen, variant, setVariant, product, setProd
                             const newPrice = parseFloat(e.target.value);
                             let varnt = { ...variant };
                             varnt.price = isNaN(newPrice) ? 0 : newPrice;
+                            setVariant({ ...varnt });
+                        }}
+                    />
+                    <TextField
+                        sx={{ margin: "2%" }}
+                        label="Wholesale Price"
+                        type="number"
+                        defaultValue={variant.wholesalePrice ? variant.wholesalePrice : 0}
+                        onChange={(e) => {
+                            const newPrice = parseFloat(e.target.value);
+                            let varnt = { ...variant };
+                            varnt.wholesalePrice = isNaN(newPrice) ? 0 : newPrice;
                             setVariant({ ...varnt });
                         }}
                     />

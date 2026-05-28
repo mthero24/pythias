@@ -1,4 +1,4 @@
-import { Products, Design, SkuToUpc, Inventory } from "@pythias/mongo";
+import { Products, Design, SkuToUpc, Inventory, PrintTypes } from "@pythias/mongo";
 import {NextApiRequest, NextResponse } from "next/server";
 import { updateTempUpc, createTempUpcs } from "@pythias/integrations"
 import { saveProducts, preCacheImages } from "@pythias/backend";
@@ -89,7 +89,7 @@ export async function GET(req = NextApiRequest) {
     if (!product) {
         return NextResponse.json({ error: true, message: "Product ID is required" });
     }
-    const productData = await Products.find({ _id: { $in: product.split(",") } }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors").populate({ path: "blanks", populate: "colors" }).lean();
+    const productData = await Products.find({ _id: { $in: product.split(",") } }).populate("design colors productImages.blank productImages.color productImages.threadColor threadColors variantsArray.color").populate({ path: "blanks", populate: "colors" }).lean();
     if (!productData) {
         for(let p of productData){
             preCacheImages(p);
@@ -121,7 +121,7 @@ export async function POST(req = NextApiRequest) {
             })
         }
     }
-    let products = await saveProducts({ products: data.products, Products, Inventory });
+    let products = await saveProducts({ products: data.products, Products, Inventory, PrintTypes });
     logActivity({ action: "product_update", entity: "product", count: data.products.length, userName, email });
 
     // Log changes for each product
