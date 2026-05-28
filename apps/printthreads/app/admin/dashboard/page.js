@@ -575,8 +575,10 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         { key: "colorName",    serverKey: "colorName", label: "Color" },
         { key: "price",        serverKey: "price",     label: "Price Sold",  align: "right", render: (i) => fmt(i.price) },
         { key: "wholesaleCost", label: "Blank COGS",   align: "right",       render: (i) => fmt(i.wholesaleCost) },
+        { key: "mpFee",        label: "Est. MP Fees",  align: "right",       render: (i) => fmt((i.price || 0) * (MARKETPLACE_FEE_RATES[(i.marketplace || "").toLowerCase()] ?? 0)) },
         { key: "net",          label: "Net",           align: "right",       render: (i) => {
-            const n = (i.price || 0) - (i.wholesaleCost || 0);
+            const mpFee = (i.price || 0) * (MARKETPLACE_FEE_RATES[(i.marketplace || "").toLowerCase()] ?? 0);
+            const n = (i.price || 0) - (i.wholesaleCost || 0) - mpFee;
             return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
         }},
     ];
