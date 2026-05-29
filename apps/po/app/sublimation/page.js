@@ -1,4 +1,4 @@
-import {Main} from "@pythias/sublimation";
+import SublimationClient from "./SublimationClient";
 import Items from "../../models/Items";
 import Order from "../../models/Order";
 import Inventory from "../../models/inventory";
@@ -25,11 +25,10 @@ export default async function Sublimation(req, res){
     }).lean()
     let buttons = await Items.find({
         styleCode: { $in: ["BTN", "MGN"] },
-        inBin: false,
         canceled: false,
         shipped: false,
+        inBin: false,
         paid: true,
-        buttonPrinted: { $ne: true },
         order: {$ne: null},
         date: { $gt: new Date(Date.now() - 14 * (24 * 60 * 60 * 1000)) }
     }).lean()
@@ -84,7 +83,8 @@ export default async function Sublimation(req, res){
         //   return { ...s };
         // });
         labels[k] = labels[k].map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
-        labels[k] = labels[k].filter(s=> s.order != undefined && s.order.status != "Shipped" && s.order.status != "Delivered")
+        const doneStatuses = new Set(["shipped", "delivered", "returned", "canceled"]);
+        labels[k] = labels[k].filter(s => s.order != undefined && !doneStatuses.has(s.order.status?.toLowerCase()))
         let inventory_ids = labels[k].map(s=>{return encodeURIComponent(`${s.colorName}-${s.sizeName}-${s.styleCode}`);})
         let inventoryArray = await Inventory.find({
             inventory_id: { $in: inventory_ids },
@@ -117,5 +117,5 @@ export default async function Sublimation(req, res){
     let params = await req.searchParams
     let station = params.station
     console.log(station )
-    return <Main labels={labels} stations={stations} stat={station}/>
+    return <SublimationClient labels={labels} stations={stations} stat={station} />
 }

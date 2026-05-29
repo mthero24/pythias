@@ -258,8 +258,9 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
 
                         {/* Utility buttons */}
                         <Stack direction="row" flexWrap="wrap" gap={1}>
-                            {source !== "PP" && gift.length > 0 && (
-                                <Button variant="outlined" size="small" startIcon={<CardGiftcardIcon />} onClick={() => print("gift")}>
+                            {source !== "PP" && (
+                                <Button variant="outlined" size="small" startIcon={<CardGiftcardIcon />}
+                                    onClick={() => print("gift")} disabled={gift.length === 0}>
                                     Gift Labels ({gift.length})
                                 </Button>
                             )}
@@ -505,7 +506,8 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                                                 const isReturns = inv?.inventoryType === "productInventory" && !!inv?.productInventory;
 
                                                 let stockLabel, stockColor;
-                                                if (item.stockStatus === "inStock")       { stockLabel = "In Stock";     stockColor = isSelected ? "#fff" : "#15803d"; }
+                                                if (item.styleCode === "BUMP")            { stockLabel = "Ready";        stockColor = isSelected ? "#fff" : "#15803d"; }
+                                                else if (item.stockStatus === "inStock")  { stockLabel = "In Stock";     stockColor = isSelected ? "#fff" : "#15803d"; }
                                                 else if (item.stockStatus === "ordered")  { stockLabel = "On Order";     stockColor = isSelected ? "#fff" : "#b45309"; }
                                                 else if (item.stockStatus === "attached") { stockLabel = "Out of Stock"; stockColor = isSelected ? "#fff" : "#dc2626"; }
                                                 else if (isReturns)                       { stockLabel = "Returns";      stockColor = isSelected ? "#fff" : "#15803d"; }

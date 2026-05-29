@@ -1,6 +1,7 @@
 import { Inventory, InventoryOrders } from "@pythias/mongo";
 import Items from "@/models/Items";
 import Order from "@/models/Order";
+import { generatePieceID } from "@pythias/integrations";
 
 // Promote attached items (oldest first) into open slots when capacity is available
 const promoteAttached = async () => {
@@ -290,10 +291,41 @@ export const recomputeStockStatus = async () => {
     if (updateOps.length) await Items.bulkWrite(updateOps, { ordered: false });
 };
 
+export async function tagBulkOrders() {
+    const bulkOrders = await Order.find({
+        $expr: { $gt: [{ $size: "$items" }, 50] },
+        status: { $nin: ["canceled", "returned", "shipped", "Shipped", "delivered", "Pending Payment", "Pending Artwork Approval"] },
+        date: { $gte: new Date("2025-10-31") },
+        bulk: { $in: [null, false] },
+    }).populate("items").lean();
+
+    if (!bulkOrders.length) return;
+    console.log(bulkOrders.length, "orders with more than 50 items — tagging");
+
+    const orderBulkOps = [];
+    const itemBulkOps  = [];
+    for (const o of bulkOrders) {
+        orderBulkOps.push({ updateOne: { filter: { _id: o._id }, update: { $set: { bulk: true } } } });
+        const skus = [...new Set(o.items.filter(i => !i.canceled).map(i => i.sku))];
+        for (const s of skus) {
+            const bulkId = generatePieceID();
+            o.items.filter(it => it.sku === s && !it.canceled).forEach(it => {
+                itemBulkOps.push({ updateOne: { filter: { _id: it._id }, update: { $set: { bulkId } } } });
+            });
+        }
+    }
+    await Promise.all([
+        Order.bulkWrite(orderBulkOps, { ordered: false }),
+        Items.bulkWrite(itemBulkOps,  { ordered: false }),
+    ]);
+}
+
 setInterval(() => {
     if (process.env.pm_id == 9 || process.env.pm_id == "9") {
-        reconcileAllocated();
-        addItemsToInventory();
-        recomputeStockStatus();
+        tagBulkOrders()
+            .then(() => addItemsToInventory())
+            .then(() => recomputeStockStatus())
+            .then(() => reconcileAllocated())
+            .catch(err => console.error("background service error:", err));
     }
 }, 1000 * 60 * 15);

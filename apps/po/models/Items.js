@@ -163,4 +163,11 @@ const schema = new mongoose.Schema(
   { suppressWarning: true }
 );
 
+// Labels page queries filter on these fields in every page load
+schema.index({ labelPrinted: 1, canceled: 1, paid: 1, bulkId: 1, shippingType: 1 });
+// BUMP item query
+schema.index({ styleCode: 1, labelPrinted: 1, canceled: 1, paid: 1 });
+// addItemsToInventory service query
+schema.index({ labelPrinted: 1, canceled: 1, shipped: 1, paid: 1, "inventory.inventory": 1 });
+
 export default TSPprints.model("Item", schema);

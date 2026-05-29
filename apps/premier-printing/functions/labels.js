@@ -1,31 +1,39 @@
 import {Items, Order, Batches} from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
+
 export async function LabelsData(){
-    // let inv = Inventory.deleteMany({inventory_id: {$regex: "\/"}})
-    // console.log("inv count", (await inv).length, "+++++++++++++++++++")
-    const [standardItems, expeditedItems, blankItems] = await Promise.all([
+    // Phase 1: fire all queries in parallel, including gift items
+    const [standardItems, expeditedItems, blankItems, giftItemsRaw, batches] = await Promise.all([
         Items.find({
             blank: { $ne: undefined },
-            colorName: {$ne: null},
-            sizeName: {$ne: null},
-            designRef: {$ne: null},
-            design: {$ne: null},
+            colorName: { $ne: null },
+            sizeName: { $ne: null },
+            designRef: { $ne: null },
+            design: { $ne: null },
             labelPrinted: false,
             canceled: false,
             paid: true,
             shippingType: { $ne: "Expedited" },
-        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
+        }).populate("color", "name _id")
+          .populate("designRef", "sku name printType")
+          .populate("inventory.inventory", "row unit shelf bin quantity")
+          .populate("inventory.productInventory", "location name")
+          .lean(),
         Items.find({
             blank: { $ne: undefined },
-            colorName: {$ne: null},
-            sizeName: {$ne: null},
-            designRef: {$ne: null},
-            design: {$ne: null},
+            colorName: { $ne: null },
+            sizeName: { $ne: null },
+            designRef: { $ne: null },
+            design: { $ne: null },
             labelPrinted: false,
             canceled: false,
             paid: true,
             shippingType: "Expedited",
-        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
+        }).populate("color", "name _id")
+          .populate("designRef", "sku name printType")
+          .populate("inventory.inventory", "row unit shelf bin quantity")
+          .populate("inventory.productInventory", "location name")
+          .lean(),
         Items.find({
             blank: { $ne: undefined },
             colorName: { $ne: null },
@@ -34,47 +42,58 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-        }).populate("color", "name _id").populate("designRef", "sku name printType").populate("inventory.inventory inventory.productInventory").lean(),
+        }).populate("color", "name _id")
+          .populate("designRef", "sku name printType")
+          .populate("inventory.inventory", "row unit shelf bin quantity")
+          .populate("inventory.productInventory", "location name")
+          .lean(),
+        Items.find({
+            labelPrinted: false,
+            canceled: false,
+            paid: true,
+            type: "gift",
+            sku: { $in: ["gift-bag"] },
+        }).lean(),
+        Batches.find({}).limit(20).sort({ _id: -1 }).lean(),
     ]);
-    let labels = { Standard: [...standardItems, ...blankItems], WholeSale: expeditedItems };
-    let rePulls = 0
-    for(let k of Object.keys(labels)){
-        const orderIds = labels[k].map(s=> s.order)
-        const orderList = await Order.find({_id: {$in: orderIds}}).select("poNumber items marketplace date").lean()
-        const orderId = (s) => s.order?._id?.toString() ?? s.order?.toString()
-        labels[k] = labels[k].map(s=> {
-            s.order = orderList.filter(o=> o._id.toString() === orderId(s))[0];
-            if(s.type == undefined) s.type = s.designRef && s.designRef.printType ? s.designRef.printType : "DTF"
-            return {...s}
-        })
-        labels[k] = labels[k].filter(s=> s.order != undefined)
-        rePulls += labels[k].filter(l=> l.rePulled).length
-        labels[k] = await Sort(labels[k])
+
+    const labels = { Standard: [...standardItems, ...blankItems], WholeSale: expeditedItems };
+
+    // Phase 2: one Order query covering ALL items + one for gifts — both in parallel
+    const allItemOrderIds = [...standardItems, ...expeditedItems, ...blankItems].map(s => s.order);
+    const giftOrderIds    = giftItemsRaw.map(s => s.order);
+
+    const [orderList, giftOrderList] = await Promise.all([
+        Order.find({ _id: { $in: allItemOrderIds } }).select("poNumber items marketplace date").lean(),
+        Order.find({ _id: { $in: giftOrderIds } }).select("poNumber items").lean(),
+    ]);
+
+    const orderMap = new Map(orderList.map(o => [o._id.toString(), o]));
+
+    let rePulls = 0;
+    for (const k of Object.keys(labels)) {
+        labels[k] = labels[k].map(s => {
+            const order = orderMap.get(s.order?.toString());
+            if (s.type == null) s.type = s.designRef?.printType ?? "DTF";
+            return { ...s, order };
+        }).filter(s => s.order != null);
+        rePulls += labels[k].filter(l => l.rePulled).length;
     }
 
-    let giftMessages = await Items.find({
-        labelPrinted: false,
-        canceled: false,
-        paid: true,
-        type: "gift",
-        sku: { $in: ["gift-bag"] },
-        }).lean()
-    const giftOrderIds = giftMessages.map(s=> s.order)
-    const giftOrderList = await Order.find({_id: {$in: giftOrderIds}}).select("poNumber items").lean()
-    giftMessages = giftMessages.map(s=> {
-        s.order = giftOrderList.filter(o=> o._id.toString() === s.order?.toString())[0];
-        s.styleCode = "GIFT";
-        return {...s}
-    })
-    //console.log(giftMessages)
-    //giftMessages.map(g=>console.log(g.order))
-    giftMessages = giftMessages.filter(s=> typeof s.order !== "undefined")
-    //console.log(giftMessages)
-    if(labels) labels = JSON.parse(JSON.stringify(labels))
-    if(giftMessages) giftMessages = JSON.parse(JSON.stringify(giftMessages))
-    let batches = JSON.parse(
-        JSON.stringify(await Batches.find({}).limit(20).sort({ _id: -1 }).lean())
-    );
-    //console.log(batches)
-    return {labels, giftMessages, rePulls, batches}
+    // Phase 3: sort all categories in parallel
+    await Promise.all(Object.keys(labels).map(async k => {
+        labels[k] = await Sort(labels[k]);
+    }));
+
+    const giftOrderMap = new Map(giftOrderList.map(o => [o._id.toString(), o]));
+    let giftMessages = giftItemsRaw
+        .map(s => ({ ...s, order: giftOrderMap.get(s.order?.toString()), styleCode: "GIFT" }))
+        .filter(s => s.order != null);
+
+    return {
+        labels:       JSON.parse(JSON.stringify(labels)),
+        giftMessages: JSON.parse(JSON.stringify(giftMessages)),
+        rePulls,
+        batches:      JSON.parse(JSON.stringify(batches)),
+    };
 }

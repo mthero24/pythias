@@ -6,8 +6,43 @@ import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logChange, userFromToken } from "@pythias/backend/server";
 
-export async function GET() {
-    let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory");
+export async function GET(req) {
+    const all = req.nextUrl.searchParams.get("all") === "true";
+
+    if (all) {
+        const q    = req.nextUrl.searchParams.get("q") || "";
+        const skip = parseInt(req.nextUrl.searchParams.get("skip") || "0");
+        const filter = q
+            ? { $or: [{ poNumber: { $regex: q, $options: "i" } }, { vendor: { $regex: q, $options: "i" } }] }
+            : {};
+        const [orders, total] = await Promise.all([
+            InventoryOrders.find(filter).sort({ _id: -1 }).skip(skip).limit(50).populate("locations.items.inventory"),
+            InventoryOrders.countDocuments(filter),
+        ]);
+        return NextResponse.json({ error: false, orders, total });
+    }
+
+    const orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory");
+
+    // Fire-and-forget: backfill stockStatus for items already on open orders
+    ;(async () => {
+        try {
+            const openOrderIds = orders.map(o => o._id);
+            const invDocs = await Inventory.find({ "orders.order": { $in: openOrderIds } }, "orders").lean();
+            const itemIds = invDocs.flatMap(inv =>
+                (inv.orders || [])
+                    .filter(o => openOrderIds.some(id => id.toString() === o.order.toString()))
+                    .flatMap(o => o.items || [])
+            );
+            if (itemIds.length > 0) {
+                TspItems.updateMany(
+                    { _id: { $in: itemIds }, stockStatus: "attached" },
+                    { $set: { stockStatus: "ordered" } }
+                ).catch(() => {});
+            }
+        } catch {}
+    })();
+
     return NextResponse.json({ error: false, orders });
 }
 
@@ -35,12 +70,14 @@ export async function PUT(req = NextApiRequest) {
                                 .sort({ date: 1 });
                             items = items.filter(it => !itemsToPrint.map(x => x._id.toString()).includes(it._id.toString()));
                             const toPrint = items.filter(it => !it.labelPrinted && !it.bulkId).slice(0, i.quantity);
+                            const bulkToReceive = items.filter(it => !it.labelPrinted && it.bulkId);
                             itemsToPrint.push(...toPrint);
 
-                            // Move TSPprints ordered → inStock
-                            if (toPrint.length > 0) {
+                            // Move TSPprints ordered → inStock (regular + bulk)
+                            const toMarkInStock = [...toPrint, ...bulkToReceive];
+                            if (toMarkInStock.length > 0) {
                                 await TspItems.bulkWrite(
-                                    toPrint.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
+                                    toMarkInStock.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
                                     { ordered: false }
                                 );
                                 inv.allocated = (inv.allocated ?? 0) + toPrint.length;

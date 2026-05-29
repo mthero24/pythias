@@ -26,7 +26,7 @@ function getBulkGroups(order) {
 }
 
 function itemInStock(item) {
-    return item.type === "sublimation" || !!item.inventory?.inventory?.inStock?.includes(item._id.toString());
+    return item.type === "sublimation" || item.stockStatus === "inStock";
 }
 
 function orderStats(order) {
@@ -194,9 +194,9 @@ function OrderRow({ order, index }) {
                             const items = order.items.filter(i => i.bulkId === bulkId && i.canceled == false);
                             const inv = items[0]?.inventory?.inventory;
                             const isSub = items[0]?.type === "sublimation";
-                            const groupInStock = isSub ? items.length : items.filter(i => inv?.inStock?.includes(i._id.toString())).length;
-                            const needsOrdered = isSub ? 0 : items.filter(i => inv?.attached?.includes(i._id.toString())).length;
-                            const ordered = isSub ? 0 : (inv?.orders?.map(o => o.items.filter(i => items.map(it => it._id.toString()).includes(i.toString())).length).reduce((a, c) => a + c, 0) ?? 0);
+                            const groupInStock = isSub ? items.length : items.filter(i => i.stockStatus === "inStock").length;
+                            const ordered      = isSub ? 0 : items.filter(i => i.stockStatus === "ordered").length;
+                            const needsOrdered = isSub ? 0 : items.length - groupInStock - ordered;
                             const labelsOut = items.filter(i => i.labelPrinted).length;
                             const skuDisplay = isSub ? items[0]?.sku : inv?.inventory_id;
 

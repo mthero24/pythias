@@ -1,0 +1,15 @@
+export declare function createMug(item: any): Promise<{ base64: string; folder: string }>;
+export declare function createCoster(url: string, bgColor: string, sku: string, index?: number): Promise<Buffer>;
+export declare function createMousePad(url: string, bgColor: string, sku: string): Promise<Buffer>;
+export declare function createPoster(url: string, bgColor: string, size: string, sku: string): Promise<{ base64: string; folder: string }>;
+export declare function createCanvasPrint(url: string, bgColor: string, size: string, sku: string, full?: boolean): Promise<{ base64: string; folder: string; ext: string }>;
+export declare function createBeerStein(url: string, widthInches: number, heightInches: number, backUrl: string | null, sku: string, shipping: string, qty: number): Promise<{ base64: string; folder: string }>;
+export declare function createHat(url: string, sku: string, color: string, shipping: string, qty: number): Promise<{ base64: string; folder: string }>;
+export declare function createSSB(url: string, sku: string, size: string, shipping: string, qty: number, code: string): Promise<{ base64: string; folder: string }>;
+export declare function createOrn(bgColor: string, url: string, heightInches: number, widthInches: number, margin: number, offsetTop: number, sku: string, style: string, shipping: string, qty: number): Promise<{ base64: string; folder: string }>;
+export declare function setupBears(colorName: string, design_url: string, sku: string, code: string, shipping: string, qty: number): Promise<{ base64: string; folder: string }>;
+export declare function setupSocks(design_url: string, color: string, sku: string): Promise<{ base64: string; folder: string; ext: string }>;
+export declare function setupWrappingPaper(width: number, design_url: string, sku: string, color: string): Promise<{ base64: string; folder: string }>;
+export declare function processEpsonPair(items: any[]): Promise<{ base64: string; folder: string }>;
+export declare function processItem(item: any): Promise<{ base64: string; folder: string; ext?: string }>;
+export declare function createButtonsPdf(poNumber: string, buttons: any[]): Promise<{ base64: string; folder: string }>;

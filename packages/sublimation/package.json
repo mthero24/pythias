@@ -4,7 +4,12 @@
   "main": "index.js",
   "private": true,
   "exports": {
-    ".": "./exports"
+    ".": "./exports",
+    "./client": "./client.js",
+    "./server": {
+      "types": "./server.d.ts",
+      "default": "./server.js"
+    }
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -15,10 +20,11 @@
   "dependencies": {
     "atob": "^2.1.2",
     "btoa": "^1.2.1",
-    "changedpi": "^1.0.4",
+    "canvas": "^2.11.2",
     "concat-stream": "^2.0.0",
-    "jimp": "^1.6.0",
+    "jspdf": "^2.5.1",
     "path": "^0.12.7",
-    "pdfkit": "^0.16.0"
+    "pdfkit": "^0.16.0",
+    "sharp": "^0.33.5"
   }
 }

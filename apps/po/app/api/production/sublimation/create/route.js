@@ -2,16 +2,16 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
-import { createMug } from "@pythias/sublimation/server";
+import { processItem } from "@pythias/sublimation/server";
 
-async function pushToFileWriter(base64, pieceId, folder) {
+async function pushToFileWriter(base64, pieceId, folder, ext) {
   const res = await fetch(`http://${process.env.localIP}/api/sublimation`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${process.env.localKey}`,
     },
-    body: JSON.stringify({ base64, pieceId, folder, printer: "printer1" }),
+    body: JSON.stringify({ base64, pieceId, folder, ext, printer: "printer1" }),
   });
   return res.json().catch(() => ({}));
 }
@@ -21,15 +21,10 @@ export async function POST(req) {
   const { userName, email } = userFromToken(token);
   const { item } = await req.json();
 
-  const MUG_CODES = ["CFM", "TMUG", "BYEH300W", "21150"];
-  if (!MUG_CODES.includes(item.styleCode)) {
-    return NextResponse.json({ error: true, msg: "Not a mug style code" });
-  }
-
   try {
-    const { base64, folder } = await createMug(item);
-    await pushToFileWriter(base64, item.pieceId, folder);
-    logActivity({ action: "sublimation_sent", entity: "order", entityName: item.pieceId, userName, email, provider: "po" });
+    const result = await processItem(item);
+    await pushToFileWriter(result.base64, item.pieceId, result.folder, result.ext);
+    logActivity({ action: "sublimation_create", entity: "order", entityName: item.pieceId, userName, email, provider: "po" });
     return NextResponse.json({ error: false });
   } catch (e) {
     console.error(e);

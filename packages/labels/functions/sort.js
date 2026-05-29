@@ -1,35 +1,43 @@
+export function Sort(list, source) {
+    // Pre-compute all sort keys once per item (called O(n) times)
+    // rather than re-computing inside the comparator (called O(n log n) times)
+    const keyed = list.map(item => ({
+        item,
+        shippingType: (item.shippingType || "").toUpperCase(),
+        type:         (item.type || "").toUpperCase(),
+        designSku:    (item.designRef?.sku || "").toUpperCase(),
+        threadColor:  (item.threadColorName || "").toUpperCase(),
+        row:          parseInt(item.inventory?.inventory?.row  || 0),
+        unit:         (item.inventory?.inventory?.unit  || "").toUpperCase(),
+        shelf:        parseInt(item.inventory?.inventory?.shelf || 0),
+        productLoc:   item.inventory?.productInventory?.location || "",
+        bin:          (item.inventory?.bin || "").toUpperCase(),
+        styleCode:    (item.styleCode || "").toUpperCase(),
+        vendor:       (item.vendor || "").toUpperCase(),
+        colorName:    (item.colorName || "").toUpperCase(),
+        sizeName:     (item.sizeName || "").toUpperCase(),
+    }));
 
-export function Sort(list, source){
-    return list.sort((a,b)=>{
-        if(source == "PO"){
-            if(a.shippingType?.toUpperCase() > b.shippingType?.toUpperCase()) return 1
-            if(a.shippingType?.toUpperCase() < b.shippingType?.toUpperCase()) return -1
+    keyed.sort((a, b) => {
+        if (source === "PO") {
+            if (a.shippingType !== b.shippingType) return a.shippingType < b.shippingType ? -1 : 1;
         }
-        if(a.type?.toUpperCase() > b.type?.toUpperCase()) return 1
-        if(a.type?.toUpperCase() < b.type?.toUpperCase()) return -1
-        if(source == "IM"){
-            if(a.designRef?.sku?.toUpperCase() > b.designRef?.sku?.toUpperCase()) return 1
-            if(a.designRef?.sku?.toUpperCase()< b.designRef?.sku?.toUpperCase()) return -1
-            if(a.threadColorName?.toUpperCase() > b.threadColorName?.toUpperCase()) return 1
-            if(a.threadColorName?.toUpperCase()< b.threadColorName?.toUpperCase()) return -1
-        } if (parseInt(a.inventory?.inventory?.row ? a.inventory?.inventory?.row : 0) > parseInt(b.inventory?.inventory?.row ? b.inventory?.inventory?.row : 0)) return 1
-        if (parseInt(a.inventory?.inventory?.row ? a.inventory?.inventory?.row : 0) < parseInt(b.inventory?.inventory?.row ? b.inventory?.inventory?.row : 0)) return -1
-        if (a.inventory?.inventory?.unit?.toUpperCase() > b.inventory?.inventory?.unit?.toUpperCase()) return 1
-        if (a.inventory?.inventory?.unit?.toUpperCase() < b.inventory?.inventory?.unit?.toUpperCase()) return -1
-        if (parseInt(a.inventory?.inventory?.shelf ? a.inventory?.inventory?.shelf : 0) > parseInt(b.inventory?.inventory?.shelf ? b.inventory?.inventory?.shelf : 0)) return 1
-        if (parseInt(a.inventory?.inventory?.shelf ? a.inventory?.inventory?.shelf : 0) < parseInt(b.inventory?.inventory?.shelf ? b.inventory?.inventory?.shelf : 0)) return -1
-        if(a.inventory?.productInventory?.location > b.inventory?.productInventory?.location) return 1
-        if(a.inventory?.productInventory?.location < b.inventory?.productInventory?.location) return -1
-        if (a.inventory?.bin?.toUpperCase() > b.inventory?.bin?.toUpperCase()) return 1
-        if (a.inventory?.bin?.toUpperCase() < b.inventory?.bin?.toUpperCase()) return -1
-        if (a.styleCode?.toUpperCase() > b.styleCode?.toUpperCase()) return 1
-        if (a.styleCode?.toUpperCase() < b.styleCode?.toUpperCase()) return -1
-        if (a.vendor?.toUpperCase() > b.vendor?.toUpperCase()) return 1;
-        if (a.vendor?.toUpperCase() < b.vendor?.toUpperCase()) return -1;
-        if(a.colorName?.toUpperCase() > b.colorName?.toUpperCase()) return 1
-        if(a.colorName?.toUpperCase()< b.colorName?.toUpperCase()) return -1
-        if(a.sizeName?.toUpperCase() > b.sizeName?.toUpperCase()) return 1
-        if(a.sizeName?.toUpperCase() < b.sizeName?.toUpperCase()) return -1
-        return 0  
-    })
+        if (a.type !== b.type) return a.type < b.type ? -1 : 1;
+        if (source === "IM") {
+            if (a.designSku !== b.designSku)   return a.designSku   < b.designSku   ? -1 : 1;
+            if (a.threadColor !== b.threadColor) return a.threadColor < b.threadColor ? -1 : 1;
+        }
+        if (a.row   !== b.row)   return a.row   - b.row;
+        if (a.unit  !== b.unit)  return a.unit  < b.unit  ? -1 : 1;
+        if (a.shelf !== b.shelf) return a.shelf - b.shelf;
+        if (a.productLoc !== b.productLoc) return a.productLoc < b.productLoc ? -1 : 1;
+        if (a.bin   !== b.bin)   return a.bin   < b.bin   ? -1 : 1;
+        if (a.styleCode !== b.styleCode) return a.styleCode < b.styleCode ? -1 : 1;
+        if (a.vendor    !== b.vendor)    return a.vendor    < b.vendor    ? -1 : 1;
+        if (a.colorName !== b.colorName) return a.colorName < b.colorName ? -1 : 1;
+        if (a.sizeName  !== b.sizeName)  return a.sizeName  < b.sizeName  ? -1 : 1;
+        return 0;
+    });
+
+    return keyed.map(k => k.item);
 }
