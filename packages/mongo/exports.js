@@ -59,3 +59,4 @@ export { default as BillingCustomer } from "./models/BillingCustomer";
 export { default as AdditionalFees } from "./models/additionalFees";
 export { default as Expense } from "./models/Expense";
 export { default as CESale } from "./models/CESale";
+export { default as Settings } from "./models/Settings";

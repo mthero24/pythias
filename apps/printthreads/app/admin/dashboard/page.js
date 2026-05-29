@@ -6,7 +6,7 @@ import {
     Card, CardContent, Grid2, Tabs, Tab, Table, TableHead, TableBody,
     TableRow, TableCell, TableSortLabel, TablePagination, Chip,
     CircularProgress, LinearProgress, Paper, Select, MenuItem,
-    TextField, FormControl,
+    TextField, FormControl, Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment,
 } from "@mui/material";
 import { LineChart, BarChart, PieChart } from "@mui/x-charts";
 import DashboardIcon              from "@mui/icons-material/Dashboard";
@@ -535,20 +535,32 @@ function fmtRate(marketplace) {
 function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, costItemsData, costItemsSortField, costItemsSortDir, onCostItemsPageChange, onCostItemsPageSizeChange, onCostItemsSortChange, detailView, onDetailViewChange, itemCountByMarketplace = {}, itemsByMarketplaceAndStyle = {}, inventoryValue }) {
     const { orders, total, page, pageSize, loading } = ordersData;
 
+    const [feeRates, setFeeRates] = useState(MARKETPLACE_FEE_RATES);
+    useEffect(() => {
+        fetch("/api/admin/settings/fee-rates")
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.value) setFeeRates(d.value); })
+            .catch(() => {});
+    }, []);
+    const [feeModalOpen, setFeeModalOpen] = useState(false);
+    const [feeRatesDraft, setFeeRatesDraft] = useState({});
+    const estimateFeeLocal = (order) => (order.total || 0) * (feeRates[(order.marketplace || "").toLowerCase()] ?? 0);
+    const fmtRateLocal = (mp) => { const r = feeRates[(mp || "").toLowerCase()]; return r != null ? `~${(r * 100).toFixed(1)}%` : "—"; };
+
     const totalFees = useMemo(() =>
-        byMarketplace.reduce((s, mp) => s + mp.revenue * (MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0), 0),
-    [byMarketplace]);
+        byMarketplace.reduce((s, mp) => s + mp.revenue * (feeRates[(mp.marketplace || "").toLowerCase()] ?? 0), 0),
+    [byMarketplace, feeRates]);
     const totalCogs = useMemo(() => Object.values(cogsByMarketplace).reduce((s, v) => s + v, 0), [cogsByMarketplace]);
     const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs;
 
     const mpRows = useMemo(() =>
         byMarketplace.map((mp) => {
-            const rate = MARKETPLACE_FEE_RATES[(mp.marketplace || "").toLowerCase()] ?? 0;
+            const rate = feeRates[(mp.marketplace || "").toLowerCase()] ?? 0;
             const fees = mp.revenue * rate;
             const cogs = cogsByMarketplace[mp.marketplace] || 0;
             return { ...mp, fees, cogs, net: mp.revenue - mp.shipping - fees - cogs };
         }),
-    [byMarketplace, cogsByMarketplace]);
+    [byMarketplace, cogsByMarketplace, feeRates]);
 
     const revFormatter = (v) => `$${(v ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
     const netHeight = Math.max(240, mpRows.length * 36 + 60);
@@ -558,7 +570,7 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         { key: "orders",   label: "Orders",       align: "right" },
         { key: "revenue",  label: "Revenue",      align: "right", render: (r) => fmt(r.revenue) },
         { key: "shipping", label: "Shipping",     align: "right", render: (r) => fmt(r.shipping) },
-        { key: "rate",     label: "Fee Rate",     align: "right", getValue: (r) => MARKETPLACE_FEE_RATES[(r.marketplace || "").toLowerCase()] ?? -1, render: (r) => fmtRate(r.marketplace) },
+        { key: "rate",     label: "Fee Rate",     align: "right", getValue: (r) => feeRates[(r.marketplace || "").toLowerCase()] ?? -1, render: (r) => fmtRateLocal(r.marketplace) },
         { key: "fees",     label: "Est. MP Fees", align: "right", render: (r) => fmt(r.fees) },
         { key: "cogs",     label: "Blank COGS",   align: "right", render: (r) => fmt(r.cogs) },
         { key: "net",      label: "Net",          align: "right", render: (r) => (
@@ -574,9 +586,9 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         { key: "colorName",    serverKey: "colorName", label: "Color" },
         { key: "price",        serverKey: "price",     label: "Price Sold",  align: "right", render: (i) => fmt(i.price) },
         { key: "wholesaleCost", label: "Blank COGS",   align: "right",       render: (i) => fmt(i.wholesaleCost) },
-        { key: "mpFee",        label: "Est. MP Fees",  align: "right",       render: (i) => fmt((i.price || 0) * (MARKETPLACE_FEE_RATES[(i.marketplace || "").toLowerCase()] ?? 0)) },
+        { key: "mpFee",        label: "Est. MP Fees",  align: "right",       render: (i) => fmt((i.price || 0) * (feeRates[(i.marketplace || "").toLowerCase()] ?? 0)) },
         { key: "net",          label: "Net",           align: "right",       render: (i) => {
-            const mpFee = (i.price || 0) * (MARKETPLACE_FEE_RATES[(i.marketplace || "").toLowerCase()] ?? 0);
+            const mpFee = (i.price || 0) * (feeRates[(i.marketplace || "").toLowerCase()] ?? 0);
             const n = (i.price || 0) - (i.wholesaleCost || 0) - mpFee;
             return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
         }},
@@ -588,10 +600,10 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         { key: "marketplace", serverKey: "marketplace", label: "Channel",     render: (o) => o.marketplace || "—" },
         { key: "total",       serverKey: "total",       label: "Revenue",     align: "right", render: (o) => fmt(o.total) },
         { key: "shipping",    label: "Shipping",        align: "right",       render: (o) => fmt(o.shippingCost) },
-        { key: "fees",        label: "Est. MP Fees",    align: "right",       render: (o) => fmt(estimateFee(o)) },
+        { key: "fees",        label: "Est. MP Fees",    align: "right",       render: (o) => fmt(estimateFeeLocal(o)) },
         { key: "blanksCogs",  label: "Blank COGS",      align: "right",       render: (o) => fmt(o.blanksCogs) },
         { key: "net",         label: "Net",             align: "right",       render: (o) => {
-            const n = (o.total || 0) - (o.shippingCost || 0) - estimateFee(o) - (o.blanksCogs || 0);
+            const n = (o.total || 0) - (o.shippingCost || 0) - estimateFeeLocal(o) - (o.blanksCogs || 0);
             return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
         }},
     ];
@@ -643,8 +655,9 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
             </Grid2>
 
             <Paper variant="outlined" sx={{ mb: 3 }}>
-                <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>By Marketplace</Typography>
+                    <Button size="small" variant="outlined" onClick={() => { setFeeRatesDraft(Object.fromEntries(Object.entries(feeRates).map(([k, v]) => [k, (v * 100).toFixed(1)]))); setFeeModalOpen(true); }}>Edit Fee Rates</Button>
                 </Box>
                 <SortableTable columns={mpColumns} rows={mpRows} defaultSort="revenue" />
             </Paper>
@@ -726,6 +739,53 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
                     />
                 )}
             </Paper>
+
+            <Dialog open={feeModalOpen} onClose={() => setFeeModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Marketplace Fee Rates</DialogTitle>
+                <DialogContent>
+                    <Table size="small">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ fontWeight: 600 }}>Marketplace</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600 }}>Rate</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {Object.keys(feeRatesDraft).map((mp) => (
+                                <TableRow key={mp}>
+                                    <TableCell sx={{ textTransform: "capitalize" }}>{mp}</TableCell>
+                                    <TableCell align="right" sx={{ width: 100 }}>
+                                        <TextField
+                                            size="small"
+                                            value={feeRatesDraft[mp] ?? ""}
+                                            onChange={(e) => setFeeRatesDraft(d => ({ ...d, [mp]: e.target.value }))}
+                                            InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+                                            sx={{ width: 90 }}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setFeeModalOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={() => {
+                        const next = {};
+                        for (const [k, v] of Object.entries(feeRatesDraft)) {
+                            const n = parseFloat(v);
+                            next[k] = isNaN(n) ? 0 : n / 100;
+                        }
+                        setFeeRates(next);
+                        fetch("/api/admin/settings/fee-rates", {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ value: next }),
+                        }).catch(() => {});
+                        setFeeModalOpen(false);
+                    }}>Save</Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 }
