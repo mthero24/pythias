@@ -1,14 +1,19 @@
 import Items from "../../../../models/Items";
 import Bin from "../../../../models/Bin";
-import {Inventory} from "@pythias/mongo";
-import {RepullReasons} from "@pythias/mongo";
+import StyleV2 from "../../../../models/StyleV2";
+import { Inventory, RepullReasons } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import inventory from "@/models/inventory";
 import { getToken } from "next-auth/jwt";
 import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
 export async function GET(){
-    console.log("GET REASONS")
-    return NextResponse.json({ error: false, reasons: await RepullReasons.find()})
+    const [reasons, blanks] = await Promise.all([
+        RepullReasons.find(),
+        StyleV2.find({ active: { $ne: false } }, "code sizes colors")
+            .populate("colors", "name")
+            .lean(),
+    ]);
+    return NextResponse.json({ error: false, reasons, blanks });
 }
 export async function POST(req=NextApiRequest){
     const token = await getToken({ req });
@@ -22,8 +27,8 @@ export async function POST(req=NextApiRequest){
         item.folded = false
         item.rePulled = true,
         item.shipped = false,
-        item.steps = []
-        item.rePulledTimes++
+        item.steps.push({ status: "Re-Pulled", date: new Date() })
+        item.rePulledTimes = (item.rePulledTimes || 0) + 1;
         if(!item.rePulledReasons) item.rePulledReasons = []
         item.rePulledReasons.push(data.reason)
         let bin = await Bin.findOne({order: item.order})
@@ -32,7 +37,7 @@ export async function POST(req=NextApiRequest){
             bin.ready = false
             await bin.save()
         }
-        let inv = await Inventory.findOne({ _id: item.inventory.inventory });
+        let inv = item.inventory?.inventory ? await Inventory.findOne({ _id: item.inventory.inventory }) : null;
         if (!inv) inv = await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) });
         if (inv) {
             if(inv.quantity > 0 && inv.inStock.length < inv.quantity){

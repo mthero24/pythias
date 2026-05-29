@@ -26,8 +26,8 @@ function getStatusMeta(status) {
 
 function trackingLabel(trackingInfo) {
     if (!trackingInfo || trackingInfo.length === 0) return "No tracking yet";
-    const first = trackingInfo.find(e => typeof e === "string");
-    return first ?? "No tracking yet";
+    const events = trackingInfo.filter(e => typeof e === "string");
+    return events.at(-1) ?? "No tracking yet";
 }
 
 export function Refund({ ords, pa }) {

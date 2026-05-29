@@ -10,7 +10,7 @@ export default async function ShippingLabels() {
         date: { $gt: cutoff },
         status: { $ne: "Delivered" },
     })
-        .sort({ date: 1 })
+        .sort({ date: -1 })
         .select("shippingInfo date poNumber status")
         .limit(400)
         .lean();
