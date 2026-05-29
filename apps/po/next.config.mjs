@@ -34,7 +34,7 @@ const nextConfig = {
     };
     if (isServer) {
       config.externals.push(({ request }, callback) => {
-        if (request === "sharp" || (request && request.startsWith("@img/sharp"))) {
+        if (request === "sharp" || request === "canvas" || request === "jspdf" || (request && request.startsWith("@img/sharp"))) {
           return callback(null, `commonjs ${request}`);
         }
         callback();
@@ -42,7 +42,7 @@ const nextConfig = {
     }
     return config;
   },
-  serverExternalPackages: ["sharp", "pdfkit", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns"],
+  serverExternalPackages: ["sharp", "pdfkit", "canvas", "jspdf", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns"],
   transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
 };
 
