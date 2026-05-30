@@ -2,10 +2,11 @@
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, Stack, Alert, Typography, Box, IconButton,
-    Accordion, AccordionSummary, AccordionDetails,
+    Accordion, AccordionSummary, AccordionDetails, Switch, FormControlLabel,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useState } from "react";
 
 const SETUP_STEPS = [
     {
@@ -26,7 +27,9 @@ const SETUP_STEPS = [
 ];
 
 export function EbayModal({ open, setOpen }) {
+    const [sandbox, setSandbox] = useState(false);
     const handleClose = () => setOpen(false);
+    const href = `/api/integrations/ebay/oauth/init${sandbox ? "?sandbox=1" : ""}`;
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -63,16 +66,34 @@ export function EbayModal({ open, setOpen }) {
                                 </Stack>
                             ))}
                             <Alert severity="info" sx={{ mt: 0.5, fontSize: "0.75rem", py: 0.5 }}>
-                                eBay uses OAuth — no API key to copy. You'll be redirected to eBay's authorization page and returned automatically.
+                                eBay uses OAuth — no API key to copy. You&apos;ll be redirected to eBay&apos;s authorization page and returned automatically.
                             </Alert>
                         </Stack>
                     </AccordionDetails>
                 </Accordion>
 
                 <Box sx={{ px: 3, py: 2.5 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, mb: 2 }}>
                         Clicking the button below will redirect you to eBay to sign in and authorize Pythias Technologies. After you approve, eBay will redirect you back and your store will be connected.
                     </Typography>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={sandbox}
+                                onChange={e => setSandbox(e.target.checked)}
+                                size="small"
+                                sx={{
+                                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#92400e" },
+                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#d97706" },
+                                }}
+                            />
+                        }
+                        label={
+                            <Typography variant="body2" color={sandbox ? "warning.dark" : "text.secondary"} fontWeight={sandbox ? 600 : 400}>
+                                {sandbox ? "Sandbox mode — connects to eBay sandbox" : "Production mode"}
+                            </Typography>
+                        }
+                    />
                 </Box>
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2 }}>
@@ -80,10 +101,13 @@ export function EbayModal({ open, setOpen }) {
                 <Button
                     variant="contained"
                     component="a"
-                    href="/api/integrations/ebay/oauth/init"
-                    sx={{ bgcolor: "#E53238", "&:hover": { bgcolor: "#c0282d" } }}
+                    href={href}
+                    sx={{
+                        bgcolor: sandbox ? "#d97706" : "#E53238",
+                        "&:hover": { bgcolor: sandbox ? "#b45309" : "#c0282d" },
+                    }}
                 >
-                    Connect with eBay
+                    {sandbox ? "Connect with eBay Sandbox" : "Connect with eBay"}
                 </Button>
             </DialogActions>
         </Dialog>
