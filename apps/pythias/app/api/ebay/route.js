@@ -28,6 +28,8 @@ export async function GET(req) {
         return NextResponse.redirect(`${adminUrl}?error=ebay_auth_failed`);
     }
 
+    console.log("[eBay OAuth] exchanging code, sandbox:", sandbox, "provider:", provider, "ruName env present:", sandbox ? !!process.env.ebayRuNameSandbox : !!process.env.ebayRuName, "clientId env present:", sandbox ? !!process.env.ebayClientIdSandbox : !!process.env.ebayClientId);
+
     try {
         const tokens = await exchangeCodeEbay(code, { sandbox });
 
@@ -52,7 +54,8 @@ export async function GET(req) {
 
         return NextResponse.redirect(adminUrl);
     } catch (e) {
-        console.error("[eBay OAuth] exchange error:", e.message);
-        return NextResponse.json({ error: e.toString() }, { status: 500 });
+        const ebayBody = e.response?.data;
+        console.error("[eBay OAuth] exchange error:", e.message, "eBay response:", JSON.stringify(ebayBody));
+        return NextResponse.json({ error: e.toString(), ebay: ebayBody }, { status: 500 });
     }
 }
