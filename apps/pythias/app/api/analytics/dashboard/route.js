@@ -28,6 +28,7 @@ export async function GET(req) {
         uniqueSessions,
         humanSessions,
         topPages,
+        modeTimePerPage,
         topSources,
         vitalsPerPage,
         trafficByDay,
@@ -45,13 +46,32 @@ export async function GET(req) {
         PageView.aggregate([
             { $match: matchHuman },
             { $group: {
-                _id: "$page",
+                _id:     "$page",
                 views:   { $sum: 1 },
                 avgTime: { $avg: "$timeOnPage" },
+                maxTime: { $max: "$timeOnPage" },
+                minTime: { $min: { $cond: [{ $gt: ["$timeOnPage", 0] }, "$timeOnPage", null] } },
                 exits:   { $sum: { $cond: [{ $gt: ["$timeOnPage", null] }, 1, 0] } },
             }},
             { $sort: { views: -1 } },
             { $limit: 15 },
+        ]),
+
+        // Mode time per page — bucket to 30s, pick most frequent bucket
+        PageView.aggregate([
+            { $match: { ...matchHuman, timeOnPage: { $gt: 0 } } },
+            { $group: {
+                _id: {
+                    page:   "$page",
+                    bucket: { $multiply: [{ $round: [{ $divide: ["$timeOnPage", 30] }, 0] }, 30] },
+                },
+                count: { $sum: 1 },
+            }},
+            { $sort: { count: -1 } },
+            { $group: {
+                _id:      "$_id.page",
+                modeTime: { $first: "$_id.bucket" },
+            }},
         ]),
 
         // Traffic sources
@@ -120,7 +140,7 @@ export async function GET(req) {
         : 0;
 
     const matchConversions = { occurredAt: { $gte: since } };
-    const [totalConversions, conversionsBySource, conversionsByDay] = await Promise.all([
+    const [totalConversions, conversionsBySource, conversionsByDay, blogViews, blogReads] = await Promise.all([
         Conversion.countDocuments(matchConversions),
         Conversion.aggregate([
             { $match: matchConversions },
@@ -132,6 +152,20 @@ export async function GET(req) {
             { $match: matchConversions },
             { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$occurredAt" } }, count: { $sum: 1 } } },
             { $sort: { _id: 1 } },
+        ]),
+
+        // Blog post views
+        PageView.aggregate([
+            { $match: { ...matchHuman, page: { $regex: "^/blog/." } } },
+            { $group: { _id: "$page", views: { $sum: 1 }, avgTime: { $avg: "$timeOnPage" } } },
+            { $sort: { views: -1 } },
+            { $limit: 20 },
+        ]),
+
+        // Blog reads (scrolled to bottom + 30s)
+        Conversion.aggregate([
+            { $match: { ...matchConversions, conversionEvent: "blog_read" } },
+            { $group: { _id: "$page", reads: { $sum: 1 } } },
         ]),
     ]);
 
@@ -156,7 +190,17 @@ export async function GET(req) {
             bySource: conversionsBySource.map(c => ({ source: c._id || "direct", count: c.count })),
             byDay:    conversionsByDay.map(c => ({ date: c._id, count: c.count })),
         },
-        topPages:       topPages.map(p => ({ page: p._id, views: p.views, avgTime: Math.round(p.avgTime ?? 0) })),
+        topPages:       (() => {
+            const modeMap = new Map(modeTimePerPage.map(m => [m._id, m.modeTime]));
+            return topPages.map(p => ({
+                page:     p._id,
+                views:    p.views,
+                avgTime:  Math.round(p.avgTime  ?? 0),
+                maxTime:  Math.round(p.maxTime  ?? 0),
+                minTime:  Math.round(p.minTime  ?? 0),
+                modeTime: Math.round(modeMap.get(p._id) ?? 0),
+            }));
+        })(),
         topSources:     topSources.map(s => ({ source: s._id || "direct", count: s.count })),
         vitalsPerPage:  vitalsPerPage.map(v => ({
             page:        v._id,
@@ -170,6 +214,22 @@ export async function GET(req) {
         })),
         trafficByDay:   trafficByDay.map(d => ({ date: d._id, views: d.views })),
         botReasons:     botReasons.map(b => ({ reason: b._id || "unknown", count: b.count })),
+        blogPosts: (() => {
+            const readsMap = new Map(blogReads.map(r => [r._id, r.reads]));
+            return blogViews.map(p => {
+                const slug  = p._id.replace("/blog/", "");
+                const reads = readsMap.get(p._id) ?? 0;
+                return {
+                    slug,
+                    page:        p._id,
+                    views:       p.views,
+                    reads,
+                    readRate:    p.views > 0 ? Math.round((reads / p.views) * 100) : 0,
+                    avgTime:     Math.round(p.avgTime ?? 0),
+                };
+            }).sort((a, b) => b.reads - a.reads || b.views - a.views);
+        })(),
+
         recentSessions: recentSessions.map(s => ({
             sessionId:  s.sessionId,
             startedAt:  s.startedAt,

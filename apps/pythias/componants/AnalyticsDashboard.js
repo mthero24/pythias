@@ -160,7 +160,10 @@ export default function AnalyticsDashboard() {
                                     <TableRow sx={{ bgcolor: "action.hover" }}>
                                         <TableCell><strong>Page</strong></TableCell>
                                         <TableCell align="right"><strong>Views</strong></TableCell>
-                                        <TableCell align="right"><strong>Avg Time</strong></TableCell>
+                                        <TableCell align="right"><strong>Avg</strong></TableCell>
+                                        <TableCell align="right"><strong>Shortest</strong></TableCell>
+                                        <TableCell align="right"><strong>Longest</strong></TableCell>
+                                        <TableCell align="right"><strong>Mode</strong></TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -169,6 +172,9 @@ export default function AnalyticsDashboard() {
                                             <TableCell sx={{ fontFamily: "monospace", fontSize: "0.78rem", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.page || "/"}</TableCell>
                                             <TableCell align="right">{p.views}</TableCell>
                                             <TableCell align="right">{fmtTime(p.avgTime)}</TableCell>
+                                            <TableCell align="right" sx={{ color: "success.main", fontSize: "0.75rem" }}>{p.minTime > 0 ? fmtTime(p.minTime) : "—"}</TableCell>
+                                            <TableCell align="right" sx={{ color: "warning.main", fontSize: "0.75rem" }}>{p.maxTime > 0 ? fmtTime(p.maxTime) : "—"}</TableCell>
+                                            <TableCell align="right" sx={{ color: "text.secondary", fontSize: "0.75rem" }}>{p.modeTime > 0 ? fmtTime(p.modeTime) : "—"}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -199,6 +205,39 @@ export default function AnalyticsDashboard() {
                             </Table>
                         </Paper>
                     </Box>
+
+                    {/* ── Blog Posts ── */}
+                    {data.blogPosts?.length > 0 && (
+                        <Paper variant="outlined" sx={{ mb: 4 }}>
+                            <Typography variant="subtitle1" fontWeight={700} sx={{ p: 2, pb: 1 }}>Blog Posts</Typography>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow sx={{ bgcolor: "action.hover" }}>
+                                        <TableCell><strong>Article</strong></TableCell>
+                                        <TableCell align="right"><strong>Views</strong></TableCell>
+                                        <TableCell align="right"><strong>Reads</strong></TableCell>
+                                        <TableCell align="right"><strong>Read-through</strong></TableCell>
+                                        <TableCell align="right"><strong>Avg Time</strong></TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {data.blogPosts.map(p => (
+                                        <TableRow key={p.page} hover>
+                                            <TableCell sx={{ fontFamily: "monospace", fontSize: "0.78rem", maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.slug}</TableCell>
+                                            <TableCell align="right">{p.views}</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 600, color: p.reads > 0 ? "primary.main" : "text.disabled" }}>{p.reads}</TableCell>
+                                            <TableCell align="right">
+                                                <Box component="span" sx={{ color: p.readRate >= 50 ? "success.main" : p.readRate >= 20 ? "warning.main" : "text.secondary", fontWeight: 600, fontSize: "0.78rem" }}>
+                                                    {p.readRate}%
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell align="right">{fmtTime(p.avgTime)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Paper>
+                    )}
 
                     {/* ── Core Web Vitals ── */}
                     {data.vitalsPerPage.length > 0 && (

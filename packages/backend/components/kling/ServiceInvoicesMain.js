@@ -86,7 +86,7 @@ function PayDialog({ invoice, onClose }) {
     );
 }
 
-function InvoiceRow({ invoice, showClient }) {
+function InvoiceRow({ invoice, showClient, canPay }) {
     const [expanded, setExpanded] = useState(false);
     const [payOpen, setPayOpen] = useState(false);
     const complete = isComplete(invoice.month, invoice.year);
@@ -115,7 +115,7 @@ function InvoiceRow({ invoice, showClient }) {
                 </TableCell>
                 <TableCell>
                     <Stack direction="row" spacing={1}>
-                        {!isPaid && (
+                        {!isPaid && canPay && (
                             <Button size="small" variant="contained" color="primary"
                                 startIcon={<PaymentIcon fontSize="small" />}
                                 onClick={() => setPayOpen(true)} sx={{ whiteSpace: "nowrap" }}>
@@ -221,7 +221,7 @@ function GenerateDialog({ onClose, onGenerate }) {
     );
 }
 
-export function ServiceInvoicesMain({ initialInvoices, canGenerate = false }) {
+export function ServiceInvoicesMain({ initialInvoices, canGenerate = false, canPay = false }) {
     const [invoices, setInvoices] = useState(initialInvoices);
     const [generateOpen, setGenerateOpen] = useState(false);
     const [error, setError] = useState(null);
@@ -295,7 +295,7 @@ export function ServiceInvoicesMain({ initialInvoices, canGenerate = false }) {
                             </TableHead>
                             <TableBody>
                                 {invoices.map(inv => (
-                                    <InvoiceRow key={inv._id} invoice={inv} showClient={canGenerate} />
+                                    <InvoiceRow key={inv._id} invoice={inv} showClient={canGenerate} canPay={canPay} />
                                 ))}
                             </TableBody>
                         </Table>

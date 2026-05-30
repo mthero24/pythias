@@ -46,6 +46,14 @@ const CATEGORIES = [
                 highlight: "Direct API",
             },
             {
+                name: "eBay",
+                logo: "/ebay.svg",
+                logoBg: null,
+                status: "live",
+                description: "Full eBay Sell API integration — pull orders, ship with tracking, manage listings, analytics, finances, messages, feedback, and disputes from one dashboard.",
+                highlight: "Full API",
+            },
+            {
                 name: "Wayfair",
                 logo: "/wayfair.svg",
                 logoBg: null,
@@ -227,20 +235,6 @@ const CATEGORIES = [
                 status: "live",
                 description: "The UK's fastest-growing marketplace and a strong Amazon alternative for British shoppers. Direct seller API integration.",
                 highlight: "UK Market",
-            },
-        ],
-    },
-    {
-        label: "Coming Soon",
-        description: "On our roadmap — integrations we're building or evaluating.",
-        integrations: [
-            {
-                name: "eBay",
-                logo: "/ebay.svg",
-                logoBg: null,
-                status: "soon",
-                description: "Pull unfulfilled eBay orders and confirm shipments via the eBay Sell Fulfillment API. OAuth-based seller integration coming soon.",
-                highlight: "Sell API",
             },
         ],
     },

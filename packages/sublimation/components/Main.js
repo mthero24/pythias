@@ -158,9 +158,10 @@ function ItemCard({ item, station, sending, onSend, sendLabel, onMarkShipped, ma
   );
 }
 
-export function Main({ labels, station }) {
+export function Main({ labels: initialLabels, station }) {
+  const [labels, setLabels] = useState(initialLabels);
   const [tab, setTab] = useState(() => {
-    const first = TABS.find(t => (labels[t.key]?.length || 0) > 0);
+    const first = TABS.find(t => (initialLabels[t.key]?.length || 0) > 0);
     return first?.key || "sublimation";
   });
   const [sending, setSending] = useState({});
@@ -168,6 +169,12 @@ export function Main({ labels, station }) {
 
   const showSnack = (msg, severity = "success") => setSnack({ open: true, msg, severity });
   const mark = (id, val) => setSending(p => ({ ...p, [id]: val }));
+
+  const removeItem = (itemId) => setLabels(prev => {
+    const next = {};
+    for (const k of Object.keys(prev)) next[k] = prev[k].filter(i => i._id !== itemId);
+    return next;
+  });
 
   const buttonGroups = useMemo(() => {
     const map = {};
@@ -292,7 +299,7 @@ export function Main({ labels, station }) {
     try {
       const { data } = await axios.post("/api/production/sublimation/mark-shipped", { pieceId: item.pieceId });
       if (data?.error) showSnack("Mark shipped failed", "error");
-      else showSnack(`Marked shipped: ${item.pieceId}`);
+      else { removeItem(item._id); showSnack(`Marked shipped: ${item.pieceId}`); }
     } catch {
       showSnack("Could not reach server", "error");
     } finally {

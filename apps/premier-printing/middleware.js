@@ -164,6 +164,8 @@ export async function middleware(req=NextRequest, res) {
   }
   if(token){
     requestHeaders.set('user', token.userName)
+    const perms = { ...(token.permissions || {}), account: true, inventory: true, designsView: true };
+    if (perms.charts) requestHeaders.set('canPayInvoice', '1');
   }
   return NextResponse.next({
     request: {

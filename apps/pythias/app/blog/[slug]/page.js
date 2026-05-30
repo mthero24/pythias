@@ -4,6 +4,7 @@ import { Box, Container, Typography, Chip, Stack, Divider, Button } from "@mui/m
 import Link from "next/link";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Script from "next/script";
+import BlogReadTracker from "@/componants/BlogReadTracker";
 
 export const revalidate = 60;
 
@@ -106,6 +107,7 @@ export default async function ArticlePage({ params }) {
                         "& pre code": { bgcolor: "transparent", p: 0 },
                     }}
                 />
+                <BlogReadTracker slug={params.slug} />
             </Container>
         </Box>
     );

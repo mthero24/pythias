@@ -156,8 +156,35 @@ export { handleWayfairOrdersGET, handleWayfairOrdersPOST } from "./handlers/wayf
 export { WayfairModal } from "./components/WayfairModal";
 
 // ebay
-export { generateEbayAuthUrl, exchangeCodeEbay, refreshEbayToken, getOrdersEbay, shipOrderEbay, createInventoryItemEbay, createOfferEbay, getAccountPoliciesEbay } from "./functions/ebay";
-export { handleEbayGET, handleEbaySendPOST, handleEbayPoliciesGET, handleEbayOrdersGET, handleEbayOrdersPOST, makeEbayOAuthRedirectGET, handleEbayOAuthInitGET } from "./handlers/ebay";
+export {
+    generateEbayAuthUrl, exchangeCodeEbay, refreshEbayToken,
+    getSellerIdentityEbay,
+    getOrdersEbay, shipOrderEbay,
+    getInventoryItemsEbay, getOffersEbay, updateOfferEbay,
+    createInventoryItemEbay, createOfferEbay, getAccountPoliciesEbay,
+    getSellerStandardsEbay, getTrafficReportEbay,
+    getTransactionsEbay, getPayoutsEbay,
+    getConversationsEbay, getConversationMessagesEbay, sendMessageEbay,
+    getFeedbackEbay,
+    getDisputesEbay, getDisputeEbay,
+    getCampaignsEbay, getPromotionsEbay,
+    getStoreEbay,
+} from "./functions/ebay";
+export { EbayDashboard } from "./components/EbayDashboard";
+export {
+    handleEbayGET, handleEbaySendPOST, handleEbayPoliciesGET,
+    handleEbayOrdersGET, handleEbayOrdersPOST,
+    handleEbayIdentityGET,
+    handleEbayListingsGET, handleEbayListingsPUT,
+    handleEbayAnalyticsGET,
+    handleEbayFinancesGET,
+    handleEbayMessagesGET, handleEbayMessagesPOST,
+    handleEbayFeedbackGET,
+    handleEbayDisputesGET,
+    handleEbayMarketingGET,
+    handleEbayStoreGET,
+    makeEbayOAuthRedirectGET, handleEbayOAuthInitGET, makeEbayOAuthInitGET,
+} from "./handlers/ebay";
 
 // mirakl
 export { getOrdersMirakl, getOrderMirakl, acceptOrderMirakl, shipOrderMirakl, cancelOrderMirakl, getOffersMirakl } from "./functions/mirakl";

@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 import Stripe from "stripe";
 import { ServiceInvoicePremier } from "@pythias/mongo";
 
 const stripe = new Stripe(process.env.stripeSecret);
 
 export async function POST(req) {
+    const token = await getToken({ req });
+    const perms = { ...(token?.permissions || {}), account: true, inventory: true, designsView: true };
+    if ((!token?.role || !["admin", "production"].includes(token.role)) || !perms.charts)
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { invoiceId } = await req.json();
     if (!invoiceId) return NextResponse.json({ error: "invoiceId required" }, { status: 400 });
 
