@@ -28,14 +28,6 @@ export async function GET(req) {
         return NextResponse.redirect(`${adminUrl}?error=ebay_auth_failed`);
     }
 
-    const _cid = sandbox ? process.env.ebayClientIdSandbox : process.env.ebayClientId;
-    const _sec = sandbox ? process.env.ebayClientSecretSandbox : process.env.ebayClientSecret;
-    const _run = sandbox ? process.env.ebayRuNameSandbox : process.env.ebayRuName;
-    console.log("[eBay OAuth] sandbox:", sandbox, "provider:", provider,
-        "clientId:", `${_cid?.slice(0,8)}... (len ${_cid?.length})`,
-        "secret:", `${_sec?.slice(0,4)}... (len ${_sec?.length})`,
-        "ruName:", `${_run?.slice(0,8)}... (len ${_run?.length})`
-    );
 
     try {
         const tokens = await exchangeCodeEbay(code, { sandbox });

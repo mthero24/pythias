@@ -1,5 +1,5 @@
 import mongoose from "mongoose"
-import { PremierPrinting } from "../lib/connection";
+import { PremierPrintingDB } from "../lib/connection";
 let schema = new mongoose.Schema({
     displayName: String,
     apiKey: String,
@@ -16,4 +16,4 @@ let schema = new mongoose.Schema({
     pullOrdersEnabled: { type: Boolean, default: false },
     sandbox: { type: Boolean, default: false },
 })
-export default PremierPrinting.model("ApiKeyIntegrations", schema);
+export default PremierPrintingDB.model("ApiKeyIntegrations", schema);
