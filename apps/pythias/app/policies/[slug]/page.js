@@ -14,6 +14,7 @@ export async function generateMetadata({ params }) {
   return {
     title: policy.title,
     description: policy.subtitle,
+    alternates: { canonical: `https://pythiastechnologies.com/policies/${slug}` },
   };
 }
 

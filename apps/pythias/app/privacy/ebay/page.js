@@ -192,9 +192,9 @@ export default function EbayPrivacyPage() {
                             <Typography sx={{ color: "#4b5563", fontSize: "0.9375rem", lineHeight: 1.8 }}>
                                 21440 Melrose Ave, Southfield MI 48075<br />
                                 (844) 579-8442<br />
-                                <Box component="a" href="mailto:info@pythiastechnologies.com"
+                                <Box component={Link} href="/contact"
                                     sx={{ color: "#E53238", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>
-                                    info@pythiastechnologies.com
+                                    Contact Us
                                 </Box>
                             </Typography>
                         </Box>

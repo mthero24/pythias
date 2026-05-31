@@ -4,6 +4,7 @@ import Link from "next/link";
 export const metadata = {
     title: "Privacy Policy",
     description: "Privacy Policy for Pythias Technologies — how we collect, use, and protect your information.",
+    alternates: { canonical: "https://pythiastechnologies.com/privacy" },
 };
 
 const EFFECTIVE_DATE = "May 23, 2025";
@@ -183,10 +184,10 @@ export default function PrivacyPage() {
                         <Li><strong>Data portability</strong> — request your data in a structured, machine-readable format</Li>
                         <Box sx={{ mt: 1.5 }}>
                             <P>
-                                To exercise any of these rights, contact us at{" "}
-                                <Box component="a" href="mailto:info@pythiastechnologies.com"
+                                To exercise any of these rights,{" "}
+                                <Box component={Link} href="/contact"
                                     sx={{ color: "#D3A73D", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>
-                                    info@pythiastechnologies.com
+                                    contact us
                                 </Box>. We will respond within 30 days.
                             </P>
                         </Box>
@@ -215,9 +216,9 @@ export default function PrivacyPage() {
                             <Typography sx={{ color: "#4b5563", fontSize: "0.9375rem", lineHeight: 1.8 }}>
                                 21440 Melrose Ave, Southfield MI 48075<br />
                                 (844) 579-8442<br />
-                                <Box component="a" href="mailto:info@pythiastechnologies.com"
+                                <Box component={Link} href="/contact"
                                     sx={{ color: "#D3A73D", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>
-                                    info@pythiastechnologies.com
+                                    Contact Us
                                 </Box>
                             </Typography>
                         </Box>

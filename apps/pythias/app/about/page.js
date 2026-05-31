@@ -168,12 +168,14 @@ export default function AboutPage() {
                                 {[
                                     "21440 Melrose Ave, Southfield MI 48075",
                                     "(844) 579-8442",
-                                    "info@pythiastechnologies.com",
                                 ].map((line) => (
                                     <Typography key={line} sx={{ color: "rgba(255,255,255,0.65)", fontSize: "0.9rem" }}>
                                         {line}
                                     </Typography>
                                 ))}
+                                <Box component={Link} href="/contact" sx={{ color: "rgba(255,255,255,0.65)", fontSize: "0.9rem", textDecoration: "none", "&:hover": { color: "#D3A73D" } }}>
+                                    Contact Us
+                                </Box>
                             </Stack>
                         </Box>
                     </Box>

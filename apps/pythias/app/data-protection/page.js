@@ -6,6 +6,7 @@ import { authOptions } from "@/auth";
 export const metadata = {
     title: "Data Protection Policy",
     description: "Pythias Technologies internal data protection policy — how we classify, handle, and safeguard personal and business data across our platform and operations.",
+    alternates: { canonical: "https://pythiastechnologies.com/data-protection" },
 };
 
 const GOLD = "#D3A73D";
@@ -205,7 +206,7 @@ export default async function DataProtectionPage() {
                         <Li><strong>Contact form and lead data</strong> — retained until the inquiry is resolved or the contact opts out, with a maximum of 2 years.</Li>
                         <Li><strong>Application logs</strong> — rotated on a rolling 30-day basis unless an active incident requires longer retention.</Li>
                         <Li><strong>Terminated employee accounts</strong> — disabled immediately; personal data removed within 30 days of departure.</Li>
-                        <P>Data deletion requests from clients or their end-customers are processed within 30 days of written request to info@pythiastechnologies.com.</P>
+                        <P>Data deletion requests from clients or their end-customers are processed within 30 days of a written request submitted via our <Box component={Link} href="/contact" sx={{ color: "#D3A73D", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>contact page</Box>.</P>
                     </Section>
 
                     <Section number="9" title="Incident Response &amp; Breach Notification">
@@ -266,9 +267,9 @@ export default async function DataProtectionPage() {
                             <Typography sx={{ color: "#4b5563", fontSize: "0.9375rem", lineHeight: 1.8 }}>
                                 21440 Melrose Ave, Southfield MI 48075<br />
                                 (844) 579-8442<br />
-                                <Box component="a" href="mailto:info@pythiastechnologies.com"
+                                <Box component={Link} href="/contact"
                                     sx={{ color: "#D3A73D", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>
-                                    info@pythiastechnologies.com
+                                    Contact Us
                                 </Box>
                             </Typography>
                         </Box>
