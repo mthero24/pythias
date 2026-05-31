@@ -2069,7 +2069,7 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
     const [deactivating, setDeactivating] = useState(false);
 
     const maskedKey = apiKey
-        ? `${"•".repeat(Math.max(0, apiKey.length - 4))}${apiKey.slice(-4)}`
+        ? `${"•".repeat(8)}${apiKey.slice(-4)}`
         : "—";
 
     const deactivate = async () => {
@@ -2441,6 +2441,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
         if (t === "acenda" || (!t && !!api.organization)) return `/admin/integrations/acenda?connectionId=${api._id}`;
         if (t === "shopify" || api.displayName?.startsWith("shopify-")) return `/admin/integrations/shopify?connectionId=${api._id}`;
         if (t === "mirakl")  return `/admin/integrations/mirakl?connectionId=${api._id}`;
+        if (t === "ebay")    return `/admin/integrations/ebay?connectionId=${api._id}`;
         return null;
     };
 

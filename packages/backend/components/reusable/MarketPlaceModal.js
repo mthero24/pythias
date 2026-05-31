@@ -353,7 +353,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         }
     };
     const [addMarketPlace, setAddMarketPlace] = useState(false);
-    const sendToConnection = async (c, mpName) => {
+    const sendToConnection = async (c, mpName, mp) => {
         if (c.displayName?.includes("shopify")) {
             setLoading(true);
             const res = await axios.post("/api/integrations/shopify/send", { product, connection: c }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${c.apiKey}` } }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
@@ -600,6 +600,28 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }
             setLoading(false);
+        } else if (c.type === "ebay") {
+            setLoading(true);
+            const offer = mp?.defaultValues ? { ...mp.defaultValues } : {};
+            const res = await axios.post("/api/integrations/ebay", { connectionId: c._id, product, offer }).catch((e) => {
+                alert(e.response?.data?.error ?? "Something went wrong sending to eBay.");
+                setLoading(false);
+            });
+            if (res?.data?.success) {
+                const results = res.data.results ?? [];
+                let p = { ...product };
+                if (!p.ids) p.ids = {};
+                p.ids[c.displayName] = results[0]?.offerId ?? results[0]?.sku ?? "sent";
+                for (const v of p.variantsArray ?? []) {
+                    const r = results.find(r => r.sku === v.sku);
+                    if (r?.offerId) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = r.offerId; }
+                }
+                await axios.post("/api/admin/products", { products: [p] });
+                setProduct({ ...p });
+                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                alert(`Sent to eBay. ${results.length} variant(s) created.`);
+            }
+            setLoading(false);
         } else if (c.seller_name) {
             setLoading(true);
             const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c, marketplaceName: mpName }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong. Please try again."); setLoading(false); });
@@ -676,7 +698,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                         variant={hasSent ? "contained" : "outlined"}
                                                         color={hasSent ? "success" : "primary"}
                                                         sx={{ fontSize: "0.62rem", py: 0.4, textTransform: "none" }}
-                                                        onClick={() => sendToConnection(c, mp.name)}>
+                                                        onClick={() => sendToConnection(c, mp.name, mp)}>
                                                         {hasSent ? "↺ Update — " : "→ Send — "}{c?.displayName || c?.seller_name || "Connection"}
                                                     </Button>
                                                 );
@@ -871,6 +893,16 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                                             <Divider sx={{ my: 0.75 }} />
                                                             {product.ids?.[marketPlace.connections.find(c => c?.type === "channelengine").displayName]
                                                                 ? <Typography variant="body2" color="text.secondary">ChannelEngine Product #: {product.ids[marketPlace.connections.find(c => c?.type === "channelengine").displayName]}</Typography>
+                                                                : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
+                                                            }
+                                                        </Card>
+                                                    )}
+                                                    {marketPlace.connections?.some(c => c?.type === "ebay") && (
+                                                        <Card variant="outlined" sx={{ p: 1.5, mb: 1, borderRadius: 1.5 }}>
+                                                            <Typography variant="subtitle2" fontWeight={700}>{marketPlace.connections.find(c => c?.type === "ebay").displayName}</Typography>
+                                                            <Divider sx={{ my: 0.75 }} />
+                                                            {product.ids?.[marketPlace.connections.find(c => c?.type === "ebay").displayName]
+                                                                ? <Typography variant="body2" color="text.secondary">eBay Offer ID: {product.ids[marketPlace.connections.find(c => c?.type === "ebay").displayName]}</Typography>
                                                                 : <Typography variant="body2" color="text.disabled">Not yet sent</Typography>
                                                             }
                                                         </Card>

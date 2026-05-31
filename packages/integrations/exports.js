@@ -175,7 +175,7 @@ export {
     handleEbayGET, handleEbaySendPOST, handleEbayPoliciesGET,
     handleEbayOrdersGET, handleEbayOrdersPOST,
     handleEbayIdentityGET,
-    handleEbayListingsGET, handleEbayListingsPUT,
+    handleEbayListingsGET, handleEbayListingsPUT, handleEbayListingsDELETE,
     handleEbayAnalyticsGET,
     handleEbayFinancesGET,
     handleEbayMessagesGET, handleEbayMessagesPOST,
@@ -183,6 +183,7 @@ export {
     handleEbayDisputesGET,
     handleEbayMarketingGET,
     handleEbayStoreGET,
+    handleEbayNotificationsGET, handleEbayNotificationsPOST,
     makeEbayOAuthRedirectGET, handleEbayOAuthInitGET, makeEbayOAuthInitGET,
 } from "./handlers/ebay";
 

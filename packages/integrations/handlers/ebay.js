@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { ApiKeyIntegrations } from "@pythias/mongo";
 import {
     generateEbayAuthUrl, exchangeCodeEbay,
     getSellerIdentityEbay,
     getOrdersEbay, shipOrderEbay,
-    getInventoryItemsEbay, getOffersEbay, updateOfferEbay,
+    getInventoryItemsEbay, getOffersEbay, updateOfferEbay, deleteInventoryItemEbay, deleteOfferEbay,
     createInventoryItemEbay, createOfferEbay, getAccountPoliciesEbay,
     getSellerStandardsEbay, getTrafficReportEbay,
     getTransactionsEbay, getPayoutsEbay,
@@ -46,6 +47,18 @@ export async function handleEbaySendPOST(req) {
     const connection = await ApiKeyIntegrations.findById(connectionId);
     if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     try {
+        const blank = product.blanks?.[0] ?? null;
+        const blankOverrides = blank?.marketPlaceOverrides?.[connection.displayName]
+            ?? blank?.marketPlaceOverrides?.["eBay"]
+            ?? blank?.marketPlaceOverrides?.["ebay"]
+            ?? {};
+
+        const categoryId          = offer?.categoryId          ?? blankOverrides.categoryId;
+        const fulfillmentPolicyId = offer?.fulfillmentPolicyId ?? blankOverrides.fulfillmentPolicyId;
+        const paymentPolicyId     = offer?.paymentPolicyId     ?? blankOverrides.paymentPolicyId;
+        const returnPolicyId      = offer?.returnPolicyId      ?? blankOverrides.returnPolicyId;
+        const merchantLocationKey = offer?.merchantLocationKey ?? blankOverrides.merchantLocationKey;
+
         const variants = product.variantsArray ?? [];
         const results = [];
         for (const variant of variants) {
@@ -66,17 +79,17 @@ export async function handleEbaySendPOST(req) {
                     Brand: [product.brand ?? "Custom"],
                 },
             });
-            if (offer?.categoryId) {
+            if (categoryId) {
                 const result = await createOfferEbay(connection, {
                     sku,
-                    categoryId:          offer.categoryId,
-                    listingDescription:  offer.description ?? product.name ?? "",
-                    price:               variant.price ?? offer.price ?? 0,
-                    fulfillmentPolicyId: offer.fulfillmentPolicyId,
-                    paymentPolicyId:     offer.paymentPolicyId,
-                    returnPolicyId:      offer.returnPolicyId,
-                    merchantLocationKey: offer.merchantLocationKey,
-                    publish:             offer.publish !== false,
+                    categoryId,
+                    listingDescription:  offer?.description ?? product.name ?? "",
+                    price:               variant.price ?? offer?.price ?? 0,
+                    fulfillmentPolicyId,
+                    paymentPolicyId,
+                    returnPolicyId,
+                    merchantLocationKey,
+                    publish:             offer?.publish !== false,
                 });
                 results.push({ sku, ...result });
             } else {
@@ -166,6 +179,24 @@ export async function handleEbayListingsPUT(req) {
     try {
         const result = await updateOfferEbay(connection, offerId, { price, quantity, listingDescription });
         return NextResponse.json({ success: true, result });
+    } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+}
+
+export async function handleEbayListingsDELETE(req) {
+    const { searchParams } = new URL(req.url);
+    const connectionId = searchParams.get("connectionId");
+    const sku          = searchParams.get("sku");
+    const offerId      = searchParams.get("offerId");
+    if (!connectionId || (!sku && !offerId)) return NextResponse.json({ error: "connectionId and sku or offerId required" }, { status: 400 });
+    const connection = await ApiKeyIntegrations.findById(connectionId);
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    try {
+        const result = offerId
+            ? await deleteOfferEbay(connection, offerId)
+            : await deleteInventoryItemEbay(connection, sku);
+        return NextResponse.json(result);
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 502 });
     }
@@ -335,6 +366,38 @@ export async function handleEbayStoreGET(req) {
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 502 });
     }
+}
+
+// ─── Marketplace Account Deletion Notification ───────────────────────────────
+// eBay requires this endpoint to be verified before granting production keys.
+// Set EBAY_VERIFICATION_TOKEN in your env to the token you enter in the eBay
+// developer portal (30–80 chars, any string you choose).
+// The endpoint URL you register must match exactly what eBay calls.
+// eBay verifies by GET ?challenge_code=XXX → respond SHA-256(challenge+token+url)
+// Production account deletion events arrive as POST — log and acknowledge them.
+
+export async function handleEbayNotificationsGET(req) {
+    const { searchParams } = new URL(req.url);
+    const challengeCode = searchParams.get("challenge_code");
+    if (!challengeCode) return NextResponse.json({ error: "challenge_code required" }, { status: 400 });
+
+    const token       = process.env.EBAY_VERIFICATION_TOKEN;
+    const endpointUrl = process.env.EBAY_NOTIFICATION_ENDPOINT_URL ?? req.url.split("?")[0];
+    if (!token) return NextResponse.json({ error: "EBAY_VERIFICATION_TOKEN not set" }, { status: 500 });
+
+    const hash = createHash("sha256")
+        .update(challengeCode + token + endpointUrl)
+        .digest("hex");
+
+    return NextResponse.json({ challengeResponse: hash });
+}
+
+export async function handleEbayNotificationsPOST(req) {
+    try {
+        const body = await req.json();
+        console.log("[eBay] account deletion notification:", JSON.stringify(body));
+    } catch {}
+    return new NextResponse(null, { status: 200 });
 }
 
 // ─── OAuth ────────────────────────────────────────────────────────────────────
