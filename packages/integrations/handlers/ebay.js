@@ -379,10 +379,25 @@ export async function handleEbayStoreGET(req) {
 export async function handleEbayNotificationsGET(req) {
     const { searchParams } = new URL(req.url);
     const challengeCode = searchParams.get("challenge_code");
-    if (!challengeCode) return NextResponse.json({ error: "challenge_code required" }, { status: 400 });
+    const debug         = searchParams.get("debug") === "1";
 
     const token       = process.env.EBAY_VERIFICATION_TOKEN;
     const endpointUrl = process.env.EBAY_NOTIFICATION_ENDPOINT_URL ?? req.url.split("?")[0];
+
+    if (debug) {
+        const hash = token && challengeCode
+            ? createHash("sha256").update((challengeCode ?? "TEST") + token + endpointUrl).digest("hex")
+            : null;
+        return NextResponse.json({
+            tokenSet:    !!token,
+            tokenLength: token?.length ?? 0,
+            endpointUrl,
+            challengeCode: challengeCode ?? "(not provided)",
+            challengeResponse: hash,
+        });
+    }
+
+    if (!challengeCode) return NextResponse.json({ error: "challenge_code required" }, { status: 400 });
     if (!token) return NextResponse.json({ error: "EBAY_VERIFICATION_TOKEN not set" }, { status: 500 });
 
     const hash = createHash("sha256")
