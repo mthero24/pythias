@@ -2,7 +2,7 @@ import { Box, Container, Typography, Divider, Stack } from "@mui/material";
 import Link from "next/link";
 
 export const metadata = {
-    title: "eBay Integration Privacy Policy | Pythias Technologies",
+    title: "eBay Integration Privacy Policy",
     description: "Privacy Policy for the Pythias Technologies eBay integration — how we access, use, and protect your eBay seller data.",
     alternates: { canonical: "https://pythiastechnologies.com/privacy/ebay" },
 };

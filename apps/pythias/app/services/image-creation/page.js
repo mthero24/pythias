@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Automated Product Image Creation | Pythias Technologies",
+    title: "Automated Product Image Creation",
     description: "AI-powered mockup generation for every product, color, and size variant — automatically. Background removal, multi-angle renders, and direct export to Shopify, Etsy, and Walmart listings.",
     keywords: "automated product mockups, AI product image generation, print on demand mockup software, bulk mockup creation, background removal, listing image automation, Shopify product images, Etsy listing photos",
     openGraph: {
@@ -41,10 +41,21 @@ const steps = [
     { title: "Images go live on listings",      desc: "Finished images are pushed directly to your Shopify, Etsy, Walmart, or Amazon listings — replacing any placeholders already in place." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                               item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",                           item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Automated Product Image Creation",   item: "https://pythiastechnologies.com/services/image-creation" },
+    ],
+};
+
 export default function ImageCreationPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Automated Image Creation"
                 title="Professional listing images,"
@@ -60,6 +71,11 @@ export default function ImageCreationPage() {
                 sub="See how Pythias generates and publishes product images across every variant and marketplace automatically."
                 color="#0ea5e9"
             />
+            <ServiceRelated related={[
+                { href: "/services/design",      label: "Design & Product Management" },
+                { href: "/services/marketplace", label: "Multi-Marketplace Integration" },
+                { href: "/services/production",  label: "Production Queue Management" },
+            ]} />
         </>
     );
 }

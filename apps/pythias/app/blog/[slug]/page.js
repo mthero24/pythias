@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Box, Container, Typography, Chip, Stack, Divider, Button } from "@mui/material";
 import Link from "next/link";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import Script from "next/script";
 import BlogReadTracker from "@/componants/BlogReadTracker";
 
 export const revalidate = 60;
@@ -12,8 +11,9 @@ export async function generateMetadata({ params }) {
     const article = await Article.findOne({ slug: params.slug, published: true }).lean();
     if (!article) return {};
     return {
-        title: `${article.title} | Pythias Technologies`,
+        title: article.title,
         description: article.metaDescription || article.excerpt || "",
+        alternates: { canonical: `https://pythiastechnologies.com/blog/${params.slug}` },
         openGraph: {
             title: article.title,
             description: article.metaDescription || article.excerpt || "",
@@ -34,18 +34,40 @@ export default async function ArticlePage({ params }) {
     const article = await getArticle(params.slug);
     if (!article) notFound();
 
+    const articleSchema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: article.title,
+        description: article.metaDescription || article.excerpt || "",
+        ...(article.coverImage ? { image: article.coverImage } : {}),
+        ...(article.publishedAt ? { datePublished: new Date(article.publishedAt).toISOString() } : {}),
+        ...(article.updatedAt ? { dateModified: new Date(article.updatedAt).toISOString() } : {}),
+        author: { "@type": article.author ? "Person" : "Organization", name: article.author || "Pythias Technologies" },
+        publisher: {
+            "@type": "Organization",
+            name: "Pythias Technologies",
+            logo: { "@type": "ImageObject", url: "https://pythiastechnologies.com/logo.png" },
+        },
+        url: `https://pythiastechnologies.com/blog/${article.slug}`,
+        mainEntityOfPage: { "@type": "WebPage", "@id": `https://pythiastechnologies.com/blog/${article.slug}` },
+    };
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home",         item: "https://pythiastechnologies.com" },
+            { "@type": "ListItem", position: 2, name: "Blog",         item: "https://pythiastechnologies.com/blog" },
+            { "@type": "ListItem", position: 3, name: article.title,  item: `https://pythiastechnologies.com/blog/${article.slug}` },
+        ],
+    };
+
     return (
         <Box sx={{ bgcolor: "#f8faff", minHeight: "100vh", py: { xs: 6, md: 10 } }}>
-            {/* JSON-LD structured data */}
-            {article.jsonLd && (
-                <Script id="article-jsonld" type="application/ld+json" strategy="beforeInteractive">
-                    {JSON.stringify(article.jsonLd)}
-                </Script>
-            )}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             {article.faqJsonLd && (
-                <Script id="faq-jsonld" type="application/ld+json" strategy="beforeInteractive">
-                    {JSON.stringify(article.faqJsonLd)}
-                </Script>
+                <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(article.faqJsonLd) }} />
             )}
 
             <Container maxWidth="md">
@@ -74,7 +96,7 @@ export default async function ArticlePage({ params }) {
                     {article.author ? ` · ${article.author}` : ""}
                 </Typography>
 
-                <Typography variant="h3" fontWeight={800} gutterBottom sx={{ mt: 1, lineHeight: 1.2 }}>
+                <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", md: "2.5rem" }, fontWeight: 800, mt: 1, lineHeight: 1.2 }} gutterBottom>
                     {article.title}
                 </Typography>
 

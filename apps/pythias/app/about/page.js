@@ -7,8 +7,39 @@ import {
 import Link from "next/link";
 
 export const metadata = {
-    title: "About Us | Pythias Technologies",
+    title: "About Us",
     description: "Learn about Pythias Technologies — the team building the future of print-on-demand fulfillment software.",
+    alternates: { canonical: "https://pythiastechnologies.com/about" },
+};
+
+const orgSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Pythias Technologies",
+    url: "https://pythiastechnologies.com",
+    logo: { "@type": "ImageObject", url: "https://pythiastechnologies.com/logo.png" },
+    description: "All-in-one print-on-demand automation platform — founded by people who understand print fulfillment from the inside out.",
+    foundingLocation: { "@type": "Place", name: "Southfield, Michigan, USA" },
+    address: {
+        "@type": "PostalAddress",
+        streetAddress: "21440 Melrose Ave",
+        addressLocality: "Southfield",
+        addressRegion: "MI",
+        postalCode: "48075",
+        addressCountry: "US",
+    },
+    telephone: "+18445798442",
+    email: "info@pythiastechnologies.com",
+    numberOfEmployees: { "@type": "QuantitativeValue", description: "US-Based Team" },
+};
+
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",     item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "About Us", item: "https://pythiastechnologies.com/about" },
+    ],
 };
 
 const VALUES = [
@@ -48,6 +79,8 @@ const STATS = [
 export default function AboutPage() {
     return (
         <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh" }}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
             {/* Hero */}
             <Box sx={{

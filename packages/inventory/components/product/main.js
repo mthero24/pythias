@@ -1,5 +1,5 @@
 "use client";
-import { Typography, Grid2, Button, TextField, Box, Stack, Pagination, PaginationItem, MenuItem, Chip, InputAdornment, Collapse, IconButton, Tooltip, CircularProgress } from "@mui/material";
+import { Typography, Grid2, Button, TextField, Box, Stack, Pagination, PaginationItem, MenuItem, Chip, InputAdornment, Collapse, IconButton, Tooltip, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, Alert, Select, FormControl, InputLabel } from "@mui/material";
 import Image from "next/image";
 import { useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
@@ -40,13 +40,66 @@ function navigate(query, page, filters) {
     window.location.href = `/inventory/product?q=${query}&page=${page}&filter=${JSON.stringify(filters)}`;
 }
 
-export function productMain({ inventory, q, totalCount, totalValue, p, blanks, fils }) {
+export function productMain({ inventory, q, totalCount, totalValue, p, blanks, fils, hasEbay = false }) {
     const [query, setQuery]           = useState(q || "");
     const [count]                     = useState(totalCount || 0);
     const [page, setPage]             = useState(p || 1);
     const [filterOpen, setFilterOpen] = useState(typeof fils === "string" || (typeof fils === "object" && fils !== null && Object.keys(fils).length > 0));
     const [filters, setFilters]       = useState(typeof fils === "string" ? JSON.parse(fils) : (typeof fils === "object" && fils !== null ? fils : {}));
     const [invs, setInvs]             = useState(inventory || []);
+
+    // eBay listing dialog
+    const [ebayTarget,      setEbayTarget]      = useState(null);
+    const [ebayConnections, setEbayConnections] = useState([]);
+    const [ebayConnection,  setEbayConnection]  = useState("");
+    const [ebayPrice,       setEbayPrice]       = useState("");
+    const [ebayBrand,       setEbayBrand]       = useState("");
+    const [ebayBrands,      setEbayBrands]      = useState([]);
+    const [ebayListing,     setEbayListing]     = useState(false);
+    const [ebayError,       setEbayError]       = useState("");
+    const [ebaySuccess,     setEbaySuccess]     = useState("");
+
+    const openEbayDialog = async (item) => {
+        setEbayTarget(item);
+        setEbayPrice(item.size?.cost ? String(item.size.cost) : "");
+        setEbayBrand("");
+        setEbayError("");
+        setEbaySuccess("");
+        const [connsRes, brandsRes] = await Promise.allSettled([
+            ebayConnections.length === 0 ? axios.get("/api/admin/integrations") : Promise.resolve(null),
+            ebayBrands.length === 0      ? axios.get("/api/admin/brands")        : Promise.resolve(null),
+        ]);
+        if (connsRes.status === "fulfilled" && connsRes.value) {
+            const conns = (connsRes.value.data.integration ?? []).filter(c => c.type === "ebay");
+            setEbayConnections(conns);
+            setEbayConnection(conns[0]?._id ?? "");
+        } else if (ebayConnections.length > 0) {
+            setEbayConnection(ebayConnections[0]?._id ?? "");
+        }
+        if (brandsRes.status === "fulfilled" && brandsRes.value) {
+            setEbayBrands(brandsRes.value.data.brands ?? []);
+        }
+    };
+
+    const submitEbayListing = async () => {
+        if (!ebayConnection) { setEbayError("Select an eBay connection"); return; }
+        if (!ebayPrice)      { setEbayError("Enter a price"); return; }
+        setEbayListing(true); setEbayError(""); setEbaySuccess("");
+        try {
+            const res = await axios.post("/api/integrations/ebay/list-inventory", {
+                connectionId: ebayConnection,
+                variantSku:   ebayTarget.sku,
+                price:        parseFloat(ebayPrice),
+                brand:        ebayBrand || undefined,
+            });
+            const listingId = res.data?.listingId;
+            setEbaySuccess(listingId ? `Listed! eBay ID: ${listingId}` : "Listed on eBay successfully!");
+        } catch (e) {
+            setEbayError(e.response?.data?.error ?? "Failed to list on eBay");
+        } finally {
+            setEbayListing(false);
+        }
+    };
 
     const applyFilter = (newFilters) => {
         setFilters(newFilters);
@@ -211,12 +264,13 @@ export function productMain({ inventory, q, totalCount, totalValue, p, blanks, f
                 {invs.length > 0 && (
                     <Grid2 container spacing={1} alignItems="center" sx={{ px: 1, mb: 0.5 }}>
                         <Grid2 size={1} />
-                        <Grid2 size={3}><Typography variant="caption" fontWeight={700} color="text.secondary">SKU</Typography></Grid2>
+                        <Grid2 size={2.5}><Typography variant="caption" fontWeight={700} color="text.secondary">SKU</Typography></Grid2>
                         <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Blank</Typography></Grid2>
                         <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Color</Typography></Grid2>
                         <Grid2 size={1}><Typography variant="caption" fontWeight={700} color="text.secondary">Size</Typography></Grid2>
                         <Grid2 size={1.5}><Typography variant="caption" fontWeight={700} color="text.secondary">Quantity</Typography></Grid2>
-                        <Grid2 size={2}><Typography variant="caption" fontWeight={700} color="text.secondary">Location</Typography></Grid2>
+                        <Grid2 size={hasEbay ? 2 : 3}><Typography variant="caption" fontWeight={700} color="text.secondary">Location</Typography></Grid2>
+                        {hasEbay && <Grid2 size={1} />}
                     </Grid2>
                 )}
 
@@ -241,7 +295,7 @@ export function productMain({ inventory, q, totalCount, totalValue, p, blanks, f
                                     <Grid2 size={1} sx={{ display: "flex", justifyContent: "center" }}>
                                         <ItemImage src={image} size={64} />
                                     </Grid2>
-                                    <Grid2 size={3}>
+                                    <Grid2 size={2.5}>
                                         <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600, wordBreak: "break-all", fontSize: "0.75rem" }}>
                                             {item.sku}
                                         </Typography>
@@ -272,7 +326,7 @@ export function productMain({ inventory, q, totalCount, totalValue, p, blanks, f
                                             {outOfStock && <Chip label="OOS" size="small" color="error" sx={{ fontWeight: 700, fontSize: "0.6rem", height: 18, "& .MuiChip-label": { px: 0.75 } }} />}
                                         </Stack>
                                     </Grid2>
-                                    <Grid2 size={2}>
+                                    <Grid2 size={hasEbay ? 2 : 3}>
                                         <TextField
                                             size="small"
                                             fullWidth
@@ -282,12 +336,85 @@ export function productMain({ inventory, q, totalCount, totalValue, p, blanks, f
                                             onBlur={(e) => saveLocation(item._id, e.target.value)}
                                         />
                                     </Grid2>
+                                    {hasEbay && <Grid2 size={1} sx={{ display: "flex", justifyContent: "center" }}>
+                                        <Tooltip title="List this item on eBay">
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                onClick={() => openEbayDialog(item)}
+                                                sx={{ minWidth: 0, px: 1, fontSize: "0.65rem", fontWeight: 700, borderColor: "#E53238", color: "#E53238", "&:hover": { bgcolor: "#fef2f2", borderColor: "#E53238" } }}
+                                            >
+                                                eBay
+                                            </Button>
+                                        </Tooltip>
+                                    </Grid2>}
                                 </Grid2>
                             </Box>
                         );
                     })}
                 </Stack>
             </Box>
+
+            {/* eBay listing dialog */}
+            <Dialog open={hasEbay && !!ebayTarget} onClose={() => { if (!ebayListing) setEbayTarget(null); }} maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700 }}>List on eBay</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        {ebayTarget && (
+                            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+                                {ebayTarget.sku}
+                            </Typography>
+                        )}
+                        {ebayConnections.length > 1 && (
+                            <FormControl size="small" fullWidth>
+                                <InputLabel>eBay Account</InputLabel>
+                                <Select value={ebayConnection} label="eBay Account" onChange={e => setEbayConnection(e.target.value)}>
+                                    {ebayConnections.map(c => (
+                                        <MenuItem key={c._id} value={c._id}>{c.displayName}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        )}
+                        <TextField
+                            label="Price"
+                            size="small"
+                            fullWidth
+                            type="number"
+                            inputProps={{ min: 0, step: 0.01 }}
+                            value={ebayPrice}
+                            onChange={e => setEbayPrice(e.target.value)}
+                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                        />
+                        <FormControl size="small" fullWidth>
+                            <InputLabel>Brand (optional)</InputLabel>
+                            <Select
+                                value={ebayBrand}
+                                label="Brand (optional)"
+                                onChange={e => setEbayBrand(e.target.value)}
+                            >
+                                <MenuItem value=""><em>None (uses product brand)</em></MenuItem>
+                                {ebayBrands.map(b => (
+                                    <MenuItem key={b._id ?? b.name} value={b.name}>{b.name}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {ebayError   && <Alert severity="error"   sx={{ py: 0 }}>{ebayError}</Alert>}
+                        {ebaySuccess && <Alert severity="success" sx={{ py: 0 }}>{ebaySuccess}</Alert>}
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setEbayTarget(null)} disabled={ebayListing}>Cancel</Button>
+                    <Button
+                        variant="contained"
+                        disabled={ebayListing || !!ebaySuccess}
+                        onClick={submitEbayListing}
+                        sx={{ bgcolor: "#E53238", "&:hover": { bgcolor: "#c42028" } }}
+                        startIcon={ebayListing ? <CircularProgress size={14} color="inherit" /> : null}
+                    >
+                        {ebayListing ? "Listing…" : "List on eBay"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Pagination */}
             {count > 0 && (

@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
   const policy = getPolicy(slug);
   if (!policy) return {};
   return {
-    title: `${policy.title} | Pythias Technologies`,
+    title: policy.title,
     description: policy.subtitle,
   };
 }

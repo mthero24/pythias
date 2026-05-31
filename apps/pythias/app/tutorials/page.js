@@ -7,6 +7,7 @@ export const revalidate = 60;
 export const metadata = {
     title: "Tutorials",
     description: "Step-by-step video tutorials for getting the most out of Pythias Technologies — production, shipping, inventory, and more.",
+    alternates: { canonical: "https://pythiastechnologies.com/tutorials" },
 };
 
 async function getTutorials() {
@@ -21,11 +22,21 @@ async function getTutorials() {
     }
 }
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",      item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Tutorials", item: "https://pythiastechnologies.com/tutorials" },
+    ],
+};
+
 export default async function TutorialsPage() {
     const tutorials = await getTutorials();
 
     return (
         <Box component="main">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             {/* Hero */}
             <Box sx={{
                 background: "linear-gradient(155deg, #0f172a 0%, #111827 55%, #0c1628 100%)",

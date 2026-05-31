@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Multi-Marketplace Integration | Pythias Technologies",
+    title: "Multi-Marketplace Integration",
     description: "Sell on Shopify, Amazon, Etsy, Walmart, TikTok Shop, and Kohl's from one platform. Orders route to production automatically, tracking syncs back, and listings stay in sync across every channel.",
     keywords: "multi-marketplace ecommerce, Shopify fulfillment software, Amazon seller tools, Etsy order management, Walmart marketplace integration, TikTok Shop fulfillment, Kohl's marketplace, print on demand marketplace, multi-channel order management",
     openGraph: {
@@ -52,10 +52,21 @@ const steps = [
     { title: "Tracking syncs everywhere",    desc: "The moment a label is printed, tracking posts back to the originating marketplace. Customers are notified automatically." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                           item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",                       item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Multi-Marketplace Integration",  item: "https://pythiastechnologies.com/services/marketplace" },
+    ],
+};
+
 export default function MarketplacePage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Marketplace Integration"
                 title="All your channels in"
@@ -89,6 +100,11 @@ export default function MarketplacePage() {
                 sub="Pythias unifies all your channels so you can focus on production — not logging into six different portals."
                 color="#ef4444"
             />
+            <ServiceRelated related={[
+                { href: "/services/shipping",    label: "Shipping & Fulfillment" },
+                { href: "/services/production",  label: "Production Queue Management" },
+                { href: "/integrations",         label: "All Integrations" },
+            ]} />
         </>
     );
 }

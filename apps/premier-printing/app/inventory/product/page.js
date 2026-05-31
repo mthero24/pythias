@@ -1,4 +1,4 @@
-import { ProductInventory, Design, Blank } from "@pythias/mongo";
+import { ProductInventory, Design, Blank, ApiKeyIntegrations } from "@pythias/mongo";
 import { ProductMain, getProductInventory } from "@pythias/inventory";
 import { serialize } from "@pythias/backend";
 
@@ -6,11 +6,12 @@ export default async function ProductInventoryPage({ searchParams }) {
     let { q, page, filter } = await searchParams;
     if (!page) page = 1;
 
-    const [blanksRaw, valueItems] = await Promise.all([
+    const [blanksRaw, valueItems, ebayConnCount] = await Promise.all([
         Blank.find({}).select("code colors sizes").populate("colors").lean(),
         ProductInventory.find({ quantity: { $gt: 0 }, delete: { $ne: true } })
             .select("quantity blankCode sizeName")
             .lean(),
+        ApiKeyIntegrations.countDocuments({ type: "ebay" }),
     ]);
 
     // Build blank → sizes cost map
@@ -61,6 +62,7 @@ export default async function ProductInventoryPage({ searchParams }) {
             p={page}
             blanks={blanks}
             fils={filter}
+            hasEbay={ebayConnCount > 0}
         />
     );
 }

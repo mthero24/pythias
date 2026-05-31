@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Analytics & Reporting for Print Shops | Pythias Technologies",
+    title: "Analytics & Reporting for Print Shops",
     description: "Real-time production analytics, line efficiency metrics, revenue reporting by marketplace, employee output tracking, and custom date-range exports built for print-on-demand businesses.",
     keywords: "print shop analytics, production reporting, line efficiency metrics, order analytics, revenue by marketplace, employee productivity tracking, DTF reporting, print on demand analytics, ecommerce reporting software",
     openGraph: {
@@ -41,10 +41,21 @@ const steps = [
     { title: "Act on what you find",        desc: "Use built-in annotations to flag issues, assign follow-ups, and track whether efficiency changes are making a measurable difference." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                    item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",                item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Analytics & Reporting",   item: "https://pythiastechnologies.com/services/analytics" },
+    ],
+};
+
 export default function AnalyticsPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Analytics & Reporting"
                 title="Know exactly how your"
@@ -60,6 +71,11 @@ export default function AnalyticsPage() {
                 sub="Pythias captures every production event automatically so you can see what's really going on — and fix it."
                 color="#8b5cf6"
             />
+            <ServiceRelated related={[
+                { href: "/services/production",  label: "Production Queue Management" },
+                { href: "/services/team",        label: "Team & Collaboration" },
+                { href: "/services/marketplace", label: "Multi-Marketplace Integration" },
+            ]} />
         </>
     );
 }

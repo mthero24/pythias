@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Inventory Management for Print Shops | Pythias Technologies",
+    title: "Inventory Management for Print Shops",
     description: "Real-time blank inventory tracking, automated reorder alerts, SKU management, and supplier integration built specifically for print-on-demand and custom apparel businesses.",
     keywords: "print shop inventory management, blank inventory tracking, DTF inventory, embroidery blank stock, SKU management, reorder alerts, apparel inventory software, print on demand inventory, stock management print shop",
     openGraph: {
@@ -41,10 +41,21 @@ const steps = [
     { title: "Buy smarter over time",        desc: "Usage reports show your actual consumption rate. Make purchasing decisions based on real data, not guesswork." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                   item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",               item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Inventory Management",   item: "https://pythiastechnologies.com/services/inventory" },
+    ],
+};
+
 export default function InventoryPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Inventory Management"
                 title="Never run out of blanks"
@@ -60,6 +71,11 @@ export default function InventoryPage() {
                 sub="Pythias tracks every blank in real time so your team always knows what's available before production starts."
                 color="#10b981"
             />
+            <ServiceRelated related={[
+                { href: "/services/production",  label: "Production Queue Management" },
+                { href: "/services/analytics",   label: "Analytics & Reporting" },
+                { href: "/services/design",      label: "Design & Product Management" },
+            ]} />
         </>
     );
 }

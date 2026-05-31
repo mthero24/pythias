@@ -4,8 +4,9 @@ import { Box, Container, Typography, Grid2, Card, CardActionArea, Chip, Stack } 
 import ArticleIcon from "@mui/icons-material/Article";
 
 export const metadata = {
-    title: "Blog | Pythias Technologies",
+    title: "Blog",
     description: "Insights, guides, and updates from the Pythias Technologies team.",
+    alternates: { canonical: "https://pythiastechnologies.com/blog" },
 };
 
 export const revalidate = 60;
@@ -22,17 +23,44 @@ async function getArticles() {
     }
 }
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Blog", item: "https://pythiastechnologies.com/blog" },
+    ],
+};
+
 export default async function BlogPage() {
     const articles = await getArticles();
 
+    const collectionSchema = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Pythias Technologies Blog",
+        description: "Insights, guides, and updates from the Pythias Technologies team.",
+        url: "https://pythiastechnologies.com/blog",
+        ...(articles.length > 0 ? {
+            hasPart: articles.map(a => ({
+                "@type": "Article",
+                headline: a.title,
+                url: `https://pythiastechnologies.com/blog/${a.slug}`,
+                ...(a.publishedAt ? { datePublished: new Date(a.publishedAt).toISOString() } : {}),
+            })),
+        } : {}),
+    };
+
     return (
         <Box sx={{ bgcolor: "#f8faff", minHeight: "100vh", py: { xs: 6, md: 10 } }}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <Container maxWidth="lg">
                 <Box sx={{ mb: 6, textAlign: "center" }}>
-                    <Typography variant="h3" fontWeight={800} gutterBottom>
+                    <Typography variant="h1" sx={{ fontSize: { xs: "2rem", md: "2.75rem" }, fontWeight: 800 }} gutterBottom>
                         Blog
                     </Typography>
-                    <Typography variant="h6" color="text.secondary">
+                    <Typography variant="subtitle1" color="text.secondary">
                         Insights, guides, and updates from the Pythias team.
                     </Typography>
                 </Box>

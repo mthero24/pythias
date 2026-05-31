@@ -1,9 +1,9 @@
-import { Box, Container, Typography, Chip, Grid, Card, CardContent, Button } from "@mui/material";
+import { Box, Container, Typography, Chip, Grid2, Card, CardContent, Button } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Link from "next/link";
 
 export const metadata = {
-    title: "Integrations | Pythias Technologies — Connect Every Channel You Sell On",
+    title: "Marketplace Integrations — Every Channel You Sell On",
     description: "Pythias connects your print-on-demand fulfillment to Amazon, Walmart, eBay, Etsy, Shopify, Wix, WooCommerce, Squarespace, TikTok Shop, Faire, SHEIN, Temu, Noon, bol.com, and more — with automatic order sync and shipping confirmation.",
     keywords: "print on demand integrations, Amazon fulfillment, Walmart marketplace, eBay seller, Etsy fulfillment, Shopify print on demand, TikTok Shop, Faire wholesale, SHEIN vendor, marketplace integration",
     openGraph: {
@@ -314,10 +314,38 @@ function IntegrationCard({ name, logo, logoText, logoBg, status, description, hi
     return card;
 }
 
+const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Pythias Marketplace Integrations",
+    description: "Marketplace and platform integrations available in Pythias Technologies.",
+    url: "https://pythiastechnologies.com/integrations",
+    numberOfItems: CATEGORIES.reduce((sum, c) => sum + c.integrations.length, 0),
+    itemListElement: CATEGORIES.flatMap((cat, ci) =>
+        cat.integrations.map((intg, ii) => ({
+            "@type": "ListItem",
+            position: CATEGORIES.slice(0, ci).reduce((s, c) => s + c.integrations.length, 0) + ii + 1,
+            name: intg.name,
+            description: intg.description,
+        }))
+    ),
+};
+
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",         item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Integrations", item: "https://pythiastechnologies.com/integrations" },
+    ],
+};
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntegrationsPage() {
     return (
         <Box component="main">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             {/* Hero */}
             <Box sx={{
                 background: "linear-gradient(155deg, #0f172a 0%, #111827 55%, #0c1628 100%)",
@@ -415,13 +443,13 @@ export default function IntegrationsPage() {
                             </Box>
 
                             {/* Cards */}
-                            <Grid container spacing={2.5}>
+                            <Grid2 container spacing={2.5}>
                                 {cat.integrations.map(intg => (
-                                    <Grid item xs={12} sm={6} md={4} lg={3} key={intg.name}>
+                                    <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={intg.name}>
                                         <IntegrationCard {...intg} />
-                                    </Grid>
+                                    </Grid2>
                                 ))}
-                            </Grid>
+                            </Grid2>
                         </Box>
                     ))}
                 </Container>
@@ -443,7 +471,7 @@ export default function IntegrationsPage() {
                             One queue. Every channel.
                         </Typography>
                     </Box>
-                    <Grid container spacing={4}>
+                    <Grid2 container spacing={4}>
                         {[
                             {
                                 step: "01",
@@ -461,7 +489,7 @@ export default function IntegrationsPage() {
                                 desc: "Your team prints and ships. Pythias generates the label, captures the tracking, and pushes confirmation back to the marketplace.",
                             },
                         ].map(s => (
-                            <Grid item xs={12} md={4} key={s.step}>
+                            <Grid2 size={{ xs: 12, md: 4 }} key={s.step}>
                                 <Box sx={{ textAlign: "center" }}>
                                     <Typography sx={{
                                         fontSize: "3rem", fontWeight: 900, color: "#D3A73D",
@@ -472,9 +500,9 @@ export default function IntegrationsPage() {
                                     <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>{s.title}</Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>{s.desc}</Typography>
                                 </Box>
-                            </Grid>
+                            </Grid2>
                         ))}
-                    </Grid>
+                    </Grid2>
                 </Container>
             </Box>
 

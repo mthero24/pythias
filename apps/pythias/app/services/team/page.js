@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Team & Collaboration Tools | Pythias Technologies",
+    title: "Team & Collaboration Tools",
     description: "Role-based access, built-in team messaging, time tracking, badge scan login, shift management, and activity logs — all the tools your print shop team needs in one platform.",
     keywords: "print shop team management, employee time tracking, role-based access print software, team collaboration tools, badge scan login, shift management software, production team tools, print on demand team",
     openGraph: {
@@ -41,10 +41,21 @@ const steps = [
     { title: "Review and improve",           desc: "Activity logs and time tracking data feed into your weekly operations review. Identify gaps and adjust before they affect output." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                   item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",               item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Team & Collaboration",   item: "https://pythiastechnologies.com/services/team" },
+    ],
+};
+
 export default function TeamPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Team & Collaboration"
                 title="Keep your whole team"
@@ -60,6 +71,11 @@ export default function TeamPage() {
                 sub="Give every employee — from floor staff to ownership — exactly what they need to do their job well."
                 color="#14b8a6"
             />
+            <ServiceRelated related={[
+                { href: "/services/production",  label: "Production Queue Management" },
+                { href: "/services/analytics",   label: "Analytics & Reporting" },
+                { href: "/services/labels",      label: "Label & Barcode Printing" },
+            ]} />
         </>
     );
 }

@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Design & Product Management | Pythias Technologies",
+    title: "Design & Product Management",
     description: "Manage your entire product design library from one platform. Collaborative approval workflows, version control, SKU mapping, and one-click publish to Shopify, Etsy, Walmart, and more.",
     keywords: "print on demand design management, product design library, design approval workflow, SKU mapping, design version control, mockup builder, print shop design software, marketplace product publishing",
     openGraph: {
@@ -41,10 +41,21 @@ const steps = [
     { title: "Publish and fulfill",       desc: "One click pushes the approved product to every selected marketplace. When an order comes in, the correct print file is already mapped and ready for production." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                        item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",                    item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Design & Product Management", item: "https://pythiastechnologies.com/services/design" },
+    ],
+};
+
 export default function DesignPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Design & Product Management"
                 title="From concept to catalog,"
@@ -60,6 +71,11 @@ export default function DesignPage() {
                 sub="See how Pythias connects your design library to your production floor and storefronts in one workflow."
                 color="#ec4899"
             />
+            <ServiceRelated related={[
+                { href: "/services/image-creation", label: "Automated Image Creation" },
+                { href: "/services/marketplace",    label: "Multi-Marketplace Integration" },
+                { href: "/services/production",     label: "Production Queue Management" },
+            ]} />
         </>
     );
 }

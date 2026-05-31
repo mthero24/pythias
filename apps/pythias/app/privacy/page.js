@@ -2,7 +2,7 @@ import { Box, Container, Typography, Divider, Stack } from "@mui/material";
 import Link from "next/link";
 
 export const metadata = {
-    title: "Privacy Policy | Pythias Technologies",
+    title: "Privacy Policy",
     description: "Privacy Policy for Pythias Technologies — how we collect, use, and protect your information.",
 };
 

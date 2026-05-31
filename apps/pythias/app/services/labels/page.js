@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Label & Barcode Printing for Print Shops | Pythias Technologies",
+    title: "Label & Barcode Printing for Print Shops",
     description: "Print production labels, packing slips, barcodes, and QR codes for every order directly from your dashboard. Bulk label printing, DTF labels, heat press settings labels, and more — no third-party tools needed.",
     keywords: "production label printing, barcode printing print shop, packing slip software, QR code labels, DTF production labels, heat press labels, bulk label printing, thermal label printer software, print shop label management",
     openGraph: {
@@ -41,10 +41,21 @@ const steps = [
     { title: "Ship with confidence",         desc: "The right label reaches every package because labels are tied directly to the order — not manually matched by your team." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                       item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",                   item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Label & Barcode Printing",   item: "https://pythiastechnologies.com/services/labels" },
+    ],
+};
+
 export default function LabelsPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Label & Barcode Printing"
                 title="The right label on"
@@ -60,6 +71,11 @@ export default function LabelsPage() {
                 sub="When labels are generated directly from order data, the right info gets to the right package — automatically."
                 color="#f59e0b"
             />
+            <ServiceRelated related={[
+                { href: "/services/production",  label: "Production Queue Management" },
+                { href: "/services/shipping",    label: "Shipping & Fulfillment" },
+                { href: "/services/team",        label: "Team & Collaboration" },
+            ]} />
         </>
     );
 }

@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Production Queue Management | Pythias Technologies",
+    title: "Production Queue Management",
     description: "Manage DTF, embroidery, sublimation, and screen print queues with automated job routing, deadline tracking, batch processing, and Brother GTX printer integration. Built for high-volume print shops.",
     keywords: "DTF queue management, embroidery job management, print shop software, production queue, Brother GTX integration, sublimation tracking, screen print scheduling, heat press management, print on demand production",
     openGraph: {
@@ -41,10 +41,21 @@ const steps = [
     { title: "Orders complete and ship",     desc: "When a job is marked complete, the order is automatically flagged for packing and a shipping label is generated — no extra steps." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                         item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",                     item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Production Queue Management",  item: "https://pythiastechnologies.com/services/production" },
+    ],
+};
+
 export default function ProductionPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Production Management"
                 title="Run every print line from"
@@ -60,6 +71,11 @@ export default function ProductionPage() {
                 sub="See how Pythias keeps every line moving — from order received to order shipped."
                 color="#D3A73D"
             />
+            <ServiceRelated related={[
+                { href: "/services/shipping",   label: "Shipping & Fulfillment" },
+                { href: "/services/inventory",  label: "Inventory Management" },
+                { href: "/services/labels",     label: "Label & Barcode Printing" },
+            ]} />
         </>
     );
 }

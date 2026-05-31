@@ -7,8 +7,9 @@ import {
 import Link from "next/link";
 
 export const metadata = {
-    title: "Features | Pythias Technologies",
+    title: "Features",
     description: "Explore all the features of the Pythias print-on-demand fulfillment platform — production, shipping, inventory, marketplaces, analytics, and more.",
+    alternates: { canonical: "https://pythiastechnologies.com/features" },
 };
 
 const CORE_FEATURES = [
@@ -97,9 +98,31 @@ const PLATFORM_FEATURES = [
     },
 ];
 
+const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Pythias Technologies",
+    applicationCategory: "BusinessApplication",
+    description: "All-in-one print-on-demand fulfillment platform — production queues, shipping automation, inventory management, multi-marketplace integration, analytics, and team tools.",
+    featureList: CORE_FEATURES.map(f => f.title).join(", "),
+    offers: { "@type": "Offer", seller: { "@type": "Organization", name: "Pythias Technologies" } },
+    url: "https://pythiastechnologies.com/features",
+};
+
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",     item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Features", item: "https://pythiastechnologies.com/features" },
+    ],
+};
+
 export default function FeaturesPage() {
     return (
         <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh" }}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
             {/* Hero */}
             <Box sx={{

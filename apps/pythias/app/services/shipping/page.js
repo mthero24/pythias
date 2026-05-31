@@ -1,7 +1,7 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
 
 export const metadata = {
-    title: "Shipping & Fulfillment Automation | Pythias Technologies",
+    title: "Shipping & Fulfillment Automation",
     description: "Auto-generate USPS, FedEx, and UPS labels the moment a print order completes. Tracking numbers sync back to Shopify, Etsy, Amazon, and every marketplace automatically — no manual steps.",
     keywords: "shipping label automation, USPS label generation, FedEx print shop, UPS shipping integration, UPS label generation, automatic tracking sync, ecommerce shipping software, print on demand shipping, fulfillment automation, Shopify shipping, Etsy shipping, Amazon fulfillment",
     openGraph: {
@@ -42,10 +42,21 @@ const steps = [
     { title: "Tracking synced everywhere",    desc: "The tracking number is posted back to every marketplace the order came from, triggering confirmation emails to your customers automatically." },
 ];
 
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",                      item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services",                  item: "https://pythiastechnologies.com/services" },
+        { "@type": "ListItem", position: 3, name: "Shipping & Fulfillment",    item: "https://pythiastechnologies.com/services/shipping" },
+    ],
+};
+
 export default function ShippingPage() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ServiceHero
                 label="Shipping & Fulfillment"
                 title="Ship every order faster with"
@@ -61,6 +72,11 @@ export default function ShippingPage() {
                 sub="See how Pythias automates your entire shipping workflow from production floor to carrier pickup."
                 color="#6366f1"
             />
+            <ServiceRelated related={[
+                { href: "/services/production",   label: "Production Queue Management" },
+                { href: "/services/marketplace",  label: "Multi-Marketplace Integration" },
+                { href: "/services/labels",       label: "Label & Barcode Printing" },
+            ]} />
         </>
     );
 }

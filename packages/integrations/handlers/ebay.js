@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
 import { createHash } from "crypto";
-import { ApiKeyIntegrations } from "@pythias/mongo";
+import { ApiKeyIntegrations, Products, ProductInventory } from "@pythias/mongo";
 import {
     generateEbayAuthUrl, exchangeCodeEbay,
     getSellerIdentityEbay,
     getOrdersEbay, shipOrderEbay,
-    getInventoryItemsEbay, getOffersEbay, updateOfferEbay, deleteInventoryItemEbay, deleteOfferEbay,
-    createInventoryItemEbay, createOfferEbay, getAccountPoliciesEbay,
+    getInventoryItemsEbay, getOffersEbay, getOfferEbay, updateOfferEbay, publishOfferEbay, deleteInventoryItemEbay, deleteOfferEbay,
+    createInventoryItemEbay, createInventoryItemGroupEbay, createOfferEbay,
+    getAccountPoliciesEbay, createFulfillmentPolicyEbay, deleteFulfillmentPolicyEbay, createPaymentPolicyEbay, createReturnPolicyEbay,
     getSellerStandardsEbay, getTrafficReportEbay,
     getTransactionsEbay, getPayoutsEbay,
     getConversationsEbay, getConversationMessagesEbay, sendMessageEbay,
     getFeedbackEbay,
     getDisputesEbay, getDisputeEbay,
-    getCampaignsEbay, getPromotionsEbay,
+    getCampaignsEbay, getPromotionsEbay, createCampaignEbay, createPromotionEbay,
     getStoreEbay,
+    getItemAspectsEbay,
+    getCategorySuggestionsEbay,
 } from "../functions/ebay.js";
 
 // ─── Identity ─────────────────────────────────────────────────────────────────
@@ -38,6 +41,7 @@ export async function handleEbayGET(req) {
     return NextResponse.json({ error: "not implemented" });
 }
 
+
 export async function handleEbaySendPOST(req) {
     const body = await req.json();
     const { connectionId, product, offer } = body;
@@ -48,55 +52,221 @@ export async function handleEbaySendPOST(req) {
     if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     try {
         const blank = product.blanks?.[0] ?? null;
-        const blankOverrides = blank?.marketPlaceOverrides?.[connection.displayName]
-            ?? blank?.marketPlaceOverrides?.["eBay"]
-            ?? blank?.marketPlaceOverrides?.["ebay"]
+        // field saved with multiple typo variants; check all spellings
+        const mpMap = blank?.marketPlaceOverrides
+            ?? blank?.marketPlaceOverides
+            ?? blank?.marketPlaceOverided
             ?? {};
-
-        const categoryId          = offer?.categoryId          ?? blankOverrides.categoryId;
-        const fulfillmentPolicyId = offer?.fulfillmentPolicyId ?? blankOverrides.fulfillmentPolicyId;
-        const paymentPolicyId     = offer?.paymentPolicyId     ?? blankOverrides.paymentPolicyId;
-        const returnPolicyId      = offer?.returnPolicyId      ?? blankOverrides.returnPolicyId;
+        // key is marketPlace.name — do a case-insensitive scan for any key containing "ebay"
+        const ebayKey = Object.keys(mpMap).find(k => k.toLowerCase().includes("ebay"))
+            ?? connection.displayName;
+        const blankOverrides = mpMap[ebayKey] ?? {};
+        console.log("[eBay send] blank keys:", Object.keys(blank ?? {}), "| mpMap keys:", Object.keys(mpMap), "| ebayKey:", ebayKey, "| blankOverrides:", JSON.stringify(blankOverrides));
+        const categoryId          = offer?.categoryId
+            ?? blankOverrides.categoryId
+            ?? blankOverrides.category_id
+            ?? blankOverrides.eBayCategoryId
+            ?? blankOverrides.ebayCategoryId
+            ?? blankOverrides.category;
+        // auto-resolve policy IDs: prefer offer > blank overrides > first policy from account
+        let fulfillmentPolicyId = offer?.fulfillmentPolicyId ?? blankOverrides.fulfillmentPolicyId;
+        let paymentPolicyId     = offer?.paymentPolicyId     ?? blankOverrides.paymentPolicyId;
+        let returnPolicyId      = offer?.returnPolicyId      ?? blankOverrides.returnPolicyId;
         const merchantLocationKey = offer?.merchantLocationKey ?? blankOverrides.merchantLocationKey;
+        if (!fulfillmentPolicyId || !paymentPolicyId || !returnPolicyId) {
+            try {
+                const policies = await getAccountPoliciesEbay(connection);
+                if (!fulfillmentPolicyId) fulfillmentPolicyId = policies.fulfillmentPolicies?.[0]?.fulfillmentPolicyId;
+                if (!paymentPolicyId)     paymentPolicyId     = policies.paymentPolicies?.[0]?.paymentPolicyId;
+                if (!returnPolicyId)      returnPolicyId      = policies.returnPolicies?.[0]?.returnPolicyId;
+                console.log("[eBay send] auto-resolved policies — fulfillment:", fulfillmentPolicyId, "payment:", paymentPolicyId, "return:", returnPolicyId);
+            } catch (e) {
+                console.warn("[eBay send] could not fetch policies (account may not be opted in):", e.message);
+            }
+        }
 
-        const variants = product.variantsArray ?? [];
-        const results = [];
+        const variants  = product.variantsArray ?? [];
+        const results   = [];
+        const allBlanks = product.blanks ?? [];
+
+        // resolve blank + its metadata for a given variant
+        const blankFor = (variant) =>
+            allBlanks.find(b => b._id?.toString() === variant.blank?.toString()) ?? blank;
+
+        const sizeNameFor = (variant) => {
+            const b     = blankFor(variant);
+            const sizes = b?.sizes ?? [];
+            const sv    = variant.size;
+            if (sv && typeof sv === "object" && sv.name) return sv.name;
+            const sid = (sv?._id ?? sv)?.toString() ?? "";
+            if (!sid) return "";
+            const byId   = sizes.find(sz => sz._id?.toString() === sid);
+            if (byId?.name) return byId.name;
+            const byName = sizes.find(sz => sz.name === sid || sz.name?.toLowerCase() === sid.toLowerCase());
+            if (byName?.name) return byName.name;
+            if (!/^[a-f0-9]{24}$/i.test(sid)) return sid;
+            console.warn("[eBay] size lookup miss — variant.size:", JSON.stringify(sv), "| blank sizes:", sizes.map(s => s._id?.toString() + "=" + s.name));
+            return "";
+        };
+
+        const colorNameFor = (variant) => {
+            const b      = blankFor(variant);
+            const colors = b?.colors ?? [];
+            const cv     = variant.color;
+            if (cv && typeof cv === "object" && cv.name) return cv.name;
+            const cid = (cv?._id ?? cv)?.toString() ?? "";
+            if (!cid) return "";
+            const byId   = colors.find(c => c._id?.toString() === cid);
+            if (byId?.name) return byId.name;
+            const byName = colors.find(c => c.name === cid || c.name?.toLowerCase() === cid.toLowerCase());
+            if (byName?.name) return byName.name;
+            if (!/^[a-f0-9]{24}$/i.test(cid)) return cid;
+            console.warn("[eBay] color lookup miss — variant.color:", JSON.stringify(cv), "| blank colors:", colors.map(c => c._id?.toString() + "=" + c.name));
+            return "";
+        };
+
+        const RESERVED = new Set(["categoryId","category_id","eBayCategoryId","ebayCategoryId","category","fulfillmentPolicyId","paymentPolicyId","returnPolicyId","merchantLocationKey","style","type","sizeType","size_type","Size Type","aspects","color"]);
+        const extraAspects = Object.fromEntries(
+            Object.entries(blankOverrides.aspects ?? {})
+                .concat(Object.entries(blankOverrides).filter(([k]) => !RESERVED.has(k) && typeof blankOverrides[k] === "string"))
+                .map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+        );
+
+        const title       = offer?.title       || product.name || product.title || product.sku || "Custom Print Item";
+        const description = offer?.description || product.description || product.name || product.title || product.sku || "Custom Print Item";
+        const imageUrls   = [];
+        if (product.design?.images?.front) imageUrls.push(product.design.images.front);
+        if (product.design?.images?.back)  imageUrls.push(product.design.images.back);
+
+        // resolve category once using the first blank's data
+        let resolvedCategoryId = categoryId;
+        if (!resolvedCategoryId) {
+            const firstBlank = blankFor(variants.find(v => v.sku) ?? {});
+            const deptStr0   = firstBlank?.department ?? "";
+            const parts = [deptStr0, ...(firstBlank?.category ?? []), firstBlank?.subcategory].filter(Boolean);
+            if (parts.length) {
+                try {
+                    const suggestions = await getCategorySuggestionsEbay(connection, parts.join(" "));
+                    resolvedCategoryId = suggestions[0]?.category?.categoryId;
+                    console.log("[eBay] auto-resolved categoryId:", resolvedCategoryId, "for query:", parts.join(" "));
+                } catch (e) {
+                    console.warn("[eBay] category suggestion failed:", e.message);
+                }
+            }
+        }
+
+        // ── Step 1: create/update each inventory item ─────────────────────────
+        const variantSKUs = [];
+        const allColors   = new Set();
+        const allSizes    = new Set();
+        let   minPrice    = Infinity;
+        let   firstDept = "", firstStyle = "", firstType = "", firstSizeType = "";
+
         for (const variant of variants) {
             const sku = variant.sku;
             if (!sku) continue;
-            const imageUrls = [];
-            if (product.design?.images?.front) imageUrls.push(product.design.images.front);
-            if (product.design?.images?.back)  imageUrls.push(product.design.images.back);
+            const vBlank      = blankFor(variant);
+            const deptStr     = vBlank?.department ?? "";
+            const styleStr    = blankOverrides.style ?? vBlank?.subcategory ?? "";
+            const typeStr     = blankOverrides.type  ?? vBlank?.category?.[0] ?? "";
+            const blankName   = (vBlank?.name ?? "").toLowerCase();
+            const autoSizeType = blankName.includes("plus") ? "Plus"
+                : (blankName.includes("big") || blankName.includes("tall")) ? "Big & Tall"
+                : "Regular";
+            const sizeTypeStr = blankOverrides["Size Type"] ?? blankOverrides.sizeType ?? blankOverrides.size_type ?? autoSizeType;
+            const sizeName    = sizeNameFor(variant);
+            const colorName   = colorNameFor(variant) || blankOverrides.color || "Custom";
+
             await createInventoryItemEbay(connection, sku, {
-                title:       offer?.title ?? product.name ?? "Custom Print Item",
-                description: offer?.description ?? product.description ?? "",
-                condition:   "NEW",
-                quantity:    variant.quantity ?? 9999,
+                title, description, condition: "NEW",
+                quantity: variant.quantity ?? 9999,
                 imageUrls,
                 aspects: {
-                    ...(variant.color?.name ? { Color: [variant.color.name] } : {}),
-                    ...(variant._sizeName    ? { Size:  [variant._sizeName]  } : {}),
+                    Color: [colorName],
+                    ...(sizeName ? { Size: [sizeName] } : {}),
+                    "Size Type": [sizeTypeStr],
                     Brand: [product.brand ?? "Custom"],
+                    ...(deptStr  ? { Department: [deptStr]  } : {}),
+                    ...(styleStr ? { Style: [styleStr] } : {}),
+                    ...(typeStr  ? { Type:  [typeStr]  } : {}),
+                    ...extraAspects,
                 },
             });
-            if (categoryId) {
-                const result = await createOfferEbay(connection, {
-                    sku,
-                    categoryId,
-                    listingDescription:  offer?.description ?? product.name ?? "",
-                    price:               variant.price ?? offer?.price ?? 0,
-                    fulfillmentPolicyId,
-                    paymentPolicyId,
-                    returnPolicyId,
-                    merchantLocationKey,
-                    publish:             offer?.publish !== false,
-                });
-                results.push({ sku, ...result });
-            } else {
-                results.push({ sku, ok: true });
-            }
+
+            variantSKUs.push(sku);
+            if (colorName) allColors.add(colorName);
+            if (sizeName)  allSizes.add(sizeName);
+            const p = variant.price ?? offer?.price ?? 0;
+            if (p < minPrice) minPrice = p;
+            if (!firstDept)     firstDept     = deptStr;
+            if (!firstStyle)    firstStyle    = styleStr;
+            if (!firstType)     firstType     = typeStr;
+            if (!firstSizeType) firstSizeType = sizeTypeStr;
         }
-        return NextResponse.json({ success: true, results });
+
+        if (variantSKUs.length === 0) {
+            return NextResponse.json({ success: true, results: [] });
+        }
+
+        // ── Step 2: single-variant → individual offer; multi → grouped ────────
+        if (variantSKUs.length === 1) {
+            const invItem = await ProductInventory.findOne({ sku: variantSKUs[0] }).select("quantity").lean().catch(() => null);
+            const invQty  = invItem?.quantity ?? 1;
+            const result  = resolvedCategoryId
+                ? await createOfferEbay(connection, {
+                    sku: variantSKUs[0],
+                    categoryId: resolvedCategoryId,
+                    listingDescription: description,
+                    price: minPrice === Infinity ? 0 : minPrice,
+                    quantity: invQty,
+                    fulfillmentPolicyId, paymentPolicyId, returnPolicyId, merchantLocationKey,
+                    publish: offer?.publish !== false,
+                  })
+                : { ok: true };
+            return NextResponse.json({ success: true, results: [{ sku: variantSKUs[0], ...result }] });
+        }
+
+        // multi-variant — create group then one grouped offer
+        if (!resolvedCategoryId) {
+            return NextResponse.json({ success: true, results: variantSKUs.map(sku => ({ sku, ok: true, note: "no category — inventory items created, no offer" })) });
+        }
+
+        const groupKey = `grp${String(product._id ?? product.sku ?? "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 40)}`;
+
+        const groupAspects = {
+            Brand: [product.brand ?? "Custom"],
+            ...(firstDept     ? { Department: [firstDept]     } : {}),
+            ...(firstStyle    ? { Style:      [firstStyle]    } : {}),
+            ...(firstType     ? { Type:       [firstType]     } : {}),
+            ...(firstSizeType ? { "Size Type": [firstSizeType] } : {}),
+            ...extraAspects,
+        };
+
+        const variesBy = {
+            specifications: [
+                ...(allColors.size > 0 ? [{ name: "Color", values: [...allColors] }] : []),
+                ...(allSizes.size  > 0 ? [{ name: "Size",  values: [...allSizes]  }] : []),
+            ],
+        };
+
+        await createInventoryItemGroupEbay(connection, groupKey, {
+            title, description,
+            aspects: groupAspects,
+            imageUrls,
+            variantSKUs,
+            variesBy,
+        });
+
+        const groupResult = await createOfferEbay(connection, {
+            inventoryItemGroupKey: groupKey,
+            categoryId: resolvedCategoryId,
+            listingDescription: description,
+            price: minPrice === Infinity ? 0 : minPrice,
+            fulfillmentPolicyId, paymentPolicyId, returnPolicyId, merchantLocationKey,
+            publish: offer?.publish !== false,
+        });
+
+        return NextResponse.json({ success: true, results: [{ groupKey, ...groupResult }] });
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 502 });
     }
@@ -111,6 +281,39 @@ export async function handleEbayPoliciesGET(req) {
     try {
         const policies = await getAccountPoliciesEbay(connection);
         return NextResponse.json(policies);
+    } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+}
+
+export async function handleEbayPoliciesPOST(req) {
+    const body = await req.json();
+    const { connectionId, type, ...fields } = body;
+    if (!connectionId || !type) return NextResponse.json({ error: "connectionId and type required" }, { status: 400 });
+    const connection = await ApiKeyIntegrations.findById(connectionId);
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    try {
+        let result;
+        if      (type === "fulfillment") result = await createFulfillmentPolicyEbay(connection, fields);
+        else if (type === "payment")     result = await createPaymentPolicyEbay(connection, fields);
+        else if (type === "return")      result = await createReturnPolicyEbay(connection, fields);
+        else return NextResponse.json({ error: "type must be fulfillment, payment, or return" }, { status: 400 });
+        return NextResponse.json({ success: true, ...result });
+    } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+}
+
+export async function handleEbayPoliciesDELETE(req) {
+    const { searchParams } = new URL(req.url);
+    const connectionId = searchParams.get("connectionId");
+    const policyId     = searchParams.get("policyId");
+    if (!connectionId || !policyId) return NextResponse.json({ error: "connectionId and policyId required" }, { status: 400 });
+    const connection = await ApiKeyIntegrations.findById(connectionId);
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    try {
+        await deleteFulfillmentPolicyEbay(connection, policyId);
+        return NextResponse.json({ success: true });
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 502 });
     }
@@ -184,6 +387,80 @@ export async function handleEbayListingsPUT(req) {
     }
 }
 
+export async function handleEbayListingsPOST(req) {
+    const body = await req.json();
+    const { connectionId, offerId, createOffer: createOfferData } = body;
+    if (!connectionId) return NextResponse.json({ error: "connectionId required" }, { status: 400 });
+    const connection = await ApiKeyIntegrations.findById(connectionId);
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    try {
+        if (createOfferData) {
+            // auto-fill missing policy IDs from account
+            if (!createOfferData.fulfillmentPolicyId || !createOfferData.paymentPolicyId || !createOfferData.returnPolicyId) {
+                try {
+                    const policies = await getAccountPoliciesEbay(connection);
+                    if (!createOfferData.fulfillmentPolicyId) createOfferData.fulfillmentPolicyId = policies.fulfillmentPolicies?.[0]?.fulfillmentPolicyId;
+                    if (!createOfferData.paymentPolicyId)     createOfferData.paymentPolicyId     = policies.paymentPolicies?.[0]?.paymentPolicyId;
+                    if (!createOfferData.returnPolicyId)      createOfferData.returnPolicyId      = policies.returnPolicies?.[0]?.returnPolicyId;
+                } catch { /* account may not be opted in — proceed without policies */ }
+            }
+            const { groupKey, groupTitle, groupDescription, groupAspects, groupImageUrls, variantSKUs, ...offerFields } = createOfferData;
+            if (groupKey && variantSKUs?.length) {
+                let resolvedImageUrls = groupImageUrls?.length ? groupImageUrls : [];
+                if (!resolvedImageUrls.length) {
+                    // pull images from the first matching inventory item
+                    const { items } = await getInventoryItemsEbay(connection, { limit: 200 }).catch(() => ({ items: [] }));
+                    for (const sku of variantSKUs) {
+                        const match = items.find(i => i.sku === sku || i.sku === sku.replace(/[^a-zA-Z0-9]/g, "").slice(0, 50));
+                        const urls  = match?.product?.imageUrls ?? match?.inventoryItem?.product?.imageUrls ?? [];
+                        if (urls.length) { resolvedImageUrls = urls; break; }
+                    }
+                }
+                await createInventoryItemGroupEbay(connection, groupKey, {
+                    title:       groupTitle       ?? offerFields.listingDescription ?? "Custom Print Item",
+                    description: groupDescription ?? offerFields.listingDescription ?? "",
+                    aspects:     groupAspects     ?? {},
+                    imageUrls:   resolvedImageUrls,
+                    variantSKUs,
+                });
+                const result = await createOfferEbay(connection, { ...offerFields, inventoryItemGroupKey: groupKey });
+                return NextResponse.json({ success: true, ...result });
+            }
+            const result = await createOfferEbay(connection, createOfferData);
+            return NextResponse.json({ success: true, ...result });
+        }
+        if (!offerId) return NextResponse.json({ error: "offerId required" }, { status: 400 });
+
+        // sync price + quantity from the DB before publishing
+        try {
+            const offer = await getOfferEbay(connection, offerId).catch(() => null);
+            const sku   = offer?.sku;
+            if (sku) {
+                const [product, invItem] = await Promise.all([
+                    Products.findOne({ "variantsArray.sku": sku }).lean().catch(() => null),
+                    ProductInventory.findOne({ sku }).lean().catch(() => null),
+                ]);
+                const variant  = product?.variantsArray?.find(v => v.sku === sku);
+                const price    = variant?.price ?? product?.price;
+                const quantity = invItem?.quantity;
+                if (price != null || quantity != null) {
+                    await updateOfferEbay(connection, offerId, {
+                        ...(price    != null ? { price }    : {}),
+                        ...(quantity != null ? { quantity } : {}),
+                    }).catch(e => console.warn("[eBay] pre-publish sync warning:", e.message));
+                }
+            }
+        } catch (syncErr) {
+            console.warn("[eBay] pre-publish product sync failed:", syncErr.message);
+        }
+
+        const result = await publishOfferEbay(connection, offerId);
+        return NextResponse.json({ success: true, ...result });
+    } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+}
+
 export async function handleEbayListingsDELETE(req) {
     const { searchParams } = new URL(req.url);
     const connectionId = searchParams.get("connectionId");
@@ -197,6 +474,23 @@ export async function handleEbayListingsDELETE(req) {
             ? await deleteOfferEbay(connection, offerId)
             : await deleteInventoryItemEbay(connection, sku);
         return NextResponse.json(result);
+    } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+}
+
+// ─── Taxonomy / Aspects ───────────────────────────────────────────────────────
+
+export async function handleEbayAspectsGET(req) {
+    const { searchParams } = new URL(req.url);
+    const connectionId = searchParams.get("connectionId");
+    const categoryId   = searchParams.get("categoryId");
+    if (!connectionId || !categoryId) return NextResponse.json({ error: "connectionId and categoryId required" }, { status: 400 });
+    const connection = await ApiKeyIntegrations.findById(connectionId);
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    try {
+        const aspects = await getItemAspectsEbay(connection, categoryId);
+        return NextResponse.json({ aspects });
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 502 });
     }
@@ -347,6 +641,23 @@ export async function handleEbayMarketingGET(req) {
         }
         const data = await getCampaignsEbay(connection, { limit });
         return NextResponse.json(data);
+    } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 502 });
+    }
+}
+
+export async function handleEbayMarketingPOST(req) {
+    const body = await req.json();
+    const { connectionId, type, ...fields } = body;
+    if (!connectionId || !type) return NextResponse.json({ error: "connectionId and type required" }, { status: 400 });
+    const connection = await ApiKeyIntegrations.findById(connectionId);
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    try {
+        let result;
+        if      (type === "campaign")   result = await createCampaignEbay(connection, fields);
+        else if (type === "promotion")  result = await createPromotionEbay(connection, fields);
+        else return NextResponse.json({ error: "type must be campaign or promotion" }, { status: 400 });
+        return NextResponse.json({ success: true, ...result });
     } catch (e) {
         return NextResponse.json({ error: e.message }, { status: 502 });
     }

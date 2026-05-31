@@ -9,8 +9,68 @@ import {
 import Link from "next/link";
 
 export const metadata = {
-    title: "How It Works | Pythias Technologies",
+    title: "How It Works",
     description: "Learn how Pythias Technologies gets your print-on-demand operation up and running in under two weeks — from equipment hookup to full automation.",
+    alternates: { canonical: "https://pythiastechnologies.com/how-it-works" },
+};
+
+const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to Get Started with Pythias Technologies",
+    description: "Get your print-on-demand operation up and running in under two weeks.",
+    totalTime: "P14D",
+    step: [
+        {
+            "@type": "HowToStep",
+            position: 1,
+            name: "Connect Your Equipment",
+            text: "Integrate your Brother GTX printers, folding machines, and other production equipment using our guided setup wizard. Our team handles the technical side on-site.",
+            url: "https://pythiastechnologies.com/how-it-works#step-1",
+        },
+        {
+            "@type": "HowToStep",
+            position: 2,
+            name: "Sync Inventory & Listings",
+            text: "Connect all your marketplace accounts and sync product listings across Amazon, Etsy, Walmart, Shopify, TikTok, and more.",
+            url: "https://pythiastechnologies.com/how-it-works#step-2",
+        },
+        {
+            "@type": "HowToStep",
+            position: 3,
+            name: "Automate Order Fulfillment",
+            text: "Orders automatically flow into production, get assigned to the right queue, printed and packed, then shipped with integrated USPS, FedEx, and UPS label generation.",
+            url: "https://pythiastechnologies.com/how-it-works#step-3",
+        },
+        {
+            "@type": "HowToStep",
+            position: 4,
+            name: "Grow Your Business",
+            text: "Scale effortlessly with automated workflows, real-time analytics, and intelligent inventory management.",
+            url: "https://pythiastechnologies.com/how-it-works#step-4",
+        },
+    ],
+};
+
+const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+        { "@type": "Question", name: "What printers are supported?",                acceptedAnswer: { "@type": "Answer", text: "We specialize in Brother GTX printer integration, including the GTX series and DTG printers. We also support most popular folding machines and can integrate with other production equipment upon request." } },
+        { "@type": "Question", name: "Does it work with Etsy, Amazon, and other marketplaces?", acceptedAnswer: { "@type": "Answer", text: "Yes. We integrate with all major marketplaces including Amazon, Etsy, Walmart, TikTok, Shopify, Kohl's, and more. Orders automatically sync and flow through your production workflow." } },
+        { "@type": "Question", name: "How fast is onboarding?",                    acceptedAnswer: { "@type": "Answer", text: "Most customers are up and running within 1–2 weeks. Our team comes to your warehouse and handles the technical setup, printer integration, and marketplace connections." } },
+        { "@type": "Question", name: "What's included in the monthly fee?",        acceptedAnswer: { "@type": "Answer", text: "Everything. Unlimited orders, all integrations, 24/7 support, software updates, printer connectivity, shipping software, inventory management, and analytics. No hidden fees or per-transaction costs." } },
+        { "@type": "Question", name: "Do you provide technical support?",          acceptedAnswer: { "@type": "Answer", text: "Yes, we provide 24/7 technical support via chat, email, phone, and dedicated Slack channels. Our team includes print production experts who understand your workflow." } },
+    ],
+};
+
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",         item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "How It Works", item: "https://pythiastechnologies.com/how-it-works" },
+    ],
 };
 
 const STEPS = [
@@ -94,6 +154,9 @@ const FAQS = [
 export default function HowItWorksPage() {
     return (
         <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh" }}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
             {/* Hero */}
             <Box sx={{

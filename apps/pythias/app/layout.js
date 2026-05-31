@@ -54,9 +54,40 @@ const orgSchema = {
   "@type": "Organization",
   name: "Pythias Technologies",
   url: "https://pythiastechnologies.com",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://pythiastechnologies.com/logo.png",
+    width: 512,
+    height: 512,
+  },
   description: "All-in-one print-on-demand automation platform for custom apparel businesses.",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "21440 Melrose Ave",
+    addressLocality: "Southfield",
+    addressRegion: "MI",
+    postalCode: "48075",
+    addressCountry: "US",
+  },
+  telephone: "+18445798442",
+  email: "info@pythiastechnologies.com",
   sameAs: [],
-  contactPoint: { "@type": "ContactPoint", contactType: "sales", availableLanguage: "English" },
+  contactPoint: {
+    "@type": "ContactPoint",
+    telephone: "+18445798442",
+    contactType: "customer support",
+    availableLanguage: "English",
+    areaServed: "US",
+  },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Pythias Technologies",
+  url: "https://pythiastechnologies.com",
+  description: "Print-on-demand automation platform for custom apparel businesses.",
+  publisher: { "@type": "Organization", name: "Pythias Technologies" },
 };
 
 const softwareSchema = {
@@ -65,8 +96,14 @@ const softwareSchema = {
   name: "Pythias Technologies",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
+  url: "https://pythiastechnologies.com",
   description: "Print-on-demand automation platform covering production queues, shipping, inventory, marketplace sync, analytics, and team management.",
-  offers: { "@type": "Offer", seller: { "@type": "Organization", name: "Pythias Technologies" } },
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    seller: { "@type": "Organization", name: "Pythias Technologies" },
+  },
   featureList: [
     "DTF and embroidery production queue management",
     "USPS, FedEx, and UPS shipping label automation",
@@ -83,6 +120,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
       </head>
       <body className={`${urbanist.variable} antialiased`}>

@@ -13,6 +13,7 @@ const SCOPES_CORE = [
     "https://api.ebay.com/oauth/api_scope",
     "https://api.ebay.com/oauth/api_scope/sell.fulfillment",
     "https://api.ebay.com/oauth/api_scope/sell.inventory",
+    "https://api.ebay.com/oauth/api_scope/sell.account",
     "https://api.ebay.com/oauth/api_scope/sell.account.readonly",
     "https://api.ebay.com/oauth/api_scope/sell.finances",
     "https://api.ebay.com/oauth/api_scope/sell.analytics.readonly",
@@ -157,8 +158,20 @@ export async function getInventoryItemsEbay(connection, { limit = 50, offset = 0
 
 export async function getOffersEbay(connection, { sku, limit = 50, offset = 0 } = {}) {
     const token = await ensureFreshToken(connection);
-    const params = { limit, offset };
-    if (sku) params.sku = sanitizeEbaySku(sku);
+    // eBay requires sku when listing offers — without it the endpoint returns nothing
+    // If no sku provided, pivot to inventory items and enrich each with its offers
+    if (!sku) {
+        const items = await getInventoryItemsEbay(connection, { limit, offset });
+        const offers = [];
+        for (const item of items.items ?? []) {
+            try {
+                const o = await getOffersEbay(connection, { sku: item.sku, limit: 25, offset: 0 });
+                offers.push(...(o.offers ?? []));
+            } catch { /* skip items with no offers */ }
+        }
+        return { offers, total: offers.length };
+    }
+    const params = { sku: sanitizeEbaySku(sku), limit, offset };
     const res = await axios.get(`${base(connection)}/sell/inventory/v1/offer`, {
         headers: { Authorization: `Bearer ${token}`, "Accept-Language": "en-US" },
         params,
@@ -166,12 +179,14 @@ export async function getOffersEbay(connection, { sku, limit = 50, offset = 0 } 
         const body = e.response?.data;
         const err  = body?.errors?.[0];
         const msg = err?.longMessage ?? err?.message ?? e.message ?? "";
-        if (msg.toLowerCase().includes("invalid") && msg.toLowerCase().includes("sku")) {
+        const safeErrorIds = new Set([25004, 25713]);
+        if (safeErrorIds.has(err?.errorId) || e.response?.status === 404 || msg.toLowerCase().includes("no offers")) {
             return { data: { offers: [], total: 0 } };
         }
         console.error("[eBay] getOffers status:", e.response?.status, "body:", JSON.stringify(body));
         throw new Error(msg);
     });
+    console.log("[eBay] getOffers sku:", sku, "total:", res.data?.total, "count:", res.data?.offers?.length);
     return { offers: res.data?.offers ?? [], total: res.data?.total ?? 0 };
 }
 
@@ -195,15 +210,31 @@ export async function deleteOfferEbay(connection, offerId) {
 
 export async function updateOfferEbay(connection, offerId, { price, quantity, listingDescription }) {
     const token = await ensureFreshToken(connection);
-    const body = {};
-    if (price !== undefined) body.pricingSummary = { price: { currency: "USD", value: String(price) } };
-    if (quantity !== undefined) body.availableQuantity = quantity;
+    // GET current offer so we can do a full-body PUT (eBay PUT replaces entire offer)
+    const current = await axios.get(
+        `${base(connection)}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    ).catch(() => null);
+    const body = { ...(current?.data ?? {}) };
+    // strip read-only fields eBay rejects on PUT
+    delete body.offerId;
+    delete body.status;
+    delete body.listing;
+    // ensure merchantLocationKey is present — eBay needs it to derive Item.Country on publish
+    if (!body.merchantLocationKey) {
+        body.merchantLocationKey = await resolveLocationKey(connection, token, null);
+    }
+    if (price !== undefined)              body.pricingSummary    = { price: { currency: "USD", value: parseFloat(price).toFixed(2) } };
+    if (quantity !== undefined)           body.availableQuantity = quantity;
     if (listingDescription !== undefined) body.listingDescription = listingDescription;
     const res = await axios.put(
         `${base(connection)}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}`,
         body,
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Language": "en-US" } }
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+    });
     return res.data ?? { ok: true };
 }
 
@@ -215,42 +246,243 @@ export async function createInventoryItemEbay(connection, sku, { title, descript
         condition,
         product: { title, description, aspects, imageUrls },
     };
+    console.log("[eBay] createInventoryItem sku:", ebaySku, "body:", JSON.stringify(body));
     const res = await axios.put(
         `${base(connection)}/sell/inventory/v1/inventory_item/${encodeURIComponent(ebaySku)}`,
         body,
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Language": "en-US" } }
-    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        console.error("[eBay] createInventoryItem error:", JSON.stringify(e.response?.data));
+        throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+    });
     return res.data ?? { ok: true };
 }
 
-export async function createOfferEbay(connection, { sku, categoryId, listingDescription, price, fulfillmentPolicyId, paymentPolicyId, returnPolicyId, merchantLocationKey, publish = true }) {
+async function resolveLocationKey(connection, token, providedKey) {
+    if (providedKey) return providedKey;
+    const b = base(connection);
+    const h = { Authorization: `Bearer ${token}` };
+    const list = await axios.get(`${b}/sell/inventory/v1/location`, { headers: h })
+        .catch(() => ({ data: { locations: [] } }));
+    const existing = list.data?.locations?.[0];
+    if (existing) return existing.merchantLocationKey;
+    // key must be alphanumeric + dash only (no underscores) per eBay spec
+    const defaultKey = "default-us-warehouse";
+    let addr = {};
+    try { addr = JSON.parse(process.env.businessAddress ?? "{}"); } catch {}
+    await axios.post(
+        `${b}/sell/inventory/v1/location/${defaultKey}`,
+        {
+            location: {
+                address: {
+                    addressLine1:    addr.addressLine1 ?? "2901 14th N",
+                    city:            addr.city         ?? "Ammon",
+                    stateOrProvince: addr.state        ?? "ID",
+                    postalCode:      addr.postalCode   ?? "83401",
+                    country:         addr.country      ?? "US",
+                },
+            },
+            locationTypes: ["WAREHOUSE"],
+            name: addr.name ?? "Default US Location",
+            merchantLocationStatus: "ENABLED",
+        },
+        { headers: { ...h, "Content-Type": "application/json" } }
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        // 25002 = location key already exists — that's fine, just use it
+        if (errs.some(err => err.errorId === 25002)) return;
+        console.error("[eBay] create location error:", JSON.stringify(e.response?.data ?? e.message));
+        throw new Error(errs[0]?.message ?? "Failed to create merchant location");
+    });
+    return defaultKey;
+}
+
+export async function createInventoryItemGroupEbay(connection, groupKey, { title, description, aspects = {}, imageUrls = [], variantSKUs = [], variesBy = {} }) {
     const token = await ensureFreshToken(connection);
-    const ebaySku = sanitizeEbaySku(sku);
     const body = {
-        sku: ebaySku,
-        marketplaceId:     "EBAY_US",
-        format:            "FIXED_PRICE",
-        availableQuantity: 9999,
-        categoryId,
-        listingDescription,
-        listingPolicies: { fulfillmentPolicyId, paymentPolicyId, returnPolicyId },
-        merchantLocationKey,
-        pricingSummary: { price: { currency: "USD", value: String(price) } },
+        title,
+        description,
+        aspects,
+        ...(imageUrls?.length ? { imageUrls } : {}),
+        variantSKUs: variantSKUs.map(s => sanitizeEbaySku(s)),
+        ...(variesBy?.specifications?.length ? { variesBy } : {}),
     };
-    const res = await axios.post(
-        `${base(connection)}/sell/inventory/v1/offer`,
+    console.log("[eBay] createInventoryItemGroup body:", JSON.stringify(body));
+    await axios.put(
+        `${base(connection)}/sell/inventory/v1/inventory_item_group/${encodeURIComponent(groupKey)}`,
         body,
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Language": "en-US" } }
-    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
-    const offerId = res.data?.offerId;
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        console.error("[eBay] createGroup error:", JSON.stringify(e.response?.data));
+        throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+    });
+    return { ok: true, groupKey };
+}
+
+export async function createOfferEbay(connection, { sku, inventoryItemGroupKey, categoryId, listingDescription, price, quantity, fulfillmentPolicyId, paymentPolicyId, returnPolicyId, merchantLocationKey, publish = true }) {
+    const token = await ensureFreshToken(connection);
+    const locationKey = await resolveLocationKey(connection, token, merchantLocationKey);
+    const policies = {};
+    if (fulfillmentPolicyId) policies.fulfillmentPolicyId = fulfillmentPolicyId;
+    if (paymentPolicyId)     policies.paymentPolicyId     = paymentPolicyId;
+    if (returnPolicyId)      policies.returnPolicyId      = returnPolicyId;
+    const cleanCategoryId = categoryId != null ? String(categoryId) : "";
+    if (!cleanCategoryId || cleanCategoryId === "undefined" || cleanCategoryId === "null") {
+        throw new Error("A valid eBay category ID is required. Check the blank's marketplace overrides or enter a category when creating the offer.");
+    }
+    const body = {
+        ...(inventoryItemGroupKey ? { inventoryItemGroupKey } : { sku: sanitizeEbaySku(sku) }),
+        marketplaceId:      "EBAY_US",
+        format:             "FIXED_PRICE",
+        categoryId:         cleanCategoryId,
+        listingDescription,
+        ...(Object.keys(policies).length ? { listingPolicies: policies } : {}),
+        merchantLocationKey: locationKey,
+        pricingSummary:     { price: { currency: "USD", value: parseFloat(price).toFixed(2) } },
+        ...(!inventoryItemGroupKey ? { availableQuantity: quantity != null ? Math.max(1, parseInt(quantity)) : 1 } : {}),
+    };
+    console.log("[eBay] createOffer body:", JSON.stringify(body));
+    let offerId;
+    let offerData = {};
+    try {
+        const res = await axios.post(
+            `${base(connection)}/sell/inventory/v1/offer`,
+            body,
+            { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Language": "en-US" } }
+        );
+        offerId  = res.data?.offerId;
+        offerData = res.data ?? {};
+    } catch (e) {
+        const errs = e.response?.data?.errors ?? [];
+        const existing = errs.find(err => err.errorId === 25002);
+        if (existing) {
+            offerId = existing.parameters?.find(p => p.name === "offerId")?.value;
+            console.log("[eBay] offer already exists, reusing offerId:", offerId);
+            // update the existing offer with the current body (policies may have changed)
+            if (offerId) {
+                await axios.put(
+                    `${base(connection)}/sell/inventory/v1/offer/${offerId}`,
+                    body,
+                    { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Language": "en-US" } }
+                ).catch(e3 => console.warn("[eBay] offer update warning:", JSON.stringify(e3.response?.data)));
+            }
+        } else {
+            console.error("[eBay] createOffer error:", JSON.stringify(e.response?.data));
+            throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+        }
+    }
+    let listingId;
     if (publish && offerId) {
-        await axios.post(
+        const pubRes = await axios.post(
             `${base(connection)}/sell/inventory/v1/offer/${offerId}/publish`,
             {},
             { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-        ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+        ).catch(e => {
+            const errs = e.response?.data?.errors ?? [];
+            console.error("[eBay] publishOffer error:", JSON.stringify(e.response?.data));
+            throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+        });
+        listingId = pubRes.data?.listingId;
+        console.log("[eBay] published offer", offerId, "→ listingId:", listingId);
     }
-    return { offerId, ...res.data };
+    return { offerId, listingId, ...offerData };
+}
+
+export async function getOfferEbay(connection, offerId) {
+    const token = await ensureFreshToken(connection);
+    const res = await axios.get(
+        `${base(connection)}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    return res.data;
+}
+
+export async function publishOfferEbay(connection, offerId) {
+    const token = await ensureFreshToken(connection);
+    const current = await axios.get(
+        `${base(connection)}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    ).catch(() => null);
+
+    if (current?.data) {
+        const offerData = current.data;
+        const storedCategoryId = String(offerData.categoryId ?? "");
+        const badCategory = !storedCategoryId || storedCategoryId === "undefined" || storedCategoryId === "null";
+
+        if (badCategory) {
+            throw new Error(
+                "This offer is missing a valid eBay category ID. " +
+                "Delete the offer, then re-list from the inventory items tab and enter a valid eBay category."
+            );
+        }
+
+        const needsLocation = !offerData.merchantLocationKey;
+        const needsPolicies = !offerData.listingPolicies?.fulfillmentPolicyId;
+
+        if (needsLocation || needsPolicies) {
+            const body = { ...offerData };
+            delete body.offerId; delete body.status; delete body.listing;
+
+            if (needsLocation) {
+                body.merchantLocationKey = await resolveLocationKey(connection, token, null);
+            }
+            if (needsPolicies) {
+                try {
+                    const acct = await getAccountPoliciesEbay(connection);
+                    body.listingPolicies = {
+                        fulfillmentPolicyId: acct.fulfillmentPolicies?.[0]?.fulfillmentPolicyId,
+                        paymentPolicyId:     acct.paymentPolicies?.[0]?.paymentPolicyId,
+                        returnPolicyId:      acct.returnPolicies?.[0]?.returnPolicyId,
+                    };
+                } catch { /* proceed — eBay may still publish without explicit policies */ }
+            }
+
+            await axios.put(
+                `${base(connection)}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}`,
+                body,
+                { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Content-Language": "en-US" } }
+            ).catch(e => console.warn("[eBay] publishOfferEbay pre-publish patch warning:", JSON.stringify(e.response?.data)));
+        }
+    }
+
+    const res = await axios.post(
+        `${base(connection)}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}/publish`,
+        {},
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    return { ok: true, listingId: res.data?.listingId };
+}
+
+// ─── Taxonomy ─────────────────────────────────────────────────────────────────
+
+export async function getItemAspectsEbay(connection, categoryId) {
+    const token = await ensureFreshToken(connection);
+    // EBAY_US category tree ID is always "0"
+    const treeId = "0";
+    const b = connection?.sandbox ? API_BASE_SANDBOX : API_BASE;
+    const res = await axios.get(
+        `${b}/commerce/taxonomy/v1/category_tree/${treeId}/get_item_aspects_for_category?category_id=${categoryId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    const aspects = res.data?.aspects ?? [];
+    return aspects.map(a => ({
+        name:     a.localizedAspectName,
+        required: a.aspectConstraint?.aspectRequired === true,
+        mode:     a.aspectConstraint?.aspectMode,
+        values:   (a.aspectValues ?? []).map(v => v.localizedValue),
+    }));
+}
+
+export async function getCategorySuggestionsEbay(connection, query) {
+    const token = await ensureFreshToken(connection);
+    const b = connection?.sandbox ? API_BASE_SANDBOX : API_BASE;
+    const res = await axios.get(
+        `${b}/commerce/taxonomy/v1/category_tree/0/get_category_suggestions`,
+        { headers: { Authorization: `Bearer ${token}` }, params: { q: query } }
+    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    return res.data?.categorySuggestions ?? [];
 }
 
 // ─── Account Policies ─────────────────────────────────────────────────────────
@@ -269,6 +501,102 @@ export async function getAccountPoliciesEbay(connection) {
         paymentPolicies:     payment.data.paymentPolicies    ?? [],
         returnPolicies:      ret.data.returnPolicies          ?? [],
     };
+}
+
+export async function createFulfillmentPolicyEbay(connection, { name, handlingTimeDays = 3, shippingCarrier = "USPS", shippingService = "USPSPriority", shippingCost = "4.99", additionalCost = "2.00", freeShipping = false }) {
+    const token = await ensureFreshToken(connection);
+    const serviceEntry = {
+        sortOrderId: 1,
+        shippingCarrierCode: shippingCarrier,
+        shippingServiceCode: shippingService,
+        buyerResponsibleForShipping: false,
+        ...(freeShipping
+            ? { freeShipping: true, shippingCost: { currency: "USD", value: "0.00" } }
+            : {
+                shippingCost:           { currency: "USD", value: parseFloat(shippingCost).toFixed(2) },
+                additionalShippingCost: { currency: "USD", value: parseFloat(additionalCost).toFixed(2) },
+              }
+        ),
+    };
+    const body = {
+        name,
+        marketplaceId: "EBAY_US",
+        categoryTypes: [{ name: "ALL_EXCLUDING_MOTORS_VEHICLES" }],
+        handlingTime: { value: parseInt(handlingTimeDays), unit: "DAY" },
+        shippingOptions: [{
+            optionType: "DOMESTIC",
+            costType: "FLAT_RATE",
+            shippingServices: [serviceEntry],
+        }],
+    };
+    console.log("[eBay] createFulfillmentPolicy body:", JSON.stringify(body));
+    const res = await axios.post(
+        `${base(connection)}/sell/account/v1/fulfillment_policy`,
+        body,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        console.error("[eBay] createFulfillmentPolicy error:", JSON.stringify(e.response?.data));
+        throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+    });
+    return res.data;
+}
+
+export async function deleteFulfillmentPolicyEbay(connection, policyId) {
+    const token = await ensureFreshToken(connection);
+    await axios.delete(
+        `${base(connection)}/sell/account/v1/fulfillment_policy/${encodeURIComponent(policyId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+    });
+    return { ok: true };
+}
+
+export async function createPaymentPolicyEbay(connection, { name, immediatePay = true }) {
+    const token = await ensureFreshToken(connection);
+    const body = {
+        name,
+        marketplaceId: "EBAY_US",
+        categoryTypes: [{ name: "ALL_EXCLUDING_MOTORS_VEHICLES" }],
+        immediatePay,
+    };
+    const res = await axios.post(
+        `${base(connection)}/sell/account/v1/payment_policy`,
+        body,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        console.error("[eBay] createPaymentPolicy error:", JSON.stringify(e.response?.data));
+        throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+    });
+    return res.data;
+}
+
+export async function createReturnPolicyEbay(connection, { name, returnsAccepted = true, returnDays = 30, payer = "BUYER", refundMethod = "MONEY_BACK" }) {
+    const token = await ensureFreshToken(connection);
+    const body = {
+        name,
+        marketplaceId: "EBAY_US",
+        categoryTypes: [{ name: "ALL_EXCLUDING_MOTORS_VEHICLES" }],
+        returnsAccepted,
+        ...(returnsAccepted ? {
+            returnPeriod:            { value: parseInt(returnDays), unit: "DAY" },
+            returnShippingCostPayer: payer,
+            refundMethod,
+        } : {}),
+    };
+    const res = await axios.post(
+        `${base(connection)}/sell/account/v1/return_policy`,
+        body,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        console.error("[eBay] createReturnPolicy error:", JSON.stringify(e.response?.data));
+        throw new Error(errs.map(err => err.longMessage ?? err.message).join("; ") || e.message);
+    });
+    return res.data;
 }
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
@@ -417,6 +745,42 @@ export async function getPromotionsEbay(connection, { limit = 20, offset = 0 } =
         return { data: { promotions: [], total: 0 } };
     });
     return { promotions: res.data?.promotions ?? [], total: res.data?.total ?? 0 };
+}
+
+export async function createCampaignEbay(connection, { name, bidPercentage = "5.0", startDate, endDate }) {
+    const token = await ensureFreshToken(connection);
+    const body = {
+        campaignName: name,
+        campaignType: "COST_PER_SALE",
+        marketplaceId: "EBAY_US",
+        fundingStrategy: { bidPercentage: String(bidPercentage), fundingModel: "COST_PER_SALE" },
+        startDate,
+        ...(endDate ? { endDate } : {}),
+    };
+    const res = await axios.post(
+        `${base(connection)}/sell/marketing/v1/ad_campaign`,
+        body,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    return res.data ?? { ok: true };
+}
+
+export async function createPromotionEbay(connection, { name, percentageOff, startDate, endDate }) {
+    const token = await ensureFreshToken(connection);
+    const body = {
+        name,
+        marketplaceId: "EBAY_US",
+        promotionType: "MARKDOWN_SALE",
+        startDate,
+        ...(endDate ? { endDate } : {}),
+        percentageOff: String(percentageOff),
+    };
+    const res = await axios.post(
+        `${base(connection)}/sell/marketing/v1/item_price_markdown`,
+        body,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    return res.data ?? { ok: true };
 }
 
 // ─── Stores ───────────────────────────────────────────────────────────────────

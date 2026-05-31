@@ -3,7 +3,7 @@ import { ArrowForward } from "@mui/icons-material";
 import Link from "next/link";
 
 export const metadata = {
-    title: "Services | Pythias Technologies — Print-on-Demand Automation Platform",
+    title: "Services — Print-on-Demand Automation Platform",
     description: "Explore Pythias Technologies' full suite of print-on-demand automation services: production queue management, shipping integration, inventory control, multi-marketplace sync, analytics, team tools, and label printing.",
     keywords: "print on demand software, DTF queue management, shipping label automation, inventory management, multi-marketplace integration, Shopify fulfillment, Etsy fulfillment, Amazon fulfillment, print shop software",
     openGraph: {
@@ -99,9 +99,36 @@ const SERVICES = [
     },
 ];
 
+const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Pythias Technologies Services",
+    description: "Complete suite of print-on-demand automation services.",
+    url: "https://pythiastechnologies.com/services",
+    numberOfItems: SERVICES.length,
+    itemListElement: SERVICES.map((s, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: s.title,
+        description: s.desc,
+        url: `https://pythiastechnologies.com${s.href}`,
+    })),
+};
+
+const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home",     item: "https://pythiastechnologies.com" },
+        { "@type": "ListItem", position: 2, name: "Services", item: "https://pythiastechnologies.com/services" },
+    ],
+};
+
 export default function ServicesPage() {
     return (
         <Box sx={{ bgcolor: "#fff", minHeight: "100vh" }}>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             {/* Hero */}
             <Box sx={{
                 position: "relative", overflow: "hidden",
