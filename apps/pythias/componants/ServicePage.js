@@ -3,10 +3,10 @@ import Link from "next/link";
 
 export const SERVICE_RATING = {
     "@type": "AggregateRating",
-    ratingValue: "5",
-    bestRating: "5",
-    worstRating: "1",
-    ratingCount: "24",
+    ratingValue: 5,
+    bestRating: 5,
+    worstRating: 1,
+    ratingCount: 24,
 };
 
 export function ServiceHero({ label, title, subtitle, accent, icon, color = "#D3A73D" }) {

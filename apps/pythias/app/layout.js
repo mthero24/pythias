@@ -106,10 +106,10 @@ const softwareSchema = {
   },
   aggregateRating: {
     "@type": "AggregateRating",
-    ratingValue: "5",
-    bestRating: "5",
-    worstRating: "1",
-    ratingCount: "24",
+    ratingValue: 5,
+    bestRating: 5,
+    worstRating: 1,
+    ratingCount: 24,
   },
   featureList: [
     "DTF and embroidery production queue management",
