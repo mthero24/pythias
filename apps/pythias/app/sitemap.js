@@ -3,6 +3,7 @@
 const ROUTES = [
     { url: "/",                          priority: 1.0,  changeFrequency: "weekly" },
     { url: "/features",                  priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/pricing",                   priority: 0.95, changeFrequency: "monthly" },
     { url: "/how-it-works",              priority: 0.9,  changeFrequency: "monthly" },
     { url: "/integrations",              priority: 0.85, changeFrequency: "monthly" },
     { url: "/setup-guides/integrations",         priority: 0.9,  changeFrequency: "monthly" },

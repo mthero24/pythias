@@ -167,21 +167,21 @@ export function DesignTemplatesList({ templates: initial }) {
         {/* Grid */}
         <Grid2 container spacing={2.5}>
           {templates.map(t => (
-            <Grid2 key={t._id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+            <Grid2 key={t._id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }} sx={{ display: "flex" }}>
               <Card sx={{
                 borderRadius: 3, overflow: "hidden",
                 border: "1px solid #e2e8f0",
                 boxShadow: "0 1px 4px rgba(0,0,0,.06)",
                 transition: "box-shadow .15s, transform .15s",
                 "&:hover": { boxShadow: "0 8px 28px rgba(0,0,0,.12)", transform: "translateY(-2px)" },
-                display: "flex", flexDirection: "column",
+                display: "flex", flexDirection: "column", width: "100%",
               }}>
 
                 {/* Canvas preview */}
                 <Box sx={{
                   background: "repeating-conic-gradient(#f1f5f9 0% 25%, #fff 0% 50%) 0 0 / 16px 16px",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  minHeight: PREV_H, overflow: "hidden",
+                  height: PREV_H, flexShrink: 0, overflow: "hidden",
                 }}>
                   <TemplatePreview canvasJson={t.canvasJson} />
                 </Box>

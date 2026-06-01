@@ -86,6 +86,7 @@ const NAV_SECTIONS = [
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
       { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },
+      { label: "Shipping & Hardware", href: "/admin/settings/shipping", icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false },
     ],
   },
   {

@@ -4,7 +4,7 @@ import { Card, TextField, Box, InputAdornment, CircularProgress } from "@mui/mat
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import axios from "axios";
 
-export function Scan({ setSubmitted, auto, setAuto, printer }) {
+export function Scan({ setSubmitted, auto, setAuto, printer, tajimaQueue }) {
     const textFieldRef = useRef(null);
     const [scan, setScan]       = useState("");
     const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export function Scan({ setSubmitted, auto, setAuto, printer }) {
         setLoading(true);
         setScan("");
         setSubmitted(null);
-        const res = await axios.post("/api/production/embroidery", { pieceId: scan, printer });
+        const res = await axios.post("/api/production/embroidery", { pieceId: scan, printer, tajimaQueue: tajimaQueue || "default" });
         setLoading(false);
         if (res.data.error) alert(res.data.msg);
         else setSubmitted(res.data);

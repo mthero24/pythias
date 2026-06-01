@@ -40,6 +40,7 @@ const QUICK_LINKS = [
     { label: "Ship Orders",      description: "Buy labels and ship pending orders",          href: "/production/shipping",        icon: <LocalShippingIcon sx={{ fontSize: 28 }} />,     accent: "#10b981" },
     { label: "Track Shipping",   description: "Track all outbound shipments",               href: "/production/shipping-labels", icon: <TrackChangesIcon sx={{ fontSize: 28 }} />,      accent: "#14b8a6" },
     { label: "Track Production", description: "Monitor labeled items in production",        href: "/production/track-labels",    icon: <TimelineIcon sx={{ fontSize: 28 }} />,           accent: "#3b82f6" },
+    { label: "GTX Printer",      description: "Brother GTX print queue management",         href: "/production/gtx",             icon: <PrintIcon sx={{ fontSize: 28 }} />,              accent: "#f97316" },
     { label: "Load DTF",         description: "Load DTF films onto press queue",            href: "/production/dtf-send",        icon: <AutoFixHighIcon sx={{ fontSize: 28 }} />,        accent: "#0ea5e9" },
     { label: "Find DTF",         description: "Locate DTF films by piece ID",               href: "/production/dtf-find",        icon: <SearchIcon sx={{ fontSize: 28 }} />,             accent: "#06b6d4" },
     { label: "Folder",           description: "Fold and sort finished garments",             href: "/production/roq-folder",      icon: <FolderIcon sx={{ fontSize: 28 }} />,             accent: "#f97316" },

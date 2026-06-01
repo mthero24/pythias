@@ -67,14 +67,15 @@ export async function GET(){
 }
 export async function POST(req = NextApiRequest) {
     let data = await req.json()
+    const tajimaQueue = data.tajimaQueue || "default";
     console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
     }).populate("designRef", "embroideryFiles").populate("blank", "code envelopes box sizes multiImages")
     console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
-        Object.keys(item.designRef.embroideryFiles).map(async key=>{
-            if(key != undefined && item.designRef.embroideryFiles[key]){
+        await Promise.all(Object.keys(item.designRef.embroideryFiles).map(async key => {
+            if (key != undefined && item.designRef.embroideryFiles[key]) {
                 await sendFile({
                     url: item.designRef.embroideryFiles[key],
                     pieceID: `${item.pieceId}-${key}`,
@@ -84,10 +85,27 @@ export async function POST(req = NextApiRequest) {
                     sku: item.sku,
                     printer: data.printer,
                     key: "$2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW",
-                    localIP:process.env.localIP
+                    localIP: process.env.localIP
                 })
             }
-        })
+        }))
+
+        // Queue DST file on the Tajima spooler if present
+        if (item.designRef?.embroideryFiles?.dst) {
+            try {
+                const dstRes = await axios.get(item.designRef.embroideryFiles.dst, { responseType: "arraybuffer" });
+                const dstBase64 = Buffer.from(dstRes.data).toString("base64");
+                const designName = `${item.pieceId}-${item.sku}.dst`;
+                await axios.post(
+                    `http://${process.env.localIP}/api/tajima/send`,
+                    { name: designName, dstBase64, machine: tajimaQueue },
+                    { headers: { Authorization: `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW` } }
+                );
+                console.log(`[tajima] Queued DST for ${item.pieceId} → queue "${tajimaQueue}"`);
+            } catch (e) {
+                console.error(`[tajima] Failed to queue DST: ${e.message}`);
+            }
+        }
         item.status = "DTF Load";
         if (!item.steps) item.steps = [];
         item.steps.push({

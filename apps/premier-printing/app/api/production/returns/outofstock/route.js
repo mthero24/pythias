@@ -9,6 +9,7 @@ export async function POST(req=NextApiRequest){
     console.log(product, "product found in returns bin route")
     if(product){
         let variant = product.variantsArray.find(v => v.sku === data.upc || v.upc === data.upc)
+        console.log(variant, "variant found")
         let productInventory = await ProductInventory.findOne({ sku: variant.sku })
         console.log(productInventory, "productInventory")
         productInventory.quantity = 0

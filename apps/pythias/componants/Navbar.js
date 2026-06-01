@@ -13,6 +13,7 @@ import Logo from "../public/logo_vertical.png";
 const NAV_LINKS = [
   { label: "Services",      href: "/services" },
   { label: "Features",      href: "/features" },
+  { label: "Pricing",       href: "/pricing" },
   { label: "Integrations",  href: "/integrations" },
   { label: "How It Works",  href: "/how-it-works" },
   { label: "Setup Guides",          href: "/setup-guides/integrations" },

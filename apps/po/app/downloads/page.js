@@ -27,7 +27,7 @@ const APPS = [
 async function getReleases() {
     try {
         const token = process.env.GITHUB_TOKEN;
-        const res = await fetch(`https://api.github.com/repos/${REPO}/releases`, {
+        const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=100`, {
             headers: {
                 Accept: 'application/vnd.github.v3+json',
                 'User-Agent': 'pythias-app',

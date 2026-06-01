@@ -32,6 +32,8 @@ from palettes import PALETTES, closest_thread
 import jobs as job_store
 from preview import layers_to_svg
 from vinyl_writer import layers_to_vinyl_svg
+from render_png import stitches_to_png
+from render_vinyl_png import vinyl_to_png
 
 app = FastAPI(title="Embroidery DST Generator", version="0.2.0")
 
@@ -518,6 +520,120 @@ async def generate_vinyl(req: GenerateVinylRequest):
         content=svg_content.encode("utf-8"),
         media_type="image/svg+xml",
         headers={"Content-Disposition": 'attachment; filename="vinyl.svg"'},
+    )
+
+
+@app.post("/generate/vinyl-preview-png")
+async def generate_vinyl_preview_png(req: GenerateVinylRequest):
+    """
+    Produce a vinyl-look PNG preview from a stored vectorize job.
+
+    Same inputs as /generate/vinyl.  Returns a transparent-background PNG where
+    each colour layer is rendered as clean solid-filled polygons with a subtle
+    gloss highlight — the visual appearance of real cut vinyl.
+    """
+    job = job_store.get(req.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job {req.job_id!r} not found or expired")
+
+    stored_layers = job["layers"]
+    w_mm = job["w_mm"]
+    h_mm = job["h_mm"]
+
+    color_poly_layers = []
+
+    # ── image layers ──────────────────────────────────────────────────────────
+    for i, (color_rgb, polygons) in enumerate(stored_layers):
+        color = _hex_to_rgb(req.colors[i]) if i < len(req.colors) and req.colors[i] \
+                else tuple(int(v) for v in color_rgb)
+        if polygons:
+            color_poly_layers.append((color, polygons))
+
+    # ── text layers ───────────────────────────────────────────────────────────
+    for tl in req.text_layers:
+        if not tl.text.strip():
+            continue
+        font_path = find_font(tl.font_family)
+        if not font_path:
+            continue
+        try:
+            polys = font_to_polygons(font_path, tl.text, size_mm=tl.size_mm,
+                                     letter_spacing_mm=tl.letter_spacing_mm)
+            offset_polys = [shp_translate(p, xoff=tl.x_mm, yoff=tl.y_mm) for p in polys]
+            if offset_polys:
+                color_poly_layers.append((_hex_to_rgb(tl.thread_hex), offset_polys))
+        except Exception:
+            pass
+
+    if not color_poly_layers:
+        raise HTTPException(status_code=422, detail="No content found in job")
+
+    png_bytes = vinyl_to_png(color_poly_layers, w_mm, h_mm)
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={"Content-Disposition": 'inline; filename="vinyl-preview.png"'},
+    )
+
+
+@app.post("/generate/preview-png")
+async def generate_preview_png(req: GenerateFromJobRequest):
+    """
+    Produce a thread-rendered PNG preview from a stored vectorize job.
+
+    Same inputs as /generate/from-job.  Returns a PNG (transparent background)
+    where every stitch is drawn to look like real embroidery thread.
+    """
+    job = job_store.get(req.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job {req.job_id!r} not found or expired")
+
+    stored_layers = job["layers"]
+    w_mm = job["w_mm"]
+    h_mm = job["h_mm"]
+
+    color_stitch_layers = []
+
+    # ── image layers ──────────────────────────────────────────────────────────
+    for i, (color_rgb, polygons) in enumerate(stored_layers):
+        color = _hex_to_rgb(req.colors[i]) if i < len(req.colors) and req.colors[i] \
+                else tuple(int(v) for v in color_rgb)
+        layer_stitches = []
+        for poly in polygons:
+            stitches, _ = polygon_to_stitches(poly, req.fill_angle)
+            if stitches:
+                layer_stitches.extend(stitches)
+        if layer_stitches:
+            color_stitch_layers.append((color, layer_stitches))
+
+    # ── text layers ───────────────────────────────────────────────────────────
+    for tl in req.text_layers:
+        if not tl.text.strip():
+            continue
+        font_path = find_font(tl.font_family)
+        if not font_path:
+            continue
+        try:
+            polys = font_to_polygons(font_path, tl.text, size_mm=tl.size_mm,
+                                     letter_spacing_mm=tl.letter_spacing_mm)
+        except Exception:
+            continue
+        text_stitches = []
+        for p in polys:
+            s, _ = polygon_to_stitches(p, tl.fill_angle)
+            if s:
+                text_stitches.extend([(x + tl.x_mm, y + tl.y_mm) for x, y in s])
+        if text_stitches:
+            color_stitch_layers.append((_hex_to_rgb(tl.thread_hex), text_stitches))
+
+    if not color_stitch_layers:
+        raise HTTPException(status_code=422, detail="No stitchable content found")
+
+    png_bytes = stitches_to_png(color_stitch_layers, w_mm, h_mm)
+    return Response(
+        content=png_bytes,
+        media_type="image/png",
+        headers={"Content-Disposition": 'inline; filename="preview.png"'},
     )
 
 

@@ -27,6 +27,7 @@ export function Main({ blanks, source }) {
         e.target.value = "";
         const res = await axios.post("/api/production/returns/outofstock", { upc })
             .catch(() => alert("Error marking out of stock"));
+        console.log("outofstock response", res?.data);
         if (res?.data) { setVariant(res.data.variant); setInventory(res.data.productInventory); }
     };
 

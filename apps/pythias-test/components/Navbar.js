@@ -50,6 +50,7 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
 
 const DRAWER_WIDTH = 260;
 
@@ -75,6 +76,7 @@ const NAV_SECTIONS = [
       { label: "Sales",        href: "/admin/sales",        icon: <LocalOfferIcon fontSize="small" /> },
       { label: "Fix UPC",      href: "/admin/fix-upc",      icon: <QrCodeIcon fontSize="small" /> },
       { label: "Activity",     href: "/admin/activity",     icon: <BarChartIcon fontSize="small" />, charts: true },
+      { label: "Shipping & Hardware", href: "/admin/settings/shipping", icon: <VpnKeyIcon fontSize="small" /> },
     ],
   },
   {

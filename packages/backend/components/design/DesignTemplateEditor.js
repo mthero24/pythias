@@ -782,7 +782,7 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
       c.backgroundColor = prevBg;
       c.renderAll();
       const transparent = await makeTransparentBackground(raw);
-      const dataUrl = await trimTransparentPixels(transparent);
+      let dataUrl = await trimTransparentPixels(transparent);
       // If a vectorize job exists, generate and attach DST / vinyl SVG + persist polygon data
       let embroideryFileBase64 = null;
       let vinylSvgContent = null;
@@ -801,12 +801,13 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
           color_hex: tl.color, thread_hex: tl.threadHex,
           x_mm: tl.xMm, y_mm: tl.yMm, fill_angle: 0, letter_spacing_mm: 1.0,
         }));
+        const jobPayload = { job_id: embJobId, colors, fill_angle: 45, text_layers: textPayload };
         if (printTypes.includes("EMB")) {
           try {
             const dstRes = await fetch(`${EMB_SERVICE}/generate/from-job`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ job_id: embJobId, colors, fill_angle: 45, text_layers: textPayload }),
+              body: JSON.stringify(jobPayload),
             });
             if (dstRes.ok) {
               const blob = await dstRes.blob();
@@ -817,15 +818,50 @@ export function DesignTemplateEditor({ templateId, apiBase = "/api/admin/design-
               });
             }
           } catch {}
+
+          // Replace the canvas export with a thread-rendered PNG (transparent background)
+          try {
+            const pngRes = await fetch(`${EMB_SERVICE}/generate/preview-png`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(jobPayload),
+            });
+            if (pngRes.ok) {
+              const pngBlob = await pngRes.blob();
+              dataUrl = await new Promise(resolve => {
+                const r = new FileReader();
+                r.onload = e => resolve(e.target.result);
+                r.readAsDataURL(pngBlob);
+              });
+            }
+          } catch {}
         }
         if (printTypes.includes("VIN")) {
+          const vinylPayload = { job_id: embJobId, colors, text_layers: textPayload };
           try {
             const svgRes = await fetch(`${EMB_SERVICE}/generate/vinyl`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ job_id: embJobId, colors, text_layers: textPayload }),
+              body: JSON.stringify(vinylPayload),
             });
             if (svgRes.ok) vinylSvgContent = await svgRes.text();
+          } catch {}
+
+          // Replace the canvas export with a vinyl-look rendered PNG (transparent background)
+          try {
+            const pngRes = await fetch(`${EMB_SERVICE}/generate/vinyl-preview-png`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(vinylPayload),
+            });
+            if (pngRes.ok) {
+              const pngBlob = await pngRes.blob();
+              dataUrl = await new Promise(resolve => {
+                const r = new FileReader();
+                r.onload = e => resolve(e.target.result);
+                r.readAsDataURL(pngBlob);
+              });
+            }
           } catch {}
         }
       }
