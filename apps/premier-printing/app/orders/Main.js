@@ -28,7 +28,7 @@ export function Main({ords, pages, page, q}){
             <Card sx={{padding: "3%", margin: "1% 1%", textAlign: "center"}} > 
                     <Grid2 container>
                             <Grid2 size={3}>
-                                <Typography>PO Number</Typography>
+                                <Typography>Order #</Typography>
                             </Grid2>
                             <Grid2 size={3}>
                                 <Typography>Status</Typography>
