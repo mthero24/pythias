@@ -151,7 +151,7 @@ export default function AboutPage() {
                         Book a free demo and we&apos;ll walk you through exactly how Pythias can fit your operation.
                     </p>
                     <div className={s.btns}>
-                        <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                         <Link href="/contact" className={s.btnGray}>Contact Us</Link>
                     </div>
                 </div>

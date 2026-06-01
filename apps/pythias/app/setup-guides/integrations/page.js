@@ -115,7 +115,7 @@ export default function SetupGuidesPage() {
                 <div className={s.wrapMd} style={{ textAlign: "center" }}>
                     <h2 className={s.ctaTitle}>Need help with your setup?</h2>
                     <p className={s.ctaSub}>Our team can walk you through any integration during your onboarding call.</p>
-                    <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                    <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                 </div>
             </section>
         </div>

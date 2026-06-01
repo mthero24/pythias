@@ -46,6 +46,10 @@ export async function POST(req= NextApiRequest){
             clientID: process.env.UPSClientID,
             clientSecret: process.env.UPSClientSecret,
             },
+            credentialsDHL: {
+                accountNumber: process.env.dhlAccount,
+                basic: process.env.dhlBasic,
+            },
         });
         console.log(rates)
         return NextResponse.json({error: false, rates})

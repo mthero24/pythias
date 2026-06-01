@@ -43,6 +43,10 @@ export async function POST(req= NextApiRequest){
             credentialsShipStation: {
                 apiKey: process.env.ssV2
             },
+            credentialsDHL: {
+                accountNumber: process.env.dhlAccount,
+                basic: process.env.dhlBasic,
+            },
             carrierCodes :{
                 usps: "se-65258",
                 ups: "se-801899"

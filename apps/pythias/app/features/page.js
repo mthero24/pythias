@@ -114,7 +114,7 @@ export default function FeaturesPage() {
                         Powerful features designed to automate every aspect of your workflow — from first order to final delivery.
                     </p>
                     <div className={s.btns}>
-                        <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                         <Link href="/contact" className={s.btnWhite}>Talk to Sales</Link>
                     </div>
                 </div>
@@ -188,7 +188,7 @@ export default function FeaturesPage() {
                         Book a free demo and we&apos;ll walk through exactly how Pythias fits your workflow — no commitment required.
                     </p>
                     <div className={s.btns}>
-                        <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                         <Link href="/how-it-works" className={s.btnGray}>How It Works</Link>
                     </div>
                 </div>

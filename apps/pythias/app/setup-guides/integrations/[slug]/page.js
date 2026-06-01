@@ -199,7 +199,7 @@ export default function IntegrationDocPage({ params }) {
                 <div style={{ textAlign: "center" }}>
                     <h2 className={s.ctaTitle}>Need help with {intg.name}?</h2>
                     <p className={s.ctaSub}>Our onboarding team can walk you through the setup live.</p>
-                    <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                    <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                 </div>
             </section>
         </div>

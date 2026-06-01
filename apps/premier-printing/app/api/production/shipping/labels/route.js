@@ -52,6 +52,10 @@ export async function POST(req= NextApiRequest){
                 clientID: process.env.upsClientId,
                 clientSecret: process.env.upsClientSecret,
             },
+            credentialsDHL: {
+                accountNumber: process.env.dhlAccount,
+                basic: process.env.dhlBasic,
+            },
             thirdParty: data.marketplace.trim() == "Zulily"? process.env.upsZulily: data.marketplace.trim() == "TSC"? process.env.upsTSC: null,
             credentialsShipStation: {
                 apiKey: process.env.ssV2

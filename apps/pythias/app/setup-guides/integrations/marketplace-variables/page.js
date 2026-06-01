@@ -121,7 +121,7 @@ export default function MarketplaceVariablesPage() {
                         Variables are entered in the <strong>Add Marketplace</strong> or <strong>Edit Marketplace</strong> modal inside your Pythias admin dashboard. Navigate to <strong>Admin → Integrations → Add / Edit</strong> a marketplace connection.
                     </p>
                     <p style={{ fontSize: "0.9rem", color: "#4b5563", lineHeight: 1.75, marginBottom: "16px" }}>
-                        Inside the modal, each <strong>CSV Group</strong> has a list of columns (defined by the marketplace's header). For each column, you can set a <strong>Default Value</strong>. Enter the variable name exactly as shown below — Pythias will resolve it to the actual value for each product or variant when the export or sync runs.
+                        Inside the modal, each <strong>CSV Group</strong> has a list of columns (defined by the marketplace&apos;s header). For each column, you can set a <strong>Default Value</strong>. Enter the variable name exactly as shown below &mdash; Pythias will resolve it to the actual value for each product or variant when the export or sync runs.
                     </p>
                     <div className={s.infoBox}>
                         <strong>Tip:</strong> Variables are case-sensitive. Use <code>productTitle</code>, not <code>ProductTitle</code> or <code>product_title</code>.
@@ -265,7 +265,7 @@ export default function MarketplaceVariablesPage() {
                     </p>
                     <div className={s.codeBox}>
                         <span className={s.cm}>{"// ✓ Correct: titleGenerator field only"}</span>{"\n"}
-                        <span className={s.kw}>titleGenerator</span>: <span className={s.str}>"Custom {"{blank}"} in {"{color}"} - Size {"{size}"}"</span>{"\n\n"}
+                        <span className={s.kw}>titleGenerator</span>: <span className={s.str}>&quot;Custom {"{blank}"} in {"{color}"} - Size {"{size}"}&quot;</span>{"\n\n"}
                         <span className={s.cm}>{"// ✓ Correct: single variable in column default"}</span>{"\n"}
                         <span className={s.str}>productTitle</span>{"\n\n"}
                         <span className={s.cm}>{"// ✗ Not supported: mixing static + variable in column default"}</span>{"\n"}
@@ -369,7 +369,7 @@ export default function MarketplaceVariablesPage() {
                             itemType="https://schema.org/Answer"
                         >
                             <span itemProp="text">
-                                Use indexed image variables for each image column. For example: set column <em>Image1</em> default value to <code>productImage,0</code>, set column <em>Image2</em> default value to <code>productImage,1</code>, and column <em>Image3</em> to <code>productImage,2</code>. Pythias will pull each image URL from the product's image array by position.
+                                Use indexed image variables for each image column. For example: set column <em>Image1</em> default value to <code>productImage,0</code>, set column <em>Image2</em> default value to <code>productImage,1</code>, and column <em>Image3</em> to <code>productImage,2</code>. Pythias will pull each image URL from the product&apos;s image array by position.
                             </span>
                         </div>
                     </details>
@@ -386,7 +386,7 @@ export default function MarketplaceVariablesPage() {
                 <div style={{ textAlign: "center" }}>
                     <h2 className={s.ctaTitle}>Questions about marketplace setup?</h2>
                     <p className={s.ctaSub}>Our team can walk you through the configuration live on a demo call.</p>
-                    <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                    <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                 </div>
             </section>
         </div>

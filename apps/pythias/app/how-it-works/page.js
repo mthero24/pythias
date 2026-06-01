@@ -110,7 +110,7 @@ export default function HowItWorksPage() {
                         Our team handles the setup — you focus on production. Here&apos;s exactly what the process looks like.
                     </p>
                     <div className={s.btns}>
-                        <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                         <Link href="/features" className={s.btnWhite}>See All Features</Link>
                     </div>
                 </div>
@@ -226,7 +226,7 @@ export default function HowItWorksPage() {
                         Book a free demo and we&apos;ll walk through exactly how Pythias fits your operation — no commitment required.
                     </p>
                     <div className={s.btns}>
-                        <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                         <Link href="/contact" className={s.btnGray}>Contact Us</Link>
                     </div>
                 </div>

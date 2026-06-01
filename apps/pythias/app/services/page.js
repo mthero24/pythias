@@ -204,7 +204,7 @@ export default function ServicesPage() {
                     <p className={s.ctaSub}>
                         Book a demo and we&apos;ll walk you through the platform with your actual workflow in mind.
                     </p>
-                    <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                    <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
                 </div>
             </section>
         </div>

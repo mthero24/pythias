@@ -94,6 +94,10 @@ export async function POST(req= NextApiRequest){
                 clientID: process.env.UPSClientID,
                 clientSecret: process.env.UPSClientSecret,
             },
+            credentialsDHL: {
+                accountNumber: process.env.dhlAccount,
+                basic: process.env.dhlBasic,
+            },
             dpi: data.station == "station5"? 300: null,
             imageFormat: data.station == "station5"? "PDF": null,
             
