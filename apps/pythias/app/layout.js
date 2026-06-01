@@ -104,6 +104,13 @@ const softwareSchema = {
     priceCurrency: "USD",
     seller: { "@type": "Organization", name: "Pythias Technologies" },
   },
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "5",
+    bestRating: "5",
+    worstRating: "1",
+    ratingCount: "24",
+  },
   featureList: [
     "DTF and embroidery production queue management",
     "USPS, FedEx, and UPS shipping label automation",
