@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import { InventoryOrders, Inventory, Blank, Items as PPItems } from "@pythias/mongo";
+import { InventoryOrders, Inventory, Blank } from "@pythias/mongo";
 import TspItems from "@/models/Items";
 import { Sort } from "@pythias/labels";
 import axios from "axios";
@@ -170,20 +170,6 @@ export async function POST(req = NextApiRequest) {
                         { ordered: false }
                     );
                     inv.attachedCount = Math.max(0, (inv.attachedCount ?? 0) - attachedItems.length);
-                }
-
-                // Mirror to PremierPrinting items for the same inventory
-                const ppAttached = await PPItems.find({
-                    stockStatus: "attached",
-                    "inventory.inventory": inv._id,
-                    canceled: false, paid: true,
-                }).sort({ date: 1 }).select("_id");
-                if (ppAttached.length > 0) {
-                    await PPItems.bulkWrite(
-                        ppAttached.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "ordered" } } } })),
-                        { ordered: false }
-                    );
-                    inv.attachedCount = Math.max(0, (inv.attachedCount ?? 0) - ppAttached.length);
                 }
 
                 await inv.save();

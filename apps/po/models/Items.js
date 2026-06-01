@@ -169,5 +169,7 @@ schema.index({ labelPrinted: 1, canceled: 1, paid: 1, bulkId: 1, shippingType: 1
 schema.index({ styleCode: 1, labelPrinted: 1, canceled: 1, paid: 1 });
 // addItemsToInventory service query
 schema.index({ labelPrinted: 1, canceled: 1, shipped: 1, paid: 1, "inventory.inventory": 1 });
+// inventory order creation — find attached items per inventory slot (FIFO)
+schema.index({ stockStatus: 1, "inventory.inventory": 1, canceled: 1, paid: 1 });
 
 export default TSPprints.model("Item", schema);
