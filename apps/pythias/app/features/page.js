@@ -81,7 +81,6 @@ const softwareSchema = {
     description: "All-in-one print-on-demand fulfillment platform — production queues, shipping automation, inventory management, multi-marketplace integration, analytics, and team tools.",
     featureList: CORE_FEATURES.map(f => f.title).join(", "),
     offers: { "@type": "Offer", seller: { "@type": "Organization", name: "Pythias Technologies" } },
-    aggregateRating: { "@type": "AggregateRating", ratingValue: 5, bestRating: 5, worstRating: 1, ratingCount: 24 },
     url: "https://pythiastechnologies.com/features",
 };
 

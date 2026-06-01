@@ -1,13 +1,7 @@
 import s from "./ServicePage.module.css";
 import Link from "next/link";
 
-export const SERVICE_RATING = {
-    "@type": "AggregateRating",
-    ratingValue: 5,
-    bestRating: 5,
-    worstRating: 1,
-    ratingCount: 24,
-};
+export const SERVICE_RATING = undefined;
 
 export function ServiceHero({ label, title, subtitle, accent, icon, color = "#D3A73D" }) {
     const css = { "--c": color, "--ca": color + "22", "--cb": color + "44", "--cs": color + "44" };
