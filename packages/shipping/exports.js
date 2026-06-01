@@ -15,6 +15,7 @@ export {Refund} from "./components/refund/Main"
 export {TrackPackage as uspsTracking} from "./functions/usps/usps"; 
 export {getRatesFeNew, purchaseFedexNew, TrackPackageFedEx} from "./functions/fedex/new";
 export {TrackPackageUPS} from "./functions/ups";
+export {getRatesDHL, purchaseDHLLabel, TrackPackageDHL} from "./functions/dhl";
 export {NoteSnackBar} from  "./components/NoteSnackBar";
 export { Items as OrderItems } from "./components/OrderModalComponents/items";
 export { Address as OrderAddress } from "./components/OrderModalComponents/address";

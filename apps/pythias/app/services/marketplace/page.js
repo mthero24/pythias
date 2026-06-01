@@ -1,4 +1,4 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated, SERVICE_RATING } from "@/componants/ServicePage";
 
 export const metadata = {
     title: "Multi-Marketplace Integration",
@@ -20,6 +20,7 @@ export const jsonLd = {
     applicationCategory: "BusinessApplication",
     description: "Multi-channel order management and fulfillment for Shopify, Amazon, Etsy, Walmart, TikTok Shop, and more.",
     offers: { "@type": "Offer", seller: { "@type": "Organization", name: "Pythias Technologies" } },
+    aggregateRating: SERVICE_RATING,
 };
 
 const MARKETPLACES = [

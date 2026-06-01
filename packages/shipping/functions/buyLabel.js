@@ -3,12 +3,15 @@ import { purchaseLabel } from "./usps/usps";
 import {ship} from "./ups";
 import {purchaseFedexNew as purchaseLabelFedEx} from "./fedex/new"
 import { ShipStationShip } from "./shipstatiton";
+import { purchaseDHLLabel } from "./dhl";
 export async function buyLabel({address, poNumber, weight, selectedShipping, dimensions, businessAddress, providers, enSettings,
     credentials,
     credentialsFedEx,
     credentialsFedExNew,
     credentialsShipStation,
-    credentialsUPS, dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType, carrierCodes, warehouse_id, saturdayDelivery}) {
+    credentialsUPS,
+    credentialsDHL,
+    dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType, carrierCodes, warehouse_id, saturdayDelivery}) {
     //console.log(saturdayDelivery, items[0]?.saturdayDelivery, "saturdayDelivery ++++++++")
     if(selectedShipping.provider == "usps"){
         if(providers.includes("endicia")){
@@ -30,6 +33,9 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
         }else return {error: true, msg: "fedex is not in provider list"}
     }else if(selectedShipping.provider == "ups"){
         let res = await ship({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials: credentialsUPS, thirdParty, imageFormat, dpi})
+        return res
+    }else if(selectedShipping.provider == "dhl"){
+        let res = await purchaseDHLLabel({address, businessAddress, weight, dimensions, selectedShipping, credentials: credentialsDHL, imageFormat, dpi})
         return res
     }else{
         return {error: true, msg: "no provider selected or provider is invalid"}

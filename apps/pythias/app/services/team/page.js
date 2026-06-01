@@ -1,4 +1,4 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated, SERVICE_RATING } from "@/componants/ServicePage";
 
 export const metadata = {
     title: "Team & Collaboration Tools",
@@ -20,6 +20,7 @@ export const jsonLd = {
     applicationCategory: "BusinessApplication",
     description: "Team management, collaboration, and access control tools for print-on-demand production teams.",
     offers: { "@type": "Offer", seller: { "@type": "Organization", name: "Pythias Technologies" } },
+    aggregateRating: SERVICE_RATING,
 };
 
 const features = [

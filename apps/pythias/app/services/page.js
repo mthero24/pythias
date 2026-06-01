@@ -1,11 +1,10 @@
-import { Box, Container, Typography, Card, CardContent, Button, Chip } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import s from "./services.module.css";
 import Link from "next/link";
 
 export const metadata = {
     title: "Services — Print-on-Demand Automation Platform",
-    description: "Explore Pythias Technologies' full suite of print-on-demand automation services: production queue management, shipping integration, inventory control, multi-marketplace sync, analytics, team tools, and label printing.",
-    keywords: "print on demand software, DTF queue management, shipping label automation, inventory management, multi-marketplace integration, Shopify fulfillment, Etsy fulfillment, Amazon fulfillment, print shop software",
+    description: "Explore Pythias Technologies' full suite of print-on-demand automation services: production queue management, shipping integration, inventory control, multi-marketplace sync, analytics, team tools, label printing, and AI-powered product creation.",
+    keywords: "print on demand software, DTF queue management, shipping label automation, inventory management, multi-marketplace integration, Shopify fulfillment, Etsy fulfillment, Amazon fulfillment, print shop software, AI product listing generator",
     openGraph: {
         title: "Services | Pythias Technologies",
         description: "The complete platform for print-on-demand operations — from production floor to shipping carrier.",
@@ -97,6 +96,15 @@ const SERVICES = [
         desc: "AI-powered mockup generation across every product, color, and size variant — the moment a design is uploaded. No manual compositing, no third-party tools.",
         highlights: ["AI mockup generation", "Bulk variant rendering", "Background removal", "Direct listing export"],
     },
+    {
+        href: "/services/product-creation-ai",
+        icon: "✨",
+        color: "#7c3aed",
+        tag: "AI",
+        title: "Product Creation AI",
+        desc: "AI-generated product titles, descriptions, keywords, and tags optimized for every marketplace — created in bulk from your design catalog, ready to publish.",
+        highlights: ["AI listing copy", "SEO keyword generation", "Bulk product creation", "Marketplace-specific optimization"],
+    },
 ];
 
 const itemListSchema = {
@@ -106,12 +114,12 @@ const itemListSchema = {
     description: "Complete suite of print-on-demand automation services.",
     url: "https://pythiastechnologies.com/services",
     numberOfItems: SERVICES.length,
-    itemListElement: SERVICES.map((s, i) => ({
+    itemListElement: SERVICES.map((svc, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        name: s.title,
-        description: s.desc,
-        url: `https://pythiastechnologies.com${s.href}`,
+        name: svc.title,
+        description: svc.desc,
+        url: `https://pythiastechnologies.com${svc.href}`,
     })),
 };
 
@@ -126,81 +134,79 @@ const breadcrumbSchema = {
 
 export default function ServicesPage() {
     return (
-        <Box sx={{ bgcolor: "#fff", minHeight: "100vh" }}>
+        <div className={s.bg}>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+
             {/* Hero */}
-            <Box sx={{
-                position: "relative", overflow: "hidden",
-                background: "linear-gradient(155deg, #0f172a 0%, #111827 55%, #0c1628 100%)",
-                py: { xs: 10, md: 14 }, px: 3, textAlign: "center",
-            }}>
-                <Box sx={{ position: "absolute", top: -80, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(211,167,61,0.12) 0%, transparent 65%)", pointerEvents: "none" }} />
-                <Container maxWidth="md" sx={{ position: "relative" }}>
-                    <Chip label="Our Services" size="small" sx={{ mb: 3, bgcolor: "rgba(211,167,61,0.15)", color: "#D3A73D", border: "1px solid rgba(211,167,61,0.3)", fontWeight: 600, letterSpacing: "0.05em", fontSize: "0.72rem", textTransform: "uppercase" }} />
-                    <Typography variant="h1" sx={{ fontSize: { xs: "2.4rem", md: "3.25rem" }, fontWeight: 800, color: "#fff", lineHeight: 1.12, letterSpacing: "-0.03em", mb: 2.5 }}>
+            <section className={s.hero}>
+                <div className={s.heroGlow} />
+                <div className={s.wrap} style={{ position: "relative" }}>
+                    <span className={s.heroChip}>Our Services</span>
+                    <h1 className={s.h1}>
                         Everything your print shop needs,{" "}
-                        <Box component="span" sx={{ background: "linear-gradient(90deg, #D3A73D, #f0c66a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                            built in.
-                        </Box>
-                    </Typography>
-                    <Typography sx={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.58)", lineHeight: 1.78, maxWidth: 580, mx: "auto" }}>
+                        <span className={s.accent}>built in.</span>
+                    </h1>
+                    <p className={s.heroSub}>
                         Pythias Technologies covers every part of your operation — from the moment an order lands to the moment it ships.
-                    </Typography>
-                </Container>
-            </Box>
+                    </p>
+                </div>
+            </section>
 
-            {/* Service cards */}
-            <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" }, gap: 3 }}>
-                    {SERVICES.map((s) => (
-                        <Card
-                            key={s.href}
-                            component={Link}
-                            href={s.href}
-                            variant="outlined"
-                            sx={{
-                                textDecoration: "none", display: "flex", flexDirection: "column",
-                                borderRadius: 4, border: "1px solid #f3f4f6",
-                                transition: "box-shadow 0.2s, transform 0.2s, border-color 0.2s",
-                                "&:hover": { boxShadow: "0 12px 40px rgba(0,0,0,0.1)", transform: "translateY(-4px)", borderColor: s.color },
-                            }}
-                        >
-                            <CardContent sx={{ p: 3.5, flex: 1, display: "flex", flexDirection: "column" }}>
-                                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
-                                    <Box sx={{ fontSize: "2rem" }}>{s.icon}</Box>
-                                    <Chip label={s.tag} size="small" sx={{ bgcolor: `${s.color}18`, color: s.color, fontWeight: 600, fontSize: "0.7rem" }} />
-                                </Box>
-                                <Typography sx={{ fontWeight: 800, fontSize: "1.0625rem", color: "#111827", mb: 1.25 }}>{s.title}</Typography>
-                                <Typography sx={{ fontSize: "0.875rem", color: "#6b7280", lineHeight: 1.65, mb: 2.5, flex: 1 }}>{s.desc}</Typography>
-                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 2.5 }}>
-                                    {s.highlights.map((h) => (
-                                        <Chip key={h} label={h} size="small" sx={{ bgcolor: "#f8fafc", color: "#374151", fontSize: "0.7rem", border: "1px solid #e5e7eb" }} />
-                                    ))}
-                                </Box>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, color: s.color, fontWeight: 700, fontSize: "0.875rem" }}>
-                                    Learn more <ArrowForward sx={{ fontSize: 16 }} />
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </Box>
-            </Container>
+            {/* Services grid */}
+            <div className={s.grid}>
+                <div className={s.wrap}>
+                    <ul
+                        className={s.grid3}
+                        style={{ listStyle: "none", padding: 0, margin: 0 }}
+                        itemScope
+                        itemType="https://schema.org/ItemList"
+                    >
+                        {SERVICES.map((svc, i) => (
+                            <li
+                                key={svc.href}
+                                itemProp="itemListElement"
+                                itemScope
+                                itemType="https://schema.org/ListItem"
+                            >
+                                <meta itemProp="position" content={i + 1} />
+                                <Link
+                                    href={svc.href}
+                                    className={s.card}
+                                    style={{ "--c": svc.color, "--ca": svc.color + "18" }}
+                                    itemProp="url"
+                                >
+                                    <div className={s.cardBody}>
+                                        <div className={s.cardTop}>
+                                            <span className={s.cardEmoji}>{svc.icon}</span>
+                                            <span className={s.cardTag}>{svc.tag}</span>
+                                        </div>
+                                        <h2 className={s.cardTitle} itemProp="name">{svc.title}</h2>
+                                        <p className={s.cardDesc} itemProp="description">{svc.desc}</p>
+                                        <ul className={s.highlights} style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                                            {svc.highlights.map((h) => (
+                                                <li key={h} className={s.highlight}>{h}</li>
+                                            ))}
+                                        </ul>
+                                        <span className={s.cardArrow}>Learn more →</span>
+                                    </div>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
 
-            {/* Bottom CTA */}
-            <Box sx={{ py: { xs: 8, md: 10 }, px: 3, background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)", textAlign: "center" }}>
-                <Container maxWidth="sm">
-                    <Typography variant="h2" sx={{ fontSize: { xs: "1.8rem", md: "2.25rem" }, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", mb: 2 }}>
-                        Ready to see it in action?
-                    </Typography>
-                    <Typography sx={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.7, mb: 4 }}>
+            {/* CTA */}
+            <section className={s.cta}>
+                <div className={s.wrapMd}>
+                    <h2 className={s.ctaTitle}>Ready to see it in action?</h2>
+                    <p className={s.ctaSub}>
                         Book a demo and we&apos;ll walk you through the platform with your actual workflow in mind.
-                    </Typography>
-                    <Button component={Link} href="/#calendar-booking-section" variant="contained" size="large" sx={{ bgcolor: "#D3A73D", color: "#111", fontWeight: 700, px: 4, py: 1.5, "&:hover": { bgcolor: "#b8860b" }, boxShadow: "0 4px 16px rgba(211,167,61,0.4)" }}>
-                        Book a Demo
-                    </Button>
-                </Container>
-            </Box>
-        </Box>
+                    </p>
+                    <a href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</a>
+                </div>
+            </section>
+        </div>
     );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -52,6 +52,7 @@ import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import AppsIcon from "@mui/icons-material/Apps";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 const DRAWER_WIDTH = 268;
 
@@ -124,6 +125,12 @@ const NAV_SECTIONS = [
       { label: "Inventory",         href: "/inventory",         icon: <StorageIcon fontSize="small" />,           showCSV: false },
       { label: "Product Inventory", href: "/inventory/product", icon: <Inventory2Icon fontSize="small" />,        showCSV: false },
       { label: "Returns",           href: "/production/returns",icon: <AssignmentReturnIcon fontSize="small" />,  showCSV: false },
+    ],
+  },
+  {
+    label: "Help",
+    items: [
+      { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <MenuBookIcon fontSize="small" />, showCSV: false, target: "_blank" },
     ],
   },
 ];
@@ -273,7 +280,7 @@ const NavDrawer = ({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) 
               {section.items.filter(item => (!item.charts || hasCharts) && (!item.permission || permissions[item.permission])).map((item) => {
                 const active = isActive(item);
                 return (
-                  <Link key={item.href} href={item.href} onClick={() => handleNav(item.showCSV)} style={{ textDecoration: "none" }}>
+                  <Link key={item.href} href={item.href} onClick={() => handleNav(item.showCSV)} style={{ textDecoration: "none" }} {...(item.target ? { target: item.target, rel: "noopener noreferrer" } : {})}>
                     <ListItemButton
                       sx={{
                         mx: 1, borderRadius: 1.5, mb: 0.25,

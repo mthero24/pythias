@@ -34,6 +34,19 @@ export default async function ArticlePage({ params }) {
     const article = await getArticle(params.slug);
     if (!article) notFound();
 
+    const titlePattern = article.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    let contentHtml = (article.content || "")
+        .replace(/<h1(\b[^>]*)>/gi, "<h2$1>")
+        .replace(/<\/h1>/gi, "</h2>");
+    if (article.coverImage) {
+        const srcPattern = article.coverImage.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        contentHtml = contentHtml.replace(new RegExp(`<img[^>]+src=["']${srcPattern}["'][^>]*\/?>`, "i"), "");
+    }
+    contentHtml = contentHtml
+        .replace(new RegExp(`<h2[^>]*>\\s*${titlePattern}\\s*</h2>`, "i"), "")
+        .replace(/<p[^>]*>\s*<\/p>/gi, "")
+        .replace(/<figure[^>]*>\s*<\/figure>/gi, "");
+
     const articleSchema = {
         "@context": "https://schema.org",
         "@type": "Article",
@@ -80,56 +93,96 @@ export default async function ArticlePage({ params }) {
                     All articles
                 </Button>
 
-                {article.coverImage && (
-                    <Box
-                        component="img"
-                        src={article.coverImage}
-                        alt={article.title}
-                        sx={{ width: "100%", maxHeight: 420, objectFit: "cover", borderRadius: 3, mb: 4 }}
-                    />
-                )}
-
-                <Typography variant="overline" color="text.secondary">
-                    {article.publishedAt
-                        ? new Date(article.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-                        : ""}
-                    {article.author ? ` · ${article.author}` : ""}
-                </Typography>
-
-                <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", md: "2.5rem" }, fontWeight: 800, mt: 1, lineHeight: 1.2 }} gutterBottom>
-                    {article.title}
-                </Typography>
-
-                {article.tags?.length > 0 && (
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 4 }}>
-                        {article.tags.map((tag) => (
-                            <Chip key={tag} label={tag} size="small" component={Link} href={`/blog?tag=${tag}`} clickable />
-                        ))}
-                    </Stack>
-                )}
-
-                <Divider sx={{ mb: 4 }} />
-
                 <Box
-                    className="article-content"
-                    dangerouslySetInnerHTML={{ __html: article.content }}
-                    sx={{
-                        "& h1,& h2,& h3,& h4": { fontWeight: 700, mt: 4, mb: 1.5 },
-                        "& h1": { fontSize: "2rem" },
-                        "& h2": { fontSize: "1.5rem" },
-                        "& h3": { fontSize: "1.25rem" },
-                        "& p": { mb: 2, lineHeight: 1.8, color: "#333" },
-                        "& ul,& ol": { pl: 3, mb: 2 },
-                        "& li": { mb: 0.5, lineHeight: 1.8 },
-                        "& a": { color: "#6366f1", textDecoration: "underline" },
-                        "& img": { maxWidth: "100%", borderRadius: 2, my: 2 },
-                        "& blockquote": { borderLeft: "4px solid #6366f1", pl: 2, my: 2, color: "text.secondary", fontStyle: "italic" },
-                        "& pre": { bgcolor: "#1e1e2e", color: "#cdd6f4", p: 2, borderRadius: 2, overflow: "auto", my: 2 },
-                        "& code": { fontFamily: "monospace", fontSize: "0.875em", bgcolor: "#f0f0f5", px: 0.5, borderRadius: 0.5 },
-                        "& pre code": { bgcolor: "transparent", p: 0 },
-                    }}
-                />
-                <BlogReadTracker slug={params.slug} />
+                    component="article"
+                    itemScope
+                    itemType="https://schema.org/BlogPosting"
+                    className="h-entry"
+                >
+                    <div style={{ display: "none" }} itemScope itemType="https://schema.org/Organization" itemProp="publisher">
+                        <meta itemProp="name" content="Pythias Technologies" />
+                        <meta itemProp="logo" content="https://pythiastechnologies.com/logo.png" />
+                    </div>
+                    {article.updatedAt && <meta itemProp="dateModified" content={new Date(article.updatedAt).toISOString()} />}
+                    <meta itemProp="url" content={`https://pythiastechnologies.com/blog/${article.slug}`} />
+
+                    {article.coverImage && (
+                        <Box
+                            component="img"
+                            src={article.coverImage}
+                            alt={article.title}
+                            itemProp="image"
+                            className="u-photo"
+                            sx={{ width: "100%", maxHeight: 420, objectFit: "cover", borderRadius: 3, mb: 4 }}
+                        />
+                    )}
+
+                    <Typography variant="overline" color="text.secondary" component="div">
+                        {article.publishedAt ? (
+                            <time
+                                dateTime={new Date(article.publishedAt).toISOString()}
+                                itemProp="datePublished"
+                                className="dt-published"
+                            >
+                                {new Date(article.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                            </time>
+                        ) : null}
+                        {article.author ? (
+                            <> · <span itemProp="author" itemScope itemType="https://schema.org/Person" className="p-author h-card">
+                                <span itemProp="name" className="p-name">{article.author}</span>
+                            </span></>
+                        ) : (
+                            <span style={{ display: "none" }} itemProp="author" itemScope itemType="https://schema.org/Organization">
+                                <meta itemProp="name" content="Pythias Technologies" />
+                            </span>
+                        )}
+                    </Typography>
+
+                    <Typography
+                        variant="h1"
+                        itemProp="headline"
+                        className="p-name"
+                        sx={{ fontSize: { xs: "1.75rem", md: "2.5rem" }, fontWeight: 800, mt: 1, lineHeight: 1.2 }}
+                        gutterBottom
+                    >
+                        {article.title}
+                    </Typography>
+
+                    {article.excerpt && (
+                        <meta itemProp="description" content={article.excerpt} />
+                    )}
+
+                    {article.tags?.length > 0 && (
+                        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 4 }}>
+                            {article.tags.map((tag) => (
+                                <Chip key={tag} label={tag} size="small" component={Link} href={`/blog?tag=${tag}`} clickable />
+                            ))}
+                        </Stack>
+                    )}
+
+                    <Divider sx={{ mb: 4 }} />
+
+                    <Box
+                        className="article-content e-content"
+                        itemProp="articleBody"
+                        dangerouslySetInnerHTML={{ __html: contentHtml }}
+                        sx={{
+                            "& h2,& h3,& h4": { fontWeight: 700, mt: 4, mb: 1.5 },
+                            "& h2": { fontSize: "1.5rem" },
+                            "& h3": { fontSize: "1.25rem" },
+                            "& p": { mb: 2, lineHeight: 1.8, color: "#333" },
+                            "& ul,& ol": { pl: 3, mb: 2 },
+                            "& li": { mb: 0.5, lineHeight: 1.8 },
+                            "& a": { color: "#6366f1", textDecoration: "underline" },
+                            "& img": { maxWidth: "100%", borderRadius: 2, my: 2 },
+                            "& blockquote": { borderLeft: "4px solid #6366f1", pl: 2, my: 2, color: "text.secondary", fontStyle: "italic" },
+                            "& pre": { bgcolor: "#1e1e2e", color: "#cdd6f4", p: 2, borderRadius: 2, overflow: "auto", my: 2 },
+                            "& code": { fontFamily: "monospace", fontSize: "0.875em", bgcolor: "#f0f0f5", px: 0.5, borderRadius: 0.5 },
+                            "& pre code": { bgcolor: "transparent", p: 0 },
+                        }}
+                    />
+                    <BlogReadTracker slug={params.slug} />
+                </Box>
             </Container>
         </Box>
     );

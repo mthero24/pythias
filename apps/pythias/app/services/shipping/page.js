@@ -1,4 +1,4 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated, SERVICE_RATING } from "@/componants/ServicePage";
 
 export const metadata = {
     title: "Shipping & Fulfillment Automation",
@@ -20,6 +20,7 @@ export const jsonLd = {
     applicationCategory: "BusinessApplication",
     description: "Automated shipping label generation and tracking sync for print-on-demand operations.",
     offers: { "@type": "Offer", seller: { "@type": "Organization", name: "Pythias Technologies" } },
+    aggregateRating: SERVICE_RATING,
 };
 
 const features = [

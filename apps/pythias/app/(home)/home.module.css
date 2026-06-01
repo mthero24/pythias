@@ -158,7 +158,9 @@
 
 .heroStats {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
+  row-gap: 16px;
 }
 @media (min-width: 900px) { .heroStats { justify-content: flex-start; } }
 .heroStat {

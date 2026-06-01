@@ -3,7 +3,8 @@ import Logo from "../../public/logo_vertical.png";
 import s from "./home.module.css";
 
 const STATS = [
-    { value: "50+",    label: "Integrations" },
+    { value: "18+",    label: "Marketplace Integrations" },
+    { value: "200+",   label: "Channels via Mirakl & Acenda" },
     { value: "24/7",   label: "Support" },
     { value: "< 2 wks", label: "Onboarding" },
 ];

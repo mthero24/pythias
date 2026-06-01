@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { label: "Features",      href: "/features" },
   { label: "Integrations",  href: "/integrations" },
   { label: "How It Works",  href: "/how-it-works" },
+  { label: "Setup Guides",          href: "/setup-guides/integrations" },
   { label: "Blog",          href: "/blog" },
   { label: "Tutorials",     href: "/tutorials" },
   { label: "About Us",      href: "/about" },

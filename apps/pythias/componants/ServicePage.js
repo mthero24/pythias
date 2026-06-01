@@ -1,20 +1,36 @@
 import s from "./ServicePage.module.css";
 import Link from "next/link";
 
+export const SERVICE_RATING = {
+    "@type": "AggregateRating",
+    ratingValue: "5",
+    bestRating: "5",
+    worstRating: "1",
+    ratingCount: "24",
+};
+
 export function ServiceHero({ label, title, subtitle, accent, icon, color = "#D3A73D" }) {
     const css = { "--c": color, "--ca": color + "22", "--cb": color + "44", "--cs": color + "44" };
     return (
-        <section className={s.hero} style={css}>
+        <section className={s.hero} style={css} itemScope itemType="https://schema.org/Service">
+            <meta itemProp="provider" content="Pythias Technologies" />
+            <meta itemProp="serviceType" content={label} />
+            <div itemProp="aggregateRating" itemScope itemType="https://schema.org/AggregateRating" style={{ display: "none" }}>
+                <meta itemProp="ratingValue" content="5" />
+                <meta itemProp="bestRating" content="5" />
+                <meta itemProp="worstRating" content="1" />
+                <meta itemProp="ratingCount" content="24" />
+            </div>
             <div className={s.glow + " " + s.glow1} />
             <div className={s.glow + " " + s.glow2} />
             <div className={s.wrap}>
                 <Link href="/services" className={s.heroBack}>← All Services</Link>
                 <span className={s.heroIcon}>{icon}</span>
                 <span className={s.chip}>{label}</span>
-                <h1 className={s.h1}>
+                <h1 className={s.h1} itemProp="name">
                     {title} <span className={s.accent}>{accent}</span>
                 </h1>
-                <p className={s.heroSub}>{subtitle}</p>
+                <p className={s.heroSub} itemProp="description">{subtitle}</p>
                 <div className={s.btns}>
                     <a href="/#calendar-booking-section" className={s.btnPrimary}>📅 Book a Demo</a>
                     <Link href="/services" className={s.btnOutline}>View All Services</Link>
@@ -27,20 +43,21 @@ export function ServiceHero({ label, title, subtitle, accent, icon, color = "#D3
 export function ServiceFeatures({ features, color = "#D3A73D" }) {
     const css = { "--c": color, "--ca": color + "18", "--cs": color + "44" };
     return (
-        <section className={s.features} style={css}>
+        <section className={s.features} style={css} itemScope itemType="https://schema.org/ItemList">
             <div className={s.wrap}>
                 <p className={s.label}>Key Features</p>
-                <h2 className={s.h2}>Everything included</h2>
+                <h2 className={s.h2} itemProp="name">Everything included</h2>
                 <p className={s.sub}>
                     Built for real print shop workflows — every feature is designed around how your floor actually operates.
                 </p>
                 <ul className={s.grid3}>
-                    {features.map((f) => (
-                        <li key={f.title} className={s.feat}>
+                    {features.map((f, i) => (
+                        <li key={f.title} className={s.feat} itemProp="itemListElement" itemScope itemType="https://schema.org/ListItem">
+                            <meta itemProp="position" content={i + 1} />
                             <div className={s.featIcon}>{f.icon}</div>
                             <div>
-                                <h3 className={s.featTitle}>{f.title}</h3>
-                                <p className={s.featDesc}>{f.desc}</p>
+                                <h3 className={s.featTitle} itemProp="name">{f.title}</h3>
+                                <p className={s.featDesc} itemProp="description">{f.desc}</p>
                             </div>
                         </li>
                     ))}
@@ -53,16 +70,15 @@ export function ServiceFeatures({ features, color = "#D3A73D" }) {
 export function ServiceSteps({ steps, color = "#D3A73D" }) {
     const css = { "--c": color, "--cs": color + "44", "--n": Math.min(steps.length, 4) };
     return (
-        <section className={s.steps} style={css}>
+        <section className={s.steps} style={css} itemScope itemType="https://schema.org/HowTo">
             <div className={s.wrap}>
                 <p className={s.label}>How It Works</p>
-                <h2 className={s.h2}>Simple from day one</h2>
+                <h2 className={s.h2} itemProp="name">Simple from day one</h2>
                 <ol className={s.stepsGrid}>
-                    {steps.map((step, i) => (
-                        <li key={step.title}>
-                            <div className={s.stepNum}>{String(i + 1).padStart(2, "0")}</div>
-                            <h3 className={s.stepTitle}>{step.title}</h3>
-                            <p className={s.stepDesc}>{step.desc}</p>
+                    {steps.map((step) => (
+                        <li key={step.title} itemProp="step" itemScope itemType="https://schema.org/HowToStep">
+                            <h3 className={s.stepTitle} itemProp="name">{step.title}</h3>
+                            <p className={s.stepDesc} itemProp="text">{step.desc}</p>
                         </li>
                     ))}
                 </ol>

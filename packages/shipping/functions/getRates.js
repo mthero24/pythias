@@ -4,6 +4,7 @@ import {getRatesFeOld} from "./fedex/old";
 import { getRatesFeNew } from "./fedex/new";
 import {getRatesUPS} from "./ups";
 import { GetRateShipStation } from "./shipstatiton";
+import { getRatesDHL } from "./dhl";
 let standardType = {
     fistClass: "usps",
     priority: "usps",
@@ -24,6 +25,7 @@ export async function getRates({
   credentialsFedExNew,
   credentialsUPS,
   credentialsShipStation,
+  credentialsDHL,
   dimensions,
   carrierCodes,
   warehouse_id
@@ -139,6 +141,11 @@ export async function getRates({
       console.log(res)
       rates.push({ label: "UPS Ground", rate: res, service: {provider: "ups", name: "Ground", service: "03", description: "Ground", packageType: "02", packageDescription: 'Package'} })
     }
+    if(providers.includes("dhl")){
+      let res = await getRatesDHL({ address, businessAddress, weight, credentials: credentialsDHL, dimensions });
+      if(res.error) rates.push({ label: "DHL Express", rate: res.msg, service: {provider: "dhl", name: res.productCode || "N"} });
+      else rates.push({ label: `DHL ${res.productName || "Express"}`, rate: res.rate, service: {provider: "dhl", name: res.productCode || "N"} });
+    }
   } else if (type.toLowerCase() == "expedited") {
     if (providers.includes("endicia")) {
       let res2 = await getRatesEn({
@@ -190,6 +197,11 @@ export async function getRates({
       let res = await getRatesUPS({address, businessAddress, service: "03", description: "Ground", packageType: "02", packageDescription: 'Package', weight, credentials: credentialsUPS})
       console.log(res)
       rates.push({ label: "UPS Ground", rate: res, service: {provider: "ups", name: "Ground", service: "03", description: "Ground", packageType: "02", packageDescription: 'Package'} })
+    }
+    if(providers.includes("dhl")){
+      let res = await getRatesDHL({ address, businessAddress, weight, credentials: credentialsDHL, dimensions });
+      if(res.error) rates.push({ label: "DHL Express", rate: res.msg, service: {provider: "dhl", name: res.productCode || "N"} });
+      else rates.push({ label: `DHL ${res.productName || "Express"}`, rate: res.rate, service: {provider: "dhl", name: res.productCode || "N"} });
     }
   } else if (type.toLowerCase() == "second day") {
     if (providers.includes("fedex")) {

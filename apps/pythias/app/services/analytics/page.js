@@ -1,4 +1,4 @@
-import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated } from "@/componants/ServicePage";
+import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated, SERVICE_RATING } from "@/componants/ServicePage";
 
 export const metadata = {
     title: "Analytics & Reporting for Print Shops",
@@ -20,6 +20,7 @@ export const jsonLd = {
     applicationCategory: "BusinessApplication",
     description: "Production analytics and reporting for print-on-demand and custom apparel businesses.",
     offers: { "@type": "Offer", seller: { "@type": "Organization", name: "Pythias Technologies" } },
+    aggregateRating: SERVICE_RATING,
 };
 
 const features = [

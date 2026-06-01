@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import AppBar from "@mui/material/AppBar";
@@ -49,6 +49,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 const DRAWER_WIDTH = 260;
 
@@ -95,6 +96,12 @@ const NAV_SECTIONS = [
     items: [
       { label: "Inventory", href: "/inventory",          icon: <WarehouseIcon fontSize="small" /> },
       { label: "Returns",   href: "/production/returns", icon: <AssignmentReturnIcon fontSize="small" /> },
+    ],
+  },
+  {
+    label: "Help",
+    items: [
+      { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <MenuBookIcon fontSize="small" />, target: "_blank" },
     ],
   },
 ];
@@ -241,6 +248,7 @@ function NavDrawer({ open, onClose, avatarSrc, avatarSx = {}, initials = "?" }) 
                   href={item.href}
                   onClick={() => handleNav(item.csv ?? false)}
                   style={{ textDecoration: "none" }}
+                  {...(item.target ? { target: item.target, rel: "noopener noreferrer" } : {})}
                 >
                   <ListItemButton
                     sx={{
