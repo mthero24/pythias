@@ -42,7 +42,7 @@ const nextConfig = {
     }
     return config;
   },
-  serverExternalPackages: ["sharp", "pdfkit", "canvas", "jspdf", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns"],
+  serverExternalPackages: ["sharp", "pdfkit", "canvas", "jspdf", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns", "@napi-rs/canvas", "pdfjs-dist", "bwip-js"],
   transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
 };
 

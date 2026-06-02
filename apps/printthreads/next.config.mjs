@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ["sharp", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns"],
+    serverExternalPackages: ["sharp", "@img/sharp-wasm32", "@img/sharp-linux-x64", "@img/sharp-libvips-linux-x64", "@pythias/dtf", "@pythias/embroidery", "@pythias/sublimation", "@pythias/returns", "@napi-rs/canvas", "pdfjs-dist", "bwip-js", "pdfkit"],
     transpilePackages: ["@pythias/integrations", "@pythias/shipping"],
     webpack: (config, { isServer }) => {
       if (isServer) {
