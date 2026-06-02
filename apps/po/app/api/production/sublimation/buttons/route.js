@@ -3,13 +3,14 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 import { createButtonsPdf } from "@pythias/sublimation/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
-async function pushToFileWriter(base64, pieceId, folder) {
-  const res = await fetch(`http://${process.env.localIP}/api/sublimation`, {
+async function pushToFileWriter(base64, pieceId, folder, localIP, localKey) {
+  const res = await fetch(`http://${localIP}/api/sublimation`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.localKey}`,
+      Authorization: `Bearer ${localKey}`,
     },
     body: JSON.stringify({ base64, pieceId, folder, printer: "printer1", print: true }),
   });
@@ -20,10 +21,11 @@ export async function POST(req) {
   const token = await getToken({ req });
   const { userName, email } = userFromToken(token);
   const { poNumber, buttons } = await req.json();
+  const sc = await getShippingCreds();
 
   try {
     const { base64, folder } = await createButtonsPdf(poNumber, buttons);
-    await pushToFileWriter(base64, poNumber, folder);
+    await pushToFileWriter(base64, poNumber, folder, sc.localIP, sc.localKey);
     logActivity({ action: "buttons_sent", entity: "order", entityName: poNumber, userName, email, provider: "po" });
     return NextResponse.json({ error: false });
   } catch (e) {

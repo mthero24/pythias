@@ -3,6 +3,7 @@ import Order from "../../../../../models/Order";
 import "../../../../../models/Items";
 import "../../../../../models/StyleV2";
 import axios from "axios";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
 export async function GET(req = NextApiRequest) {
     const noScale = req.nextUrl.searchParams.get("noScale") === "true";
@@ -22,12 +23,13 @@ export async function GET(req = NextApiRequest) {
         }
     }
 
+    const sc = await getShippingCreds();
     const headers = {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+            "Authorization": `Bearer ${sc.localKey}`
         }
     };
-    const res = await axios.get(`http://${process.env.localIP}/api/shipping/scales?station=${req.nextUrl.searchParams.get("station")}`, headers);
+    const res = await axios.get(`http://${sc.localIP}/api/shipping/scales?station=${req.nextUrl.searchParams.get("station")}`, headers);
     return NextResponse.json({ ...res.data });
 }

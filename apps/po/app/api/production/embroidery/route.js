@@ -6,6 +6,7 @@ import {sendFile} from "@pythias/embroidery"
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 const getImages = async (front, back, style, item)=>{
     let styleImage = style.images.filter(
         (i) => i.color.toString() == item.color?._id.toString()
@@ -44,6 +45,7 @@ export async function POST(req = NextApiRequest) {
     const { userName, email } = userFromToken(token);
     let data = await req.json()
     const tajimaQueue = data.tajimaQueue || "default";
+    const sc = await getShippingCreds();
     console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
@@ -60,8 +62,8 @@ export async function POST(req = NextApiRequest) {
                     color: item.colorName,
                     sku: item.sku,
                     printer: data.printer,
-                    key: "$2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy",
-                    localIP:process.env.localIP
+                    key: sc.localKey,
+                    localIP: sc.localIP
                 })
             }
         })

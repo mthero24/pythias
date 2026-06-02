@@ -27,7 +27,7 @@ const STRING_KEYS = [
     "businessAddress.postalCode", "businessAddress.country", "businessAddress.emailAddress", "businessAddress.phone",
 ];
 
-const ARRAY_KEYS = ["shippingLabelPrinters", "productionLabelPrinters", "scales"];
+const ARRAY_KEYS = ["productionLabelPrinters", "scales"];
 const OBJECT_KEYS = ["production"];
 const ALL_KEYS = [...STRING_KEYS, ...ARRAY_KEYS, ...OBJECT_KEYS];
 

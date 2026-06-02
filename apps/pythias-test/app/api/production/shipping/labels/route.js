@@ -17,9 +17,12 @@ export async function POST(req = NextApiRequest) {
     console.log(data);
     if (!data.address.country) data.address.country = "US";
     const sc = await getShippingCreds();
+    const stationCfg = sc.stations.find(s => s.name === data.station);
+    const stationFormat = stationCfg?.format ?? "PDF";
+    const printEndpoint = stationFormat === "ZPL" ? "printers" : "cpu";
     const buyOpts = {
         ...data,
-        imageType: "PDF",
+        imageType: stationFormat,
         businessAddress: data.marketplace == "TCS" ? { name: "TSC Distribution Center", businessName: "ATTN: Online Orders", address: "100 Rains Drive", city: "Fanklin", state: "KY", postalCode: "42134", country: "US" } : sc.businessAddress,
         providers: ["usps", "ups"],
         enSettings: sc.enSettings,
@@ -30,7 +33,7 @@ export async function POST(req = NextApiRequest) {
         credentialsDHL: sc.credentialsDHL,
         thirdParty: data.marketplace?.trim() == "Zulily" ? process.env.upsZulily : data.marketplace?.trim() == "TSC" ? process.env.upsTSC : null,
         credentialsShipStation: sc.credentialsShipStation,
-        imageFormat: "PDF",
+        imageFormat: stationFormat,
         carrierCodes: sc.carrierCodes,
         warehouse_id: sc.warehouse_id,
     };
@@ -52,7 +55,7 @@ export async function POST(req = NextApiRequest) {
         order.status = "Shipped";
         for (const lbl of purchasedLabels) {
             if (data.selectedShipping.provider == "usps") await new manifest({ pic: lbl.trackingNumber, Date: new Date() }).save();
-            order.shippingInfo.labels.push({ trackingNumber: lbl.trackingNumber, label: lbl.label, cost: parseFloat(lbl.cost || 0), trackingInfo: ["Label Purchased"], provider: data.selectedShipping.provider });
+            order.shippingInfo.labels.push({ trackingNumber: lbl.trackingNumber, label: lbl.label, cost: parseFloat(lbl.cost || 0), trackingInfo: ["Label Purchased"], provider: data.selectedShipping.provider, format: stationFormat });
         }
         for (let item of order.items) {
             item.shipped = true; item.shippedDate = new Date();
@@ -63,9 +66,9 @@ export async function POST(req = NextApiRequest) {
         order = await order.save();
         logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email, provider: "pythiasTest" });
         await Bin.findOneAndUpdate({ order: order._id }, { "items": [], "ready": false, "inUse": false, "order": null, "giftWrap": false, "readyToWrap": false, "wrapped": false, "wrapImage": null });
-        const printHeaders = { headers: { "Content-Type": "application/json", "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW` } };
+        const printHeaders = { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sc.localKey}` } };
         for (const lbl of purchasedLabels) {
-            try { await axios.post(`http://${sc.localIP}/api/shipping/cpu`, { label: lbl.label, station: data.station, barcode: "ppp" }, printHeaders); } catch(e) { console.error("Print failed:", e.message); }
+            try { await axios.post(`http://${sc.localIP}/api/shipping/${printEndpoint}`, { label: lbl.label, station: data.station, barcode: "ppp" }, printHeaders); } catch(e) { console.error("Print failed:", e.message); }
         }
         return NextResponse.json({
             error: false, label: primaryLabel.label,

@@ -28,7 +28,7 @@ const STRING_KEYS = [
 ];
 
 // Keys stored as JSON-serialized arrays
-const ARRAY_KEYS = ["shippingLabelPrinters", "productionLabelPrinters", "scales"];
+const ARRAY_KEYS = ["productionLabelPrinters", "scales"];
 // Keys stored as JSON-serialized objects
 const OBJECT_KEYS = ["production"];
 const ALL_KEYS = [...STRING_KEYS, ...ARRAY_KEYS, ...OBJECT_KEYS];

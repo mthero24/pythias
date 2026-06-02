@@ -23,13 +23,16 @@ export async function POST(req = NextApiRequest) {
 
     if (order.preShipped) {
         const sc = await getShippingCreds();
+        const preStationCfg = sc.stations.find(s => s.name === data.station);
+        const preFormat = preStationCfg?.format ?? "ZPL";
+        const preEndpoint = preFormat === "PDF" ? "cpu" : "printers";
         const headers = {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer $2a$10$C60NVSh5FFWXoUlY1Awaxu2jKU3saE/aqkYqF3iPIQVJl/4Wg.NTO`
+                "Authorization": `Bearer ${sc.localKey}`,
             }
         };
-        let res = await axios.post(`http://${sc.localIP}/api/shipping/printers`, { label: order.shippingInfo.label, station: data.station, barcode: "ppp" }, headers);
+        let res = await axios.post(`http://${sc.localIP}/api/shipping/${preEndpoint}`, { label: order.shippingInfo.label, station: data.station, barcode: "ppp" }, headers);
         console.log(res.data);
         for (let i of order.items) {
             i.shipped = true;
@@ -54,6 +57,9 @@ export async function POST(req = NextApiRequest) {
 
     if (!data.address.country) data.address.country = "US";
     const sc = await getShippingCreds();
+    const stationCfg = sc.stations.find(s => s.name === data.station);
+    const stationFormat = stationCfg?.format ?? "ZPL";
+    const printEndpoint = stationFormat === "PDF" ? "cpu" : "printers";
 
     const buyOpts = {
         ...data,
@@ -68,8 +74,8 @@ export async function POST(req = NextApiRequest) {
         credentialsShipStation: sc.credentialsShipStation,
         carrierCodes: sc.carrierCodes,
         warehouse_id: sc.warehouse_id,
-        dpi: data.station == "station5" ? 300 : null,
-        imageFormat: data.station == "station5" ? "PDF" : null,
+        imageType: stationFormat,
+        imageFormat: stationFormat === "PDF" ? "PDF" : null,
     };
 
     try {
@@ -97,6 +103,7 @@ export async function POST(req = NextApiRequest) {
                 cost: parseFloat(lbl.cost || 0),
                 trackingInfo: ["Label Purchased"],
                 provider: data.selectedShipping.provider,
+                format: stationFormat,
             });
         }
         for (let item of ord.items) {
@@ -109,11 +116,10 @@ export async function POST(req = NextApiRequest) {
         ord = await ord.save();
         logActivity({ action: "order_shipped", entity: "order", entityId: ord._id, entityName: ord.poNumber || ord.orderId || "", userName, email, provider: "po" });
         await Bin.findOneAndUpdate({ order: ord._id }, { "items": [], "ready": false, "inUse": false, "order": null, "giftWrap": false, "readyToWrap": false, "wrapped": false, "wrapImage": null });
-        const printHeaders = { headers: { "Content-Type": "application/json", "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy` } };
-        const endpoint = data.station == "station5" ? "cpu" : "printers";
+        const printHeaders = { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${sc.localKey}` } };
         for (const lbl of purchasedLabels) {
             try {
-                const res = await axios.post(`http://${sc.localIP}/api/shipping/${endpoint}`, { label: lbl.label, station: data.station, barcode: "po" }, printHeaders);
+                const res = await axios.post(`http://${sc.localIP}/api/shipping/${printEndpoint}`, { label: lbl.label, station: data.station, barcode: "po" }, printHeaders);
                 console.log(res.data, "printer res");
             } catch(e) { console.error("Print failed:", e.message); }
         }

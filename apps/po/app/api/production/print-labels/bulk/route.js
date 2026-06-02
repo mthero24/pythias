@@ -8,6 +8,7 @@ import { buildBulkLabelData } from "@/functions/bulkLabelString";
 import { Inventory } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
 
@@ -65,15 +66,16 @@ export async function POST(req = NextApiRequest) {
         const encoded = btoa(labelsString);
 
         // Send to printer — 10 s timeout so the route never hangs
+        const sc = await getShippingCreds();
         const headers = {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`,
+                "Authorization": `Bearer ${sc.localKey}`,
             },
             timeout: 10_000,
         };
         await axios
-            .post(`http://${process.env.localIP}/api/print-labels`, { label: encoded, printer: "printer1" }, headers)
+            .post(`http://${sc.localIP}/api/print-labels`, { label: encoded, printer: "printer1" }, headers)
             .catch(e => console.error("[bulk-labels] printer error:", e.message));
 
         // Persist batch + item updates

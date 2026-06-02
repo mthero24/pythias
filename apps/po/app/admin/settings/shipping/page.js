@@ -1,4 +1,4 @@
 import { ShippingSettingsMain } from "@pythias/backend";
 export default function ShippingSettingsPage() {
-    return <ShippingSettingsMain />;
+    return <ShippingSettingsMain defaultStationFormat="ZPL" />;
 }

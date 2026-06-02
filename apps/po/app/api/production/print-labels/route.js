@@ -10,6 +10,7 @@ import inventory from "@/models/inventory";
 import { Types } from "mongoose";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G","H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",];
 
 const subtractInventory = async (item) => {
@@ -44,6 +45,7 @@ export async function POST(req=NextApiRequest){
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     let data = await req.json();
+    const printerName = data.printer ?? "printer1";
     let labelsString = ``
     //create batchId
     let batchID = ''
@@ -81,16 +83,14 @@ export async function POST(req=NextApiRequest){
     //convert to base64
     labelsString = btoa(labelsString)
    
-    //print labels
-    console.log(process.env.localIP, process.env.localKey)
-    let headers = {
+    const sc = await getShippingCreds();
+    const headers = {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+            "Authorization": `Bearer ${sc.localKey}`
         }
-    }
-    console.log(headers)
-    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
+    };
+    let res = await axios.post(`http://${sc.localIP}/api/print-labels`, {label: labelsString, printer: printerName}, headers).catch(e=>{console.log(e.response)})
     console.log(res?.data)
     //update data
     console.log(pieceIds)

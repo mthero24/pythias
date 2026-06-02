@@ -15,6 +15,8 @@ const KEYS = [
     "businessAddress.name", "businessAddress.businessName", "businessAddress.address1",
     "businessAddress.address2", "businessAddress.city", "businessAddress.state",
     "businessAddress.postalCode", "businessAddress.country", "businessAddress.emailAddress", "businessAddress.phone",
+    "production",
+    "productionLabelPrinters",
 ];
 
 async function loadMap() {
@@ -99,5 +101,16 @@ export async function getShippingCreds() {
         },
         carrierCodes: { usps: "se-186007" },
         warehouse_id: 13111,
+        stations: (() => {
+            try {
+                const prod = JSON.parse(m["production"] || "{}");
+                return (prod.shippingStations ?? []).map(s =>
+                    typeof s === "string" ? { name: s, hasScale: true, format: "ZPL" } : { format: "ZPL", ...s }
+                );
+            } catch { return []; }
+        })(),
+        labelPrinters: (() => {
+            try { return JSON.parse(m["productionLabelPrinters"] || "[]"); } catch { return []; }
+        })(),
     };
 }

@@ -1,7 +1,7 @@
 import PDFDocument from "pdfkit";
 import { Base64Encode } from "base64-stream";
 import axios from "axios"
-export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex, type, poNumber })=>{
+export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex, type, poNumber, printer = "printer1" })=>{
     let labelsString = ``
     let doc = new PDFDocument({ size: [1 * 72, 1 * 72], margin: 0 });
     let stream = doc.pipe(new Base64Encode());
@@ -30,7 +30,7 @@ export const createPdf = async ({items, buildLabelData, localIP, key, lastIndex,
             }
         }
         console.log(headers, localIP)
-        let res = await axios.post(`http://${localIP}/api/print-labels-pdf`, {label: labelsString, printer: "printer1", barcode: "label"}, headers).catch(e=>{console.log(e, "error")})
+        let res = await axios.post(`http://${localIP}/api/print-labels-pdf`, {label: labelsString, printer, barcode: "label"}, headers).catch(e=>{console.log(e, "error")})
         console.log(res?.data, "res")
     }); 
 }

@@ -4,6 +4,7 @@ import Inventory from "@/models/inventory"
 import Batch from "@/models/batches";
 import axios from "axios";
 import btoa from "btoa";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 import {NextApiResponse, NextResponse} from "next/server";
 let letters = [
   "a",
@@ -120,14 +121,14 @@ const printLabels = async (labelSort) => {
     labels += l.label;
   }
   console.log(labels)
+  const sc = await getShippingCreds();
   let headers = {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+            "Authorization": `Bearer ${sc.localKey}`
         }
     }
-    console.log(headers)
-    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: btoa(labels), printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
+    let res = await axios.post(`http://${sc.localIP}/api/print-labels`, {label: btoa(labels), printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
     console.log(res?.data)
     res.data.status = 200
   return res.data;

@@ -25,7 +25,8 @@ import { UntrackedLabels } from "./untracked";
 import { Footer } from "@pythias/backend";
 import LoaderOverlay from "./LoaderOverlay";
 
-export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
+export function Main({ labels, rePulls, giftLabels = [], batches, source, printers = [] }) {
+    const printerList = printers.length > 0 ? printers : [{ name: "printer1", format: "ZPL" }];
     const [useLabels, setLabels]         = useState(labels);
     const [rePull, setRePulls]           = useState(rePulls);
     const [gift, setGiftLabels]          = useState(giftLabels);
@@ -47,6 +48,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
     const [marketplaces, setMarketplaces] = useState([]);
     const [confirmReturnToQue, setConfirmReturnToQue] = useState(false);
     const [stockFilter, setStockFilter]   = useState(null);
+    const [selectedPrinter, setSelectedPrinter] = useState(printerList[0]?.name ?? "printer1");
 
     useEffect(() => {
         let pt = [], sc = [], mp = [];
@@ -156,7 +158,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
             }
             items = Sort(items, source);
         }
-        let res = await axios.post("/api/production/print-labels", { items });
+        let res = await axios.post("/api/production/print-labels", { items, printer: selectedPrinter });
         if (res.data.error) { setLoading(false); alert(res.data.msg); }
         else afterPrint(res.data);
     };
@@ -164,7 +166,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
     const printBlanks = async (type) => {
         setLoading(true);
         let items = Sort(useLabels[type].filter(l => l.isBlank === true), source);
-        let res = await axios.post("/api/production/print-labels", { items });
+        let res = await axios.post("/api/production/print-labels", { items, printer: selectedPrinter });
         if (res.data.error) { setLoading(false); alert(res.data.msg); }
         else afterPrint(res.data);
     };
@@ -172,7 +174,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
     const printReturns = async (type) => {
         setLoading(true);
         let items = Sort(useLabels[type].filter(l => l.inventory && l.inventory.inventoryType === "productInventory"), source);
-        let res = await axios.post("/api/production/print-labels", { items });
+        let res = await axios.post("/api/production/print-labels", { items, printer: selectedPrinter });
         if (res.data.error) { setLoading(false); alert(res.data.msg); }
         else afterPrint(res.data);
     };
@@ -294,6 +296,35 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source }) {
                             )}
                         </Stack>
                     </Box>
+
+                    {/* Printer selector */}
+                    <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+                        {printerList.map(p => {
+                            const active = selectedPrinter === p.name;
+                            return (
+                                <Box key={p.name} onClick={() => setSelectedPrinter(p.name)}
+                                    sx={{
+                                        display: "flex", alignItems: "center", gap: 0.75,
+                                        px: 1.5, py: 0.5, borderRadius: 1.5, cursor: "pointer",
+                                        fontSize: "0.8125rem", fontWeight: active ? 700 : 500,
+                                        lineHeight: 1.5, textTransform: "capitalize", userSelect: "none",
+                                        transition: "background 0.12s, color 0.12s",
+                                        bgcolor: active ? "primary.main" : "background.paper",
+                                        color: active ? "#fff" : "text.primary",
+                                        border: "1px solid",
+                                        borderColor: active ? "primary.main" : "divider",
+                                        boxShadow: active ? 1 : 0,
+                                        "&:hover": { bgcolor: active ? "primary.dark" : "action.hover" },
+                                    }}>
+                                    <PrintIcon sx={{ fontSize: 13, opacity: active ? 0.9 : 0.55, flexShrink: 0 }} />
+                                    {p.name}
+                                    <Typography component="span" sx={{ fontSize: "0.68rem", opacity: active ? 0.8 : 0.5, ml: 0.25 }}>
+                                        {p.format ?? "ZPL"}
+                                    </Typography>
+                                </Box>
+                            );
+                        })}
+                    </Stack>
 
                     {/* Utility inputs */}
                     <Card variant="outlined" sx={{ borderRadius: 3, p: 2, mb: 2 }}>

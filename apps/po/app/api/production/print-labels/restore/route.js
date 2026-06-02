@@ -6,6 +6,7 @@ import { buildLabelData } from "../../../../../functions/labelString";
 import axios from "axios"
 import { LabelsData } from "../../../../../functions/labels";
 import btoa from "btoa"
+import { getShippingCreds } from "@/lib/getShippingCreds";
 export async function POST(req=NextApiResponse) {
     let data = await req.json()
     console.log(data)
@@ -39,15 +40,14 @@ export async function POST(req=NextApiResponse) {
     labelsString = btoa(labelsString)
 
     //print labels
-    console.log(process.env.localIP, process.env.localKey)
+    const sc = await getShippingCreds();
     let headers = {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`,
+        Authorization: `Bearer ${sc.localKey}`,
       },
     };
-    console.log(headers)
-    let res = await axios.post(`http://${process.env.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
+    let res = await axios.post(`http://${sc.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
     console.log(res?.data)
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)

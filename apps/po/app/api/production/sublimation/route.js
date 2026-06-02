@@ -3,13 +3,14 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 import { createMug } from "@pythias/sublimation/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
-async function pushToFileWriter(base64, pieceId, folder) {
-  const res = await fetch(`http://${process.env.localIP}/api/sublimation`, {
+async function pushToFileWriter(base64, pieceId, folder, localIP, localKey) {
+  const res = await fetch(`http://${localIP}/api/sublimation`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.localKey}`,
+      Authorization: `Bearer ${localKey}`,
     },
     body: JSON.stringify({ base64, pieceId, folder, printer: "printer1" }),
   });
@@ -20,6 +21,7 @@ export async function POST(req) {
   const token = await getToken({ req });
   const { userName, email } = userFromToken(token);
   const { item } = await req.json();
+  const sc = await getShippingCreds();
 
   const MUG_CODES = ["CFM", "TMUG", "BYEH300W", "21150"];
   if (!MUG_CODES.includes(item.styleCode)) {
@@ -28,7 +30,7 @@ export async function POST(req) {
 
   try {
     const { base64, folder } = await createMug(item);
-    await pushToFileWriter(base64, item.pieceId, folder);
+    await pushToFileWriter(base64, item.pieceId, folder, sc.localIP, sc.localKey);
     logActivity({ action: "sublimation_sent", entity: "order", entityName: item.pieceId, userName, email, provider: "po" });
     return NextResponse.json({ error: false });
   } catch (e) {

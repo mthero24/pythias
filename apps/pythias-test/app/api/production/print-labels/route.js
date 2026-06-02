@@ -7,6 +7,7 @@ import btoa from "btoa";
 import axios from "axios";
 import {buildLabelData} from "@/functions/labelString"
 import {createPdf} from "@pythias/labels"
+import { getShippingCreds } from "@/lib/getShippingCreds";
 let letters = ["a", "b", "c", "d","e","f","g","h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G","H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",];
 let updateReturnBin = async (re, upc, sku)=>{
   try{
@@ -35,6 +36,7 @@ export const config = {
   }
 export async function POST(req=NextApiRequest){
    let data = await req.json();
+    const printerName = data.printer ?? "printer1";
     //create batchId
     let batchID = ''
     for(let i = 0; i< 9; i++){
@@ -48,7 +50,8 @@ export async function POST(req=NextApiRequest){
     }
     // build labels
   console.log("items to print", itemsToPrint.length)
-    await createPdf({items: itemsToPrint, buildLabelData, poNumber: data.poNumber, localIP: process.env.localIP, key: "$2a$10$JZrqzFlmXbhUOy92szsDkejVy6xoYm48hPJP2VhYtMeOBNyM7o8pm"})
+    const sc = await getShippingCreds();
+    await createPdf({items: itemsToPrint, buildLabelData, poNumber: data.poNumber, localIP: sc.localIP, key: sc.localKey, printer: printerName})
    //subtractInventory(data.items)
     let pieceIds = itemsToPrint.map(i=> i.pieceId)
     // console.log(pieceIds)

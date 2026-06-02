@@ -146,7 +146,10 @@ export default function ShippingSettingsPage() {
                         <Typography variant="h6" fontWeight={700}>Shipping &amp; Hardware</Typography>
                         <Typography variant="body2" color="text.secondary">Internal server, warehouse address, carriers, printers, and scales</Typography>
                     </Box>
-                    <Button href="/admin/settings/integrations" variant="outlined" size="small">Marketplace Integrations →</Button>
+                    <Stack direction="row" spacing={1}>
+                        <Button href="/admin/settings/shipping/guide" variant="outlined" size="small">Setup Guide →</Button>
+                        <Button href="/admin/settings/integrations" variant="outlined" size="small">Marketplace Integrations →</Button>
+                    </Stack>
                 </Stack>
 
                 {msg && <Alert severity={msg.type} sx={{ mb: 2 }}>{msg.text}</Alert>}

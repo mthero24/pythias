@@ -31,21 +31,33 @@ function MaskedField({ label, value, onChange, helperText, placeholder }) {
     );
 }
 
-function PrinterRow({ printer, onChange, onDelete }) {
+function LabelPrinterRow({ printer, onChange, onDelete }) {
+    const fmt = printer.format ?? "ZPL";
     return (
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="flex-start">
-            <TextField label="Name" value={printer.name} onChange={e => onChange("name", e.target.value)} size="small" sx={{ width: 140 }} />
-            <TextField label="IP Address" value={printer.ipAddress} onChange={e => onChange("ipAddress", e.target.value)} size="small" sx={{ flex: 1 }} placeholder="192.168.1.x" />
-            <TextField label="Port" value={printer.port} onChange={e => onChange("port", e.target.value)} size="small" sx={{ width: 80 }} />
-            <FormControl size="small" sx={{ width: 100 }}>
-                <InputLabel>Format</InputLabel>
-                <Select label="Format" value={printer.format ?? "ZPL"} onChange={e => onChange("format", e.target.value)}>
-                    <MenuItem value="ZPL">ZPL</MenuItem>
-                    <MenuItem value="PDF">PDF</MenuItem>
-                </Select>
-            </FormControl>
-            <IconButton size="small" color="error" onClick={onDelete} sx={{ mt: 0.5 }}><DeleteIcon fontSize="small" /></IconButton>
-        </Stack>
+        <Box>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="center"
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, px: 1.5, py: 1 }}>
+                <Chip label={printer.name} size="small" sx={{ fontWeight: 700, minWidth: 72, fontFamily: "monospace" }} />
+                <FormControl size="small" sx={{ width: 100 }}>
+                    <InputLabel>Format</InputLabel>
+                    <Select label="Format" value={fmt} onChange={e => onChange("format", e.target.value)}>
+                        <MenuItem value="ZPL">ZPL</MenuItem>
+                        <MenuItem value="PDF">PDF</MenuItem>
+                    </Select>
+                </FormControl>
+                {fmt === "ZPL" && (
+                    <TextField label="ZPL Port" value={printer.port ?? "9100"} onChange={e => onChange("port", e.target.value)}
+                        size="small" sx={{ width: 110 }} placeholder="9100" />
+                )}
+                <Box sx={{ flex: 1 }} />
+                <IconButton size="small" color="error" onClick={onDelete}><DeleteIcon fontSize="small" /></IconButton>
+            </Stack>
+            {fmt === "ZPL" && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, ml: 0.5 }}>
+                    TCP port (usually 9100)
+                </Typography>
+            )}
+        </Box>
     );
 }
 
@@ -70,7 +82,7 @@ function MachineList({ label, prefix, items, onAdd, onRemove }) {
     );
 }
 
-function StationList({ stations, onAdd, onRemove, onToggleScale }) {
+function StationList({ stations, onAdd, onRemove, onToggleScale, onUpdateStation, defaultFormat = "ZPL" }) {
     const nextName = `station${stations.length + 1}`;
     return (
         <Box>
@@ -79,8 +91,9 @@ function StationList({ stations, onAdd, onRemove, onToggleScale }) {
                 {stations.map((s, i) => {
                     const name = typeof s === "string" ? s : (s.name ?? "");
                     const hasScale = typeof s === "string" ? true : !!s.hasScale;
+                    const fmt = typeof s === "string" ? defaultFormat : (s.format ?? defaultFormat);
                     return (
-                        <Box key={i} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, px: 1.5, py: 0.75, minWidth: 130, position: "relative" }}>
+                        <Box key={i} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1, px: 1.5, py: 0.75, minWidth: 150, position: "relative" }}>
                             <IconButton
                                 size="small"
                                 onClick={() => onRemove(i)}
@@ -88,7 +101,7 @@ function StationList({ stations, onAdd, onRemove, onToggleScale }) {
                             >
                                 <CloseIcon fontSize="small" />
                             </IconButton>
-                            <Typography variant="body2" fontWeight={600} sx={{ textTransform: "capitalize", mb: 0.25, pr: 3 }}>
+                            <Typography variant="body2" fontWeight={600} sx={{ textTransform: "capitalize", mb: 0.5, pr: 3 }}>
                                 {name}
                             </Typography>
                             <FormControlLabel
@@ -96,8 +109,20 @@ function StationList({ stations, onAdd, onRemove, onToggleScale }) {
                                     <Switch size="small" checked={hasScale} onChange={e => onToggleScale(i, e.target.checked)} />
                                 }
                                 label={<Typography variant="caption" color="text.secondary">Scale</Typography>}
-                                sx={{ m: 0 }}
+                                sx={{ m: 0, mb: 0.5 }}
                             />
+                            <FormControl size="small" fullWidth>
+                                <InputLabel sx={{ fontSize: 11 }}>Format</InputLabel>
+                                <Select
+                                    label="Format"
+                                    value={fmt}
+                                    onChange={e => onUpdateStation(i, "format", e.target.value)}
+                                    sx={{ fontSize: 12 }}
+                                >
+                                    <MenuItem value="ZPL">ZPL</MenuItem>
+                                    <MenuItem value="PDF">PDF</MenuItem>
+                                </Select>
+                            </FormControl>
                         </Box>
                     );
                 })}
@@ -105,7 +130,7 @@ function StationList({ stations, onAdd, onRemove, onToggleScale }) {
                     label={`+ ${nextName}`}
                     size="small"
                     variant="outlined"
-                    onClick={() => onAdd({ name: nextName, hasScale: false })}
+                    onClick={() => onAdd({ name: nextName, hasScale: false, format: defaultFormat })}
                     sx={{ cursor: "pointer", borderStyle: "dashed", alignSelf: "center" }}
                 />
             </Stack>
@@ -122,12 +147,11 @@ const EMPTY = {
     endicia: { requesterId: "", accountNumber: "", passPhrase: "" },
     fedex: { accountNumber: "", clientId: "", clientSecret: "" },
     dhl: { accountNumber: "", clientId: "", clientSecret: "" },
-    shippingLabelPrinters: [],
     productionLabelPrinters: [],
     production: { shippingStations: [], dtfPrinters: [], gtxPrinters: [], roqFolders: [], sublimationMachines: [], embroideryMachines: [] },
 };
 
-export function ShippingSettingsMain() {
+export function ShippingSettingsMain({ defaultStationFormat = "ZPL" }) {
     const { data: session } = useSession();
     const [creds, setCreds] = useState(EMPTY);
     const [loading, setLoading] = useState(true);
@@ -219,6 +243,14 @@ export function ShippingSettingsMain() {
         });
     }
 
+    function updateStation(idx, field, value) {
+        setCreds(c => {
+            const arr = [...(c.production?.shippingStations ?? [])];
+            arr[idx] = { ...arr[idx], [field]: value };
+            return { ...c, production: { ...(c.production ?? {}), shippingStations: arr } };
+        });
+    }
+
     async function save(e) {
         e.preventDefault();
         setSaving(true);
@@ -244,6 +276,7 @@ export function ShippingSettingsMain() {
                         <Typography variant="h6" fontWeight={700}>Shipping &amp; Hardware</Typography>
                         <Typography variant="body2" color="text.secondary">Internal server, warehouse address, carriers, printers, and scales</Typography>
                     </Box>
+                    <Button href="./shipping/guide" variant="outlined" size="small">Setup Guide →</Button>
                 </Stack>
 
                 {msg && <Alert severity={msg.type} sx={{ mb: 2 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
@@ -389,58 +422,33 @@ export function ShippingSettingsMain() {
                             </AccordionDetails>
                         </Accordion>
 
-                        {/* ── Printers ──────────────────────────────────────── */}
+                        {/* ── Pick / Production Label Printers ─────────────── */}
                         <Accordion>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                <Typography fontWeight={700}>Label Printers</Typography>
+                                <Typography fontWeight={700}>Pick / Production Label Printers</Typography>
                             </AccordionSummary>
                             <AccordionDetails>
-                                <Stack spacing={3}>
+                                <Stack spacing={2}>
                                     <Typography variant="caption" color="text.secondary">
-                                        Compatible models: Zebra ZD421 / ZD621 (ZPL, direct IP), Rollo Label Printer (ZPL/PDF), DYMO LabelWriter 4XL (PDF, USB bridge), Munbyn ITPP941 (ZPL/PDF).
-                                        Use ZPL for direct network printing; PDF for USB-only printers bridged via the internal server.
+                                        Printers are automatically named <strong>printer1</strong>, <strong>printer2</strong>, etc. — matching the printer IDs used on the production floor.
+                                        Choose ZPL for direct-network Zebra printers and enter the TCP port (usually 9100). Choose PDF for USB or shared printers handled by the internal server.
                                     </Typography>
-
+                                    <Stack spacing={1}>
+                                        {(creds.productionLabelPrinters ?? []).map((p, i) => (
+                                            <LabelPrinterRow key={i} printer={p}
+                                                onChange={(f, v) => setArrayItem("productionLabelPrinters", i, f, v)}
+                                                onDelete={() => removeArrayItem("productionLabelPrinters", i)} />
+                                        ))}
+                                    </Stack>
                                     <Box>
-                                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" fontWeight={700}>Shipping Label Printers</Typography>
-                                            <Button size="small" startIcon={<AddIcon />}
-                                                onClick={() => addArrayItem("shippingLabelPrinters", { name: "", ipAddress: "", port: "9100", format: "ZPL" })}>
-                                                Add
-                                            </Button>
-                                        </Stack>
-                                        <Stack spacing={1}>
-                                            {(creds.shippingLabelPrinters ?? []).map((p, i) => (
-                                                <PrinterRow key={i} printer={p}
-                                                    onChange={(f, v) => setArrayItem("shippingLabelPrinters", i, f, v)}
-                                                    onDelete={() => removeArrayItem("shippingLabelPrinters", i)} />
-                                            ))}
-                                            {!creds.shippingLabelPrinters?.length && (
-                                                <Typography variant="body2" color="text.secondary">No shipping label printers added.</Typography>
-                                            )}
-                                        </Stack>
-                                    </Box>
-
-                                    <Divider />
-
-                                    <Box>
-                                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                                            <Typography variant="subtitle2" fontWeight={700}>Production / Pick Label Printers</Typography>
-                                            <Button size="small" startIcon={<AddIcon />}
-                                                onClick={() => addArrayItem("productionLabelPrinters", { name: "", ipAddress: "", port: "9100", format: "ZPL" })}>
-                                                Add
-                                            </Button>
-                                        </Stack>
-                                        <Stack spacing={1}>
-                                            {(creds.productionLabelPrinters ?? []).map((p, i) => (
-                                                <PrinterRow key={i} printer={p}
-                                                    onChange={(f, v) => setArrayItem("productionLabelPrinters", i, f, v)}
-                                                    onDelete={() => removeArrayItem("productionLabelPrinters", i)} />
-                                            ))}
-                                            {!creds.productionLabelPrinters?.length && (
-                                                <Typography variant="body2" color="text.secondary">No production label printers added.</Typography>
-                                            )}
-                                        </Stack>
+                                        <Button size="small" startIcon={<AddIcon />} variant="outlined"
+                                            onClick={() => addArrayItem("productionLabelPrinters", {
+                                                name: `printer${(creds.productionLabelPrinters?.length ?? 0) + 1}`,
+                                                format: "ZPL",
+                                                port: "9100",
+                                            })}>
+                                            Add Printer
+                                        </Button>
                                     </Box>
                                 </Stack>
                             </AccordionDetails>
@@ -462,6 +470,8 @@ export function ShippingSettingsMain() {
                                         onAdd={addStation}
                                         onRemove={removeStation}
                                         onToggleScale={toggleStationScale}
+                                        onUpdateStation={updateStation}
+                                        defaultFormat={defaultStationFormat}
                                     />
 
                                     <Divider />
