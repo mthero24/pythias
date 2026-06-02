@@ -61,42 +61,42 @@ export async function PUT(req = NextApiRequest) {
                 inv.quantity = inv.quantity + i.quantity;
                 inv.pending_quantity = inv.pending_quantity - i.quantity;
                 if (inv.orders) {
-                    let or = inv.orders.filter(o => o.order.toString() == order._id.toString());
+                    const or = inv.orders.filter(o => o.order.toString() == order._id.toString());
                     for (let o of or) {
-                        if (o && o.items && o.items.length > 0) {
-                            let items = await TspItems.find({ _id: { $in: o.items } })
+                        if (!o) continue;
+                        let items;
+                        if (o.items && o.items.length > 0) {
+                            items = await TspItems.find({ _id: { $in: o.items } })
                                 .populate("design inventory.inventory")
                                 .populate("order", "poNumber items")
                                 .sort({ date: 1 });
-                            items = items.filter(it => !itemsToPrint.map(x => x._id.toString()).includes(it._id.toString()));
-                            const toPrint = items.filter(it => !it.labelPrinted && !it.bulkId).slice(0, i.quantity);
-                            const bulkToReceive = items.filter(it => !it.labelPrinted && it.bulkId);
-                            itemsToPrint.push(...toPrint);
-
-                            // Move TSPprints ordered → inStock (regular + bulk)
-                            const toMarkInStock = [...toPrint, ...bulkToReceive];
-                            if (toMarkInStock.length > 0) {
-                                await TspItems.bulkWrite(
-                                    toMarkInStock.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
-                                    { ordered: false }
-                                );
-                                inv.allocated = (inv.allocated ?? 0) + toPrint.length;
-                            }
-
-                            // Mirror to PremierPrinting items
-                            const ppOrdered = await PPItems.find({
+                        } else {
+                            // No items pre-linked at order creation — find FIFO ordered items for this inventory
+                            items = await TspItems.find({
                                 stockStatus: "ordered",
                                 "inventory.inventory": inv._id,
-                                canceled: false, paid: true,
+                                canceled: false,
+                                paid: true,
                                 labelPrinted: false,
-                            }).sort({ date: 1 }).limit(i.quantity).select("_id");
-                            if (ppOrdered.length > 0) {
-                                await PPItems.bulkWrite(
-                                    ppOrdered.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
-                                    { ordered: false }
-                                );
-                                inv.allocated = (inv.allocated ?? 0) + ppOrdered.length;
-                            }
+                            })
+                                .populate("design inventory.inventory")
+                                .populate("order", "poNumber items")
+                                .sort({ date: 1 })
+                                .limit(i.quantity);
+                        }
+
+                        items = items.filter(it => !itemsToPrint.map(x => x._id.toString()).includes(it._id.toString()));
+                        const toPrint = items.filter(it => !it.labelPrinted && !it.bulkId).slice(0, i.quantity);
+                        const bulkToReceive = items.filter(it => !it.labelPrinted && it.bulkId);
+                        itemsToPrint.push(...toPrint);
+
+                        const toMarkInStock = [...toPrint, ...bulkToReceive];
+                        if (toMarkInStock.length > 0) {
+                            await TspItems.bulkWrite(
+                                toMarkInStock.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
+                                { ordered: false }
+                            );
+                            inv.allocated = (inv.allocated ?? 0) + toPrint.length;
                         }
                     }
                 }
@@ -122,9 +122,13 @@ export async function PUT(req = NextApiRequest) {
 }
 
 export async function POST(req = NextApiRequest) {
+    const t0 = Date.now();
+    const elapsed = () => `${Date.now() - t0}ms`;
+    console.log("[inventory/order POST] start");
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     let data = await req.json();
+    console.log(`[inventory/order POST] body +${elapsed()}`, { poNumber: data.order?.poNumber, company: data.order?.company, needsOrderedCount: data.needsOrdered?.length, itemsCount: data.items?.length });
     let order = new InventoryOrders({
         vendor: data.order.company,
         poNumber: data.order.poNumber,
@@ -138,6 +142,7 @@ export async function POST(req = NextApiRequest) {
     for (let i of data.needsOrdered) {
         if (!locations.includes(i.location)) locations.push(i.location);
     }
+    console.log(`[inventory/order POST] locations +${elapsed()}`, locations, "included items", data.needsOrdered?.filter(i => i.included).length);
 
     for (let loc of locations) {
         let items = [];
@@ -145,16 +150,20 @@ export async function POST(req = NextApiRequest) {
             if (i.location == loc && i.included) {
                 items.push({ inventory: i.inv._id, quantity: i.order });
 
+                console.log(`[inventory/order POST] Inventory.findById +${elapsed()}`, i.inv._id);
                 let inv = await Inventory.findById(i.inv._id);
+                console.log(`[inventory/order POST] inv found +${elapsed()}`, !!inv, inv?.style_code, inv?.color_name);
                 inv.pending_quantity += i.order;
 
                 // Find the oldest attached items for this inventory (FIFO), up to ordered quantity
+                console.log(`[inventory/order POST] TspItems.find attached +${elapsed()}`, inv._id);
                 const attachedItems = await TspItems.find({
                     stockStatus: "attached",
                     "inventory.inventory": inv._id,
                     canceled: false,
                     paid: true,
                 }).sort({ date: 1 }).limit(i.order).select("_id");
+                console.log(`[inventory/order POST] attachedItems +${elapsed()}`, attachedItems.length);
 
                 if (!inv.orders) inv.orders = [];
                 inv.orders.push({
@@ -172,13 +181,16 @@ export async function POST(req = NextApiRequest) {
                     inv.attachedCount = Math.max(0, (inv.attachedCount ?? 0) - attachedItems.length);
                 }
 
+                console.log(`[inventory/order POST] inv.save +${elapsed()}`, inv._id);
                 await inv.save();
             }
         }
         order.locations.push({ name: loc, received: false, items });
     }
 
+    console.log(`[inventory/order POST] order.save +${elapsed()}`, order._id);
     await order.save();
+    console.log(`[inventory/order POST] done +${elapsed()}`);
     logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "create", userName, email, provider: "po" });
     return NextResponse.json({ error: false });
 }
