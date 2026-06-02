@@ -4,6 +4,7 @@ import { Items } from "@pythias/mongo";
 import { Color } from "@pythias/mongo"
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, style, item, source)=>{
     let styleImage = style.multiImages.front?.filter(i=> i.color == item.color.toString())[0]
     if(!styleImage){
@@ -77,11 +78,10 @@ export async function GET(req) {
 }
 
 export async function POST(req = NextApiRequest) {
-    let config = JSON.parse(process.env.dtf);
-    console.log(config);
+    const sc = await getShippingCreds();
     setConfig({
-      internalIP: process.env.localIP,
-      apiKey: "$2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW",
+      internalIP: sc.localIP,
+      apiKey: sc.localKey,
     });
     let data = await req.json()
     console.log(data, "data")

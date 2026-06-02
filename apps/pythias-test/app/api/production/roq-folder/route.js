@@ -6,9 +6,11 @@ import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
 import {updateOrder} from "@pythias/integrations";
-import { truncate } from "fs";
+import { truncate } from "fs"
+import { getShippingCreds } from "@/lib/getShippingCreds";;
 const ups =["faire", "Zulily", "TSC"]
 export async function POST(req = NextApiRequest){
+    const sc = await getShippingCreds();
     let data = await req.json();
     console.log(data)
     let item = await Items.findOne({pieceId: data.scan,}).populate("blank")
@@ -79,11 +81,11 @@ export async function POST(req = NextApiRequest){
             let headers = {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
+                    "Authorization": `Bearer ${sc.localKey}`
                 }
             }
             let response = await axios.post(
-                `http://${process.env.localIP}/api/roq-folder`,
+                `http://${sc.localIP}/api/roq-folder`,
                 {
                   barcode: item.pieceId,
                   label: item.order.shippingInfo.label,

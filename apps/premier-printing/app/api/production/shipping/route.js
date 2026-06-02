@@ -5,9 +5,11 @@ import axios from "axios";
 import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 export async function POST(req= NextApiRequest){
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
+    const sc = await getShippingCreds();
     let data = await req.json();
     console.log(data)
     if(data.reprint){
@@ -21,10 +23,10 @@ export async function POST(req= NextApiRequest){
         let headers = {
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
+                "Authorization": `Bearer ${sc.localKey}`
             }
         }
-        let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
+        let res = await axios.post(`http://${sc.localIP}/api/shipping/cpu`, {label: order.shippingInfo.label, station: data.station, barcode: "ppp"}, headers)
         console.log(res.data)
         let re2s = await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: order.shippingInfo.labels[0].trackingNumber})
         if(res.error){

@@ -4,6 +4,7 @@ import { Items } from "@pythias/mongo";
 import { Color } from "@pythias/mongo"
 import {sendFile} from "@pythias/embroidery"
 import axios from "axios";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 const getImages = async (front, back, upperSleeve, lowerSleeve, center, pocket, style, item, source)=>{
     let styleImage = style.multiImages.front?.filter(i=> i.color == item.color.toString())[0]
     if(!styleImage){
@@ -66,6 +67,7 @@ export async function GET(){
     return NextResponse.json({error: false})
 }
 export async function POST(req = NextApiRequest) {
+    const sc = await getShippingCreds();
     let data = await req.json()
     const tajimaQueue = data.tajimaQueue || "default";
     console.log(data, "data")
@@ -84,8 +86,8 @@ export async function POST(req = NextApiRequest) {
                     color: item.colorName,
                     sku: item.sku,
                     printer: data.printer,
-                    key: "$2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW",
-                    localIP: process.env.localIP
+                    key: sc.localKey,
+                    localIP: sc.localIP
                 })
             }
         }))
@@ -97,9 +99,9 @@ export async function POST(req = NextApiRequest) {
                 const dstBase64 = Buffer.from(dstRes.data).toString("base64");
                 const designName = `${item.pieceId}-${item.sku}.dst`;
                 await axios.post(
-                    `http://${process.env.localIP}/api/tajima/send`,
+                    `http://${sc.localIP}/api/tajima/send`,
                     { name: designName, dstBase64, machine: tajimaQueue },
-                    { headers: { Authorization: `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW` } }
+                    { headers: { Authorization: `Bearer ${sc.localKey}` } }
                 );
                 console.log(`[tajima] Queued DST for ${item.pieceId} → queue "${tajimaQueue}"`);
             } catch (e) {

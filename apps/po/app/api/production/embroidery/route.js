@@ -76,9 +76,9 @@ export async function POST(req = NextApiRequest) {
                 const dstBase64 = Buffer.from(dstRes.data).toString("base64");
                 const designName = `${item.pieceId}-${item.sku}.dst`;
                 await axios.post(
-                    `http://${process.env.localIP}/api/tajima/send`,
+                    `http://${sc.localIP}/api/tajima/send`,
                     { name: designName, dstBase64, machine: tajimaQueue },
-                    { headers: { Authorization: `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy` } }
+                    { headers: { Authorization: `Bearer ${sc.localKey}` } }
                 );
                 console.log(`[tajima] Queued DST for ${item.pieceId} → queue "${tajimaQueue}"`);
             } catch (e) {

@@ -1,10 +1,11 @@
 export const dynamic = "force-dynamic";
 import {setConfig, createMug} from "@pythias/sublimation";
 import {NextApiRequest, NextResponse} from "next/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
 export async function POST(req= NextApiRequest){
-    console.log(process.env.localKey, "localkey");
-    setConfig({localIP: process.env.localIP, localKey: process.env.localKey})
+    const sc = await getShippingCreds();
+    setConfig({localIP: sc.localIP, localKey: sc.localKey})
     let data = await req.json();
     console.log(data)
     let item = data.item

@@ -1,15 +1,17 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import axios from "axios"
+import { getShippingCreds } from "@/lib/getShippingCreds";
 export async function POST(req= NextApiRequest){
+    const sc = await getShippingCreds();
     let data = await req.json();
     let headers = {
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer $2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW`
+            "Authorization": `Bearer ${sc.localKey}`
         }
     }
     console.log(data.label)
-    let res = await axios.post(`http://${process.env.localIP}/api/shipping/cpu`, {label: data.label, station: data.station, barcode: "ppp"}, headers)
+    let res = await axios.post(`http://${sc.localIP}/api/shipping/cpu`, {label: data.label, station: data.station, barcode: "ppp"}, headers)
     console.log(res.data)
     if(res.error){
         return NextResponse.json({error: true, msg: "error printing label"})

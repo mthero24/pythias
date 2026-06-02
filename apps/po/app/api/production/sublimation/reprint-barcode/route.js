@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import btoa from "btoa";
 import axios from "axios";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
 export async function POST(req) {
     let data;
@@ -26,14 +27,15 @@ export async function POST(req) {
 ^LH12,18^CFS,25,12^AXN,22,30^FO20,430^FD[REPRINT]^FS
 ^XZ`;
 
+    const sc = await getShippingCreds();
     try {
         await axios.post(
-            `http://${process.env.localIP}/api/print-labels`,
+            `http://${sc.localIP}/api/print-labels`,
             { label: btoa(label), printer: "printer1" },
             {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`,
+                    "Authorization": `Bearer ${sc.localKey}`,
                 },
                 timeout: 10_000,
             }

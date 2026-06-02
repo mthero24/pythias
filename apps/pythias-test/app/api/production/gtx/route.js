@@ -4,12 +4,10 @@ import { Item as Items } from "@pythias/mongo";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
-const INTERNAL = process.env.localIP || "38.43.61.68:3005";
-const BEARER = "$2a$10$Z7IGcOqlki/aMY.SxBz6/.vj3toNJ39/TGh0YunAAUHh3dkWy1ZUW";
-
-function internalHeaders() {
-    return { Authorization: `Bearer ${BEARER}`, "Content-Type": "application/json" };
+function internalHeaders(key) {
+    return { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
 }
 
 function buildGTXJob(item, printAs) {
@@ -122,6 +120,7 @@ export async function POST(req) {
     const { userName, email } = userFromToken(token);
     const data = await req.json();
     const { action, pieceID, pieceIDs, printer = "printer1" } = data;
+    const sc = await getShippingCreds();
 
     try {
         // ── scan: add pieceIDs to queue ──
@@ -141,7 +140,7 @@ export async function POST(req) {
 
                     const job = buildGTXJob(item);
                     const onPrinterNow = await Items.findOne({ onPrinter: true, "printerQue.printer": printer });
-                    await axios.post(`http://${INTERNAL}/api/gtx/send`, { que: job, createOnly: !!onPrinterNow }, { headers: internalHeaders() });
+                    await axios.post(`http://${sc.localIP}/api/gtx/send`, { que: job, createOnly: !!onPrinterNow }, { headers: internalHeaders(sc.localKey) });
 
                     if (!onPrinterNow) {
                         item.onPrinter = true;
@@ -174,7 +173,7 @@ export async function POST(req) {
 
             if (onPrinter) {
                 const oldJob = buildGTXJob(onPrinter);
-                await axios.post(`http://${INTERNAL}/api/gtx/delete`, { que: oldJob }, { headers: internalHeaders() });
+                await axios.post(`http://${sc.localIP}/api/gtx/delete`, { que: oldJob }, { headers: internalHeaders(sc.localKey) });
                 onPrinter.onPrinter = false;
                 onPrinter.printed = true;
                 onPrinter.printedDate = new Date();
@@ -186,7 +185,7 @@ export async function POST(req) {
                 await onPrinter.save();
             }
 
-            await axios.post(`http://${INTERNAL}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders() });
+            await axios.post(`http://${sc.localIP}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders(sc.localKey) });
             item.onPrinter = true;
             item.printerQue = { printer, scan: Date.now() };
             item.status = `On Printer ${printer}`;
@@ -205,7 +204,7 @@ export async function POST(req) {
             const oldJob = buildGTXJob(onPrinter);
             const nextItem = await Items.findOne({ onPrinter: false, "printerQue.printer": printer }).populate("blank", "code envelopes").populate("order", "poNumber items").populate("color", "category name color_type").sort({ "printerQue.scan": 1 });
 
-            await axios.post(`http://${INTERNAL}/api/gtx/delete`, { que: oldJob }, { headers: internalHeaders() });
+            await axios.post(`http://${sc.localIP}/api/gtx/delete`, { que: oldJob }, { headers: internalHeaders(sc.localKey) });
             onPrinter.onPrinter = false;
             onPrinter.printed = true;
             onPrinter.printedDate = new Date();
@@ -218,7 +217,7 @@ export async function POST(req) {
 
             if (nextItem) {
                 const nextJob = buildGTXJob(nextItem);
-                await axios.post(`http://${INTERNAL}/api/gtx/send`, { que: nextJob, createOnly: false }, { headers: internalHeaders() });
+                await axios.post(`http://${sc.localIP}/api/gtx/send`, { que: nextJob, createOnly: false }, { headers: internalHeaders(sc.localKey) });
                 nextItem.onPrinter = true;
                 nextItem.status = `On Printer ${printer}`;
                 if (!nextItem.steps) nextItem.steps = [];
@@ -234,7 +233,7 @@ export async function POST(req) {
             const item = await Items.findOne({ pieceId: pieceID.toUpperCase().trim() }).populate("blank", "code envelopes").populate("order", "poNumber items").populate("color", "category name color_type");
             if (!item) return NextResponse.json({ error: true, msg: "Item not found" });
             const job = buildGTXJob(item);
-            await axios.post(`http://${INTERNAL}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders() });
+            await axios.post(`http://${sc.localIP}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders(sc.localKey) });
             return NextResponse.json({ error: false, msg: "repulled" });
         }
 
@@ -243,7 +242,7 @@ export async function POST(req) {
             const item = await getItemForGTX(pieceID);
             if (!item) return NextResponse.json({ error: true, msg: "Item not found" });
             const job = buildGTXJob(item, "white");
-            await axios.post(`http://${INTERNAL}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders() });
+            await axios.post(`http://${sc.localIP}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders(sc.localKey) });
             return NextResponse.json({ error: false, msg: "printing as white" });
         }
 
@@ -252,7 +251,7 @@ export async function POST(req) {
             const item = await getItemForGTX(pieceID);
             if (!item) return NextResponse.json({ error: true, msg: "Item not found" });
             const job = buildGTXJob(item, "ash");
-            await axios.post(`http://${INTERNAL}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders() });
+            await axios.post(`http://${sc.localIP}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders(sc.localKey) });
             return NextResponse.json({ error: false, msg: "printing as ash" });
         }
 
@@ -261,7 +260,7 @@ export async function POST(req) {
             const item = await getItemForGTX(pieceID);
             if (!item) return NextResponse.json({ error: true, msg: "Item not found" });
             const job = buildGTXJob(item);
-            await axios.post(`http://${INTERNAL}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders() });
+            await axios.post(`http://${sc.localIP}/api/gtx/send`, { que: job, createOnly: false }, { headers: internalHeaders(sc.localKey) });
             return NextResponse.json({ error: false, msg: "resent to printer" });
         }
 
@@ -270,7 +269,7 @@ export async function POST(req) {
             const item = await getItemForGTX(pieceID);
             if (!item) return NextResponse.json({ error: true, msg: "Item not found" });
             const job = buildGTXJob(item);
-            await axios.post(`http://${INTERNAL}/api/gtx/delete`, { que: job }, { headers: internalHeaders() });
+            await axios.post(`http://${sc.localIP}/api/gtx/delete`, { que: job }, { headers: internalHeaders(sc.localKey) });
             await Items.updateOne({ pieceId: pieceID.toUpperCase().trim() }, { $set: { onPrinter: false, printerQue: {} } });
             return NextResponse.json({ error: false, msg: "cleared" });
         }

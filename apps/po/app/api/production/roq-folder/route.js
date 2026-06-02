@@ -10,6 +10,7 @@ import { getShippingCreds } from "@/lib/getShippingCreds";
 export async function POST(req = NextApiRequest){
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
+    const sc = await getShippingCreds();
     let data = await req.json();
     console.log(data)
     let item = await Items.findOne({pieceId: data.scan,}).populate({path: "order", populate: "items user"}).populate("styleV2")
@@ -76,11 +77,11 @@ export async function POST(req = NextApiRequest){
             let headers = {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
+                    "Authorization": `Bearer ${sc.localKey}`
                 }
             }
             let response = await axios.post(
-                `http://${process.env.localIP}/api/roq-folder`,
+                `http://${sc.localIP}/api/roq-folder`,
                 {
                   barcode: item.pieceId,
                   label: item.order.shippingInfo.label,

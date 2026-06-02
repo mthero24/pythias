@@ -128,11 +128,10 @@ export async function GET(req = NextApiRequest) {
 export async function POST(req = NextApiRequest) {
   const token = await getToken({ req });
   const { userName, email } = userFromToken(token);
-  let config = JSON.parse(process.env.dtf);
-  console.log(config);
+  const sc = await getShippingCreds();
   setConfig({
-    internalIP: process.env.localIP,
-    apiKey: "$2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy",
+    internalIP: sc.localIP,
+    apiKey: sc.localKey,
   });
   let data = await req.json();
   console.log(data, "data");
