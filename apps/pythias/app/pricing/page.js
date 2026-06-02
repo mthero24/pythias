@@ -2,8 +2,8 @@ import Link from "next/link";
 import s from "./pricing.module.css";
 
 export const metadata = {
-    title: "Pricing",
-    description: "Simple, transparent pricing for every stage of your print-on-demand business. From Starter at $199/mo to Enterprise with a dedicated instance.",
+    title: "Pythias Fulfillment Cloud Pricing — Plans from $199/mo",
+    description: "Simple, transparent pricing for Pythias Fulfillment Cloud — the production OS for print-on-demand operations. From Starter at $199/mo to Enterprise with a dedicated instance.",
     alternates: { canonical: "https://pythiastechnologies.com/pricing" },
 };
 
@@ -110,7 +110,7 @@ const FAQS = [
     },
     {
         q: "What integrations are included?",
-        a: "Starter and Professional include up to 2 and 5 integrations respectively, chosen from our full library: Amazon, Etsy, Walmart, Shopify, TikTok, ChannelEngine, Faire, ShipStation, and more. Business, Scale, and Enterprise get all integrations.",
+        a: "Starter and Professional include up to 2 and 5 Pythias Connect integrations respectively, chosen from our full library: Amazon, Etsy, Walmart, Shopify, TikTok, ChannelEngine, Faire, ShipStation, and more. Business, Scale, and Enterprise get all integrations.",
     },
     {
         q: "Is there a setup fee?",
@@ -129,9 +129,9 @@ const FAQS = [
 const pricingSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "Pythias Technologies Pricing",
+    name: "Pythias Fulfillment Cloud Pricing",
     url: "https://pythiastechnologies.com/pricing",
-    description: "Transparent pricing tiers for the Pythias print-on-demand automation platform — from $199/mo Starter to Enterprise.",
+    description: "Transparent pricing tiers for Pythias Fulfillment Cloud — the production OS for print-on-demand operations. From $199/mo Starter to Enterprise.",
 };
 
 const breadcrumbSchema = {
@@ -139,7 +139,7 @@ const breadcrumbSchema = {
     "@type": "BreadcrumbList",
     itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home",    item: "https://pythiastechnologies.com" },
-        { "@type": "ListItem", position: 2, name: "Pricing", item: "https://pythiastechnologies.com/pricing" },
+        { "@type": "ListItem", position: 2, name: "Pythias Fulfillment Cloud Pricing", item: "https://pythiastechnologies.com/pricing" },
     ],
 };
 
@@ -154,13 +154,13 @@ export default function PricingPage() {
                 <div className={`${s.glow} ${s.glow1}`} />
                 <div className={`${s.glow} ${s.glow2}`} />
                 <div className={s.wrap}>
-                    <p className={s.tag}>Pricing</p>
+                    <p className={s.tag}>Pythias Fulfillment Cloud</p>
                     <h1 className={s.h1}>
                         Simple pricing that{" "}
                         <span className={s.accent}>scales with you.</span>
                     </h1>
                     <p className={s.heroSub}>
-                        No hidden fees. No per-transaction costs. Pay for the tier that fits your volume today and upgrade when you need more.
+                        No hidden fees. No per-transaction costs. One flat monthly rate for your entire Pythias Fulfillment Cloud instance — upgrade when your volume needs it.
                     </p>
                 </div>
             </section>
@@ -177,7 +177,7 @@ export default function PricingPage() {
                                 itemType="https://schema.org/Offer"
                             >
                                 {tier.popular && <span className={s.popularBadge}>Most Popular</span>}
-                                <meta itemProp="name" content={`Pythias ${tier.name}`} />
+                                <meta itemProp="name" content={`Pythias Fulfillment Cloud — ${tier.name}`} />
                                 {tier.price && <meta itemProp="price" content={tier.price} />}
                                 <meta itemProp="priceCurrency" content="USD" />
 

@@ -12,10 +12,12 @@ const schema = new mongoose.Schema({
     year:        { type: Number, required: true },
     lines:       [lineSchema],
     totalAmount: { type: Number, default: 0 },
-    status:      { type: String, enum: ["open", "paid"], default: "open" },
-    paidAt:      Date,
-    createdAt:   { type: Date, default: Date.now },
-    updatedAt:   { type: Date, default: Date.now },
+    status:        { type: String, enum: ["open", "paid"], default: "open" },
+    paidAt:        Date,
+    paymentMethod: { type: String, default: null },
+    paymentNote:   { type: String, default: "" },
+    createdAt:     { type: Date, default: Date.now },
+    updatedAt:     { type: Date, default: Date.now },
 });
 
 schema.index({ month: 1, year: 1 }, { unique: true });

@@ -7,6 +7,8 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { Avatar, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import Image from "next/image";
+import LogoImg from "../public/logo_vertical.png";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -143,10 +145,15 @@ export default function Navbar() {
                         </IconButton>
                     </Tooltip>
 
-                    <Link href={`${base}/dashboard`} style={{ textDecoration: "none" }}>
-                        <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#1a1f2e" }}>
-                            {org?.name ?? "Pythias"}
-                        </Typography>
+                    <Link href={`${base}/dashboard`} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+                        <Image
+                            src={LogoImg}
+                            alt="Pythias Technologies"
+                            width={100}
+                            height={46}
+                            priority
+                            style={{ height: "auto" }}
+                        />
                     </Link>
 
                     <Box sx={{ flex: 1 }} />

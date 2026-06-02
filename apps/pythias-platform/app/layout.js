@@ -4,7 +4,7 @@ import { AppThemeProvider } from "@/components/AppThemeProvider";
 export const metadata = {
     title: "Pythias Platform",
     description: "Print fulfillment management platform",
-    icons: { icon: "/favicon.ico" },
+    icons: { icon: "/icon.png" },
 };
 
 export default function RootLayout({ children }) {

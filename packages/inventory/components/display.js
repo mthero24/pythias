@@ -14,7 +14,7 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import SearchIcon from "@mui/icons-material/Search";
 import HistoryIcon from "@mui/icons-material/History";
 
-function OrderCard({ o, editable, edit, orderEdit, setEdit, setOrderEdit, updateQuantity, deleteItem, setConfirmReceive }) {
+function OrderCard({ o, editable, edit, orderEdit, setEdit, setOrderEdit, updateQuantity, deleteItem, setConfirmReceive, receiving }) {
     return (
         <Card variant="outlined" sx={{ borderRadius: 2 }}>
             <Box sx={{ px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", borderBottom: "1px solid", borderColor: "divider" }}>
@@ -53,6 +53,7 @@ function OrderCard({ o, editable, edit, orderEdit, setEdit, setOrderEdit, update
                             {editable && !l.received && !o.received && (
                                 <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
                                     <Button size="small" variant="contained" color="success"
+                                        disabled={receiving}
                                         onClick={() => setConfirmReceive({ o, l })}>
                                         Mark Received
                                     </Button>
@@ -98,6 +99,7 @@ export function DisplayModal({ open, setOpen }) {
     const [edit, setEdit]                 = useState(false);
     const [orderEdit, setOrderEdit]       = useState(null);
     const [confirmReceive, setConfirmReceive] = useState(null);
+    const [receiving, setReceiving]           = useState(false);
     const [view, setView]                 = useState("open");
     const [allOrders, setAllOrders]       = useState([]);
     const [allTotal, setAllTotal]         = useState(0);
@@ -148,8 +150,11 @@ export function DisplayModal({ open, setOpen }) {
     };
 
     const markReceived = async ({ order, location }) => {
+        setReceiving(true);
         const res = await axios.put("/api/admin/inventory/order", { id: order._id, location: location.name })
             .catch(() => null);
+        setReceiving(false);
+        setConfirmReceive(null);
         if (res?.data?.error === false) setOrders(res.data.orders);
         else alert("Something went wrong marking order received — do not click Receive again, contact support");
     };
@@ -175,7 +180,7 @@ export function DisplayModal({ open, setOpen }) {
         if (!res?.data || res.data.error !== false) alert("Something went wrong deleting item, please refresh");
     };
 
-    const cardProps = { edit, orderEdit, setEdit, setOrderEdit, updateQuantity, deleteItem, setConfirmReceive };
+    const cardProps = { edit, orderEdit, setEdit, setOrderEdit, updateQuantity, deleteItem, setConfirmReceive, receiving };
 
     return (
         <>
@@ -262,17 +267,26 @@ export function DisplayModal({ open, setOpen }) {
                 </DialogActions>
             </Dialog>
 
-            <Dialog open={!!confirmReceive} onClose={() => setConfirmReceive(null)} maxWidth="xs" fullWidth>
+            <Dialog open={!!confirmReceive} onClose={() => !receiving && setConfirmReceive(null)} maxWidth="xs" fullWidth>
                 <DialogTitle fontWeight={700}>Confirm Receipt</DialogTitle>
                 <DialogContent>
-                    <Typography>Are you sure you want to mark this location as received?</Typography>
-                    {confirmReceive && <Chip label={confirmReceive.l.name} sx={{ mt: 1 }} />}
+                    {receiving ? (
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 2 }}>
+                            <CircularProgress size={40} color="success" />
+                            <Typography color="text.secondary">Marking received and printing labels…</Typography>
+                        </Box>
+                    ) : (
+                        <>
+                            <Typography>Are you sure you want to mark this location as received?</Typography>
+                            {confirmReceive && <Chip label={confirmReceive.l.name} sx={{ mt: 1 }} />}
+                        </>
+                    )}
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setConfirmReceive(null)}>Cancel</Button>
-                    <Button variant="contained" color="success"
-                        onClick={() => { markReceived({ order: confirmReceive.o, location: confirmReceive.l }); setConfirmReceive(null); }}>
-                        Mark Received
+                    <Button onClick={() => setConfirmReceive(null)} disabled={receiving}>Cancel</Button>
+                    <Button variant="contained" color="success" disabled={receiving}
+                        onClick={() => markReceived({ order: confirmReceive.o, location: confirmReceive.l })}>
+                        {receiving ? "Processing…" : "Mark Received"}
                     </Button>
                 </DialogActions>
             </Dialog>

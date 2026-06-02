@@ -1,5 +1,5 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import { InventoryOrders, Inventory, Blank, Items as PPItems } from "@pythias/mongo";
+import { InventoryOrders, Inventory, Blank } from "@pythias/mongo";
 import TspItems from "@/models/Items";
 import { Sort } from "@pythias/labels";
 import axios from "axios";
@@ -61,42 +61,42 @@ export async function PUT(req = NextApiRequest) {
                 inv.quantity = inv.quantity + i.quantity;
                 inv.pending_quantity = inv.pending_quantity - i.quantity;
                 if (inv.orders) {
-                    let or = inv.orders.filter(o => o.order.toString() == order._id.toString());
+                    const or = inv.orders.filter(o => o.order.toString() == order._id.toString());
                     for (let o of or) {
-                        if (o && o.items && o.items.length > 0) {
-                            let items = await TspItems.find({ _id: { $in: o.items } })
+                        if (!o) continue;
+                        let items;
+                        if (o.items && o.items.length > 0) {
+                            items = await TspItems.find({ _id: { $in: o.items } })
                                 .populate("design inventory.inventory")
                                 .populate("order", "poNumber items")
                                 .sort({ date: 1 });
-                            items = items.filter(it => !itemsToPrint.map(x => x._id.toString()).includes(it._id.toString()));
-                            const toPrint = items.filter(it => !it.labelPrinted && !it.bulkId).slice(0, i.quantity);
-                            const bulkToReceive = items.filter(it => !it.labelPrinted && it.bulkId);
-                            itemsToPrint.push(...toPrint);
-
-                            // Move TSPprints ordered → inStock (regular + bulk)
-                            const toMarkInStock = [...toPrint, ...bulkToReceive];
-                            if (toMarkInStock.length > 0) {
-                                await TspItems.bulkWrite(
-                                    toMarkInStock.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
-                                    { ordered: false }
-                                );
-                                inv.allocated = (inv.allocated ?? 0) + toPrint.length;
-                            }
-
-                            // Mirror to PremierPrinting items
-                            const ppOrdered = await PPItems.find({
+                        } else {
+                            // No items pre-linked at order creation — find FIFO ordered items for this inventory
+                            items = await TspItems.find({
                                 stockStatus: "ordered",
                                 "inventory.inventory": inv._id,
-                                canceled: false, paid: true,
+                                canceled: false,
+                                paid: true,
                                 labelPrinted: false,
-                            }).sort({ date: 1 }).limit(i.quantity).select("_id");
-                            if (ppOrdered.length > 0) {
-                                await PPItems.bulkWrite(
-                                    ppOrdered.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
-                                    { ordered: false }
-                                );
-                                inv.allocated = (inv.allocated ?? 0) + ppOrdered.length;
-                            }
+                            })
+                                .populate("design inventory.inventory")
+                                .populate("order", "poNumber items")
+                                .sort({ date: 1 })
+                                .limit(i.quantity);
+                        }
+
+                        items = items.filter(it => !itemsToPrint.map(x => x._id.toString()).includes(it._id.toString()));
+                        const toPrint = items.filter(it => !it.labelPrinted && !it.bulkId).slice(0, i.quantity);
+                        const bulkToReceive = items.filter(it => !it.labelPrinted && it.bulkId);
+                        itemsToPrint.push(...toPrint);
+
+                        const toMarkInStock = [...toPrint, ...bulkToReceive];
+                        if (toMarkInStock.length > 0) {
+                            await TspItems.bulkWrite(
+                                toMarkInStock.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "inStock" } } } })),
+                                { ordered: false }
+                            );
+                            inv.allocated = (inv.allocated ?? 0) + toPrint.length;
                         }
                     }
                 }
@@ -179,22 +179,6 @@ export async function POST(req = NextApiRequest) {
                         { ordered: false }
                     );
                     inv.attachedCount = Math.max(0, (inv.attachedCount ?? 0) - attachedItems.length);
-                }
-
-                // Mirror to PremierPrinting items for the same inventory
-                console.log(`[inventory/order POST] PPItems.find attached +${elapsed()}`, inv._id);
-                const ppAttached = await PPItems.find({
-                    stockStatus: "attached",
-                    "inventory.inventory": inv._id,
-                    canceled: false, paid: true,
-                }).sort({ date: 1 }).select("_id");
-                console.log(`[inventory/order POST] ppAttached +${elapsed()}`, ppAttached.length);
-                if (ppAttached.length > 0) {
-                    await PPItems.bulkWrite(
-                        ppAttached.map(it => ({ updateOne: { filter: { _id: it._id }, update: { $set: { stockStatus: "ordered" } } } })),
-                        { ordered: false }
-                    );
-                    inv.attachedCount = Math.max(0, (inv.attachedCount ?? 0) - ppAttached.length);
                 }
 
                 console.log(`[inventory/order POST] inv.save +${elapsed()}`, inv._id);

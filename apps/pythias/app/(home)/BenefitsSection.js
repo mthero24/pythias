@@ -4,26 +4,26 @@ const benefits = [
     {
         gradient: "linear-gradient(135deg, #D3A73D 0%, #f0c66a 100%)",
         icon: "⚡",
-        title: "Automated Production",
-        description: "Connect Brother GTX printers and folding machines. Job queuing, status tracking, and quality control workflows — fully automated.",
+        title: "Pythias Fulfillment Cloud",
+        description: "The production OS for your print floor. Connect Brother GTX printers and folding machines — job queuing, status tracking, and quality control, fully automated.",
     },
     {
         gradient: "linear-gradient(135deg, #6366f1 0%, #818cf8 100%)",
         icon: "🚚",
-        title: "Simplified Shipping",
-        description: "Integrated USPS, FedEx, UPS, and more. Auto-generate labels, sync tracking, and deliver notifications without lifting a finger.",
+        title: "Pythias Shipping",
+        description: "USPS, FedEx, UPS, and more — auto-generate labels, sync tracking back to every marketplace, and deliver notifications without lifting a finger.",
     },
     {
         gradient: "linear-gradient(135deg, #10b981 0%, #34d399 100%)",
         icon: "📦",
-        title: "Smart Inventory",
-        description: "Real-time stock tracking across all products and materials. Automated reorder points and supplier management prevent stockouts.",
+        title: "Pythias Inventory",
+        description: "Real-time stock tracking across all products and materials. Automated reorder points and supplier management so you never run out.",
     },
     {
         gradient: "linear-gradient(135deg, #ef4444 0%, #f87171 100%)",
         icon: "🛒",
-        title: "Marketplace Integration",
-        description: "Sell on Amazon, Etsy, Walmart, Shopify, TikTok, and more from one dashboard. Orders route and fulfill automatically.",
+        title: "Pythias Connect",
+        description: "Sell on Amazon, Etsy, Walmart, Shopify, TikTok, and 15+ more from one dashboard. Orders route to production and fulfill automatically.",
     },
 ];
 
