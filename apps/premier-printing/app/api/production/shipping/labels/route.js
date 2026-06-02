@@ -9,29 +9,30 @@ import { createShipment as ceCreateShipment } from "@/functions/channelEngine";
 import {ApiKeyIntegrations, Item as Items} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 export async function POST(req= NextApiRequest){
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     let data = await req.json();
     console.log(data)
-    //return NextResponse.json({error: true})
     if(!data.address.country) data.address.country = "US"
+    const sc = await getShippingCreds();
     const buyOpts = {
         ...data,
         imageType: "PDF",
-        businessAddress: data.marketplace == "TCS" ? { name: "TSC Distribution Center", businessName: "ATTN: Online Orders", address: "100 Rains Drive", city: "Fanklin", state: "KY", postalCode: "42134", country: "US" } : JSON.parse(process.env.businessAddress),
+        businessAddress: data.marketplace == "TCS" ? { name: "TSC Distribution Center", businessName: "ATTN: Online Orders", address: "100 Rains Drive", city: "Fanklin", state: "KY", postalCode: "42134", country: "US" } : sc.businessAddress,
         providers: ["usps", "ups"],
-        enSettings: { requesterID: process.env.endiciaRequesterID, accountNumber: process.env.endiciaAccountNUmber, passPhrase: process.env.endiciaPassPhrase },
-        credentials: { clientId: process.env.uspsClientId, clientSecret: process.env.uspsClientSecret, crid: process.env.uspsCRID, mid: process.env.uspsMID, manifestMID: process.env.manifestMID, accountNumber: process.env.accountNumber, api: "apis" },
-        credentialsFedEx: { accountNumber: process.env.tpalfedexaccountnumber, meterNumber: process.env.tpalfedexmeternumber, key: process.env.tpalfedexkey, password: process.env.tpalfedexpassword },
-        credentialsFedExNew: { accountNumber: process.env.AccountFedExTest, key: process.env.ApiKeyTestFedEx, secret: process.env.SecretKeyFedExTest },
-        credentialsUPS: { accountNumber: process.env.upsAccountNumber, clientID: process.env.upsClientId, clientSecret: process.env.upsClientSecret },
-        credentialsDHL: { accountNumber: process.env.dhlAccount, basic: process.env.dhlBasic },
+        enSettings: sc.enSettings,
+        credentials: sc.credentials,
+        credentialsFedEx: sc.credentialsFedEx,
+        credentialsFedExNew: sc.credentialsFedExNew,
+        credentialsUPS: sc.credentialsUPS,
+        credentialsDHL: sc.credentialsDHL,
         thirdParty: data.marketplace?.trim() == "Zulily" ? process.env.upsZulily : data.marketplace?.trim() == "TSC" ? process.env.upsTSC : null,
-        credentialsShipStation: { apiKey: process.env.ssV2 },
+        credentialsShipStation: sc.credentialsShipStation,
         imageFormat: "PDF",
-        carrierCodes: { usps: "se-65258", ups: "se-801899" },
-        warehouse_id: 349794,
+        carrierCodes: sc.carrierCodes,
+        warehouse_id: sc.warehouse_id,
     };
 
     try {
@@ -49,7 +50,7 @@ export async function POST(req= NextApiRequest){
         let order = await Order.findOne({_id: data.orderId}).populate("items")
         const beforeStatus = order.status;
         try {
-            await updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:order.orderId, carrierCode: "usps", trackingNumber: primaryLabel.trackingNumber})
+            await updateOrder({auth: sc.shipstationAuth, orderId:order.orderId, carrierCode: "usps", trackingNumber: primaryLabel.trackingNumber})
         } catch(e) { console.error("ShipStation update failed:", e.message); }
         order.shippingInfo.label = primaryLabel.label;
         order.shippingInfo.shippingCost += totalCost;

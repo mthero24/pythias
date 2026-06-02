@@ -1,8 +1,8 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import { getRates } from "@pythias/shipping";
-import { Settings } from "@pythias/mongo";
 import Order from "../../../../../models/Order";
 import User from "../../../../../models/User";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
 export async function POST(req = NextApiRequest) {
     let data = await req.json();
@@ -12,14 +12,9 @@ export async function POST(req = NextApiRequest) {
         data.dimensions = data.packages[0].dimensions;
     }
 
-    // Resolve ship-from: use user's first address if the order has a user, else business address
-    let businessAddress;
-    try {
-        const settingsDoc = await Settings.findOne({ key: "businessAddress" }).lean();
-        businessAddress = settingsDoc?.value ? JSON.parse(settingsDoc.value) : JSON.parse(process.env.businessAddress);
-    } catch {
-        try { businessAddress = JSON.parse(process.env.businessAddress); } catch {}
-    }
+    const sc = await getShippingCreds();
+    let businessAddress = sc.businessAddress;
+
     if (data.orderId) {
         try {
             const order = await Order.findById(data.orderId).select("userName").lean();
@@ -50,48 +45,20 @@ export async function POST(req = NextApiRequest) {
             providers: ["usps", "fedex"],
             weight: data.weight,
             dimensions: data.dimensions,
-            enSettings: {
-            requesterID: process.env.endiciaRequesterID,
-            accountNumber: process.env.endiciaAccountNUmber,
-            passPhrase: process.env.endiciaPassPhrase,
-            },
-            credentials: {
-                clientId: process.env.uspsClientId,
-                clientSecret: process.env.uspsClientSecret,
-                accountNumber: process.env.accountNumber
-            },
-            credentialsShipStation: {
-                apiKey: process.env.ssV2
-            },
-            carrierCodes: {
-                usps: "se-186007",
-            },
-            warehouse_id: 13111,
-            credentialsFedEx: {
-            accountNumber: process.env.tpalfedexaccountnumber,
-            meterNumber: process.env.tpalfedexmeternumber,
-            key: process.env.tpalfedexkey,
-            password: process.env.tpalfedexpassword,
-            },
-            credentialsFedExNew: {
-            accountNumber: process.env.AccountNumberFedEx,
-            key: process.env.ApiKeyFedEx,
-            secret: process.env.SecretKeyFedEx,
-            },
-            credentialsUPS: {
-            accountNumber: process.env.UPSAccountNumber,
-            clientID: process.env.UPSClientID,
-            clientSecret: process.env.UPSClientSecret,
-            },
-            credentialsDHL: {
-                accountNumber: process.env.dhlAccount,
-                basic: process.env.dhlBasic,
-            },
+            enSettings: sc.enSettings,
+            credentials: sc.credentials,
+            credentialsFedEx: sc.credentialsFedEx,
+            credentialsFedExNew: sc.credentialsFedExNew,
+            credentialsUPS: sc.credentialsUPS,
+            credentialsShipStation: sc.credentialsShipStation,
+            credentialsDHL: sc.credentialsDHL,
+            carrierCodes: sc.carrierCodes,
+            warehouse_id: sc.warehouse_id,
         });
-        console.log(rates)
-        return NextResponse.json({error: false, rates})
-    }catch(e){
-        console.log(e)
-        return NextResponse.json({error: true, msg:e})
+        console.log(rates);
+        return NextResponse.json({ error: false, rates });
+    } catch(e) {
+        console.log(e);
+        return NextResponse.json({ error: true, msg: e });
     }
 }
