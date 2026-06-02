@@ -18,24 +18,34 @@ export async function POST(req) {
     const creds = await getOrgCreds(orgId);
     const sc = buildShippingCreds(creds);
 
-    try {
-        const label = await buyLabel({
-            ...data,
-            imageType: "PDF",
-            imageFormat: "PDF",
-            businessAddress: sc.businessAddress,
-            providers: ["usps", "ups"],
-            enSettings: sc.enSettings,
-            credentials: sc.credentials,
-            credentialsUPS: sc.credentialsUPS,
-            credentialsFedEx: sc.credentialsFedEx,
-            credentialsShipStation: { apiKey: sc.ssV2 },
-        });
+    const buyOpts = {
+        ...data,
+        imageType: "PDF",
+        imageFormat: "PDF",
+        businessAddress: sc.businessAddress,
+        providers: ["usps", "ups"],
+        enSettings: sc.enSettings,
+        credentials: sc.credentials,
+        credentialsUPS: sc.credentialsUPS,
+        credentialsFedEx: sc.credentialsFedEx,
+        credentialsShipStation: { apiKey: sc.ssV2 },
+    };
 
-        if (label.error) return NextResponse.json(label);
+    try {
+        const pkgs = data.packages?.length > 1 ? data.packages : [{ weight: data.weight, dimensions: data.dimensions }];
+        const purchasedLabels = [];
+        for (const pkg of pkgs) {
+            const lbl = await buyLabel({ ...buyOpts, weight: pkg.weight, dimensions: pkg.dimensions });
+            if (lbl.error) return NextResponse.json(lbl);
+            purchasedLabels.push(lbl);
+        }
+        const label = purchasedLabels[0];
+        const totalCost = purchasedLabels.reduce((s, l) => s + parseFloat(l.cost ?? 0), 0);
 
         if (data.selectedShipping?.provider === "usps") {
-            await Manifest.create({ pic: label.trackingNumber, Date: new Date() }).catch(() => {});
+            for (const lbl of purchasedLabels) {
+                await Manifest.create({ pic: lbl.trackingNumber, Date: new Date() }).catch(() => {});
+            }
         }
 
         const order = await PlatformOrder.findOne({ orgId, _id: data.orderId }).populate("items");
@@ -43,16 +53,18 @@ export async function POST(req) {
 
         order.shippingInfo = order.shippingInfo ?? {};
         order.shippingInfo.label = label.label;
-        order.shippingInfo.shippingCost = (order.shippingInfo.shippingCost ?? 0) + parseFloat(label.cost ?? 0);
+        order.shippingInfo.shippingCost = (order.shippingInfo.shippingCost ?? 0) + totalCost;
         order.shippingInfo.shippedAt = new Date();
         order.shippingInfo.labels = order.shippingInfo.labels ?? [];
-        order.shippingInfo.labels.push({
-            trackingNumber: label.trackingNumber,
-            label: label.label,
-            cost: parseFloat(label.cost ?? 0),
-            trackingInfo: ["Label Purchased"],
-            provider: data.selectedShipping?.provider,
-        });
+        for (const lbl of purchasedLabels) {
+            order.shippingInfo.labels.push({
+                trackingNumber: lbl.trackingNumber,
+                label: lbl.label,
+                cost: parseFloat(lbl.cost ?? 0),
+                trackingInfo: ["Label Purchased"],
+                provider: data.selectedShipping?.provider,
+            });
+        }
         order.status = "Shipped";
 
         const itemIds = order.items.map(i => i._id);
@@ -132,12 +144,14 @@ export async function POST(req) {
             }).catch(e => console.error("ShipStation update:", e.message));
         }
 
-        // Print shipping label on local printer
-        await axios.post(
-            `http://${creds.localIP}/api/shipping/cpu`,
-            { label: label.label, station: data.station, barcode: "ppp" },
-            { headers: { "Content-Type": "application/json", Authorization: `Bearer ${creds.localKey}` } },
-        ).catch(e => console.error("Print request:", e.message));
+        // Print all labels on local printer
+        for (const lbl of purchasedLabels) {
+            await axios.post(
+                `http://${creds.localIP}/api/shipping/cpu`,
+                { label: lbl.label, station: data.station, barcode: "ppp" },
+                { headers: { "Content-Type": "application/json", Authorization: `Bearer ${creds.localKey}` } },
+            ).catch(e => console.error("Print request:", e.message));
+        }
 
         // Return updated bin state
         const [readyToShip, inUse] = await Promise.all([

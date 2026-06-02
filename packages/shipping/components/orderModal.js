@@ -10,13 +10,18 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
-export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, setBin, setAuto, show, setShow, style, setBins, action, setAction, station, source, weight, setWeight, dimensions, setDimensions, onAction }) {
+export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, setBin, setAuto, show, setShow, style, setBins, action, setAction, station, hasScale, source, weight, setWeight, dimensions, setDimensions, onAction }) {
     const [shippingPrices, setShippingPrices] = useState();
     const [getWeight, setGetWeight]           = useState(false);
     const [timer, setTimer]                   = useState(0);
     const [label, setLabel]                   = useState();
     const [closeTimer, setCloseTimer]         = useState(false);
     const [stopClose, setStopClose]           = useState(false);
+    const [loadingWeight, setLoadingWeight]   = useState(false);
+    const [multiBox, setMultiBox]             = useState(false);
+    const [boxes, setBoxes]                   = useState([]);
+    const [getManualRates, setGetManualRates] = useState(false);
+    const [blankWeight, setBlankWeight]       = useState(0);
 
     const close = () => {
         setShow(false);
@@ -29,22 +34,43 @@ export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, 
         setWeight(0);
         setDimensions();
         setLabel();
+        setMultiBox(false);
+        setBoxes([]);
+        setGetManualRates(false);
+        setBlankWeight(0);
+    };
+
+    const addBox = () => {
+        setBoxes(prev => [...prev, { weight, dimensions }]);
+        setWeight(0);
+        setDimensions();
+        setShippingPrices();
+        setGetWeight(prev => !prev);
     };
 
     useEffect(() => {
         const getShippingRates = async () => {
+            const currentBox = weight > 0 && dimensions ? [{ weight, dimensions }] : [];
+            const allBoxes = multiBox ? [...boxes, ...currentBox] : null;
             const res = await axios.post("/api/production/shipping/rates", {
                 address: order.shippingAddress,
                 marketplace: order.marketplace,
                 shippingType: order.shippingType,
-                weight,
-                dimensions,
+                weight: allBoxes ? allBoxes.reduce((s, p) => s + p.weight, 0) : weight,
+                dimensions: allBoxes ? allBoxes[0]?.dimensions : dimensions,
+                orderId: order._id,
+                packages: allBoxes,
             });
             if (res.data.error) alert(res.data.msg);
             else setShippingPrices(res.data.rates.rates);
         };
-        if (show && order && weight > 0 && dimensions && dimensions.width > 0 && dimensions.length > 0 && dimensions.height > 0) getShippingRates();
-    }, [dimensions, weight]);
+        const singleReady = !multiBox && show && order && weight > 0 && dimensions?.width > 0 && dimensions?.length > 0 && dimensions?.height > 0;
+        const multiReady  = multiBox  && show && order && getManualRates && (boxes.length > 0 || (weight > 0 && dimensions));
+        if (singleReady || multiReady) {
+            getShippingRates();
+            if (multiReady) setGetManualRates(false);
+        }
+    }, [dimensions, weight, getManualRates]);
 
     useEffect(() => {
         const countDown = async () => {
@@ -85,7 +111,26 @@ export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, 
                 setWeight(res.data.value);
             }
         };
-        if (action === "ship" && weight === 0) startTimer();
+        const getBlankWeight = async () => {
+            setLoadingWeight(true);
+            try {
+                const res = await axios.get(`/api/production/shipping/scales?noScale=true&id=${order._id}`);
+                const total = res.data.error ? 8 : res.data.value;
+                setBlankWeight(total);
+                // In multi-box mode, suggest the remaining unallocated weight for this box
+                const allocated = boxes.reduce((s, b) => s + b.weight, 0);
+                setWeight(multiBox ? Math.max(1, total - allocated) : total);
+            } catch {
+                setBlankWeight(8);
+                setWeight(8);
+            } finally {
+                setLoadingWeight(false);
+            }
+        };
+        if (action === "ship" && weight === 0) {
+            if (hasScale === false) getBlankWeight();
+            else startTimer();
+        }
     }, [show, getWeight]);
 
     const isOld = order && new Date(order.date) < new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
@@ -137,12 +182,17 @@ export function OrderModal({ order, item, bin, setOrder, setShowNotes, setItem, 
                         shippingPrices={shippingPrices} setShippingPrices={setShippingPrices}
                         timer={timer} weight={weight}
                         setGetWeight={setGetWeight} getWeight={getWeight}
+                        loadingWeight={loadingWeight}
                         setDimensions={setDimensions} dimensions={dimensions}
                         station={station} close={close}
                         label={label} setLabel={setLabel}
                         closeTimer={closeTimer} setCloseTimer={setCloseTimer}
                         stopClose={stopClose} setStopClose={setStopClose}
                         setBins={setBins} source={source} onAction={onAction}
+                        multiBox={multiBox} setMultiBox={setMultiBox}
+                        boxes={boxes} setBoxes={setBoxes}
+                        addBox={addBox} setGetManualRates={setGetManualRates}
+                        blankWeight={blankWeight} setWeight={setWeight}
                     />
                 )}
                 {order && (

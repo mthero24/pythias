@@ -127,10 +127,9 @@ export default function Navbar() {
                 position="static"
                 elevation={0}
                 sx={{
-                    backgroundColor: "#fff",
-                    borderBottom: "1px solid",
-                    borderColor: "rgba(0,0,0,0.08)",
-                    color: "#1a1f2e",
+                    backgroundColor: "#0f172a",
+                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    color: "#fff",
                 }}
             >
                 <Toolbar sx={{ minHeight: "56px !important", px: { xs: 1.5, sm: 2 } }}>
@@ -139,7 +138,7 @@ export default function Navbar() {
                             size="medium"
                             edge="start"
                             onClick={() => setDrawerOpen(true)}
-                            sx={{ mr: 1.5, color: "#1a1f2e" }}
+                            sx={{ mr: 1.5, color: "rgba(255,255,255,0.8)" }}
                         >
                             <MenuIcon />
                         </IconButton>
@@ -166,14 +165,13 @@ export default function Navbar() {
                             onClick={() => signOut({ callbackUrl: "/login" })}
                             sx={{
                                 ml: 1,
-                                color: "text.secondary",
-                                border: "1px solid",
-                                borderColor: "rgba(0,0,0,0.12)",
+                                color: "rgba(255,255,255,0.65)",
+                                border: "1px solid rgba(255,255,255,0.15)",
                                 borderRadius: 1.5,
                                 px: 1.25,
                                 py: 0.6,
                                 gap: 0.75,
-                                "&:hover": { backgroundColor: "rgba(0,0,0,0.04)", borderColor: "rgba(0,0,0,0.2)" },
+                                "&:hover": { backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.3)" },
                             }}
                         >
                             <LogoutIcon sx={{ fontSize: 16 }} />

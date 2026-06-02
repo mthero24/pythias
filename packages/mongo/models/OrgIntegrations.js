@@ -58,8 +58,8 @@ const schema = new mongoose.Schema({
     // ── FedEx ──────────────────────────────────────────────────────
     fedex: {
         accountNumber: { type: String, default: "" },
-        meterNumber: { type: String, default: "" },
-        key: { type: String, default: "" },
+        clientId:      { type: String, default: "" },
+        clientSecret:  { type: String, default: "" },
     },
 
     // ── Shopify ────────────────────────────────────────────────────
@@ -151,10 +151,20 @@ const schema = new mongoose.Schema({
         region: { type: String, default: "us-east-1" },
     },
 
+    // ── DHL ───────────────────────────────────────────────────────
+    dhl: {
+        accountNumber: { type: String, default: "" },
+        clientId:      { type: String, default: "" },
+        clientSecret:  { type: String, default: "" },
+    },
+
     // ── Production settings ────────────────────────────────────────
     production: {
+        shippingStations: [{ name: { type: String }, hasScale: { type: Boolean, default: false } }],
         dtfPrinters: [{ type: String }],
-        shippingStations: [{ type: String }],
+        gtxPrinters: [{ type: String }],
+        roqFolders: [{ type: String }],
+        sublimationMachines: [{ type: String }],
         embroideryMachines: [{ type: String }],
         tajimaIpMap: { type: Object, default: {} },
     },

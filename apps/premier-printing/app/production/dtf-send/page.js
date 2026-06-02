@@ -1,8 +1,15 @@
-import {setConfig, DTFSend} from "@pythias/dtf";
+import { DTFSend, setConfig } from "@pythias/dtf";
+import { Settings } from "@pythias/mongo";
 
-setConfig(process.env.dtf)
+setConfig(process.env.dtf);
 
+export default async function dtfSend() {
+    let printers = [];
+    try {
+        const doc = await Settings.findOne({ key: "production" }).lean();
+        const prod = doc?.value ? JSON.parse(doc.value) : {};
+        printers = prod.dtfPrinters ?? [];
+    } catch {}
 
-export default async function dtfSend(){
-    return <DTFSend printers={JSON.parse(process.env.dtf).printers}/>
+    return <DTFSend printers={printers} />;
 }

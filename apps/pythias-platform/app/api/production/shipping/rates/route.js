@@ -12,6 +12,10 @@ export async function POST(req) {
 
     const creds = await getOrgCreds(token.orgId);
     const sc = buildShippingCreds(creds);
+    if (data.packages?.length > 0) {
+        data.weight = data.packages.reduce((s, p) => s + p.weight, 0);
+        data.dimensions = data.packages[0].dimensions;
+    }
 
     try {
         const rates = await getRates({

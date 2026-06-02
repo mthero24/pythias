@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useOrg } from "@/components/OrgProvider";
 import {
     Box, Container, Typography, Stack, TextField, Button,
     Alert, Accordion, AccordionSummary, AccordionDetails, InputAdornment,
@@ -49,20 +48,6 @@ function PrinterRow({ printer, onChange, onDelete }) {
         </Stack>
     );
 }
-
-const EMPTY = {
-    localIP: "", localKey: "",
-    businessAddress: { name: "", businessName: "", address1: "", address2: "", city: "", state: "", postalCode: "", country: "US", emailAddress: "", phone: "" },
-    shipstation: { apiKey: "", apiSecret: "", v2Key: "" },
-    usps: { clientId: "", clientSecret: "", accountNumber: "", crid: "", mid: "", manifestMid: "" },
-    ups: { clientId: "", clientSecret: "", accountNumber: "" },
-    endicia: { requesterId: "", accountNumber: "", passPhrase: "" },
-    fedex: { accountNumber: "", clientId: "", clientSecret: "" },
-    dhl: { accountNumber: "", clientId: "", clientSecret: "" },
-    shippingLabelPrinters: [],
-    productionLabelPrinters: [],
-    production: { shippingStations: [], dtfPrinters: [], gtxPrinters: [], roqFolders: [], sublimationMachines: [], embroideryMachines: [] },
-};
 
 function MachineList({ label, prefix, items, onAdd, onRemove }) {
     const nextName = `${prefix}${items.length + 1}`;
@@ -128,17 +113,29 @@ function StationList({ stations, onAdd, onRemove, onToggleScale }) {
     );
 }
 
-export default function ShippingSettingsPage() {
+const EMPTY = {
+    localIP: "", localKey: "",
+    businessAddress: { name: "", businessName: "", address1: "", address2: "", city: "", state: "", postalCode: "", country: "US", emailAddress: "", phone: "" },
+    shipstation: { apiKey: "", apiSecret: "", v2Key: "" },
+    usps: { clientId: "", clientSecret: "", accountNumber: "", crid: "", mid: "", manifestMid: "" },
+    ups: { clientId: "", clientSecret: "", accountNumber: "" },
+    endicia: { requesterId: "", accountNumber: "", passPhrase: "" },
+    fedex: { accountNumber: "", clientId: "", clientSecret: "" },
+    dhl: { accountNumber: "", clientId: "", clientSecret: "" },
+    shippingLabelPrinters: [],
+    productionLabelPrinters: [],
+    production: { shippingStations: [], dtfPrinters: [], gtxPrinters: [], roqFolders: [], sublimationMachines: [], embroideryMachines: [] },
+};
+
+export function ShippingSettingsMain() {
     const { data: session } = useSession();
-    const { org } = useOrg() ?? {};
-    const base = org?.slug ? `/${org.slug}` : "";
     const [creds, setCreds] = useState(EMPTY);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [msg, setMsg] = useState(null);
 
     useEffect(() => {
-        fetch("/api/settings/integrations")
+        fetch("/api/admin/settings/integrations")
             .then(r => r.json())
             .then(d => {
                 if (d.creds) setCreds(c => deepMerge(c, d.creds));
@@ -194,6 +191,14 @@ export default function ShippingSettingsPage() {
         setCreds(c => ({ ...c, production: { ...(c.production ?? {}), [key]: [...(c.production?.[key] ?? []), name] } }));
     }
 
+    function removeFromProduction(key, idx) {
+        setCreds(c => {
+            const arr = [...(c.production?.[key] ?? [])];
+            arr.splice(idx, 1);
+            return { ...c, production: { ...(c.production ?? {}), [key]: arr } };
+        });
+    }
+
     function addStation(station) {
         setCreds(c => ({ ...c, production: { ...(c.production ?? {}), shippingStations: [...(c.production?.shippingStations ?? []), station] } }));
     }
@@ -214,19 +219,11 @@ export default function ShippingSettingsPage() {
         });
     }
 
-    function removeFromProduction(key, idx) {
-        setCreds(c => {
-            const arr = [...(c.production?.[key] ?? [])];
-            arr.splice(idx, 1);
-            return { ...c, production: { ...(c.production ?? {}), [key]: arr } };
-        });
-    }
-
     async function save(e) {
         e.preventDefault();
         setSaving(true);
         setMsg(null);
-        const res = await fetch("/api/settings/integrations", {
+        const res = await fetch("/api/admin/settings/integrations", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(creds),
@@ -236,7 +233,7 @@ export default function ShippingSettingsPage() {
         setSaving(false);
     }
 
-    const isAdminOrOwner = session?.user?.role === "owner" || session?.user?.role === "admin";
+    const isAdmin = session?.user?.role === "admin" || session?.user?.role === "manager";
     if (loading) return null;
 
     return (
@@ -247,10 +244,9 @@ export default function ShippingSettingsPage() {
                         <Typography variant="h6" fontWeight={700}>Shipping &amp; Hardware</Typography>
                         <Typography variant="body2" color="text.secondary">Internal server, warehouse address, carriers, printers, and scales</Typography>
                     </Box>
-                    <Button href={`${base}/settings`} variant="outlined" size="small">← Back to settings</Button>
                 </Stack>
 
-                {msg && <Alert severity={msg.type} sx={{ mb: 2 }}>{msg.text}</Alert>}
+                {msg && <Alert severity={msg.type} sx={{ mb: 2 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
 
                 <form onSubmit={save}>
                     <Stack spacing={2}>
@@ -458,7 +454,7 @@ export default function ShippingSettingsPage() {
                             <AccordionDetails>
                                 <Stack spacing={3}>
                                     <Typography variant="caption" color="text.secondary">
-                                        Names must match the station/printer IDs configured in your internal server&apos;s <strong>fwSettings.json</strong>. These names appear as selectable options on the production floor screens (DTF Send, Shipping, Embroidery, etc.).
+                                        Names must match the station/printer IDs configured in your internal server&apos;s <strong>fwSettings.json</strong>. These names appear as selectable options on the production floor screens.
                                     </Typography>
 
                                     <StationList
@@ -508,7 +504,7 @@ export default function ShippingSettingsPage() {
 
                     </Stack>
 
-                    {isAdminOrOwner && (
+                    {isAdmin && (
                         <Box sx={{ mt: 3 }}>
                             <Button type="submit" variant="contained" size="large" disabled={saving} fullWidth>
                                 {saving ? "Saving..." : "Save shipping settings"}

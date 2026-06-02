@@ -54,3 +54,4 @@ export { DesignTemplateEditor } from "./components/design/DesignTemplateEditor";
 export { DesignTemplatesList } from "./components/design/DesignTemplatesList";
 export { ContactForm } from "./components/contact/ContactForm";
 export { ContactMessages } from "./components/contact/ContactMessages";
+export { ShippingSettingsMain } from "./components/settings/ShippingSettingsMain";

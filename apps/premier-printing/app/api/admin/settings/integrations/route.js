@@ -9,7 +9,7 @@ const STRING_KEYS = [
     "usps.clientId", "usps.clientSecret", "usps.accountNumber", "usps.crid", "usps.mid", "usps.manifestMid",
     "ups.clientId", "ups.clientSecret", "ups.accountNumber",
     "endicia.requesterId", "endicia.accountNumber", "endicia.passPhrase",
-    "fedex.accountNumber", "fedex.meterNumber", "fedex.key",
+    "fedex.accountNumber", "fedex.clientId", "fedex.clientSecret",
     "shopify.storeUrl", "shopify.accessToken", "shopify.apiKey", "shopify.apiSecret",
     "walmart.clientId", "walmart.clientSecret",
     "etsy.apiKey", "etsy.shopId",
@@ -21,14 +21,15 @@ const STRING_KEYS = [
     "mirakl.shopUrl", "mirakl.apiKey",
     "channelengine.apiUrl", "channelengine.apiKey",
     "wasabi.keyId", "wasabi.secret", "wasabi.bucket", "wasabi.region",
+    "dhl.accountNumber", "dhl.clientId", "dhl.clientSecret",
     "businessAddress.name", "businessAddress.businessName", "businessAddress.address1",
     "businessAddress.address2", "businessAddress.city", "businessAddress.state",
     "businessAddress.postalCode", "businessAddress.country", "businessAddress.emailAddress", "businessAddress.phone",
 ];
 
-// Keys stored as JSON-serialized arrays
 const ARRAY_KEYS = ["shippingLabelPrinters", "productionLabelPrinters", "scales"];
-const ALL_KEYS = [...STRING_KEYS, ...ARRAY_KEYS];
+const OBJECT_KEYS = ["production"];
+const ALL_KEYS = [...STRING_KEYS, ...ARRAY_KEYS, ...OBJECT_KEYS];
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -39,9 +40,8 @@ export async function GET() {
 
     const creds = {};
 
-    // Rebuild nested object from flat string keys
     for (const [k, v] of Object.entries(map)) {
-        if (ARRAY_KEYS.includes(k)) continue;
+        if (ARRAY_KEYS.includes(k) || OBJECT_KEYS.includes(k)) continue;
         const parts = k.split(".");
         let obj = creds;
         for (let i = 0; i < parts.length - 1; i++) {
@@ -51,13 +51,12 @@ export async function GET() {
         obj[parts[parts.length - 1]] = v;
     }
 
-    // Parse array keys
     for (const k of ARRAY_KEYS) {
-        try {
-            creds[k] = map[k] ? JSON.parse(map[k]) : [];
-        } catch {
-            creds[k] = [];
-        }
+        try { creds[k] = map[k] ? JSON.parse(map[k]) : []; } catch { creds[k] = []; }
+    }
+
+    for (const k of OBJECT_KEYS) {
+        try { creds[k] = map[k] ? JSON.parse(map[k]) : {}; } catch { creds[k] = {}; }
     }
 
     return NextResponse.json({ creds });
@@ -71,16 +70,20 @@ export async function PATCH(req) {
     }
 
     const body = await req.json();
-
-    // Extract array keys before flattening
     const ops = [];
+
     for (const k of ARRAY_KEYS) {
         if (Array.isArray(body[k])) {
             ops.push(Settings.findOneAndUpdate({ key: k }, { key: k, value: JSON.stringify(body[k]) }, { upsert: true }));
         }
     }
 
-    // Flatten remaining nested keys
+    for (const k of OBJECT_KEYS) {
+        if (body[k] !== undefined && typeof body[k] === "object") {
+            ops.push(Settings.findOneAndUpdate({ key: k }, { key: k, value: JSON.stringify(body[k]) }, { upsert: true }));
+        }
+    }
+
     const flat = flattenKeys(body);
     for (const [k, v] of Object.entries(flat)) {
         if (!STRING_KEYS.includes(k)) continue;

@@ -146,7 +146,7 @@ export default function SettingsPage() {
                             {t === "org" ? "Organization" : t === "production" ? "Production" : "Users & Permissions"}
                         </Button>
                     ))}
-                    <Button variant="outlined" size="small" href="shipping">
+                    <Button variant="outlined" size="small" href="settings/shipping">
                         Shipping &amp; Hardware
                     </Button>
                 </Stack>
