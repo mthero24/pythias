@@ -18,14 +18,14 @@ export default function HeroSection() {
             <div className={s.wrap}>
                 <div className={s.heroRow}>
                     <div className={s.heroText}>
-                        <span className={s.heroChip}>All-in-One Print-on-Demand Platform</span>
+                        <span className={s.heroChip}>Pythias Fulfillment Cloud</span>
                         <h1 className={s.heroH1}>
-                            Automate your entire{" "}
+                            One platform to run your entire{" "}
                             <span className={s.heroAccent}>print operation.</span>
                         </h1>
                         <p className={s.heroSub}>
-                            From order intake to shipping label — Pythias connects your production
-                            floor, marketplaces, printers, and shipping carriers into a single automated workflow.
+                            Pythias Fulfillment Cloud, Inventory, Shipping, Connect, and AI — five integrated products built for
+                            print-on-demand operations, from production floor to final delivery.
                         </p>
                         <div className={s.heroBtns}>
                             <a href="#calendar-booking-section" className={s.btnGold}>

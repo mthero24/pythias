@@ -5,6 +5,10 @@ export async function POST(req= NextApiRequest){
     let data = await req.json();
     console.log(data)
     if(!data.address.country) data.address.country = "US"
+    if (data.packages?.length > 0) {
+        data.weight = data.packages.reduce((s, p) => s + p.weight, 0);
+        data.dimensions = data.packages[0].dimensions;
+    }
     try{
         let rates = await getRates({
             address: data.address,

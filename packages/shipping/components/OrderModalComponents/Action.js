@@ -1,4 +1,4 @@
-import { Box, Typography, Card, TextField, Grid2, Button, FormControlLabel, Checkbox, FormControl, FormLabel, RadioGroup, Radio, Divider, Chip, Stack } from "@mui/material";
+import { Box, Typography, Card, TextField, Grid2, Button, FormControlLabel, Checkbox, FormControl, FormLabel, RadioGroup, Radio, Divider, Chip, Stack, CircularProgress, Switch } from "@mui/material";
 import Image from "next/image";
 import { createImage } from "../../functions/image";
 import { SafeImage } from "./SafeImage";
@@ -22,7 +22,7 @@ const IMAGE_MAP = {
 
 const getImage = (imageKey) => IMAGE_MAP[imageKey] ?? multiple;
 
-export function Actions({ bin, setBins, item, order, action, setAction, shippingPrices, setShippingPrices, timer, weight, setGetWeight, getWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source, onAction }) {
+export function Actions({ bin, setBins, item, order, action, setAction, shippingPrices, setShippingPrices, timer, weight, setWeight, setGetWeight, getWeight, loadingWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source, onAction, multiBox, setMultiBox, boxes, setBoxes, addBox, setGetManualRates, blankWeight }) {
     const [shippingSelected, setShippingSelected] = useState({ name: "GroundAdvantage" });
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false);
     const [processing, setProcessing]             = useState(false);
@@ -37,12 +37,17 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
 
     const ship = async () => {
         setProcessing(true);
+        const currentBox = weight > 0 && dimensions ? [{ weight, dimensions }] : [];
+        const packages = multiBox ? [...boxes, ...currentBox] : null;
+        const totalWeight = packages ? packages.reduce((s, p) => s + p.weight, 0) : weight;
+        const shipDimensions = packages ? packages[0].dimensions : dimensions;
         const res = await axios.post("/api/production/shipping/labels", {
             address: order.shippingAddress,
             poNumber: order.poNumber,
             orderId: order._id,
             selectedShipping: shippingSelected,
-            dimensions, weight,
+            dimensions: shipDimensions, weight: totalWeight,
+            packages,
             shippingType: order.shippingType,
             station, ignoreBadAddress,
             marketplace: order.marketplace,
@@ -52,7 +57,7 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
                 itemQuantity: parseInt(i.quantity),
                 countryofOrigin: "US",
                 weightUOM: "lb",
-                itemTotalWeight: (weight / order.items.length) / 16,
+                itemTotalWeight: (totalWeight / order.items.length) / 16,
                 saterdayDelivery,
             })),
         });
@@ -126,9 +131,47 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
             {/* Ship flow */}
             {action === "ship" && (
                 <Box sx={{ p: 3 }}>
-                    <Typography variant="subtitle1" fontWeight={700} textAlign="center" gutterBottom>
-                        Shipping Type: <span style={{ color: "inherit" }}>{order.shippingType}</span>
-                    </Typography>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                        <Typography variant="subtitle1" fontWeight={700}>
+                            Shipping Type: {order.shippingType}
+                        </Typography>
+                        <FormControlLabel
+                            control={<Switch size="small" checked={!!multiBox} onChange={e => {
+                                const on = e.target.checked;
+                                if (!on && boxes.length > 0) {
+                                    // Restore total weight and first box dimensions for single-box mode
+                                    const total = blankWeight > 0
+                                        ? blankWeight
+                                        : boxes.reduce((s, b) => s + b.weight, 0) + (weight || 0);
+                                    setWeight(total);
+                                    setDimensions(boxes[0].dimensions);
+                                }
+                                setMultiBox(on);
+                                setBoxes([]);
+                            }} />}
+                            label={<Typography variant="body2" color="text.secondary">Multiple Boxes</Typography>}
+                            sx={{ mr: 0 }}
+                        />
+                    </Stack>
+
+                    {/* Completed boxes list */}
+                    {multiBox && boxes.length > 0 && (
+                        <Box sx={{ mb: 2, p: 1.5, borderRadius: 1, bgcolor: "action.hover" }}>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
+                                Boxes Added ({boxes.length})
+                            </Typography>
+                            <Stack direction="row" flexWrap="wrap" useFlexGap spacing={0.75}>
+                                {boxes.map((b, i) => (
+                                    <Chip
+                                        key={i}
+                                        label={`Box ${i + 1}: ${b.weight}oz — ${b.dimensions.width}×${b.dimensions.length}×${b.dimensions.height}`}
+                                        size="small"
+                                        onDelete={() => setBoxes(prev => prev.filter((_, j) => j !== i))}
+                                    />
+                                ))}
+                            </Stack>
+                        </Box>
+                    )}
 
                     {/* Countdown to weigh */}
                     {timer > 0 && !closeTimer && (
@@ -145,12 +188,39 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
                     {timer === 0 && weight > 0 && (
                         <Box>
                             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-                                <Chip
-                                    icon={<ScaleIcon />}
-                                    label={`${weight} oz`}
-                                    color="primary"
-                                    sx={{ fontWeight: 700, fontSize: "1.05rem", height: 38, px: 1.5 }}
-                                />
+                                {multiBox && blankWeight > 0 ? (
+                                    <Stack spacing={0.5} alignItems="center">
+                                        <Typography variant="body2" color="text.secondary">
+                                            Total: {blankWeight}oz &nbsp;·&nbsp; Remaining after this box: <strong>{Math.max(0, blankWeight - boxes.reduce((s, b) => s + b.weight, 0) - weight)}oz</strong>
+                                        </Typography>
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <Chip icon={<ScaleIcon />} label={`Box ${boxes.length + 1}`} color="primary" size="small" />
+                                            <TextField
+                                                type="number"
+                                                size="small"
+                                                label="Weight (oz)"
+                                                value={weight}
+                                                onChange={e => setWeight(Math.max(0, parseFloat(e.target.value) || 0))}
+                                                sx={{ width: 120 }}
+                                                inputProps={{ min: 0 }}
+                                            />
+                                        </Stack>
+                                    </Stack>
+                                ) : (
+                                    <Stack direction="row" alignItems="center" spacing={1}>
+                                        <Chip
+                                            icon={<ScaleIcon />}
+                                            label={`${weight} oz`}
+                                            color="primary"
+                                            sx={{ fontWeight: 700, fontSize: "1.05rem", height: 38, px: 1.5 }}
+                                        />
+                                        {multiBox && (
+                                            <Typography variant="caption" color="text.secondary">
+                                                Box {boxes.length + 1}
+                                            </Typography>
+                                        )}
+                                    </Stack>
+                                )}
                             </Box>
 
                             {!dimensions && (order.shippingType === "Standard" || order.shippingType === "Expedited") && (
@@ -182,17 +252,46 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
                                             onChange={(e) => updateDimensions("height", e.target.value)}
                                         />
                                     </Stack>
+                                    {multiBox && (
+                                        <Stack direction="row" spacing={1} justifyContent="center" sx={{ mt: 2 }}>
+                                            <Button variant="outlined" onClick={addBox}>
+                                                + Add Box {boxes.length + 1}
+                                            </Button>
+                                            {boxes.length > 0 && (
+                                                <Button variant="contained" onClick={() => setGetManualRates(true)}>
+                                                    Get Rates ({boxes.length + 1} boxes)
+                                                </Button>
+                                            )}
+                                        </Stack>
+                                    )}
                                 </Box>
                             )}
                         </Box>
                     )}
 
-                    {/* No weight — weigh again */}
+                    {/* No weight — loading or weigh again */}
                     {timer === 0 && weight === 0 && (
                         <Box sx={{ textAlign: "center", py: 3 }}>
-                            <Button variant="contained" size="large" startIcon={<ScaleIcon />} onClick={() => setGetWeight(!getWeight)}>
-                                Weigh Again
-                            </Button>
+                            {loadingWeight
+                                ? <CircularProgress />
+                                : (
+                                    <Stack spacing={1} alignItems="center">
+                                        {multiBox && boxes.length > 0 && (
+                                            <Button variant="contained" size="large" onClick={() => setGetManualRates(true)}>
+                                                Done — Get Rates ({boxes.length} {boxes.length === 1 ? "box" : "boxes"})
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant={multiBox && boxes.length > 0 ? "outlined" : "contained"}
+                                            size="large"
+                                            startIcon={<ScaleIcon />}
+                                            onClick={() => setGetWeight(!getWeight)}
+                                        >
+                                            {multiBox && boxes.length > 0 ? `Weigh Box ${boxes.length + 1}` : "Weigh Again"}
+                                        </Button>
+                                    </Stack>
+                                )
+                            }
                         </Box>
                     )}
 

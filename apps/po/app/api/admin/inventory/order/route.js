@@ -1,6 +1,8 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import { InventoryOrders, Inventory, Blank } from "@pythias/mongo";
 import TspItems from "@/models/Items";
+import "@/models/Order";
+import "@/models/Design";
 import { Sort } from "@pythias/labels";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
@@ -61,7 +63,7 @@ export async function PUT(req = NextApiRequest) {
                 inv.quantity = inv.quantity + i.quantity;
                 inv.pending_quantity = inv.pending_quantity - i.quantity;
                 if (inv.orders) {
-                    const or = inv.orders.filter(o => o.order.toString() == order._id.toString());
+                    const or = inv.orders.filter(o => o?.order?.toString() == order._id.toString());
                     for (let o of or) {
                         if (!o) continue;
                         let items;
@@ -100,7 +102,7 @@ export async function PUT(req = NextApiRequest) {
                         }
                     }
                 }
-                inv.orders = inv.orders.filter(o => o.order.toString() != order._id.toString());
+                inv.orders = inv.orders.filter(o => o?.order?.toString() != order._id.toString());
                 printItems.push(...itemsToPrint);
                 await inv.save();
             }
@@ -109,7 +111,8 @@ export async function PUT(req = NextApiRequest) {
             let printLabels = await axios.post("https://production.printoracle.com/api/production/print-labels", { items: Sort(printItems, "PO"), poNumber: order.poNumber });
             console.log(printLabels?.data);
             if (order.locations.filter(l => l.received == false).length == 0) order.received = true;
-            order.markModified("locations received");
+            order.markModified("locations");
+            order.markModified("received");
             await order.save();
             logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "receive", userName, email, provider: "po" });
             let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory");

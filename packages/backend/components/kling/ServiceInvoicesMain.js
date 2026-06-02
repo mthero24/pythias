@@ -86,9 +86,72 @@ function PayDialog({ invoice, onClose }) {
     );
 }
 
-function InvoiceRow({ invoice, showClient, canPay }) {
+const PAYMENT_METHODS = [
+    { value: "check",       label: "Check" },
+    { value: "ach",         label: "ACH / Wire Transfer" },
+    { value: "credit_card", label: "Credit Card" },
+    { value: "stripe",      label: "Stripe" },
+    { value: "cash",        label: "Cash" },
+    { value: "other",       label: "Other" },
+];
+
+const METHOD_LABEL = Object.fromEntries(PAYMENT_METHODS.map(m => [m.value, m.label]));
+
+function MarkPaidDialog({ invoice, onClose, onConfirm }) {
+    const [method, setMethod] = useState("check");
+    const [note, setNote] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState("");
+    const monthLabel = `${MONTH_NAMES[invoice.month - 1]} ${invoice.year}`;
+
+    const handleConfirm = async () => {
+        setSaving(true);
+        setError("");
+        try {
+            await onConfirm(invoice._id, invoice._client, method, note);
+            onClose();
+        } catch (e) {
+            setError(e?.response?.data?.error ?? "Failed to mark invoice as paid");
+            setSaving(false);
+        }
+    };
+
+    return (
+        <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
+            <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, pb: 1 }}>
+                <CheckCircleIcon color="success" />
+                <Typography variant="h6" fontWeight={700}>Mark Invoice Paid</Typography>
+            </DialogTitle>
+            <DialogContent>
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                    <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover", border: "1px solid", borderColor: "divider" }}>
+                        <Typography variant="caption" color="text.secondary" display="block">Invoice Period</Typography>
+                        <Typography variant="subtitle1" fontWeight={700}>{monthLabel}</Typography>
+                        <Typography variant="h6" fontWeight={800} color="success.main">${invoice.totalAmount.toFixed(2)}</Typography>
+                    </Box>
+                    <TextField select label="Payment Method" value={method} onChange={e => setMethod(e.target.value)} size="small" fullWidth SelectProps={{ native: true }}>
+                        {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                    </TextField>
+                    <TextField label="Reference / Note" placeholder="Check #, wire ref, etc." value={note} onChange={e => setNote(e.target.value)} size="small" fullWidth />
+                </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+                <Button variant="outlined" onClick={onClose} disabled={saving}>Cancel</Button>
+                <Button variant="contained" color="success"
+                    startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
+                    onClick={handleConfirm} disabled={saving}>
+                    {saving ? "Saving…" : "Confirm Payment"}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
+function InvoiceRow({ invoice, showClient, canPay, canMarkPaid, onMarkPaid }) {
     const [expanded, setExpanded] = useState(false);
     const [payOpen, setPayOpen] = useState(false);
+    const [markPaidOpen, setMarkPaidOpen] = useState(false);
     const complete = isComplete(invoice.month, invoice.year);
     const isPaid = invoice.status === "paid";
     const monthLabel = `${MONTH_SHORT[invoice.month - 1]} ${invoice.year}`;
@@ -114,13 +177,23 @@ function InvoiceRow({ invoice, showClient, canPay }) {
                         color={isPaid ? "success" : "warning"} variant="outlined" />
                 </TableCell>
                 <TableCell>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" rowGap={0.5}>
+                        {!isPaid && canMarkPaid && (
+                            <Button size="small" variant="contained" color="success"
+                                startIcon={<CheckCircleIcon fontSize="small" />}
+                                onClick={() => setMarkPaidOpen(true)} sx={{ whiteSpace: "nowrap" }}>
+                                Mark Paid
+                            </Button>
+                        )}
                         {!isPaid && canPay && (
                             <Button size="small" variant="contained" color="primary"
                                 startIcon={<PaymentIcon fontSize="small" />}
                                 onClick={() => setPayOpen(true)} sx={{ whiteSpace: "nowrap" }}>
                                 Pay ${invoice.totalAmount.toFixed(2)}
                             </Button>
+                        )}
+                        {isPaid && invoice.paymentMethod && (
+                            <Chip size="small" label={METHOD_LABEL[invoice.paymentMethod] ?? invoice.paymentMethod} color="success" variant="outlined" />
                         )}
                         {complete && (
                             <Button size="small" variant="outlined" color="inherit"
@@ -160,6 +233,7 @@ function InvoiceRow({ invoice, showClient, canPay }) {
                 </TableCell>
             </TableRow>
             {payOpen && <PayDialog invoice={invoice} onClose={() => setPayOpen(false)} />}
+            {markPaidOpen && <MarkPaidDialog invoice={invoice} onClose={() => setMarkPaidOpen(false)} onConfirm={onMarkPaid} />}
         </>
     );
 }
@@ -226,13 +300,9 @@ export function ServiceInvoicesMain({ initialInvoices, canGenerate = false, canP
     const [generateOpen, setGenerateOpen] = useState(false);
     const [error, setError] = useState(null);
 
-    const handleStatusChange = async (invoiceId, status) => {
-        try {
-            const res = await axios.put("/api/admin/service-invoices", { invoiceId, status });
-            setInvoices(prev => prev.map(inv => inv._id === invoiceId ? res.data.invoice : inv));
-        } catch (e) {
-            setError(e?.response?.data?.error ?? "Failed to update invoice");
-        }
+    const handleMarkPaid = async (invoiceId, client, paymentMethod, paymentNote) => {
+        const res = await axios.put("/api/admin/service-invoices", { invoiceId, client, status: "paid", paymentMethod, paymentNote });
+        setInvoices(prev => prev.map(inv => inv._id === invoiceId ? { ...res.data.invoice, _client: client } : inv));
     };
 
     const handleGenerate = async (month, year, client) => {
@@ -295,7 +365,7 @@ export function ServiceInvoicesMain({ initialInvoices, canGenerate = false, canP
                             </TableHead>
                             <TableBody>
                                 {invoices.map(inv => (
-                                    <InvoiceRow key={inv._id} invoice={inv} showClient={canGenerate} canPay={canPay} />
+                                    <InvoiceRow key={inv._id} invoice={inv} showClient={canGenerate} canPay={canPay} canMarkPaid={canGenerate} onMarkPaid={handleMarkPaid} />
                                 ))}
                             </TableBody>
                         </Table>

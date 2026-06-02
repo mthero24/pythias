@@ -43,6 +43,7 @@ export async function POST(req = NextApiRequest) {
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     let data = await req.json()
+    const tajimaQueue = data.tajimaQueue || "default";
     console.log(data, "data")
     let item = await Items.findOne({
         pieceId: data.pieceId.toUpperCase().trim(),
@@ -64,6 +65,25 @@ export async function POST(req = NextApiRequest) {
                 })
             }
         })
+
+        // Queue any DST file on the Tajima spooler
+        const dstUrl = Object.values(item.printFiles || {}).find(u => u && u.toLowerCase().endsWith(".dst"));
+        if (dstUrl) {
+            try {
+                const dstRes = await axios.get(dstUrl, { responseType: "arraybuffer" });
+                const dstBase64 = Buffer.from(dstRes.data).toString("base64");
+                const designName = `${item.pieceId}-${item.sku}.dst`;
+                await axios.post(
+                    `http://${process.env.localIP}/api/tajima/send`,
+                    { name: designName, dstBase64, machine: tajimaQueue },
+                    { headers: { Authorization: `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy` } }
+                );
+                console.log(`[tajima] Queued DST for ${item.pieceId} → queue "${tajimaQueue}"`);
+            } catch (e) {
+                console.error(`[tajima] Failed to queue DST: ${e.message}`);
+            }
+        }
+
         item.status = "EMB Load";
         if (!item.steps) item.steps = [];
         item.steps.push({

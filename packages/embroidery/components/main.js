@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography, ToggleButtonGroup, ToggleButton } from "@mui/material";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import SewingMachineIcon from "@mui/icons-material/Toys";
 import { DTFBody } from "./DTFBody";
 import { Printers } from "./printers";
 import { Footer } from "@pythias/backend";
 
-export function Main({ printers }) {
-    const [printer, setPrinter] = useState("printer1");
-    const [auto, setAuto]       = useState(true);
+export function Main({ printers, tajimaQueues }) {
+    const [printer, setPrinter]           = useState("printer1");
+    const [tajimaQueue, setTajimaQueue]   = useState(tajimaQueues?.[0] || "default");
+    const [auto, setAuto]                 = useState(true);
 
     return (
         <>
@@ -25,9 +27,29 @@ export function Main({ printers }) {
                         </Box>
                     </Stack>
                     <Printers printers={printers} printer={printer} setPrinter={setPrinter} setAuto={setAuto} />
+
+                    {tajimaQueues?.length > 1 && (
+                        <Box sx={{ mt: 1.5 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+                                Tajima Machine Queue
+                            </Typography>
+                            <ToggleButtonGroup
+                                value={tajimaQueue}
+                                exclusive
+                                onChange={(_, v) => { if (v) setTajimaQueue(v); }}
+                                size="small"
+                            >
+                                {tajimaQueues.map(q => (
+                                    <ToggleButton key={q} value={q} sx={{ px: 2, textTransform: "none", fontWeight: 600 }}>
+                                        {q}
+                                    </ToggleButton>
+                                ))}
+                            </ToggleButtonGroup>
+                        </Box>
+                    )}
                 </Box>
 
-                <DTFBody auto={auto} setAuto={setAuto} printer={printer} />
+                <DTFBody auto={auto} setAuto={setAuto} printer={printer} tajimaQueue={tajimaQueue} />
             </Box>
             <Footer fixed={true} />
         </>

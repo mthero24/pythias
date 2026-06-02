@@ -11,13 +11,11 @@ import Image from "next/image";
 import Logo from "../public/logo_vertical.png";
 
 const NAV_LINKS = [
-  { label: "Services",      href: "/services" },
-  { label: "Features",      href: "/features" },
-  { label: "Integrations",  href: "/integrations" },
+  { label: "Products",      href: "/services" },
+  { label: "Pricing",       href: "/pricing" },
+  { label: "Pythias Connect", href: "/integrations" },
   { label: "How It Works",  href: "/how-it-works" },
-  { label: "Setup Guides",          href: "/setup-guides/integrations" },
   { label: "Blog",          href: "/blog" },
-  { label: "Tutorials",     href: "/tutorials" },
   { label: "About Us",      href: "/about" },
   { label: "Contact Us",    href: "/contact" },
 ];

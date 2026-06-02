@@ -2,12 +2,12 @@ import s from "./services.module.css";
 import Link from "next/link";
 
 export const metadata = {
-    title: "Services — Print-on-Demand Automation Platform",
-    description: "Explore Pythias Technologies' full suite of print-on-demand automation services: production queue management, shipping integration, inventory control, multi-marketplace sync, analytics, team tools, label printing, and AI-powered product creation.",
-    keywords: "print on demand software, DTF queue management, shipping label automation, inventory management, multi-marketplace integration, Shopify fulfillment, Etsy fulfillment, Amazon fulfillment, print shop software, AI product listing generator",
+    title: "Product Suite — Pythias Fulfillment Cloud, Inventory, Shipping, Connect & AI",
+    description: "Explore the Pythias product suite: Pythias Fulfillment Cloud (production OS), Pythias Inventory, Pythias Shipping, Pythias Connect (marketplace integrations), and Pythias AI (forecasting and automation).",
+    keywords: "Pythias Fulfillment Cloud, Pythias Inventory, Pythias Shipping, Pythias Connect, Pythias AI, print on demand software, DTF queue management, shipping label automation, inventory management, multi-marketplace integration, print shop software",
     openGraph: {
-        title: "Services | Pythias Technologies",
-        description: "The complete platform for print-on-demand operations — from production floor to shipping carrier.",
+        title: "Product Suite | Pythias Technologies",
+        description: "Five integrated products for print-on-demand operations — Fulfillment Cloud, Inventory, Shipping, Connect, and AI.",
         type: "website",
         url: "https://pythiastechnologies.com/services",
     },
@@ -19,9 +19,9 @@ const SERVICES = [
         href: "/services/production",
         icon: "🖨️",
         color: "#D3A73D",
-        tag: "Production",
-        title: "Production Queue Management",
-        desc: "Manage DTF, embroidery, sublimation, and screen print queues with automated job routing, deadline tracking, and Brother GTX printer integration.",
+        tag: "Fulfillment Cloud",
+        title: "Pythias Fulfillment Cloud",
+        desc: "The production OS for your print floor — DTF, embroidery, sublimation, and screen print queues with automated job routing, deadline tracking, and Brother GTX printer integration.",
         highlights: ["DTF & Embroidery queues", "Heat press settings", "Batch processing", "Brother GTX integration"],
     },
     {
@@ -29,7 +29,7 @@ const SERVICES = [
         icon: "🚚",
         color: "#6366f1",
         tag: "Shipping",
-        title: "Shipping & Fulfillment",
+        title: "Pythias Shipping",
         desc: "Auto-generate USPS, FedEx, and UPS labels the moment an order completes. Sync tracking back to every marketplace automatically — no manual steps.",
         highlights: ["USPS, FedEx & UPS labels", "Auto-tracking sync", "Batch shipping", "Rate comparison"],
     },
@@ -38,7 +38,7 @@ const SERVICES = [
         icon: "📦",
         color: "#10b981",
         tag: "Inventory",
-        title: "Inventory Management",
+        title: "Pythias Inventory",
         desc: "Real-time blank inventory tracking across all SKUs. Automated reorder alerts, supplier management, and low-stock notifications prevent costly stockouts.",
         highlights: ["Real-time stock levels", "Automated reorders", "Supplier management", "Multi-location support"],
     },
@@ -46,24 +46,33 @@ const SERVICES = [
         href: "/services/marketplace",
         icon: "🛒",
         color: "#ef4444",
-        tag: "Marketplace",
-        title: "Multi-Marketplace Integration",
-        desc: "One dashboard for every channel — Shopify, Amazon, Etsy, Walmart, TikTok Shop, and Kohl's. Orders route to production automatically.",
-        highlights: ["Shopify, Amazon, Etsy", "TikTok Shop & Walmart", "Auto order routing", "Listing sync"],
+        tag: "Connect",
+        title: "Pythias Connect",
+        desc: "One dashboard for every channel — Shopify, Amazon, Etsy, Walmart, TikTok Shop, and 15+ more via Mirakl & Acenda. Orders route to production automatically.",
+        highlights: ["Shopify, Amazon, Etsy", "TikTok Shop & Walmart", "Mirakl & Acenda networks", "Auto order routing"],
+    },
+    {
+        href: "/services/product-creation-ai",
+        icon: "🤖",
+        color: "#8b5cf6",
+        tag: "AI",
+        title: "Pythias AI",
+        desc: "Production forecasting, AI-powered mockup generation, and intelligent listing copy — trained on your catalog and order history to automate what used to take hours.",
+        highlights: ["Production forecasting", "AI mockup generation", "AI listing copy", "Demand prediction"],
     },
     {
         href: "/services/analytics",
         icon: "📊",
-        color: "#8b5cf6",
+        color: "#14b8a6",
         tag: "Analytics",
         title: "Analytics & Reporting",
-        desc: "Daily output reports, line efficiency metrics, marketplace revenue breakdowns, and custom date-range exports — all in real time.",
+        desc: "Daily output reports, line efficiency metrics, marketplace revenue breakdowns, and custom date-range exports — all in real time across every product.",
         highlights: ["Daily output reports", "Line efficiency KPIs", "Revenue by channel", "Custom exports"],
     },
     {
         href: "/services/team",
         icon: "👥",
-        color: "#14b8a6",
+        color: "#f59e0b",
         tag: "Team",
         title: "Team & Collaboration",
         desc: "Role-based access, built-in messaging, time tracking, badge scanning login, and activity logs to keep every shift running smoothly.",
@@ -72,7 +81,7 @@ const SERVICES = [
     {
         href: "/services/labels",
         icon: "🏷️",
-        color: "#f59e0b",
+        color: "#ec4899",
         tag: "Labels",
         title: "Label & Barcode Printing",
         desc: "Print production labels, packing slips, barcodes, and QR codes for any order directly from the dashboard — no third-party tools needed.",
@@ -81,7 +90,7 @@ const SERVICES = [
     {
         href: "/services/design",
         icon: "🎨",
-        color: "#ec4899",
+        color: "#0ea5e9",
         tag: "Design",
         title: "Design & Product Management",
         desc: "Create, organize, and publish your entire product design library from one place. Approval workflows, version control, and one-click push to every connected marketplace.",
@@ -89,29 +98,20 @@ const SERVICES = [
     },
     {
         href: "/services/image-creation",
-        icon: "🤖",
-        color: "#0ea5e9",
+        icon: "✨",
+        color: "#7c3aed",
         tag: "Automation",
         title: "Automated Product Image Creation",
         desc: "AI-powered mockup generation across every product, color, and size variant — the moment a design is uploaded. No manual compositing, no third-party tools.",
         highlights: ["AI mockup generation", "Bulk variant rendering", "Background removal", "Direct listing export"],
-    },
-    {
-        href: "/services/product-creation-ai",
-        icon: "✨",
-        color: "#7c3aed",
-        tag: "AI",
-        title: "Product Creation AI",
-        desc: "AI-generated product titles, descriptions, keywords, and tags optimized for every marketplace — created in bulk from your design catalog, ready to publish.",
-        highlights: ["AI listing copy", "SEO keyword generation", "Bulk product creation", "Marketplace-specific optimization"],
     },
 ];
 
 const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Pythias Technologies Services",
-    description: "Complete suite of print-on-demand automation services.",
+    name: "Pythias Technologies Product Suite",
+    description: "Five integrated products for print-on-demand operations: Fulfillment Cloud, Inventory, Shipping, Connect, and AI.",
     url: "https://pythiastechnologies.com/services",
     numberOfItems: SERVICES.length,
     itemListElement: SERVICES.map((svc, i) => ({
@@ -142,13 +142,13 @@ export default function ServicesPage() {
             <section className={s.hero}>
                 <div className={s.heroGlow} />
                 <div className={s.wrap} style={{ position: "relative" }}>
-                    <span className={s.heroChip}>Our Services</span>
+                    <span className={s.heroChip}>Product Suite</span>
                     <h1 className={s.h1}>
-                        Everything your print shop needs,{" "}
-                        <span className={s.accent}>built in.</span>
+                        Five products. Every part of your{" "}
+                        <span className={s.accent}>operation covered.</span>
                     </h1>
                     <p className={s.heroSub}>
-                        Pythias Technologies covers every part of your operation — from the moment an order lands to the moment it ships.
+                        Pythias Fulfillment Cloud, Inventory, Shipping, Connect, and AI — each best-in-class on its own, built to work together from day one.
                     </p>
                 </div>
             </section>

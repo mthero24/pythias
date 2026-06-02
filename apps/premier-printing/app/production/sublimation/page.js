@@ -1,8 +1,13 @@
 import {Main} from "@pythias/sublimation";
-import { Items, Order, Inventory } from "@pythias/mongo";
+import { Items, Order, Inventory, Settings } from "@pythias/mongo";
 import {Sort} from "@pythias/labels";
 export default async function Sublimation(req, res){
-    let stations = JSON.parse(process.env.shipping).shipStations
+    let stations = [];
+    try {
+        const settingsDoc = await Settings.findOne({ key: "production" }).lean();
+        const prod = settingsDoc?.value ? JSON.parse(settingsDoc.value) : {};
+        stations = prod.shippingStations ?? [];
+    } catch {}
     let sublimation = await Items.find({
         type: "sublimation",
         inBin: false,

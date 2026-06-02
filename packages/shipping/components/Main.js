@@ -4,7 +4,7 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import { Manifest } from "./manifest";
-import { Stations } from "./stations";
+import { Stations, stationName, stationHasScale } from "./stations";
 import { Bins } from "./bins";
 import { Scan } from "./scan";
 import { OrderModal } from "./orderModal";
@@ -14,7 +14,9 @@ import { Repull } from "../../repull/exports";
 import { Footer } from "@pythias/backend";
 
 export function Main({ stations, binCount, bins, pieceId, stat, source }) {
-    const [station, setStation]       = useState(stat ?? stations?.[0] ?? "station1");
+    const [station, setStation]       = useState(stat ?? stationName(stations?.[0]) ?? "station1");
+    const stationObj = stations?.find(s => stationName(s) === station);
+    const hasScale = stationHasScale(stationObj ?? station);
     const [order, setOrder]           = useState();
     const [item, setItem]             = useState();
     const [bin, setBin]               = useState();
@@ -119,7 +121,8 @@ export function Main({ stations, binCount, bins, pieceId, stat, source }) {
                     item={item} setItem={setItem} bin={bin} setBin={setBin}
                     style={modalStyle} show={show} setShow={setShow} setAuto={setAuto}
                     setBins={setBins} action={action} setAction={setAction}
-                    station={station} source={source} weight={weight} setWeight={setWeight}
+                    station={station} hasScale={hasScale} source={source}
+                    weight={weight} setWeight={setWeight}
                     dimensions={dimensions} setDimensions={setDimensions} onAction={fetchStats}
                 />
             </Box>

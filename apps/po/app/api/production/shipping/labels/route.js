@@ -59,107 +59,70 @@ export async function POST(req= NextApiRequest){
     }
     if(!data.address.country) data.address.country = "US"
 
+    const buyOpts = {
+        ...data,
+        businessAddress: order.user?.addresses[0] ?? { name: "Print Oracle", address1: "21440 Melorose Ave", address2: "suit 100", city: "Southfield", state: "MI", zip: "48075", country: "US" },
+        providers: ["usps", "fedex"],
+        enSettings: { requesterID: process.env.endiciaRequesterID, accountNumber: process.env.endiciaAccountNUmber, passPhrase: process.env.endiciaPassPhrase },
+        credentials: { clientId: process.env.uspsClientId, clientSecret: process.env.uspsClientSecret, crid: process.env.uspsCRID, mid: process.env.uspsMID, manifestMID: process.env.manifestMID, accountNumber: process.env.accountNumber },
+        credentialsFedEx: { accountNumber: process.env.tpalfedexaccountnumber, meterNumber: process.env.tpalfedexmeternumber, key: process.env.tpalfedexkey, password: process.env.tpalfedexpassword },
+        credentialsFedExNew: { accountNumber: process.env.AccountNumberFedEx, key: process.env.ApiKeyFedEx, secret: process.env.SecretKeyFedEx },
+        credentialsUPS: { accountNumber: process.env.UPSAccountNumber, clientID: process.env.UPSClientID, clientSecret: process.env.UPSClientSecret },
+        credentialsDHL: { accountNumber: process.env.dhlAccount, basic: process.env.dhlBasic },
+        dpi: data.station == "station5" ? 300 : null,
+        imageFormat: data.station == "station5" ? "PDF" : null,
+    };
     try{
-        console.log(data)
-        let label = await buyLabel({
-            ...data,
-            businessAddress: order.user?.addresses[0]? order.user?.addresses[0]: { name: "Print Oracle", address1: "21440 Melorose Ave", address2: "suit 100", city: "Southfield", state: "MI", zip: "48075", country: "US"},
-            providers: ["usps", "fedex"],
-            enSettings: {
-            requesterID: process.env.endiciaRequesterID,
-            accountNumber: process.env.endiciaAccountNUmber,
-            passPhrase: process.env.endiciaPassPhrase,
-            },
-            credentials: {
-                clientId: process.env.uspsClientId,
-                clientSecret: process.env.uspsClientSecret,
-                crid: process.env.uspsCRID,
-                mid: process.env.uspsMID,
-                manifestMID: process.env.manifestMID,
-                accountNumber: process.env.accountNumber
-            },
-            credentialsFedEx: {
-                accountNumber: process.env.tpalfedexaccountnumber,
-                meterNumber: process.env.tpalfedexmeternumber,
-                key: process.env.tpalfedexkey,
-                password: process.env.tpalfedexpassword,
-            },
-            credentialsFedExNew: {
-                accountNumber: process.env.AccountNumberFedEx,
-                key: process.env.ApiKeyFedEx,
-                secret: process.env.SecretKeyFedEx,
-            },
-            credentialsUPS: {
-                accountNumber: process.env.UPSAccountNumber,
-                clientID: process.env.UPSClientID,
-                clientSecret: process.env.UPSClientSecret,
-            },
-            credentialsDHL: {
-                accountNumber: process.env.dhlAccount,
-                basic: process.env.dhlBasic,
-            },
-            dpi: data.station == "station5"? 300: null,
-            imageFormat: data.station == "station5"? "PDF": null,
-            
-        });
-        if(!label ||label.error){
-            return NextResponse.json(label? label: {error: true, msg: "No label returned"})
-        }else{
-            if(data.selectedShipping.provider == "usps"){
-                let man = new manifest({pic: label.trackingNumber, Date: new Date(Date.now())})
-                await man.save()
-            }
-            let order = await Order.findOne({_id: data.orderId}).populate("items")
-            order.shippingInfo.label = label.label
-            order.shippingInfo.shippingCost += parseFloat(label.cost);
-            order.status = "Shipped"
-            order.shippingInfo.labels.push({
-                trackingNumber: label.trackingNumber,
-                label: label.label,
-                cost: parseFloat(label.cost),
-                trackingInfo: ["Label Purchased"],
-                provider: data.selectedShipping.provider
-            });
-            for (let item of order.items) {
-                item.shipped = true;
-                item.shippedDate = new Date();
-                if (!item.steps) item.steps = [];
-                item.steps.push({
-                    status: "Shipped",
-                    date: new Date(),
-                });
-                await item.save();
-            }
-            order = await order.save();
-            logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email, provider: "po" });
-            // print label
-            let bin = await Bin.findOneAndUpdate({order: order._id},  {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null})
-            let headers = {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy`
-                }
-            }
-            let res = await axios.post(`http://${process.env.localIP}/api/shipping/${data.station == "station5"? "cpu": "printers"}`, {label: label.label, station: data.station, barcode: "po"}, headers)
-
-            console.log(res.data, "printer res")
-            if(res && res.error && res.msg != `{"code":"ECONNRESET"}`){
-                return NextResponse.json({error: true, msg: "error printing label"})
-            }else{
-                console.log("return")
-                return NextResponse.json({error: false, label: label.label, 
-                    bins: {
-                        readyToShip: await Bin.find({ ready: true })
-                            .sort({ number: 1 })
-                            .populate({ path: "order", populate: "items" })
-                            .lean(),
-                        inUse: await Bin.find({ inUse: true })
-                            .sort({ number: 1 })
-                            .populate({ path: "order", populate: "items" })
-                            .lean(),
-                },})
-            }
+        const pkgs = data.packages?.length > 1 ? data.packages : [{ weight: data.weight, dimensions: data.dimensions }];
+        const purchasedLabels = [];
+        for (const pkg of pkgs) {
+            const lbl = await buyLabel({ ...buyOpts, weight: pkg.weight, dimensions: pkg.dimensions });
+            if (!lbl || lbl.error) return NextResponse.json(lbl ?? { error: true, msg: "No label returned" });
+            purchasedLabels.push(lbl);
         }
+        const primaryLabel = purchasedLabels[0];
+        const totalCost = purchasedLabels.reduce((s, l) => s + parseFloat(l.cost || 0), 0);
+
+        let order = await Order.findOne({_id: data.orderId}).populate("items");
+        order.shippingInfo.label = primaryLabel.label;
+        order.shippingInfo.shippingCost += totalCost;
+        order.status = "Shipped";
+        for (const lbl of purchasedLabels) {
+            if (data.selectedShipping.provider == "usps") {
+                await new manifest({ pic: lbl.trackingNumber, Date: new Date() }).save();
+            }
+            order.shippingInfo.labels.push({
+                trackingNumber: lbl.trackingNumber,
+                label: lbl.label,
+                cost: parseFloat(lbl.cost || 0),
+                trackingInfo: ["Label Purchased"],
+                provider: data.selectedShipping.provider,
+            });
+        }
+        for (let item of order.items) {
+            item.shipped = true;
+            item.shippedDate = new Date();
+            if (!item.steps) item.steps = [];
+            item.steps.push({ status: "Shipped", date: new Date() });
+            await item.save();
+        }
+        order = await order.save();
+        logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email, provider: "po" });
+        await Bin.findOneAndUpdate({ order: order._id }, { "items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null });
+        const printHeaders = { headers: { "Content-Type": "application/json", "Authorization": `Bearer $2a$10$PDlV9Xhf.lMicHvMvBCMwuyCYUhWGqjaCEFpG0AJMSKteUfKBO.Hy` } };
+        const endpoint = data.station == "station5" ? "cpu" : "printers";
+        for (const lbl of purchasedLabels) {
+            const res = await axios.post(`http://${process.env.localIP}/api/shipping/${endpoint}`, { label: lbl.label, station: data.station, barcode: "po" }, printHeaders);
+            console.log(res.data, "printer res");
+        }
+        return NextResponse.json({
+            error: false,
+            label: primaryLabel.label,
+            bins: {
+                readyToShip: await Bin.find({ ready: true }).sort({ number: 1 }).populate({ path: "order", populate: "items" }).lean(),
+                inUse: await Bin.find({ inUse: true }).sort({ number: 1 }).populate({ path: "order", populate: "items" }).lean(),
+            },
+        });
     }catch(e){
         console.log(e)
         return NextResponse.json({error: true, msg:JSON.stringify(e)})

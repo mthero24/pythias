@@ -15,7 +15,6 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import SearchIcon from "@mui/icons-material/Search";
 import FolderIcon from "@mui/icons-material/Folder";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import InventoryIcon from "@mui/icons-material/Inventory2";
@@ -29,6 +28,7 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import SettingsIcon from "@mui/icons-material/Settings";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import AppsIcon from "@mui/icons-material/Apps";
@@ -57,7 +57,6 @@ const NAV_GROUPS = [
     {
         label: "Shipping",
         items: [
-            { label: "Orders",           href: "/orders",          icon: <ShoppingCartIcon fontSize="small" /> },
             { label: "Ship Orders",      href: "/shipping",        icon: <LocalShippingIcon fontSize="small" /> },
             { label: "Track Shipping",   href: "/shipping-labels", icon: <TrackChangesIcon fontSize="small" /> },
             { label: "Track Production", href: "/track-labels",    icon: <TimelineIcon fontSize="small" /> },
@@ -81,6 +80,7 @@ const NAV_GROUPS = [
             { label: "Analytics",       href: "/analytics",           icon: <TrendingUpIcon fontSize="small" />,        adminOnly: true },
             { label: "Live Users",      href: "/live",                icon: <FiberManualRecordIcon fontSize="small" sx={{ color: "#22c55e" }} />, adminOnly: true },
             { label: "Downloads",       href: "/downloads",           icon: <SystemUpdateAltIcon fontSize="small" /> },
+            { label: "Shipping & Hardware", href: "/admin/settings/shipping", icon: <VpnKeyIcon fontSize="small" />, adminOnly: true },
             { label: "Service Plans",   href: "/admin/service-plans",    icon: <AppsIcon fontSize="small" />,     adminOnly: true },
             { label: "Service Invoices",href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" />,  adminOnly: true },
             { label: "Kling Invoices",  href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" />, adminOnly: true },

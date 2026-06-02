@@ -38,6 +38,13 @@ const QUICK_LINKS = [
         accent: "#6366f1",
     },
     {
+        label: "GTX Printer",
+        description: "Brother GTX print queue management",
+        href: "/production/gtx",
+        icon: <PrintIcon sx={{ fontSize: 28 }} />,
+        accent: "#f97316",
+    },
+    {
         label: "Ship Orders",
         description: "Buy labels and ship pending orders",
         href: "/production/shipping",

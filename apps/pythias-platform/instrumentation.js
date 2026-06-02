@@ -1,6 +1,3 @@
 export async function register() {
-    if (process.env.NEXT_RUNTIME === "nodejs") {
-        const { warmTenantCache } = await import("@pythias/mongo");
-        await warmTenantCache();
-    }
+    // DB connections are lazy-initialized on first use via @pythias/mongo
 }

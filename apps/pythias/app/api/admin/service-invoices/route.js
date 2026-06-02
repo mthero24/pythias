@@ -36,14 +36,21 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-    const { invoiceId, client, status } = await req.json();
+    const { invoiceId, client, status, paymentMethod, paymentNote } = await req.json();
     const IM = INVOICE_MODEL[client];
     if (!["open", "paid"].includes(status) || !IM) {
         return NextResponse.json({ error: "Invalid status or client" }, { status: 400 });
     }
     const update = { status, updatedAt: new Date() };
-    if (status === "paid") update.paidAt = new Date();
-    else update.paidAt = null;
+    if (status === "paid") {
+        update.paidAt = new Date();
+        if (paymentMethod) update.paymentMethod = paymentMethod;
+        if (paymentNote !== undefined) update.paymentNote = paymentNote;
+    } else {
+        update.paidAt = null;
+        update.paymentMethod = null;
+        update.paymentNote = "";
+    }
     const invoice = await IM.findByIdAndUpdate(invoiceId, update, { new: true });
     return NextResponse.json({ invoice });
 }

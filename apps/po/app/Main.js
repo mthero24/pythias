@@ -7,7 +7,6 @@ import {
 } from "@mui/material";
 import * as logo from "@/public/images/logowhite.png";
 
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import LabelIcon from "@mui/icons-material/Label";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
@@ -24,10 +23,10 @@ import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 const QUICK_LINKS = [
     { label: "Print Labels",        description: "Print production labels for items",         href: "/print-labels",        icon: <LabelIcon sx={{ fontSize: 28 }} />,            accent: "#f59e0b" },
-    { label: "Orders",              description: "View and manage customer orders",            href: "/orders",              icon: <ShoppingCartIcon sx={{ fontSize: 28 }} />,      accent: "#6366f1" },
     { label: "Ship Orders",         description: "Buy labels and ship pending orders",         href: "/shipping",            icon: <LocalShippingIcon sx={{ fontSize: 28 }} />,     accent: "#10b981" },
     { label: "Track Shipping",      description: "Track all outbound shipments",               href: "/shipping-labels",     icon: <TrackChangesIcon sx={{ fontSize: 28 }} />,      accent: "#14b8a6" },
     { label: "Track Production",    description: "Monitor labeled items in production",        href: "/track-labels",        icon: <TimelineIcon sx={{ fontSize: 28 }} />,           accent: "#8b5cf6" },
+    { label: "GTX Printer",          description: "Brother GTX print queue management",         href: "/production/gtx",      icon: <FormatColorFillIcon sx={{ fontSize: 28 }} />,    accent: "#f97316" },
     { label: "Load DTF",            description: "Load DTF films onto press queue",            href: "/dtf-send",            icon: <AutoFixHighIcon sx={{ fontSize: 28 }} />,        accent: "#3b82f6" },
     { label: "Find DTF",            description: "Locate DTF films by piece ID",               href: "/dtf-find",            icon: <SearchIcon sx={{ fontSize: 28 }} />,             accent: "#0ea5e9" },
     { label: "Folder",              description: "Fold and sort finished garments",            href: "/roq-folder",          icon: <FolderIcon sx={{ fontSize: 28 }} />,             accent: "#f97316" },

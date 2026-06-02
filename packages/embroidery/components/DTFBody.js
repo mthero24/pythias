@@ -21,7 +21,7 @@ const COMBO_SIDES = [
     { key: "centerDesign", comboKey: "centerCombo", label: "Center Preview" },
 ];
 
-export function DTFBody({ auto, setAuto, printer }) {
+export function DTFBody({ auto, setAuto, printer, tajimaQueue }) {
     const [submitted, setSubmitted] = useState(null);
 
     const hasRaw   = submitted && RAW_SIDES.some(s => submitted[s.key]);
@@ -30,7 +30,7 @@ export function DTFBody({ auto, setAuto, printer }) {
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "70vh", py: 2, display: "flex", flexDirection: "column" }}>
 
-            <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} />
+            <Scan auto={auto} setAuto={setAuto} setSubmitted={setSubmitted} printer={printer} tajimaQueue={tajimaQueue} />
 
             {/* Item info chips */}
             {submitted?.item && (
