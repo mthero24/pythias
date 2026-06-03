@@ -22,7 +22,7 @@ const TIERS = [
         ],
         cta: "Get Started",
         ctaStyle: "outline",
-        href: "https://platform.pythiastechnologies.com/register",
+        href: "https://platform.pythiastechnologies.com/register?plan=starter",
     },
     {
         name: "Professional",
@@ -39,7 +39,7 @@ const TIERS = [
         ],
         cta: "Get Started",
         ctaStyle: "gold",
-        href: "https://platform.pythiastechnologies.com/register",
+        href: "https://platform.pythiastechnologies.com/register?plan=professional",
     },
     {
         name: "Business",
@@ -55,7 +55,7 @@ const TIERS = [
         ],
         cta: "Get Started",
         ctaStyle: "outline",
-        href: "https://platform.pythiastechnologies.com/register",
+        href: "https://platform.pythiastechnologies.com/register?plan=business",
     },
     {
         name: "Scale",
@@ -71,7 +71,7 @@ const TIERS = [
         ],
         cta: "Get Started",
         ctaStyle: "outline",
-        href: "https://platform.pythiastechnologies.com/register",
+        href: "https://platform.pythiastechnologies.com/register?plan=scale",
     },
     {
         name: "Enterprise",
@@ -292,7 +292,7 @@ export default function PricingPage() {
                                 A dedicated Pythias engineer comes to your facility. Includes flights, hotel, car rental, full data migration, and 30-day post-launch support. Enterprise tier.
                             </p>
                             <ul className={s.onboardBullets}>
-                                {["Dedicated engineer at your warehouse", "Full travel & accommodation covered", "Complete data migration", "On-site hardware & printer setup", "30-day post-launch dedicated support"].map(b => (
+                                {["Dedicated engineer at your warehouse", "Complete production install", "Complete data migration", "On-site hardware & printer setup", "30-day post-launch dedicated support"].map(b => (
                                     <li key={b} className={s.onboardBullet}>
                                         <span className={s.checkGold}>✓</span> {b}
                                     </li>

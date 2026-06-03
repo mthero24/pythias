@@ -191,7 +191,7 @@ export default function BillingActions({ currentTier, hasStripeCustomer }) {
                             <Stack spacing={0.5} sx={{ mb: 2 }}>
                                 {[
                                     "Dedicated engineer at your warehouse",
-                                    "Full travel & accommodation covered",
+                                    "Complete production install",
                                     "Complete data migration",
                                     "On-site hardware & printer setup",
                                     "30-day post-launch dedicated support",

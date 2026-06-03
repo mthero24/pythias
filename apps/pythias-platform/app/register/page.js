@@ -1,16 +1,21 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider, MenuItem, Select, InputLabel, FormControl, Chip } from "@mui/material";
 import { TIERS } from "@/lib/tiers";
 
 const TIER_OPTIONS = ['starter', 'professional', 'business', 'scale'];
+const VALID_TIERS = new Set(TIER_OPTIONS);
 
 export default function RegisterPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const planParam = searchParams.get("plan");
+    const initialTier = VALID_TIERS.has(planParam) ? planParam : "starter";
+
     const [step, setStep] = useState(1);
     const [form, setForm] = useState({
-        orgName: "", slug: "", billingEmail: "", tier: "starter",
+        orgName: "", slug: "", billingEmail: "", tier: initialTier,
         firstName: "", lastName: "", email: "", password: "", confirm: "",
     });
     const [error, setError] = useState("");
