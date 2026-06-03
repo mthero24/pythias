@@ -1,4 +1,5 @@
-import { Modal, Box, Typography, Button, Card, CardContent, TextField, Divider, Grid2, Checkbox, Chip, Tooltip, Stack, CardActionArea, Stepper, Step, StepLabel, StepButton, IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
+"use client";
+import { Modal, Box, Typography, Button, Card, CardContent, TextField, Divider, Grid2, Checkbox, Chip, Tooltip, Stack, CardActionArea, Stepper, Step, StepLabel, StepButton, IconButton, ToggleButton, ToggleButtonGroup, CircularProgress } from '@mui/material';
 import CreatableSelect from 'react-select/creatable';
 import {useState, useEffect, useRef} from 'react';
 import LoaderOverlay from "../reusable/LoaderOverlay";
@@ -123,9 +124,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
     }
     useEffect(() => {
         const handleBeforeUnload = async (event) => {
-            // Perform actions before the page unloads
-            // e.g., save unsaved data, send analytics, clean up resources
-            if (window.dataLayer[0]) {
+            if (window.dataLayer?.[0]) {
                 event.preventDefault(); // This line is crucial for displaying the prompt
                 let res = await axios.post("/api/upc/releasehold", { upcs: window.dataLayer[0] }); // Release hold on temp UPCs if any
             }

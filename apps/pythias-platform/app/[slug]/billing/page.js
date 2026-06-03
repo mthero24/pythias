@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
-import { Organization, UsageLedger } from "@pythias/mongo";
+import { Organization, UsageLedger, KlingInvoicePlatform } from "@pythias/mongo";
 import { Box, Container, Typography, Card, CardContent, Stack, Chip, Table, TableBody, TableCell, TableHead, TableRow, Divider } from "@mui/material";
 import TierBadge from "@/components/TierBadge";
 import { TIERS } from "@/lib/tiers";
@@ -12,13 +12,29 @@ export default async function BillingPage() {
     const session = await getServerSession(authOptions);
     if (!session) redirect("/login");
 
-    const [org, ledgers] = await Promise.all([
-        Organization.findById(session.user.orgId).lean(),
-        UsageLedger.find({ orgId: session.user.orgId }).sort({ period: -1 }).limit(12).lean(),
+    const orgId = session.user.orgId;
+
+    const [org, ledgers, klingInvoices] = await Promise.all([
+        Organization.findById(orgId).lean(),
+        UsageLedger.find({ orgId }).sort({ period: -1 }).limit(12).lean(),
+        KlingInvoicePlatform.find({ orgId }).sort({ period: -1 }).limit(12).lean(),
     ]);
     if (!org) redirect("/login");
 
     const tier = TIERS[org.tier];
+
+    // Build a map of period → kling invoice for easy lookup
+    const klingMap = {};
+    for (const k of klingInvoices) klingMap[k.period] = k;
+
+    // Collect all periods across both sources
+    const allPeriods = [...new Set([
+        ...ledgers.map(l => l.period),
+        ...klingInvoices.map(k => k.period),
+    ])].sort((a, b) => b.localeCompare(a)).slice(0, 12);
+
+    const ledgerMap = {};
+    for (const l of ledgers) ledgerMap[l.period] = l;
 
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
@@ -41,9 +57,9 @@ export default async function BillingPage() {
                         <Stack direction="row" flexWrap="wrap" gap={3}>
                             {[
                                 { label: "Orders/mo", val: tier.limits.ordersPerMonth },
-                                { label: "Products", val: tier.limits.products },
-                                { label: "Designs", val: tier.limits.designs },
-                                { label: "Users", val: tier.limits.users },
+                                { label: "Products",  val: tier.limits.products },
+                                { label: "Designs",   val: tier.limits.designs },
+                                { label: "Users",     val: tier.limits.users },
                                 { label: "Integrations", val: tier.limits.integrations },
                             ].map(({ label, val }) => (
                                 <Box key={label} sx={{ textAlign: "center" }}>
@@ -55,7 +71,7 @@ export default async function BillingPage() {
                             ))}
                         </Stack>
 
-                        {tier.overage.order > 0 && (
+                        {tier.overage?.order > 0 && (
                             <>
                                 <Divider sx={{ my: 2 }} />
                                 <Typography variant="caption" color="text.secondary">
@@ -63,6 +79,11 @@ export default async function BillingPage() {
                                 </Typography>
                             </>
                         )}
+
+                        <Divider sx={{ my: 2 }} />
+                        <Typography variant="caption" color="text.secondary">
+                            Kling AI Video: $8/video upcharge
+                        </Typography>
                     </CardContent>
                 </Card>
 
@@ -74,34 +95,46 @@ export default async function BillingPage() {
                                 <TableCell>Period</TableCell>
                                 <TableCell align="right">Orders</TableCell>
                                 <TableCell align="right">Overage</TableCell>
+                                <TableCell align="right">Kling Videos</TableCell>
                                 <TableCell align="right">Total charge</TableCell>
                                 <TableCell align="right">Status</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {ledgers.map(l => (
-                                <TableRow key={l.period}>
-                                    <TableCell>{l.period}</TableCell>
-                                    <TableCell align="right">{l.orders.toLocaleString()}</TableCell>
-                                    <TableCell align="right">
-                                        {l.overageOrders > 0 ? `${l.overageOrders} orders (+$${l.overageOrdersCharge.toFixed(2)})` : "—"}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        {l.totalOverageCharge > 0 ? `$${l.totalOverageCharge.toFixed(2)}` : "—"}
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <Chip
-                                            label={l.invoiced ? "Invoiced" : "Pending"}
-                                            size="small"
-                                            color={l.invoiced ? "success" : "default"}
-                                            variant="outlined"
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                            {ledgers.length === 0 && (
+                            {allPeriods.map(period => {
+                                const l = ledgerMap[period];
+                                const k = klingMap[period];
+                                const klingCharge = k?.totalAmount ?? 0;
+                                const overageCharge = l?.totalOverageCharge ?? 0;
+                                const totalCharge = overageCharge + klingCharge;
+                                const invoiced = (l?.invoiced ?? false) || (k?.status === "invoiced" || k?.status === "paid");
+                                return (
+                                    <TableRow key={period}>
+                                        <TableCell>{period}</TableCell>
+                                        <TableCell align="right">{l ? l.orders.toLocaleString() : "—"}</TableCell>
+                                        <TableCell align="right">
+                                            {l?.overageOrders > 0 ? `${l.overageOrders} orders (+$${l.overageOrdersCharge.toFixed(2)})` : "—"}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {k?.videoCount > 0 ? `${k.videoCount} videos (+$${klingCharge.toFixed(2)})` : "—"}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {totalCharge > 0 ? `$${totalCharge.toFixed(2)}` : "—"}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            <Chip
+                                                label={invoiced ? "Invoiced" : "Pending"}
+                                                size="small"
+                                                color={invoiced ? "success" : "default"}
+                                                variant="outlined"
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                            {allPeriods.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={5} align="center">
+                                    <TableCell colSpan={6} align="center">
                                         <Typography variant="caption" color="text.secondary">No billing history yet</Typography>
                                     </TableCell>
                                 </TableRow>

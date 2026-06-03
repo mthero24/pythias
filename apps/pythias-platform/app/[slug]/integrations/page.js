@@ -47,6 +47,7 @@ export default async function IntegrationsPage({ params }) {
         .map(([type]) => type);
 
     const channelEngineConnected = !!(creds?.channelengine?.apiUrl && creds?.channelengine?.apiKey);
+    const gs1Connected = !!org?.settings?.gs1?.apiKey;
 
     const { slug } = await params;
 
@@ -54,6 +55,7 @@ export default async function IntegrationsPage({ params }) {
         <PlatformIntegrationsPage
             connectedTypes={connectedTypes}
             channelEngineConnected={channelEngineConnected}
+            gs1Connected={gs1Connected}
             slug={slug}
         />
     );

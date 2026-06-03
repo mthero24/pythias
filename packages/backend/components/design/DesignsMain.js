@@ -17,7 +17,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 
 const MAX_THUMBS = 5;
 
-export function Main({ designs, ct, query, pa, canEdit = true }) {
+export function Main({ designs, ct, query, pa, canEdit = true, designBasePath = "/admin/design" }) {
     const [designss, setDesigns] = useState(designs);
     const [search, setSearch] = useState(query ?? "");
     const [page, setPage] = useState(pa ? parseInt(pa) : 1);
@@ -91,7 +91,7 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
     const createDesign = async () => {
         let res = await axios.post("/api/admin/designs", {});
         if (res.data.error) alert(res.data.msg);
-        else location.href = `/admin/design/${res.data.design._id}`;
+        else location.href = `${designBasePath}/${res.data.design._id}`;
     };
 
     const handlePageChange = (_, value) => {
@@ -186,7 +186,7 @@ export function Main({ designs, ct, query, pa, canEdit = true }) {
                                         "&:hover": { boxShadow: 4 },
                                     }}
                                 >
-                                    <Link href={`/admin/design/${d._id}`} target="_blank" style={{ textDecoration: "none", display: "flex", flexDirection: "column", flex: 1 }}>
+                                    <Link href={`${designBasePath}/${d._id}`} target="_blank" style={{ textDecoration: "none", display: "flex", flexDirection: "column", flex: 1 }}>
                                         {/* Primary image */}
                                         <Box sx={{
                                             position: "relative",

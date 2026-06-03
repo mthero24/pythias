@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import {
-    Box, Container, Typography, Stack, TextField, Button, Card, CardContent,
+    Box, Container, Typography, Stack, TextField, Button, Card,
     Table, TableHead, TableRow, TableCell, TableBody, Chip, InputAdornment,
     IconButton, Pagination, CircularProgress, MenuItem, Select, FormControl, InputLabel,
 } from "@mui/material";
@@ -9,6 +9,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import { useOrg } from "@/components/OrgProvider";
+import { CreateNFProduct } from "@pythias/backend";
 
 export default function ProductsPage() {
     const { org } = useOrg() ?? {};
@@ -20,6 +21,15 @@ export default function ProductsPage() {
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("all");
     const [loading, setLoading] = useState(true);
+
+    const [createOpen, setCreateOpen] = useState(false);
+    const [createProduct, setCreateProduct] = useState({ blanks: [], colors: [], productImages: [], variantsArray: [] });
+    const [createStage, setCreateStage] = useState("Select Blank");
+    const [brands, setBrands] = useState([]);
+    const [seasons, setSeasons] = useState([]);
+    const [genders, setGenders] = useState([]);
+    const [themes, setThemes] = useState([]);
+    const [sportUsedFor, setSportUsedFor] = useState([]);
 
     const PER_PAGE = 50;
 
@@ -39,12 +49,23 @@ export default function ProductsPage() {
         setSearch(q);
     }
 
+    function handleCreateOpen() {
+        fetch("/api/admin/brands").then(r => r.json()).then(d => setBrands(d.brands ?? [])).catch(() => {});
+        fetch("/api/admin/oneoffs").then(r => r.json()).then(d => {
+            setGenders(d.genders ?? []);
+            setThemes(d.themes ?? []);
+            setSportUsedFor(d.sportUsedFor ?? []);
+            setSeasons(d.seasons ?? []);
+        }).catch(() => {});
+        setCreateOpen(true);
+    }
+
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
             <Container maxWidth="lg" sx={{ py: 4 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
                     <Typography variant="h5" fontWeight={700}>Products</Typography>
-                    <Button variant="contained" startIcon={<AddIcon />} href={`${base}/products/create`}>New Product</Button>
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreateOpen}>New Product</Button>
                 </Stack>
 
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
@@ -122,7 +143,7 @@ export default function ProductsPage() {
                                     <TableRow>
                                         <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
                                             No products found.{" "}
-                                            <a href={`${base}/products/create`} style={{ color: "inherit", textDecoration: "underline" }}>Create your first product →</a>
+                                            <span onClick={handleCreateOpen} style={{ cursor: "pointer", textDecoration: "underline" }}>Create your first product →</span>
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -141,6 +162,29 @@ export default function ProductsPage() {
                     </Box>
                 )}
             </Container>
+
+            <CreateNFProduct
+                open={createOpen}
+                setOpen={(v) => {
+                    setCreateOpen(v);
+                    if (!v) load(1, search, filter);
+                }}
+                product={createProduct}
+                setProduct={setCreateProduct}
+                stage={createStage}
+                setStage={setCreateStage}
+                brands={brands}
+                setBrands={setBrands}
+                seasons={seasons}
+                setSeasons={setSeasons}
+                genders={genders}
+                setGenders={setGenders}
+                themes={themes}
+                setThemes={setThemes}
+                sportUsedFor={sportUsedFor}
+                setSportUsedFor={setSportUsedFor}
+                CreateSku={null}
+            />
         </Box>
     );
 }

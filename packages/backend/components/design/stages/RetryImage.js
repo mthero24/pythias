@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useRef, useState } from "react";
 
 export const RetryImage = ({ src, maxRetries = 2, retryDelay = 500, onError, ...rest }) => {

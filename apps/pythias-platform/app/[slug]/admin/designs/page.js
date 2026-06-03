@@ -11,6 +11,8 @@ export default async function Designs(req) {
     const session = await getServerSession(authOptions);
     if (!session) redirect("/login");
 
+    const params = await req.params;
+    const slug = params?.slug;
     const orgId = session.user.orgId;
     const query = await req.searchParams;
     const page = query.page ? parseInt(query.page) : 1;
@@ -48,6 +50,7 @@ export default async function Designs(req) {
             pa={page}
             query={q}
             canEdit={true}
+            designBasePath={`/${slug}/admin/design`}
         />
     );
 }

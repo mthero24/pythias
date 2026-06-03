@@ -550,13 +550,13 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                                 setImage(prev => ({ ...prev, image: data.url }));
                                 setOriginalImage(data.url);
                                 setStep("");
-                                // Auto-detect person → auto-set imageGroup to "model"
+                                // Auto-detect person → mark as model image (type, not theme)
                                 fetch("/api/admin/classify-image", {
                                     method: "POST",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ imageUrl: data.url }),
                                 }).then(r => r.json()).then(({ hasModel }) => {
-                                    if (hasModel) setImage(prev => ({ ...prev, imageGroup: "model" }));
+                                    if (hasModel) setImage(prev => ({ ...prev, isModel: true }));
                                 }).catch(() => {});
                             }
                         }} />
@@ -865,6 +865,26 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                             </Stack>
                         </Paper>
                     )}
+
+                    <Divider />
+
+                    {/* Image type */}
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight={700} mb={1}>Image Type</Typography>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                            {["flat", "model"].map(t => (
+                                <Chip
+                                    key={t}
+                                    label={t.charAt(0).toUpperCase() + t.slice(1)}
+                                    size="small"
+                                    variant={(image.isModel ? "model" : "flat") === t ? "filled" : "outlined"}
+                                    color={(image.isModel ? "model" : "flat") === t ? "primary" : "default"}
+                                    onClick={() => setImage(prev => ({ ...prev, isModel: t === "model" }))}
+                                    sx={{ cursor: "pointer", textTransform: "capitalize" }}
+                                />
+                            ))}
+                        </Box>
+                    </Box>
 
                     <Divider />
 

@@ -5,10 +5,11 @@ import { PlatformBlank, PlatformItem } from "@pythias/mongo";
 import { BlanksComponent } from "@pythias/backend";
 export const dynamic = "force-dynamic";
 
-export default async function Blanks() {
+export default async function Blanks({ params }) {
     const session = await getServerSession(authOptions);
     if (!session) redirect("/login");
 
+    const { slug } = await params;
     const orgId = session.user.orgId;
 
     const blanks = await PlatformBlank.find({ orgId }).lean().catch(() => []);
@@ -28,6 +29,7 @@ export default async function Blanks() {
             blanks={JSON.parse(JSON.stringify(blanksWithSales))}
             mPs={[]}
             source="platform"
+            basePath={`/${slug}/admin/blanks`}
         />
     );
 }

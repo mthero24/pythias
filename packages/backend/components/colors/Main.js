@@ -40,7 +40,24 @@ const FAMILY_HUE = {
     grey: "#6b7280", orange: "#f97316", pink: "#ec4899", purple: "#8b5cf6",
     red: "#ef4444", white: "#9ca3af", yellow: "#f59e0b",
 };
-const BLANK = { name: "", hexcode: "#ffffff", color_type: "light", colorFamily: "" };
+const BLANK = { name: "", hexcode: "#ffffff", color_type: "light", colorFamily: "", sku: "" };
+
+function generateColorSku(name) {
+    if (!name) return "";
+    const n = name.trim();
+    const base = n.toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/light/g, "l")
+        .replace(/heather/g, "h")
+        .replace(/vintage/g, "v")
+        .replace(/ and /g, "")
+        .replace(/black/g, "bl")
+        .replace(/white/g, "wh")
+        .replace(/plaid/g, "pl")
+        .replace(/red/g, "re")
+        .replace(/top/g, "");
+    return base.substring(0, 7);
+}
 
 function textColor(c) { return c?.color_type === "dark" ? "#fff" : "#000"; }
 
@@ -233,9 +250,14 @@ export function Main({ colors: init }) {
                                             <Typography variant="body2" sx={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mb: 0.5, fontSize: "0.8rem" }}>
                                                 {c.name || "—"}
                                             </Typography>
-                                            <Typography sx={{ fontFamily: "monospace", fontSize: "0.67rem", color: "text.disabled", mb: 0.75, letterSpacing: 0.5 }}>
+                                            <Typography sx={{ fontFamily: "monospace", fontSize: "0.67rem", color: "text.disabled", mb: 0.25, letterSpacing: 0.5 }}>
                                                 {c.hexcode || "—"}
                                             </Typography>
+                                            {c.sku && (
+                                                <Typography sx={{ fontFamily: "monospace", fontSize: "0.67rem", color: "primary.main", mb: 0.5, fontWeight: 600 }}>
+                                                    {c.sku}
+                                                </Typography>
+                                            )}
                                             <Stack direction="row" flexWrap="wrap" gap={0.5}>
                                                 {c.colorFamily && (
                                                     <Chip label={c.colorFamily} size="small" sx={{
@@ -284,10 +306,23 @@ export function Main({ colors: init }) {
 
 function ColorDialog({ open, title, color, onClose, onSave }) {
     const [draft, setDraft] = useState(color ?? BLANK);
+    const [skuManual, setSkuManual] = useState(false);
 
-    useEffect(() => { setDraft(color ?? BLANK); }, [color, open]);
+    useEffect(() => {
+        const base = color ?? BLANK;
+        setDraft({ ...base, sku: base.sku || generateColorSku(base.name) });
+        setSkuManual(!!(color?.sku));
+    }, [color, open]);
 
     const set = (key, val) => setDraft(prev => ({ ...prev, [key]: val }));
+
+    const handleNameChange = (name) => {
+        setDraft(prev => ({
+            ...prev,
+            name,
+            sku: skuManual ? prev.sku : generateColorSku(name),
+        }));
+    };
 
     const isValidHex = /^#[0-9a-fA-F]{6}$/.test(draft.hexcode);
 
@@ -315,7 +350,14 @@ function ColorDialog({ open, title, color, onClose, onSave }) {
                     <TextField
                         fullWidth size="small" label="Name"
                         value={draft.name ?? ""}
-                        onChange={(e) => set("name", e.target.value)}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                    />
+                    <TextField
+                        fullWidth size="small" label="Color SKU"
+                        value={draft.sku ?? ""}
+                        onChange={(e) => { setSkuManual(true); set("sku", e.target.value.toLowerCase().replace(/\s+/g, "")); }}
+                        inputProps={{ maxLength: 12, style: { fontFamily: "monospace" } }}
+                        helperText="Auto-generated from name — edit to override"
                     />
                     <TextField
                         fullWidth size="small" label="Hex Code"

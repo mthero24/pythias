@@ -313,11 +313,10 @@ const ColorImageCard = ({ blank, color, allColors, setAllColors, setBlank, updat
                                     </Tooltip>
                                 )}
                             </Box>
-                            {img.name && (
-                                <Typography variant="caption" sx={{ display: "block", textAlign: "center", mt: 0.25, color: "text.secondary" }}>
-                                    {img.name}
-                                </Typography>
-                            )}
+                            <Box sx={{ display: "flex", justifyContent: "center", gap: 0.5, mt: 0.25 }}>
+                                {img.isModel && <Chip label="Model" size="small" color="info" sx={{ fontSize: "0.62rem", height: 16 }} />}
+                                {img.name && <Typography variant="caption" sx={{ color: "text.secondary" }}>{img.name}</Typography>}
+                            </Box>
                         </Grid2>
                     ))}
                     <Menu
@@ -608,6 +607,12 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                 setBlank(bla);
                                                 debouncedUpdate({blank: bla});
                                             }} />
+                                            <TextField label="Size Code (SKU)" size="small" fullWidth value={s.sku || generateSizeSku(s.name)} onChange={(e) => {
+                                                let bla = {...blank};
+                                                bla.sizes[i].sku = e.target.value;
+                                                setBlank(bla);
+                                                debouncedUpdate({blank: bla});
+                                            }} />
                                             <TextField label="Retail Price" size="small" fullWidth value={s.retailPrice} onChange={(e) => {
                                                 let bla = {...blank};
                                                 bla.sizes[i].retailPrice = e.target.value;
@@ -883,15 +888,28 @@ const BulletModal = ({ open, onClose, blank, setBlank, update }) => {
     )
 }
 
+const generateSizeSku = (name) => {
+    if (!name) return "";
+    const n = name.trim().toLowerCase().replace(/\s+/g, "").replace(/-/g, "");
+    const MAP = { small: "s", medium: "m", large: "l", xlarge: "xl", "2xlarge": "2xl", "3xlarge": "3xl", "4xlarge": "4xl", "5xlarge": "5xl", xxlarge: "2xl", xxxlarge: "3xl", xsmall: "xs" };
+    return MAP[n] ?? n.substring(0, 5);
+};
+
 const SizesModal = ({ open, onClose, blank, setBlank, update }) => {
-    const [size, setSize] = useState({name: "", retailPrice: "", wholesalePrice: "", weight: ""})
+    const [size, setSize] = useState({name: "", sku: "", retailPrice: "", wholesaleCost: "", wholesalePrice: "", weight: ""})
+    const [skuManual, setSkuManual] = useState(false);
     return (
         <Modal open={open} onClose={onClose}>
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 440, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 24, p: 4 }}>
                 <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Add Size</Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <TextField label="Name" fullWidth value={size.name} onChange={(e) => setSize({...size, name: e.target.value})} />
+                    <TextField label="Name" fullWidth value={size.name} onChange={(e) => {
+                        const n = e.target.value;
+                        setSize(s => ({ ...s, name: n, sku: skuManual ? s.sku : generateSizeSku(n) }));
+                    }} />
+                    <TextField label="Size Code (SKU)" fullWidth value={size.sku} onChange={(e) => { setSkuManual(true); setSize(s => ({ ...s, sku: e.target.value })); }} helperText="Auto-generated from name — edit to override" />
                     <TextField label="Retail Price" fullWidth value={size.retailPrice} onChange={(e) => setSize({...size, retailPrice: e.target.value})} />
+                    <TextField label="Wholesale Cost" fullWidth value={size.wholesaleCost} onChange={(e) => setSize({...size, wholesaleCost: e.target.value})} />
                     <TextField label="Wholesale Price" fullWidth value={size.wholesalePrice} onChange={(e) => setSize({...size, wholesalePrice: e.target.value})} />
                     <TextField label="Weight (oz)" fullWidth value={size.weight} onChange={(e) => setSize({...size, weight: e.target.value})} />
                 </Box>
@@ -901,7 +919,8 @@ const SizesModal = ({ open, onClose, blank, setBlank, update }) => {
                         let bla = {...blank};
                         if (!bla.sizes) bla.sizes = [];
                         bla.sizes.push(size);
-                        setSize({name: "", retailPrice: "", wholesalePrice: "", weight: ""});
+                        setSize({name: "", sku: "", retailPrice: "", wholesaleCost: "", wholesalePrice: "", weight: ""});
+                        setSkuManual(false);
                         setBlank(bla);
                         update({blank: bla});
                         onClose();

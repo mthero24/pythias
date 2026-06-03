@@ -22,6 +22,7 @@ const STRING_KEYS = [
     "channelengine.apiUrl", "channelengine.apiKey",
     "wasabi.keyId", "wasabi.secret", "wasabi.bucket", "wasabi.region",
     "dhl.accountNumber", "dhl.clientId", "dhl.clientSecret",
+    "gs1.apiKey", "gs1.secondaryKey", "gs1.accountNumber",
     "businessAddress.name", "businessAddress.businessName", "businessAddress.address1",
     "businessAddress.address2", "businessAddress.city", "businessAddress.state",
     "businessAddress.postalCode", "businessAddress.country", "businessAddress.emailAddress", "businessAddress.phone",

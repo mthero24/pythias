@@ -1,10 +1,10 @@
 "use client";
 import {
     Box, Grid2, Card, CardActionArea, Container, Typography, Divider,
-    Button, Chip, Stack, Paper, Avatar, Switch,
+    Button, Chip, Stack, Paper, Avatar, Switch, IconButton,
     Collapse, Table, TableHead, TableBody, TableRow, TableCell,
     TableContainer, CircularProgress, Alert, Tooltip, Select, MenuItem,
-    TextField,
+    TextField, Dialog, DialogTitle, DialogContent, DialogActions,
 } from "@mui/material";
 import Image from "next/image";
 import tiktok  from "./tiktoksm.jpeg";
@@ -32,9 +32,10 @@ import { TargetModal }  from "./TargetModal";
 import { EbayModal }    from "./EbayModal";
 import { NoonModal }    from "./NoonModal";
 import { BolModal }     from "./BolModal";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import SyncIcon from "@mui/icons-material/Sync";
@@ -68,6 +69,7 @@ const PLATFORMS = {
     wayfair:     { label: "Wayfair",          color: "#7B2D8B", description: "Pull purchase orders from Wayfair and confirm shipments via the Wayfair Supplier GraphQL API." },
     rithum:          { label: "Rithum",        color: "#1a1a2e", description: "Formerly ChannelAdvisor/DSCO — pull orders and sync products across Zulily and other Rithum-powered channels." },
     channelengine:   { label: "ChannelEngine", color: "#0078d7", description: "Omni-channel hub: sync products, pull orders, confirm shipments, and manage returns across all your channels via ChannelEngine." },
+    gs1:             { label: "GS1 US",        color: "#009a44", description: "Generate and manage GTINs/UPCs for your products via the GS1 US API. Required to assign valid UPCs when creating products." },
 };
 
 function platformColor(type) {
@@ -129,15 +131,17 @@ function PlatformCard({ logo, logoSrc, alt, name, description, onClick, href, co
     }
 
     if (connected) {
-        return (
+        const connectedCard = (
             <Card variant="outlined" sx={{
                 height: "100%", borderRadius: 2,
                 border: "1px solid #6ee7b7",
                 bgcolor: "#f0fdf4",
+                ...(href ? { transition: "box-shadow .15s, transform .15s", "&:hover": { boxShadow: "0 4px 16px rgba(0,0,0,.1)", transform: "translateY(-2px)" } } : {}),
             }}>
-                {inner}
+                {href ? <CardActionArea component={Link} href={href} sx={{ height: "100%" }}>{inner}</CardActionArea> : inner}
             </Card>
         );
+        return connectedCard;
     }
 
     if (href) {
@@ -2401,7 +2405,7 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected }) {
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp }) {
     const [tikTokOpen,  setTikTokOpen]  = useState(false);
     const [acendaOpen,  setAcendaOpen]  = useState(false);
     const [walmartOpen, setWalmartOpen] = useState(false);
@@ -2423,6 +2427,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const [ebayOpen,    setEbayOpen]    = useState(false);
     const [noonOpen,    setNoonOpen]    = useState(false);
     const [bolOpen,     setBolOpen]     = useState(false);
+    const [gs1Open,     setGs1Open]     = useState(false);
+    const [gs1IsConnected, setGs1IsConnected] = useState(!!gs1ConnectedProp);
     const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || []);
     const [tiktokConnections, setTiktokConnections] = useState(tiktokShops || []);
 
@@ -2679,6 +2685,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     {channelEngineConnected !== undefined && (
                         <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
                             <PlatformCard
+                                logoSrc="/channelengine.png" alt="ChannelEngine"
                                 name="ChannelEngine"
                                 description={PLATFORMS.channelengine.description}
                                 logoBg="#0078d7"
@@ -2687,14 +2694,24 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             />
                         </Grid2>
                     )}
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/gs1.png" alt="GS1 US"
+                            name="GS1 US"
+                            description={PLATFORMS.gs1.description}
+                            connected={gs1IsConnected}
+                            href={gs1IsConnected ? "/admin/integrations/gs1" : undefined}
+                            onClick={gs1IsConnected ? undefined : () => setGs1Open(true)}
+                        />
+                    </Grid2>
                 </Grid2>
 
                 {/* ── Active connections ── */}
                 <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2}>
-                    Active Connections ({allConnections.length + (channelEngineConnected ? 1 : 0)})
+                    Active Connections ({allConnections.length + (channelEngineConnected ? 1 : 0) + (gs1IsConnected ? 1 : 0)})
                 </Typography>
 
-                {allConnections.length === 0 && !channelEngineConnected ? (
+                {allConnections.length === 0 && !channelEngineConnected && !gs1IsConnected ? (
                     <Paper variant="outlined" sx={{
                         mt: 1, p: 5, borderRadius: 2, textAlign: "center",
                         border: "1px dashed #d1d5db",
@@ -2710,7 +2727,9 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                                     <Box sx={{ width: 6, bgcolor: "#0078d7", flexShrink: 0 }} />
                                     <Box sx={{ flexGrow: 1, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", px: 2.5, py: 2, gap: 2 }}>
                                         <Stack direction="row" alignItems="center" spacing={2}>
-                                            <Avatar sx={{ bgcolor: "#0078d7", width: 38, height: 38, fontSize: "0.75rem", fontWeight: 700 }}>CE</Avatar>
+                                            <Avatar sx={{ bgcolor: "#0078d7", width: 38, height: 38 }}>
+                                                <img src="/channelengine.png" alt="ChannelEngine" style={{ width: 28, height: 28, objectFit: "contain" }} />
+                                            </Avatar>
                                             <Box>
                                                 <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                                                     <Typography fontWeight={700} fontSize="0.95rem">ChannelEngine</Typography>
@@ -2729,6 +2748,38 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                                             sx={{ bgcolor: "#0078d7", "&:hover": { bgcolor: "#0078d7", filter: "brightness(0.88)" }, borderRadius: 1.5 }}
                                         >
                                             Manage
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            </Paper>
+                        )}
+                        {gs1IsConnected && (
+                            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                                <Box sx={{ display: "flex", alignItems: "stretch" }}>
+                                    <Box sx={{ width: 6, bgcolor: "#009a44", flexShrink: 0 }} />
+                                    <Box sx={{ flexGrow: 1, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", px: 2.5, py: 2, gap: 2 }}>
+                                        <Stack direction="row" alignItems="center" spacing={2}>
+                                            <Avatar sx={{ bgcolor: "#fff", border: "1px solid #e5e7eb", width: 38, height: 38 }}>
+                                                <img src="/gs1.png" alt="GS1 US" style={{ width: 30, height: 30, objectFit: "contain" }} />
+                                            </Avatar>
+                                            <Box>
+                                                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                                    <Typography fontWeight={700} fontSize="0.95rem">GS1 US</Typography>
+                                                    <Chip label="UPC/GTIN" size="small" sx={{ bgcolor: "#009a4418", color: "#009a44", fontWeight: 600, fontSize: "0.7rem" }} />
+                                                    <Chip label="Active" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem" }} />
+                                                </Stack>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    UPC generation enabled
+                                                </Typography>
+                                            </Box>
+                                        </Stack>
+                                        <Button
+                                            component={Link} href="/admin/integrations/gs1"
+                                            variant="outlined" size="small"
+                                            endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                                            sx={{ borderColor: "#009a44", color: "#009a44", "&:hover": { borderColor: "#007a35", bgcolor: "#009a4408" }, borderRadius: 1.5 }}
+                                        >
+                                            Dashboard
                                         </Button>
                                     </Box>
                                 </Box>
@@ -2777,6 +2828,89 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             <RakutenModal      open={rakutenOpen}      setOpen={setRakutenOpen}      provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <WayfairModal      open={wayfairOpen}      setOpen={setWayfairOpen}      provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <RithumModal       open={rithumOpen}       setOpen={setRithumOpen}       provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
+            <Gs1Modal open={gs1Open} setOpen={setGs1Open} onConnected={() => setGs1IsConnected(true)} />
         </Box>
+    );
+}
+
+function Gs1Modal({ open, setOpen, onConnected }) {
+    const [apiKey, setApiKey]               = useState("");
+    const [secondaryKey, setSecondaryKey]   = useState("");
+    const [accountNumber, setAccountNumber] = useState("");
+    const [saving, setSaving]               = useState(false);
+    const [error, setError]                 = useState("");
+    const loaded = useRef(false);
+
+    useEffect(() => {
+        if (open && !loaded.current) {
+            loaded.current = true;
+            fetch("/api/admin/settings/gs1").then(r => r.json()).then(d => {
+                if (!d.error && d.gs1) {
+                    setApiKey(d.gs1.apiKey ?? "");
+                    setSecondaryKey(d.gs1.secondaryKey ?? "");
+                    setAccountNumber(d.gs1.accountNumber ?? "");
+                }
+            });
+        }
+        if (!open) loaded.current = false;
+    }, [open]);
+
+    const save = async () => {
+        if (!apiKey) { setError("Primary API Key is required"); return; }
+        setSaving(true); setError("");
+        try {
+            const res = await fetch("/api/admin/settings/gs1", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ apiKey, secondaryKey, accountNumber }),
+            });
+            const d = await res.json();
+            if (d.error) { setError(d.msg ?? "Save failed"); }
+            else { onConnected?.(); setOpen(false); }
+        } catch { setError("Save failed"); }
+        finally { setSaving(false); }
+    };
+
+    return (
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <img src="/gs1.png" alt="GS1 US" style={{ height: 28, objectFit: "contain" }} />
+                    <span>GS1 US Settings</span>
+                </Stack>
+                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Enter your GS1 US credentials to enable GTIN/UPC generation. Products will not receive UPCs until this is configured.
+                    </Typography>
+                    <Button size="small" variant="text" href="https://www.gs1us.org/tools/gs1-company-database-gepir" target="_blank" rel="noopener noreferrer"
+                        endIcon={<OpenInNewIcon sx={{ fontSize: 12 }} />}
+                        sx={{ alignSelf: "flex-start", p: 0, fontSize: "0.72rem", color: "#009a44", minWidth: 0, textTransform: "none" }}>
+                        Get GS1 US API credentials
+                    </Button>
+                    {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
+                    <TextField fullWidth size="small" label="GS1 Primary API Key" type="password"
+                        value={apiKey} onChange={e => setApiKey(e.target.value)}
+                        helperText="Your GS1 US primary product key" autoComplete="off" />
+                    <TextField fullWidth size="small" label="GS1 Secondary Key" type="password"
+                        value={secondaryKey} onChange={e => setSecondaryKey(e.target.value)}
+                        helperText="Your GS1 US secondary product key" autoComplete="off" />
+                    <TextField fullWidth size="small" label="Account Number"
+                        value={accountNumber} onChange={e => setAccountNumber(e.target.value)}
+                        helperText="X-Product-Owner-Account-Id used in API requests" />
+                </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="contained" onClick={save} disabled={saving || !apiKey}
+                    sx={{ bgcolor: "#009a44", "&:hover": { bgcolor: "#007a35" } }}
+                    startIcon={saving ? <CircularProgress size={14} color="inherit" /> : null}
+                >
+                    Save
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 }

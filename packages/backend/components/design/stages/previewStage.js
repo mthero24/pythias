@@ -1,3 +1,4 @@
+"use client";
 import { Box, Grid2, TextField, Modal, Button, Typography, Card, CardContent, Chip, Stack, IconButton, Paper, Divider, FormControlLabel, Checkbox, List, ListItemText, Avatar, ListItemAvatar, ListItem, ImageList, ImageListItem } from "@mui/material";
 import LoaderOverlay from "../../reusable/LoaderOverlay";
 import DeleteIcon from '@mui/icons-material/Delete';

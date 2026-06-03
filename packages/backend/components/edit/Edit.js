@@ -37,7 +37,7 @@ const CATEGORY_META = {
     printLocations: { label: "Print Locations", Icon: LocationOnIcon,     color: "#f43f5e" },
 };
 
-export function Edit({ data }) {
+export function Edit({ data, priceFields = [] }) {
     const [values, setValues]           = useState(data);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [globalSearch, setGlobalSearch] = useState("");
@@ -51,9 +51,11 @@ export function Edit({ data }) {
         setDeleteTarget(null);
     };
 
-    const handleAdd = async (key, value, onSuccess) => {
+    const handleAdd = async (key, value, price, onSuccess) => {
         if (!value?.trim()) return;
-        const res = await axios.post("/api/admin/oneoffs", { type: key, value: value.trim() });
+        const body = { type: key, value: value.trim() };
+        if (price != null && price !== "") body.price = parseFloat(price);
+        const res = await axios.post("/api/admin/oneoffs", body);
         if (res.data.error) {
             alert(res.data.msg ?? "Error saving item");
         } else {
@@ -138,7 +140,8 @@ export function Edit({ data }) {
                                     list={filteredByGlobal}
                                     totalCount={list.length}
                                     globalQ={globalQ}
-                                    onAdd={(value, onSuccess) => handleAdd(key, value, onSuccess)}
+                                    showPrice={priceFields.includes(key)}
+                                    onAdd={(value, price, onSuccess) => handleAdd(key, value, price, onSuccess)}
                                     onDelete={(id, name) => setDeleteTarget({ type: key, id, name })}
                                 />
                             </Grid2>
@@ -171,9 +174,10 @@ export function Edit({ data }) {
     );
 }
 
-function CategoryCard({ categoryKey, meta, list, totalCount, globalQ, onAdd, onDelete }) {
+function CategoryCard({ categoryKey, meta, list, totalCount, globalQ, showPrice = false, onAdd, onDelete }) {
     const { label, Icon, color } = meta;
     const [addVal, setAddVal]   = useState("");
+    const [addPrice, setAddPrice] = useState("");
     const [search, setSearch]   = useState("");
     const inputRef              = useRef(null);
 
@@ -185,8 +189,9 @@ function CategoryCard({ categoryKey, meta, list, totalCount, globalQ, onAdd, onD
         : sorted;
 
     const handleAdd = () => {
-        onAdd(addVal, () => {
+        onAdd(addVal, showPrice ? addPrice : null, () => {
             setAddVal("");
+            setAddPrice("");
             inputRef.current?.focus();
         });
     };
@@ -215,28 +220,50 @@ function CategoryCard({ categoryKey, meta, list, totalCount, globalQ, onAdd, onD
 
             {/* Add input */}
             <Box sx={{ px: 2, pt: 1.5, pb: 1 }}>
-                <TextField
-                    inputRef={inputRef}
-                    size="small"
-                    fullWidth
-                    placeholder={`Add ${label.toLowerCase()}…`}
-                    value={addVal}
-                    onChange={(e) => setAddVal(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
-                    InputProps={{
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <Tooltip title="Add (Enter)">
-                                    <span>
-                                        <IconButton size="small" edge="end" onClick={handleAdd} disabled={!addVal.trim()} sx={{ color: addVal.trim() ? color : undefined }}>
-                                            <AddIcon fontSize="small" />
-                                        </IconButton>
-                                    </span>
-                                </Tooltip>
-                            </InputAdornment>
-                        ),
-                    }}
-                />
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <TextField
+                        inputRef={inputRef}
+                        size="small"
+                        fullWidth
+                        placeholder={`Add ${label.toLowerCase()}…`}
+                        value={addVal}
+                        onChange={(e) => setAddVal(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+                        InputProps={{
+                            endAdornment: !showPrice ? (
+                                <InputAdornment position="end">
+                                    <Tooltip title="Add (Enter)">
+                                        <span>
+                                            <IconButton size="small" edge="end" onClick={handleAdd} disabled={!addVal.trim()} sx={{ color: addVal.trim() ? color : undefined }}>
+                                                <AddIcon fontSize="small" />
+                                            </IconButton>
+                                        </span>
+                                    </Tooltip>
+                                </InputAdornment>
+                            ) : null,
+                        }}
+                    />
+                    {showPrice && (
+                        <TextField
+                            size="small"
+                            placeholder="+$"
+                            value={addPrice}
+                            onChange={(e) => setAddPrice(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
+                            sx={{ width: 80 }}
+                            inputProps={{ type: "number", min: 0, step: 0.01 }}
+                        />
+                    )}
+                    {showPrice && (
+                        <Tooltip title="Add (Enter)">
+                            <span>
+                                <IconButton size="small" onClick={handleAdd} disabled={!addVal.trim()} sx={{ color: addVal.trim() ? color : undefined }}>
+                                    <AddIcon fontSize="small" />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+                    )}
+                </Stack>
             </Box>
 
             <Divider />
@@ -279,7 +306,7 @@ function CategoryCard({ categoryKey, meta, list, totalCount, globalQ, onAdd, onD
                         {displayed.map((item, idx) => (
                             <Chip
                                 key={item._id ?? idx}
-                                label={item.name}
+                                label={item.price != null ? `${item.name} (+$${Number(item.price).toFixed(2)})` : item.name}
                                 size="small"
                                 onDelete={() => onDelete(item._id, item.name)}
                                 deleteIcon={<CloseIcon />}

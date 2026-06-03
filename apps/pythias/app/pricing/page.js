@@ -154,7 +154,7 @@ export default function PricingPage() {
                 <div className={`${s.glow} ${s.glow1}`} />
                 <div className={`${s.glow} ${s.glow2}`} />
                 <div className={s.wrap}>
-                    <p className={s.tag}>Pythias Fulfillment Cloud</p>
+                    <img src="/fullfilment_cloud_transparant.png" alt="Pythias Fulfillment Cloud" className={s.heroLogo} />
                     <h1 className={s.h1}>
                         Simple pricing that{" "}
                         <span className={s.accent}>scales with you.</span>

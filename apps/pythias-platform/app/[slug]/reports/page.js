@@ -687,6 +687,225 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
     );
 }
 
+function ForecastTab() {
+    const [revForecast,   setRevForecast]   = useState(null);
+    const [blkForecast,   setBlkForecast]   = useState(null);
+    const [revLoading,    setRevLoading]    = useState(false);
+    const [blkLoading,    setBlkLoading]    = useState(false);
+    const [revComputing,  setRevComputing]  = useState(false);
+    const [blkComputing,  setBlkComputing]  = useState(false);
+    const [horizon,       setHorizon]       = useState(90);
+
+    const loadRevForecast = useCallback(async (h) => {
+        setRevLoading(true);
+        try {
+            const res  = await fetch(`/api/admin/dashboard/forecast?horizon=${h ?? horizon}`);
+            const json = await res.json();
+            if (!json.notReady) setRevForecast(json);
+        } catch (e) { console.error(e); }
+        finally { setRevLoading(false); }
+    }, [horizon]);
+
+    const loadBlkForecast = useCallback(async () => {
+        setBlkLoading(true);
+        try {
+            const res  = await fetch("/api/admin/dashboard/blanks-forecast");
+            const json = await res.json();
+            if (!json.notReady) setBlkForecast(json);
+        } catch (e) { console.error(e); }
+        finally { setBlkLoading(false); }
+    }, []);
+
+    const computeRevForecast = async () => {
+        setRevComputing(true);
+        try {
+            const res  = await fetch(`/api/admin/dashboard/forecast?horizon=${horizon}`, { method: "POST" });
+            const json = await res.json();
+            setRevForecast(json);
+        } catch (e) { console.error(e); }
+        finally { setRevComputing(false); }
+    };
+
+    const computeBlkForecast = async () => {
+        setBlkComputing(true);
+        try {
+            const res  = await fetch("/api/admin/dashboard/blanks-forecast", { method: "POST" });
+            const json = await res.json();
+            setBlkForecast(json);
+        } catch (e) { console.error(e); }
+        finally { setBlkComputing(false); }
+    };
+
+    useEffect(() => { loadRevForecast(); loadBlkForecast(); }, [loadRevForecast, loadBlkForecast]);
+
+    const revFormatter = (v) => `$${(v ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+    const best = revForecast?.best;
+    const proj = revForecast?.projections?.[best] ?? revForecast?.projections?.linear ?? {};
+    const models = revForecast?.models ?? {};
+    const combined = revForecast?.combined ?? [];
+
+    // Build chart series from available models
+    const MODEL_COLORS = { linear: "#2196f3", exponentialSmoothing: "#4caf50", movingAverage: "#ff9800", chronos: "#9c27b0", prophet: "#e91e63" };
+    const MODEL_LABELS = { linear: "Linear", exponentialSmoothing: "Exp. Smoothing", movingAverage: "Moving Avg", chronos: "Chronos AI", prophet: "Prophet" };
+
+    const chartDataset = combined.map(pt => ({ ...pt, date: pt.date?.slice(0, 10) }));
+    const availModels  = Object.keys(MODEL_COLORS).filter(k => combined.some(pt => pt[k] != null));
+
+    const blkRows = blkForecast?.rows ?? [];
+    const needsReorder = blkRows.filter(r => r.needsReorder);
+
+    const blkColumns = [
+        { key: "styleCode", label: "Style" },
+        { key: "colorName", label: "Color" },
+        { key: "sizeName",  label: "Size"  },
+        { key: "onHand",    label: "On Hand",    align: "right" },
+        { key: "last30",    label: "Last 30d",   align: "right" },
+        { key: "avgMonthly",label: "Avg/Mo",     align: "right", render: (r) => r.avgMonthly?.toFixed(1) ?? "—" },
+        { key: "suggested", label: "Suggested",  align: "right", render: (r) => r.suggested > 0 ? <Typography variant="body2" color="warning.main" fontWeight={600}>{r.suggested}</Typography> : r.suggested },
+        { key: "orderValue",label: "Order Value", align: "right", render: (r) => r.orderValue > 0 ? fmt(r.orderValue) : "—" },
+        { key: "needsReorder", label: "Status",  render: (r) => r.needsReorder
+            ? <Chip size="small" label="Reorder" color="error" />
+            : <Chip size="small" label="OK" color="success" variant="outlined" /> },
+    ];
+
+    return (
+        <>
+            {/* Revenue Forecast */}
+            <Box sx={{ mb: 4 }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }} flexWrap="wrap" gap={1}>
+                    <Typography variant="subtitle1" fontWeight={700}>Revenue Forecast</Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <FormControl size="small" sx={{ minWidth: 140 }}>
+                            <Select value={horizon} onChange={(e) => { setHorizon(e.target.value); loadRevForecast(e.target.value); }}>
+                                {[30, 60, 90, 180, 365].map(d => <MenuItem key={d} value={d}>{d} days out</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                        <Button size="small" variant="contained" onClick={computeRevForecast} disabled={revComputing}>
+                            {revComputing ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+                            {revComputing ? "Computing…" : "Run Forecast"}
+                        </Button>
+                    </Stack>
+                </Stack>
+
+                {revLoading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress /></Box>
+                ) : !revForecast ? (
+                    <Paper variant="outlined" sx={{ p: 4, textAlign: "center" }}>
+                        <AutoGraphIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
+                        <Typography color="text.secondary" variant="body2">No forecast computed yet. Click "Run Forecast" to generate projections.</Typography>
+                    </Paper>
+                ) : (
+                    <>
+                        <Grid2 container spacing={2} sx={{ mb: 2 }}>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Next 7 Days"   value={fmt(proj.week)}    /></Grid2>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Next 30 Days"  value={fmt(proj.month)}   /></Grid2>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Next 90 Days"  value={fmt(proj.quarter)} /></Grid2>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Next 365 Days" value={fmt(proj.year)}    sub={best ? `Best model: ${MODEL_LABELS[best] ?? best}` : undefined} /></Grid2>
+                        </Grid2>
+
+                        <Grid2 container spacing={2} sx={{ mb: 2 }}>
+                            <Grid2 size={{ xs: 12, md: 8 }}>
+                                <ChartCard title="Revenue — Historical + Forecast" minH={300}>
+                                    {chartDataset.length > 0 ? (
+                                        <LineChart
+                                            dataset={chartDataset}
+                                            xAxis={[{ dataKey: "date", scaleType: "band", tickLabelStyle: { fontSize: 9 }, tickMinStep: 7 }]}
+                                            series={[
+                                                { dataKey: "actual", label: "Actual", color: "#111827", valueFormatter: revFormatter },
+                                                ...availModels.map(k => ({
+                                                    dataKey: k,
+                                                    label: MODEL_LABELS[k] ?? k,
+                                                    color: MODEL_COLORS[k],
+                                                    valueFormatter: revFormatter,
+                                                    strokeDasharray: k === best ? undefined : "4 2",
+                                                })),
+                                            ]}
+                                            height={300}
+                                            margin={{ left: 72, right: 16, top: 16, bottom: 40 }}
+                                            yAxis={[{ valueFormatter: revFormatter }]}
+                                        />
+                                    ) : <NoData />}
+                                </ChartCard>
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, md: 4 }}>
+                                <ChartCard title="Model Accuracy (RMSE)" minH={300}>
+                                    {Object.keys(models).length > 0 ? (
+                                        <Box sx={{ pt: 1 }}>
+                                            {Object.entries(models).map(([k, m]) => (
+                                                <Box key={k} sx={{ mb: 1.5 }}>
+                                                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                                                            <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: MODEL_COLORS[k] ?? "#999" }} />
+                                                            <Typography variant="caption" fontWeight={k === best ? 700 : 400}>
+                                                                {MODEL_LABELS[k] ?? k}{k === best ? " ★" : ""}
+                                                            </Typography>
+                                                        </Stack>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            RMSE: {m.rmse != null ? `$${m.rmse.toFixed(0)}` : "—"}
+                                                        </Typography>
+                                                    </Stack>
+                                                    <LinearProgress
+                                                        variant="determinate"
+                                                        value={100 - Math.min(100, ((m.rmse ?? 0) / (Math.max(...Object.values(models).map(x => x.rmse ?? 0)) || 1)) * 100)}
+                                                        sx={{ mt: 0.5, height: 6, borderRadius: 3, bgcolor: "grey.100", "& .MuiLinearProgress-bar": { bgcolor: MODEL_COLORS[k] ?? "#999" } }}
+                                                    />
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    ) : <NoData />}
+                                </ChartCard>
+                            </Grid2>
+                        </Grid2>
+                    </>
+                )}
+            </Box>
+
+            {/* Blank Inventory Forecast */}
+            <Box>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }} flexWrap="wrap" gap={1}>
+                    <Typography variant="subtitle1" fontWeight={700}>Blank Inventory Forecast</Typography>
+                    <Button size="small" variant="contained" onClick={computeBlkForecast} disabled={blkComputing}>
+                        {blkComputing ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
+                        {blkComputing ? "Computing…" : "Run Forecast"}
+                    </Button>
+                </Stack>
+
+                {blkLoading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress /></Box>
+                ) : !blkForecast ? (
+                    <Paper variant="outlined" sx={{ p: 4, textAlign: "center" }}>
+                        <AutoGraphIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
+                        <Typography color="text.secondary" variant="body2">No inventory forecast computed yet. Click "Run Forecast" to analyze reorder needs.</Typography>
+                    </Paper>
+                ) : (
+                    <>
+                        <Grid2 container spacing={2} sx={{ mb: 2 }}>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="SKUs Needing Reorder" value={fmtN(blkForecast.needsReorderCount)} color="error.main" /></Grid2>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Total Suggested Units" value={fmtN(blkForecast.totalSuggestedUnits)} /></Grid2>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Est. Order Value"      value={fmt(blkForecast.totalOrderValue)} color="warning.main" /></Grid2>
+                            <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Total SKUs Analyzed"   value={fmtN(blkRows.length)} /></Grid2>
+                        </Grid2>
+
+                        <Paper variant="outlined" sx={{ mb: 2 }}>
+                            <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                                <Typography variant="subtitle2" fontWeight={600}>SKUs Needing Reorder ({needsReorder.length})</Typography>
+                            </Box>
+                            <SortableTable columns={blkColumns} rows={needsReorder} defaultSort="orderValue" defaultDir="desc" />
+                        </Paper>
+
+                        <Paper variant="outlined">
+                            <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                                <Typography variant="subtitle2" fontWeight={600}>All SKUs</Typography>
+                            </Box>
+                            <SortableTable columns={blkColumns} rows={blkRows} defaultSort="avgMonthly" defaultDir="desc" />
+                        </Paper>
+                    </>
+                )}
+            </Box>
+        </>
+    );
+}
+
 function BlanksTab({ blanks, loading }) {
     const totalQty  = useMemo(() => blanks.reduce((s, r) => s + r.qty, 0), [blanks]);
     const totalCogs = useMemo(() => blanks.reduce((s, r) => s + r.totalCogs, 0), [blanks]);
@@ -1053,6 +1272,7 @@ export default function ReportsPage() {
                         <Tab icon={<PrecisionManufacturingIcon fontSize="small" />} iconPosition="start" label="Production" />
                         <Tab icon={<AttachMoneyIcon fontSize="small" />}            iconPosition="start" label="Costs" />
                         <Tab icon={<CategoryIcon fontSize="small" />}              iconPosition="start" label="Blanks" />
+                        <Tab icon={<AutoGraphIcon fontSize="small" />}            iconPosition="start" label="Forecast" />
                     </Tabs>
                 </Box>
 
@@ -1100,6 +1320,7 @@ export default function ReportsPage() {
                             />
                         )}
                         {tab === 4 && <BlanksTab blanks={blanksRows} loading={blanksLoading} />}
+                        {tab === 5 && <ForecastTab />}
                     </>
                 )}
 

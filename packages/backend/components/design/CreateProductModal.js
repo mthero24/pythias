@@ -54,7 +54,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         if(product) {
             let prods = []
             let prod = {...product}
-            if(prod?.blanks.length > 1) setCombined(true);
+            if(prod?.blanks?.length > 1) setCombined(true);
             if(prod && prod._id)prods.push(prod);
             setProducts(prods);
         }

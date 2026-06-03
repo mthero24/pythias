@@ -8,7 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import { Avatar, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import Image from "next/image";
-import LogoImg from "../public/logo_vertical.png";
+import LogoImg from "../public/fullfilment_cloud_transparant.png";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -36,7 +36,22 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import PaymentIcon from "@mui/icons-material/Payment";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import PeopleIcon   from "@mui/icons-material/People";
+import PeopleIcon from "@mui/icons-material/People";
+import LocalPrintshopIcon from "@mui/icons-material/LocalPrintshop";
+import LabelIcon from "@mui/icons-material/Label";
+import PaletteIcon from "@mui/icons-material/Palette";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
+import DesignServicesIcon from "@mui/icons-material/DesignServices";
+import DownloadIcon from "@mui/icons-material/Download";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import GavelIcon from "@mui/icons-material/Gavel";
+import TuneIcon from "@mui/icons-material/Tune";
+import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 
 const DRAWER_WIDTH = 268;
 const SIDEBAR_BG = "#1a1f2e";
@@ -60,45 +75,62 @@ function buildSections(base) {
         {
             label: "Catalog",
             items: [
-                { label: "Blanks",    path: "admin/blanks",    icon: <CheckroomIcon fontSize="small" /> },
-                { label: "Designs",   path: "admin/designs",   icon: <BrushIcon fontSize="small" /> },
-                { label: "Products",  path: "products",        icon: <InventoryIcon fontSize="small" /> },
+                { label: "Blanks",            path: "admin/blanks",            icon: <CheckroomIcon fontSize="small" /> },
+                { label: "Colors",            path: "admin/colors",            icon: <PaletteIcon fontSize="small" /> },
+                { label: "Designs",           path: "admin/designs",           icon: <BrushIcon fontSize="small" /> },
+                { label: "Design Templates",  path: "admin/design-templates",  icon: <DesignServicesIcon fontSize="small" /> },
+                { label: "Products",          path: "products",                icon: <InventoryIcon fontSize="small" /> },
+                { label: "Converters",        path: "admin/converters",        icon: <CompareArrowsIcon fontSize="small" /> },
+                { label: "Downloads",         path: "admin/downloads",         icon: <DownloadIcon fontSize="small" /> },
+                { label: "Edit Data",         path: "admin/edit-data",         icon: <TuneIcon fontSize="small" /> },
             ],
         },
         {
             label: "Orders",
             items: [
-                { label: "Orders", path: "orders", icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Orders",             path: "orders",             icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Marketplaces",       path: "marketplaces",       icon: <StorefrontIcon fontSize="small" /> },
+                { label: "Inventory",          path: "inventory",          icon: <WarehouseIcon fontSize="small" /> },
+                { label: "Product Inventory",  path: "inventory/product",  icon: <InventoryIcon fontSize="small" /> },
             ],
         },
         {
             label: "Production",
             items: [
-                { label: "Print Labels", path: "production/print-labels",  icon: <PrintIcon fontSize="small" /> },
-                { label: "Bulk Orders",  path: "production/bulk",          icon: <ViewListIcon fontSize="small" /> },
-                { label: "Load DTF",     path: "production/dtf-send",      icon: <FileUploadIcon fontSize="small" /> },
-                { label: "Find DTF",     path: "production/dtf-find",      icon: <FindInPageIcon fontSize="small" /> },
-                { label: "Embroidery",   path: "production/embroidery",    icon: <AutoFixHighIcon fontSize="small" /> },
-                { label: "Sublimation",  path: "production/sublimation",   icon: <PhotoCameraIcon fontSize="small" /> },
-                { label: "Folder",       path: "production/roq-folder",    icon: <FolderIcon fontSize="small" /> },
-                { label: "Ship Orders",  path: "production/shipping",      icon: <LocalShippingIcon fontSize="small" /> },
-                { label: "Returns",      path: "production/returns",       icon: <AssignmentReturnIcon fontSize="small" /> },
+                { label: "Print Labels",    path: "production/print-labels",   icon: <PrintIcon fontSize="small" /> },
+                { label: "Bulk Orders",     path: "production/bulk",           icon: <ViewListIcon fontSize="small" /> },
+                { label: "Load DTF",        path: "production/dtf-send",       icon: <FileUploadIcon fontSize="small" /> },
+                { label: "Find DTF",        path: "production/dtf-find",       icon: <FindInPageIcon fontSize="small" /> },
+                { label: "GTX",             path: "production/gtx",            icon: <LocalPrintshopIcon fontSize="small" /> },
+                { label: "Embroidery",      path: "production/embroidery",     icon: <AutoFixHighIcon fontSize="small" /> },
+                { label: "Sublimation",     path: "production/sublimation",    icon: <PhotoCameraIcon fontSize="small" /> },
+                { label: "Folder",          path: "production/roq-folder",     icon: <FolderIcon fontSize="small" /> },
+                { label: "Ship Orders",     path: "production/shipping",       icon: <LocalShippingIcon fontSize="small" /> },
+                { label: "Ship Labels",     path: "production/shipping-labels", icon: <LabelIcon fontSize="small" /> },
+                { label: "Returns",         path: "production/returns",        icon: <AssignmentReturnIcon fontSize="small" /> },
             ],
         },
         {
             label: "Account",
             items: [
-                { label: "Reports",            path: "reports",           icon: <BarChartIcon fontSize="small" /> },
-                { label: "Integrations",       path: "integrations",      icon: <IntegrationInstructionsIcon fontSize="small" /> },
-                { label: "Users",              path: "users",             icon: <PeopleIcon fontSize="small" /> },
-                { label: "Settings",           path: "settings",          icon: <SettingsIcon fontSize="small" /> },
-                { label: "Billing",            path: "billing",           icon: <PaymentIcon fontSize="small" /> },
+                { label: "Reports",       path: "reports",            icon: <BarChartIcon fontSize="small" /> },
+                { label: "Analytics",     path: "admin/analytics",    icon: <TimelineIcon fontSize="small" /> },
+                { label: "Sales",         path: "admin/sales",        icon: <TrendingUpIcon fontSize="small" /> },
+                { label: "Integrations",  path: "integrations",       icon: <IntegrationInstructionsIcon fontSize="small" /> },
+                { label: "Track Labels",  path: "admin/track-labels", icon: <TrackChangesIcon fontSize="small" /> },
+                { label: "Licenses",      path: "admin/license",      icon: <GavelIcon fontSize="small" /> },
+                { label: "Users",         path: "users",              icon: <PeopleIcon fontSize="small" /> },
+                { label: "Settings",          path: "settings",          icon: <SettingsIcon fontSize="small" /> },
+                { label: "Shipping & Hardware", path: "settings/shipping", icon: <LocalShippingIcon fontSize="small" /> },
+                { label: "Billing",           path: "billing",           icon: <PaymentIcon fontSize="small" /> },
+                { label: "Support",           path: "support",           icon: <SupportAgentIcon fontSize="small" /> },
             ],
         },
         {
             label: "Help",
             items: [
-                { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <MenuBookIcon fontSize="small" />, target: "_blank" },
+                { label: "Guides",       path: "guides",          icon: <MenuBookIcon fontSize="small" /> },
+                { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <IntegrationInstructionsIcon fontSize="small" />, target: "_blank" },
             ],
         },
     ].map(section => ({
@@ -130,6 +162,7 @@ export default function Navbar() {
                     backgroundColor: "#0f172a",
                     borderBottom: "1px solid rgba(255,255,255,0.07)",
                     color: "#fff",
+                    mb: 2,
                 }}
             >
                 <Toolbar sx={{ minHeight: "56px !important", px: { xs: 1.5, sm: 2 } }}>
@@ -148,8 +181,8 @@ export default function Navbar() {
                         <Image
                             src={LogoImg}
                             alt="Pythias Technologies"
-                            width={100}
-                            height={46}
+                            width={160}
+                            height={74}
                             priority
                             style={{ height: "auto" }}
                         />
@@ -215,11 +248,17 @@ function NavDrawer({ open, onClose, initials, base, pathname, session, org }) {
             }}
         >
             {/* Header */}
-            <Box sx={{ px: 2.5, py: 2, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <Box sx={{ px: 2.5, pt: 2.5, pb: 2, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <Box sx={{ mb: 1.5, display: "flex", justifyContent: "center" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/fullfilment_cloud_transparant.png" alt="Pythias Technologies" style={{ width: "80%", maxWidth: 200, height: "auto" }} />
+                </Box>
                 <Link href={`${base}/dashboard`} onClick={onClose} style={{ textDecoration: "none" }}>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#fff" }}>
-                        {org?.name ?? "Pythias"}
-                    </Typography>
+                    {org?.name && (
+                        <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#fff" }}>
+                            {org.name}
+                        </Typography>
+                    )}
                     {org?.tier && (
                         <Typography variant="caption" sx={{ color: SIDEBAR_TEXT_DIM, textTransform: "capitalize" }}>
                             {org.tier} plan

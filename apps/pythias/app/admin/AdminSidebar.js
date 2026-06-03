@@ -20,6 +20,7 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import AppsIcon from "@mui/icons-material/Apps";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import Link from "next/link";
 
 const DRAWER_WIDTH = 240;
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
     { label: "Service Invoices", href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" /> },
     { label: "Kling Invoices",   href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" /> },
     { label: "Finance",          href: "/admin/finance",          icon: <TrendingUpIcon fontSize="small" /> },
+    { label: "Support Tickets", href: "/admin/support-tickets", icon: <SupportAgentIcon fontSize="small" /> },
 ];
 
 function SidebarContent({ onClose }) {

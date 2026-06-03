@@ -18,7 +18,7 @@ import {useState, useMemo, useRef} from "react";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import axios from "axios"
 
-export function BlanksComponent({blanks, mPs, source}){
+export function BlanksComponent({blanks, mPs, source, basePath = "/admin/blanks"}){
     const [blank, setBlank] = useState({})
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [marketplaceModal, setMarketplaceModal] = useState(false)
@@ -111,7 +111,7 @@ export function BlanksComponent({blanks, mPs, source}){
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                         <Button variant="outlined" onClick={() => setAliasOpen(true)}>Alias / Combined</Button>
                         <Button variant="outlined" startIcon={<AutoAwesomeIcon />} onClick={() => { setClassifyOpen(true); setClassifyLog([]); setClassifySummary(null); runClassify(); }}>Classify Model Images</Button>
-                        <Button variant="contained" color="primary" startIcon={<AddIcon />} href="/admin/blanks/create">Create Blank</Button>
+                        <Button variant="contained" color="primary" startIcon={<AddIcon />} href={`${basePath}/create`}>Create Blank</Button>
                     </Box>
                 </Box>
 
@@ -220,7 +220,7 @@ export function BlanksComponent({blanks, mPs, source}){
                                                 <Button fullWidth size="small" variant="contained" startIcon={<StorefrontIcon />} onClick={() => { setBlank(b); setMarketplaceModal(true) }}>Markets</Button>
                                                 {b.type !== "alias" && <Button fullWidth size="small" variant="outlined" startIcon={<BuildIcon />} href={`/admin/blanks/production/${b._id}`} target="_blank">Production</Button>}
                                             </Stack>
-                                            <Button fullWidth size="small" variant="outlined" startIcon={<EditIcon />} href={`/admin/blanks/create?id=${b._id}`} target="_blank">Edit</Button>
+                                            <Button fullWidth size="small" variant="outlined" startIcon={<EditIcon />} href={`${basePath}/create?id=${b._id}`} target="_blank">Edit</Button>
                                         </Stack>
                                     </CardContent>
                                 </Card>
@@ -549,7 +549,7 @@ const AliasModal = ({blanks, open, setOpen}) => {
                             if (!options.code) options.code = selectedBlanks.map(b => b?.code).join("-")
                             let res = await axios.post("/api/admin/blanks/alias", {options, selectedBlanks, sizesToUse, colorsToUse})
                             if (res?.data && !res.data.error) {
-                                location.href = `/admin/blanks/create?id=${res.data.blank._id}`
+                                location.href = `${basePath}/create?id=${res.data.blank._id}`
                             }
                         }}>Create Alias</Button>
                         <Button fullWidth variant="outlined" onClick={() => setOpen(false)}>Cancel</Button>

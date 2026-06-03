@@ -94,6 +94,13 @@ const updateInventory = async (blank) => {
   if (ops.length > 0) await Inventory.bulkWrite(ops, { ordered: false });
 };
 
+const generateSizeSku = (name) => {
+  if (!name) return "";
+  const n = name.trim().toLowerCase().replace(/\s+/g, "").replace(/-/g, "");
+  const MAP = { small: "s", medium: "m", large: "l", xlarge: "xl", "2xlarge": "2xl", "3xlarge": "3xl", "4xlarge": "4xl", "5xlarge": "5xl", xxlarge: "2xl", xxxlarge: "3xl", xsmall: "xs" };
+  return MAP[n] ?? n.substring(0, 5);
+};
+
 export async function POST(req = NextApiRequest) {
   const token = await getToken({ req });
   const { userName, email } = userFromToken(token);
@@ -101,7 +108,7 @@ export async function POST(req = NextApiRequest) {
   let newBlank;
   try {
     for (const s of blank.sizes) {
-      s.sku = s.name.includes(" ") ? s.name.split(" ").map(w => w[0]).join("") : s.name;
+      if (!s.sku) s.sku = generateSizeSku(s.name);
     }
 
     if (blank._id) {

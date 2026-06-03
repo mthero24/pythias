@@ -211,3 +211,7 @@ export { BolModal } from "./components/BolModal";
 export { getRithumOrders, shipRithumOrder, createRithumProduct, updateRithumProduct } from "./functions/rithum";
 export { handleRithumSendPOST, handleRithumOrdersGET, handleRithumOrdersPOST } from "./handlers/rithum";
 export { RithumModal } from "./components/RithumModal";
+
+// gs1
+export { handleGs1DashboardGET } from "./handlers/gs1";
+export { Gs1Dashboard } from "./components/Gs1Dashboard";

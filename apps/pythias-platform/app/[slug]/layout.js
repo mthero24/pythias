@@ -5,7 +5,7 @@ import { Organization } from "@pythias/mongo";
 import Navbar from "@/components/Navbar";
 import OrgProvider from "@/components/OrgProvider";
 import UsageAlertBanner from "@/components/UsageAlertBanner";
-import { FloatingChat } from "@pythias/backend";
+import { FloatingChat, CSVProvider } from "@pythias/backend";
 
 export default async function DashboardLayout({ children, params }) {
     const session = await getServerSession(authOptions);
@@ -33,12 +33,14 @@ export default async function DashboardLayout({ children, params }) {
 
     return (
         <OrgProvider org={orgData} user={session.user}>
-            <Navbar />
-            <UsageAlertBanner org={orgData} />
-            <main style={{ minHeight: "calc(100vh - 64px)" }}>
-                {children}
-            </main>
-            <FloatingChat />
+            <CSVProvider>
+                <Navbar />
+                <UsageAlertBanner org={orgData} />
+                <main style={{ minHeight: "calc(100vh - 64px)" }}>
+                    {children}
+                </main>
+                <FloatingChat />
+            </CSVProvider>
         </OrgProvider>
     );
 }

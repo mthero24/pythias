@@ -1,0 +1,62 @@
+import {PlatformProduct as Products, PlatformProductInventory as ProductInventory, PlatformItem as Item, PlatformInventory as Inventory} from "@pythias/mongo"
+import {NextApiRequest, NextResponse} from "next/server";
+import { logActivity } from "@pythias/backend/server";
+
+export async function POST(req=NextApiRequest){
+    let data = await req.json()
+    console.log(data)
+    let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: data.upc } } }, { variantsArray: { $elemMatch: { upc: data.upc } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
+    console.log(product, "product found in returns bin route")
+    if(product){
+        let variant = product.variantsArray.find(v => v.sku === data.upc || v.upc === data.upc)
+        console.log(variant, "variant found")
+        let productInventory = await ProductInventory.findOne({ sku: variant.sku })
+        console.log(productInventory, "productInventory")
+        productInventory.quantity = 0
+        await productInventory.save()
+        logActivity({ action: "out_of_stock", entity: "inventory", entityId: productInventory._id, entityName: variant.sku || data.upc || "", provider: "premierPrinting" });
+        return NextResponse.json({ error: false, msg: "Inventory created and updated", productInventory: productInventory, variant })
+    }
+    return NextResponse.json({error: true, msg: "Look up SKU or UPC on the design page!!!"})
+
+}
+export async function PUT(req = NextApiRequest) {
+    let data = await req.json()
+    console.log(data)
+    let item = await Item.findOne({ pieceId: data.upc })
+    if(item){
+        item.inventory.inventoryType = "inventory"
+        item.inventory.productInventory = null
+        item.inventory.inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size })
+        if(!item.inventory.inventory){
+            item.inventory.inventory = await Inventory.findOne({
+                style_code: item.blankCode,
+                color_name: item.colorName,
+                size_name: item.sizeName,
+            })
+        }    
+        console.log(item.inventory.inventory, "inventory assigned to item")      
+        if(item.inventory.inventory && item.inventory.inventory.quantity > 0 && item.inventory.inventory.quantity > item.inventory.inventory.inStock.length){
+            item.inventory.inventory.inStock.push(item._id.toString())
+            await item.inventory.inventory.save()
+        }else if(item.inventory.inventory){
+            item.inventory.inventory.attached.push(item._id.toString())
+            await item.inventory.inventory.save()
+        }
+        item.labelPrinted = false
+        item.steps.push({ status: "sent to production", date: new Date() })
+        await item.save()
+        let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: item.sku } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
+        console.log(product, "product found in returns bin route")
+        if (product) {
+            let variant = product.variantsArray.find(v => v.sku === item.sku || v.upc === item.upc)
+            let productInventory = await ProductInventory.findOne({ sku: variant.sku })
+            console.log(productInventory, "productInventory")
+            productInventory.quantity = 0
+            await productInventory.save()
+            return NextResponse.json({ error: false, msg: "Inventory created and updated", productInventory: productInventory, variant })
+        }
+    }
+    return NextResponse.json({ error: true, msg: "Look up SKU or UPC on the design page!!!" })
+
+}

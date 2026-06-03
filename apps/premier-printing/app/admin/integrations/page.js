@@ -1,5 +1,5 @@
 import {Main} from "@pythias/integrations";
-import {TikTokAuth, ApiKeyIntegrations} from "@pythias/mongo";
+import {TikTokAuth, ApiKeyIntegrations, Settings} from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import crypto from "crypto";
 export const dynamic = 'force-dynamic';
@@ -40,5 +40,7 @@ export default async function Integrations(){
 
     const etsyRedirectURI = buildEtsyRedirectURI();
     const hasChannelEngine = !!(process.env.ChannelEnginAPIURL && process.env.ChannelEnginAPIKey);
-    return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI} shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"} channelEngineConnected={hasChannelEngine} />;
+    const gs1ApiKeyDoc = await Settings.findOne({ key: "gs1.apiKey" }).lean();
+    const hasGs1 = !!(gs1ApiKeyDoc?.value);
+    return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI} shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"} channelEngineConnected={hasChannelEngine} gs1Connected={hasGs1} />;
 }

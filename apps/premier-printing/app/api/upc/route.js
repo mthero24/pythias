@@ -1,5 +1,5 @@
 import {NextApiRequest, NextResponse} from "next/server";
-import {SkuToUpc as UpcToSku} from "@pythias/mongo";
+import {SkuToUpc as UpcToSku, Settings} from "@pythias/mongo";
 let sizeConverter = {
     XSmall: "XS",
     XXSmall: "XXS",
@@ -25,6 +25,8 @@ export async function GET(req){
     //makke a change
 }
 export async function POST(req=NextApiRequest){
+    const gs1Setting = await Settings.findOne({ key: "gs1.apiKey" }).lean();
+    if (!gs1Setting?.value) return NextResponse.json({ error: false, upcs: [] });
     let data = await req.json()
     if(data.count){
         //console.log("Getting temp upcs", data.count)

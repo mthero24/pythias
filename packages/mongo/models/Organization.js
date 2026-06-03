@@ -39,6 +39,15 @@ const schema = new mongoose.Schema({
         logoUrl: { type: String },
         primaryColor: { type: String },
         bulkThreshold: { type: Number, default: 5 },
+        skuFormat: {
+            parts: { type: [String], default: ["blank.code", "color.sku", "size.sku", "design.sku"] },
+            separator: { type: String, default: "_" },
+        },
+        gs1: {
+            apiKey: { type: String },
+            secondaryKey: { type: String },
+            accountNumber: { type: String },
+        },
     },
     trialEndsAt: { type: Date },
     createdAt: { type: Date, default: Date.now },

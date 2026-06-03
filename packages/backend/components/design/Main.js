@@ -55,7 +55,7 @@ const SectionCard = ({ icon, title, subtitle, children, action }) => (
     </Card>
 );
 
-export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport, printTypes, canEdit = true }) {
+export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLocations, seas, gen, CreateSku, source, them, sport, printTypes, canEdit = true, designsPath = "/admin/designs" }) {
     const router = useRouter();
     const [des, setDesign] = useState({ ...design });
     const originalDesign = useRef({ ...design });
@@ -86,7 +86,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [copied, setCopied] = useState(false);
     const [sublimationOpen, setSublimationOpen] = useState(false);
     const { setShow } = useCSV();
-    setShow(true);
+
+    useEffect(() => { setShow(true); }, []);
 
     useEffect(() => {
         if (!reload) setReload(!reload);
@@ -310,7 +311,12 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
 
     let updateDesign = async (des, oldSku) => {
         if (!canEdit) return;
-        let res = await axios.put("/api/admin/designs", { design: { ...des }, oldSku, before: originalDesign.current }).catch(e => { res = e.response; });
+        let res;
+        try {
+            res = await axios.put("/api/admin/designs", { design: { ...des }, oldSku, before: originalDesign.current });
+        } catch (e) {
+            res = e.response;
+        }
         if (res?.data?.error) alert(res.data.msg);
         else originalDesign.current = { ...des };
     };
@@ -357,7 +363,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const deleteDesign = async () => {
         let res = await axios.delete(`/api/admin/designs?design=${des._id}`);
         if (res.data.error) alert(res.data.msg);
-        else router.push("/admin/designs");
+        else router.push(designsPath);
     };
 
     async function copyTextToClipboard(text) {
@@ -372,8 +378,12 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
         await axios.post(`/api/admin/designs/releaseUPCs`, {});
     }
 
-    // Collect all images to display
-    const designImages = imageLocations
+    // Collect all images to display — include any keys in des.images even if not in imageLocations
+    const allImageLocs = [
+        ...imageLocations,
+        ...Object.keys(des.images ?? {}).filter(k => !imageLocations.includes(k)),
+    ];
+    const designImages = allImageLocs
         .filter(loc => des.images && des.images[loc])
         .map(loc => ({ loc, url: des.images[loc], threadColor: null, label: `Default ${loc}` }));
 
@@ -382,7 +392,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
         des.threadColors.forEach(tc => {
             const colorObj = colors.filter(c => (c._id ? c._id.toString() : c.toString()) == tc.toString())[0];
             if (!colorObj) return;
-            imageLocations.forEach(loc => {
+            allImageLocs.forEach(loc => {
                 const url = des.threadImages?.[colorObj.name]?.[loc];
                 if (url) threadImages.push({ loc, url, threadColor: colorObj.name, label: `${colorObj.name} ${loc}` });
             });
@@ -405,7 +415,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                         <Button
                             variant="text"
                             startIcon={<ArrowBackIcon />}
-                            href="/admin/designs"
+                            href={designsPath}
                             size="small"
                             sx={{ color: "text.secondary", minWidth: 0, px: 1 }}
                         >
