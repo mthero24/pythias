@@ -3,9 +3,8 @@ import { getToken } from "next-auth/jwt";
 import Stripe from "stripe";
 import { ServiceInvoicePremier } from "@pythias/mongo";
 
-const stripe = new Stripe(process.env.stripeSecret);
-
 export async function POST(req) {
+    const stripe = new Stripe(process.env.stripeSecret);
     const token = await getToken({ req });
     const perms = { ...(token?.permissions || {}), account: true, inventory: true, designsView: true };
     if ((!token?.role || !["admin", "production"].includes(token.role)) || !perms.charts)

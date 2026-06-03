@@ -1,4 +1,4 @@
-import { Blank as Blanks } from "@pythias/mongo";
+import { PlatformBlank as Blanks } from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import { Main } from "./Main";
 export const dynamic = 'force-dynamic';

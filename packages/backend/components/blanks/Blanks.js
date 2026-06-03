@@ -218,7 +218,7 @@ export function BlanksComponent({blanks, mPs, source, basePath = "/admin/blanks"
                                         <Stack spacing={0.75} sx={{ marginTop: "auto", pt: 1 }}>
                                             <Stack direction="row" spacing={0.75}>
                                                 <Button fullWidth size="small" variant="contained" startIcon={<StorefrontIcon />} onClick={() => { setBlank(b); setMarketplaceModal(true) }}>Markets</Button>
-                                                {b.type !== "alias" && <Button fullWidth size="small" variant="outlined" startIcon={<BuildIcon />} href={`/admin/blanks/production/${b._id}`} target="_blank">Production</Button>}
+                                                {b.type !== "alias" && <Button fullWidth size="small" variant="outlined" startIcon={<BuildIcon />} href={`${basePath}/production/${b._id}`} target="_blank">Production</Button>}
                                             </Stack>
                                             <Button fullWidth size="small" variant="outlined" startIcon={<EditIcon />} href={`${basePath}/create?id=${b._id}`} target="_blank">Edit</Button>
                                         </Stack>

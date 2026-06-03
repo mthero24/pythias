@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { ServiceInvoicePremier, BillingCustomer } from "@pythias/mongo";
 
-const stripe = new Stripe(process.env.stripeSecret);
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 export async function POST(req) {
+    const stripe = new Stripe(process.env.stripeSecret);
     const { month, year } = await req.json();
     if (!month || !year) return NextResponse.json({ ok: false, reason: "month and year required" }, { status: 400 });
 
