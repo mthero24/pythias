@@ -87,7 +87,7 @@ export async function PUT(req) {
     try {
         if (oldSku && oldSku !== design.sku) {
             const { PlatformProduct } = await import("@pythias/mongo");
-            const products = await PlatformProduct.find({ orgId, designRef: design._id });
+            const products = await PlatformProduct.find({ orgId, design: design._id });
             for (const p of products) {
                 if (p.sku) p.sku = p.sku.replace(oldSku, design.sku);
                 for (const v of (p.variants ?? [])) {

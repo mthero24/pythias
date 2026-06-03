@@ -3,7 +3,7 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useState } from "react";
 import { RetryImage } from "./RetryImage";
 
-export const BlankStage = ({products, setProducts, setStage, blanks, design, source, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs, showToast})=>{
+export const BlankStage = ({products, setProducts, setStage, blanks, design, source, slug, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs, showToast})=>{
     const [department, setDepartment] = useState(null)
     const [category, setCategory] = useState(null)
     const [departments] = useState(blanks.map(b => b.department).filter((value, index, self) => value && self.indexOf(value) === index))
@@ -134,7 +134,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                                 )}
                                 <Box sx={{ aspectRatio: "1 / 1", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "background.default", padding: 1 }}>
                                     {styleImages.map((si, i) => (
-                                        <RetryImage key={i} src={`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side? si.side: si.sides}.jpg}?width=400`} alt={`${b.code} image`} style={{ maxWidth: `${100 / styleImages.length}%`, maxHeight: "100%", objectFit: "contain" }} />
+                                        <RetryImage key={i} src={`/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side? si.side: si.sides}.jpg?width=400&orgSlug=${slug}`} alt={`${b.code} image`} style={{ maxWidth: `${100 / styleImages.length}%`, maxHeight: "100%", objectFit: "contain" }} />
                                     ))}
                                 </Box>
                                 <Divider />

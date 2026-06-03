@@ -47,7 +47,7 @@ export default async function DesignPage({ params }) {
             PlatformEditData.find({ orgId, type: "sportUsedFor" }).lean(),
             PlatformEditData.find({ orgId, type: "printTypes" }).lean(),
             PlatformEditData.find({ orgId, type: "printLocations" }).lean(),
-            PlatformProduct.find({ orgId, designRef: id }).lean(),
+            PlatformProduct.find({ orgId, design: id }).lean(),
         ]);
 
         if (!design) return notFound();
@@ -70,6 +70,7 @@ export default async function DesignPage({ params }) {
                 sport={serialize(sportUsedFor)}
                 printTypes={serialize(printTypes)}
                 source="platform"
+                slug={slug}
                 canEdit={true}
                 CreateSku={CreateSku}
                 designsPath={`/${slug}/admin/designs`}

@@ -50,12 +50,12 @@ const ColorHeader = ({ color, name, mainCount, extraCount }) => (
     </Box>
 );
 
-export const VariantImageStage = ({ products, setProducts, design, source, setStage }) => {
+export const VariantImageStage = ({ products, setProducts, design, source, slug, setStage }) => {
     return (
         <Box sx={{ padding: { xs: 1, sm: 1.5 }, background: "linear-gradient(180deg, #f4f6fa 0%, #eceff5 100%)", minHeight: "100%", borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 0.5, color: "text.primary" }}>Select Variant Images</Typography>
             <Typography variant="caption" sx={{ display: "block", textAlign: "center", marginBottom: 1.5, color: "text.secondary" }}>Pick one <b>main</b> image per color, plus any <b>extras</b> for the gallery.</Typography>
-            {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors?.length > 0 ? design.threadImages : design.images} setProducts={setProducts} threadColors={design.threadColors?.length > 0 ? true : false} source={source} />)}
+            {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors?.length > 0 ? design.threadImages : design.images} setProducts={setProducts} threadColors={design.threadColors?.length > 0 ? true : false} source={source} slug={slug} />)}
             <Grid2 container spacing={2} sx={{ justifyContent: "space-between", marginTop: 1.5 }}>
                 <Grid2 size="auto">
                     <Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("product_images") }}>Back</Button>
@@ -78,7 +78,7 @@ export const VariantImageStage = ({ products, setProducts, design, source, setSt
 }
 
 
-const CreateVariantImages = ({ product, products, setProducts, design, threadColors, source }) => {
+const CreateVariantImages = ({ product, products, setProducts, design, threadColors, source, slug }) => {
     const [mainImage, setMainImage] = useState(true);
     const [zoomImage, setZoomImage] = useState(null);
     const cdn = (url) => url.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");
@@ -121,7 +121,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                             : Object.keys(design ? design : {}).join("_");
                         const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}`;
                         if (!imgs[blank.code][color.name].find(i => i.sku === imgKey)) {
-                            imgs[blank.code][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}.jpg?width=400`), sku: imgKey });
+                            imgs[blank.code][color.name].push({ image: encodeURI(`/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
                         }
                     }
                 }
@@ -160,7 +160,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                             if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
                             const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`;
                             if (!imgs[blank.code][threadColor][color.name].find(i => i.sku === imgKey)) {
-                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://${source.includes("test") ? "test" : source}.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400`), sku: imgKey });
+                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
                             }
                         }
                     }

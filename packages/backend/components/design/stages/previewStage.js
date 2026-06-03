@@ -212,7 +212,20 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                 <Grid2 size="auto">
                     <Button variant="contained" color="primary" size="large" disabled={loading} sx={{ minWidth: 160 }} onClick={async () => {
                         setLoading(true)
-                        let res = await axios.post("/api/admin/products", { products: products }).catch(err => {
+                        const toAbsolute = url => url && url.startsWith("/api/renderImages/")
+                            ? `https://platform.pythiastechnologies.com${url}`
+                            : url;
+                        const fixImgUrl = obj => {
+                            if (!obj || typeof obj !== "object") return obj;
+                            if (Array.isArray(obj)) return obj.map(fixImgUrl);
+                            const out = {};
+                            for (const k of Object.keys(obj)) {
+                                out[k] = k === "image" ? toAbsolute(obj[k]) : fixImgUrl(obj[k]);
+                            }
+                            return out;
+                        };
+                        const productsToSave = products.map(fixImgUrl);
+                        let res = await axios.post("/api/admin/products", { products: productsToSave }).catch(err => {
                             console.log(err.response.data)
                             setLoading(false)
                             return { data: { error: true, msg: err.response.data?.msg || "Failed to save product" } };
@@ -265,6 +278,16 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
         </Box>
     )
 }
+
+const resizeUrl = (url, w, h) => {
+    if (!url) return null;
+    const cdn = url.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");
+    const [base, qs] = cdn.split("?");
+    const p = new URLSearchParams(qs || "");
+    p.set("width", w);
+    p.set("height", h);
+    return `${base}?${p.toString()}`;
+};
 
 export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank, product, setProducts, products, setProduct, preview, pageProducts, setPageProducts, design, setDesign }) => {
     const [open, setOpen] = useState(false);
@@ -386,7 +409,7 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
             <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 1.5, cursor: "pointer", "&:hover": { backgroundColor: "action.hover" } }} onClick={() => setOpen(!open)}>
                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 1.5, flex: 1, minWidth: 0 }}>
                     <Box sx={{ width: 56, height: 56, borderRadius: 1, overflow: "hidden", flexShrink: 0, backgroundColor: "background.default", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <RetryImage src={variants && `${variants[0].image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        <RetryImage src={variants && resizeUrl(variants[0].image, 75, 75)} alt={`${blank} ${threadColor} ${color}`} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{[blank, threadColor, color].filter(Boolean).join(" · ")}</Typography>
@@ -407,13 +430,13 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                             <ListItem key={i}>
                                 <ListItemAvatar>
                                     <Avatar>
-                                        <RetryImage src={`${variant.image?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                        <RetryImage src={resizeUrl(variant.image, 75, 75)} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                     </Avatar>
                                 </ListItemAvatar>
                                 {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
                                     <ListItemAvatar>
                                         <Avatar key={i}>
-                                            <RetryImage src={img.image ? `${img.image.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75` : `${img.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin").replace("?width=400", "")}?width=75&height=75`} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
+                                            <RetryImage src={resizeUrl(img.image || img, 75, 75)} alt={`${blank} ${threadColor} ${color}`} width={75} height={75} style={{ width: "auto", height: "auto", maxHeight: "100%", maxWidth: "100%" }} />
                                         </Avatar>
                                     </ListItemAvatar>
                                 ))}

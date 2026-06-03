@@ -19,7 +19,7 @@ const STAGES = [
     { key: "preview", label: "Preview" },
 ];
 
-export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, loading, setLoading, preview, setPreview, themes, sportUsedFor , setThemes, setSportUsedFor, pageProducts, setPageProducts, printTypes, licenses }) => {
+export const CreateProductModal = ({ open, setOpen, product, setProduct, design, setDesign, updateDesign, blanks, colors, imageGroups, brands, genders, seasons, setSeasons, setGenders, setBrands, CreateSku, source, slug, loading, setLoading, preview, setPreview, themes, sportUsedFor , setThemes, setSportUsedFor, pageProducts, setPageProducts, printTypes, licenses }) => {
     const [cols, setColors] = useState({})
     const [sizes, setSizes] = useState({})
     const [images, setImages] = useState([])
@@ -147,16 +147,16 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
                     ))}
                 </Stepper>
                 {stage == "blanks" &&
-                    <BlankStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} blanks={blanks} design={design} source={source} combined={combined} colors={colors} cols={cols} setColors={setColors} sizes={sizes} setSizes={setSizes} setCombined={setCombined} getUpcs={getUpcs} scrollToTarget={scrollToTarget} showToast={showToast} />
+                    <BlankStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} blanks={blanks} design={design} source={source} slug={slug} combined={combined} colors={colors} cols={cols} setColors={setColors} sizes={sizes} setSizes={setSizes} setCombined={setCombined} getUpcs={getUpcs} scrollToTarget={scrollToTarget} showToast={showToast} />
                 }
                 {stage == "colors" &&
-                    <ColorStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setCombined={setCombined} getUpcs={getUpcs} setImages={setImages} upcs={upcs} getTempUpcs={getTempUpcs} showToast={showToast} />
+                    <ColorStage products={products} setProducts={setProducts} stage={stage} setStage={setStage} design={design} source={source} slug={slug} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setCombined={setCombined} getUpcs={getUpcs} setImages={setImages} upcs={upcs} getTempUpcs={getTempUpcs} showToast={showToast} />
                 }
                 {stage == "product_images" &&
                     <ProductImageStage products={products} setProducts={setProducts} setStage={setStage} design={design} source={source} combined={combined} colors={colors} cols={cols} sizes={sizes} setColors={setColors} setImages={setImages} images={images} imageGroups={imageGroups} showToast={showToast} />
                 }
                 {stage == "variant_images" &&
-                    <VariantImageStage products={products} setProducts={setProducts} design={design} source={source} setStage={setStage} showToast={showToast} />
+                    <VariantImageStage products={products} setProducts={setProducts} design={design} source={source} slug={slug} setStage={setStage} showToast={showToast} />
                 }
                 {stage == "information" &&
                    <InformationStage

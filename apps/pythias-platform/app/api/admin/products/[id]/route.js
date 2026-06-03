@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
     if (!mongoose.isValidObjectId(id)) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
 
     const product = await PlatformProduct.findOne({ _id: id, orgId: token.orgId })
-        .populate("designRef", "sku name printType images")
+        .populate("design", "sku name printType images")
         .populate("blank", "code name colors sizes printLocations")
         .lean();
 

@@ -25,7 +25,7 @@ const ColorSwatch = ({ color, selected, premium, onClick, size = 48 }) => (
     </Tooltip>
 );
 
-export const ColorStage = ({ products, setProducts, setStage, design, source, combined, colors, cols, sizes, setImages, upcs, getTempUpcs }) => {
+export const ColorStage = ({ products, setProducts, setStage, design, source, slug, combined, colors, cols, sizes, setImages, upcs, getTempUpcs }) => {
     const hasThreadColors = design.threadColors?.length > 0;
     return (
         <Box sx={{ padding: { xs: 1.5, sm: 2 } }}>
@@ -190,14 +190,14 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                                 for (let col of product.colors) {
                                                     if(b.images && b.images.length > 0){
                                                         for (let bm of b.images.filter(m => m.color.toString() == col._id.toString())) {
-                                                            if(!im.filter(i => i.image == encodeURI(`https://${source == "pythias-test"? "test": source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400`)).length > 0){
-                                                                im.push({ image: encodeURI(`https://${source == "pythias-test"? "test": source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                            if(!im.filter(i => i.image == encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400&orgSlug=${slug}`)).length > 0){
+                                                                im.push({ image: encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400&orgSlug=${slug}`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                             }
                                                             
                                                         }
                                                     }else{
                                                         for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes("default"))) {
-                                                            im.push({ image: encodeURI(`https://${source == "pythias-test"? "test": source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                            im.push({ image: encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400&orgSlug=${slug}`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                         }
                                                     }
                                                 }
@@ -220,17 +220,17 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                             for (let col of product.colors) {
                                                 if (b.images && b.images.length > 0) {
                                                     for (let bm of b.images.filter(m => m.color?.toString() == col._id?.toString() && (Object.keys(m.boxes ? m.boxes : {}).includes(ti) || Object.keys(m.boxes ? m.boxes : {}).includes("back")))) {
-                                                        if (!im.filter(i => i.image == encodeURI(`https://${source == "pythias-test" ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${Object.keys(design.images ? design.images : {}).join("_") }.jpg?width=400`)).length > 0 && Object.keys(bm.boxes ? bm.boxes : {}).includes(ti) && Object.keys(design.images ? design.images : {}).includes(ti)) {
-                                                            im.push({ image: encodeURI(`https://${source == "pythias-test" ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${Object.keys(design.images ? design.images : {}).join("_") }.jpg?width=400`), color: col, sides: Object.keys(design.images ? design.images : {}).join("_"), blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                        if (!im.filter(i => i.image == encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${Object.keys(design.images ? design.images : {}).join("_") }.jpg?width=400&orgSlug=${slug}`)).length > 0 && Object.keys(bm.boxes ? bm.boxes : {}).includes(ti) && Object.keys(design.images ? design.images : {}).includes(ti)) {
+                                                            im.push({ image: encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${Object.keys(design.images ? design.images : {}).join("_") }.jpg?width=400&orgSlug=${slug}`), color: col, sides: Object.keys(design.images ? design.images : {}).join("_"), blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                         }
-                                                        if (!Object.keys(design.images ? design.images : {}).includes("back") && Object.keys(bm.boxes ? bm.boxes : {}).includes("back") && !im.filter(i => i.image == encodeURI(`https://${source == "pythias-test" ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back.jpg?width=400`)).length > 0) {
+                                                        if (!Object.keys(design.images ? design.images : {}).includes("back") && Object.keys(bm.boxes ? bm.boxes : {}).includes("back") && !im.filter(i => i.image == encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back.jpg?width=400&orgSlug=${slug}`)).length > 0) {
                                                             console.log("________back___________")
-                                                            im.push({ image: encodeURI(`https://${source == "pythias-test" ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back.jpg?width=400`), color: col, sides: "back", blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back` })
+                                                            im.push({ image: encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back.jpg?width=400&orgSlug=${slug}`), color: col, sides: "back", blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back` })
                                                         }
                                                     }
                                                 } else {
                                                     for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes("default"))) {
-                                                        im.push({ image: encodeURI(`https://${source == "pythias-test" ? "test" : source}.pythiastechnologies.com/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                        im.push({ image: encodeURI(`/api/renderImages/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400&orgSlug=${slug}`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                     }
                                                 }
                                             }
@@ -238,13 +238,12 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                     }
 
                                     // Ensure a back-side render exists for every blank, even when the design has no back image.
-                                    const host = source == "pythias-test" ? "test" : source;
                                     const codeKey = b.code.replace(/-/g, "_");
                                     const pushBackFromImages = (col, urlSideSuffix, extra) => {
                                         if (!b.images || b.images.length === 0) return;
                                         for (const bm of b.images.filter(m => m.color?.toString() == col._id?.toString() && Object.keys(m.boxes ? m.boxes : {}).includes("back"))) {
                                             const fileBase = bm.image.split("/").pop().split(".")[0];
-                                            const url = encodeURI(`https://${host}.pythiastechnologies.com/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400`);
+                                            const url = encodeURI(`/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400&orgSlug=${slug}`);
                                             if (!im.find(i => i.image === url)) {
                                                 im.push({ image: url, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${codeKey}_${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}`, ...extra });
                                             }
@@ -257,7 +256,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, co
                                         const pool = matches.length > 0 ? matches : backList.filter(m => m.color?.toString() == col._id?.toString() && m.imageGroup?.includes("default"));
                                         for (const bm of pool) {
                                             const fileBase = bm.image.split("/").pop().split(".")[0];
-                                            const url = encodeURI(`https://${host}.pythiastechnologies.com/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400`);
+                                            const url = encodeURI(`/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400&orgSlug=${slug}`);
                                             if (!im.find(i => i.image === url)) {
                                                 im.push({ image: url, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${codeKey}_${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}`, ...extra });
                                             }

@@ -418,8 +418,7 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
                                 <Button fullWidth size="small" variant="contained" startIcon={<StorefrontIcon />} onClick={() => { setMarketplaceModal(true); setProduct({ ...p }); }}>Markets</Button>
                                 <Button fullWidth size="small" variant="outlined" startIcon={<EditIcon />} onClick={() => {
                                     setProduct({ ...p });
-                                    if (p.isNFProduct) { setStart("Select Images"); setNFProduct(true); }
-                                    else setCreateProduct(true);
+                                    setCreateProduct(true);
                                 }}>Edit</Button>
                             </Stack>
                             <Stack direction="row" spacing={0.75}>

@@ -26,7 +26,7 @@ export async function GET(req) {
             .sort({ _id: -1 })
             .skip((page - 1) * PER_PAGE)
             .limit(PER_PAGE)
-            .populate("designRef", "sku name")
+            .populate("design", "sku name")
             .populate("blanks", "code name sizes colors")
             .populate("colors", "name hexcode sku")
             .populate("productImages.color", "name hexcode sku")
@@ -140,7 +140,7 @@ async function buildPlatformDoc(raw, orgId) {
     const dept = raw.department;
     return {
         orgId,
-        designRef: raw.design?._id ?? raw.design ?? null,
+        design: raw.design?._id ?? raw.design ?? null,
         blanks: raw.blanks?.map(b => b._id ?? b) ?? [],
         colors: raw.colors?.map(c => c._id ?? c).length > 0
             ? raw.colors.map(c => c._id ?? c)
