@@ -90,7 +90,7 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                 return (
                     <Grid2 size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={b._id}>
                         {(() => {
-                            const selected = products.filter(p => p.blanks.filter(blank => blank._id.toString() == b?._id?.toString())[0] != undefined).length > 0;
+                            const selected = products.filter(p => p.blanks.filter(blank => (blank._id ?? blank)?.toString() == b?._id?.toString())[0] != undefined).length > 0;
                             const premium = !!(design.blanks.filter(d => (d.blank._id ? d.blank._id : d.blank).toString() == b._id.toString())[0]?.colors?.length);
                             return (
                         <Card variant="outlined" sx={{ borderRadius: 2, borderColor: selected ? "primary.main" : "divider", borderWidth: selected ? 2 : 1, position: "relative", transition: "border-color 150ms, box-shadow 150ms", "&:hover": { boxShadow: 2 } }}>
@@ -103,19 +103,19 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                             if(!p.productImages) p.productImages = []
                             if(!p.design) p.design = design
                             if(!p.colors) p.colors = []
-                            if (p.blanks.filter(blank => blank?._id?.toString() == b?._id?.toString())[0]) {
-                                p.blanks = p.blanks.filter(blank => blank?._id.toString() != b._id.toString())
+                            if (p.blanks.filter(blank => (blank._id ?? blank)?.toString() == b?._id?.toString())[0]) {
+                                p.blanks = p.blanks.filter(blank => (blank._id ?? blank)?.toString() != b._id?.toString())
                             } else {
                                 p.blanks.push(b)
                             }
                             setProducts([{...p}])
                         }else{
                             let newProducts = [...products]
-                            let product = newProducts.filter(p => p.blanks.filter(blank => blank?._id?.toString() == b?._id?.toString())[0])[0]
+                            let product = newProducts.filter(p => p.blanks.filter(blank => (blank._id ?? blank)?.toString() == b?._id?.toString())[0])[0]
                             if (product) {
-                                product.blanks = product.blanks.filter(blank => blank?._id.toString() != b?._id.toString())
+                                product.blanks = product.blanks.filter(blank => (blank._id ?? blank)?.toString() != b?._id?.toString())
                                 if (product.blanks.length == 0) {
-                                    newProducts = newProducts.filter(p => p.blanks.filter(blank => blank?._id.toString() != b?._id.toString())[0])
+                                    newProducts = newProducts.filter(p => p.blanks.filter(blank => (blank._id ?? blank)?.toString() != b?._id?.toString())[0])
                                 }
                             } else {
                                 product = { blanks: [b], design: design, colors: [], sizes: [], threadColors: [], productImages: []}

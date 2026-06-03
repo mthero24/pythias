@@ -125,7 +125,7 @@ async function buildPlatformDoc(raw, orgId) {
         colorName: pi.color?.name ?? pi.colorName ?? null,
         blank: pi.blank?._id ?? pi.blank ?? null,
         sku: pi.sku ?? "",
-        side: pi.side ?? null,
+        side: pi.side ?? pi.sides ?? null,
     }));
 
     const defaultColorId = raw.defaultColor?._id ?? raw.defaultColor ?? variantsFlat[0]?.color?._id ?? variantsFlat[0]?.color ?? null;

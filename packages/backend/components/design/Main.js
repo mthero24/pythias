@@ -15,7 +15,6 @@ import LoaderOverlay from "../reusable/LoaderOverlay";
 import DeleteModal from "../reusable/DeleteModal";
 import { Footer } from "../reusable/Footer";
 import { CreateProductModal } from "./CreateProductModal";
-import { CreateNFProduct } from "../product/CreateNFProduct";
 import { AiProductModal } from "./AiProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import { ProductCard } from "../reusable/ProductCard";
@@ -84,8 +83,6 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [product, setProduct] = useState({ blanks: [], design: design, threadColors: [], colors: [], sizes: [], defaultColor: null, variants: [], productImages: [], variantImages: {} });
     const [marketplaceModal, setMarketplaceModal] = useState(false);
     const [preview, setPreview] = useState(false);
-    const [nfProduct, setNFProduct] = useState(false);
-    const [nfStart, setNFStart] = useState("Select Blank");
     const [copied, setCopied] = useState(false);
     const [sublimationOpen, setSublimationOpen] = useState(false);
     const { setShow } = useCSV();
@@ -725,7 +722,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                         ) : (
                             <Grid2 container spacing={2}>
                                 {des.products.map((p, i) => (
-                                    <ProductCard key={i} p={p} setProduct={setProduct} des={des} setDesign={setDesign} setCreateProduct={setCreateProduct} setMarketplaceModal={setMarketplaceModal} setPreview={setPreview} marketPlaces={marketPlaces} source={source} canEdit={canEdit} setStart={setNFStart} setNFProduct={setNFProduct} />
+                                    <ProductCard key={i} p={p} setProduct={setProduct} des={des} setDesign={setDesign} setCreateProduct={setCreateProduct} setMarketplaceModal={setMarketplaceModal} setPreview={setPreview} marketPlaces={marketPlaces} source={source} canEdit={canEdit} allBlanks={blanks} allColors={colors} />
                                 ))}
                             </Grid2>
                         )}
@@ -760,7 +757,6 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                     {aiToast.message}
                 </Alert>
             </Snackbar>
-            <CreateNFProduct open={nfProduct} setOpen={setNFProduct} stage={nfStart} setStage={setNFStart} product={product} setProduct={setProduct} brands={bran} setBrands={setBrands} seasons={seasons} setSeasons={setSeasons} genders={genders} setGenders={setGenders} CreateSku={CreateSku} themes={themes} setThemes={setThemes} sportUsedFor={sportUsedFor} setSportUsedFor={setSportUsedFor} />
             <AddImageModal open={addImageModal} setOpen={setAddImageModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} />
             <AddDSTModal open={addDSTModal} setOpen={setAddDSTModal} des={des} setDesign={setDesign} updateDesign={updateDesign} printLocations={printLocations} reload={reload} setReload={setReload} colors={colors} loading={loading} setLoading={setLoading} setDeleteModal={setDeleteModal} setDeleteImage={setDeleteImage} setDeleteTitle={setDeleteTitle} setDeleeFunction={setDeleeFunction} />
             <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} product={product} />

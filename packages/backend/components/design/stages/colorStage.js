@@ -308,7 +308,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, sl
                                     console.log("Getting temp upcs", vLength - used)
                                 }
                             }
-                            const normUrl = url => url ? url.replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
+                            const normUrl = url => url ? url.replace(/^https?:\/\/[^/]+/, "").replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
                             const imgMatch = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
                             let prods = [...products]
                             for(let p of prods){

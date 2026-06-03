@@ -258,7 +258,7 @@ const VideoModal = ({ open, onClose, product, onVideoSaved, onPollStart }) => {
     );
 };
 
-export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, marketPlaces, setMarketplaceModal, setStart, des, setDesign, updateDesign, setPreview, source, printTypes, licenses, canEdit = true }) => {
+export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, marketPlaces, setMarketplaceModal, setStart, des, setDesign, updateDesign, setPreview, source, printTypes, licenses, canEdit = true, allBlanks, allColors }) => {
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteImage, setDeleteImage] = useState({});
     const [deleteTitle, setDeleteTitle] = useState("");
@@ -346,9 +346,12 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
         }
     }
 
-    const defaultColorId = p.defaultColor?._id ? p.defaultColor._id.toString() : p.defaultColor?.toString() ?? p.colors?.[0]?._id?.toString();
-    const primaryImage = p.productImages?.find(i => i.color?._id?.toString() === defaultColorId && i.side !== "back")?.image;
-    const backImage = p.productImages?.find(i => i.color?._id?.toString() === defaultColorId && (i.side === "back" || i.side === "modelBack"))?.image;
+    const defaultColorId = (p.defaultColor?._id ?? p.defaultColor)?.toString() ?? (p.colors?.[0]?._id ?? p.colors?.[0])?.toString();
+    const imgSide = i => i.side ?? i.sides ?? (i.sku?.toLowerCase().match(/-(back|modelback)$/) ? "back" : null);
+    const isBack = i => { const s = imgSide(i); return s === "back" || s === "modelBack"; };
+    const primaryImage = p.productImages?.find(i => (i.color?._id ?? i.color)?.toString() === defaultColorId && !isBack(i))?.image
+        ?? p.productImages?.find(i => !isBack(i))?.image;
+    const backImage = p.productImages?.find(i => (i.color?._id ?? i.color)?.toString() === defaultColorId && isBack(i))?.image;
     const variantCount = p.variantsArray?.length ?? 0;
     const isCombined = p.blanks?.length > 1;
 
@@ -417,7 +420,15 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
                             <Stack direction="row" spacing={0.75}>
                                 <Button fullWidth size="small" variant="contained" startIcon={<StorefrontIcon />} onClick={() => { setMarketplaceModal(true); setProduct({ ...p }); }}>Markets</Button>
                                 <Button fullWidth size="small" variant="outlined" startIcon={<EditIcon />} onClick={() => {
-                                    setProduct({ ...p });
+                                    const resolveId = x => (x?._id ?? x)?.toString();
+                                    const prod = { ...p };
+                                    if (allBlanks) prod.blanks = (p.blanks || []).map(b => allBlanks.find(bl => bl._id?.toString() === resolveId(b)) ?? b).filter(Boolean);
+                                    if (allColors) {
+                                        prod.colors = (p.colors || []).map(c => allColors.find(co => co._id?.toString() === resolveId(c)) ?? c).filter(Boolean);
+                                        prod.threadColors = (p.threadColors || []).map(c => allColors.find(co => co._id?.toString() === resolveId(c)) ?? c).filter(Boolean);
+                                        if (p.defaultColor) prod.defaultColor = allColors.find(co => co._id?.toString() === resolveId(p.defaultColor)) ?? p.defaultColor;
+                                    }
+                                    setProduct(prod);
                                     setCreateProduct(true);
                                 }}>Edit</Button>
                             </Stack>
