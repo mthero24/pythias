@@ -212,7 +212,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                 <Grid2 size="auto">
                     <Button variant="contained" color="primary" size="large" disabled={loading} sx={{ minWidth: 160 }} onClick={async () => {
                         setLoading(true)
-                        const toAbsolute = url => url && url.startsWith("/api/renderImages/")
+                        const toAbsolute = url => typeof url === "string" && url.startsWith("/api/renderImages/")
                             ? `https://platform.pythiastechnologies.com${url}`
                             : url;
                         const fixImgUrl = obj => {
