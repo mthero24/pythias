@@ -10,6 +10,24 @@ const nextConfig = {
             { protocol: "https", hostname: "pythiastechnologies.com" },
         ],
     },
+    webpack(config, { isServer }) {
+        if (isServer) {
+            // serverExternalPackages misses workspace-resolved paths; catch native
+            // modules explicitly so webpack never tries to bundle their binaries.
+            const nativePkgs = new Set(["sharp", "canvas", "@napi-rs/canvas"]);
+            const existing = Array.isArray(config.externals) ? config.externals : [config.externals].filter(Boolean);
+            config.externals = [
+                ...existing,
+                ({ request }, callback) => {
+                    if (nativePkgs.has(request) || request.startsWith("@napi-rs/")) {
+                        return callback(null, `commonjs ${request}`);
+                    }
+                    callback();
+                },
+            ];
+        }
+        return config;
+    },
 };
 
 export default nextConfig;
