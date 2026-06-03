@@ -3,10 +3,9 @@ import Stripe from "stripe";
 import { Organization, UsageLedger } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
 export async function POST(req) {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
 

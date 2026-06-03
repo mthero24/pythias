@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { ServiceInvoicePremier, BillingCustomer } from "@pythias/mongo";
 
-const stripe = new Stripe(process.env.stripeSecret);
-
 export async function POST(req) {
+    const stripe = new Stripe(process.env.stripeSecret);
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

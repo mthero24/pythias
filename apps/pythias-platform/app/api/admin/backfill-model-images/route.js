@@ -2,9 +2,8 @@ import OpenAI from "openai";
 import { Blank } from "@pythias/mongo";
 export const maxDuration = 300;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 async function classifyImage(imageUrl) {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     try {
         const res = await fetch(imageUrl, { signal: AbortSignal.timeout(15_000) });
         if (!res.ok) return false;

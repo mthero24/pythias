@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 const PROMPT = `You are analyzing a design image (e.g. a print-on-demand graphic, t-shirt design).
 
 Extract every visible text block. For each one return a JSON object with these fields:
@@ -22,6 +20,7 @@ Return ONLY a JSON array. No markdown, no explanation. Example:
 [{"text":"Happy Birthday","x_pct":0.1,"y_pct":0.05,"w_pct":0.8,"h_pct":0.15,"color_hex":"#ffffff","is_bold":true,"is_italic":false,"is_all_caps":false,"font_style":"display"}]`;
 
 export async function POST(req) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const token = await getToken({ req });
   if (!token?.permissions?.designs) {
     return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 403 });
