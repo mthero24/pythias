@@ -1,7 +1,7 @@
 import { Box, Grid, Typography, Card, CardContent, CardActionArea, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Chip } from "@mui/material"
 import Image from "next/image"
-import * as multiple from "./images/multipleSizesBags.jpg"
-import * as boxes from "./images/boxes.webp"
+import multiple from "./images/multipleSizesBags.jpg"
+import boxes from "./images/boxes.webp"
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EditIcon from '@mui/icons-material/Edit'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
