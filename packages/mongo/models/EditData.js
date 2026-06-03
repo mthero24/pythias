@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { PlatformDB } from "../lib/connection";
+import { PremierPrinting } from "../lib/connection";
 
 const schema = new mongoose.Schema({
     orgId:  { type: mongoose.Schema.Types.ObjectId, ref: "Organization", required: true, index: true },
@@ -10,4 +10,4 @@ const schema = new mongoose.Schema({
 
 schema.index({ orgId: 1, type: 1 });
 
-export default PlatformDB.model("PlatformEditData", schema);
+export default PremierPrinting.model("EditData", schema);

@@ -1,28 +1,60 @@
-import { PlatformProduct as Products, PlatformBlank as Blanks, Seasons, Genders, SportUsedFor, Brands, PlatformMarketPlace as MarketPlaces, Themes, PlatformInventory as Inventory, PrintTypes, PlatformLicenseHolder as LicenseHolders, PlatformUser as User } from "@pythias/mongo";
-import { ProductsMain as Main, serialize, getProducts, } from "@pythias/backend";
+import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Seasons, Genders, SportUsedFor, Brands, PlatformMarketPlace as MarketPlaces, Themes, PrintTypes, PlatformLicenseHolder as LicenseHolders, PlatformUser as User } from "@pythias/mongo";
+import { ProductsMain as Main, serialize } from "@pythias/backend";
 import { CreateSku } from "@/functions/CreateSku";
 import { headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 export const dynamic = 'force-dynamic';
-//server components
+
 export default async function ProductsPage(req) {
-    let query = await req.searchParams
-    let page = parseInt(query.page ? query.page : 1)
-    let q = query.q ? query.q : null;
-    let filters = query.filters ? JSON.parse(query.filters) : {};
-    const headersList = await headers();
-    const user = await User.findOne({ userName: headersList.get("user") }).select("permissions").lean();
+    const query = await req.searchParams;
+    const page = parseInt(query.page ?? "1");
+    const q = query.q ?? null;
+    const filters = query.filters ? JSON.parse(query.filters) : {};
+    const { slug } = await req.params ?? {};
+
+    const [headersList, session] = await Promise.all([headers(), getServerSession(authOptions)]);
+    const orgId = session?.user?.orgId;
+
+    const [user, blanks, seasons, genders, sportsUsedFor, platformBrands, marketplaces, themes, colors, printTypes, licenses, totalProducts] = await Promise.all([
+        User.findOne({ userName: headersList.get("user") }).select("permissions").lean(),
+        Blanks.find(orgId ? { orgId } : {}).populate("colors").lean(),
+        Seasons.find().lean(),
+        Genders.find().lean(),
+        SportUsedFor.find().lean(),
+        orgId ? Brands.find({ orgId }).sort({ name: 1 }).lean() : [],
+        MarketPlaces.find(orgId ? { orgId } : {}).lean(),
+        Themes.find().lean(),
+        Color.find(orgId ? { orgId } : {}).lean(),
+        PrintTypes.find().lean(),
+        LicenseHolders.find(orgId ? { orgId } : {}).lean(),
+        orgId ? PlatformProduct.countDocuments({ orgId }) : Promise.resolve(0),
+    ]);
+
     const canManageMarketplaces = Boolean(user?.permissions?.marketplaces);
-    let { products, count, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, themes, colors, totalProducts, printTypes, licenses } = await getProducts({ Products, Blanks, Seasons, Genders, SportUsedFor, Brands, MarketPlaces, Themes, Color, PrintTypes, LicenseHolders, page, query: q, filters, Inventory });
-    products = serialize(products);
-    blanks = serialize(blanks);
-    seasons = serialize(seasons);
-    genders = serialize(genders);
-    sportsUsedFor = serialize(sportsUsedFor);
-    brands = serialize(brands);
-    marketplaces = serialize(marketplaces);
-    themes = serialize(themes);
-    colors = serialize(colors);
-    printTypes = serialize(printTypes);
-    licenses = serialize(licenses);
-    return <Main prods={products} co={count} pa={page} query={q} blanks={blanks} seasons={seasons} genders={genders} sportsUsedFor={sportsUsedFor} brands={brands} marketplaces={marketplaces} themes={themes} colors={colors} filter={filters} CreateSku={CreateSku} source={"simplysage"} totalProducts={totalProducts} printTypes={printTypes} licenses={licenses} canManageMarketplaces={canManageMarketplaces}/>;
+
+    return (
+        <Main
+            prods={[]}
+            co={0}
+            pa={page}
+            query={q}
+            blanks={serialize(blanks)}
+            seasons={serialize(seasons)}
+            genders={serialize(genders)}
+            sportsUsedFor={serialize(sportsUsedFor)}
+            brands={serialize(platformBrands)}
+            marketplaces={serialize(marketplaces)}
+            themes={serialize(themes)}
+            colors={serialize(colors)}
+            filter={filters}
+            CreateSku={CreateSku}
+            source={"simplysage"}
+            totalProducts={totalProducts}
+            printTypes={serialize(printTypes)}
+            licenses={serialize(licenses)}
+            canManageMarketplaces={canManageMarketplaces}
+            searchUrl="/api/admin/products"
+        />
+    );
 }

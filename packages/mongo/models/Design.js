@@ -3,6 +3,7 @@ import { PremierPrinting }from "../lib/connection";
 import Color from "./Color"
 import Brands from "./Brands"
 const schema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
   sku: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   description: { type: String },

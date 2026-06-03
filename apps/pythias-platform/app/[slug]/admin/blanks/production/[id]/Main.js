@@ -24,7 +24,7 @@ import { useState } from "react";
 import axios from "axios";
 import { Standard } from "./ShippingBags";
 
-export function Main({ bla }) {
+export function Main({ bla, basePath = "/admin/blanks" }) {
   const [blank, setBlank] = useState(bla)
   const [dimensions, setDimensions] = useState(blank.singleShippingDimensions || null);
 
@@ -52,7 +52,7 @@ export function Main({ bla }) {
           <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>{blank.name}</Typography>
           <Typography variant="body2" color="text.secondary">{blank.code}</Typography>
         </Box>
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} href="/admin/blanks">Back to Blanks</Button>
+        <Button variant="outlined" startIcon={<ArrowBackIcon />} href={basePath}>Back to Blanks</Button>
       </Box>
 
       <Stack spacing={3}>
@@ -137,6 +137,7 @@ const FoldSettings = ({ blank, setBlank, save }) => {
 const EnvelopeSettings = ({ blank, handleUpdateEnvelope }) => {
   const keys = ["platen", "width", "height", "vertoffset", "horizoffset"]
   if (!blank.printLocations?.length) return <Typography variant="body2" color="text.secondary">No print locations configured.</Typography>
+  const envelopes = blank.envelopes ?? [];
   return (
     <Stack spacing={1}>
       {blank.printLocations.map(pl => (
@@ -154,19 +155,19 @@ const EnvelopeSettings = ({ blank, handleUpdateEnvelope }) => {
                     size="small"
                     label={key}
                     type="number"
-                    value={blank.envelopes.filter(e => e.placement == pl.name)[0]?.[key] ?? ""}
+                    value={envelopes.filter(e => e.placement == pl.name)[0]?.[key] ?? ""}
                     onChange={() => handleUpdateEnvelope({ pl, key })}
                   />
                 </Grid2>
               ))}
             </Grid2>
 
-            {blank.sizes.length > 0 && (
+            {(blank.sizes?.length > 0) && (
               <>
                 <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600, display: "block", mb: 1 }}>Per Size Overrides</Typography>
                 <Stack spacing={1.5}>
                   {blank.sizes.map((s) => {
-                    const envelope = blank.envelopes.find(e => e.placement == pl.name && e.sizeName == s.name)
+                    const envelope = envelopes.find(e => e.placement == pl.name && e.sizeName == s.name)
                     if (!envelope) return null
                     return (
                       <Box key={s._id}>

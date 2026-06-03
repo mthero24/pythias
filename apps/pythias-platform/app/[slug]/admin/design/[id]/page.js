@@ -36,7 +36,7 @@ export default async function DesignPage({ params }) {
             products,
         ] = await Promise.all([
             PlatformDesign.findOne({ _id: id, orgId }).lean(),
-            PlatformBlank.find({ orgId }).select("colors code name sizes images active department category printLocations").lean(),
+            PlatformBlank.find({ orgId }).select("colors code name sizes images active department category printLocations hiddenColors").populate("colors").lean(),
             PlatformColor.find({ orgId }).lean(),
             PlatformMarketPlace.find({ orgId }).lean(),
             PlatformLicenseHolder.find({ orgId }).lean(),

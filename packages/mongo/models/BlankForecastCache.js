@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { PremierPrinting } from "../lib/connection";
 
 const schema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     appKey:               { type: String, required: true },
     rows:                 { type: mongoose.Schema.Types.Mixed },
     needsReorderCount:    Number,

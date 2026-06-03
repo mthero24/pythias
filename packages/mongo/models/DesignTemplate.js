@@ -3,6 +3,7 @@ import { PremierPrinting } from "../lib/connection";
 import Blank from "./Blanks";
 
 const customFieldSchema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
   id:           { type: String, required: true },   // UUID matching fabric obj fieldId
   label:        { type: String, required: true },   // "Recipient Name"
   placeholder:  { type: String, default: "" },

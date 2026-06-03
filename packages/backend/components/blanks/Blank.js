@@ -7,7 +7,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CloseIcon from "@mui/icons-material/Close";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import {useState} from "react";
-export function Blank({bla, mPs, blanks}){
+export function Blank({bla, mPs, blanks, basePath = "/admin/blanks"}){
     const [blank, setBlank] = useState(bla);
     const [loading, setLoading] = useState(false);
     const [headingModal, setHeadingModal] = useState(false)
@@ -57,14 +57,14 @@ export function Blank({bla, mPs, blanks}){
             </Box>
           </Box>
           <div>
-            <Link href={`/admin/blanks/create?id=${style._id}`}>
+            <Link href={`${basePath}/create?id=${style._id}`}>
               <Button>Edit</Button>
             </Link>
             <Button color="error" onClick={handleDelete}>
               Delete
             </Button>
             {style.type !== "alias" && (
-              <a href={`/admin/blanks/production/${style._id}`}>
+              <a href={`${basePath}/production/${style._id}`}>
                 <Button>Change Production Settings</Button>
               </a>
             )}

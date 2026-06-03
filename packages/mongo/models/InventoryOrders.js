@@ -3,6 +3,7 @@ import  {PremierPrinting} from '../lib/connection';
 import inventory from "./inventory";
 import Items from "./Items";
 var schema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     orderType: String,
     dateOrdered: Date,
     dateExpected: Date,

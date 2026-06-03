@@ -3,6 +3,7 @@ import { PremierPrinting } from "../lib/connection";
 const Schema = mongoose.Schema;
 const SchemaObj = new Schema(
   {
+    orgId: { type: Schema.Types.ObjectId, ref: "Organization", index: true },
     name: String,
     price: {type:Number, default:0},
   },

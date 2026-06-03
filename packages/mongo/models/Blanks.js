@@ -14,6 +14,7 @@ let imageSchema = [{
 }]
 const SchemaObj = new Schema(
   {
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     name: { type: String, required: true },
     code: { type: String, unique: true, required: true },
     type: { type: String, default: "single" },

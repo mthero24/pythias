@@ -5,6 +5,7 @@ import Color from "./Color";
 import Blank from "./Blanks"
 
 const SchemaObj = new Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     quantity: { type: Number, required: true, default: 0 },
     inventory_id: { type: String, required: true, unique: true },
     barcode_id: { type: String, required: true, unique: true },

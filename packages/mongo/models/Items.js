@@ -7,6 +7,7 @@ import ProductInventory from "./ProductInventory";
 import { InventoryTwoTone } from "@mui/icons-material";
 const schema = new mongoose.Schema(
   {
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     date: {
       type: Date,
       default: new Date(),

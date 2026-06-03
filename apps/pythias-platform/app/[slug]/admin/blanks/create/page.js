@@ -36,11 +36,22 @@ export default async function CreateBlankPage({ params, searchParams }) {
         PlatformEditData.find({ orgId, type: "suppliers" }).lean(),
     ]);
 
+    // Hydrate stored ObjectIds back into full objects using the already-fetched arrays
+    const blankData = {
+        ...blank,
+        colors: (blank.colors ?? [])
+            .map(id => colors.find(c => String(c._id) === String(id)))
+            .filter(Boolean),
+        printLocations: (blank.printLocations ?? [])
+            .map(id => printLocations.find(pl => String(pl._id) === String(id)))
+            .filter(Boolean),
+    };
+
     return (
         <CreateBlank
             colors={serialize(colors)}
             blanks={serialize(blanks)}
-            bla={serialize(blank)}
+            bla={serialize(blankData)}
             printPricing={null}
             locations={serialize(printLocations)}
             printTypes={serialize(printTypes)}

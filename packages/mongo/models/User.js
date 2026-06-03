@@ -4,6 +4,7 @@ import { trusted } from "mongoose";
 import { PremierPrinting } from "../lib/connection";
 
 const schema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
   password: {
     type: String,
     required: true,
@@ -43,6 +44,7 @@ const schema = new mongoose.Schema({
       read: Boolean,
     },
   ],
+  isActive: { type: Boolean, default: true },
   role: { type: String, default: "production" },
   manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   permissions: Object,

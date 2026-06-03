@@ -3,6 +3,7 @@ import { PremierPrinting } from "../lib/connection";
 import Item from "./Items"
 import brand from "./Brands"
 const schema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
   date: {
     type: Date,
     default: new Date(),

@@ -5,6 +5,7 @@ import Color from "./Color";
 import Blank from "./Blanks"
 import Design from "./Design"
 const SchemaObj = new Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     quantity: { type: Number, required: true, default: 0 },
     order_at_quantity: { type: Number, required: true, default: 0 },
     pending_quantity: { type: Number, default: 0 },

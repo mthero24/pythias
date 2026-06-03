@@ -8,6 +8,7 @@ import Inventory from "./inventory"
 import ProductInventory from "./ProductInventory"
 
 const schema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     design: {
         type: mongoose.Schema.Types.ObjectId,
         ref: Design,

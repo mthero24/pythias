@@ -1,15 +1,21 @@
-import {Blank, MarketPlaces} from "@pythias/mongo";
+import { PlatformBlank, PlatformMarketPlace } from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
-import {BlankMain as Main} from "@pythias/backend";
-export const dynamic = 'force-dynamic'; 
-export default async function Show(req, res){
-    //console.log(await req.params);
-    let {id} = await req.params;
-    let blank = await Blank.findById(id).populate("printLocations").lean()
-    let blanks = await Blank.find({}).lean();
-    let marketPlaces = await MarketPlaces.find({}).lean();
-    blank = serialize(blank);
-    marketPlaces = serialize(marketPlaces);
-    blanks = serialize(blanks);
-    return <Main bla={blank} mPs={marketPlaces} blanks={blanks} />
+import { BlankMain as Main } from "@pythias/backend";
+export const dynamic = 'force-dynamic';
+
+export default async function Show({ params }) {
+    const { id, slug } = await params;
+    const [blank, blanks, marketPlaces] = await Promise.all([
+        PlatformBlank.findById(id).populate("printLocations").lean(),
+        PlatformBlank.find({}).lean(),
+        PlatformMarketPlace.find({}).lean(),
+    ]);
+    return (
+        <Main
+            bla={serialize(blank)}
+            mPs={serialize(marketPlaces)}
+            blanks={serialize(blanks)}
+            basePath={`/${slug}/admin/blanks`}
+        />
+    );
 }

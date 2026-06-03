@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { PremierPrinting } from "../lib/connection";
 
 const schema = new mongoose.Schema({
+  orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
     from:     { type: String, required: true },
     to:       { type: String },           // set for DMs, absent for group msgs
     group:    { type: String },           // set for group msgs

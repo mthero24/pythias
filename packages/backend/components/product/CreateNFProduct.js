@@ -63,9 +63,10 @@ const ZoomModal = ({ image, onClose }) => (
     </Modal>
 );
 
-export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor }) => {
+export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, setStage, brands: brandsProp, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor }) => {
     const [type, setType] = useState("From Blank");
-    const [blanks, setBlanks] = useState([]);;
+    const [blanks, setBlanks] = useState([]);
+    const [localBrands, setLocalBrands] = useState(brandsProp || []);
     const [loading, setLoading] = useState(false);
     const [primaryImage, setPrimaryImage] = useState(true);
     const [upcs, setUpcs] = useState([])
@@ -105,9 +106,20 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                 console.error("Error fetching marketplaces:", error);
             }
         };
+        const fetchBrands = async () => {
+            try {
+                const response = await axios.get('/api/admin/brands');
+                const fetched = response.data.brands || [];
+                setLocalBrands(fetched);
+                if (setBrands) setBrands(fetched);
+            } catch (error) {
+                console.error("Error fetching brands:", error);
+            }
+        };
         if(open) {
             fetchBlanks();
             fetchMarkets();
+            fetchBrands();
         }
     },[open])
     let style = {
@@ -536,7 +548,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                         prod.productImages = (prod.productImages || []).filter(im => !im.color || prod.colors.find(c => c._id.toString() === im.color._id.toString()));
                                         for(let color of prod.colors){
                                             for(let size of prod.sizes){
-                                                let sku = `${prod.sku}_${color.sku}_${size.sku ?? size.name}`;
+                                                let sku = `${prod.sku}_${color.sku ?? color.name}_${size.sku ?? size.name}`;
                                                 if(!prod.variantsArray.filter(v => v.sku === sku)[0]){
                                                     prod.variantsArray.push({
                                                         sku,
@@ -764,13 +776,16 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                         <Grid2 container spacing={2}>
                                             <Grid2 size={{ xs: 12, sm: 6 }}>
                                                 <Typography variant="caption" sx={{ display: "block", marginBottom: .5 }}>Brand</Typography>
-                                                <CreatableSelect {...selectMenuPortalProps} placeholder="Select Brand" options={[{ value: null, label: "Select Brand" }, ...brands.map(brand => ({ value: brand.name, label: brand.name }))]} value={product.brand ? { value: product.brand, label: product.brand } : null} onChange={async (newValue) => {
+                                                <CreatableSelect {...selectMenuPortalProps} placeholder="Select Brand" options={[{ value: null, label: "Select Brand" }, ...localBrands.map(brand => ({ value: brand.name, label: brand.name }))]} value={product.brand ? { value: product.brand, label: product.brand } : null} onChange={async (newValue) => {
                                                     let prod = { ...product }
                                                     prod.brand = newValue.value
-                                                    if (newValue.value && !brands.filter(b => b.name == newValue.value)[0]) {
+                                                    if (newValue.value && !localBrands.find(b => b.name === newValue.value)) {
                                                         let res = await axios.post("/api/admin/brands", { name: newValue.value })
                                                         if (res.data.error) alert(res.data.msg)
-                                                        else setBrands(res.data.brands)
+                                                        else {
+                                                            setLocalBrands(res.data.brands)
+                                                            if (setBrands) setBrands(res.data.brands)
+                                                        }
                                                     }
                                                     setProduct({ ...prod })
                                                 }} />
@@ -987,12 +1002,12 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                             <Button fullWidth variant="contained" disabled={loading} onClick={async () => {
                                 setLoading(true)
                                 let res = await axios.post("/api/admin/products", { products: [product] });
+                                setLoading(false);
                                 if (res.data.error) alert(res.data.msg)
                                 else {
                                     setOpen(false);
                                     setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] });
                                     setStage("Select Blank");
-                                    setLoading(false);
                                 }
                             }}>{loading ? "Saving..." : "Create"}</Button>
                         </Box>

@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider } from "@mui/material";
+import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider, IconButton, InputAdornment } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -10,6 +11,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -51,13 +53,22 @@ export default function LoginPage() {
                                 />
                                 <TextField
                                     label="Password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     required
                                     fullWidth
                                     size="small"
                                     autoComplete="current-password"
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton size="small" onClick={() => setShowPassword(v => !v)} edge="end">
+                                                    {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
                                 />
                                 <Button type="submit" variant="contained" fullWidth disabled={loading}>
                                     {loading ? "Signing in..." : "Sign in"}

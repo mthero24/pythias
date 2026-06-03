@@ -27,10 +27,38 @@ export async function GET(req) {
             .skip((page - 1) * PER_PAGE)
             .limit(PER_PAGE)
             .populate("designRef", "sku name")
-            .populate("blanks", "code name")
+            .populate("blanks", "code name sizes colors")
+            .populate("colors", "name hexcode sku")
+            .populate("productImages.color", "name hexcode sku")
+            .populate("variantsArray.blank", "code name")
+            .populate("variantsArray.color", "name hexcode sku")
             .lean(),
         PlatformProduct.countDocuments(filter),
     ]);
+
+    // For products saved before colors/blanks were stored, derive from populated variantsArray
+    for (const product of products) {
+        if (!product.colors?.length && product.variantsArray?.length) {
+            const seen = new Map();
+            for (const v of product.variantsArray) {
+                if (v.color?._id) {
+                    const id = v.color._id.toString();
+                    if (!seen.has(id)) seen.set(id, v.color);
+                }
+            }
+            product.colors = [...seen.values()];
+        }
+        if (!product.blanks?.length && product.variantsArray?.length) {
+            const seen = new Map();
+            for (const v of product.variantsArray) {
+                if (v.blank?._id) {
+                    const id = v.blank._id.toString();
+                    if (!seen.has(id)) seen.set(id, v.blank);
+                }
+            }
+            product.blanks = [...seen.values()];
+        }
+    }
 
     return NextResponse.json({ error: false, products: JSON.parse(JSON.stringify(products)), count });
 }
@@ -56,7 +84,10 @@ function flattenVariants(raw) {
 }
 
 async function buildPlatformDoc(raw, orgId) {
-    const variantsFlat = flattenVariants(raw);
+    let variantsFlat = flattenVariants(raw);
+    if (variantsFlat.length === 0 && Array.isArray(raw.variantsArray) && raw.variantsArray.length > 0) {
+        variantsFlat = raw.variantsArray;
+    }
 
     const variantsArray = await Promise.all(variantsFlat.map(async v => {
         const blankId = v.blank?._id ?? v.blank ?? null;
@@ -88,15 +119,32 @@ async function buildPlatformDoc(raw, orgId) {
         };
     }));
 
-    const images = (raw.productImages || []).map(pi => ({
-        url: pi.image,
-        colorName: pi.color?.name ?? null,
+    const productImages = (raw.productImages || []).map(pi => ({
+        image: pi.image ?? pi.url ?? "",
+        color: pi.color?._id ?? pi.color ?? null,
+        colorName: pi.color?.name ?? pi.colorName ?? null,
+        blank: pi.blank?._id ?? pi.blank ?? null,
+        sku: pi.sku ?? "",
+        side: pi.side ?? null,
     }));
+
+    const defaultColorId = raw.defaultColor?._id ?? raw.defaultColor ?? variantsFlat[0]?.color?._id ?? variantsFlat[0]?.color ?? null;
+
+    const uniqueColorIds = [...new Map(
+        variantsFlat.map(v => {
+            const id = v.color?._id ?? v.color;
+            return [String(id), id];
+        }).filter(([k]) => k !== "null" && k !== "undefined")
+    ).values()];
+
     const dept = raw.department;
     return {
         orgId,
         designRef: raw.design?._id ?? raw.design ?? null,
         blanks: raw.blanks?.map(b => b._id ?? b) ?? [],
+        colors: raw.colors?.map(c => c._id ?? c).length > 0
+            ? raw.colors.map(c => c._id ?? c)
+            : uniqueColorIds,
         title: raw.title,
         sku: raw.sku,
         description: raw.description ?? "",
@@ -109,9 +157,15 @@ async function buildPlatformDoc(raw, orgId) {
         active: true,
         variants: null,
         variantsArray,
+        defaultColor: defaultColorId,
         variantImages: raw.variantImages ?? null,
         variantSecondaryImages: raw.variantSecondaryImages ?? null,
-        images,
+        productImages,
+        isNFProduct: raw.isNFProduct ?? true,
+        lastUpdated: new Date(),
+        marketplaceValues: raw.marketplaceValues ?? null,
+        theme: raw.theme ?? "",
+        sportUsedFor: raw.sportUsedFor ?? "",
     };
 }
 
@@ -138,6 +192,26 @@ const assignUpcForPlatform = async (raw, variantsFlat) => {
     }
 };
 
+export async function DELETE(req) {
+    const token = await getToken({ req });
+    if (!token?.orgId) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
+    const { userName, email } = userFromToken(token);
+
+    const url = new URL(req.url);
+    const productId = url.searchParams.get("product");
+    if (!productId) return NextResponse.json({ error: true, msg: "Missing product id" }, { status: 400 });
+
+    try {
+        const product = await PlatformProduct.findOneAndDelete({ _id: productId, orgId: token.orgId });
+        if (!product) return NextResponse.json({ error: true, msg: "Product not found" }, { status: 404 });
+        logActivity({ action: "product_delete", entity: "product", count: 1, userName, email });
+        return NextResponse.json({ error: false });
+    } catch (e) {
+        console.error("[products DELETE]", e);
+        return NextResponse.json({ error: true, msg: e.message });
+    }
+}
+
 export async function POST(req) {
     const token = await getToken({ req });
     if (!token?.orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -157,7 +231,8 @@ export async function POST(req) {
         try {
             const saved = [];
             for (const raw of body.products) {
-                await assignUpcForPlatform(raw, flattenVariants(raw));
+                const flatForUpc = flattenVariants(raw).length > 0 ? flattenVariants(raw) : (raw.variantsArray ?? []);
+                await assignUpcForPlatform(raw, flatForUpc);
                 const doc = await buildPlatformDoc(raw, token.orgId);
                 let product;
                 if (raw._id) {
@@ -180,12 +255,13 @@ export async function POST(req) {
 
             return NextResponse.json({ error: false, products: JSON.parse(JSON.stringify(saved)) });
         } catch (e) {
-            return NextResponse.json({ error: e.message?.includes("duplicate") ? "SKU already exists" : e.message });
+            console.error("[products POST products]", e);
+            return NextResponse.json({ error: true, msg: e.message?.includes("duplicate") ? "SKU already exists" : e.message });
         }
     }
 
     const product = body.product ?? body;
-    if (!product || typeof product !== "object") return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    if (!product || typeof product !== "object") return NextResponse.json({ error: true, msg: "Invalid body" }, { status: 400 });
     product.orgId = token.orgId;
 
     try {
@@ -193,6 +269,7 @@ export async function POST(req) {
         logActivity({ action: "product_update", entity: "product", count: 1, userName, email });
         return NextResponse.json({ error: false, product: JSON.parse(JSON.stringify(saved)) });
     } catch (e) {
-        return NextResponse.json({ error: e.message?.includes("duplicate") ? "SKU already exists" : e.message });
+        console.error("[products POST product]", e);
+        return NextResponse.json({ error: true, msg: e.message?.includes("duplicate") ? "SKU already exists" : e.message });
     }
 }
