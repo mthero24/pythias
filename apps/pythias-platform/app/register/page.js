@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider, MenuItem, Select, InputLabel, FormControl, Chip } from "@mui/material";
 import { TIERS } from "@/lib/tiers";
@@ -7,7 +7,7 @@ import { TIERS } from "@/lib/tiers";
 const TIER_OPTIONS = ['starter', 'professional', 'business', 'scale'];
 const VALID_TIERS = new Set(TIER_OPTIONS);
 
-export default function RegisterPage() {
+function RegisterForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const planParam = searchParams.get("plan");
@@ -142,5 +142,13 @@ export default function RegisterPage() {
                 </CardContent>
             </Card>
         </Box>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense>
+            <RegisterForm />
+        </Suspense>
     );
 }
