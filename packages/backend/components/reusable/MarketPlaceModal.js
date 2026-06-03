@@ -238,7 +238,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                         try {
                             await axios.get(image.image.replace("=400", "=2400"));
                         } catch (error) {
-                            console.error("Error pre-caching image:", error);
+                            console.warn("pre-cache image failed:", error?.message);
                         }
                     }
                 }
@@ -260,7 +260,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                         try {
                             await axios.get(variant.image.replace("=400", "=2400"));
                         } catch (error) {
-                            console.error("Error pre-caching variant image:", error);
+                            console.warn("pre-cache variant image failed:", error?.message);
                         }
                     }
                 }

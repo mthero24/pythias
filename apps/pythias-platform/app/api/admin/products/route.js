@@ -26,7 +26,7 @@ export async function GET(req) {
             .sort({ _id: -1 })
             .skip((page - 1) * PER_PAGE)
             .limit(PER_PAGE)
-            .populate("design", "sku name")
+            .populate("design", "sku name printType")
             .populate("blanks", "code name sizes colors")
             .populate("colors", "name hexcode sku")
             .populate("productImages.color", "name hexcode sku")

@@ -433,7 +433,19 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
                                 }}>Edit</Button>
                             </Stack>
                             <Stack direction="row" spacing={0.75}>
-                                <Button fullWidth size="small" variant="outlined" color="secondary" startIcon={<VisibilityIcon />} onClick={() => { setProduct({ ...p }); setCreateProduct(true); setPreview(true); }}>Preview</Button>
+                                <Button fullWidth size="small" variant="outlined" color="secondary" startIcon={<VisibilityIcon />} onClick={() => {
+                                    const resolveId = x => (x?._id ?? x)?.toString();
+                                    const prod = { ...p };
+                                    if (allBlanks) prod.blanks = (p.blanks || []).map(b => allBlanks.find(bl => bl._id?.toString() === resolveId(b)) ?? b).filter(Boolean);
+                                    if (allColors) {
+                                        prod.colors = (p.colors || []).map(c => allColors.find(co => co._id?.toString() === resolveId(c)) ?? c).filter(Boolean);
+                                        prod.threadColors = (p.threadColors || []).map(c => allColors.find(co => co._id?.toString() === resolveId(c)) ?? c).filter(Boolean);
+                                        if (p.defaultColor) prod.defaultColor = allColors.find(co => co._id?.toString() === resolveId(p.defaultColor)) ?? p.defaultColor;
+                                    }
+                                    setProduct(prod);
+                                    setCreateProduct(true);
+                                    setPreview(true);
+                                }}>Preview</Button>
                                 <Tooltip title={videoGenerating ? "Generating new video — click to check progress" : productVideo ? "View / regenerate video" : "Generate product video"}>
                                     <Button
                                         fullWidth size="small"

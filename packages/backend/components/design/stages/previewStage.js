@@ -192,7 +192,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                                         }} variant="contained" size="small" startIcon={<AddIcon />} sx={{ textTransform: "none" }}>Add Product Inventory</Button>}
                                     </Box>
                                     {product.colors.map(color => {
-                                        const variants = product.variantsArray.filter(v => (v.blank._id ? v.blank?._id.toString() : v.blank?.toString()) === blank._id.toString() && (v.color?._id? v.color._id.toString(): v.color?.toString()) === color._id.toString());
+                                        const variants = product.variantsArray.filter(v => (v.blank?._id ?? v.blank)?.toString() === (blank?._id ?? blank)?.toString() && (v.color?._id ?? v.color)?.toString() === (color?._id ?? color)?.toString());
                                         return variants.length > 0 ? (
                                             <VariantDisplay key={`${blank.code}-${color.name}`} blank={blank.code} color={color.name} variants={variants} fullBlank={blank} product={product} setProducts={setProducts} preview={preview} pageProducts={pageProducts} setPageProducts={setPageProducts} design={design} setDesign={setDesign} />
                                         ) : null;

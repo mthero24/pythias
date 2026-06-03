@@ -121,7 +121,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                             : Object.keys(design ? design : {}).join("_");
                         const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}`;
                         if (!imgs[blank.code][color.name].find(i => i.sku === imgKey)) {
-                            imgs[blank.code][color.name].push({ image: encodeURI(`/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
+                            imgs[blank.code][color.name].push({ image: encodeURI(`https://platform.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
                         }
                     }
                 }
@@ -160,7 +160,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                             if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
                             const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`;
                             if (!imgs[blank.code][threadColor][color.name].find(i => i.sku === imgKey)) {
-                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
+                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://platform.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
                             }
                         }
                     }
