@@ -22,6 +22,31 @@ export async function POST(req) {
 
     const body = await req.json();
 
+    // User creation: { email, firstName, lastName, password, role }
+    if (body.email && body.password && !body.user) {
+        try {
+            await checkUsage(session.user.orgId, "user");
+        } catch (e) {
+            return NextResponse.json({ error: true, msg: e.message }, { status: 429 });
+        }
+        const existing = await PlatformUser.findOne({ userName: body.email.toLowerCase().trim() });
+        if (existing) return NextResponse.json({ error: true, msg: "A user with that email already exists" }, { status: 409 });
+        const user = new PlatformUser({
+            orgId: session.user.orgId,
+            email: body.email.trim(),
+            firstName: body.firstName?.trim() ?? "",
+            lastName: body.lastName?.trim() ?? "",
+            userName: body.email.toLowerCase().trim(),
+            password: body.password,
+            role: body.role ?? "operator",
+            isActive: true,
+        });
+        await user.save();
+        await incrementUsage(session.user.orgId, "user");
+        const saved = await PlatformUser.findById(user._id).select("-password").lean();
+        return NextResponse.json({ error: false, user: saved });
+    }
+
     // Password reset: { user, password }
     if (body.user && body.password) {
         const target = await PlatformUser.findOne({ _id: body.user._id, orgId: session.user.orgId });

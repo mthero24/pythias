@@ -2304,7 +2304,7 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
 }
 
 // ─── TikTok connection row ─────────────────────────────────────────────────────
-function TikTokConnectionCard({ shop, onDeactivate }) {
+function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin" }) {
     const color = "#010101";
     const [confirming, setConfirming]     = useState(false);
     const [deactivating, setDeactivating] = useState(false);
@@ -2363,7 +2363,7 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
                     <Stack direction="row" spacing={1} flexShrink={0} alignItems="center">
                         {!confirming && shop.access_token && (
                             <Button
-                                component={Link} href="/admin/integrations/tiktok"
+                                component={Link} href={`${adminBase}/integrations/tiktok`}
                                 variant="contained" size="small"
                                 endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
                                 sx={{ bgcolor: "#010101", color: "#fff", "&:hover": { bgcolor: "#333" }, borderRadius: 1.5 }}>
@@ -2405,7 +2405,7 @@ function TikTokConnectionCard({ shop, onDeactivate }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp }) {
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp, slug }) {
     const [tikTokOpen,  setTikTokOpen]  = useState(false);
     const [acendaOpen,  setAcendaOpen]  = useState(false);
     const [walmartOpen, setWalmartOpen] = useState(false);
@@ -2440,14 +2440,15 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const connectedTypes = new Set(apiConnections.map(a => a.type?.toLowerCase()));
     const hasTikTok = tiktokConnections.length > 0;
 
+    const adminBase = slug ? `/${slug}/admin` : "/admin";
     const manageHref = (api) => {
         const t = api.type?.toLowerCase();
-        if (t === "walmart") return `/admin/integrations/walmart?connectionId=${api._id}`;
-        if (t === "faire")   return `/admin/integrations/faire?connectionId=${api._id}`;
-        if (t === "acenda" || (!t && !!api.organization)) return `/admin/integrations/acenda?connectionId=${api._id}`;
-        if (t === "shopify" || api.displayName?.startsWith("shopify-")) return `/admin/integrations/shopify?connectionId=${api._id}`;
-        if (t === "mirakl")  return `/admin/integrations/mirakl?connectionId=${api._id}`;
-        if (t === "ebay")    return `/admin/integrations/ebay?connectionId=${api._id}`;
+        if (t === "walmart") return `${adminBase}/integrations/walmart?connectionId=${api._id}`;
+        if (t === "faire")   return `${adminBase}/integrations/faire?connectionId=${api._id}`;
+        if (t === "acenda" || (!t && !!api.organization)) return `${adminBase}/integrations/acenda?connectionId=${api._id}`;
+        if (t === "shopify" || api.displayName?.startsWith("shopify-")) return `${adminBase}/integrations/shopify?connectionId=${api._id}`;
+        if (t === "mirakl")  return `${adminBase}/integrations/mirakl?connectionId=${api._id}`;
+        if (t === "ebay")    return `${adminBase}/integrations/ebay?connectionId=${api._id}`;
         return null;
     };
 
@@ -2690,7 +2691,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                                 description={PLATFORMS.channelengine.description}
                                 logoBg="#0078d7"
                                 connected={!!channelEngineConnected}
-                                href={channelEngineConnected ? "/admin/integrations/channelengine" : undefined}
+                                href={channelEngineConnected ? `${adminBase}/integrations/channelengine` : undefined}
                             />
                         </Grid2>
                     )}
@@ -2742,7 +2743,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                                             </Box>
                                         </Stack>
                                         <Button
-                                            component={Link} href="/admin/integrations/channelengine"
+                                            component={Link} href={`${adminBase}/integrations/channelengine`}
                                             variant="contained" size="small"
                                             endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
                                             sx={{ bgcolor: "#0078d7", "&:hover": { bgcolor: "#0078d7", filter: "brightness(0.88)" }, borderRadius: 1.5 }}
@@ -2774,7 +2775,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                                             </Box>
                                         </Stack>
                                         <Button
-                                            component={Link} href="/admin/integrations/gs1"
+                                            component={Link} href={`${adminBase}/integrations/gs1`}
                                             variant="outlined" size="small"
                                             endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
                                             sx={{ borderColor: "#009a44", color: "#009a44", "&:hover": { borderColor: "#007a35", bgcolor: "#009a4408" }, borderRadius: 1.5 }}
@@ -2786,7 +2787,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             </Paper>
                         )}
                         {tiktokConnections.map(tt => (
-                            <TikTokConnectionCard key={tt._id} shop={tt}
+                            <TikTokConnectionCard key={tt._id} shop={tt} adminBase={adminBase}
                                 onDeactivate={id => setTiktokConnections(prev => prev.filter(t => t._id !== id))} />
                         ))}
                         {apiConnections.map(api => (

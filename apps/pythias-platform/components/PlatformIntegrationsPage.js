@@ -232,7 +232,7 @@ export function PlatformIntegrationsPage({ connectedTypes = [], channelEngineCon
     const [gs1Open, setGs1Open] = useState(false);
     const [gs1IsConnected, setGs1IsConnected] = useState(!!gs1ConnectedProp);
 
-    const manageHref = (type) => `/${slug}/integrations/${type}`;
+    const manageHref = (type) => `/${slug}/admin/integrations/${type}`;
 
     const totalActive = connected.size + (channelEngineConnected ? 1 : 0) + (gs1IsConnected ? 1 : 0);
 

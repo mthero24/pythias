@@ -58,13 +58,18 @@ export async function handleAdminIntegrationsGET(req) {
 export async function handleAdminIntegrationsPOST(req) {
     let data = await req.json();
     if (data.type == "tiktok") {
-        let auth = await TikTokAuth.findOne({ seller_name: data.seller_name, provider: data.provider });
-        if (!auth) {
-            auth = new TikTokAuth({ seller_name: data.seller_name, provider: data.provider });
-            await auth.save();
+        try {
+            let auth = await TikTokAuth.findOne({ seller_name: data.seller_name, provider: data.provider });
+            if (!auth) {
+                auth = new TikTokAuth({ seller_name: data.seller_name, provider: data.provider });
+                await auth.save();
+            }
+            let url = await generateAuthorizationUrl(auth._id.toString());
+            return NextResponse.json({ error: false, url });
+        } catch (err) {
+            console.error("TikTok auth error:", err.message);
+            return NextResponse.json({ error: true, msg: err.message }, { status: 500 });
         }
-        let url = await generateAuthorizationUrl(auth._id.toString());
-        return NextResponse.json({ error: false, url });
     } else if (["acenda","walmart","faire","shein","temu","wix","woocommerce","squarespace","meta","pinterest","onbuy","rakuten","wayfair","rithum"].includes(data.type)) {
         let integration = await ApiKeyIntegrations.findOne({ displayName: data.displayName, provider: data.provider });
         if (!integration) {
