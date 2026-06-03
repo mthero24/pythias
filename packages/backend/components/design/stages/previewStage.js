@@ -270,7 +270,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                             setOpen(false)
                             setLoading(false)
                         }
-                    }}>{loading ? "Saving..." : "Create"}</Button>
+                    }}>{loading ? "Saving..." : products.some(p => p._id) ? "Edit" : "Create"}</Button>
                     {loading && <LoaderOverlay />}
                 </Grid2>
             </Grid2>}

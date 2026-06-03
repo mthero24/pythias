@@ -16,38 +16,45 @@ export async function GET(req) {
 
 export async function POST(req) {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
+    if (!["owner", "admin"].includes(session.user.role))
+        return NextResponse.json({ error: true, msg: "Insufficient permissions" }, { status: 403 });
 
-    if (!["owner", "admin"].includes(session.user.role)) {
-        return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
+    const body = await req.json();
+
+    // Password reset: { user, password }
+    if (body.user && body.password) {
+        const target = await PlatformUser.findOne({ _id: body.user._id, orgId: session.user.orgId });
+        if (!target) return NextResponse.json({ error: true, msg: "User not found" }, { status: 404 });
+        target.password = body.password;
+        await target.save();
+        const users = await PlatformUser.find({ orgId: session.user.orgId })
+            .select("userName firstName lastName email role permissions avatar lastSeen")
+            .lean();
+        return NextResponse.json({ error: false, users });
     }
 
-    try {
-        await checkUsage(session.user.orgId, "user");
-    } catch (err) {
-        return NextResponse.json({ error: err.message }, { status: 429 });
-    }
+    return NextResponse.json({ error: true, msg: "Invalid request" }, { status: 400 });
+}
 
-    const { email, firstName, lastName, password, role } = await req.json();
-    if (!email || !password) return NextResponse.json({ error: "Email and password required" }, { status: 400 });
+export async function PUT(req) {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
+    if (!["owner", "admin"].includes(session.user.role))
+        return NextResponse.json({ error: true, msg: "Insufficient permissions" }, { status: 403 });
 
-    const exists = await PlatformUser.findOne({ email }).lean();
-    if (exists) return NextResponse.json({ error: "Email already in use" }, { status: 409 });
+    const { user } = await req.json();
+    if (!user?._id) return NextResponse.json({ error: true, msg: "userId required" }, { status: 400 });
 
-    const user = await PlatformUser.create({
-        orgId: session.user.orgId,
-        email,
-        userName: email,
-        password,
-        firstName: firstName || "",
-        lastName: lastName || "",
-        role: ["admin", "operator", "viewer"].includes(role) ? role : "operator",
-    });
+    const target = await PlatformUser.findOne({ _id: user._id, orgId: session.user.orgId });
+    if (!target) return NextResponse.json({ error: true, msg: "User not found" }, { status: 404 });
 
-    await incrementUsage(session.user.orgId, "user");
+    await PlatformUser.findByIdAndUpdate(user._id, { permissions: user.permissions ?? {} });
 
-    const { password: _, ...safeUser } = user.toObject();
-    return NextResponse.json({ user: safeUser }, { status: 201 });
+    const users = await PlatformUser.find({ orgId: session.user.orgId })
+        .select("userName firstName lastName email role permissions avatar lastSeen")
+        .lean();
+    return NextResponse.json({ error: false, users });
 }
 
 export async function PATCH(req) {
@@ -80,19 +87,22 @@ export async function PATCH(req) {
 
 export async function DELETE(req) {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
+    if (!["owner", "admin"].includes(session.user.role))
+        return NextResponse.json({ error: true, msg: "Insufficient permissions" }, { status: 403 });
 
-    if (!["owner", "admin"].includes(session.user.role)) {
-        return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
-    }
-
-    const { userId } = await req.json();
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+    const url = new URL(req.url);
+    const userId = url.searchParams.get("user");
+    if (!userId) return NextResponse.json({ error: true, msg: "userId required" }, { status: 400 });
 
     const target = await PlatformUser.findOne({ _id: userId, orgId: session.user.orgId });
-    if (!target) return NextResponse.json({ error: "User not found" }, { status: 404 });
-    if (target.role === "owner") return NextResponse.json({ error: "Cannot delete owner" }, { status: 403 });
+    if (!target) return NextResponse.json({ error: true, msg: "User not found" }, { status: 404 });
+    if (target.role === "owner") return NextResponse.json({ error: true, msg: "Cannot delete owner" }, { status: 403 });
 
-    await PlatformUser.findByIdAndUpdate(userId, { isActive: false });
-    return NextResponse.json({ ok: true });
+    await PlatformUser.findByIdAndDelete(userId);
+
+    const users = await PlatformUser.find({ orgId: session.user.orgId })
+        .select("userName firstName lastName email role permissions avatar lastSeen")
+        .lean();
+    return NextResponse.json({ error: false, users });
 }

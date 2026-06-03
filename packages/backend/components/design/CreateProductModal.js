@@ -132,7 +132,7 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
         >
             <Box sx={style} ref={targetRef}>
                 <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 1 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 500 }}>Create Product</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 500 }}>{product?._id ? "Edit Product" : "Create Product"}</Typography>
                     <IconButton onClick={() => { setOpen(false); setUpcs([]); releaseHold(); setTempUpcs([]); setStage("blanks"); setProduct({ blanks: [], colors: [], threadColors: [], sizes: [], productImages: { blank: [], color: [], threadColor: [] } }); setProducts([]); setPreview(false); }} aria-label="close" size="small">
                         <CloseIcon />
                     </IconButton>

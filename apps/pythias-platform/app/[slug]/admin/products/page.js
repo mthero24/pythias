@@ -49,7 +49,7 @@ export default async function ProductsPage(req) {
             colors={serialize(colors)}
             filter={filters}
             CreateSku={CreateSku}
-            source={"simplysage"}
+            source={"platform"}
             totalProducts={totalProducts}
             printTypes={serialize(printTypes)}
             licenses={serialize(licenses)}

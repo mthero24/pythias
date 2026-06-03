@@ -55,7 +55,7 @@ export const VariantImageStage = ({ products, setProducts, design, source, slug,
         <Box sx={{ padding: { xs: 1, sm: 1.5 }, background: "linear-gradient(180deg, #f4f6fa 0%, #eceff5 100%)", minHeight: "100%", borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 0.5, color: "text.primary" }}>Select Variant Images</Typography>
             <Typography variant="caption" sx={{ display: "block", textAlign: "center", marginBottom: 1.5, color: "text.secondary" }}>Pick one <b>main</b> image per color, plus any <b>extras</b> for the gallery.</Typography>
-            {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors?.length > 0 ? design.threadImages : design.images} setProducts={setProducts} threadColors={design.threadColors?.length > 0 ? true : false} source={source} slug={slug} />)}
+            {products.map(product => <CreateVariantImages key={product.id} product={product} products={products} design={design.threadColors?.length > 0 ? design.threadImages : design.images} designObj={design} setProducts={setProducts} threadColors={design.threadColors?.length > 0 ? true : false} source={source} slug={slug} />)}
             <Grid2 container spacing={2} sx={{ justifyContent: "space-between", marginTop: 1.5 }}>
                 <Grid2 size="auto">
                     <Button variant="outlined" size="large" sx={{ minWidth: 160 }} onClick={() => { setStage("product_images") }}>Back</Button>
@@ -78,7 +78,13 @@ export const VariantImageStage = ({ products, setProducts, design, source, slug,
 }
 
 
-const CreateVariantImages = ({ product, products, setProducts, design, threadColors, source, slug }) => {
+const CreateVariantImages = ({ product, products, setProducts, design, designObj, threadColors, source, slug }) => {
+    const dSku = product.design?.sku ?? designObj?.sku ?? "";
+    const dPrintType = product.design?.printType ?? designObj?.printType ?? "";
+    const renderBase = source === "platform"
+        ? "https://platform.pythiastechnologies.com/api/renderImages"
+        : "/api/renderImages";
+    const renderSuffix = source === "platform" && slug ? `&orgSlug=${slug}` : "";
     const [mainImage, setMainImage] = useState(true);
     const [zoomImage, setZoomImage] = useState(null);
     const cdn = (url) => url.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");
@@ -98,7 +104,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                     if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = [];
                     const rawUrl = `${cdn(img.image)}?width=400`;
                     const fileBase = img.image.split("/").pop().split(".")[0];
-                    const sku = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${fileBase}-${color.name.replace(/\//g, "_")}-other`;
+                    const sku = `${dPrintType}_${dSku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${fileBase}-${color.name.replace(/\//g, "_")}-other`;
                     if (!imgs[blank.code][color.name].find(i => i.sku === sku)) {
                         imgs[blank.code][color.name].push({ image: rawUrl, sku });
                     }
@@ -119,9 +125,9 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                         const imgSide = imgBoxes.includes("back") && !imgBoxes.some(b => b !== "back" && Object.keys(design ?? {}).includes(b))
                             ? "back"
                             : Object.keys(design ? design : {}).join("_");
-                        const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}`;
+                        const imgKey = `${dPrintType}_${dSku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}`;
                         if (!imgs[blank.code][color.name].find(i => i.sku === imgKey)) {
-                            imgs[blank.code][color.name].push({ image: encodeURI(`https://platform.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
+                            imgs[blank.code][color.name].push({ image: encodeURI(`${renderBase}/${dSku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${imgSide}.jpg?width=400${renderSuffix}`), sku: imgKey });
                         }
                     }
                 }
@@ -138,7 +144,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                         if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
                         const rawUrl = `${cdn(img.image)}?width=400`;
                         const fileBase = img.image.split("/").pop().split(".")[0];
-                        const sku = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${fileBase}-${color.name.replace(/\//g, "_")}-other-${threadColor}`;
+                        const sku = `${dPrintType}_${dSku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${fileBase}-${color.name.replace(/\//g, "_")}-other-${threadColor}`;
                         if (!imgs[blank.code][threadColor][color.name].find(i => i.sku === sku)) {
                             imgs[blank.code][threadColor][color.name].push({ image: rawUrl, sku });
                         }
@@ -158,9 +164,9 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
                             if (!imgs[blank.code]) imgs[blank.code] = {};
                             if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {};
                             if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
-                            const imgKey = `${product.design.printType}_${product.design.sku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`;
+                            const imgKey = `${dPrintType}_${dSku}_${color.sku}_${blank.code.replace(/-/g, "_")}_${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}`;
                             if (!imgs[blank.code][threadColor][color.name].find(i => i.sku === imgKey)) {
-                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`https://platform.pythiastechnologies.com/api/renderImages/${product.design.sku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400&orgSlug=${slug}`), sku: imgKey });
+                                imgs[blank.code][threadColor][color.name].push({ image: encodeURI(`${renderBase}/${dSku}-${blank.code.replace(/-/g, "_")}-${img.image.split("/").pop().split(".")[0]}-${color.name.replace(/\//g, "_")}-${side}-${threadColor}.jpg?width=400${renderSuffix}`), sku: imgKey });
                             }
                         }
                     }
@@ -290,7 +296,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, threadCol
             <CardContent sx={{ padding: { xs: 1.25, sm: 1.5 }, "&:last-child": { paddingBottom: { xs: 1.25, sm: 1.5 } } }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, marginBottom: 1.25, position: "sticky", top: 0, zIndex: 1, backgroundColor: "#fff", paddingY: 0.5 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{product.design?.sku}</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{dSku}</Typography>
                         <Typography variant="caption" color="text.secondary">{blankKeys.join(" · ")}</Typography>
                         {availableGroups.length > 1 && (
                             <FormControl size="small" sx={{ minWidth: 110 }}>

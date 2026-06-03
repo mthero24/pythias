@@ -29,9 +29,9 @@ export default async function TrackLabels() {
             item.order.status !== "Shipped"
         );
 
-        return <TrackLabelsComponent items={serialize(items)} source="simplysage" />;
+        return <TrackLabelsComponent items={serialize(items)} source="platform" />;
     } catch (e) {
         console.error("[track-labels]", e);
-        return <TrackLabelsComponent items={[]} source="simplysage" />;
+        return <TrackLabelsComponent items={[]} source="platform" />;
     }
 }

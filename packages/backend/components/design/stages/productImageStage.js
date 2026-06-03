@@ -59,7 +59,7 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
         <Box sx={{ padding: { xs: 1, sm: 1.5 }, background: "linear-gradient(180deg, #f4f6fa 0%, #eceff5 100%)", minHeight: "100%", borderRadius: 2 }}>
             <Typography variant="subtitle1" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 1.5, color: "text.primary" }}>Select Product Images</Typography>
             {products.map((product, i) => {
-                const normUrl = url => url ? url.replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
+                const normUrl = url => url ? url.replace(/^https?:\/\/[^/]+/, "").replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
                 const imgMatch = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
                 const productImageGroups = [...new Set(product.blanks.flatMap(b => (b.images || []).map(img => img.imageGroup || "default")))];
                 const allImages = [...(images[product.id] || []), ...(product.tempImages || [])];

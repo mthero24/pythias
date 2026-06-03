@@ -166,7 +166,7 @@ function ColorSwatch({ color, selected, onClick, score }) {
     );
 }
 
-export function AiProductModal({ open, onClose, design, blanks, colors, marketPlaces, brands, onConfirm, source }) {
+export function AiProductModal({ open, onClose, design, blanks, colors, marketPlaces, brands, onConfirm, source, slug }) {
     const [selectedBlankIds, setSelectedBlankIds] = useState([]);
     const [maxColors, setMaxColors] = useState(4);
     const [selectedTheme, setSelectedTheme] = useState("default");
@@ -417,7 +417,11 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
         }
     };
 
-    const host = source == "pythias-test" ? "test" : source;
+    const isPlatform = source === "platform";
+    const renderBase = isPlatform
+        ? `https://platform.pythiastechnologies.com/api/renderImages`
+        : `/api/renderImages`;
+    const renderSuffix = isPlatform && slug ? `&orgSlug=${slug}` : "";
     const designSides = Object.keys(design?.images ?? {});
     const sidesStr = designSides.length > 0 ? designSides.join("_") : "front";
 
@@ -454,7 +458,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
                 if (bm) {
                     const codeKey = blank.code.replace(/-/g, "_");
                     const fileBase = bm.image.split("/").pop().split(".")[0];
-                    return encodeURI(`https://${host}.pythiastechnologies.com/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${colorName.replace(/\//g, "_")}-${sidesStr}.jpg?width=200`);
+                    return encodeURI(`${renderBase}/${design.sku}-${codeKey}-${fileBase}-${colorName.replace(/\//g, "_")}-${sidesStr}.jpg?width=200${renderSuffix}`);
                 }
             }
 
@@ -476,7 +480,7 @@ export function AiProductModal({ open, onClose, design, blanks, colors, marketPl
     const makeRenderUrl = (blank, img, color, sides) => {
         const codeKey = blank.code.replace(/-/g, "_");
         const fileBase = img.image.split("/").pop().split(".")[0];
-        const image = encodeURI(`https://${host}.pythiastechnologies.com/api/renderImages/${design.sku}-${codeKey}-${fileBase}-${color.name.replace(/\//g, "_")}-${sides}.jpg?width=400`);
+        const image = encodeURI(`${renderBase}/${design.sku}-${codeKey}-${fileBase}-${color.name.replace(/\//g, "_")}-${sides}.jpg?width=400${renderSuffix}`);
         const sku = `${design.printType}_${design.sku}_${color.sku ?? color.name.toLowerCase().replace(/\s+/g, "_")}_${codeKey}_${fileBase}-${color.name.replace(/\//g, "_")}-${sides}`;
         return { image, blank: blank._id, color: color._id, sku, side: sides };
     };

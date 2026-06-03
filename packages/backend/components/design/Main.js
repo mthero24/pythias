@@ -741,6 +741,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                 brands={bran}
                 onConfirm={handleAiProductConfirm}
                 source={source}
+                slug={slug}
             />
             <Snackbar
                 open={aiToast.open}
@@ -762,7 +763,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             <DeleteModal open={deleteModal} setOpen={setDeleteModal} title={deleteTitle} onDelete={deleteFunction.onDelete} deleteImage={deleteImage} type={type} product={product} />
             <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={product} setProduct={setProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={genders} seasons={seasons} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} slug={slug} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={themes} sportUsedFor={sportUsedFor} setThemes={setThemes} setSportUsedFor={setSportUsedFor} printTypes={printTypes} licenses={licenses} />
             {loading && <LoaderOverlay />}
-            <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => b.sizes.map(s => s.name))} design={des} setDesign={setDesign} source={source} />
+            <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={product} setProduct={setProduct} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => b.sizes.map(s => s.name))} design={des} setDesign={setDesign} source={source} canManage={canEdit} canEdit={canEdit} />
             <SublimationImages design={des} setDesign={setDesign} updateDesign={updateDesign} open={sublimationOpen} setOpen={setSublimationOpen} />
 
             <Footer />
