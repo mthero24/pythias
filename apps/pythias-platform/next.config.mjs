@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ["@pythias/mongo", "@pythias/sublimation", "sharp", "canvas", "pdfkit"],
+    serverExternalPackages: ["@pythias/mongo", "@pythias/sublimation", "sharp", "canvas", "pdfkit", "@napi-rs/canvas", "@pythias/shipping"],
     transpilePackages: ["@pythias/backend", "@pythias/labels", "@pythias/roq-folder"],
     images: {
         remotePatterns: [
