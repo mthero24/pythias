@@ -118,7 +118,7 @@ const FAQS = [
     },
     {
         q: "What's included in remote onboarding?",
-        a: "Remote onboarding ($2,000) is one week of live remote sessions, 4 hours per day, covering data import, printer configuration, marketplace connections, and team training. Available for any tier.",
+        a: "Remote onboarding ($3,000) is 5 days (Monday–Friday) of live remote sessions, 4 hours per day, covering data import, printer configuration, marketplace connections, and team training. Available for any tier.",
     },
     {
         q: "Do extra user seats require a plan upgrade?",
@@ -272,12 +272,12 @@ export default function PricingPage() {
                         <li className={s.onboardCard}>
                             <span className={s.onboardIcon}>💻</span>
                             <h3 className={s.onboardTitle}>Remote Onboarding</h3>
-                            <p className={s.onboardPrice}>$2,000</p>
+                            <p className={s.onboardPrice}>$3,000</p>
                             <p className={s.onboardDesc}>
                                 One week of live remote sessions — 4 hours per day — covering everything from data import to printer configuration and marketplace connections.
                             </p>
                             <ul className={s.onboardBullets}>
-                                {["Live Zoom sessions, 4 hrs/day for 5 days", "Data import & migration assistance", "Printer & hardware configuration", "Marketplace connection setup", "Team training & walkthrough"].map(b => (
+                                {["Live Zoom sessions, 4 hrs/day Mon–Fri", "Data import & migration assistance", "Printer & hardware configuration", "Marketplace connection setup", "Team training & walkthrough"].map(b => (
                                     <li key={b} className={s.onboardBullet}>
                                         <span className={s.checkGold}>✓</span> {b}
                                     </li>

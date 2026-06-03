@@ -5,6 +5,7 @@ import { Organization, UsageLedger, KlingInvoicePlatform } from "@pythias/mongo"
 import { Box, Container, Typography, Card, CardContent, Stack, Chip, Table, TableBody, TableCell, TableHead, TableRow, Divider } from "@mui/material";
 import TierBadge from "@/components/TierBadge";
 import { TIERS } from "@/lib/tiers";
+import BillingActions from "./BillingActions";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,10 @@ export default async function BillingPage() {
                         <Typography variant="caption" color="text.secondary">
                             Kling AI Video: $8/video upcharge
                         </Typography>
+                        <BillingActions
+                            currentTier={org.tier}
+                            hasStripeCustomer={!!org.stripeCustomerId}
+                        />
                     </CardContent>
                 </Card>
 
