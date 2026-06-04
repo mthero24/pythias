@@ -59,9 +59,13 @@ export async function handleAdminIntegrationsPOST(req) {
     let data = await req.json();
     if (data.type == "tiktok") {
         try {
-            let auth = await TikTokAuth.findOne({ seller_name: data.seller_name, provider: data.provider });
+            const orgId = data.orgId ?? null;
+            const filter = orgId
+                ? { seller_name: data.seller_name, orgId }
+                : { seller_name: data.seller_name, provider: data.provider };
+            let auth = await TikTokAuth.findOne(filter);
             if (!auth) {
-                auth = new TikTokAuth({ seller_name: data.seller_name, provider: data.provider });
+                auth = new TikTokAuth({ seller_name: data.seller_name, provider: data.provider, orgId });
                 await auth.save();
             }
             let url = await generateAuthorizationUrl(auth._id.toString());
@@ -70,8 +74,12 @@ export async function handleAdminIntegrationsPOST(req) {
             console.error("TikTok auth error:", err.message);
             return NextResponse.json({ error: true, msg: err.message }, { status: 500 });
         }
-    } else if (["acenda","walmart","faire","shein","temu","wix","woocommerce","squarespace","meta","pinterest","onbuy","rakuten","wayfair","rithum"].includes(data.type)) {
-        let integration = await ApiKeyIntegrations.findOne({ displayName: data.displayName, provider: data.provider });
+    } else if (["acenda","walmart","faire","shein","temu","wix","woocommerce","squarespace","meta","pinterest","onbuy","rakuten","wayfair","rithum","noon","bol"].includes(data.type)) {
+        const orgId = data.orgId ?? null;
+        const findFilter = orgId
+            ? { displayName: data.displayName, orgId }
+            : { displayName: data.displayName, provider: data.provider };
+        let integration = await ApiKeyIntegrations.findOne(findFilter);
         if (!integration) {
             integration = new ApiKeyIntegrations({
                 displayName: data.displayName,
@@ -82,6 +90,7 @@ export async function handleAdminIntegrationsPOST(req) {
                 shopId: data.shopId,
                 provider: data.provider,
                 type: data.type,
+                orgId,
             });
             await integration.save();
         } else {
@@ -94,7 +103,10 @@ export async function handleAdminIntegrationsPOST(req) {
             integration.type = data.type;
             await integration.save();
         }
-        let integrations = await ApiKeyIntegrations.find({ provider: data.provider });
+        const listFilter = orgId
+            ? { $or: [{ orgId }, { provider: data.provider, orgId: null }] }
+            : { provider: data.provider };
+        let integrations = await ApiKeyIntegrations.find(listFilter);
         return NextResponse.json({ error: false, integrations });
     }
 }

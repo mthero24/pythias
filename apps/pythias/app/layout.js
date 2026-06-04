@@ -63,10 +63,10 @@ const orgSchema = {
   description: "All-in-one print-on-demand automation platform for custom apparel businesses.",
   address: {
     "@type": "PostalAddress",
-    streetAddress: "21440 Melrose Ave",
-    addressLocality: "Southfield",
+    streetAddress: "1421 Hidden View Drive",
+    addressLocality: "Lapeer",
     addressRegion: "MI",
-    postalCode: "48075",
+    postalCode: "48446",
     addressCountry: "US",
   },
   telephone: "+18445798442",

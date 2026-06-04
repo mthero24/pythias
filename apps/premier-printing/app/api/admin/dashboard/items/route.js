@@ -43,9 +43,9 @@ export async function GET(req) {
             in: "$$dtf.date",
         }};
 
-        const [rawItems, total, summaryAgg, dtfModeAgg, printModeAgg, shipModeAgg] = await Promise.all([
+        const [rawItems, total, summaryAgg, dtfModeAgg, printModeAgg, shipModeAgg, stageDistAgg] = await Promise.all([
             Items.find(filter)
-                .select("date status steps printed treated folded shipped canceled rePulled inBin colorName sizeName styleCode pieceId batchID orderId poNumber order printedDate shippedDate")
+                .select("date status steps printed treated folded shipped canceled rePulled inBin colorName sizeName styleCode pieceId batchID orderId poNumber order printedDate shippedDate shipByDate")
                 .sort({ [sortField]: sortDir })
                 .skip(csvMode ? 0 : (page - 1) * pageSize)
                 .limit(pageSize)
@@ -78,12 +78,96 @@ export async function GET(req) {
             ]),
             modeAgg("printedDate"),
             modeAgg("shippedDate"),
+            // Stage counts: each item counted once at its latest step only
+            Items.aggregate([
+                { $match: filter },
+                // Find last re-pull date (if any)
+                { $addFields: {
+                    lastRePullDate: {
+                        $max: {
+                            $map: {
+                                input: { $filter: { input: { $ifNull: ["$steps", []] }, as: "s", cond: { $eq: ["$$s.status", "Re-Pulled"] } } },
+                                as: "s", in: "$$s.date",
+                            }
+                        }
+                    }
+                }},
+                // Effective steps: after last re-pull if re-pulled, otherwise all steps
+                { $addFields: {
+                    effectiveSteps: {
+                        $cond: {
+                            if: { $gt: ["$lastRePullDate", null] },
+                            then: { $filter: { input: { $ifNull: ["$steps", []] }, as: "s", cond: { $and: [{ $ne: ["$$s.status", "Re-Pulled"] }, { $gt: ["$$s.date", "$lastRePullDate"] }] } } },
+                            else: { $ifNull: ["$steps", []] },
+                        }
+                    }
+                }},
+                // Compute current stage using priority ranking
+                { $addFields: {
+                    latestStatus: {
+                        $cond: {
+                            if: { $and: [{ $gt: ["$lastRePullDate", null] }, { $eq: [{ $size: "$effectiveSteps" }, 0] }] },
+                            then: "Re-Pulled",
+                            else: {
+                                $let: {
+                                    vars: {
+                                        best: {
+                                            $reduce: {
+                                                input: {
+                                                    $map: {
+                                                        input: "$effectiveSteps",
+                                                        as: "s",
+                                                        in: {
+                                                            status: "$$s.status",
+                                                            priority: { $switch: { branches: [
+                                                                { case: { $in: ["$$s.status", ["Printed", "Label Printed"]] }, then: 1 },
+                                                                { case: { $in: ["$$s.status", ["DTF Load", "Embroidery Load"]] }, then: 2 },
+                                                                { case: { $eq: ["$$s.status", "DTF Find"] }, then: 3 },
+                                                                { case: { $eq: ["$$s.status", "Folded"] }, then: 4 },
+                                                                { case: { $eq: [{ $indexOfCP: [{ $ifNull: ["$$s.status", ""] }, "In Bin"] }, 0] }, then: 5 },
+                                                                { case: { $in: ["$$s.status", ["Shipped", "PreShipped"]] }, then: 6 },
+                                                            ], default: 0 } }
+                                                        }
+                                                    }
+                                                },
+                                                initialValue: { status: "Pending", priority: -1 },
+                                                in: { $cond: { if: { $gt: ["$$this.priority", "$$value.priority"] }, then: "$$this", else: "$$value" } }
+                                            }
+                                        }
+                                    },
+                                    in: "$$best.status"
+                                }
+                            }
+                        }
+                    }
+                }},
+                { $group: {
+                    _id: null,
+                    dtfFind:      { $sum: { $cond: [{ $eq: ["$latestStatus", "DTF Find"] }, 1, 0] } },
+                    dtfLoad:      { $sum: { $cond: [{ $in: ["$latestStatus", ["DTF Load", "Embroidery Load"]] }, 1, 0] } },
+                    labelPrinted: { $sum: { $cond: [{ $in: ["$latestStatus", ["Printed", "Label Printed"]] }, 1, 0] } },
+                    folded:       { $sum: { $cond: [{ $eq: ["$latestStatus", "Folded"] }, 1, 0] } },
+                    inBin:        { $sum: { $cond: [{ $eq: [{ $indexOfCP: [{ $ifNull: ["$latestStatus", ""] }, "In Bin"] }, 0] }, 1, 0] } },
+                    rePulled:     { $sum: { $cond: [{ $eq: ["$latestStatus", "Re-Pulled"] }, 1, 0] } },
+                    shipped:      { $sum: { $cond: [{ $in: ["$latestStatus", ["Shipped", "PreShipped"]] }, 1, 0] } },
+                }},
+            ]),
         ]);
 
         const items = await addCogs(rawItems);
 
+        const stageDist = stageDistAgg[0] ?? { dtfFind: 0, dtfLoad: 0, labelPrinted: 0, folded: 0, inBin: 0, rePulled: 0, shipped: 0 };
         const productionSummary = {
             ...(summaryAgg[0] ?? { total: 0, active: 0, shipped: 0, rePulled: 0, labelPrinted: 0, dtfLoad: 0, dtfFind: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null }),
+            // Stage counts: each item counted once at its latest step only
+            dtfFind:      stageDist.dtfFind,
+            dtfLoad:      stageDist.dtfLoad,
+            labelPrinted: stageDist.labelPrinted,
+            folded:       stageDist.folded,
+            inBin:        stageDist.inBin,
+            shipped:      stageDist.shipped,
+            // Re-Pulled counts all items ever re-pulled (not just last step)
+            rePulled:     summaryAgg[0]?.rePulled ?? 0,
             modeDtfLoad:     dtfModeAgg[0]?._id   ?? null,
             modePrintLabels: printModeAgg[0]?._id ?? null,
             modeDaysToShip:  shipModeAgg[0]?._id  ?? null,
@@ -91,7 +175,22 @@ export async function GET(req) {
 
         if (csvMode) {
             const headers = ["Date", "PO Number", "Style", "Color", "Size", "Piece ID", "Wholesale Cost", "Stage"];
-            const stageOf = (i) => { if (!i.steps?.length) return "Pending"; const s = [...i.steps].sort((a, b) => new Date(b.date) - new Date(a.date))[0]; const st = s.status || "Pending"; return st.startsWith("In Bin") ? "In Bin" : st; };
+            const PRIO = { "Printed": 1, "Label Printed": 1, "DTF Load": 2, "Embroidery Load": 2, "DTF Find": 3, "Folded": 4, "Shipped": 6, "PreShipped": 6 };
+            const prio = (s) => s?.startsWith("In Bin") ? 5 : (PRIO[s] ?? 0);
+            const stageOf = (i) => {
+                if (!i.steps?.length) return "Pending";
+                let steps = i.steps;
+                const rePulls = steps.filter(s => s.status === "Re-Pulled");
+                if (rePulls.length) {
+                    const last = rePulls.reduce((a, b) => new Date(b.date) > new Date(a.date) ? b : a);
+                    const after = steps.filter(s => s.status !== "Re-Pulled" && new Date(s.date) > new Date(last.date));
+                    if (!after.length) return "Re-Pulled";
+                    steps = after;
+                }
+                const best = steps.reduce((b, s) => prio(s.status) > prio(b?.status) ? s : b, steps[0]);
+                const st = best?.status || "Pending";
+                return st.startsWith("In Bin") ? "In Bin" : st;
+            };
             const rows = items.map(i => [
                 i.date ? new Date(i.date).toLocaleDateString() : "",
                 i.poNumber || i.orderId || "",
@@ -118,7 +217,7 @@ export async function GET(req) {
         return NextResponse.json({
             error: true, msg: e.message,
             items: [], total: 0, page: 1, pageSize: 50, pages: 0,
-            productionSummary: { total: 0, active: 0, shipped: 0, rePulled: 0, labelPrinted: 0, dtfLoad: 0, dtfFind: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null, modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null },
+            productionSummary: { total: 0, active: 0, shipped: 0, rePulled: 0, labelPrinted: 0, folded: 0, inBin: 0, dtfLoad: 0, dtfFind: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null, modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null },
         }, { status: 500 });
     }
 }

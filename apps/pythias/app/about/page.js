@@ -14,8 +14,8 @@ const orgSchema = {
     url: "https://pythiastechnologies.com",
     logo: { "@type": "ImageObject", url: "https://pythiastechnologies.com/logo.png" },
     description: "All-in-one print-on-demand automation platform — founded by people who understand print fulfillment from the inside out.",
-    foundingLocation: { "@type": "Place", name: "Southfield, Michigan, USA" },
-    address: { "@type": "PostalAddress", streetAddress: "21440 Melrose Ave", addressLocality: "Southfield", addressRegion: "MI", postalCode: "48075", addressCountry: "US" },
+    foundingLocation: { "@type": "Place", name: "Lapeer, Michigan, USA" },
+    address: { "@type": "PostalAddress", streetAddress: "1421 Hidden View Drive", addressLocality: "Lapeer", addressRegion: "MI", postalCode: "48446", addressCountry: "US" },
     telephone: "+18445798442",
     numberOfEmployees: { "@type": "QuantitativeValue", description: "US-Based Team" },
 };
@@ -112,10 +112,10 @@ export default function AboutPage() {
                                 itemScope
                                 itemType="https://schema.org/PostalAddress"
                             >
-                                <span itemProp="streetAddress">21440 Melrose Ave</span>,{" "}
-                                <span itemProp="addressLocality">Southfield</span>{" "}
+                                <span itemProp="streetAddress">1421 Hidden View Drive</span>,{" "}
+                                <span itemProp="addressLocality">Lapeer</span>{" "}
                                 <span itemProp="addressRegion">MI</span>{" "}
-                                <span itemProp="postalCode">48075</span>
+                                <span itemProp="postalCode">48446</span>
                             </p>
                             <p className={s.locationAddress} itemProp="telephone">(844) 579-8442</p>
                             <Link href="/contact" className={s.locationLink}>Contact Us</Link>

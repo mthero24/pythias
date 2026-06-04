@@ -80,7 +80,7 @@ export default function Footer() {
                     </Typography>
                     <Stack direction="row" spacing={3}>
                         <Typography sx={{ color: "rgba(255,255,255,0.25)", fontSize: "0.8rem" }}>
-                            21440 Melrose Ave, Southfield MI 48075
+                            1421 Hidden View Drive, Lapeer MI 48446
                         </Typography>
                         <Typography sx={{ color: "rgba(255,255,255,0.25)", fontSize: "0.8rem" }}>
                             (844) 579-8442

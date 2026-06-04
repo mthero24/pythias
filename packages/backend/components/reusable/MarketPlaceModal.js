@@ -629,6 +629,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 let p = { ...product };
                 if (!p.ids) p.ids = {};
                 p.ids[mpName] = res.data.tiktokProductId;
+                await axios.post("/api/admin/products", { products: [p] });
                 setProduct({ ...p });
                 if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }

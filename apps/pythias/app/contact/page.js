@@ -19,10 +19,10 @@ const contactPageSchema = {
         email: "info@pythiastechnologies.com",
         address: {
             "@type": "PostalAddress",
-            streetAddress: "21440 Melrose Ave",
-            addressLocality: "Southfield",
+            streetAddress: "1421 Hidden View Drive",
+            addressLocality: "Lapeer",
             addressRegion: "MI",
-            postalCode: "48075",
+            postalCode: "48446",
             addressCountry: "US",
         },
     },
@@ -46,7 +46,7 @@ export default function ContactPage() {
                 apiUrl="/api/contact"
                 companyName="Pythias Technologies"
                 phone="(844) 579-8442"
-                address="21440 Melrose Ave, Southfield MI 48075"
+                address="1421 Hidden View Drive, Lapeer MI 48446"
                 email="info@pythiastechnologies.com"
                 tagline="Your print-on-demand fulfillment technology partner."
             />

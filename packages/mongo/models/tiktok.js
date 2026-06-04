@@ -11,6 +11,7 @@ let schema = new mongoose.Schema({
     granted_scopes: Array,
     date: Date,
     provider: String,
+    orgId: { type: mongoose.Schema.Types.ObjectId, default: null },
     user: String,
     shop_list: Array
 })

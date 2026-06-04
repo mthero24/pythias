@@ -2,7 +2,7 @@ import { Modal, Box, Typography, TextField, Button, CircularProgress } from "@mu
 import { useState } from "react";
 import axios from "axios";
 
-export function TikTokModal({ open, setOpen, provider }) {
+export function TikTokModal({ open, setOpen, provider, orgId }) {
     const [sellerName, setSellerName] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -24,7 +24,7 @@ export function TikTokModal({ open, setOpen, provider }) {
         if (!sellerName.trim()) { alert("Seller Name Required"); return; }
         setLoading(true);
         try {
-            const res = await axios.post("/api/admin/integrations", { type: "tiktok", seller_name: sellerName.trim(), provider });
+            const res = await axios.post("/api/admin/integrations", { type: "tiktok", seller_name: sellerName.trim(), provider, ...(orgId ? { orgId } : {}) });
             if (res?.data?.url) {
                 window.location.href = res.data.url;
             } else {

@@ -29,7 +29,8 @@ export async function addLicenceFees(items) {
     return items.map(i => {
         const holder = i.designRef ? designHolderMap[String(i.designRef)] : null;
         if (!holder) return { ...i, licenceFee: 0 };
-        const basePrice = i.price || retailMap[i.styleCode]?.[i.sizeName] || 0;
+        const rawPrice  = i.price || retailMap[i.styleCode]?.[i.sizeName] || 0;
+        const basePrice = i.price ? Math.max(0, rawPrice - (i.discount || 0)) : rawPrice;
         const adjPrice = basePrice + (holder.additionalFees || 0);
         const fee = adjPrice * (holder.paymentType === "Percentage Per Unit" ? (holder.amount / 100) : 1)
             + (holder.paymentType === "Flat Per Unit" || holder.paymentType === "One Time" ? holder.amount : 0);

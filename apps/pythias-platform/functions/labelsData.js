@@ -11,6 +11,7 @@ export async function LabelsData(orgId) {
             designRef: { $ne: null },
             colorName: { $ne: null },
             sizeName: { $ne: null },
+            stockStatus: "inStock",
         })
             .populate("designRef", "sku name printType")
             .populate("blank", "sizes singleShippingDimensions")
@@ -21,6 +22,7 @@ export async function LabelsData(orgId) {
             designRef: { $ne: null },
             colorName: { $ne: null },
             sizeName: { $ne: null },
+            stockStatus: "inStock",
         })
             .populate("designRef", "sku name printType")
             .populate("blank", "sizes singleShippingDimensions")

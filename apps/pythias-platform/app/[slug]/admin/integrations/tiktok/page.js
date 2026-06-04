@@ -11,6 +11,10 @@ export default async function TikTokPage({ params }) {
     if (!session) redirect("/login");
 
     const { slug } = await params;
-    const shops = await TikTokAuth.find({ provider: slug }).sort({ date: -1 }).lean().catch(() => []);
-    return <TikTokDashboard shops={serialize(shops)} slug={slug} />;
+    const orgId = session.user.orgId;
+    // Query by orgId (new) OR by provider=slug with no orgId (legacy)
+    const shops = await TikTokAuth.find({
+        $or: [{ orgId }, { provider: slug, orgId: null }],
+    }).sort({ date: -1 }).lean().catch(() => []);
+    return <TikTokDashboard shops={serialize(shops)} slug={slug} orgId={orgId} />;
 }

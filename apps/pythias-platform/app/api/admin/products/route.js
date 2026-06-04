@@ -116,6 +116,7 @@ async function buildPlatformDoc(raw, orgId) {
             price: v.price ?? 0,
             wholesalePrice: v.wholesalePrice ?? 0,
             active: true,
+            ...(v.ids ? { ids: v.ids } : {}),
         };
     }));
 
@@ -166,6 +167,14 @@ async function buildPlatformDoc(raw, orgId) {
         marketplaceValues: raw.marketplaceValues ?? null,
         theme: raw.theme ?? "",
         sportUsedFor: raw.sportUsedFor ?? "",
+        ...(raw.video !== undefined ? { video: raw.video } : {}),
+        ...(raw.pendingVideoTask !== undefined ? { pendingVideoTask: raw.pendingVideoTask } : {}),
+        ...(raw.tempImages?.length ? { tempImages: raw.tempImages } : {}),
+        ...(raw.designTemplateId ? { designTemplateId: raw.designTemplateId } : {}),
+        ...(raw.ids ? { ids: raw.ids } : {}),
+        ...(raw.marketPlacesArray ? {
+            marketPlacesArray: raw.marketPlacesArray.map(m => m._id ?? m),
+        } : {}),
     };
 }
 
@@ -185,10 +194,12 @@ const assignUpcForPlatform = async (raw, variantsFlat) => {
         upcRecord.hold = false;
         await upcRecord.save();
     }
-    const tempCount = await SkuToUpc.countDocuments({ temp: true, hold: { $in: [false, null] } });
-    if (tempCount < 1000 && !global._creatingTempUpcs) {
-        global._creatingTempUpcs = true;
-        createTempUpcs().finally(() => { global._creatingTempUpcs = false; });
+    if (process.env.gs1PrimaryProductKey) {
+        const tempCount = await SkuToUpc.countDocuments({ temp: true, hold: { $in: [false, null] } });
+        if (tempCount < 1000 && !global._creatingTempUpcs) {
+            global._creatingTempUpcs = true;
+            createTempUpcs().finally(() => { global._creatingTempUpcs = false; });
+        }
     }
 };
 

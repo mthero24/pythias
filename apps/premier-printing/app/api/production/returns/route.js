@@ -1,5 +1,5 @@
-import {Products, SkuToUpc, ProductInventory} from "@pythias/mongo"
-import {NextApiRequest, NextResponse} from "next/server";
+import { Products, SkuToUpc, ProductInventory, ReturnScan } from "@pythias/mongo";
+import { NextApiRequest, NextResponse } from "next/server";
 
 export async function POST(req=NextApiRequest){
     let data = await req.json()
@@ -7,13 +7,34 @@ export async function POST(req=NextApiRequest){
     let product = await Products.findOne({ $or: [{ variantsArray: { $elemMatch: { sku: data.upc } } }, { variantsArray: { $elemMatch: { upc: data.upc } } }] }).populate("design", "sku images").populate("blanks", "sizes code multiImages images").populate("colors", "name").populate("variantsArray.blank variantsArray.color")
     console.log(product, "product found in returns bin route")
     if(!product){
-        let skuToUpc = await SkuToUpc.findOne({ $or: [{sku: data.upc}, {upc: data.upc}]}) 
-        console.log(skuToUpc, "skuToUpc")    
+        let skuToUpc = await SkuToUpc.findOne({ $or: [{sku: data.upc}, {upc: data.upc}]})
+        console.log(skuToUpc, "skuToUpc")
     }
     if(product){
         let variant = product.variantsArray.find(v => v.sku === data.upc || v.upc === data.upc)
         let productInventory = await ProductInventory.findOne({ sku: variant.sku })
         console.log(productInventory, "productInventory")
+
+        // Resolve size and color names for tracking
+        const blank   = variant.blank;
+        const sizeName  = blank?.sizes?.find(s => s._id.toString() === variant.size?.toString())?.name ?? null;
+        const colorName = variant.color?.name ?? null;
+        const styleCode = blank?.code ?? null;
+        const designSku = product.design?.sku ?? null;
+
+        // Log the return scan
+        await ReturnScan.create({
+            date:      new Date(),
+            sku:       variant.sku,
+            upc:       data.upc !== variant.sku ? data.upc : null,
+            styleCode,
+            colorName,
+            sizeName,
+            designSku,
+            product:   product._id,
+            source:    data.source ?? "PP",
+        }).catch(e => console.error("[ReturnScan] log failed:", e.message));
+
         if(!productInventory){
             variant.productInventory = new ProductInventory({
                 quantity: 1,

@@ -18,6 +18,7 @@ import CategoryIcon               from "@mui/icons-material/Category";
 import AutoGraphIcon              from "@mui/icons-material/AutoGraph";
 import AddShoppingCartIcon        from "@mui/icons-material/AddShoppingCart";
 import DownloadIcon               from "@mui/icons-material/Download";
+import AssignmentReturnIcon       from "@mui/icons-material/AssignmentReturn";
 
 const fmt = (n) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n ?? 0);
@@ -161,15 +162,17 @@ function PaginatedTable({ columns, rows, total, page, pageSize, loading, sortFie
 
 // ─── Overview (Charts) tab ────────────────────────────────────────────────────
 
-const STAGE_PIE_COLORS = ["#9e9e9e", "#00bcd4", "#ff9800", "#2196f3", "#4caf50"];
+const STAGE_PIE_COLORS = ["#9e9e9e", "#00bcd4", "#ff9800", "#2196f3", "#8b5cf6", "#f97316", "#4caf50"];
 
 const EMPTY_PROD = {
-    total: 0, active: 0, shipped: 0, rePulled: 0, labelPrinted: 0, dtfLoad: 0, dtfFind: 0,
+    total: 0, active: 0, shipped: 0, rePulled: 0, labelPrinted: 0, dtfLoad: 0, dtfFind: 0, folded: 0, inBin: 0,
     avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null,
     modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null,
 };
 
-function OverviewTab({ revenueByDay, byMarketplace, productionSummary, blanks, itemsLoading, blanksLoading }) {
+const MP_COLORS = ["#2196f3","#4caf50","#ff9800","#e91e63","#9c27b0","#00bcd4","#f44336","#8bc34a","#ff5722","#607d8b","#795548","#ffc107"];
+
+function OverviewTab({ revenueByDay, ordersByDayByMarketplace, byMarketplace, productionSummary, blanks, itemsLoading, blanksLoading }) {
     const ps = productionSummary ?? EMPTY_PROD;
 
     const stageData = useMemo(() => [
@@ -177,8 +180,16 @@ function OverviewTab({ revenueByDay, byMarketplace, productionSummary, blanks, i
         { id: 1, value: ps.dtfLoad,      label: "DTF Load"      },
         { id: 2, value: ps.labelPrinted, label: "Label Printed" },
         { id: 3, value: ps.rePulled,     label: "Re-Pulled"     },
-        { id: 4, value: ps.shipped,      label: "Shipped"       },
+        { id: 4, value: ps.folded,       label: "Folded"        },
+        { id: 5, value: ps.inBin,        label: "In Bin"        },
+        { id: 6, value: ps.shipped,      label: "Shipped"       },
     ].filter(d => d.value > 0).map((d, i) => ({ ...d, color: STAGE_PIE_COLORS[d.id] })), [ps]);
+
+    const mpNames = useMemo(() => {
+        const names = new Set();
+        for (const row of ordersByDayByMarketplace) Object.keys(row).filter(k => k !== "date").forEach(k => names.add(k));
+        return [...names].sort();
+    }, [ordersByDayByMarketplace]);
 
     const topMp      = byMarketplace.slice(0, 10);
     const topBlanks  = blanks.slice(0, 10);
@@ -206,14 +217,20 @@ function OverviewTab({ revenueByDay, byMarketplace, productionSummary, blanks, i
                 </ChartCard>
             </Grid2>
 
-            {/* Daily orders */}
-            <Grid2 size={{ xs: 12, md: 6 }}>
-                <ChartCard title="Daily Orders" minH={240}>
-                    {revenueByDay.length > 0 ? (
+            {/* Daily orders by marketplace — full width stacked */}
+            <Grid2 size={{ xs: 12 }}>
+                <ChartCard title="Daily Orders by Marketplace" minH={240}>
+                    {ordersByDayByMarketplace.length > 0 && mpNames.length > 0 ? (
                         <BarChart
-                            dataset={revenueByDay}
+                            dataset={ordersByDayByMarketplace}
                             xAxis={[{ dataKey: "date", scaleType: "band", tickLabelStyle: { fontSize: 10 } }]}
-                            series={[{ dataKey: "orders", label: "Orders", color: "#4caf50" }]}
+                            series={mpNames.map((mp, i) => ({
+                                dataKey: mp,
+                                label: mp,
+                                stack: "orders",
+                                color: MP_COLORS[i % MP_COLORS.length],
+                                valueFormatter: (v) => v ? `${v} orders` : "",
+                            }))}
                             height={240}
                             margin={{ left: 48, right: 16, top: 16, bottom: 40 }}
                         />
@@ -268,14 +285,14 @@ function OverviewTab({ revenueByDay, byMarketplace, productionSummary, blanks, i
                 </ChartCard>
             </Grid2>
 
-            {/* Cost breakdown */}
+            {/* Orders by marketplace — vertical */}
             <Grid2 size={{ xs: 12, md: 6 }}>
-                <ChartCard title="Revenue by Marketplace — Orders vs Avg Order Value" minH={240}>
+                <ChartCard title="Orders by Marketplace" minH={240}>
                     {topMp.length > 0 ? (
                         <BarChart
                             dataset={topMp}
                             xAxis={[{ dataKey: "marketplace", scaleType: "band", tickLabelStyle: { fontSize: 10 } }]}
-                            series={[{ dataKey: "orders", label: "Orders", color: "#2196f3" }]}
+                            series={[{ dataKey: "orders", label: "Orders", color: "#2196f3", valueFormatter: (v) => `${v ?? 0} orders` }]}
                             height={240}
                             margin={{ left: 48, right: 16, top: 16, bottom: 60 }}
                         />
@@ -283,7 +300,7 @@ function OverviewTab({ revenueByDay, byMarketplace, productionSummary, blanks, i
                 </ChartCard>
             </Grid2>
 
-            {/* Shipping cost over time */}
+            {/* Blanks COGS by Style */}
             <Grid2 size={{ xs: 12, md: 6 }}>
                 <ChartCard title="Blanks COGS by Style" loading={blanksLoading} minH={240}>
                     {topBlanks.length > 0 ? (() => {
@@ -333,19 +350,26 @@ function daysToShip(o) {
     return (new Date(o.shippingInfo.shippedAt) - new Date(o.date)) / (1000 * 60 * 60 * 24);
 }
 
-function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir }) {
+function SalesTab({ summary, ordersData, revenueByDay, ordersByDayByMarketplace = [], onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, salesItemsData, salesItemsSortField, salesItemsSortDir, onSalesItemsPageChange, onSalesItemsPageSizeChange, onSalesItemsSortChange }) {
     const { orders, total, page, pageSize, loading } = ordersData;
     const avgOrder = summary.orderCount > 0 ? summary.totalRevenue / summary.orderCount : 0;
+    const [detailView, setDetailView] = useState("orders");
+
+    const salesMpNames = useMemo(() => {
+        const names = new Set();
+        for (const row of ordersByDayByMarketplace) Object.keys(row).filter(k => k !== "date").forEach(k => names.add(k));
+        return [...names].sort();
+    }, [ordersByDayByMarketplace]);
 
     const columns = [
         { key: "date",        serverKey: "date",        label: "Date",        render: (o) => fmtDate(o.date) },
         { key: "poNumber",    serverKey: "poNumber",    label: "PO #",        render: (o) => o.poNumber || o.orderId || "—" },
         { key: "marketplace", serverKey: "marketplace", label: "Channel",     render: (o) => <Chip size="small" label={o.marketplace || "—"} variant="outlined" /> },
-        { key: "total",       serverKey: "total",       label: "Revenue",      align: "right", render: (o) => fmt(o.total) },
-        { key: "shipping",    label: "Shipping",         align: "right",       render: (o) => fmt(o.shippingCost) },
-        { key: "blanksCogs",  label: "Blank COGS",       align: "right",       render: (o) => fmt(o.blanksCogs) },
-        { key: "licenceFee",  label: "Licence Fees",     align: "right",       render: (o) => fmt(o.licenceFee) },
-        { key: "daysToShip",  label: "Days to Ship",     align: "right",       render: (o) => { const d = daysToShip(o); return d != null ? d.toFixed(1) : "—"; } },
+        { key: "total",       serverKey: "total",       label: "Revenue",      align: "center", render: (o) => fmt(o.total) },
+        { key: "shipping",    label: "Shipping",         align: "center",       render: (o) => fmt(o.shippingCost) },
+        { key: "blanksCogs",  label: "Blank COGS",       align: "center",       render: (o) => fmt(o.blanksCogs) },
+        { key: "licenceFee",  label: "Licence Fees",     align: "center",       render: (o) => fmt(o.licenceFee) },
+        { key: "daysToShip",  label: "Days to Ship",     align: "center",       render: (o) => { const d = daysToShip(o); return d != null ? d.toFixed(1) : "—"; } },
         { key: "status",      label: "Status",           render: orderChip },
     ];
 
@@ -361,7 +385,7 @@ function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeC
             </Grid2>
 
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
-                <Grid2 size={{ xs: 12, md: 7 }}>
+                <Grid2 size={{ xs: 12 }}>
                     <ChartCard title="Revenue Over Time" minH={200}>
                         {revenueByDay.length > 0 ? (
                             <LineChart
@@ -375,15 +399,21 @@ function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeC
                         ) : <NoData />}
                     </ChartCard>
                 </Grid2>
-                <Grid2 size={{ xs: 12, md: 5 }}>
-                    <ChartCard title="Orders by Marketplace" minH={200}>
-                        {revenueByDay.length > 0 ? (
+                <Grid2 size={{ xs: 12 }}>
+                    <ChartCard title="Daily Orders by Marketplace" minH={200}>
+                        {ordersByDayByMarketplace.length > 0 && salesMpNames.length > 0 ? (
                             <BarChart
-                                dataset={revenueByDay}
+                                dataset={ordersByDayByMarketplace}
                                 xAxis={[{ dataKey: "date", scaleType: "band", tickLabelStyle: { fontSize: 10 } }]}
-                                series={[{ dataKey: "orders", label: "Orders", color: "#4caf50" }]}
+                                series={salesMpNames.map((mp, i) => ({
+                                    dataKey: mp,
+                                    label: mp,
+                                    stack: "orders",
+                                    color: MP_COLORS[i % MP_COLORS.length],
+                                    valueFormatter: (v) => v ? `${v} orders` : "",
+                                }))}
                                 height={200}
-                                margin={{ left: 40, right: 16, top: 10, bottom: 40 }}
+                                margin={{ left: 48, right: 16, top: 10, bottom: 40 }}
                             />
                         ) : <NoData />}
                     </ChartCard>
@@ -391,11 +421,40 @@ function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeC
             </Grid2>
 
             <Paper variant="outlined">
-                <PaginatedTable
-                    columns={columns} rows={orders} total={total} page={page} pageSize={pageSize}
-                    loading={loading} sortField={sortField} sortDir={sortDir}
-                    onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} onSortChange={onSortChange}
-                />
+                <Box sx={{ px: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", alignItems: "flex-end" }}>
+                    <Tabs value={detailView} onChange={(_, v) => v && setDetailView(v)} sx={{ minHeight: 40 }} TabIndicatorProps={{ sx: { height: 2 } }}>
+                        <Tab label="Orders" value="orders" sx={{ minHeight: 40, py: 0.5, textTransform: "none", fontSize: "0.8125rem", fontWeight: 600 }} />
+                        <Tab label="Items"  value="items"  sx={{ minHeight: 40, py: 0.5, textTransform: "none", fontSize: "0.8125rem", fontWeight: 600 }} />
+                    </Tabs>
+                </Box>
+                {detailView === "orders" ? (
+                    <PaginatedTable
+                        columns={columns} rows={orders} total={total} page={page} pageSize={pageSize}
+                        loading={loading} sortField={sortField} sortDir={sortDir}
+                        onPageChange={onPageChange} onPageSizeChange={onPageSizeChange} onSortChange={onSortChange}
+                    />
+                ) : (
+                    <PaginatedTable
+                        columns={[
+                            { key: "date",        serverKey: "date",        label: "Date",       render: (i) => fmtDate(i.date) },
+                            { key: "marketplace", serverKey: "marketplace", label: "Channel" },
+                            { key: "styleCode",   serverKey: "styleCode",   label: "Style" },
+                            { key: "colorName",   serverKey: "colorName",   label: "Color" },
+                            { key: "sizeName",    serverKey: "sizeName",    label: "Size" },
+                            { key: "price",       serverKey: "price",       label: "Price", align: "center", render: (i) => fmt(i.price) },
+                        ]}
+                        rows={salesItemsData?.items ?? []}
+                        total={salesItemsData?.total ?? 0}
+                        page={salesItemsData?.page ?? 1}
+                        pageSize={salesItemsData?.pageSize ?? 50}
+                        loading={salesItemsData?.loading ?? false}
+                        sortField={salesItemsSortField}
+                        sortDir={salesItemsSortDir}
+                        onPageChange={onSalesItemsPageChange}
+                        onPageSizeChange={onSalesItemsPageSizeChange}
+                        onSortChange={onSalesItemsSortChange}
+                    />
+                )}
             </Paper>
         </>
     );
@@ -403,10 +462,24 @@ function SalesTab({ summary, ordersData, revenueByDay, onPageChange, onPageSizeC
 
 // ─── Production tab ───────────────────────────────────────────────────────────
 
+const STEP_PRIORITY = { "Printed": 1, "Label Printed": 1, "DTF Load": 2, "Embroidery Load": 2, "DTF Find": 3, "Folded": 4, "Shipped": 6, "PreShipped": 6 };
+function stepPriority(status) {
+    if (!status) return 0;
+    if (status.startsWith("In Bin")) return 5;
+    return STEP_PRIORITY[status] ?? 0;
+}
 function itemStage(i) {
     if (!i.steps?.length) return "Pending";
-    const latest = [...i.steps].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-    const s = latest?.status || "Pending";
+    let steps = i.steps;
+    const rePulls = steps.filter(s => s.status === "Re-Pulled");
+    if (rePulls.length > 0) {
+        const lastRePull = rePulls.reduce((a, b) => new Date(b.date) > new Date(a.date) ? b : a);
+        const afterRePull = steps.filter(s => s.status !== "Re-Pulled" && new Date(s.date) > new Date(lastRePull.date));
+        if (!afterRePull.length) return "Re-Pulled";
+        steps = afterRePull;
+    }
+    const best = steps.reduce((b, s) => stepPriority(s.status) > stepPriority(b?.status) ? s : b, steps[0]);
+    const s = best?.status || "Pending";
     return s.startsWith("In Bin") ? "In Bin" : s;
 }
 
@@ -435,16 +508,18 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
         { id: 1, value: ps.dtfLoad,      label: "DTF Load"      },
         { id: 2, value: ps.labelPrinted, label: "Label Printed" },
         { id: 3, value: ps.rePulled,     label: "Re-Pulled"     },
-        { id: 4, value: ps.shipped,      label: "Shipped"       },
+        { id: 4, value: ps.folded,       label: "Folded"        },
+        { id: 5, value: ps.shipped,      label: "Shipped"       },
     ].filter(d => d.value > 0).map(d => ({ ...d, color: STAGE_PIE_COLORS[d.id] })), [ps]);
 
     const columns = [
-        { key: "date",      serverKey: "date",      label: "Date",     render: (i) => fmtDate(i.date) },
-        { key: "styleCode", serverKey: "styleCode", label: "Style" },
-        { key: "colorName", serverKey: "colorName", label: "Color" },
-        { key: "sizeName",  serverKey: "sizeName",  label: "Size"  },
-        { key: "pieceId",   serverKey: "pieceId",   label: "Piece ID" },
-        { key: "stage",     label: "Stage", render: (i) => {
+        { key: "date",        serverKey: "date",      label: "Date",        render: (i) => fmtDate(i.date) },
+        { key: "shipByDate",  serverKey: "shipByDate",label: "Ship By",     render: (i) => i.shipByDate ? fmtDate(i.shipByDate) : "—" },
+        { key: "styleCode",   serverKey: "styleCode", label: "Style" },
+        { key: "colorName",   serverKey: "colorName", label: "Color" },
+        { key: "sizeName",    serverKey: "sizeName",  label: "Size"  },
+        { key: "pieceId",     serverKey: "pieceId",   label: "Piece ID" },
+        { key: "stage",       label: "Stage", render: (i) => {
             const s = itemStage(i);
             return <Chip size="small" label={s} color={stageColor(s)} />;
         }},
@@ -453,20 +528,17 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
     return (
         <>
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Total Items"    value={fmtN(ps.total)} /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="DTF Find"      value={fmtN(ps.dtfFind)}      color="warning.main" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="DTF Load"      value={fmtN(ps.dtfLoad)}      color="info.main" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Label Printed" value={fmtN(ps.labelPrinted)} color="info.main" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Re-Pulled"     value={fmtN(ps.rePulled)}     color="warning.main" /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Shipped"       value={fmtN(ps.shipped)}      color="success.main" /></Grid2>
-            </Grid2>
-
-            <Grid2 container spacing={2} sx={{ mb: 3 }}>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg DTF Sent"      value={fmtDays(ps.avgDaysToLabel)} /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Mode DTF Sent"     value={fmtModeDays(ps.modeDtfLoad)} /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg Print Labels"  value={fmtDays(ps.avgDaysToPrint)} /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Mode Print Labels" value={fmtModeDays(ps.modePrintLabels)} /></Grid2>
-                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg Days to Ship"  value={fmtDays(ps.avgDaysToShip)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Total Items"      value={fmtN(ps.total)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Label Printed"    value={fmtN(ps.labelPrinted)}  color="info.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="DTF Load"         value={fmtN(ps.dtfLoad)}       color="info.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="DTF Find"         value={fmtN(ps.dtfFind)}       color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Folded"           value={fmtN(ps.folded)}        color="secondary.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="In Bin"           value={fmtN(ps.inBin)}         color="primary.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Shipped"          value={fmtN(ps.shipped)}       color="success.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Re-Pulled"        value={fmtN(ps.rePulled)}      color="warning.main" /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg DTF Sent"     value={fmtDays(ps.avgDaysToLabel)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg Print Labels" value={fmtDays(ps.avgDaysToPrint)} /></Grid2>
+                <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Avg Days to Ship" value={fmtDays(ps.avgDaysToShip)} /></Grid2>
                 <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Mode Days to Ship" value={fmtModeDays(ps.modeDaysToShip)} /></Grid2>
             </Grid2>
 
@@ -566,23 +638,26 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarke
             const fees = mp.revenue * rate;
             const cogs = cogsByMarketplace[mp.marketplace] || 0;
             const licenceFee = (licenceFeeByMarketplace ?? {})[mp.marketplace] || 0;
-            return { ...mp, fees, cogs, licenceFee, net: mp.revenue - mp.shipping - fees - cogs - licenceFee };
+            const items = (itemCountByMarketplace ?? {})[mp.marketplace] || 0;
+            return { ...mp, fees, cogs, licenceFee, items, net: mp.revenue - mp.shipping - fees - cogs - licenceFee };
         }),
-    [byMarketplace, cogsByMarketplace, licenceFeeByMarketplace, feeRates]);
+    [byMarketplace, cogsByMarketplace, licenceFeeByMarketplace, feeRates, itemCountByMarketplace]);
 
     const revFormatter = (v) => `$${(v ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
     const netHeight = Math.max(240, mpRows.length * 36 + 60);
 
     const mpColumns = [
         { key: "marketplace", label: "Marketplace" },
-        { key: "orders",   label: "Orders",       align: "right" },
-        { key: "revenue",  label: "Revenue",      align: "right", render: (r) => fmt(r.revenue) },
-        { key: "shipping", label: "Shipping",     align: "right", render: (r) => fmt(r.shipping) },
-        { key: "rate",     label: "Fee Rate",     align: "right", getValue: (r) => feeRates[(r.marketplace || "").toLowerCase()] ?? -1, render: (r) => fmtRateLocal(r.marketplace) },
-        { key: "fees",       label: "Est. MP Fees",  align: "right", render: (r) => fmt(r.fees) },
-        { key: "cogs",       label: "Blank COGS",    align: "right", render: (r) => fmt(r.cogs) },
-        { key: "licenceFee", label: "Licence Fees",  align: "right", render: (r) => fmt(r.licenceFee) },
-        { key: "net",        label: "Net",            align: "right", render: (r) => (
+        { key: "orders",   label: "Orders",       align: "center" },
+        { key: "items",    label: "Items Sold",      align: "center", render: (r) => fmtN(r.items) },
+        { key: "avgItems", label: "Avg Items/Order", align: "center", getValue: (r) => r.orders > 0 ? r.items / r.orders : 0, render: (r) => r.orders > 0 ? (r.items / r.orders).toFixed(1) : "—" },
+        { key: "revenue",  label: "Revenue",         align: "center", render: (r) => fmt(r.revenue) },
+        { key: "shipping", label: "Shipping",     align: "center", render: (r) => fmt(r.shipping) },
+        { key: "rate",     label: "Fee Rate",     align: "center", getValue: (r) => feeRates[(r.marketplace || "").toLowerCase()] ?? -1, render: (r) => fmtRateLocal(r.marketplace) },
+        { key: "fees",       label: "Est. MP Fees",  align: "center", render: (r) => fmt(r.fees) },
+        { key: "cogs",       label: "Blank COGS",    align: "center", render: (r) => fmt(r.cogs) },
+        { key: "licenceFee", label: "Licence Fees",  align: "center", render: (r) => fmt(r.licenceFee) },
+        { key: "net",        label: "Net",            align: "center", render: (r) => (
             <Typography variant="body2" sx={{ fontWeight: 600, color: r.net >= 0 ? "success.main" : "error.main" }}>{fmt(r.net)}</Typography>
         )},
     ];
@@ -593,11 +668,11 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarke
         { key: "styleCode",    serverKey: "styleCode",   label: "Blank Code" },
         { key: "sizeName",     serverKey: "sizeName",  label: "Size" },
         { key: "colorName",    serverKey: "colorName", label: "Color" },
-        { key: "price",        serverKey: "price",     label: "Price Sold",  align: "right", render: (i) => fmt(i.price) },
-        { key: "wholesaleCost", label: "Blank COGS",   align: "right",       render: (i) => fmt(i.wholesaleCost) },
-        { key: "licenceFee",   label: "Licence Fees",  align: "right",       render: (i) => fmt(i.licenceFee) },
-        { key: "mpFee",        label: "Est. MP Fees",  align: "right",       render: (i) => fmt((i.price || 0) * (feeRates[(i.marketplace || "").toLowerCase()] ?? 0)) },
-        { key: "net",          label: "Net",           align: "right",       render: (i) => {
+        { key: "price",        serverKey: "price",     label: "Price Sold",  align: "center", render: (i) => fmt(i.price) },
+        { key: "wholesaleCost", label: "Blank COGS",   align: "center",       render: (i) => fmt(i.wholesaleCost) },
+        { key: "licenceFee",   label: "Licence Fees",  align: "center",       render: (i) => fmt(i.licenceFee) },
+        { key: "mpFee",        label: "Est. MP Fees",  align: "center",       render: (i) => fmt((i.price || 0) * (feeRates[(i.marketplace || "").toLowerCase()] ?? 0)) },
+        { key: "net",          label: "Net",           align: "center",       render: (i) => {
             const mpFee = (i.price || 0) * (feeRates[(i.marketplace || "").toLowerCase()] ?? 0);
             const n = (i.price || 0) - (i.wholesaleCost || 0) - (i.licenceFee || 0) - mpFee;
             return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
@@ -608,12 +683,12 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, licenceFeeByMarke
         { key: "date",        serverKey: "date",        label: "Date",        render: (o) => fmtDate(o.date) },
         { key: "poNumber",    serverKey: "poNumber",    label: "PO #",        render: (o) => o.poNumber || o.orderId || "—" },
         { key: "marketplace", serverKey: "marketplace", label: "Channel",     render: (o) => o.marketplace || "—" },
-        { key: "total",       serverKey: "total",       label: "Revenue",     align: "right", render: (o) => fmt(o.total) },
-        { key: "shipping",    label: "Shipping",        align: "right",       render: (o) => fmt(o.shippingCost) },
-        { key: "fees",        label: "Est. MP Fees",    align: "right",       render: (o) => fmt(estimateFeeLocal(o)) },
-        { key: "blanksCogs",  label: "Blank COGS",      align: "right",       render: (o) => fmt(o.blanksCogs) },
-        { key: "licenceFee",  label: "Licence Fees",    align: "right",       render: (o) => fmt(o.licenceFee) },
-        { key: "net",         label: "Net",             align: "right",       render: (o) => {
+        { key: "total",       serverKey: "total",       label: "Revenue",     align: "center", render: (o) => fmt(o.total) },
+        { key: "shipping",    label: "Shipping",        align: "center",       render: (o) => fmt(o.shippingCost) },
+        { key: "fees",        label: "Est. MP Fees",    align: "center",       render: (o) => fmt(estimateFeeLocal(o)) },
+        { key: "blanksCogs",  label: "Blank COGS",      align: "center",       render: (o) => fmt(o.blanksCogs) },
+        { key: "licenceFee",  label: "Licence Fees",    align: "center",       render: (o) => fmt(o.licenceFee) },
+        { key: "net",         label: "Net",             align: "center",       render: (o) => {
             const n = (o.total || 0) - (o.shippingCost || 0) - estimateFeeLocal(o) - (o.blanksCogs || 0) - (o.licenceFee || 0);
             return <Typography variant="body2" sx={{ color: n >= 0 ? "success.main" : "error.main" }}>{fmt(n)}</Typography>;
         }},
@@ -822,9 +897,9 @@ function BlanksTab({ blanks, loading }) {
         { key: "styleCode", label: "Style" },
         { key: "colorName", label: "Color" },
         { key: "sizeName",  label: "Size"  },
-        { key: "qty",       label: "Qty Sold",   align: "right" },
-        { key: "unitCost",  label: "Unit Cost",  align: "right", render: (r) => fmt(r.unitCost) },
-        { key: "totalCogs", label: "Total COGS", align: "right", render: (r) => fmt(r.totalCogs) },
+        { key: "qty",       label: "Qty Sold",   align: "center" },
+        { key: "unitCost",  label: "Unit Cost",  align: "center", render: (r) => fmt(r.unitCost) },
+        { key: "totalCogs", label: "Total COGS", align: "center", render: (r) => fmt(r.totalCogs) },
     ];
 
     return (
@@ -1228,22 +1303,22 @@ function BlankForecastTab({ forecastBlanksData, loading, onRefresh }) {
         { key: "styleCode", label: "Style" },
         { key: "colorName", label: "Color" },
         { key: "sizeName",  label: "Size" },
-        { key: "last30",    label: "Last 30d",  align: "right" },
-        { key: "last90",    label: "Last 90d",  align: "right" },
-        { key: "avgMonthly",label: "Avg/Mo",    align: "right" },
-        { key: "proj12mo",  label: "Proj 12mo", align: "right" },
-        { key: "onHand",    label: "On Hand",   align: "right", render: (r) => r.onHand  ?? "—" },
-        { key: "pending",   label: "Pending",   align: "right", render: (r) => r.pending ?? "—" },
-        { key: "reorderAt", label: "Reorder At",align: "right", render: (r) => r.reorderAt ?? "—" },
-        { key: "suggested", label: "Order Qty", align: "right", render: (r) => r.suggested != null ? (
+        { key: "last30",    label: "Last 30d",  align: "center" },
+        { key: "last90",    label: "Last 90d",  align: "center" },
+        { key: "avgMonthly",label: "Avg/Mo",    align: "center" },
+        { key: "proj12mo",  label: "Proj 12mo", align: "center" },
+        { key: "onHand",    label: "On Hand",   align: "center", render: (r) => r.onHand  ?? "—" },
+        { key: "pending",   label: "Pending",   align: "center", render: (r) => r.pending ?? "—" },
+        { key: "reorderAt", label: "Reorder At",align: "center", render: (r) => r.reorderAt ?? "—" },
+        { key: "suggested", label: "Order Qty", align: "center", render: (r) => r.suggested != null ? (
             <Typography variant="body2" sx={{ fontWeight: 700, color: r.suggested > 0 ? "error.main" : "success.main" }}>{fmtN(r.suggested)}</Typography>
         ) : "—" },
-        { key: "unitCost",   label: "Unit Cost",   align: "right", render: (r) => fmt(r.unitCost) },
-        { key: "orderValue", label: "Order Value", align: "right", render: (r) => r.orderValue != null ? fmt(r.orderValue) : "—" },
-        { key: "wkOrd",  label: "Wk Ord",  align: "right", getValue: r => wkOrd(r),  render: r => { const v = wkOrd(r);  return v > 0 ? <Typography variant="body2" sx={{ fontWeight: 600, color: "warning.main" }}>{fmtN(v)}</Typography> : "—"; } },
-        { key: "moOrd",  label: "Mo Ord",  align: "right", getValue: r => moOrd(r),  render: r => { const v = moOrd(r);  return v > 0 ? fmtN(v) : "—"; } },
-        { key: "qtrOrd", label: "Qtr Ord", align: "right", getValue: r => qtrOrd(r), render: r => { const v = qtrOrd(r); return v > 0 ? fmtN(v) : "—"; } },
-        { key: "yrOrd",  label: "Yr Ord",  align: "right", getValue: r => yrOrd(r),  render: r => { const v = yrOrd(r);  return v > 0 ? fmtN(v) : "—"; } },
+        { key: "unitCost",   label: "Unit Cost",   align: "center", render: (r) => fmt(r.unitCost) },
+        { key: "orderValue", label: "Order Value", align: "center", render: (r) => r.orderValue != null ? fmt(r.orderValue) : "—" },
+        { key: "wkOrd",  label: "Wk Ord",  align: "center", getValue: r => wkOrd(r),  render: r => { const v = wkOrd(r);  return v > 0 ? <Typography variant="body2" sx={{ fontWeight: 600, color: "warning.main" }}>{fmtN(v)}</Typography> : "—"; } },
+        { key: "moOrd",  label: "Mo Ord",  align: "center", getValue: r => moOrd(r),  render: r => { const v = moOrd(r);  return v > 0 ? fmtN(v) : "—"; } },
+        { key: "qtrOrd", label: "Qtr Ord", align: "center", getValue: r => qtrOrd(r), render: r => { const v = qtrOrd(r); return v > 0 ? fmtN(v) : "—"; } },
+        { key: "yrOrd",  label: "Yr Ord",  align: "center", getValue: r => yrOrd(r),  render: r => { const v = yrOrd(r);  return v > 0 ? fmtN(v) : "—"; } },
     ];
 
     return (
@@ -1324,6 +1399,93 @@ function BlankForecastTab({ forecastBlanksData, loading, onRefresh }) {
 
 // ─── CSV download (client-side) ───────────────────────────────────────────────
 
+// ─── Returns tab ─────────────────────────────────────────────────────────────
+
+function ReturnsTab({ returnsData, loading, onRefresh }) {
+    if (loading && !returnsData) {
+        return <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}><CircularProgress /></Box>;
+    }
+
+    const { topReturned = [], totalCount = 0 } = returnsData ?? {};
+
+    const topChart = topReturned.slice(0, 10);
+    const topHeight = Math.max(240, topChart.length * 36 + 60);
+
+    const columns = [
+        { key: "sku",       label: "SKU" },
+        { key: "blankCode", label: "Style" },
+        { key: "colorName", label: "Color" },
+        { key: "sizeName",  label: "Size"  },
+        { key: "designSku", label: "Design" },
+        { key: "quantity",  label: "Qty in Returns", align: "center" },
+    ];
+
+    return (
+        <>
+            {loading && <LinearProgress sx={{ mb: 1, borderRadius: 1 }} />}
+
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Total Returns"  value={fmtN(totalCount)} color="error.main" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Unique SKUs"    value={fmtN(topReturned.length)} /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 3 }}><KpiCard label="Top Returned"   value={topReturned[0] ? `${topReturned[0].blankCode || "—"} / ${topReturned[0].colorName || "—"}` : "—"} sub={topReturned[0] ? `${fmtN(topReturned[0].quantity)} in returns` : undefined} /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 3 }}>
+                    <Card variant="outlined" sx={{ height: "100%" }}>
+                        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 }, display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                            <Button size="small" variant="outlined" onClick={onRefresh} disabled={loading}>Refresh</Button>
+                        </CardContent>
+                    </Card>
+                </Grid2>
+            </Grid2>
+
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 12 }}>
+                    <ChartCard title="Top Returned Items by Quantity" minH={topHeight}>
+                        {topChart.length > 0 ? (
+                            <BarChart
+                                layout="horizontal"
+                                dataset={topChart.map(r => ({ ...r, label: `${r.blankCode || r.sku || "—"} ${r.colorName || ""} ${r.sizeName || ""}`.trim() }))}
+                                yAxis={[{ dataKey: "label", scaleType: "band", tickLabelStyle: { fontSize: 10 } }]}
+                                series={[{ dataKey: "quantity", label: "Qty in Returns", color: "#ef4444", valueFormatter: (v) => `${v ?? 0}` }]}
+                                height={topHeight}
+                                margin={{ left: 160, right: 16, top: 8, bottom: 30 }}
+                            />
+                        ) : <NoData />}
+                    </ChartCard>
+                </Grid2>
+
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                    <ChartCard title="Returns Over Time" minH={200}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200 }}>
+                            <Typography variant="body2" color="text.secondary">Coming soon — more scan data needed</Typography>
+                        </Box>
+                    </ChartCard>
+                </Grid2>
+
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                    <ChartCard title="12-Month Projections" minH={200}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200 }}>
+                            <Typography variant="body2" color="text.secondary">Coming soon — more scan data needed</Typography>
+                        </Box>
+                    </ChartCard>
+                </Grid2>
+            </Grid2>
+
+            <Paper variant="outlined">
+                <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>All Return Inventory</Typography>
+                </Box>
+                <SortableTable columns={columns} rows={topReturned} defaultSort="quantity" defaultDir="desc"
+                            />
+                        ) : <NoData />}
+                    </ChartCard>
+                </Grid2>
+            </Grid2>
+
+            </Paper>
+        </>
+    );
+}
+
 function downloadCsv(filename, headers, rows) {
     const esc = (v) => {
         const s = v == null ? "" : String(v);
@@ -1370,10 +1532,48 @@ export default function Admin() {
     const [from,        setFrom]        = useState(() => daysAgo(30));
     const [to,          setTo]          = useState(() => todayStr());
     const [tab,         setTab]         = useState(0); // 0 = Overview (Charts)
+    const [backfillRunning,   setBackfillRunning]   = useState(false);
+    const [backfillResult,    setBackfillResult]    = useState(null);
+    const [discountRunning,   setDiscountRunning]   = useState(false);
+    const [discountResult,    setDiscountResult]    = useState(null);
+    const [imageFixRunning,   setImageFixRunning]   = useState(false);
+    const [imageFixResult,    setImageFixResult]    = useState(null);
+    const runBackfillShipByDate = async () => {
+        setBackfillRunning(true); setBackfillResult(null);
+        try {
+            const res = await fetch("/api/admin/backfill/ship-by-date", { method: "POST" });
+            const d = await res.json();
+            setBackfillResult(d.error ? `Error: ${d.msg}` : `Done — updated: ${d.updated}, skipped: ${d.skipped}`);
+        } catch (e) { setBackfillResult(`Error: ${e.message}`); }
+        finally { setBackfillRunning(false); }
+    };
+    const runBackfillDiscounts = async () => {
+        setDiscountRunning(true); setDiscountResult(null);
+        try {
+            const res = await fetch("/api/admin/backfill/discounts", { method: "POST" });
+            const d = await res.json();
+            setDiscountResult(d.error ? `Error: ${d.msg}` : `Done — updated: ${d.updated}, skipped: ${d.skipped}`);
+        } catch (e) { setDiscountResult(`Error: ${e.message}`); }
+        finally { setDiscountRunning(false); }
+    };
+    const runFixImageUrls = async () => {
+        setImageFixRunning(true); setImageFixResult(null);
+        try {
+            const res = await fetch("/api/admin/backfill/fix-image-urls", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+            const d = await res.json();
+            setImageFixResult(d.error ? `Error: ${d.msg}` : `Done — fixed: ${d.updated}`);
+        } catch (e) { setImageFixResult(`Error: ${e.message}`); }
+        finally { setImageFixRunning(false); }
+    };
     const [data,        setData]        = useState(null);
     const [loading,     setLoading]     = useState(true);
     const [error,       setError]       = useState(null);
     const [marketplace, setMarketplace] = useState("All");
+
+    // Returns state
+    const [returnsData,    setReturnsData]    = useState(null);
+    const [returnsLoading, setReturnsLoading] = useState(false);
+    const returnsLoadedRef = useRef(false);
 
     // Orders state
     const [ordersRows,      setOrdersRows]      = useState([]);
@@ -1562,6 +1762,20 @@ export default function Admin() {
         }
     }, []);
 
+    const loadReturns = useCallback(async (f, t) => {
+        setReturnsLoading(true);
+        try {
+            const res  = await fetch(`/api/admin/dashboard/returns?from=${f}&to=${t}`);
+            const json = await res.json();
+            if (!res.ok || json.error) throw new Error(json.msg);
+            setReturnsData(json);
+        } catch (e) {
+            console.error("[returns]", e.message);
+        } finally {
+            setReturnsLoading(false);
+        }
+    }, []);
+
     useEffect(() => { load(from, to); }, [from, to, load]);
     useEffect(() => { setOrdersPage(1); setItemsPage(1); setCostItemsPage(1); }, [from, to, marketplace]);
     useEffect(() => { loadOrders(from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir); }, [from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir, loadOrders]);
@@ -1571,6 +1785,7 @@ export default function Admin() {
     useEffect(() => { loadForecast(marketplace, horizon); }, [marketplace, horizon, loadForecast]);
     useEffect(() => {
         if (tab === 6 && !blankForecastLoadedRef.current) { blankForecastLoadedRef.current = true; loadBlankForecast(); }
+        if (tab === 7 && !returnsLoadedRef.current) { returnsLoadedRef.current = true; loadReturns(from, to); }
     }, [tab, loadBlankForecast]);
 
     const handlePreset = (label) => {
@@ -1598,11 +1813,12 @@ export default function Admin() {
     const handleCostItemsPageSizeChange = useCallback((size) => { setCostItemsSize(size); setCostItemsPage(1); }, []);
 
     // Derived data
-    const summary             = data?.summary             ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
-    const byMarketplace       = data?.byMarketplace       ?? [];
-    const orderMarketplaceMap = data?.orderMarketplaceMap ?? {};
-    const items               = data?.items               ?? [];
-    const inventoryValue      = data?.inventoryValue      ?? 0;
+    const summary                  = data?.summary                  ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
+    const byMarketplace            = data?.byMarketplace            ?? [];
+    const orderMarketplaceMap      = data?.orderMarketplaceMap      ?? {};
+    const items                    = data?.items                    ?? [];
+    const inventoryValue           = data?.inventoryValue           ?? 0;
+    const ordersByDayByMarketplace = data?.ordersByDayByMarketplace ?? [];
     const totalServiceCost    = data?.totalServiceCost    ?? 0;
     const totalKlingCost      = data?.totalKlingCost      ?? 0;
     const itemCount           = data?.itemCount           ?? 0;
@@ -1668,6 +1884,31 @@ export default function Admin() {
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        {/* TEMP: remove after backfills are done */}
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Button variant="outlined" size="small" color="warning" onClick={runBackfillShipByDate}
+                                disabled={backfillRunning}
+                                startIcon={backfillRunning ? <CircularProgress size={12} color="inherit" /> : null}>
+                                {backfillRunning ? "Running…" : "Backfill Ship-By"}
+                            </Button>
+                            {backfillResult && <Typography variant="caption" color={backfillResult.startsWith("Error") ? "error" : "success.main"}>{backfillResult}</Typography>}
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Button variant="outlined" size="small" color="warning" onClick={runBackfillDiscounts}
+                                disabled={discountRunning}
+                                startIcon={discountRunning ? <CircularProgress size={12} color="inherit" /> : null}>
+                                {discountRunning ? "Running…" : "Backfill Discounts"}
+                            </Button>
+                            {discountResult && <Typography variant="caption" color={discountResult.startsWith("Error") ? "error" : "success.main"}>{discountResult}</Typography>}
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Button variant="outlined" size="small" color="warning" onClick={runFixImageUrls}
+                                disabled={imageFixRunning}
+                                startIcon={imageFixRunning ? <CircularProgress size={12} color="inherit" /> : null}>
+                                {imageFixRunning ? "Running…" : "Fix Image URLs"}
+                            </Button>
+                            {imageFixResult && <Typography variant="caption" color={imageFixResult.startsWith("Error") ? "error" : "success.main"}>{imageFixResult}</Typography>}
+                        </Stack>
                         <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleDownload}
                             disabled={isInitialLoad || !data || tab === 0 || tab === 5 || (tab === 6 && !blankForecastData)}>
                             CSV
@@ -1701,6 +1942,7 @@ export default function Admin() {
                         <Tab icon={<CategoryIcon fontSize="small" />}              iconPosition="start" label="Blanks" />
                         <Tab icon={<AutoGraphIcon fontSize="small" />}             iconPosition="start" label="Forecast" />
                         <Tab icon={<AddShoppingCartIcon fontSize="small" />}      iconPosition="start" label="Order Forecast" />
+                        <Tab icon={<AssignmentReturnIcon fontSize="small" />}    iconPosition="start" label="Returns" />
                     </Tabs>
                 </Box>
 
@@ -1715,6 +1957,7 @@ export default function Admin() {
                         {tab === 0 && (
                             <OverviewTab
                                 revenueByDay={revenueByDay}
+                                ordersByDayByMarketplace={ordersByDayByMarketplace}
                                 byMarketplace={byMarketplace}
                                 productionSummary={productionSummary}
                                 blanks={blanksRows}
@@ -1725,8 +1968,12 @@ export default function Admin() {
                         {tab === 1 && (
                             <SalesTab
                                 summary={summary} ordersData={ordersData} revenueByDay={revenueByDay}
+                                ordersByDayByMarketplace={ordersByDayByMarketplace}
                                 sortField={ordersSortField} sortDir={ordersSortDir}
                                 onPageChange={setOrdersPage} onPageSizeChange={handleOrdersPageSizeChange} onSortChange={handleOrdersSort}
+                                salesItemsData={costItemsData}
+                                salesItemsSortField={costItemsSortField} salesItemsSortDir={costItemsSortDir}
+                                onSalesItemsPageChange={setCostItemsPage} onSalesItemsPageSizeChange={handleCostItemsPageSizeChange} onSalesItemsSortChange={handleCostItemsSort}
                             />
                         )}
                         {tab === 2 && (
@@ -1766,6 +2013,13 @@ export default function Admin() {
                                 forecastBlanksData={blankForecastData}
                                 loading={blankForecastLoading}
                                 onRefresh={() => loadBlankForecast(true)}
+                            />
+                        )}
+                        {tab === 7 && (
+                            <ReturnsTab
+                                returnsData={returnsData}
+                                loading={returnsLoading}
+                                onRefresh={() => { returnsLoadedRef.current = true; loadReturns(from, to); }}
                             />
                         )}
                     </>

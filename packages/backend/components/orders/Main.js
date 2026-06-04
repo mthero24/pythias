@@ -678,9 +678,16 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                     </Typography>
 
                                     {/* Total */}
-                                    <Typography variant="body2" sx={{ fontWeight: 500, display: { xs: "none", md: "block" } }}>
-                                        ${(o.total ?? 0).toFixed(2)}
-                                    </Typography>
+                                    <Box sx={{ display: { xs: "none", md: "block" } }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                            ${((o.total ?? 0) - (o.discountAmount ?? 0)).toFixed(2)}
+                                        </Typography>
+                                        {o.discountAmount > 0 && (
+                                            <Typography variant="caption" color="error.main" sx={{ display: "block", lineHeight: 1.2 }}>
+                                                −${(o.discountAmount).toFixed(2)}
+                                            </Typography>
+                                        )}
+                                    </Box>
 
                                     {/* Expand toggle — stop propagation so click doesn't navigate */}
                                     <Box
@@ -701,9 +708,25 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                         <Stack direction="row" spacing={1} sx={{ mb: 1.5, display: { xs: "flex", md: "none" }, flexWrap: "wrap", alignItems: "center" }}>
                                             <Chip label={statusInfo.label} color={statusInfo.color} size="small" variant="outlined" sx={{ fontSize: "0.65rem", height: 20 }} />
                                             <Typography variant="caption" color="text.secondary">
-                                                {new Date(o.date).toLocaleDateString("en-US")} · ${(o.total ?? 0).toFixed(2)}
+                                                {new Date(o.date).toLocaleDateString("en-US")} · ${((o.total ?? 0) - (o.discountAmount ?? 0)).toFixed(2)}
+                                                {o.discountAmount > 0 && <span style={{ color: "#ef4444", marginLeft: 4 }}>−${o.discountAmount.toFixed(2)}</span>}
                                             </Typography>
                                         </Stack>
+
+                                        {o.discountAmount > 0 && (
+                                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                                                <Chip
+                                                    label={o.discountName ? `Discount: ${o.discountName}` : "Discount Applied"}
+                                                    size="small"
+                                                    color="error"
+                                                    variant="outlined"
+                                                    sx={{ fontSize: "0.7rem", height: 22 }}
+                                                />
+                                                <Typography variant="caption" color="error.main" sx={{ fontWeight: 600 }}>
+                                                    −${(o.discountAmount).toFixed(2)}
+                                                </Typography>
+                                            </Stack>
+                                        )}
 
                                         <Stack spacing={1}>
                                             {o.items.map((item, idx) => {

@@ -40,7 +40,7 @@ export async function GET(req) {
                 { $sort: { [sortField]: sortDir, _id: 1 } },
                 ...(csvMode ? [] : [{ $skip: (page - 1) * pageSize }]),
                 { $limit: pageSize },
-                { $project: { date: 1, styleCode: 1, sizeName: 1, colorName: 1, price: 1, designRef: 1, orderId: 1, poNumber: 1, marketplace: 1 } },
+                { $project: { date: 1, styleCode: 1, sizeName: 1, colorName: 1, price: 1, discount: 1, discountName: 1, designRef: 1, orderId: 1, poNumber: 1, marketplace: 1 } },
             ]),
             csvMode ? Promise.resolve([]) : Items.aggregate([...basePipeline, { $count: "total" }]),
         ]);
@@ -50,17 +50,18 @@ export async function GET(req) {
         const blanks = styleCodes.length ? await Blank.find({ code: { $in: styleCodes } }).select("code sizes").lean() : [];
         const costMap = {};
         for (const b of blanks) { costMap[b.code] = {}; for (const s of b.sizes ?? []) costMap[b.code][s.name] = s.wholesaleCost ?? 0; }
-        const itemsWithCogs = rawItems.map(i => ({ ...i, wholesaleCost: costMap[i.styleCode]?.[i.sizeName] ?? 0 }));
+        const itemsWithCogs = rawItems.map(i => ({ ...i, wholesaleCost: costMap[i.styleCode]?.[i.sizeName] ?? 0, effectivePrice: (i.price || 0) - (i.discount || 0) }));
 
         const items = await addLicenceFees(itemsWithCogs);
 
         if (csvMode) {
             const esc = (v) => { const s = String(v ?? ""); return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s; };
-            const headers = ["Date", "Channel", "Blank Code", "Size", "Color", "Price Sold", "Blank COGS", "Licence Fees", "Est. MP Fees", "Net"];
+            const headers = ["Date", "Channel", "Blank Code", "Size", "Color", "Effective Price", "Discount", "Blank COGS", "Licence Fees", "Est. MP Fees", "Net"];
             const rows = items.map(i => {
-                const mpFee = (i.price || 0) * (MP_RATES[(i.marketplace || "").toLowerCase()] ?? 0);
-                const net = (i.price || 0) - (i.wholesaleCost || 0) - (i.licenceFee || 0) - mpFee;
-                return [i.date ? new Date(i.date).toLocaleDateString() : "", i.marketplace || "", i.styleCode || "", i.sizeName || "", i.colorName || "", (i.price ?? 0).toFixed(2), (i.wholesaleCost ?? 0).toFixed(2), (i.licenceFee ?? 0).toFixed(2), mpFee.toFixed(2), net.toFixed(2)];
+                const ep = (i.effectivePrice ?? i.price ?? 0);
+                const mpFee = ep * (MP_RATES[(i.marketplace || "").toLowerCase()] ?? 0);
+                const net = ep - (i.wholesaleCost || 0) - (i.licenceFee || 0) - mpFee;
+                return [i.date ? new Date(i.date).toLocaleDateString() : "", i.marketplace || "", i.styleCode || "", i.sizeName || "", i.colorName || "", ep.toFixed(2), (i.discount ?? 0).toFixed(2), (i.wholesaleCost ?? 0).toFixed(2), (i.licenceFee ?? 0).toFixed(2), mpFee.toFixed(2), net.toFixed(2)];
             });
             const csv = [headers, ...rows].map(r => r.map(esc).join(",")).join("\r\n");
             return new Response(csv, { headers: { "Content-Type": "text/csv", "Content-Disposition": `attachment; filename="cost-items.csv"` } });

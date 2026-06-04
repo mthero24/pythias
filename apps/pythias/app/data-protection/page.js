@@ -265,7 +265,7 @@ export default async function DataProtectionPage() {
                         <Box sx={{ bgcolor: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 3, p: 3, mt: 1 }}>
                             <Typography sx={{ fontWeight: 700, color: "#111827", mb: 0.5 }}>Pythias Technologies, LLC</Typography>
                             <Typography sx={{ color: "#4b5563", fontSize: "0.9375rem", lineHeight: 1.8 }}>
-                                21440 Melrose Ave, Southfield MI 48075<br />
+                                1421 Hidden View Drive, Lapeer MI 48446<br />
                                 (844) 579-8442<br />
                                 <Box component={Link} href="/contact"
                                     sx={{ color: "#D3A73D", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>

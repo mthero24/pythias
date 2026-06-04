@@ -131,7 +131,7 @@ const DATA_PROTECTION = {
     {
       number: "12", title: "Contact & Questions",
       body: [
-        { type: "p", text: "Pythias Technologies, LLC\n21440 Melrose Ave, Southfield MI 48075\n(844) 579-8442\ninfo@pythiastechnologies.com" },
+        { type: "p", text: "Pythias Technologies, LLC\n1421 Hidden View Drive, Lapeer MI 48446\n(844) 579-8442\ninfo@pythiastechnologies.com" },
       ],
     },
   ],

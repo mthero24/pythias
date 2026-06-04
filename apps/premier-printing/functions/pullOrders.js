@@ -146,7 +146,8 @@ const createItemVariant = async (variant, product, order, price) => {
         type: product.design?.printType,
         upc: variant.upc,
         isBlank: product.design ? false : true,
-        price: price
+        price: price,
+        ...(order.shipByDate ? { shipByDate: order.shipByDate } : {}),
     })
     item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: item.sku })
@@ -176,28 +177,29 @@ const createItem = async (i, order, blank, color, threadColor, size, design, sku
     let item = new Item({ pieceId: await generatePieceID(),
         paid: true,
         sku: sku || i.sku,
-        orderItemId: i.orderItemId, 
-        blank: blank, 
-        styleCode: blank?.code, 
-        sizeName: size && size.name? size.name: blank?.sizes.find(s => s._id.toString() == size)?.name, 
-        threadColorName: threadColor?.name, 
-        threadColor: threadColor, 
-        colorName: color?.name, 
-        color: color, 
-        size: size, 
-        design: threadColor ? design.threadImages[threadColor?.name] : design?.images, 
-        designRef: design, 
-        order: order._id, 
-        shippingType: order.shippingType, 
-        quantity: 1, 
-        status: order.status, 
-        name: i.name, 
-        date: order.date, 
-        type: design?.printType, 
-        upc: i.upc, 
+        orderItemId: i.orderItemId,
+        blank: blank,
+        styleCode: blank?.code,
+        sizeName: size && size.name? size.name: blank?.sizes.find(s => s._id.toString() == size)?.name,
+        threadColorName: threadColor?.name,
+        threadColor: threadColor,
+        colorName: color?.name,
+        color: color,
+        size: size,
+        design: threadColor ? design.threadImages[threadColor?.name] : design?.images,
+        designRef: design,
+        order: order._id,
+        shippingType: order.shippingType,
+        quantity: 1,
+        status: order.status,
+        name: i.name,
+        date: order.date,
+        type: design?.printType,
+        upc: i.upc,
         options: i.options[0]?.value,
         isBlank: isBlank == true? true: false,
-        price: i.unitPrice
+        price: i.unitPrice,
+        ...(order.shipByDate ? { shipByDate: order.shipByDate } : {}),
     })
     item = await item.save();
     let productInventory = await ProductInventory.findOne({ sku: item.sku })
@@ -372,6 +374,34 @@ async function buildItems(o, order, { colorFixer, sizeFixer, designFixer, skuFix
     return items;
 }
 
+// ─── Discount helpers ────────────────────────────────────────────────────────
+
+// Extract discount line items from a raw SS order's items array.
+// Returns { amount, name } where amount is the total positive discount value.
+function extractDiscountFromLineItems(rawItems = []) {
+    const discountLines = rawItems.filter(i => (i.unitPrice ?? 0) < 0);
+    const amount = discountLines.reduce((s, i) => s + Math.abs((i.unitPrice ?? 0) * (parseInt(i.quantity) || 1)), 0);
+    const name   = discountLines.map(i => i.name).filter(Boolean).join(", ") || null;
+    return { amount, name };
+}
+
+// Distribute a total discount amount proportionally across items by price.
+// Items with price 0 receive no share; falls back to even split if all prices are 0.
+async function allocateDiscount(items, discountAmount, discountName) {
+    if (!discountAmount || discountAmount <= 0 || !items.length) return;
+    const totalPrice = items.reduce((s, i) => s + (i.price || 0), 0);
+    const ops = items.map(item => {
+        const share = totalPrice > 0
+            ? discountAmount * (item.price || 0) / totalPrice
+            : discountAmount / items.length;
+        const rounded = Math.round(share * 100) / 100;
+        item.discount = rounded;
+        if (discountName) item.discountName = discountName;
+        return item.save();
+    });
+    await Promise.all(ops);
+}
+
 // ─── Marketplace order normalizers ────────────────────────────────────────────
 // Normalize Faire orders to the same shape the processing loop expects.
 function normalizeFaireOrder(o, conn) {
@@ -406,6 +436,7 @@ function normalizeFaireOrder(o, conn) {
         })),
         _marketplaceOrderId: o.id,
         _marketplaceConnectionId: conn._id,
+        shipByDate: o.required_ship_date ? new Date(o.required_ship_date) : (o.ship_before ? new Date(o.ship_before) : null),
     };
 }
 
@@ -444,6 +475,7 @@ function normalizeWalmartOrder(o, conn) {
         items: lines,
         _marketplaceOrderId: o.purchaseOrderId,
         _marketplaceConnectionId: conn._id,
+        shipByDate: o.shippedDate ? new Date(o.shippedDate) : null,
     };
 }
 
@@ -478,6 +510,7 @@ function normalizeEtsyOrder(o, conn) {
         })),
         _marketplaceOrderId: String(o.receipt_id),
         _marketplaceConnectionId: conn._id,
+        shipByDate: o.must_ship_by ? new Date(o.must_ship_by) : null,
     };
 }
 
@@ -514,6 +547,7 @@ function normalizeAcendaOrder(o, conn) {
         ),
         _marketplaceOrderId: String(o.id),
         _marketplaceConnectionId: conn._id,
+        shipByDate: o.ship_by ?? o.required_ship_date ? new Date(o.ship_by ?? o.required_ship_date) : null,
     };
 }
 
@@ -553,6 +587,7 @@ function normalizeEbayOrder(o, conn) {
         _marketplaceOrderId:    o.orderId,
         _marketplaceConnectionId: conn._id,
         _ebayLineItemIds: (o.lineItems ?? []).map(li => li.lineItemId),
+        shipByDate: null,
     };
 }
 
@@ -649,11 +684,13 @@ export async function pullOrders(){
                 marketplace: o.orderNumber.toLowerCase().includes("cs")? "customer service entry": o.advancedOptions.source? o.advancedOptions.source: o.billTo.name,
                 total: o.orderTotal,
                 shippingCost: o.shippingAmount ?? 0,
-                discountAmount: Math.max(0, (o.orderTotal ?? 0) - (o.amountPaid ?? o.orderTotal ?? 0)),
+                discountAmount: extractDiscountFromLineItems(o.items).amount,
+                discountName: extractDiscountFromLineItems(o.items).name,
                 productCost: (o.amountPaid ?? o.orderTotal ?? 0) - (o.shippingAmount ?? 0) - (o.taxAmount ?? 0),
                 paid: true,
                 ...(o._marketplaceOrderId ? { marketplaceOrderId: o._marketplaceOrderId } : {}),
                 ...(o._marketplaceConnectionId ? { marketplaceConnectionId: o._marketplaceConnectionId } : {}),
+                ...(o.shipByDate ? { shipByDate: o.shipByDate } : {}),
             })
             if(o.customerNotes){
                 console.log(o.customerNotes.split("<br/>"))
@@ -679,12 +716,11 @@ export async function pullOrders(){
             order.items = items
             order = await order.save()
             logActivity({ action: "order_received", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName: "system", provider: "premierPrinting" });
-            items.map(async i => {
-                i.order = order._id
-                await i.save()
-            })
+            await Promise.all(items.map(i => { i.order = order._id; return i.save(); }));
+            if (order.discountAmount > 0) await allocateDiscount(items, order.discountAmount, order.discountName);
         }else{
             order.status = o.orderStatus
+            if (o.shipByDate && !order.shipByDate) order.shipByDate = o.shipByDate;
             if(order.shippingAddress.name != o.shipTo.name || order.shippingAddress.address1 != o.shipTo.street1 || order.shippingAddress.address2 != o.shipTo.street2 || order.shippingAddress.city != o.shipTo.city || order.shippingAddress.zip != o.shipTo.postalCode || order.shippingAddress.state != o.shipTo.state || order.shippingAddress.country != o.shipTo.country){
                 order.shippingAddress.name = o.shipTo.name? o.shipTo.name: "not provided"
                 order.shippingAddress.address1 = o.shipTo.street1 ? o.shipTo.street1 : "not provided"
@@ -713,6 +749,151 @@ export async function pullOrders(){
     }
     await updateInventory();
     await recomputeStockStatus();
+}
+
+// Backfill shipByDate on all unshipped orders that are missing it.
+// SS orders: re-fetch from ShipStation using poNumber.
+// Direct marketplace orders: use the shipByDate from the normalized payload if re-fetched.
+export async function backfillShipByDate({ onProgress } = {}) {
+    const unshipped = await Order.find({
+        shipByDate: { $exists: false },
+        canceled: { $ne: true },
+        "shippingInfo.shippedAt": { $exists: false },
+    }).select("_id poNumber marketplaceConnectionId marketplace items").lean();
+
+    console.log(`[backfillShipByDate] ${unshipped.length} orders to process`);
+    let updated = 0;
+    let skipped = 0;
+
+    for (let idx = 0; idx < unshipped.length; idx++) {
+        const o = unshipped[idx];
+        if (onProgress) onProgress(idx + 1, unshipped.length);
+
+        try {
+            // Direct marketplace connection orders — try re-fetching
+            if (o.marketplaceConnectionId) {
+                const conn = await ApiKeyIntegrations.findById(o.marketplaceConnectionId).lean();
+                if (conn) {
+                    const type = conn.type?.toLowerCase();
+                    let shipByDate = null;
+
+                    if (type === "faire") {
+                        const { orders: raw } = await getOrdersFaire({ apiKey: conn.apiKey, limit: 1, orderId: o.poNumber }).catch(() => ({ orders: [] }));
+                        const raw0 = raw?.[0];
+                        if (raw0?.required_ship_date) shipByDate = new Date(raw0.required_ship_date);
+                        else if (raw0?.ship_before) shipByDate = new Date(raw0.ship_before);
+                    } else if (type === "walmart") {
+                        const { orders: raw } = await getReleasedOrdersWalmart({ clientId: conn.apiKey, clientSecret: conn.apiSecret }).catch(() => ({ orders: [] }));
+                        const match = (raw ?? []).find(r => r.purchaseOrderId === o.poNumber || r.customerOrderId === o.poNumber);
+                        if (match?.shippedDate) shipByDate = new Date(match.shippedDate);
+                    } else if (type === "etsy") {
+                        const liveConn = await ApiKeyIntegrations.findById(conn._id);
+                        const data = await getOpenReceiptsEtsy(liveConn).catch(() => null);
+                        const match = (data?.results ?? []).find(r => String(r.receipt_id) === o.poNumber);
+                        if (match?.must_ship_by) shipByDate = new Date(match.must_ship_by);
+                    } else if (type === "ebay") {
+                        const liveConn = await ApiKeyIntegrations.findById(conn._id);
+                        const raw = await getOrdersEbay(liveConn).catch(() => []);
+                        const match = raw.find(r => r.orderId === o.poNumber);
+                        if (match?.shipByDate) shipByDate = new Date(match.shipByDate);
+                    }
+
+                    if (shipByDate) {
+                        await Order.updateOne({ _id: o._id }, { $set: { shipByDate } });
+                        if (o.items?.length) {
+                            await Item.updateMany({ _id: { $in: o.items } }, { $set: { shipByDate } });
+                        }
+                        updated++;
+                        continue;
+                    }
+                }
+                skipped++;
+                continue;
+            }
+
+            // ShipStation order — re-fetch by PO number
+            const ssOrders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: o.poNumber }).catch(() => []);
+            const ss = ssOrders?.[0];
+            if (ss?.shipByDate) {
+                const shipByDate = new Date(ss.shipByDate);
+                await Order.updateOne({ _id: o._id }, { $set: { shipByDate } });
+                if (o.items?.length) {
+                    await Item.updateMany({ _id: { $in: o.items } }, { $set: { shipByDate } });
+                }
+                updated++;
+            } else {
+                skipped++;
+            }
+        } catch (e) {
+            console.error(`[backfillShipByDate] ${o.poNumber}:`, e.message);
+            skipped++;
+        }
+    }
+
+    console.log(`[backfillShipByDate] done — updated: ${updated}, skipped: ${skipped}`);
+    return { total: unshipped.length, updated, skipped };
+}
+
+export async function backfillDiscounts({ onProgress } = {}) {
+    // Find all orders — re-fetch from SS to get actual discount line items
+    const orders = await Order.find({
+        canceled: { $ne: true },
+        $or: [
+            { discountAmount: { $gt: 0 } },
+            { discountName: { $exists: false } },
+        ],
+    }).select("_id poNumber marketplaceConnectionId discountAmount discountName items").lean();
+
+    console.log(`[backfillDiscounts] ${orders.length} orders to process`);
+    let updated = 0, skipped = 0;
+
+    for (let idx = 0; idx < orders.length; idx++) {
+        const o = orders[idx];
+        if (onProgress) onProgress(idx + 1, orders.length);
+        try {
+            let discountAmount = o.discountAmount || 0;
+            let discountName   = o.discountName   || null;
+
+            // Re-fetch from SS to get discount line items (most reliable source)
+            if (!o.marketplaceConnectionId) {
+                const ssOrders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: o.poNumber }).catch(() => []);
+                const ss = ssOrders?.[0];
+                if (ss) {
+                    const extracted = extractDiscountFromLineItems(ss.items ?? []);
+                    if (extracted.amount > 0) {
+                        discountAmount = extracted.amount;
+                        discountName   = extracted.name;
+                    } else if (!discountAmount) {
+                        discountAmount = extractDiscountFromLineItems(ss.items ?? []).amount;
+                    }
+                }
+            }
+
+            if (discountAmount > 0 || discountName) {
+                await Order.updateOne({ _id: o._id }, { $set: { discountAmount, discountName } });
+            }
+
+            if (discountAmount > 0 && o.items?.length) {
+                const items = await Item.find({ _id: { $in: o.items } }).lean();
+                const ops = items.map(item => {
+                    const totalPrice = items.reduce((s, i) => s + (i.price || 0), 0);
+                    const share = totalPrice > 0
+                        ? discountAmount * (item.price || 0) / totalPrice
+                        : discountAmount / items.length;
+                    return Item.updateOne({ _id: item._id }, { $set: { discount: Math.round(share * 100) / 100, discountName: discountName || null } });
+                });
+                await Promise.all(ops);
+            }
+
+            updated++;
+        } catch (e) {
+            console.error(`[backfillDiscounts] ${o.poNumber}:`, e.message);
+            skipped++;
+        }
+    }
+
+    console.log(`[backfillDiscounts] done — updated: ${updated}, skipped: ${skipped}`);
+    return { total: orders.length, updated, skipped };
 }
 
 export async function repullOrderItems(poNumber) {

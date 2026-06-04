@@ -3,6 +3,7 @@ import { SkuToUpc } from "@pythias/mongo";
 // get next available gtin
 
 export async function NextGTIN({auth}){
+    if (!auth.apiKey) return null;
     let headers = {
         headers:{
             "Cache-Control": "no-cache",
@@ -10,25 +11,30 @@ export async function NextGTIN({auth}){
             "X-Product-Owner-Account-Id": auth.accountNumber
         }
     }
-    let resPre = await axios.get("https://api.gs1us.org/api/v1/myprefix", headers).catch(e=>{console.log(e.response.data)})
-    while(!resPre){
-        await new Promise((resolve)=>{
-            setTimeout(()=>{
-                resolve()
-            },1000)
-        })
-        resPre = await axios.get("https://api.gs1us.org/api/v1/myprefix", headers).catch(e=>{console.log(e.response.data)})
+    let resPre = null;
+    let attempts = 0;
+    while(!resPre && attempts < 3){
+        resPre = await axios.get("https://api.gs1us.org/api/v1/myprefix", headers).catch(e=>{
+            if (e.response?.status < 500) return "abort";
+            console.log(e.response?.data);
+        });
+        if (resPre === "abort") return null;
+        if (!resPre) await new Promise(r => setTimeout(r, 1000));
+        attempts++;
     }
+    if (!resPre) return null;
     let prefix = resPre?.data.filter(p=> p.remainingCapacity > 0)[0]
     if(prefix){
-        let resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{console.log(e.response?.data)})
-        while(!resNext){
-            await new Promise((resolve)=>{
-                setTimeout(()=>{
-                    resolve()
-                },1000)
-            })
-            resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{console.log(e.response?.data)})
+        let resNext = null;
+        attempts = 0;
+        while(!resNext && attempts < 3){
+            resNext = await axios.get(`https://api.gs1us.org/api/v1/myprefix/${prefix.prefix}/gtin/next`, headers).catch(e=>{
+                if (e.response?.status < 500) return "abort";
+                console.log(e.response?.data);
+            });
+            if (resNext === "abort") return null;
+            if (!resNext) await new Promise(r => setTimeout(r, 1000));
+            attempts++;
         }
         if(resNext?.data && resNext.data.gtin) return resNext.data
     }

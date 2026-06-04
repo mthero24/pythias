@@ -87,3 +87,4 @@ export { default as PlatformConverter } from "./models/converters";
 export { default as PlatformForecastCache } from "./models/ForecastCache";
 export { default as PlatformBlankForecastCache } from "./models/BlankForecastCache";
 export { default as SupportTicket } from "./models/SupportTicket";
+export { default as ReturnScan } from "./models/ReturnScan";

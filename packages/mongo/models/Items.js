@@ -131,6 +131,9 @@ const schema = new mongoose.Schema(
     },
     stockStatus: { type: String, enum: ["inStock", "attached", "ordered", null], default: null },
     updated: {type: Boolean, default: false},
+    shipByDate: { type: Date },
+    discount: { type: Number, default: 0 },
+    discountName: { type: String },
   },
   { suppressWarning: true }
 );

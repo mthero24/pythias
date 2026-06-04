@@ -259,10 +259,15 @@ export function Main({ ord, blanks, source }) {
                                         { label: "Marketplace", value: order.marketplace },
                                         { label: "Shipping Type", value: order.shippingType },
                                         { label: "Date", value: order.date ? new Date(order.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "—" },
+                                        { label: "Order Total", value: `$${((order.total ?? 0) - (order.discountAmount ?? 0)).toFixed(2)}${order.discountAmount > 0 ? ` (was $${(order.total ?? 0).toFixed(2)})` : ""}` },
+                                        ...(order.discountAmount > 0 ? [
+                                            { label: "Discount", value: `-$${(order.discountAmount).toFixed(2)}` },
+                                            { label: "Discount Name", value: order.discountName || "—" },
+                                        ] : []),
                                     ].map(({ label, value }) => (
                                         <Grid2 key={label} size={{ xs: 6, sm: 4 }}>
                                             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.25, textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{label}</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{value || "—"}</Typography>
+                                            <Typography variant="body2" sx={{ fontWeight: 500, color: label === "Discount" ? "error.main" : "inherit" }}>{value || "—"}</Typography>
                                         </Grid2>
                                     ))}
                                 </Grid2>

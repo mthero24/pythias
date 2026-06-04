@@ -2005,6 +2005,34 @@ function WayfairOrdersPanel({ connectionId }) {
     );
 }
 
+// ─── Rithum Orders Panel ──────────────────────────────────────────────────────
+function RithumOrdersPanel({ connectionId }) {
+    const [loading, setLoading] = useState(false);
+    const [result,  setResult]  = useState(null);
+    const [error,   setError]   = useState("");
+    const pull = async () => {
+        setLoading(true); setError(""); setResult(null);
+        try {
+            const res = await axios.post(`/api/integrations/rithum/orders`, { connectionId });
+            setResult(res.data);
+        } catch (e) { setError(e.response?.data?.msg ?? "Failed to pull orders"); }
+        finally { setLoading(false); }
+    };
+    return (
+        <Box sx={{ borderTop: "1px solid #f1f5f9", px: 2.5, py: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+                <Button variant="outlined" size="small" onClick={pull} disabled={loading}
+                    startIcon={loading ? <CircularProgress size={12} color="inherit" /> : null}
+                    sx={{ borderColor: "#1a1a2e", color: "#1a1a2e", borderRadius: 1.5 }}>
+                    {loading ? "Pulling…" : "Pull Orders Now"}
+                </Button>
+                {result && <Typography variant="caption" color="success.main">{result.imported} order(s) imported</Typography>}
+                {error  && <Typography variant="caption" color="error">{error}</Typography>}
+            </Stack>
+        </Box>
+    );
+}
+
 // ─── Wix Orders Panel ─────────────────────────────────────────────────────────
 function WixOrdersPanel({ connectionId }) {
     const [loading, setLoading] = useState(false);
@@ -2297,6 +2325,11 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
                             <WayfairOrdersPanel connectionId={id} />
                         </Collapse>
                     )}
+                    {isRithum && (
+                        <Collapse in={pullEnabled}>
+                            <RithumOrdersPanel connectionId={id} />
+                        </Collapse>
+                    )}
                 </Box>
             </Box>
         </Paper>
@@ -2304,7 +2337,7 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
 }
 
 // ─── TikTok connection row ─────────────────────────────────────────────────────
-function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin" }) {
+function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin", orgId }) {
     const color = "#010101";
     const [confirming, setConfirming]     = useState(false);
     const [deactivating, setDeactivating] = useState(false);
@@ -2313,7 +2346,9 @@ function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin" }) {
     const authorize = async () => {
         setAuthorizing(true);
         try {
-            const res = await axios.post("/api/admin/integrations", { type: "tiktok", seller_name: shop.seller_name, provider: shop.provider });
+            const payload = { type: "tiktok", seller_name: shop.seller_name, provider: shop.provider };
+            if (orgId) payload.orgId = orgId;
+            const res = await axios.post("/api/admin/integrations", payload);
             if (res.data?.url) window.location.href = res.data.url;
         } catch (e) {
             console.error("Authorize failed", e);
@@ -2405,7 +2440,7 @@ function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin" }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp, slug }) {
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp, slug, orgId }) {
     const [tikTokOpen,  setTikTokOpen]  = useState(false);
     const [acendaOpen,  setAcendaOpen]  = useState(false);
     const [walmartOpen, setWalmartOpen] = useState(false);
@@ -2701,7 +2736,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             name="GS1 US"
                             description={PLATFORMS.gs1.description}
                             connected={gs1IsConnected}
-                            href={gs1IsConnected ? "/admin/integrations/gs1" : undefined}
+                            href={gs1IsConnected ? `${adminBase}/integrations/gs1` : undefined}
                             onClick={gs1IsConnected ? undefined : () => setGs1Open(true)}
                         />
                     </Grid2>
@@ -2787,7 +2822,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                             </Paper>
                         )}
                         {tiktokConnections.map(tt => (
-                            <TikTokConnectionCard key={tt._id} shop={tt} adminBase={adminBase}
+                            <TikTokConnectionCard key={tt._id} shop={tt} adminBase={adminBase} orgId={orgId}
                                 onDeactivate={id => setTiktokConnections(prev => prev.filter(t => t._id !== id))} />
                         ))}
                         {apiConnections.map(api => (
@@ -2808,7 +2843,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             </Container>
 
             {/* Modals */}
-            <TikTokModal  open={tikTokOpen}  setOpen={setTikTokOpen}  provider={provider} />
+            <TikTokModal  open={tikTokOpen}  setOpen={setTikTokOpen}  provider={provider} orgId={orgId} />
             <AcendaModal  open={acendaOpen}  setOpen={setAcendaOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <WalmartModal open={walmartOpen} setOpen={setWalmartOpen} provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <FaireModal   open={faireOpen}   setOpen={setFaireOpen}   provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />

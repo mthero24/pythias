@@ -4,6 +4,7 @@ import { Order, Items, Inventory, Blank, addCogs, addLicenceFees, ServiceInvoice
 
 const activeExpr = { $and: [{ $ne: ["$canceled", true] }, { $ne: ["$refunded", true] }] };
 const shipCostExpr = { $ifNull: ["$selectedShipping.cost", { $ifNull: ["$shippingInfo.shippingCost", 0] }] };
+const effectiveRevExpr = { $subtract: [{ $ifNull: ["$total", 0] }, { $ifNull: ["$discountAmount", 0] }] };
 
 export async function GET(req) {
     try {
@@ -15,12 +16,12 @@ export async function GET(req) {
         const until = toParam   ? new Date(toParam   + "T23:59:59") : new Date();
         const dateFilter = { $gte: since, $lte: until };
 
-        const [summaryAgg, byMarketplaceAgg, rawItems, invResult, itemCount, revenueByDayAgg, itemsByDayAgg, rawLicencedItems] = await Promise.all([
+        const [summaryAgg, byMarketplaceAgg, rawItems, invResult, itemCount, revenueByDayAgg, itemsByDayAgg, rawLicencedItems, ordersByDayMpAgg] = await Promise.all([
             Order.aggregate([
                 { $match: { date: dateFilter } },
                 { $group: {
                     _id:           null,
-                    totalRevenue:  { $sum: { $cond: { if: activeExpr, then: { $ifNull: ["$total", 0] }, else: 0 } } },
+                    totalRevenue:  { $sum: { $cond: { if: activeExpr, then: effectiveRevExpr, else: 0 } } },
                     orderCount:    { $sum: { $cond: { if: activeExpr, then: 1, else: 0 } } },
                     canceledCount: { $sum: { $cond: { if: activeExpr, then: 0, else: 1 } } },
                     totalShipping: { $sum: { $cond: { if: activeExpr, then: shipCostExpr, else: 0 } } },
@@ -31,7 +32,7 @@ export async function GET(req) {
                 { $group: {
                     _id:      { $ifNull: ["$marketplace", "Unknown"] },
                     orders:   { $sum: 1 },
-                    revenue:  { $sum: { $ifNull: ["$total", 0] } },
+                    revenue:  { $sum: effectiveRevExpr },
                     shipping: { $sum: shipCostExpr },
                 }},
                 { $project: { _id: 0, marketplace: "$_id", orders: 1, revenue: 1, shipping: 1 } },
@@ -49,7 +50,7 @@ export async function GET(req) {
             Items.countDocuments({ date: dateFilter }),
             Order.aggregate([
                 { $match: { date: dateFilter, canceled: { $ne: true }, refunded: { $ne: true } } },
-                { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, revenue: { $sum: { $ifNull: ["$total", 0] } }, orders: { $sum: 1 } } },
+                { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, revenue: { $sum: effectiveRevExpr }, orders: { $sum: 1 } } },
                 { $project: { _id: 0, date: "$_id", revenue: 1, orders: 1 } },
                 { $sort: { date: 1 } },
             ]),
@@ -63,6 +64,11 @@ export async function GET(req) {
             Items.find({ date: dateFilter, designRef: { $ne: null }, canceled: { $ne: true } })
                 .select("designRef price styleCode sizeName order")
                 .lean(),
+            Order.aggregate([
+                { $match: { date: dateFilter, canceled: { $ne: true }, refunded: { $ne: true } } },
+                { $group: { _id: { date: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, marketplace: { $ifNull: ["$marketplace", "Unknown"] } }, orders: { $sum: 1 } } },
+                { $sort: { "_id.date": 1 } },
+            ]),
         ]);
 
         const items = await addCogs(rawItems);
@@ -128,9 +134,17 @@ export async function GET(req) {
         const totalServiceCost = serviceInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
         const totalKlingCost   = klingInvoicesForPeriod.filter(inPeriod).reduce((s, i) => s + (i.totalAmount || 0), 0);
 
+        const ordersByDayMpMap = {};
+        for (const row of ordersByDayMpAgg) {
+            const { date, marketplace } = row._id;
+            if (!ordersByDayMpMap[date]) ordersByDayMpMap[date] = { date };
+            ordersByDayMpMap[date][marketplace] = (ordersByDayMpMap[date][marketplace] || 0) + row.orders;
+        }
+        const ordersByDayByMarketplace = Object.values(ordersByDayMpMap).sort((a, b) => a.date.localeCompare(b.date));
+
         console.log(`[dashboard] ${since.toISOString()} → ${until.toISOString()} | orders: ${summary.orderCount} | items: ${itemCount} (fetched: ${items.length})`);
 
-        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, licenceFeeByMarketplace, totalServiceCost, totalKlingCost, cogsByMarketplace, itemCountByMarketplace, itemsByMarketplaceAndStyle });
+        return NextResponse.json({ summary, byMarketplace, orderMarketplaceMap, items, inventoryValue, itemCount, revenueByDay: revenueByDayAgg, itemsByDay: itemsByDayAgg, ordersByDayByMarketplace, licenceFeeByMarketplace, totalServiceCost, totalKlingCost, cogsByMarketplace, itemCountByMarketplace, itemsByMarketplaceAndStyle });
     } catch (e) {
         console.error("[dashboard] error:", e);
         return NextResponse.json({

@@ -20,7 +20,7 @@ const InfoRow = ({ label, value }) => (
 );
 
 
-export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen, preview, setPreview, pageProducts, setPageProducts, showToast }) => {
+export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, setSizes, setColors, setProducts, products, updateDesign, releaseHold, loading, setLoading, setUpcs, tempUpcs, setOpen, preview, setPreview, pageProducts, setPageProducts, showToast, source }) => {
     return (
         <Box sx={{ padding: { xs: 2, sm: 3 }, maxWidth: 1200, margin: "0 auto" }}>
             <Typography variant="h5" sx={{ textAlign: "center", fontWeight: 600, marginBottom: 3 }}>Preview</Typography>
@@ -213,7 +213,7 @@ export const PreviewStage = ({ design, setDesign, setStage, setImages, colors, s
                     <Button variant="contained" color="primary" size="large" disabled={loading} sx={{ minWidth: 160 }} onClick={async () => {
                         setLoading(true)
                         const toAbsolute = url => typeof url === "string" && url.startsWith("/api/renderImages/")
-                            ? `https://platform.pythiastechnologies.com${url}`
+                            ? `https://${source ?? "platform"}.pythiastechnologies.com${url}`
                             : url;
                         const fixImgUrl = obj => {
                             if (!obj || typeof obj !== "object") return obj;

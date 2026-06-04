@@ -58,8 +58,18 @@ export async function GET(req) {
         await auth.save();
     }
 
-    const subdomain = PROVIDER_SUBDOMAINS[auth.provider] ?? "imperial";
+    // Platform org — identified by orgId (new) or by provider not matching a known app (legacy)
+    if (auth.orgId) {
+        return NextResponse.redirect(
+            `https://platform.pythiastechnologies.com/${auth.provider}/admin/integrations/tiktok`
+        );
+    }
+    const subdomain = PROVIDER_SUBDOMAINS[auth.provider];
+    if (subdomain) {
+        return NextResponse.redirect(`https://${subdomain}.pythiastechnologies.com/admin/integrations`);
+    }
+    // Legacy platform org (no orgId stored) — provider is the slug
     return NextResponse.redirect(
-        `https://${subdomain}.pythiastechnologies.com/admin/integrations`
+        `https://platform.pythiastechnologies.com/${auth.provider}/admin/integrations/tiktok`
     );
 }

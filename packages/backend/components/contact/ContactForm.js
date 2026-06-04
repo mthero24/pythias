@@ -12,7 +12,7 @@ export function ContactForm({
   apiUrl = "/api/contact",
   companyName = "Premier Printing",
   phone = "(844) 579-8442",
-  address = "21440 Melrose Ave, Southfield MI 48075",
+  address = "1421 Hidden View Drive, Lapeer MI 48446",
   email = "info@premierprinting.net",
   tagline = "Your full-service print fulfillment partner.",
 }) {
@@ -64,7 +64,7 @@ export function ContactForm({
           <Box sx={{ width: { xs: "100%", md: 320 }, flexShrink: 0 }}>
             <Paper elevation={0} sx={{
               border: "1px solid #e2e8f0", borderRadius: 3, p: 4,
-              background: "linear-gradient(160deg,#7c3aed 0%,#6d28d9 100%)",
+              background: "linear-gradient(160deg,#0f172a 0%,#1e293b 100%)",
               color: "#fff",
             }}>
               <Typography variant="h6" fontWeight={800} mb={0.5}>{companyName}</Typography>
@@ -144,8 +144,9 @@ export function ContactForm({
                   startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
                   sx={{
                     alignSelf: "flex-start", px: 5, py: 1.5, borderRadius: 2, fontWeight: 700,
-                    background: "linear-gradient(135deg,#7c3aed,#6d28d9)",
-                    "&:hover": { background: "#6d28d9" },
+                    background: "#D3A73D",
+                    color: "#111",
+                    "&:hover": { background: "#b8860b", boxShadow: "0 4px 16px rgba(211,167,61,0.4)" },
                   }}
                 >
                   {submitting ? "Sending…" : "Send Message"}

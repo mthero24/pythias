@@ -1,7 +1,6 @@
-import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Seasons, Genders, SportUsedFor, Brands, PlatformMarketPlace as MarketPlaces, Themes, PrintTypes, PlatformLicenseHolder as LicenseHolders, PlatformUser as User } from "@pythias/mongo";
+import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Seasons, Genders, SportUsedFor, Brands, PlatformMarketPlace as MarketPlaces, Themes, PrintTypes, PlatformLicenseHolder as LicenseHolders } from "@pythias/mongo";
 import { ProductsMain as Main, serialize } from "@pythias/backend";
 import { CreateSku } from "@/functions/CreateSku";
-import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 export const dynamic = 'force-dynamic';
@@ -11,13 +10,12 @@ export default async function ProductsPage(req) {
     const page = parseInt(query.page ?? "1");
     const q = query.q ?? null;
     const filters = query.filters ? JSON.parse(query.filters) : {};
-    const { slug } = await req.params ?? {};
 
-    const [headersList, session] = await Promise.all([headers(), getServerSession(authOptions)]);
+    const session = await getServerSession(authOptions);
     const orgId = session?.user?.orgId;
+    const orgSlug = session?.user?.orgSlug;
 
-    const [user, blanks, seasons, genders, sportsUsedFor, platformBrands, marketplaces, themes, colors, printTypes, licenses, totalProducts] = await Promise.all([
-        User.findOne({ userName: headersList.get("user") }).select("permissions").lean(),
+    const [blanks, seasons, genders, sportsUsedFor, platformBrands, marketplaces, themes, colors, printTypes, licenses, totalProducts] = await Promise.all([
         Blanks.find(orgId ? { orgId } : {}).populate("colors").lean(),
         Seasons.find().lean(),
         Genders.find().lean(),
@@ -31,7 +29,7 @@ export default async function ProductsPage(req) {
         orgId ? PlatformProduct.countDocuments({ orgId }) : Promise.resolve(0),
     ]);
 
-    const canManageMarketplaces = Boolean(user?.permissions?.marketplaces);
+    const canManageMarketplaces = Boolean(session?.user?.permissions?.marketplaces) || ["admin", "owner"].includes(session?.user?.role);
 
     return (
         <Main
@@ -49,7 +47,7 @@ export default async function ProductsPage(req) {
             colors={serialize(colors)}
             filter={filters}
             CreateSku={CreateSku}
-            source={"platform"}
+            source={orgSlug || "platform"}
             totalProducts={totalProducts}
             printTypes={serialize(printTypes)}
             licenses={serialize(licenses)}

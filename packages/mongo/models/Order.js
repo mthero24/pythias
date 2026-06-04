@@ -170,6 +170,8 @@ const schema = new mongoose.Schema({
   pricingChanges: { type: Number, default: 0 },
   shopifyOrderId: { type: String, unique: true, sparse: true },
   shopifyShop: { type: String, sparse: true },
+  shipByDate: { type: Date },
+  discountName: { type: String },
 });
 
 // schema.pre("save", async function (next) {
