@@ -1474,13 +1474,7 @@ function ReturnsTab({ returnsData, loading, onRefresh }) {
                 <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>All Return Inventory</Typography>
                 </Box>
-                <SortableTable columns={columns} rows={topReturned} defaultSort="quantity" defaultDir="desc"
-                            />
-                        ) : <NoData />}
-                    </ChartCard>
-                </Grid2>
-            </Grid2>
-
+                <SortableTable columns={columns} rows={topReturned} defaultSort="quantity" defaultDir="desc" />
             </Paper>
         </>
     );
