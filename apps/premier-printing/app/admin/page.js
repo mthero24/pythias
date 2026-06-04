@@ -1884,31 +1884,6 @@ export default function Admin() {
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                        {/* TEMP: remove after backfills are done */}
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                            <Button variant="outlined" size="small" color="warning" onClick={runBackfillShipByDate}
-                                disabled={backfillRunning}
-                                startIcon={backfillRunning ? <CircularProgress size={12} color="inherit" /> : null}>
-                                {backfillRunning ? "Running…" : "Backfill Ship-By"}
-                            </Button>
-                            {backfillResult && <Typography variant="caption" color={backfillResult.startsWith("Error") ? "error" : "success.main"}>{backfillResult}</Typography>}
-                        </Stack>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                            <Button variant="outlined" size="small" color="warning" onClick={runBackfillDiscounts}
-                                disabled={discountRunning}
-                                startIcon={discountRunning ? <CircularProgress size={12} color="inherit" /> : null}>
-                                {discountRunning ? "Running…" : "Backfill Discounts"}
-                            </Button>
-                            {discountResult && <Typography variant="caption" color={discountResult.startsWith("Error") ? "error" : "success.main"}>{discountResult}</Typography>}
-                        </Stack>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                            <Button variant="outlined" size="small" color="warning" onClick={runFixImageUrls}
-                                disabled={imageFixRunning}
-                                startIcon={imageFixRunning ? <CircularProgress size={12} color="inherit" /> : null}>
-                                {imageFixRunning ? "Running…" : "Fix Image URLs"}
-                            </Button>
-                            {imageFixResult && <Typography variant="caption" color={imageFixResult.startsWith("Error") ? "error" : "success.main"}>{imageFixResult}</Typography>}
-                        </Stack>
                         <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleDownload}
                             disabled={isInitialLoad || !data || tab === 0 || tab === 5 || (tab === 6 && !blankForecastData)}>
                             CSV
