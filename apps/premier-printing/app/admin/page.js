@@ -499,9 +499,13 @@ function stageColor(status) {
 function fmtDays(val)     { return val != null ? val.toFixed(1) + "d" : "—"; }
 function fmtModeDays(val) { return val != null ? `${val}d`             : "—"; }
 
-function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir }) {
+function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, urgentItems = [], urgentLoading }) {
     const ps = productionSummary ?? EMPTY_PROD;
     const { items, total, page, pageSize, loading } = itemsData;
+
+    const rePullReasonsData = useMemo(() =>
+        (ps.rePullReasons ?? []).map((r, id) => ({ id, value: r.count, label: r.reason ?? "Unknown" })),
+    [ps]);
 
     const stageData = useMemo(() => [
         { id: 0, value: ps.dtfFind,      label: "DTF Find"      },
@@ -527,6 +531,48 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
 
     return (
         <>
+            {(urgentLoading || urgentItems.length > 0) && (
+                <Paper variant="outlined" sx={{ mb: 3, borderColor: "warning.main", borderWidth: 2, overflow: "hidden" }}>
+                    <Box sx={{ px: 2, py: 1, bgcolor: "warning.main" }}>
+                        <Typography variant="subtitle2" sx={{ color: "warning.contrastText", fontWeight: 700 }}>
+                            Due to Ship Within 24 Hours ({urgentLoading ? "…" : urgentItems.length})
+                        </Typography>
+                    </Box>
+                    {urgentLoading ? (
+                        <Box sx={{ p: 2 }}><LinearProgress /></Box>
+                    ) : (
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>PO #</TableCell>
+                                    <TableCell>Marketplace</TableCell>
+                                    <TableCell>Piece ID</TableCell>
+                                    <TableCell>Style</TableCell>
+                                    <TableCell>Color / Size</TableCell>
+                                    <TableCell>Ship By</TableCell>
+                                    <TableCell>Last Step</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {urgentItems.map(i => {
+                                    const stage = itemStage(i);
+                                    return (
+                                        <TableRow key={i.pieceId}>
+                                            <TableCell>{i.order?.poNumber ?? "—"}</TableCell>
+                                            <TableCell sx={{ textTransform: "capitalize" }}>{i.order?.marketplace ?? "—"}</TableCell>
+                                            <TableCell>{i.pieceId}</TableCell>
+                                            <TableCell>{i.styleCode ?? "—"}</TableCell>
+                                            <TableCell>{[i.colorName, i.sizeName].filter(Boolean).join(" / ") || "—"}</TableCell>
+                                            <TableCell sx={{ color: "warning.dark", fontWeight: 600 }}>{fmtDate(i.shipByDate)}</TableCell>
+                                            <TableCell><Chip size="small" label={stage} color={stageColor(stage)} /></TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    )}
+                </Paper>
+            )}
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
                 <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Total Items"      value={fmtN(ps.total)} /></Grid2>
                 <Grid2 size={{ xs: 4, sm: 2 }}><KpiCard label="Label Printed"    value={fmtN(ps.labelPrinted)}  color="info.main" /></Grid2>
@@ -543,7 +589,29 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
             </Grid2>
 
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
-                <Grid2 size={{ xs: 12, md: 7 }}>
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                    <ChartCard title="Stage Distribution" minH={200}>
+                        {stageData.length > 0 ? (
+                            <PieChart
+                                series={[{ data: stageData, innerRadius: 40, outerRadius: 75, paddingAngle: 2, cornerRadius: 3 }]}
+                                height={200}
+                                slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}
+                            />
+                        ) : <NoData />}
+                    </ChartCard>
+                </Grid2>
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                    <ChartCard title="Re-Pull Reasons" minH={200}>
+                        {rePullReasonsData.length > 0 ? (
+                            <PieChart
+                                series={[{ data: rePullReasonsData, innerRadius: 40, outerRadius: 75, paddingAngle: 2, cornerRadius: 3 }]}
+                                height={200}
+                                slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}
+                            />
+                        ) : <NoData />}
+                    </ChartCard>
+                </Grid2>
+                <Grid2 size={{ xs: 12 }}>
                     <ChartCard title="Items Received per Day" minH={200}>
                         {itemsByDay.length > 0 ? (
                             <BarChart
@@ -552,17 +620,6 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
                                 series={[{ dataKey: "count", label: "Items", color: "#00bcd4" }]}
                                 height={200}
                                 margin={{ left: 48, right: 16, top: 10, bottom: 40 }}
-                            />
-                        ) : <NoData />}
-                    </ChartCard>
-                </Grid2>
-                <Grid2 size={{ xs: 12, md: 5 }}>
-                    <ChartCard title="Stage Distribution" minH={200}>
-                        {stageData.length > 0 ? (
-                            <PieChart
-                                series={[{ data: stageData, innerRadius: 40, outerRadius: 75, paddingAngle: 2, cornerRadius: 3 }]}
-                                height={200}
-                                slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}
                             />
                         ) : <NoData />}
                     </ChartCard>
@@ -1544,9 +1601,26 @@ export default function Admin() {
     const runBackfillDiscounts = async () => {
         setDiscountRunning(true); setDiscountResult(null);
         try {
-            const res = await fetch("/api/admin/backfill/discounts", { method: "POST" });
-            const d = await res.json();
-            setDiscountResult(d.error ? `Error: ${d.msg}` : `Done — updated: ${d.updated}, skipped: ${d.skipped}`);
+            let batch = 0, totalUpdated = 0, totalSkipped = 0, grandTotal = 0;
+            while (true) {
+                setDiscountResult(`Batch ${batch + 1} running…`);
+                const res = await fetch("/api/admin/backfill/discounts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ batch }),
+                });
+                const d = await res.json();
+                if (d.error) { setDiscountResult(`Error: ${d.msg}`); break; }
+                grandTotal     = d.total;
+                totalUpdated  += d.updated;
+                totalSkipped  += d.skipped;
+                setDiscountResult(`Batch ${batch + 1}: ${(batch + 1) * 1000 > grandTotal ? grandTotal : (batch + 1) * 1000}/${grandTotal} — updated: ${totalUpdated}`);
+                if (!d.hasMore) {
+                    setDiscountResult(`Done — ${grandTotal} orders, updated: ${totalUpdated}, skipped: ${totalSkipped}`);
+                    break;
+                }
+                batch++;
+            }
         } catch (e) { setDiscountResult(`Error: ${e.message}`); }
         finally { setDiscountRunning(false); }
     };
@@ -1587,6 +1661,8 @@ export default function Admin() {
     const [itemsSortDir,      setItemsSortDir]      = useState("desc");
     const [itemsLoading,      setItemsLoading]      = useState(false);
     const [productionSummary, setProductionSummary] = useState(null);
+    const [urgentItems,       setUrgentItems]       = useState([]);
+    const [urgentLoading,     setUrgentLoading]     = useState(false);
 
     // Cost items state (CostsTab → Items Detail)
     const [costDetailView,     setCostDetailView]     = useState("orders");
@@ -1617,8 +1693,9 @@ export default function Admin() {
     const costItemsAbortRef    = useRef(null);
     const blanksAbortRef       = useRef(null);
     const forecastAbortRef     = useRef(null);
-    const blankForecastAbortRef = useRef(null);
+    const blankForecastAbortRef  = useRef(null);
     const blankForecastLoadedRef = useRef(false);
+    const urgentAbortRef         = useRef(null);
 
     const load = useCallback(async (f, t) => {
         if (abortRef.current) abortRef.current.abort();
@@ -1739,6 +1816,23 @@ export default function Admin() {
         }
     }, []);
 
+    const loadUrgentItems = useCallback(async () => {
+        if (urgentAbortRef.current) urgentAbortRef.current.abort();
+        const controller = new AbortController();
+        urgentAbortRef.current = controller;
+        setUrgentLoading(true);
+        try {
+            const res  = await fetch("/api/admin/dashboard/urgent-items", { signal: controller.signal });
+            const json = await res.json();
+            if (!res.ok || json.error) throw new Error(json.msg);
+            setUrgentItems(json.items);
+        } catch (e) {
+            if (e.name !== "AbortError") console.error("[urgent-items]", e.message);
+        } finally {
+            if (urgentAbortRef.current === controller) setUrgentLoading(false);
+        }
+    }, []);
+
     const loadBlankForecast = useCallback(async (force = false) => {
         if (blankForecastAbortRef.current) blankForecastAbortRef.current.abort();
         const controller = new AbortController();
@@ -1774,6 +1868,7 @@ export default function Admin() {
     useEffect(() => { setOrdersPage(1); setItemsPage(1); setCostItemsPage(1); }, [from, to, marketplace]);
     useEffect(() => { loadOrders(from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir); }, [from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir, loadOrders]);
     useEffect(() => { loadItems(from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir); }, [from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir, loadItems]);
+    useEffect(() => { loadUrgentItems(); }, [loadUrgentItems]);
     useEffect(() => { loadCostItems(from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir); }, [from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir, loadCostItems]);
     useEffect(() => { loadBlanks(from, to, marketplace); }, [from, to, marketplace, loadBlanks]);
     useEffect(() => { loadForecast(marketplace, horizon); }, [marketplace, horizon, loadForecast]);
@@ -1878,6 +1973,19 @@ export default function Admin() {
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        {/* TEMP */}
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Button variant="outlined" size="small" color="warning" onClick={runBackfillShipByDate} disabled={backfillRunning} startIcon={backfillRunning ? <CircularProgress size={12} color="inherit" /> : null}>
+                                {backfillRunning ? "Running…" : "Backfill Ship-By"}
+                            </Button>
+                            {backfillResult && <Typography variant="caption" color={backfillResult.startsWith("Error") ? "error" : "success.main"}>{backfillResult}</Typography>}
+                        </Stack>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Button variant="outlined" size="small" color="warning" onClick={runBackfillDiscounts} disabled={discountRunning} startIcon={discountRunning ? <CircularProgress size={12} color="inherit" /> : null}>
+                                {discountRunning ? "Running…" : "Backfill Discounts"}
+                            </Button>
+                            {discountResult && <Typography variant="caption" color={discountResult.startsWith("Error") ? "error" : "success.main"}>{discountResult}</Typography>}
+                        </Stack>
                         <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleDownload}
                             disabled={isInitialLoad || !data || tab === 0 || tab === 5 || (tab === 6 && !blankForecastData)}>
                             CSV
@@ -1950,6 +2058,7 @@ export default function Admin() {
                                 productionSummary={productionSummary} itemsData={itemsData} itemsByDay={itemsByDay}
                                 sortField={itemsSortField} sortDir={itemsSortDir}
                                 onPageChange={setItemsPage} onPageSizeChange={handleItemsPageSizeChange} onSortChange={handleItemsSort}
+                                urgentItems={urgentItems} urgentLoading={urgentLoading}
                             />
                         )}
                         {tab === 3 && (

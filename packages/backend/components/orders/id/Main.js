@@ -369,6 +369,7 @@ export function Main({ ord, blanks, source }) {
                                                                 { label: i.colorName, prefix: "Color" },
                                                                 { label: i.sizeName, prefix: "Size" },
                                                                 { label: i.styleCode, prefix: "Blank" },
+                                                                ...(i.price != null ? [{ label: `$${Number(i.price).toFixed(2)}`, prefix: "Price" }] : []),
                                                             ].map(({ label, prefix }) => (
                                                                 <Chip
                                                                     key={prefix}

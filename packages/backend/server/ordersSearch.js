@@ -10,7 +10,7 @@ const SEARCH_MS = 10000;
 
 const ITEM_PROJECT = {
     sku: 1, name: 1, colorName: 1, sizeName: 1, styleCode: 1,
-    design: 1, isBlank: 1, color: 1, size: 1, blank: 1, upc: 1, pieceId: 1,
+    design: 1, isBlank: 1, color: 1, size: 1, blank: 1, upc: 1, pieceId: 1, price: 1,
 };
 
 const ORDER_PROJECT = {

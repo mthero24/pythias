@@ -744,7 +744,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                                         key={idx}
                                                         sx={{
                                                             display: "grid",
-                                                            gridTemplateColumns: { xs: "56px 1fr", md: "56px 2fr 1fr 1fr 1fr" },
+                                                            gridTemplateColumns: { xs: "56px 1fr", md: "56px 2fr 1fr 1fr 1fr 80px" },
                                                             gap: 1.5,
                                                             alignItems: "center",
                                                             p: 1.25,
@@ -800,6 +800,14 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                                         <Box sx={{ display: { xs: "none", md: "block" } }}>
                                                             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.25 }}>Blank</Typography>
                                                             <Typography variant="body2">{item.styleCode || <span style={{ color: "#f59e0b" }}>—</span>}</Typography>
+                                                        </Box>
+
+                                                        {/* Price */}
+                                                        <Box sx={{ display: { xs: "none", md: "block" } }}>
+                                                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.25 }}>Price</Typography>
+                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                {item.price != null ? `$${Number(item.price).toFixed(2)}` : "—"}
+                                                            </Typography>
                                                         </Box>
                                                     </Box>
                                                 );

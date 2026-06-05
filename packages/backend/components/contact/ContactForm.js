@@ -36,7 +36,7 @@ export function ContactForm({
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (data.error) throw new Error(data.msg);
+      if (!data.success) throw new Error(data.error || data.msg || "Failed to send message.");
       setForm({ name: "", company: "", phone: "", email: "", message: "" });
       setSnack({ open: true, msg: "Message sent! We'll be in touch soon.", sev: "success" });
     } catch (err) {

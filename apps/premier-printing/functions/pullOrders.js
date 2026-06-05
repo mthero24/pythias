@@ -382,6 +382,9 @@ function extractDiscountFromLineItems(rawItems = []) {
     const discountLines = rawItems.filter(i => (i.unitPrice ?? 0) < 0);
     const amount = discountLines.reduce((s, i) => s + Math.abs((i.unitPrice ?? 0) * (parseInt(i.quantity) || 1)), 0);
     const name   = discountLines.map(i => i.name).filter(Boolean).join(", ") || null;
+    if (discountLines.length > 0) {
+        console.log(`[discount] name="${name}" total=$${amount}`);
+    }
     return { amount, name };
 }
 
@@ -834,66 +837,65 @@ export async function backfillShipByDate({ onProgress } = {}) {
     return { total: unshipped.length, updated, skipped };
 }
 
-export async function backfillDiscounts({ onProgress } = {}) {
-    // Find all orders — re-fetch from SS to get actual discount line items
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const BATCH_SIZE     = 1000;
+const CONCURRENCY    = 5;      // SS requests in parallel per chunk
+const CHUNK_DELAY_MS = 7500;   // 5 req / 7.5 s ≈ 40 req/min (SS limit)
+
+export async function backfillDiscounts({ batch = 0 } = {}) {
+    const total = await Order.countDocuments({
+        canceled: { $ne: true },
+        marketplaceConnectionId: { $exists: false },
+    });
+
     const orders = await Order.find({
         canceled: { $ne: true },
-        $or: [
-            { discountAmount: { $gt: 0 } },
-            { discountName: { $exists: false } },
-        ],
-    }).select("_id poNumber marketplaceConnectionId discountAmount discountName items").lean();
+        marketplaceConnectionId: { $exists: false },
+    })
+        .select("_id poNumber discountAmount discountName items")
+        .sort({ _id: -1 })
+        .skip(batch * BATCH_SIZE)
+        .limit(BATCH_SIZE)
+        .lean();
 
-    console.log(`[backfillDiscounts] ${orders.length} orders to process`);
+    console.log(`[backfillDiscounts] batch ${batch}: ${orders.length} orders (${batch * BATCH_SIZE + 1}–${batch * BATCH_SIZE + orders.length} of ${total})`);
     let updated = 0, skipped = 0;
 
-    for (let idx = 0; idx < orders.length; idx++) {
-        const o = orders[idx];
-        if (onProgress) onProgress(idx + 1, orders.length);
-        try {
-            let discountAmount = o.discountAmount || 0;
-            let discountName   = o.discountName   || null;
-
-            // Re-fetch from SS to get discount line items (most reliable source)
-            if (!o.marketplaceConnectionId) {
+    // Process CONCURRENCY orders at a time
+    for (let i = 0; i < orders.length; i += CONCURRENCY) {
+        const chunk = orders.slice(i, i + CONCURRENCY);
+        await Promise.all(chunk.map(async o => {
+            try {
                 const ssOrders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: o.poNumber }).catch(() => []);
                 const ss = ssOrders?.[0];
-                if (ss) {
-                    const extracted = extractDiscountFromLineItems(ss.items ?? []);
-                    if (extracted.amount > 0) {
-                        discountAmount = extracted.amount;
-                        discountName   = extracted.name;
-                    } else if (!discountAmount) {
-                        discountAmount = extractDiscountFromLineItems(ss.items ?? []).amount;
-                    }
-                }
-            }
+                if (!ss) { skipped++; return; }
 
-            if (discountAmount > 0 || discountName) {
-                await Order.updateOne({ _id: o._id }, { $set: { discountAmount, discountName } });
-            }
+                const { amount: discountAmount, name: discountName } = extractDiscountFromLineItems(ss.items ?? []);
+                await Order.updateOne({ _id: o._id }, { $set: { discountAmount, discountName: discountName ?? null } });
 
-            if (discountAmount > 0 && o.items?.length) {
-                const items = await Item.find({ _id: { $in: o.items } }).lean();
-                const ops = items.map(item => {
+                if (discountAmount > 0 && o.items?.length) {
+                    const items = await Item.find({ _id: { $in: o.items } }).lean();
                     const totalPrice = items.reduce((s, i) => s + (i.price || 0), 0);
-                    const share = totalPrice > 0
-                        ? discountAmount * (item.price || 0) / totalPrice
-                        : discountAmount / items.length;
-                    return Item.updateOne({ _id: item._id }, { $set: { discount: Math.round(share * 100) / 100, discountName: discountName || null } });
-                });
-                await Promise.all(ops);
+                    await Promise.all(items.map(item => {
+                        const share = totalPrice > 0
+                            ? discountAmount * (item.price || 0) / totalPrice
+                            : discountAmount / items.length;
+                        return Item.updateOne({ _id: item._id }, { $set: { discount: Math.round(share * 100) / 100, discountName: discountName || null } });
+                    }));
+                }
+                updated++;
+            } catch (e) {
+                console.error(`[backfillDiscounts] ${o.poNumber}:`, e.message);
+                skipped++;
             }
-
-            updated++;
-        } catch (e) {
-            console.error(`[backfillDiscounts] ${o.poNumber}:`, e.message);
-            skipped++;
-        }
+        }));
+        await sleep(CHUNK_DELAY_MS);
     }
 
-    console.log(`[backfillDiscounts] done — updated: ${updated}, skipped: ${skipped}`);
-    return { total: orders.length, updated, skipped };
+    const hasMore = (batch + 1) * BATCH_SIZE < total;
+    console.log(`[backfillDiscounts] batch ${batch} done — updated: ${updated}, skipped: ${skipped}, hasMore: ${hasMore}`);
+    return { total, batch, batchSize: BATCH_SIZE, processed: orders.length, updated, skipped, hasMore, nextBatch: hasMore ? batch + 1 : null };
 }
 
 export async function repullOrderItems(poNumber) {

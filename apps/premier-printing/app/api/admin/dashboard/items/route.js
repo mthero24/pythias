@@ -43,7 +43,7 @@ export async function GET(req) {
             in: "$$dtf.date",
         }};
 
-        const [rawItems, total, summaryAgg, dtfModeAgg, printModeAgg, shipModeAgg, stageDistAgg] = await Promise.all([
+        const [rawItems, total, summaryAgg, dtfModeAgg, printModeAgg, shipModeAgg, stageDistAgg, rePullReasonsAgg] = await Promise.all([
             Items.find(filter)
                 .select("date status steps printed treated folded shipped canceled rePulled inBin colorName sizeName styleCode pieceId batchID orderId poNumber order printedDate shippedDate shipByDate")
                 .sort({ [sortField]: sortDir })
@@ -152,6 +152,13 @@ export async function GET(req) {
                     shipped:      { $sum: { $cond: [{ $in: ["$latestStatus", ["Shipped", "PreShipped"]] }, 1, 0] } },
                 }},
             ]),
+            Items.aggregate([
+                { $match: { ...filter, canceled: { $ne: true }, rePulled: true } },
+                { $unwind: "$rePulledReasons" },
+                { $match: { rePulledReasons: { $exists: true, $ne: null, $gt: "" } } },
+                { $group: { _id: "$rePulledReasons", count: { $sum: 1 } } },
+                { $sort: { count: -1 } },
+            ]),
         ]);
 
         const items = await addCogs(rawItems);
@@ -171,6 +178,7 @@ export async function GET(req) {
             modeDtfLoad:     dtfModeAgg[0]?._id   ?? null,
             modePrintLabels: printModeAgg[0]?._id ?? null,
             modeDaysToShip:  shipModeAgg[0]?._id  ?? null,
+            rePullReasons:   rePullReasonsAgg.map(r => ({ reason: r._id, count: r.count })),
         };
 
         if (csvMode) {
@@ -217,7 +225,7 @@ export async function GET(req) {
         return NextResponse.json({
             error: true, msg: e.message,
             items: [], total: 0, page: 1, pageSize: 50, pages: 0,
-            productionSummary: { total: 0, active: 0, shipped: 0, rePulled: 0, labelPrinted: 0, folded: 0, inBin: 0, dtfLoad: 0, dtfFind: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null, modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null },
+            productionSummary: { total: 0, active: 0, shipped: 0, rePulled: 0, labelPrinted: 0, folded: 0, inBin: 0, dtfLoad: 0, dtfFind: 0, avgDaysToLabel: null, avgDaysToPrint: null, avgDaysToShip: null, modeDtfLoad: null, modePrintLabels: null, modeDaysToShip: null, rePullReasons: [] },
         }, { status: 500 });
     }
 }

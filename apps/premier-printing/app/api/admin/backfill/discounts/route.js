@@ -9,7 +9,8 @@ export async function POST(req) {
         return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
     }
     try {
-        const result = await backfillDiscounts();
+        const { batch = 0 } = await req.json().catch(() => ({}));
+        const result = await backfillDiscounts({ batch });
         return NextResponse.json({ error: false, ...result });
     } catch (e) {
         console.error("[backfill/discounts]", e);
