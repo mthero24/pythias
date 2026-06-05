@@ -19,7 +19,7 @@ const FEATURES = [
     "Team collaboration and activity logs",
 ];
 
-export function Main({ type, name = "Premier Printing", initials = "PP", tagline = "Production Management", onSuccess }) {
+export function Main({ type, name = "Premier Printing", initials = "PP", tagline = "Production Management", logo, redirectTo = "/account", onSuccess }) {
     const isRegister = type === "register";
 
     const [data, setData]             = useState({ userName: "", password: "", email: "", firstName: "", lastName: "" });
@@ -55,7 +55,7 @@ export function Main({ type, name = "Premier Printing", initials = "PP", tagline
                 });
                 if (response?.ok) {
                     if (onSuccess) onSuccess();
-                    else location.replace("/account");
+                    else location.replace(redirectTo);
                 } else {
                     setError(response?.error ?? "Invalid username or password.");
                 }
@@ -93,24 +93,28 @@ export function Main({ type, name = "Premier Printing", initials = "PP", tagline
 
                 {/* Brand mark */}
                 <Box sx={{ position: "relative" }}>
-                    <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Box sx={{
-                            width: 44, height: 44, borderRadius: 2.5,
-                            background: "linear-gradient(135deg, #6366f1 0%, #14b8a6 100%)",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            flexShrink: 0,
-                        }}>
-                            <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "1rem", letterSpacing: -0.5 }}>{initials}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "1.1rem", lineHeight: 1.1 }}>
-                                {name}
-                            </Typography>
-                            <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.72rem", fontWeight: 500 }}>
-                                {tagline}
-                            </Typography>
-                        </Box>
-                    </Stack>
+                    {logo ? (
+                        <Box component="img" src={logo} alt={name} sx={{ height: 48, objectFit: "contain" }} />
+                    ) : (
+                        <Stack direction="row" alignItems="center" spacing={1.5}>
+                            <Box sx={{
+                                width: 44, height: 44, borderRadius: 2.5,
+                                background: "linear-gradient(135deg, #6366f1 0%, #14b8a6 100%)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                flexShrink: 0,
+                            }}>
+                                <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: "1rem", letterSpacing: -0.5 }}>{initials}</Typography>
+                            </Box>
+                            <Box>
+                                <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "1.1rem", lineHeight: 1.1 }}>
+                                    {name}
+                                </Typography>
+                                <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.72rem", fontWeight: 500 }}>
+                                    {tagline}
+                                </Typography>
+                            </Box>
+                        </Stack>
+                    )}
                 </Box>
 
                 {/* Center content */}

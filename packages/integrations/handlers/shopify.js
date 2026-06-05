@@ -164,6 +164,7 @@ export async function handleShopifyOrdersPOST(req) {
                     total: data.order.totalPrice,
                     status: data.order.status,
                     shippingType: "Standard",
+                    ...(data.orgId ? { orgId: data.orgId } : {}),
                 });
                 let items = [];
                 for (let i of data.order.items) {
@@ -197,6 +198,7 @@ export async function handleShopifyOrdersPOST(req) {
                 updateInventory();
             } else {
                 order.status = data.order.status;
+                if (data.orgId && !order.orgId) order.orgId = data.orgId;
                 if (data.order.paymentStatus == "PAID") {
                     order.paid = true;
                     for (let item of order.items) {
@@ -360,8 +362,15 @@ export async function handleShopifyProductsGET(req) {
     let password = authorizationHeader.split(" ")[1];
     let user = await User.findOne({ password: password });
     if (user) {
-        let brand = new URL(req.url).searchParams.get("brand");
-        let designs = await Design.find({ "b2m.brand": brand, onShopify: { $in: [null, false] }, published: true }).limit(5).populate("blanks.blank blanks.colors");
+        const searchParams = new URL(req.url).searchParams;
+        let brand  = searchParams.get("brand");
+        let orgId  = searchParams.get("orgId");
+        let designs = await Design.find({
+            "b2m.brand": brand,
+            onShopify: { $in: [null, false] },
+            published: true,
+            ...(orgId ? { orgId } : {}),
+        }).limit(5).populate("blanks.blank blanks.colors");
         let products = [];
         for (let d of designs) {
             products = products.concat(await createProducts(d, brand));
