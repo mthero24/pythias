@@ -88,6 +88,7 @@ export const authOptions = {
       };
       return session;
     },
+    redirect: async () => "/",
   },
   pages: {
     signIn: "/login",

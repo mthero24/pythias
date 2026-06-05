@@ -1,8 +1,9 @@
-import { Items, Order, Products } from "@pythias/mongo";
+import { Items, Order, Products, Inventory, ProductInventory } from "@pythias/mongo";
 import { generatePieceID } from "@pythias/integrations";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { updateInventory, recomputeStockStatus } from "@/functions/pullOrders";
 
 function genOrderId() {
     return `MANUAL-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -15,6 +16,27 @@ async function resolveDesign(designImages, designId) {
         .populate("design", "images")
         .select("design").lean();
     return prod?.design?.images ?? null;
+}
+
+async function assignInventory(item) {
+    const productInventory = await ProductInventory.findOne({ sku: item.sku });
+    if (productInventory && productInventory.quantity - productInventory.inStock.length > 0) {
+        item.inventory.inventoryType = "productInventory";
+        item.inventory.productInventory = productInventory._id;
+        productInventory.inStock.push(item._id.toString());
+        await productInventory.save();
+    } else {
+        let inventory = await Inventory.findOne({ blank: item.blank, color: item.color, sizeId: item.size });
+        if (!inventory) {
+            inventory = await Inventory.findOne({ inventory_id: `${item.colorName}-${item.sizeName}-${item.styleCode}` });
+        }
+        if (inventory) {
+            if (!item.inventory) item.inventory = {};
+            item.inventory.inventoryType = "inventory";
+            item.inventory.inventory = inventory._id;
+        }
+    }
+    return item;
 }
 
 export async function POST(req) {
@@ -66,7 +88,7 @@ export async function POST(req) {
         const resolvedDesign = await resolveDesign(designImages, designId);
         const unitCount = Math.max(1, Math.min(99, Number(qty) || 1));
 
-        return Promise.all(Array.from({ length: unitCount }, () =>
+        const units = await Promise.all(Array.from({ length: unitCount }, () =>
             new Items({
                 pieceId:      generatePieceID(),
                 sku,
@@ -92,12 +114,19 @@ export async function POST(req) {
                 type:         printType || null,
             }).save()
         ));
+
+        // Assign inventory to each unit, then save
+        return Promise.all(units.map(item => assignInventory(item).then(i => i.save())));
     }))).flat();
 
     const total = savedItems.reduce((sum, it) => sum + (it.price ?? 0), 0);
     order.items = savedItems.map(it => it._id);
     order.total = total;
     await order.save();
+
+    // Run the same inventory + stock status recompute as pullOrders
+    await updateInventory();
+    await recomputeStockStatus();
 
     return NextResponse.json({ success: true, orderId: order._id.toString(), poNumber });
 }

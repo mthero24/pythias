@@ -79,6 +79,7 @@ const schema = new mongoose.Schema({
   marketplaceOrderId: { type: String },
   marketplaceConnectionId: { type: mongoose.Schema.Types.ObjectId },
   marketplaceShipped: { type: Boolean, default: false },
+  ebayLineItemIds: [String],
   error: { type: String },
   shippingRates: {
     firstClassRate: Number,

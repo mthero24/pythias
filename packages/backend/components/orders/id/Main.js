@@ -732,35 +732,91 @@ const NoteModal = ({ open, setOpen, order, setOrder }) => {
 };
 
 const ShippedModal = ({ open, setOpen, order, setOrder }) => {
+    const existingTracking = order?.shippingInfo?.labels?.[0]?.trackingNumber ?? "";
+    const existingProvider = order?.shippingInfo?.labels?.[0]?.provider ?? "";
+
     const [trackingNumber, setTrackingNumber] = useState("");
-    const [provider, setProvider] = useState("");
+    const [provider,       setProvider]       = useState("");
+    const [submitting,     setSubmitting]      = useState(false);
+    const [warning,        setWarning]         = useState(null);
+
+    const effectiveTracking = trackingNumber.trim() || existingTracking;
+    const noTracking        = !effectiveTracking;
 
     const markShipped = async () => {
-        const res = await axios.post("/api/orders/shipped", { order, trackingNumber, provider });
-        if (res?.data?.error) alert(res.data.msg);
-        else {
-            setTrackingNumber("");
-            setProvider("");
-            setOrder(res.data.order);
-            setOpen(false);
+        setSubmitting(true);
+        setWarning(null);
+        try {
+            const res = await axios.post("/api/orders/shipped", { order, trackingNumber, provider });
+            if (res?.data?.error) {
+                setWarning(res.data.msg);
+            } else {
+                setOrder(res.data.order);
+                if (res.data.warning) {
+                    setWarning(res.data.warning);
+                    // Leave modal open so user sees the warning before closing
+                } else {
+                    setTrackingNumber("");
+                    setProvider("");
+                    setOpen(false);
+                }
+            }
+        } catch (e) {
+            setWarning(e.message || "Something went wrong.");
+        } finally {
+            setSubmitting(false);
         }
     };
 
+    const handleClose = () => {
+        setTrackingNumber("");
+        setProvider("");
+        setWarning(null);
+        setOpen(false);
+    };
+
     return (
-        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 Mark as Shipped
-                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+                <IconButton size="small" onClick={handleClose}><CloseIcon fontSize="small" /></IconButton>
             </DialogTitle>
             <DialogContent dividers>
                 <Stack spacing={2} sx={{ pt: 0.5 }}>
-                    <TextField fullWidth label="Tracking Number" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} />
-                    <TextField fullWidth label="Shipping Provider" value={provider} onChange={(e) => setProvider(e.target.value)} />
+                    {noTracking && (
+                        <Alert severity="warning">
+                            No tracking number — the marketplace will <strong>not</strong> be updated automatically unless you enter one.
+                        </Alert>
+                    )}
+                    <TextField
+                        fullWidth
+                        label="Tracking Number"
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder={existingTracking || "Enter tracking number"}
+                        helperText={existingTracking && !trackingNumber ? `Using existing: ${existingTracking}` : ""}
+                    />
+                    <TextField
+                        fullWidth
+                        label="Shipping Provider"
+                        value={provider}
+                        onChange={(e) => setProvider(e.target.value)}
+                        placeholder={existingProvider || "e.g. USPS, UPS, FedEx"}
+                        helperText={existingProvider && !provider ? `Using existing: ${existingProvider}` : ""}
+                    />
+                    {warning && <Alert severity={warning.toLowerCase().includes("fail") ? "error" : "warning"}>{warning}</Alert>}
                 </Stack>
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button onClick={() => setOpen(false)}>Cancel</Button>
-                <Button variant="contained" startIcon={<LocalShippingIcon />} onClick={markShipped}>Mark Shipped</Button>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button
+                    variant="contained"
+                    startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <LocalShippingIcon />}
+                    onClick={markShipped}
+                    disabled={submitting}
+                >
+                    {submitting ? "Saving…" : "Mark Shipped"}
+                </Button>
             </DialogActions>
         </Dialog>
     );
