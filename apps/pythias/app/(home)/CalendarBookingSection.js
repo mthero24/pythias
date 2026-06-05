@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Container, Typography, Button } from "@mui/material";
+import { Box, Container, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
-const POLL_INTERVAL = 8_000; // 8 seconds — short enough to catch most iCal updates
+const POLL_INTERVAL  = 8_000;  // 8 seconds — short enough to catch most iCal updates
+const BUTTON_DELAY   = 90_000; // 90 seconds — enough time to actually complete a booking
 
 async function fetchUids() {
   try {
@@ -31,7 +32,8 @@ export default function CalendarBookingSection() {
   const baseUids      = useRef(null);
   const intervalId    = useRef(null);
   const redirected    = useRef(false);
-  const [showButton, setShowButton] = useState(false);
+  const [showButton,  setShowButton]  = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,10 +43,10 @@ export default function CalendarBookingSection() {
       if (cancelled) return;
       baseUids.current = initial ?? new Set();
 
-      // Show the manual fallback button after 10 s — the user has had time to book
+      // Show the manual fallback button after 90 s — enough time to actually complete a booking
       const showTimer = setTimeout(() => {
         if (!redirected.current) setShowButton(true);
-      }, 10_000);
+      }, BUTTON_DELAY);
 
       intervalId.current = setInterval(async () => {
         if (redirected.current) return;
@@ -56,6 +58,7 @@ export default function CalendarBookingSection() {
             redirected.current = true;
             clearInterval(intervalId.current);
             clearTimeout(showTimer);
+            try { sessionStorage.setItem("_demo_booked", "1"); } catch {}
             fireBookingEvents();
             router.push("/demo-confirmed");
             return;
@@ -76,8 +79,15 @@ export default function CalendarBookingSection() {
 
   function handleManualConfirm() {
     if (redirected.current) return;
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmYes() {
+    if (redirected.current) return;
     redirected.current = true;
     clearInterval(intervalId.current);
+    setConfirmOpen(false);
+    try { sessionStorage.setItem("_demo_booked", "1"); } catch {}
     fireBookingEvents();
     router.push("/demo-confirmed");
   }
@@ -172,6 +182,21 @@ export default function CalendarBookingSection() {
               {"I just booked my demo →"}
             </Button>
           )}
+
+          <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+            <DialogTitle sx={{ fontWeight: 700 }}>Confirm your booking</DialogTitle>
+            <DialogContent>
+              <Typography>
+                Did you finish selecting a time and complete your booking on the calendar above?
+              </Typography>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button onClick={() => setConfirmOpen(false)}>No, go back</Button>
+              <Button variant="contained" onClick={handleConfirmYes} sx={{ bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } }}>
+                Yes, I booked it
+              </Button>
+            </DialogActions>
+          </Dialog>
           <Typography
             variant="body2"
             sx={{ color: "#666666", fontStyle: "italic" }}

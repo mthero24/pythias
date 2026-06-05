@@ -19,7 +19,7 @@ const FEATURES = [
     "Team collaboration and activity logs",
 ];
 
-export function Main({ type, name = "Premier Printing", initials = "PP", tagline = "Production Management", logo, redirectTo = "/account", onSuccess }) {
+export function Main({ type, name = "Premier Printing", initials = "PP", tagline = "Production Management", logo, redirectTo = "/account", notFoundRedirect, onSuccess }) {
     const isRegister = type === "register";
 
     const [data, setData]             = useState({ userName: "", password: "", email: "", firstName: "", lastName: "" });
@@ -56,8 +56,10 @@ export function Main({ type, name = "Premier Printing", initials = "PP", tagline
                 if (response?.ok) {
                     if (onSuccess) onSuccess();
                     else location.replace(redirectTo);
+                } else if (response?.error === "USER_NOT_FOUND" && notFoundRedirect) {
+                    location.replace(notFoundRedirect);
                 } else {
-                    setError(response?.error ?? "Invalid username or password.");
+                    setError(response?.error === "USER_NOT_FOUND" ? "Account not found." : (response?.error ?? "Invalid username or password."));
                 }
             }
         } catch {

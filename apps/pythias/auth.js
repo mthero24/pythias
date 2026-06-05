@@ -20,7 +20,7 @@ export const authOptions = {
         const user = await User.findOne({ userName: userName }).lean();
         console.log(user)
         if (!user) {
-          throw new Error("Invalid credentials, please try again!");
+          throw new Error("USER_NOT_FOUND");
         }
         if (
           !user ||

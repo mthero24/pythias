@@ -4,10 +4,10 @@ export default async function Login() {
     return (
         <LoginMain
             type="login"
-            name="Pythias Fulfillment Cloud"
-            tagline="Sell anywhere. Fulfill everywhere."
-            logo="/fullfilment_cloud_transparant.png"
-            redirectTo="https://platform.pythiastechnologies.com"
+            name="Pythias Technologies"
+            tagline="Internal Administration"
+            redirectTo="/admin"
+            notFoundRedirect="https://platform.pythiastechnologies.com"
         />
     );
 }
