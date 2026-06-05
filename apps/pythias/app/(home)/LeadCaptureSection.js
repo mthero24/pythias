@@ -1,14 +1,57 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box, Container, Typography, TextField, Button,
   Grid, CircularProgress, Alert, Snackbar,
 } from "@mui/material";
 
+function savePartial(data) {
+  if (!data.email?.trim()) return;
+  navigator.sendBeacon?.(
+    "/api/contact/partial",
+    new Blob([JSON.stringify(data)], { type: "application/json" })
+  );
+}
+
 export default function LeadCaptureSection() {
   const [form, setForm] = useState({ name: "", email: "", company: "", orderVolume: "", challenges: "" });
   const [submitting, setSubmitting] = useState(false);
   const [snack, setSnack] = useState({ open: false, msg: "", sev: "success" });
+  const debounceRef  = useRef(null);
+  const submittedRef = useRef(false);
+  const formRef      = useRef(form);
+
+  // Keep ref in sync so event listeners always see latest form state
+  useEffect(() => { formRef.current = form; }, [form]);
+
+  // Debounced auto-save whenever email is filled and form changes
+  useEffect(() => {
+    if (!form.email?.trim()) return;
+    if (submittedRef.current) return;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      savePartial(form);
+    }, 2500);
+    return () => clearTimeout(debounceRef.current);
+  }, [form]);
+
+  // Save on page hide / tab close
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden" && !submittedRef.current) {
+        savePartial(formRef.current);
+      }
+    };
+    const handleBeforeUnload = () => {
+      if (!submittedRef.current) savePartial(formRef.current);
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
@@ -32,6 +75,7 @@ export default function LeadCaptureSection() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
+      submittedRef.current = true;
       setForm({ name: "", email: "", company: "", orderVolume: "", challenges: "" });
       setSnack({ open: true, msg: "Thanks! We'll be in touch soon.", sev: "success" });
     } catch (err) {
