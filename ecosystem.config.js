@@ -34,12 +34,6 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         LD_LIBRARY_PATH: "/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib",
-        mongoURL: "mongodb+srv://pythiasTechnologies:MUITteJaMpj6rSZc@cluster0.figvn.mongodb.net/pythias?retryWrites=true&w=majority&appName=Cluster0",
-        pythiasMongoURL: "mongodb+srv://pythiasTechnologies:MUITteJaMpj6rSZc@cluster0.figvn.mongodb.net/pythias?retryWrites=true&w=majority&appName=Cluster0",
-        premierPrintingMongoURL: "mongodb+srv://pythiasTechnologies:MUITteJaMpj6rSZc@cluster0.figvn.mongodb.net/premierprinting?retryWrites=true&w=majority&appName=Cluster0",
-        PLATFORM_MONGO_URL: "mongodb+srv://pythiasTechnologies:MUITteJaMpj6rSZc@cluster0.figvn.mongodb.net/platform?retryWrites=true&w=majority&appName=Cluster0",
-        NEXTAUTH_SECRET: "THe@huilekjasdf",
-        NEXTAUTH_URL: "https://pythiastechnologies.com",
       },
       output: null, // Output log file
       error: null, // Error log file

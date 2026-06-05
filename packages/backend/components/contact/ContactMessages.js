@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box, Container, Typography, Stack, Chip, Paper, IconButton,
   Tooltip, Divider, Badge, TextField, InputAdornment,
@@ -85,6 +85,10 @@ export function ContactMessages({ messages: initial = [], apiUrl = "/api/admin/c
   const [messages, setMessages] = useState(initial);
   const [filter, setFilter] = useState("all"); // "all" | "unread"
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    axios.get(apiUrl).then(r => setMessages(r.data.messages ?? [])).catch(() => {});
+  }, [apiUrl]);
 
   const unreadCount = messages.filter(m => !m.read).length;
 
