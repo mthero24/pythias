@@ -11,5 +11,5 @@ export default async function ContactMessagesPage() {
     } catch (e) {
         console.error("[contact-messages page]", e);
     }
-    return <ContactMessages messages={messages} apiUrl="/api/admin/contact-messages" />;
+    return <ContactMessages messages={messages} apiUrl="/api/admin/contact-messages" detailBase="/admin/contact-messages" />;
 }

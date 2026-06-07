@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { PageView, Session, Conversion } from "@/models/Analytics";
+import { LeadSequence, ContactMessage, EmailEvent } from "@pythias/mongo";
 
 export async function GET(req) {
     const token = await getToken({ req });
@@ -169,6 +170,59 @@ export async function GET(req) {
         ]),
     ]);
 
+    // ── Email stats (cumulative list counts + range-filtered engagement) ─────────
+    const [
+        totalEmailsCollected,
+        activeEmails,
+        optedOutEmails,
+        emailOpens,
+        emailClicks,
+        uniqueOpeners,
+        uniqueClickers,
+        emailOpensByDay,
+        emailClicksByDay,
+    ] = await Promise.all([
+        // Total unique emails ever collected (lead sequences + contact messages)
+        LeadSequence.countDocuments({}),
+
+        // Active — enrolled and not opted out
+        LeadSequence.countDocuments({ unsubscribed: { $ne: true } }),
+
+        // Opted out
+        LeadSequence.countDocuments({ unsubscribed: true }),
+
+        // Opens in range
+        EmailEvent.countDocuments({ type: "email.opened", occurredAt: { $gte: since } }),
+
+        // Clicks in range
+        EmailEvent.countDocuments({ type: "email.clicked", occurredAt: { $gte: since } }),
+
+        // Unique openers in range
+        EmailEvent.distinct("email", { type: "email.opened", occurredAt: { $gte: since } }),
+
+        // Unique clickers in range
+        EmailEvent.distinct("email", { type: "email.clicked", occurredAt: { $gte: since } }),
+
+        // Opens by day
+        EmailEvent.aggregate([
+            { $match: { type: "email.opened", occurredAt: { $gte: since } } },
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$occurredAt" } }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+        ]),
+
+        // Clicks by day
+        EmailEvent.aggregate([
+            { $match: { type: "email.clicked", occurredAt: { $gte: since } } },
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$occurredAt" } }, count: { $sum: 1 } } },
+            { $sort: { _id: 1 } },
+        ]),
+    ]);
+
+    // Emails sent in range (delivered events)
+    const emailsSentInRange = await EmailEvent.countDocuments({ type: "email.delivered", occurredAt: { $gte: since } });
+    const openRate  = emailsSentInRange > 0 ? Math.round((uniqueOpeners.length  / emailsSentInRange) * 1000) / 10 : 0;
+    const clickRate = emailsSentInRange > 0 ? Math.round((uniqueClickers.length / emailsSentInRange) * 1000) / 10 : 0;
+
     return NextResponse.json({
         error: false,
         range,
@@ -240,5 +294,20 @@ export async function GET(req) {
             exitPage:   s.exitPage,
             referrer:   s.referrer,
         })),
+
+        emailStats: {
+            totalCollected: totalEmailsCollected,
+            active:         activeEmails,
+            optedOut:       optedOutEmails,
+            sent:           emailsSentInRange,
+            opens:          emailOpens,
+            clicks:         emailClicks,
+            uniqueOpens:    uniqueOpeners.length,
+            uniqueClicks:   uniqueClickers.length,
+            openRate,
+            clickRate,
+            opensByDay:  emailOpensByDay.map(d => ({ date: d._id, count: d.count })),
+            clicksByDay: emailClicksByDay.map(d => ({ date: d._id, count: d.count })),
+        },
     });
 }

@@ -1,18 +1,26 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { ContactMessage } from "@pythias/mongo";
+import { ContactMessage, LeadSequence } from "@pythias/mongo";
 
 async function auth(req) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    if (!token) return false;
-    return true;
+    return !!token;
 }
 
 export async function GET(req) {
     if (!await auth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     try {
-        const messages = await ContactMessage.find({}).sort({ createdAt: -1 }).lean();
-        return NextResponse.json({ success: true, messages });
+        const messages  = await ContactMessage.find({}).sort({ createdAt: -1 }).lean();
+        const emails    = [...new Set(messages.map(m => m.email?.toLowerCase()).filter(Boolean))];
+        const sequences = await LeadSequence.find({ email: { $in: emails } }).lean();
+        const seqMap    = Object.fromEntries(sequences.map(s => [s.email, s]));
+
+        const enriched = messages.map(m => ({
+            ...m,
+            sequence: seqMap[m.email?.toLowerCase()] ?? null,
+        }));
+
+        return NextResponse.json({ success: true, messages: enriched });
     } catch (err) {
         console.error("Contact messages GET error:", err);
         return NextResponse.json({ success: false, error: "Failed to load messages." }, { status: 500 });
@@ -22,8 +30,25 @@ export async function GET(req) {
 export async function PATCH(req) {
     if (!await auth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     try {
-        const { id, read } = await req.json();
-        await ContactMessage.findByIdAndUpdate(id, { read });
+        const body = await req.json();
+        const { id, action } = body;
+
+        if (action === "pause" || action === "resume") {
+            const msg = await ContactMessage.findById(id).lean();
+            if (msg?.email) {
+                await LeadSequence.updateOne(
+                    { email: msg.email.toLowerCase() },
+                    { $set: { paused: action === "pause" } }
+                );
+            }
+            return NextResponse.json({ success: true });
+        }
+
+        const update = {};
+        if (body.read  !== undefined) update.read  = body.read;
+        if (body.notes !== undefined) update.notes = body.notes;
+
+        await ContactMessage.findByIdAndUpdate(id, update);
         return NextResponse.json({ success: true });
     } catch (err) {
         console.error("Contact messages PATCH error:", err);

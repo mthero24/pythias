@@ -11,6 +11,7 @@ const schema = new mongoose.Schema(
         read:    { type: Boolean, default: false },
         source:  { type: String, default: "website" }, // website | google-lead-form
         meta:    { type: mongoose.Schema.Types.Mixed, default: {} },
+        notes:   { type: String, default: "" },
     },
     { timestamps: true }
 );

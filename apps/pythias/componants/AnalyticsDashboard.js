@@ -11,6 +11,11 @@ import SmartToyIcon      from "@mui/icons-material/SmartToy";
 import TrendingUpIcon    from "@mui/icons-material/TrendingUp";
 import SpeedIcon         from "@mui/icons-material/Speed";
 import CheckCircleIcon   from "@mui/icons-material/CheckCircle";
+import EmailIcon         from "@mui/icons-material/Email";
+import MailOutlineIcon   from "@mui/icons-material/MailOutline";
+import UnsubscribeIcon   from "@mui/icons-material/Unsubscribe";
+import OpenInNewIcon     from "@mui/icons-material/OpenInNew";
+import AdsClickIcon      from "@mui/icons-material/AdsClick";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtTime(secs) {
@@ -150,6 +155,38 @@ export default function AnalyticsDashboard() {
                             </Box>
                         </Paper>
                     )}
+
+                    {/* ── Email stats ── */}
+                    {data.emailStats && (() => {
+                        const es = data.emailStats;
+                        return (
+                            <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+                                    <EmailIcon sx={{ color: "#6366f1" }} />
+                                    <Typography variant="h6" fontWeight={600}>Email Marketing</Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>(list counts are all-time; opens/clicks are within selected range)</Typography>
+                                </Box>
+
+                                {/* List health */}
+                                <Typography variant="overline" color="text.secondary" fontWeight={700} display="block" mb={1}>Email List</Typography>
+                                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+                                    <StatCard icon={<MailOutlineIcon />}  label="Total Collected" value={es.totalCollected.toLocaleString()} color="#6366f1" />
+                                    <StatCard icon={<PeopleIcon />}        label="Active"          value={es.active.toLocaleString()} sub="not opted out" color="#10b981" />
+                                    <StatCard icon={<UnsubscribeIcon />}   label="Opted Out"       value={es.optedOut.toLocaleString()} sub={es.totalCollected > 0 ? `${Math.round((es.optedOut / es.totalCollected) * 100)}% of list` : ""} color="#ef4444" />
+                                </Box>
+
+                                <Divider sx={{ mb: 3 }} />
+
+                                {/* Engagement */}
+                                <Typography variant="overline" color="text.secondary" fontWeight={700} display="block" mb={1}>Engagement (selected range)</Typography>
+                                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                                    <StatCard icon={<EmailIcon />}        label="Emails Sent"  value={es.sent.toLocaleString()} color="#6366f1" />
+                                    <StatCard icon={<OpenInNewIcon />}    label="Opens"        value={es.opens.toLocaleString()} sub={`${es.uniqueOpens} unique · ${es.openRate}% open rate`}  color="#0ea5e9" />
+                                    <StatCard icon={<AdsClickIcon />}     label="Clicks"       value={es.clicks.toLocaleString()} sub={`${es.uniqueClicks} unique · ${es.clickRate}% click rate`} color="#f59e0b" />
+                                </Box>
+                            </Paper>
+                        );
+                    })()}
 
                     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3, mb: 4 }}>
                         {/* ── Top pages ── */}

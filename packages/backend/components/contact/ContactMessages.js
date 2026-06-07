@@ -2,7 +2,7 @@
 import { useState } from "react";
 import {
   Box, Container, Typography, Stack, Chip, Paper, IconButton,
-  Tooltip, Divider, Badge, TextField, InputAdornment,
+  Tooltip, Divider, Badge, TextField, InputAdornment, Button,
 } from "@mui/material";
 import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import MarkEmailUnreadIcon from "@mui/icons-material/MarkEmailUnread";
@@ -10,12 +10,21 @@ import SearchIcon from "@mui/icons-material/Search";
 import PhoneIcon from "@mui/icons-material/Phone";
 import BusinessIcon from "@mui/icons-material/Business";
 import EmailIcon from "@mui/icons-material/Email";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import axios from "axios";
 
-function MessageCard({ msg, onToggleRead }) {
+function MessageCard({ msg, onToggleRead, detailBase }) {
   const date = new Date(msg.createdAt).toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
+
+  const seqStatus = msg.sequence
+    ? msg.sequence.paused      ? "paused"
+    : msg.sequence.completed   ? "done"
+    : msg.sequence.unsubscribed? "unsub"
+    :                            "active"
+    : null;
 
   return (
     <Paper elevation={0} sx={{
@@ -28,11 +37,15 @@ function MessageCard({ msg, onToggleRead }) {
     }}>
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
         <Stack spacing={0.25}>
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
             <Typography fontWeight={700} fontSize="0.95rem">{msg.name}</Typography>
             {!msg.read && (
               <Chip label="New" size="small" sx={{ fontSize: "0.65rem", height: 18, bgcolor: "#7c3aed", color: "#fff" }} />
             )}
+            {seqStatus === "active"  && <Chip label="Sequence active" size="small" color="info"    sx={{ height: 18, fontSize: "0.65rem" }} />}
+            {seqStatus === "paused"  && <Chip label="Paused" size="small" color="warning" sx={{ height: 18, fontSize: "0.65rem" }} />}
+            {seqStatus === "done"    && <Chip label="Sequence done" size="small" color="success" sx={{ height: 18, fontSize: "0.65rem" }} />}
+            {seqStatus === "unsub"   && <Chip label="Unsubscribed" size="small" color="error" sx={{ height: 18, fontSize: "0.65rem" }} />}
           </Stack>
           <Stack direction="row" flexWrap="wrap" gap={1.5}>
             {msg.company && (
@@ -70,18 +83,31 @@ function MessageCard({ msg, onToggleRead }) {
               }
             </IconButton>
           </Tooltip>
+          {detailBase && (
+            <Tooltip title="Open detail view">
+              <IconButton size="small" component="a" href={`${detailBase}/${msg._id}`}>
+                <OpenInNewIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </Stack>
 
       <Divider sx={{ mb: 1.5 }} />
-      <Typography variant="body2" color="text.primary" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>
+      <Typography variant="body2" color="text.primary" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.7, mb: msg.notes ? 1.5 : 0 }}>
         {msg.message}
       </Typography>
+      {msg.notes && (
+        <Box sx={{ bgcolor: "#fefce8", border: "1px solid #fde047", borderRadius: 1.5, px: 1.5, py: 1, mt: 0.5 }}>
+          <Typography variant="caption" fontWeight={700} color="#854d0e" display="block">Notes</Typography>
+          <Typography variant="caption" color="#92400e" sx={{ whiteSpace: "pre-wrap" }}>{msg.notes}</Typography>
+        </Box>
+      )}
     </Paper>
   );
 }
 
-export function ContactMessages({ messages: initial = [], apiUrl = "/api/admin/contact-messages" }) {
+export function ContactMessages({ messages: initial = [], apiUrl = "/api/admin/contact-messages", detailBase }) {
   const [messages, setMessages] = useState(initial);
   const [filter, setFilter] = useState("all"); // "all" | "unread"
   const [search, setSearch] = useState("");
@@ -163,7 +189,7 @@ export function ContactMessages({ messages: initial = [], apiUrl = "/api/admin/c
             </Box>
           )}
           {visible.map(m => (
-            <MessageCard key={m._id} msg={m} onToggleRead={toggleRead} />
+            <MessageCard key={m._id} msg={m} onToggleRead={toggleRead} detailBase={detailBase} />
           ))}
         </Stack>
       </Container>
