@@ -1,0 +1,6 @@
+# Monthly product update notes
+# Edit this file before the 1st of each month.
+# List bullet points of new features, improvements, and fixes.
+# Claude will use these to write personalized emails for each platform.
+
+- [Add your updates here]

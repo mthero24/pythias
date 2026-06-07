@@ -300,6 +300,21 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
+      name: "product-update-email",
+      cwd: "apps/pythias",
+      script: "scripts/runProductUpdate.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "0 16 1 * *", // 1st of every month at 16:00 UTC (11am EST) — after monthly-broadcast
+      watch: false,
+      env: { NODE_ENV: "production", PORT: 3002 },
+      out_file: "logs/product-update-out.log",
+      error_file: "logs/product-update-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "monthly-broadcast",
       cwd: "apps/pythias",
       script: "scripts/runMonthlyBroadcast.js",
