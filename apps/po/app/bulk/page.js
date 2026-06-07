@@ -5,7 +5,7 @@ import { getShippingCreds } from "@/lib/getShippingCreds";
 export const dynamic = 'force-dynamic';
 export default async function Bulk() {
     const [orders, sc] = await Promise.all([
-        Order.find({ bulk: true, canceled: false, status: { $nin: ["Canceled", "returned", "shipped", "Shipped", "Delivered"] }, bulkPrinted: { $in: [false, null] } })
+        Order.find({ bulk: true, canceled: false, status: { $nin: ["Canceled", "returned", "shipped", "Shipped", "Delivered", "payment failed", "Payment Failed"] }, bulkPrinted: { $in: [false, null] } })
             .populate({ path: "items", populate: { path: "inventory.inventory" } })
             .lean(),
         getShippingCreds(),

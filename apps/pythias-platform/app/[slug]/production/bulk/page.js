@@ -21,7 +21,7 @@ export default async function BulkOrdersPage() {
             bulk: true,
             bulkPrinted: { $in: [false, null] },
             cancelled: false,
-            status: { $nin: ["Canceled", "returned", "shipped", "Shipped", "Delivered"] },
+            status: { $nin: ["Canceled", "returned", "shipped", "Shipped", "Delivered", "payment failed", "Payment Failed"] },
         })
             .populate("items")
             .lean(),
