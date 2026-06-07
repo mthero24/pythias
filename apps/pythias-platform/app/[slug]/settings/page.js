@@ -80,8 +80,11 @@ export default function SettingsPage() {
                             {t === "org" ? "Organization" : t === "production" ? "Production" : "SKU Format"}
                         </Button>
                     ))}
-                    <Button variant="outlined" size="small" href="admin/settings/labels">
+                    <Button variant="outlined" size="small" href="settings/labels">
                         Label Creator
+                    </Button>
+                    <Button variant="outlined" size="small" href="settings/picklist">
+                        Picklist Settings
                     </Button>
                     <Button variant="outlined" size="small" href="settings/shipping">
                         Shipping &amp; Hardware

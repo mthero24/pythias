@@ -103,11 +103,10 @@ function PicklistPreview({ cols }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export function PicklistSettingsMain() {
-    const [fields, setFields]   = useState([]);   // ordered list of enabled optional field keys
+    const [fields, setFields]     = useState([]);
     const [dragOver, setDragOver] = useState(null);
-    const [saving, setSaving]   = useState(false);
-    const [msg, setMsg]         = useState(null);
-    const [loaded, setLoaded]   = useState(false);
+    const [saving, setSaving]     = useState(false);
+    const [msg, setMsg]           = useState(null);
 
     useEffect(() => {
         fetch("/api/admin/settings/integrations")
@@ -115,9 +114,8 @@ export function PicklistSettingsMain() {
             .then(d => {
                 const saved = d.creds?.picklistTemplate ?? {};
                 setFields(saved.fields ?? []);
-                setLoaded(true);
             })
-            .catch(() => setLoaded(true));
+            .catch(() => {});
     }, []);
 
     const toggle = (key) => {
@@ -167,7 +165,6 @@ export function PicklistSettingsMain() {
     const disabledCols = OPTIONAL_COLS.filter(f => !fields.includes(f.key));
     const allCols      = [...FIXED_COLS, ...enabledCols];
 
-    if (!loaded) return null;
 
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
