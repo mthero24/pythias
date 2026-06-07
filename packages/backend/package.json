@@ -6,7 +6,8 @@
     "exports": {
         ".": "./exports",
         "./server": "./server",
-        "./functions": "./functions/index.js"
+        "./functions": "./functions/index.js",
+        "./lib/labelConstants.js": "./lib/labelConstants.js"
     },
     "scripts": {},
     "peerDependencies": {

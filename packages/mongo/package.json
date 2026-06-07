@@ -4,7 +4,8 @@
     "type": "module",
     "private": true,
     "exports": {
-        ".": "./exports"
+        ".": "./exports",
+        "./platform-brand": "./models/PlatformBrand.js"
     },
     "scripts": {},
     "dependencies": {

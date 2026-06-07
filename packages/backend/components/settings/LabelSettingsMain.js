@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import {
     Box, Typography, Stack, Button, Alert, Container,
     FormControl, InputLabel, Select, MenuItem, Paper,
-    Switch, FormControlLabel, Divider,
+    Switch, FormControlLabel, Divider, Tabs, Tab, Chip, Avatar,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
 import {
@@ -41,6 +41,40 @@ const OPTIONAL_FIELDS = [
     { key: "blankCode",      label: "Blank Code",         sample: "Blank: GI64000" },
     { key: "orderDate",      label: "Order Date",         sample: "06/01/2026" },
 ];
+
+const SPECIAL_CASE_MARKETPLACES = [
+    { key: "target",  label: "Target",      color: "#cc0000" },
+    { key: "walmart", label: "Walmart",     color: "#0071ce" },
+    { key: "kohls",   label: "Kohl's",      color: "#8b2131" },
+    { key: "amazon",  label: "Amazon",      color: "#ff9900" },
+    { key: "tiktok",  label: "TikTok Shop", color: "#010101" },
+    { key: "faire",   label: "Faire",       color: "#3d3d3d" },
+    { key: "etsy",    label: "Etsy",        color: "#f16521" },
+];
+
+const SPECIAL_OPTIONAL_FIELDS = [
+    { key: "upc",          label: "UPC / GTIN",      sample: "012345678901" },
+    { key: "itemNumber",   label: "Item Number",      sample: "#1" },
+    { key: "color",        label: "Color",            sample: "Color: Black" },
+    { key: "size",         label: "Size",             sample: "Size: L" },
+    { key: "designSku",    label: "Design SKU",       sample: "SKU: ABC-123" },
+    { key: "designName",   label: "Design Name",      sample: "Title: Classic Tee" },
+    { key: "styleCode",    label: "Style Code",       sample: "GI64000" },
+    { key: "blankCode",    label: "Blank Code",       sample: "Blank: GI64000" },
+    { key: "shipByDate",   label: "Ship By Date",     sample: "06/15/2026" },
+    { key: "printType",    label: "Print Type",       sample: "DTF" },
+    { key: "orderCount",   label: "Order Count",      sample: "CNT 5" },
+];
+
+// Default special case config (mirrors Premier's Target label)
+const SPECIAL_CASE_DEFAULT = {
+    enabled: false,
+    barcodeField: "upc",   // "upc" | "pieceId"
+    showBrandLogo: false,
+    brandId: null,
+    fields: ["upc", "color", "size", "designSku"],
+    fieldPositions: {},
+};
 
 // ── Draggable field element ───────────────────────────────────────────────────
 function DraggableField({ fieldKey, sample, pos, scale, dotW, dotH, selected, onSelect, onMove, onResize, onRotate }) {
@@ -265,7 +299,7 @@ function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRota
                     <DraggableField
                         key={key}
                         fieldKey={key}
-                        sample={OPTIONAL_FIELDS.find(f => f.key === key)?.sample ?? key}
+                        sample={([...(template._specialFields ?? []), ...OPTIONAL_FIELDS]).find(f => f.key === key)?.sample ?? key}
                         pos={positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" }}
                         scale={scale}
                         dotW={dotW}
@@ -286,13 +320,18 @@ function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRota
 }
 
 // ── Main settings page ────────────────────────────────────────────────────────
-export function LabelSettingsMain() {
+export function LabelSettingsMain({ defaultTemplate } = {}) {
     const { data: session } = useSession();
-    const [template, setTemplate] = useState(LABEL_TEMPLATE_DEFAULT);
+    const baseDefault = { ...LABEL_TEMPLATE_DEFAULT, ...(defaultTemplate ?? {}) };
+    const [template, setTemplate] = useState(baseDefault);
     const [loading, setLoading]   = useState(true);
     const [saving, setSaving]     = useState(false);
     const [msg, setMsg]           = useState(null);
     const [selected, setSelected] = useState(null);
+    const [tab, setTab]           = useState("design");
+    const [activeCase, setActiveCase]       = useState(null); // marketplace key
+    const [specialSelected, setSpecialSelected] = useState(null);
+    const [brands, setBrands] = useState([]);
 
     // Always tracks the latest template so save() never captures stale state
     const templateRef = useRef(template);
@@ -302,20 +341,86 @@ export function LabelSettingsMain() {
         fetch("/api/admin/settings/integrations")
             .then(r => r.json())
             .then(d => {
-                if (d.creds?.labelTemplate) {
+                if (d.creds?.labelTemplate && Object.keys(d.creds.labelTemplate).length) {
                     const saved = d.creds.labelTemplate;
                     setTemplate({
-                        ...LABEL_TEMPLATE_DEFAULT,
+                        ...baseDefault,
                         ...saved,
                         fieldPositions: {
-                            ...DEFAULT_FIELD_POSITIONS,
+                            ...(baseDefault.fieldPositions ?? DEFAULT_FIELD_POSITIONS),
                             ...(saved.fieldPositions ?? {}),
                         },
                     });
                 }
                 setLoading(false);
             });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        fetch("/api/admin/brands").then(r => r.json()).then(d => setBrands(d.brands ?? [])).catch(() => {});
+    }, []);
+
+    // ── Special case helpers ──────────────────────────────────────────────────
+    function getSpecialCase(mk) {
+        return { ...SPECIAL_CASE_DEFAULT, ...(template.specialCases?.[mk] ?? {}) };
+    }
+
+    function setSpecialCase(mk, updater) {
+        setTemplate(t => {
+            const prev = { ...SPECIAL_CASE_DEFAULT, ...(t.specialCases?.[mk] ?? {}) };
+            const next = typeof updater === "function" ? updater(prev) : { ...prev, ...updater };
+            return { ...t, specialCases: { ...(t.specialCases ?? {}), [mk]: next } };
+        });
+    }
+
+    function toggleSpecialCase(mk) {
+        setSpecialCase(mk, sc => ({ ...sc, enabled: !sc.enabled }));
+        if (!getSpecialCase(mk).enabled) setActiveCase(mk);
+    }
+
+    function toggleSpecialField(mk, key) {
+        setSpecialCase(mk, sc => {
+            const fields = sc.fields ?? [];
+            return { ...sc, fields: fields.includes(key) ? fields.filter(k => k !== key) : [...fields, key] };
+        });
+    }
+
+    const handleSpecialMove = useCallback((mk, key, x, y) => {
+        setSpecialCase(mk, sc => ({
+            ...sc,
+            fieldPositions: {
+                ...DEFAULT_FIELD_POSITIONS,
+                ...(sc.fieldPositions ?? {}),
+                [key]: { ...(sc.fieldPositions?.[key] ?? DEFAULT_FIELD_POSITIONS[key] ?? {}), x, y },
+            },
+        }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [template]);
+
+    const handleSpecialResize = useCallback((mk, key, size) => {
+        setSpecialCase(mk, sc => ({
+            ...sc,
+            fieldPositions: {
+                ...DEFAULT_FIELD_POSITIONS,
+                ...(sc.fieldPositions ?? {}),
+                [key]: { ...(sc.fieldPositions?.[key] ?? DEFAULT_FIELD_POSITIONS[key] ?? {}), size },
+            },
+        }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [template]);
+
+    const handleSpecialRotate = useCallback((mk, key, rotation) => {
+        setSpecialCase(mk, sc => ({
+            ...sc,
+            fieldPositions: {
+                ...DEFAULT_FIELD_POSITIONS,
+                ...(sc.fieldPositions ?? {}),
+                [key]: { ...(sc.fieldPositions?.[key] ?? DEFAULT_FIELD_POSITIONS[key] ?? {}), rotation },
+            },
+        }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [template]);
 
     const handleMove = useCallback((key, x, y) => {
         setTemplate(t => ({
@@ -391,7 +496,166 @@ export function LabelSettingsMain() {
 
                 {msg && <Alert severity={msg.type} sx={{ mb: 3 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
 
-                <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems="flex-start">
+                <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
+                    <Tab label="Label Design" value="design" />
+                    <Tab label="Special Cases" value="special" />
+                </Tabs>
+
+                {/* ══ SPECIAL CASES TAB ══════════════════════════════════════════ */}
+                {tab === "special" && (
+                    <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems="flex-start">
+                        {/* Left: marketplace list */}
+                        <Stack spacing={1.5} sx={{ width: { xs: "100%", md: 220 }, flexShrink: 0 }}>
+                            <Typography variant="subtitle2" fontWeight={700}>Marketplaces</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                                Enable a marketplace to configure a secondary label printed before the pick label.
+                            </Typography>
+                            {SPECIAL_CASE_MARKETPLACES.map(mk => {
+                                const sc = getSpecialCase(mk.key);
+                                return (
+                                    <Paper
+                                        key={mk.key}
+                                        variant="outlined"
+                                        onClick={() => { if (sc.enabled) setActiveCase(mk.key); }}
+                                        sx={{
+                                            p: 1.5, borderRadius: 2, cursor: sc.enabled ? "pointer" : "default",
+                                            borderColor: activeCase === mk.key ? mk.color : "divider",
+                                            bgcolor: activeCase === mk.key ? `${mk.color}0d` : "background.paper",
+                                            transition: "all 150ms",
+                                        }}
+                                    >
+                                        <Stack direction="row" alignItems="center" spacing={1.5}>
+                                            <Avatar sx={{ width: 28, height: 28, bgcolor: mk.color, fontSize: 11, fontWeight: 700 }}>
+                                                {mk.label[0]}
+                                            </Avatar>
+                                            <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>{mk.label}</Typography>
+                                            <Switch
+                                                size="small"
+                                                checked={sc.enabled}
+                                                onClick={e => e.stopPropagation()}
+                                                onChange={() => toggleSpecialCase(mk.key)}
+                                            />
+                                        </Stack>
+                                    </Paper>
+                                );
+                            })}
+                            {canSave && (
+                                <Button variant="contained" size="large" disabled={saving} onClick={save} fullWidth sx={{ mt: 1 }}>
+                                    {saving ? "Saving…" : "Save"}
+                                </Button>
+                            )}
+                        </Stack>
+
+                        {/* Right: editor for active case */}
+                        {activeCase && (() => {
+                            const mk = SPECIAL_CASE_MARKETPLACES.find(m => m.key === activeCase);
+                            const sc = getSpecialCase(activeCase);
+                            const scTemplate = {
+                                ...template,
+                                fields: sc.fields ?? [],
+                                fieldPositions: { ...DEFAULT_FIELD_POSITIONS, ...(sc.fieldPositions ?? {}) },
+                            };
+                            return (
+                                <Stack spacing={2} sx={{ flex: 1 }}>
+                                    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                                        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+                                            {mk.label} — Extra Label
+                                        </Typography>
+                                        <Stack spacing={2}>
+                                            <FormControl size="small" fullWidth>
+                                                <InputLabel>Barcode field</InputLabel>
+                                                <Select
+                                                    label="Barcode field"
+                                                    value={sc.barcodeField ?? "upc"}
+                                                    onChange={e => setSpecialCase(activeCase, { barcodeField: e.target.value })}
+                                                >
+                                                    <MenuItem value="upc">UPC / GTIN</MenuItem>
+                                                    <MenuItem value="pieceId">Piece ID</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch
+                                                        size="small"
+                                                        checked={!!sc.showBrandLogo}
+                                                        onChange={() => setSpecialCase(activeCase, { showBrandLogo: !sc.showBrandLogo })}
+                                                    />
+                                                }
+                                                label={<Typography variant="body2">Show brand logo</Typography>}
+                                                sx={{ m: 0 }}
+                                            />
+                                            {sc.showBrandLogo && brands.length > 0 && (
+                                                <FormControl size="small" fullWidth>
+                                                    <InputLabel>Brand</InputLabel>
+                                                    <Select
+                                                        label="Brand"
+                                                        value={sc.brandId ?? ""}
+                                                        onChange={e => setSpecialCase(activeCase, { brandId: e.target.value })}
+                                                    >
+                                                        <MenuItem value="">None</MenuItem>
+                                                        {brands.map(b => (
+                                                            <MenuItem key={b._id} value={b._id}>
+                                                                <Stack direction="row" spacing={1} alignItems="center">
+                                                                    {b.logo && <Avatar src={b.logo} sx={{ width: 20, height: 20 }} variant="rounded" />}
+                                                                    <span>{b.name}</span>
+                                                                </Stack>
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            )}
+                                        </Stack>
+                                    </Paper>
+
+                                    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                                        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>Fields</Typography>
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                                            Toggle fields · Left-drag to reposition · Right-click to resize/rotate
+                                        </Typography>
+                                        <Stack spacing={0}>
+                                            {SPECIAL_OPTIONAL_FIELDS.map(f => (
+                                                <FormControlLabel
+                                                    key={f.key}
+                                                    control={
+                                                        <Switch
+                                                            size="small"
+                                                            checked={(sc.fields ?? []).includes(f.key)}
+                                                            onChange={() => toggleSpecialField(activeCase, f.key)}
+                                                        />
+                                                    }
+                                                    label={<Typography variant="body2">{f.label}</Typography>}
+                                                    sx={{ m: 0 }}
+                                                />
+                                            ))}
+                                        </Stack>
+                                    </Paper>
+
+                                    <LabelCanvas
+                                        template={{
+                                            ...scTemplate,
+                                            // Override OPTIONAL_FIELDS sample lookup inside canvas
+                                            _specialFields: SPECIAL_OPTIONAL_FIELDS,
+                                        }}
+                                        selectedKey={specialSelected}
+                                        onSelect={setSpecialSelected}
+                                        onMove={(key, x, y) => handleSpecialMove(activeCase, key, x, y)}
+                                        onResize={(key, size) => handleSpecialResize(activeCase, key, size)}
+                                        onRotate={(key, rotation) => handleSpecialRotate(activeCase, key, rotation)}
+                                    />
+                                </Stack>
+                            );
+                        })()}
+
+                        {!activeCase && (
+                            <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", py: 8 }}>
+                                <Typography color="text.disabled">Enable and select a marketplace to configure its label.</Typography>
+                            </Box>
+                        )}
+                    </Stack>
+                )}
+
+                {/* ══ LABEL DESIGN TAB ═══════════════════════════════════════════ */}
+                {tab === "design" && <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems="flex-start">
 
                     {/* ── Sidebar controls ── */}
                     <Stack spacing={2} sx={{ width: { xs: "100%", md: 260 }, flexShrink: 0 }}>
@@ -485,7 +749,7 @@ export function LabelSettingsMain() {
                             onRotate={handleRotate}
                         />
                     </Box>
-                </Stack>
+                </Stack>}
             </Container>
         </Box>
     );

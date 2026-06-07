@@ -2,11 +2,13 @@
 import {
     Box, Typography, Button, Stack, Card, Chip, Collapse,
     IconButton, LinearProgress, Snackbar, Alert, CircularProgress, Tooltip,
+    Select, MenuItem, FormControl,
 } from "@mui/material";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import PrintIcon from "@mui/icons-material/Print";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
@@ -41,10 +43,12 @@ function StatusChip({ inStock, total }) {
     return                         <Chip icon={<WarningAmberIcon />} label="Partially Stocked" size="small" sx={{ bgcolor: "#fffbeb", color: "#d97706", border: "1px solid #fde68a", fontWeight: 600, fontSize: "0.7rem" }} />;
 }
 
-function OrderRow({ order, index }) {
+function OrderRow({ order, index, printers, picklistPrinter }) {
     const [open, setOpen] = useState(false);
     const [printing, setPrinting] = useState(false);
     const [printed, setPrinted] = useState(false);
+    const [printingPicklist, setPrintingPicklist] = useState(false);
+    const [picklistPrinted, setPicklistPrinted] = useState(false);
     const [snack, setSnack] = useState(null);
 
     const { total, inStock, outOfStock } = orderStats(order);
@@ -85,6 +89,47 @@ function OrderRow({ order, index }) {
             setSnack({ severity: "success", msg: `Labels sent for ${order.poNumber}` });
         } else {
             setSnack({ severity: "error", msg: res?.data?.msg ?? "Print failed" });
+        }
+    };
+
+    const printPicklist = async () => {
+        setPrintingPicklist(true);
+        const bulkItems = [];
+        const seen = new Set();
+        for (const bulkId of bulkGroups) {
+            const items = order.items.filter(it => it.bulkId === bulkId && it.canceled == false);
+            if (items.length > 0 && !seen.has(bulkId)) {
+                seen.add(bulkId);
+                bulkItems.push({
+                    bulkId,
+                    inventory: items[0].inventory?.inventory ?? null,
+                    quantity: items.length,
+                    totalQuantity: total,
+                    blankCode: items[0].styleCode,
+                    colorName: items[0].colorName,
+                    sizeName: items[0].sizeName,
+                    designSku: items[0].designSku,
+                    sku: items[0].sku,
+                    type: items[0].type,
+                    poNumber: order.poNumber,
+                    order,
+                    design: items[0].design,
+                    shippingType: order.shippingType,
+                    items,
+                });
+            }
+        }
+        const res = await axios.post("/api/production/print-labels/bulk/picklist", {
+            items: bulkItems,
+            poNumber: order.poNumber,
+            printer: picklistPrinter,
+        }).catch(() => null);
+        setPrintingPicklist(false);
+        if (res?.data?.error === false) {
+            setPicklistPrinted(true);
+            setSnack({ severity: "success", msg: `Picklist sent for ${order.poNumber}` });
+        } else {
+            setSnack({ severity: "error", msg: res?.data?.msg ?? "Picklist print failed" });
         }
     };
 
@@ -151,6 +196,24 @@ function OrderRow({ order, index }) {
                             }}
                         >
                             {printing ? "Sending…" : printed ? "Sent ✓" : "Print"}
+                        </Button>
+
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={printingPicklist ? <CircularProgress size={14} /> : <FormatListBulletedIcon fontSize="small" />}
+                            disabled={printingPicklist}
+                            onClick={printPicklist}
+                            sx={{
+                                borderColor: picklistPrinted ? "#16a34a" : "#6b7280",
+                                color: picklistPrinted ? "#16a34a" : "#6b7280",
+                                fontWeight: 600,
+                                fontSize: "0.75rem",
+                                px: 1.25,
+                                minWidth: 90,
+                            }}
+                        >
+                            {printingPicklist ? "Sending…" : picklistPrinted ? "List ✓" : "Picklist"}
                         </Button>
 
                         <IconButton size="small" onClick={() => setOpen(p => !p)} sx={{ color: "#6b7280" }}>
@@ -248,7 +311,10 @@ function OrderRow({ order, index }) {
     );
 }
 
-export function BulkMain({ orders }) {
+export function BulkMain({ orders, printers = [] }) {
+    const printerList = printers.length > 0 ? printers : [{ name: "printer1", format: "PDF" }];
+    const [picklistPrinter, setPicklistPrinter] = useState(printerList[0]?.name ?? "printer1");
+
     const allStats = orders.reduce((acc, o) => {
         const { total, inStock, outOfStock } = orderStats(o);
         acc.items += total;
@@ -269,7 +335,7 @@ export function BulkMain({ orders }) {
                     }}>
                         <ViewListIcon sx={{ color: "#fff", fontSize: 20 }} />
                     </Box>
-                    <Box>
+                    <Box sx={{ flex: 1 }}>
                         <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: -0.5, lineHeight: 1.2 }}>
                             Bulk Orders
                         </Typography>
@@ -277,6 +343,25 @@ export function BulkMain({ orders }) {
                             {orders.length} pending order{orders.length !== 1 ? "s" : ""}
                         </Typography>
                     </Box>
+
+                    {/* Picklist printer selector */}
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                        <FormatListBulletedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+                        <Typography variant="caption" fontWeight={600} color="text.secondary">Picklist printer</Typography>
+                        <FormControl size="small" sx={{ minWidth: 130 }}>
+                            <Select
+                                value={picklistPrinter}
+                                onChange={e => setPicklistPrinter(e.target.value)}
+                                sx={{ fontSize: "0.8rem" }}
+                            >
+                                {printerList.map(p => (
+                                    <MenuItem key={p.name} value={p.name} sx={{ fontSize: "0.8rem" }}>
+                                        {p.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Stack>
                 </Stack>
             </Box>
 
@@ -316,7 +401,9 @@ export function BulkMain({ orders }) {
                         <Typography variant="h6" fontWeight={700} color="text.secondary">No bulk orders pending</Typography>
                     </Card>
                 ) : (
-                    orders.map((order, i) => <OrderRow key={order._id} order={order} index={i} />)
+                    orders.map((order, i) => (
+                        <OrderRow key={order._id} order={order} index={i} printers={printerList} picklistPrinter={picklistPrinter} />
+                    ))
                 )}
             </Box>
         </Box>

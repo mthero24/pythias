@@ -3,3 +3,4 @@ export {UntrackedLabels} from "./components/untracked";
 export {Sort} from "./functions/sort";
 export {createPdf} from "./functions/createPdf";
 export {BulkMain} from "./components/BulMain";
+export {buildPicklistPdf} from "./functions/buildPicklistPdf";

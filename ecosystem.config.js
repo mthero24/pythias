@@ -49,30 +49,6 @@ module.exports = {
       cron_restart: "0 9 * * *", //9am UTC is 4AM EST
     },
     {
-      name: "nextjs-printthreads",
-      cwd: "apps/printthreads",
-      script: "node_modules/next/dist/bin/next",
-      args: "start -p 3003",
-      exec_mode: "cluster",
-      instances: "1",
-      env: {
-        NODE_ENV: "production",
-        LD_LIBRARY_PATH: "/home/michaelthero/pythias/node_modules/@img/sharp-libvips-linux-x64/lib",
-      },
-      output: null, // Output log file
-      error: null, // Error log file
-      merge_logs: true,
-      log_rotate: true,
-      max_size: "10M",
-      retain: "10",
-      log_date_format: "YYYY-MM-DD HH:mm Z",
-
-      max_memory_restart: "5G",
-      max_restarts: 10,
-      min_uptime: "30s",
-      cron_restart: "0 9 * * *", //9am UTC is 4AM EST
-    },
-    {
       name: "nextjs-po",
       cwd: "apps/po",
       script: "node_modules/next/dist/bin/next",
@@ -192,24 +168,6 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
-      name: "blanks-forecast-printthreads",
-      cwd: "apps/printthreads",
-      script: "scripts/runBlankForecast.js",
-      exec_mode: "fork",
-      instances: 1,
-      autorestart: false,
-      cron_restart: "0 */4 * * *", // every 4 hours
-      watch: false,
-      env: {
-        NODE_ENV: "production",
-        PORT: 3003,
-      },
-      out_file: "logs/blanks-forecast-printthreads-out.log",
-      error_file: "logs/blanks-forecast-printthreads-error.log",
-      merge_logs: false,
-      log_date_format: "YYYY-MM-DD HH:mm Z",
-    },
-    {
       name: "blanks-forecast-po",
       cwd: "apps/po",
       script: "scripts/runBlankForecast.js",
@@ -242,24 +200,6 @@ module.exports = {
       },
       out_file: "logs/forecast-premier-out.log",
       error_file: "logs/forecast-premier-error.log",
-      merge_logs: false,
-      log_date_format: "YYYY-MM-DD HH:mm Z",
-    },
-    {
-      name: "forecast-printthreads",
-      cwd: "apps/printthreads",
-      script: "scripts/runForecast.js",
-      exec_mode: "fork",
-      instances: 1,
-      autorestart: false,
-      cron_restart: "0 */4 * * *", // every 4 hours
-      watch: false,
-      env: {
-        NODE_ENV: "production",
-        PORT: 3003,
-      },
-      out_file: "logs/forecast-printthreads-out.log",
-      error_file: "logs/forecast-printthreads-error.log",
       merge_logs: false,
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },

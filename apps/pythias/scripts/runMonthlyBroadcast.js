@@ -55,7 +55,7 @@ Write a monthly newsletter email for ${month}. The audience is print-on-demand b
 Include:
 1. A short intro (2 sentences max, friendly tone)
 2. One practical tip or insight about running a POD business efficiently (3-4 sentences)
-3. A brief product highlight — pick ONE from: multi-marketplace order sync, automatic label printing, real-time inventory, AI-powered product tools, or ShipStation integration
+3. A brief product highlight — pick ONE from: multi-marketplace order sync, automatic label printing, real-time inventory, AI-powered product tools, ShipStation integration, or the drag-and-drop label creator (lets sellers design custom pick labels with per-marketplace overrides for Target, Walmart, Kohl's, etc.)
 4. A soft CTA to book a demo or learn more
 
 Format as clean HTML using only <p>, <h3>, <ul>, <li>, <strong>, <a> tags.

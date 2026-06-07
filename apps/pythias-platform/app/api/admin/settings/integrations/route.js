@@ -28,7 +28,7 @@ const STRING_KEYS = [
 ];
 
 const ARRAY_KEYS = ["productionLabelPrinters", "scales"];
-const OBJECT_KEYS = ["production", "labelTemplate"];
+const OBJECT_KEYS = ["production", "labelTemplate", "picklistTemplate"];
 const ALL_KEYS = [...STRING_KEYS, ...ARRAY_KEYS, ...OBJECT_KEYS];
 
 export async function GET() {

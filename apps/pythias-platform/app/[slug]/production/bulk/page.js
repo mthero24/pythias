@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
-import { PlatformOrder, Organization } from "@pythias/mongo";
+import { PlatformOrder, Organization, Settings } from "@pythias/mongo";
 import mongoose from "mongoose";
 import { serialize } from "@pythias/backend";
 import { BulkMain } from "@pythias/labels";
@@ -14,7 +14,7 @@ export default async function BulkOrdersPage() {
 
     const orgId = new mongoose.Types.ObjectId(session.user.orgId);
 
-    const [org, orders] = await Promise.all([
+    const [org, orders, printersDoc] = await Promise.all([
         Organization.findById(orgId).lean(),
         PlatformOrder.find({
             orgId,
@@ -25,7 +25,9 @@ export default async function BulkOrdersPage() {
         })
             .populate("items")
             .lean(),
+        Settings.findOne({ key: "productionLabelPrinters" }).lean(),
     ]);
+    const printers = (() => { try { return JSON.parse(printersDoc?.value ?? "[]"); } catch { return []; } })();
 
     if (!org) redirect("/login");
 
@@ -45,5 +47,5 @@ export default async function BulkOrdersPage() {
             })),
     }));
 
-    return <BulkMain orders={serialize(shaped)} bulkThreshold={bulkThreshold} />;
+    return <BulkMain orders={serialize(shaped)} bulkThreshold={bulkThreshold} printers={printers} />;
 }

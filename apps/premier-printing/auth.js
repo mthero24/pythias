@@ -88,7 +88,7 @@ export const authOptions = {
       };
       return session;
     },
-    redirect: async () => "/",
+    redirect: async ({ baseUrl }) => baseUrl,
   },
   pages: {
     signIn: "/login",

@@ -10,4 +10,5 @@ const schema = new mongoose.Schema({
 
 schema.index({ orgId: 1, name: 1 });
 
-export default PlatformDB.model("Brand", schema, "brands");
+// Use the existing model if already registered (prevents "Cannot overwrite model" on hot-reload)
+export default PlatformDB.models["Brand"] ?? PlatformDB.model("Brand", schema, "brands");

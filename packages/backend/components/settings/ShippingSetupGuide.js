@@ -10,6 +10,7 @@ import ScaleIcon from "@mui/icons-material/Scale";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
+import LabelIcon from "@mui/icons-material/Label";
 
 function Code({ children }) {
     return (
@@ -47,7 +48,7 @@ function Step({ number, icon, title, children }) {
     );
 }
 
-export function ShippingSetupGuide({ settingsPath = "/admin/settings/shipping" }) {
+export function ShippingSetupGuide({ settingsPath = "/admin/settings/shipping", labelsPath = "/admin/settings/labels" }) {
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
             <Container maxWidth="md" sx={{ py: 4 }}>
@@ -250,6 +251,34 @@ export function ShippingSetupGuide({ settingsPath = "/admin/settings/shipping" }
 
                             <Alert severity="info">
                                 After saving, open the shipping modal on an order and click <strong>Weigh</strong>. If the scale reads <Code>8oz</Code> on every order without a real reading, the internal server IP is unreachable — check network connectivity and the static IP assignment.
+                            </Alert>
+                        </Stack>
+                    </Step>
+
+                    {/* Step 7 — Label setup */}
+                    <Step number={7} icon={<LabelIcon color="primary" fontSize="small" />} title="Configure pick labels">
+                        <Stack spacing={1.5}>
+                            <Typography variant="body2">
+                                Go to <Link href={labelsPath}>Label Settings</Link> to design the pick label printed with every order. The label contains a barcode, order info, and any custom fields you choose.
+                            </Typography>
+
+                            <Typography variant="body2" fontWeight={600}>Label Design tab</Typography>
+                            <Stack component="ul" spacing={0.5} sx={{ pl: 2.5, m: 0 }}>
+                                <Typography component="li" variant="body2"><strong>Label size</strong> — choose the physical stock loaded in your label printer (4×6 is standard for shipping labels; 4×3 and 4×2 are common for pick labels)</Typography>
+                                <Typography component="li" variant="body2"><strong>Fields</strong> — toggle which data points appear on the label (order number, name, SKU, color, size, ship-by date, etc.). Drag each field on the canvas to position it</Typography>
+                                <Typography component="li" variant="body2"><strong>Resize &amp; rotate</strong> — right-click any field on the canvas to change its font size or rotation</Typography>
+                                <Typography component="li" variant="body2">Click <strong>Save</strong> when the layout looks correct</Typography>
+                            </Stack>
+
+                            <Typography variant="body2" fontWeight={600}>Special Cases tab (optional)</Typography>
+                            <Stack component="ul" spacing={0.5} sx={{ pl: 2.5, m: 0 }}>
+                                <Typography component="li" variant="body2">Enable a marketplace (Target, Walmart, Kohl&apos;s, etc.) to print an <strong>extra label alongside the standard pick label</strong> — both always print; the special label is never a replacement</Typography>
+                                <Typography component="li" variant="body2">Choose the <strong>barcode field</strong> (UPC or Piece ID) and which data fields to include</Typography>
+                                <Typography component="li" variant="body2">Optionally enable a <strong>brand logo</strong> — this requires brands to be configured under the Brands section</Typography>
+                            </Stack>
+
+                            <Alert severity="info">
+                                Label changes take effect immediately for new print jobs. Re-printing an existing order picks up the latest template automatically.
                             </Alert>
                         </Stack>
                     </Step>

@@ -49,3 +49,31 @@ export const LABEL_TEMPLATE_DEFAULT = {
     fields: PREMIER_DEFAULT_FIELDS,
     fieldPositions: DEFAULT_FIELD_POSITIONS,
 };
+
+// PO default — mirrors the existing bulkLabelString.js layout
+export const PO_DEFAULT_FIELDS = [
+    "itemNumber", "styleCode", "inventoryLoc", "color", "size",
+    "shippingType", "designSku", "orderCount", "printType", "printLocations",
+];
+
+export const PO_DEFAULT_FIELD_POSITIONS = {
+    barcode:        { x: 50,  y: 80  },
+    itemNumber:     { x: 20,  y: 330, size: "sm" },
+    styleCode:      { x: 120, y: 250, size: "xl" },
+    inventoryLoc:   { x: 220, y: 310, size: "sm" },
+    color:          { x: 20,  y: 360, size: "md" },
+    size:           { x: 20,  y: 390, size: "md" },
+    shippingType:   { x: 20,  y: 430, size: "sm" },
+    designSku:      { x: 20,  y: 480, size: "sm" },
+    orderCount:     { x: 150, y: 500, size: "sm" },
+    printType:      { x: 20,  y: 230, size: "lg" },
+    printLocations: { x: 20,  y: 460, size: "sm" },
+};
+
+export const PO_LABEL_TEMPLATE_DEFAULT = {
+    width: 4,
+    height: 3,
+    format: "ZPL",
+    fields: PO_DEFAULT_FIELDS,
+    fieldPositions: { ...DEFAULT_FIELD_POSITIONS, ...PO_DEFAULT_FIELD_POSITIONS },
+};

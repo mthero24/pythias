@@ -1,10 +1,28 @@
 import { PlatformItem, Settings } from "@pythias/mongo";
-import { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL } from "@pythias/backend/lib/labelConstants.js";
+import { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL } from "@pythias/backend/server";
 
 const DPI = 203;
 
+const MK_KEY_MAP = {
+    "target": "target",
+    "target plus us marketplace": "target",
+    "walmart": "walmart",
+    "walmart marketplace": "walmart",
+    "kohls": "kohls",
+    "kohl's": "kohls",
+    "amazon": "amazon",
+    "tiktok": "tiktok",
+    "tiktok shop": "tiktok",
+    "faire": "faire",
+    "etsy": "etsy",
+};
+function marketplaceKey(marketplace) {
+    return MK_KEY_MAP[(marketplace ?? "").toLowerCase()] ?? null;
+}
+
 function fieldText(key, item, idx, totalQuantity) {
     switch (key) {
+        case "upc":            return item.upc ?? "";
         case "itemNumber":     return `#${idx + 1}`;
         case "styleCode":      return item.styleCode ?? "";
         case "shipByDate":     return new Date(item.shipByDate ?? item.date).toLocaleDateString("en-US");
@@ -72,9 +90,36 @@ async function loadTemplate() {
     return tpl;
 }
 
+function buildSpecialCaseZPL(item, idx, sc, template, totalQuantity) {
+    const widthDots  = Math.round((template.width  ?? 2) * DPI);
+    const heightDots = Math.round((template.height ?? 2) * DPI);
+    const positions  = { ...DEFAULT_FIELD_POSITIONS, ...(sc.fieldPositions ?? {}) };
+    const barcodePos = positions.barcode ?? { x: 50, y: 55 };
+    const barcodeValue = sc.barcodeField === "pieceId" ? item.pieceId : (item.upc ?? "NO UPC");
+
+    const lines = [
+        "^XA",
+        `^PW${widthDots}`,
+        `^LL${heightDots}`,
+        `^FO${barcodePos.x},${barcodePos.y}^BY2^BC,100,N,N,N,A^FD${barcodeValue}^FS`,
+    ];
+
+    for (const key of (sc.fields ?? [])) {
+        const text = fieldText(key, item, idx, totalQuantity);
+        if (!text) continue;
+        const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
+        const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
+        const rot = pos.rotation ?? "N";
+        lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y}^FD${text}^FS`);
+    }
+
+    lines.push("^XZ");
+    return lines.join("\n");
+}
+
 /**
  * Build a ZPL label string for one item using the org's saved label template.
- * Returns { zpl: string, format: "ZPL"|"PDF" }.
+ * Special-case labels (per-marketplace) always print alongside the standard pick label.
  */
 export async function buildLabelData(item, idx, poNumber, totalQuantity, template = null) {
     const tpl = template ?? await loadTemplate();
@@ -86,7 +131,11 @@ export async function buildLabelData(item, idx, poNumber, totalQuantity, templat
         });
     }
 
-    return buildZPL(item, idx, poNumber, totalQuantity, tpl);
+    const mkKey = marketplaceKey(item.order?.marketplace);
+    const sc = mkKey ? (tpl.specialCases?.[mkKey] ?? null) : null;
+    const specialLabel = sc?.enabled ? buildSpecialCaseZPL(item, idx, sc, tpl, totalQuantity) : "";
+
+    return specialLabel + buildZPL(item, idx, poNumber, totalQuantity, tpl);
 }
 
 /**

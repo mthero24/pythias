@@ -25,7 +25,7 @@ import { UntrackedLabels } from "./untracked";
 import { Footer } from "@pythias/backend";
 import LoaderOverlay from "./LoaderOverlay";
 
-export function Main({ labels, rePulls, giftLabels = [], batches, source, printers = [] }) {
+export function Main({ labels, rePulls, giftLabels = [], batches, source, printers = [], useShipByDate = false }) {
     const printerList = printers.length > 0 ? printers : [{ name: "printer1", format: "ZPL" }];
     const [useLabels, setLabels]         = useState(labels);
     const [rePull, setRePulls]           = useState(rePulls);
@@ -49,6 +49,8 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
     const [confirmReturnToQue, setConfirmReturnToQue] = useState(false);
     const [stockFilter, setStockFilter]   = useState(null);
     const [selectedPrinter, setSelectedPrinter] = useState(printerList[0]?.name ?? "printer1");
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo]     = useState("");
 
     useEffect(() => {
         let pt = [], sc = [], mp = [];
@@ -236,6 +238,20 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
         }
     };
 
+    const selectByDateRange = (from, to) => {
+        if (!from && !to) { setSelected([]); return; }
+        const sel = [];
+        Object.keys(useLabels).forEach(l => {
+            useLabels[l].forEach(k => {
+                const raw = useShipByDate && k.shipByDate ? k.shipByDate : k.order?.date;
+                if (!raw) return;
+                const d = new Date(raw).toLocaleDateString("en-CA"); // YYYY-MM-DD
+                if ((!from || d >= from) && (!to || d <= to)) sel.push(k.pieceId);
+            });
+        });
+        setSelected(sel);
+    };
+
     const totalLabels = Object.values(useLabels).reduce((sum, arr) => sum + arr.length, 0);
 
     return (
@@ -354,18 +370,20 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                 </Stack>
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 4 }}>
-                                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.5 }}>Select by Order Date</Typography>
-                                <TextField size="small" fullWidth type="date"
-                                    onChange={(e) => {
-                                        let sel = [];
-                                        const picked = new Date(new Date(e.target.value).getTime() + 24 * 60 * 60 * 1000).toLocaleDateString("en-US");
-                                        Object.keys(useLabels).map(l => {
-                                            sel.push(...useLabels[l].map(k => {
-                                                if (new Date(k.order.date).toLocaleDateString("en-US") === picked) return k.pieceId;
-                                            }));
-                                        });
-                                        setSelected(sel.filter(s => s != undefined));
-                                    }} />
+                                <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.5 }}>
+                                    Select by {useShipByDate ? "Ship By" : "Order"} Date
+                                </Typography>
+                                <Stack direction="row" spacing={0.75} alignItems="center">
+                                    <TextField size="small" fullWidth type="date" label="From"
+                                        InputLabelProps={{ shrink: true }}
+                                        value={dateFrom}
+                                        onChange={(e) => { setDateFrom(e.target.value); selectByDateRange(e.target.value, dateTo); }} />
+                                    <Typography variant="body2" color="text.disabled" sx={{ flexShrink: 0 }}>–</Typography>
+                                    <TextField size="small" fullWidth type="date" label="To"
+                                        InputLabelProps={{ shrink: true }}
+                                        value={dateTo}
+                                        onChange={(e) => { setDateTo(e.target.value); selectByDateRange(dateFrom, e.target.value); }} />
+                                </Stack>
                             </Grid2>
                         </Grid2>
                     </Card>
@@ -606,9 +624,16 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                                                 {item.sizeName}
                                                             </Typography>
                                                             {/* Date */}
-                                                            <Typography sx={{ fontSize: "0.68rem", textAlign: "center", color: isSelected ? "#e0e7ff" : "text.disabled" }}>
-                                                                {new Date(item.date).toLocaleDateString("en-US")}
-                                                            </Typography>
+                                                            <Box sx={{ textAlign: "center" }}>
+                                                                <Typography sx={{ fontSize: "0.68rem", color: isSelected ? "#e0e7ff" : "text.disabled" }}>
+                                                                    {new Date(item.shipByDate ?? item.date).toLocaleDateString("en-US")}
+                                                                </Typography>
+                                                                {item.shipByDate && (
+                                                                    <Typography sx={{ fontSize: "0.58rem", color: isSelected ? "#c7d2fe" : "text.disabled", opacity: 0.75 }}>
+                                                                        ship by
+                                                                    </Typography>
+                                                                )}
+                                                            </Box>
                                                         </Box>
                                                         {/* Location row */}
                                                         {(inv?.inventoryType === "inventory" && inv?.inventory?.row) && (

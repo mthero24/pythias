@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
 import { LabelsData } from "@/functions/labelsData";
+import { loadTemplate } from "@/functions/buildLabelData";
 import { Main } from "@pythias/labels";
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,11 @@ export default async function PrintLabels() {
     const session = await getServerSession(authOptions);
     if (!session) redirect("/login");
 
-    const { labels, giftMessages, rePulls, batches } = await LabelsData(session.user.orgId);
+    const [{ labels, giftMessages, rePulls, batches }, tpl] = await Promise.all([
+        LabelsData(session.user.orgId),
+        loadTemplate(),
+    ]);
+    const useShipByDate = (tpl.fields ?? []).includes("shipByDate");
     return (
         <Main
             labels={labels}
@@ -17,6 +22,7 @@ export default async function PrintLabels() {
             rePulls={rePulls}
             batches={batches}
             source="PLATFORM"
+            useShipByDate={useShipByDate}
         />
     );
 }

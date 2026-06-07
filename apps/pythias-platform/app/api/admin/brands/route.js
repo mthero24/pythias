@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PlatformBrand } from "@pythias/mongo";
+import PlatformBrand from "@pythias/mongo/platform-brand";
 import { getToken } from "next-auth/jwt";
 
 export async function GET(req) {

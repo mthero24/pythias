@@ -1,5 +1,5 @@
 import { Items, Inventory, ProductInventory, Settings } from "@pythias/mongo";
-import { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL } from "@pythias/backend/lib/labelConstants.js";
+import { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL } from "@pythias/backend/server";
 
 const DPI = 203;
 
@@ -17,9 +17,28 @@ export async function loadTemplate() {
     return tpl;
 }
 
+// ── Marketplace key normalizer ────────────────────────────────────────────────
+const MK_KEY_MAP = {
+    "target": "target",
+    "target plus us marketplace": "target",
+    "walmart": "walmart",
+    "walmart marketplace": "walmart",
+    "kohls": "kohls",
+    "kohl's": "kohls",
+    "amazon": "amazon",
+    "tiktok": "tiktok",
+    "tiktok shop": "tiktok",
+    "faire": "faire",
+    "etsy": "etsy",
+};
+function marketplaceKey(marketplace) {
+    return MK_KEY_MAP[(marketplace ?? "").toLowerCase()] ?? null;
+}
+
 // ── Field text resolvers ──────────────────────────────────────────────────────
 function fieldText(key, item, i, totalQuantity) {
     switch (key) {
+        case "upc":            return item.upc ?? "";
         case "itemNumber":     return `#${i + 1}`;
         case "styleCode":      return item.styleCode ?? "";
         case "shipByDate":     return new Date(item.shipByDate ?? item.date).toLocaleDateString("en-US");
@@ -78,6 +97,34 @@ function buildZPL(item, i, poNumber, totalQuantity, template) {
     return lines.join("\n");
 }
 
+// ── Special-case label builder ────────────────────────────────────────────────
+function buildSpecialCaseZPL(item, i, sc, template, totalQuantity) {
+    const widthDots  = Math.round((template.width  ?? 2) * DPI);
+    const heightDots = Math.round((template.height ?? 2) * DPI);
+    const positions  = { ...DEFAULT_FIELD_POSITIONS, ...(sc.fieldPositions ?? {}) };
+    const barcodePos = positions.barcode ?? { x: 50, y: 55 };
+    const barcodeValue = sc.barcodeField === "pieceId" ? item.pieceId : (item.upc ?? "NO UPC");
+
+    const lines = [
+        "^XA",
+        `^PW${widthDots}`,
+        `^LL${heightDots}`,
+        `^FO${barcodePos.x},${barcodePos.y}^BY2^BC,100,N,N,N,A^FD${barcodeValue}^FS`,
+    ];
+
+    for (const key of (sc.fields ?? [])) {
+        const text = fieldText(key, item, i, totalQuantity);
+        if (!text) continue;
+        const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
+        const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
+        const rot = pos.rotation ?? "N";
+        lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y}^FD${text}^FS`);
+    }
+
+    lines.push("^XZ");
+    return lines.join("\n");
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity, template = null) => {
     // Resolve total quantity
@@ -122,10 +169,19 @@ export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity
 
     const tpl = template ?? await loadTemplate();
 
-    // Target marketplace requires a UPC label printed first
-    const targetLabel = (item.order?.marketplace === "target" || item.order?.marketplace === "Target Plus US Marketplace")
-        ? `^XA\n^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc ?? "no upc present"}^FS\n^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS\n^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${item.colorName}, Size: ${item.sizeName}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${item.isBlank ? "Blank Item" : (item.designRef?.sku ?? item.sku)}^FS\n^XZ`
-        : "";
+    // Determine if this order has a configured special-case label.
+    // Template-driven config takes priority; fall back to the legacy hardcoded
+    // Target label for orgs that haven't configured it in label settings yet.
+    const mkKey = marketplaceKey(item.order?.marketplace);
+    const sc = mkKey ? (tpl.specialCases?.[mkKey] ?? null) : null;
 
-    return targetLabel + buildZPL(item, i, poNumber, totalQuantity, tpl);
+    let specialLabel = "";
+    if (sc?.enabled) {
+        specialLabel = buildSpecialCaseZPL(item, i, sc, tpl, totalQuantity);
+    } else if (item.order?.marketplace === "target" || item.order?.marketplace === "Target Plus US Marketplace") {
+        specialLabel = `^XA\n^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc ?? "no upc present"}^FS\n^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS\n^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${item.colorName}, Size: ${item.sizeName}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${item.isBlank ? "Blank Item" : (item.designRef?.sku ?? item.sku)}^FS\n^XZ`;
+    }
+
+    // Special-case label always prints alongside (before) the standard pick label — never instead of it.
+    return specialLabel + buildZPL(item, i, poNumber, totalQuantity, tpl);
 };

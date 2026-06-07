@@ -30,7 +30,7 @@ const STRING_KEYS = [
 // Keys stored as JSON-serialized arrays
 const ARRAY_KEYS = ["productionLabelPrinters", "scales"];
 // Keys stored as JSON-serialized objects
-const OBJECT_KEYS = ["production"];
+const OBJECT_KEYS = ["production", "labelTemplate", "picklistTemplate"];
 const ALL_KEYS = [...STRING_KEYS, ...ARRAY_KEYS, ...OBJECT_KEYS];
 
 export async function GET() {
