@@ -261,7 +261,9 @@ function OrderRow({ order, index, printers, picklistPrinter }) {
                             const ordered      = isSub ? 0 : items.filter(i => i.stockStatus === "ordered").length;
                             const needsOrdered = isSub ? 0 : items.length - groupInStock - ordered;
                             const labelsOut = items.filter(i => i.labelPrinted).length;
-                            const skuDisplay = isSub ? items[0]?.sku : inv?.inventory_id;
+                            const skuDisplay = isSub
+                                ? items[0]?.sku
+                                : inv?.inventory_id ?? inv?.sku ?? items[0]?.designSku ?? items[0]?.sku;
 
                             return (
                                 <Box

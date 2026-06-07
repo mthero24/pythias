@@ -81,6 +81,8 @@ const NAV_GROUPS = [
             { label: "Live Users",      href: "/live",                icon: <FiberManualRecordIcon fontSize="small" sx={{ color: "#22c55e" }} />, adminOnly: true },
             { label: "Downloads",       href: "/downloads",           icon: <SystemUpdateAltIcon fontSize="small" /> },
             { label: "Shipping & Hardware", href: "/admin/settings/shipping", icon: <VpnKeyIcon fontSize="small" />, adminOnly: true },
+            { label: "Label Creator",       href: "/admin/settings/labels",   icon: <SettingsIcon fontSize="small" />, adminOnly: true },
+            { label: "Picklist Settings",   href: "/admin/settings/picklist", icon: <SettingsIcon fontSize="small" />, adminOnly: true },
             { label: "Service Plans",   href: "/admin/service-plans",    icon: <AppsIcon fontSize="small" />,     adminOnly: true },
             { label: "Service Invoices",href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" />,  adminOnly: true },
             { label: "Kling Invoices",  href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" />, adminOnly: true },

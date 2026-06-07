@@ -158,8 +158,8 @@ export async function buildPicklistPdf({ items, poNumber, sc, printer = "printer
     const base64 = await buildBase64(items, poNumber, template);
 
     await axios.post(
-        `http://${sc.localIP}/api/print-labels-pdf`,
-        { label: base64, printer, barcode: "picklist" },
+        `http://${sc.localIP}/api/print-picklist`,
+        { label: base64, printer },
         {
             headers: {
                 "Content-Type": "application/json",
