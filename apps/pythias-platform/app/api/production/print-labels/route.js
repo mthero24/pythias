@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PlatformItem, Batches } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { getOrgCreds } from "@/lib/getOrgCreds";
-import { buildLabelData } from "@/functions/buildLabelData";
+import { buildLabelData, loadTemplate } from "@/functions/buildLabelData";
 import { LabelsData } from "@/functions/labelsData";
 import axios from "axios";
 import btoa from "btoa";
@@ -17,7 +17,7 @@ export async function POST(req) {
 
     const orgId = token.orgId;
     const data = await req.json();
-    const creds = await getOrgCreds(orgId);
+    const [creds, template] = await Promise.all([getOrgCreds(orgId), loadTemplate()]);
 
     let batchID = "";
     for (let i = 0; i < 9; i++) batchID += LETTERS[Math.floor(Math.random() * LETTERS.length)];
@@ -27,21 +27,17 @@ export async function POST(req) {
     let labelsString = "";
     const pieceIds = [];
     for (let i = 0; i < printableItems.length; i++) {
-        const labelStr = await buildLabelData(printableItems[i], i, data.poNumber, null);
-        labelsString += labelStr;
+        labelsString += await buildLabelData(printableItems[i], i, data.poNumber, null, template);
         pieceIds.push(printableItems[i].pieceId);
     }
 
     const encoded = btoa(labelsString);
-    const headers = {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${creds.localKey}`,
-        },
-    };
+    const headers = { headers: { "Content-Type": "application/json", Authorization: `Bearer ${creds.localKey}` } };
 
+    // ZPL → /api/print-labels (direct Zebra)  |  PDF → /api/cpu (file writer)
+    const printEndpoint = template.format === "PDF" ? "cpu" : "print-labels";
     await axios
-        .post(`http://${creds.localIP}/api/print-labels`, { label: encoded, printer: "printer1" }, headers)
+        .post(`http://${creds.localIP}/api/${printEndpoint}`, { label: encoded, printer: "printer1" }, headers)
         .catch(e => console.error("print-labels:", e.message));
 
     const batch = new Batches({ batchID, date: new Date(), count: printableItems.length });

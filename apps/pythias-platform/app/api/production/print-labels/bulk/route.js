@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PlatformItem, PlatformOrder, Batches } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { getOrgCreds } from "@/lib/getOrgCreds";
-import { buildLabelData } from "@/functions/buildLabelData";
+import { buildLabelData, loadTemplate } from "@/functions/buildLabelData";
 import axios from "axios";
 import btoa from "btoa";
 
@@ -16,7 +16,7 @@ export async function POST(req) {
     const { items, poNumber } = await req.json();
     if (!items?.length) return NextResponse.json({ error: true, msg: "No items" }, { status: 400 });
 
-    const creds = await getOrgCreds(orgId);
+    const [creds, template] = await Promise.all([getOrgCreds(orgId), loadTemplate()]);
 
     let batchID = "";
     for (let i = 0; i < 9; i++) batchID += LETTERS[Math.floor(Math.random() * LETTERS.length)];
@@ -26,16 +26,19 @@ export async function POST(req) {
     let labelsString = "";
     const pieceIds = [];
     for (let i = 0; i < printableItems.length; i++) {
-        const labelStr = await buildLabelData(printableItems[i], i, poNumber, null);
-        labelsString += labelStr;
+        labelsString += await buildLabelData(printableItems[i], i, poNumber, null, template);
         pieceIds.push(printableItems[i].pieceId);
     }
 
     const encoded = btoa(labelsString);
+    const headers = { headers: { "Content-Type": "application/json", Authorization: `Bearer ${creds.localKey}` } };
+
+    // ZPL → /api/print-labels (direct Zebra)  |  PDF → /api/cpu (file writer)
+    const printEndpoint = template.format === "PDF" ? "cpu" : "print-labels";
     await axios.post(
-        `http://${creds.localIP}/api/print-labels`,
+        `http://${creds.localIP}/api/${printEndpoint}`,
         { label: encoded, printer: "printer1" },
-        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${creds.localKey}` } },
+        headers,
     ).catch(e => console.error("[bulk/print-labels]", e.message));
 
     const batch = new Batches({ batchID, date: new Date(), count: printableItems.length });
@@ -52,7 +55,6 @@ export async function POST(req) {
         },
     );
 
-    // Mark the order's bulkPrinted once all labels are printed
     if (poNumber) {
         await PlatformOrder.findOneAndUpdate(
             { orgId, poNumber, bulk: true },

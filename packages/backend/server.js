@@ -9,3 +9,4 @@ export { createTracking } from "./server/tracking.js";
 export { generateInventory } from "./server/generateInventory.js";
 export { createUpc, MarkRecycle, UnMarkRecycle } from "./server/createUpcs.js";
 export { generateUPC } from "./server/generateUpcs.js";
+export { generatePickLabel, generatePickLabels } from "./server/generatePickLabel.js";
