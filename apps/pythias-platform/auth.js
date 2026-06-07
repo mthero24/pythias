@@ -60,6 +60,7 @@ export const authOptions = {
                     orgSlug: user.org?.slug,
                     orgName: user.org?.name,
                     orgStatus: user.org?.status,
+                    orgType: user.org?.orgType ?? "fulfillment",
                 };
             }
             return token;
@@ -80,6 +81,7 @@ export const authOptions = {
                 orgSlug: token.orgSlug,
                 orgName: token.orgName,
                 orgStatus: token.orgStatus,
+                orgType: token.orgType ?? "fulfillment",
             };
             return session;
         },

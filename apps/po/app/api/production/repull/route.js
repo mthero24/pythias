@@ -1,9 +1,8 @@
 import Items from "../../../../models/Items";
 import Bin from "../../../../models/Bin";
 import StyleV2 from "../../../../models/StyleV2";
-import { Inventory, RepullReasons } from "@pythias/mongo";
+import { Inventory, InventoryOrders, RepullReasons } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
-import inventory from "@/models/inventory";
 import { getToken } from "next-auth/jwt";
 import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
 export async function GET(){
@@ -37,15 +36,32 @@ export async function POST(req=NextApiRequest){
             bin.ready = false
             await bin.save()
         }
-        let inv = item.inventory?.inventory ? await Inventory.findOne({ _id: item.inventory.inventory }) : null;
-        if (!inv) inv = await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) });
-        if (inv) {
-            if(inv.quantity > 0 && inv.inStock.length < inv.quantity){
-                inv.inStock.push(item._id.toString())
-            } else {
-                inv.attached.push(item._id.toString())
+        const invId = item.inventory?.inventory
+            || (await Inventory.findOne({ inventory_id: encodeURIComponent(`${item.colorName}-${item.sizeName}-${item.styleCode}`) }, "_id").lean())?._id;
+        if (invId) {
+            const inv = await Inventory.findOne({ _id: invId }, "quantity allocated").lean();
+            if (inv) {
+                const quantity = Math.max(0, inv.quantity ?? 0);
+                const wasInStock = item.stockStatus === "inStock";
+                const otherAllocated = wasInStock ? Math.max(0, (inv.allocated ?? 0) - 1) : (inv.allocated ?? 0);
+                if (otherAllocated < quantity) {
+                    item.stockStatus = "inStock";
+                    if (!wasInStock) await Inventory.updateOne({ _id: invId }, { $inc: { allocated: 1 } });
+                } else {
+                    if (wasInStock) await Inventory.updateOne({ _id: invId }, { $inc: { allocated: -1 } });
+                    const pending = await InventoryOrders.aggregate([
+                        { $match: { received: { $ne: true }, "locations.items.inventory": invId } },
+                        { $unwind: "$locations" },
+                        { $match: { "locations.received": { $ne: true } } },
+                        { $unwind: "$locations.items" },
+                        { $match: { "locations.items.inventory": invId } },
+                        { $group: { _id: null, total: { $sum: "$locations.items.quantity" } } },
+                    ]);
+                    const orderedCap = pending[0]?.total ?? 0;
+                    const orderedUsed = await Items.countDocuments({ "inventory.inventory": invId, stockStatus: "ordered", canceled: false, shipped: false });
+                    item.stockStatus = orderedUsed < orderedCap ? "ordered" : "attached";
+                }
             }
-            await inv.save()
         }
         await item.save()
         logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email, provider: "po" });

@@ -395,6 +395,20 @@ export function ShippingSettingsMain({ defaultStationFormat = "ZPL" }) {
                             </AccordionDetails>
                         </Accordion>
 
+                        {/* ── Stamps.com SERA REST API ──────────────────────── */}
+                        <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography fontWeight={700}>Stamps.com (REST API)</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Stack spacing={2}>
+                                    <MaskedField label="Client ID" value={creds.stamps?.clientId ?? ""} onChange={set("stamps.clientId")} />
+                                    <MaskedField label="Client Secret" value={creds.stamps?.clientSecret ?? ""} onChange={set("stamps.clientSecret")} />
+                                    <MaskedField label="Refresh Token" value={creds.stamps?.refreshToken ?? ""} onChange={set("stamps.refreshToken")} />
+                                </Stack>
+                            </AccordionDetails>
+                        </Accordion>
+
                         {/* ── FedEx ─────────────────────────────────────────── */}
                         <Accordion>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>

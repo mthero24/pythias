@@ -1,8 +1,9 @@
-import { PlatformItem as Items, PlatformOrder as Order, PlatformProduct as Products } from "@pythias/mongo";
+import { PlatformItem as Items, PlatformOrder as Order, PlatformProduct as Products, Organization } from "@pythias/mongo";
 import { generatePieceID } from "@pythias/integrations";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
+import { routeOrder } from "@/functions/routeOrder";
 
 function genOrderId() {
     return `MANUAL-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -101,6 +102,18 @@ export async function POST(req) {
     order.items = savedItems.map(it => it._id);
     order.total = total;
     await order.save();
+
+    // For Commerce Cloud orgs, route the order to a fulfillment provider immediately
+    if (session.user.orgType === "commerce") {
+        const org = await Organization.findById(orgId, "orgType wallet _id").lean();
+        if (org?.orgType === "commerce") {
+            const result = await routeOrder(order, savedItems, org);
+            if (result.unroutable) {
+                console.error(`[routeOrder] Order ${order._id} unroutable:`, result.reason);
+                // Order is saved but unrouted — platform admin will be alerted via RoutingLog status
+            }
+        }
+    }
 
     return NextResponse.json({ success: true, orderId: order._id.toString(), poNumber });
 }

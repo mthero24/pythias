@@ -20,3 +20,4 @@ export {NoteSnackBar} from  "./components/NoteSnackBar";
 export { Items as OrderItems } from "./components/OrderModalComponents/items";
 export { Address as OrderAddress } from "./components/OrderModalComponents/address";
 export { convertLabel } from "./functions/convertLabel";
+export { getRatesStamps, buyShippingLabelStamps, voidStampsLabel } from "./functions/stamps/stamps";

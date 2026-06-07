@@ -1,4 +1,4 @@
-import { PlatformBin as Bin, PlatformItem as Items, RepullReasons, PlatformBlank as Blank, PlatformInventory as Inventory } from "@pythias/mongo";
+import { PlatformBin as Bin, PlatformItem as Items, RepullReasons, PlatformBlank as Blank, PlatformInventory as Inventory, PlatformInventoryOrder as InventoryOrders } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import { getToken } from "next-auth/jwt";
 import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
@@ -46,6 +46,32 @@ export async function POST(req=NextApiRequest){
             bin.items = bin.items.filter(i=> i.toString() != item._id.toString())
             bin.ready = false
             await bin.save()
+        }
+        const invId = item.inventory?.inventory;
+        if (invId) {
+            const inv = await Inventory.findOne({ _id: invId }, "quantity allocated").lean();
+            if (inv) {
+                const quantity = Math.max(0, inv.quantity ?? 0);
+                const wasInStock = item.stockStatus === "inStock";
+                const otherAllocated = wasInStock ? Math.max(0, (inv.allocated ?? 0) - 1) : (inv.allocated ?? 0);
+                if (otherAllocated < quantity) {
+                    item.stockStatus = "inStock";
+                    if (!wasInStock) await Inventory.updateOne({ _id: invId }, { $inc: { allocated: 1 } });
+                } else {
+                    if (wasInStock) await Inventory.updateOne({ _id: invId }, { $inc: { allocated: -1 } });
+                    const pending = await InventoryOrders.aggregate([
+                        { $match: { received: { $ne: true }, "locations.items.inventory": invId } },
+                        { $unwind: "$locations" },
+                        { $match: { "locations.received": { $ne: true } } },
+                        { $unwind: "$locations.items" },
+                        { $match: { "locations.items.inventory": invId } },
+                        { $group: { _id: null, total: { $sum: "$locations.items.quantity" } } },
+                    ]);
+                    const orderedCap = pending[0]?.total ?? 0;
+                    const orderedUsed = await Items.countDocuments({ "inventory.inventory": invId, stockStatus: "ordered", orgId, canceled: false, shipped: false });
+                    item.stockStatus = orderedUsed < orderedCap ? "ordered" : "attached";
+                }
+            }
         }
         await item.save()
         logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email });

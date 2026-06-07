@@ -26,6 +26,7 @@ export default async function DashboardLayout({ children, params }) {
         slug: org.slug,
         tier: org.tier,
         status: org.status,
+        orgType: org.orgType ?? "fulfillment",
         limits: org.limits,
         usage: org.usage,
         enabledIntegrations: org.enabledIntegrations,

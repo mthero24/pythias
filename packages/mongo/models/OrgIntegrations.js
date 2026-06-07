@@ -48,11 +48,18 @@ const schema = new mongoose.Schema({
         accountTSC: { type: String, default: "" },
     },
 
-    // ── Endicia / Stamps ───────────────────────────────────────────
+    // ── Endicia / Stamps (legacy SOAP) ────────────────────────────
     endicia: {
         requesterId: { type: String, default: "" },
         accountNumber: { type: String, default: "" },
         passPhrase: { type: String, default: "" },
+    },
+
+    // ── Stamps.com SERA REST API ───────────────────────────────────
+    stamps: {
+        clientId:     { type: String, default: "" },
+        clientSecret: { type: String, default: "" },
+        refreshToken: { type: String, default: "" },
     },
 
     // ── FedEx ──────────────────────────────────────────────────────

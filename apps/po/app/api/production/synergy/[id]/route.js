@@ -3,7 +3,9 @@ import Temps from "@/models/Temps";
 import Colors from "@/models/Color";
 import Style from "@/models/StyleV2";
 import { createImage } from "@/functions/image";
-import { NextApiRequest, NextResponse, useParams } from "next/server";
+import { NextResponse } from "next/server";
+import axios from "axios";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
 const getimagesize = async (options) => {
   let http = require("https");
@@ -28,10 +30,8 @@ const getimagesize = async (options) => {
     return { height: 2500, width: 3000 };
   }
 };
-export async function GET(request, { params }) {
-    let par = await params
-    //console.log(par)
-    let item = await Item.findOne({ pieceId: par.id })
+
+async function buildItemXml(item) {
     console.log(item, "item");
     item.color = await Colors.findOne({ _id: item.color }).select("name category color_type hexcode image")
     if(!item.color) {
@@ -41,7 +41,6 @@ export async function GET(request, { params }) {
     }
     item.styleV2 = await Style.findOne({ code: item.styleCode });
     //console.log(item.styleV2.envelopes);
-    //console.log(envleopes, "fff");
     let pretreatments = item.styleV2.pretreatments.filter(
         (pre) => pre.type == (item.color ? item.color.color_type : "dark")
     );
@@ -147,7 +146,7 @@ export async function GET(request, { params }) {
     //         time: 60
     //     }
     // }
-    
+
     let pressTime;
     let pressTemp;
     let printedTemp;
@@ -242,7 +241,7 @@ export async function GET(request, { params }) {
     //console.log(firefly);
     //set material thickness by style
     let xml = `<?xml version="1.0" encoding="utf-16"?>
-                        <ProductInfo xmlns="http://schemas.datacontract.org/2004/07/LoadZoneAPI" 
+                        <ProductInfo xmlns="http://schemas.datacontract.org/2004/07/LoadZoneAPI"
                                 xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
                         <ActiveImageLocation>FRONT</ActiveImageLocation>
                         ${
@@ -429,9 +428,9 @@ export async function GET(request, { params }) {
                                 </Thumbnail>
                                 <TotalQuantity>1</TotalQuantity>
                                 <TrackingID i:nil="true"/>
-                                
+
                                 <VerticalOffset>${envelope.vertoffset}</VerticalOffset>
-                                <Width>${width}</Width>     
+                                <Width>${width}</Width>
                             </ArtInfo>
                         </Art>
                         <Color>${item.color? item.color.name : item.colorName}</Color>
@@ -483,10 +482,61 @@ export async function GET(request, { params }) {
     });
     item.markModified("printedSides")
     await item.save();
+    return xml;
+}
+
+async function queueOnDigitalLine(items) {
+    let sc;
+    try {
+        sc = await getShippingCreds();
+    } catch (e) {
+        console.error("[synergy] Could not get shipping creds:", e.message);
+        return;
+    }
+    for (const item of items) {
+        try {
+            const xml = await buildItemXml(item);
+            await axios.post(
+                `http://${sc.localIP}/api/synergy/add-to-queue`,
+                { xml },
+                {
+                    headers: {
+                        Authorization: `Bearer ${sc.localKey}`,
+                        "Content-Type": "application/json",
+                    },
+                    timeout: 10000,
+                }
+            );
+            console.log(`[synergy] Queued ${item.pieceId} on digital line`);
+        } catch (e) {
+            console.error(`[synergy] Failed to queue ${item.pieceId}:`, e.message);
+        }
+    }
+}
+
+export async function GET(request, { params }) {
+    let par = await params
+    let item = await Item.findOne({ pieceId: par.id })
+
+    if (!item) {
+        const bulkItems = await Item.find({ bulkId: par.id.toUpperCase().trim() });
+        if (!bulkItems.length) {
+            return new NextResponse("Item not found", { status: 404 });
+        }
+        console.log(`[synergy] Bulk scan: ${bulkItems.length} items for bulkId ${par.id}`);
+        const xml = await buildItemXml(bulkItems[0]);
+        if (bulkItems.length > 1) {
+            queueOnDigitalLine(bulkItems.slice(1)).catch(console.error);
+        }
+        return new NextResponse(xml, {
+            status: 200,
+            headers: { "Content-Type": "application/xml" },
+        });
+    }
+
+    const xml = await buildItemXml(item);
     return new NextResponse(xml, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/xml',
-    },
-  });
+        status: 200,
+        headers: { "Content-Type": "application/xml" },
+    });
 }

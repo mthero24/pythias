@@ -5,6 +5,7 @@ import { getRatesFeNew } from "./fedex/new";
 import {getRatesUPS} from "./ups";
 import { GetRateShipStation } from "./shipstatiton";
 import { getRatesDHL } from "./dhl";
+import { getRatesStamps } from "./stamps/stamps";
 let standardType = {
     fistClass: "usps",
     priority: "usps",
@@ -26,6 +27,7 @@ export async function getRates({
   credentialsUPS,
   credentialsShipStation,
   credentialsDHL,
+  credentialsStamps,
   dimensions,
   carrierCodes,
   warehouse_id
@@ -146,6 +148,14 @@ export async function getRates({
       if(res.error) rates.push({ label: "DHL Express", rate: res.msg, service: {provider: "dhl", name: res.productCode || "N"} });
       else rates.push({ label: `DHL ${res.productName || "Express"}`, rate: res.rate, service: {provider: "dhl", name: res.productCode || "N"} });
     }
+    if(providers.includes("stamps")){
+      let res = await getRatesStamps({ address, businessAddress, weight, credentials: credentialsStamps, dimensions, service: "usps_ground_advantage" });
+      if(!res.error) rates.push({ label: "USPS Ground Advantage", rate: res.rate, service: {provider: "stamps", name: "usps_ground_advantage"} });
+      else rates.push({ label: "USPS Ground Advantage", rate: res.msg, service: {provider: "stamps", name: "usps_ground_advantage"} });
+      let res2 = await getRatesStamps({ address, businessAddress, weight, credentials: credentialsStamps, dimensions, service: "usps_priority_mail" });
+      if(!res2.error) rates.push({ label: "USPS Priority Mail", rate: res2.rate, service: {provider: "stamps", name: "usps_priority_mail"} });
+      else rates.push({ label: "USPS Priority Mail", rate: res2.msg, service: {provider: "stamps", name: "usps_priority_mail"} });
+    }
   } else if (type.toLowerCase() == "expedited") {
     if (providers.includes("endicia")) {
       let res2 = await getRatesEn({
@@ -202,6 +212,11 @@ export async function getRates({
       let res = await getRatesDHL({ address, businessAddress, weight, credentials: credentialsDHL, dimensions });
       if(res.error) rates.push({ label: "DHL Express", rate: res.msg, service: {provider: "dhl", name: res.productCode || "N"} });
       else rates.push({ label: `DHL ${res.productName || "Express"}`, rate: res.rate, service: {provider: "dhl", name: res.productCode || "N"} });
+    }
+    if(providers.includes("stamps")){
+      let res2 = await getRatesStamps({ address, businessAddress, weight, credentials: credentialsStamps, dimensions, service: "usps_priority_mail" });
+      if(!res2.error) rates.push({ label: "USPS Priority Mail", rate: res2.rate, service: {provider: "stamps", name: "usps_priority_mail"} });
+      else rates.push({ label: "USPS Priority Mail", rate: res2.msg, service: {provider: "stamps", name: "usps_priority_mail"} });
     }
   } else if (type.toLowerCase() == "second day") {
     if (providers.includes("fedex")) {

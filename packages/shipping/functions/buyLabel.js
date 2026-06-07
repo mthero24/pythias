@@ -4,6 +4,7 @@ import {ship} from "./ups";
 import {purchaseFedexNew as purchaseLabelFedEx} from "./fedex/new"
 import { ShipStationShip } from "./shipstatiton";
 import { purchaseDHLLabel } from "./dhl";
+import { buyShippingLabelStamps } from "./stamps/stamps";
 export async function buyLabel({address, poNumber, weight, selectedShipping, dimensions, businessAddress, providers, enSettings,
     credentials,
     credentialsFedEx,
@@ -11,6 +12,7 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
     credentialsShipStation,
     credentialsUPS,
     credentialsDHL,
+    credentialsStamps,
     dpi, ignoreBadAddress, imageFormat, thirdParty, items, imageType, carrierCodes, warehouse_id, saturdayDelivery}) {
     //console.log(saturdayDelivery, items[0]?.saturdayDelivery, "saturdayDelivery ++++++++")
     if(selectedShipping.provider == "usps"){
@@ -36,6 +38,9 @@ export async function buyLabel({address, poNumber, weight, selectedShipping, dim
         return res
     }else if(selectedShipping.provider == "dhl"){
         let res = await purchaseDHLLabel({address, businessAddress, weight, dimensions, selectedShipping, credentials: credentialsDHL, imageFormat, dpi})
+        return res
+    }else if(selectedShipping.provider == "stamps"){
+        let res = await buyShippingLabelStamps({address, poNumber, weight, selectedShipping, dimensions, businessAddress, credentials: credentialsStamps, imageFormat, dpi})
         return res
     }else{
         return {error: true, msg: "no provider selected or provider is invalid"}

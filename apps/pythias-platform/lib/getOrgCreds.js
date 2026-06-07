@@ -47,6 +47,16 @@ export function buildShippingCreds(creds) {
             meterNumber: creds.fedex?.meterNumber,
             key: creds.fedex?.key,
         },
+        credentialsDHL: {
+            accountNumber: creds.dhl?.accountNumber,
+            clientId:      creds.dhl?.clientId,
+            clientSecret:  creds.dhl?.clientSecret,
+        },
+        credentialsStamps: {
+            clientId:     creds.stamps?.clientId,
+            clientSecret: creds.stamps?.clientSecret,
+            refreshToken: creds.stamps?.refreshToken,
+        },
         ssAuth: `${creds.shipstation?.apiKey}:${creds.shipstation?.apiSecret}`,
         ssV2: creds.shipstation?.v2Key,
         localIP: creds.localIP,

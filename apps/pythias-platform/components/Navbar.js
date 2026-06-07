@@ -9,6 +9,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { Avatar, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import Image from "next/image";
 import LogoImg from "../public/fullfilment_cloud_transparant.png";
+import CommerceLogoImg from "../public/commerce-cloud-logo.png";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -53,6 +54,10 @@ import TuneIcon from "@mui/icons-material/Tune";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import SellIcon from "@mui/icons-material/Sell";
+import HubIcon from "@mui/icons-material/Hub";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import AltRouteIcon from "@mui/icons-material/AltRoute";
+import HandshakeIcon from "@mui/icons-material/Handshake";
 
 const DRAWER_WIDTH = 268;
 const SIDEBAR_BG = "#1a1f2e";
@@ -65,79 +70,12 @@ const SIDEBAR_ACTIVE_ICON = "#fff";
 const SIDEBAR_ACTIVE_TEXT = "#fff";
 const SIDEBAR_ACCENT = "#6366f1";
 
-function buildSections(base) {
-    return [
-        {
-            label: "Overview",
-            items: [
-                { label: "Dashboard",    path: "dashboard",       icon: <DashboardIcon fontSize="small" />,    exact: true },
-            ],
-        },
-        {
-            label: "Catalog",
-            items: [
-                { label: "Blanks",            path: "admin/blanks",            icon: <CheckroomIcon fontSize="small" /> },
-                { label: "Colors",            path: "admin/colors",            icon: <PaletteIcon fontSize="small" /> },
-                { label: "Designs",           path: "admin/designs",           icon: <BrushIcon fontSize="small" /> },
-                { label: "Design Templates",  path: "admin/design-templates",  icon: <DesignServicesIcon fontSize="small" /> },
-                { label: "Products",          path: "products",                icon: <InventoryIcon fontSize="small" /> },
-                { label: "Converters",        path: "admin/converters",        icon: <CompareArrowsIcon fontSize="small" /> },
-                { label: "Downloads",         path: "admin/downloads",         icon: <DownloadIcon fontSize="small" /> },
-                { label: "Brands",            path: "admin/brands",            icon: <SellIcon fontSize="small" /> },
-                { label: "Edit Data",         path: "admin/edit-data",         icon: <TuneIcon fontSize="small" /> },
-            ],
-        },
-        {
-            label: "Orders",
-            items: [
-                { label: "Orders",             path: "orders",             icon: <ShoppingCartIcon fontSize="small" /> },
-                { label: "Marketplaces",       path: "marketplaces",       icon: <StorefrontIcon fontSize="small" /> },
-                { label: "Inventory",          path: "inventory",          icon: <WarehouseIcon fontSize="small" /> },
-                { label: "Product Inventory",  path: "inventory/product",  icon: <InventoryIcon fontSize="small" /> },
-            ],
-        },
-        {
-            label: "Production",
-            items: [
-                { label: "Print Labels",    path: "production/print-labels",   icon: <PrintIcon fontSize="small" /> },
-                { label: "Bulk Orders",     path: "production/bulk",           icon: <ViewListIcon fontSize="small" /> },
-                { label: "Load DTF",        path: "production/dtf-send",       icon: <FileUploadIcon fontSize="small" /> },
-                { label: "Find DTF",        path: "production/dtf-find",       icon: <FindInPageIcon fontSize="small" /> },
-                { label: "GTX",             path: "production/gtx",            icon: <LocalPrintshopIcon fontSize="small" /> },
-                { label: "Embroidery",      path: "production/embroidery",     icon: <AutoFixHighIcon fontSize="small" /> },
-                { label: "Sublimation",     path: "production/sublimation",    icon: <PhotoCameraIcon fontSize="small" /> },
-                { label: "Folder",          path: "production/roq-folder",     icon: <FolderIcon fontSize="small" /> },
-                { label: "Ship Orders",     path: "production/shipping",       icon: <LocalShippingIcon fontSize="small" /> },
-                { label: "Ship Labels",     path: "production/shipping-labels", icon: <LabelIcon fontSize="small" /> },
-                { label: "Returns",         path: "production/returns",        icon: <AssignmentReturnIcon fontSize="small" /> },
-            ],
-        },
-        {
-            label: "Account",
-            items: [
-                { label: "Reports",       path: "reports",            icon: <BarChartIcon fontSize="small" /> },
-                { label: "Analytics",     path: "admin/analytics",    icon: <TimelineIcon fontSize="small" /> },
-                { label: "Sales",         path: "admin/sales",        icon: <TrendingUpIcon fontSize="small" /> },
-                { label: "Integrations",  path: "integrations",       icon: <IntegrationInstructionsIcon fontSize="small" /> },
-                { label: "Track Labels",  path: "admin/track-labels", icon: <TrackChangesIcon fontSize="small" /> },
-                { label: "Licenses",      path: "admin/license",      icon: <GavelIcon fontSize="small" /> },
-                { label: "Users",         path: "users",              icon: <PeopleIcon fontSize="small" /> },
-                { label: "Settings",            path: "settings",                  icon: <SettingsIcon fontSize="small" /> },
-                { label: "Shipping & Hardware", path: "settings/shipping",   icon: <LocalShippingIcon fontSize="small" /> },
-                { label: "Label Creator",       path: "settings/labels",     icon: <LabelIcon fontSize="small" /> },
-                { label: "Picklist Settings",   path: "settings/picklist",   icon: <SettingsIcon fontSize="small" /> },
-                { label: "Billing",           path: "billing",           icon: <PaymentIcon fontSize="small" /> },
-                { label: "Support",           path: "support",           icon: <SupportAgentIcon fontSize="small" /> },
-            ],
-        },
-        {
-            label: "Help",
-            items: [
-                { label: "Guides",       path: "guides",          icon: <MenuBookIcon fontSize="small" /> },
-                { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <IntegrationInstructionsIcon fontSize="small" />, target: "_blank" },
-            ],
-        },
-    ].map(section => ({
+function buildSections(base, org) {
+    const sections = org?.orgType === "commerce"
+        ? buildCommerceSections(base)
+        : buildFulfillmentSections(base);
+
+    return sections.map(section => ({
         ...section,
         items: section.items.map(item => ({
             ...item,
@@ -146,12 +84,153 @@ function buildSections(base) {
     }));
 }
 
+function buildFulfillmentSections(base) {
+    return [
+        {
+            label: "Overview",
+            items: [
+                { label: "Dashboard", path: "dashboard", icon: <DashboardIcon fontSize="small" />, exact: true },
+            ],
+        },
+        {
+            label: "Catalog",
+            items: [
+                { label: "Blanks",           path: "admin/blanks",           icon: <CheckroomIcon fontSize="small" /> },
+                { label: "Colors",           path: "admin/colors",           icon: <PaletteIcon fontSize="small" /> },
+                { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
+                { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
+                { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },
+                { label: "Converters",       path: "admin/converters",       icon: <CompareArrowsIcon fontSize="small" /> },
+                { label: "Downloads",        path: "admin/downloads",        icon: <DownloadIcon fontSize="small" /> },
+                { label: "Brands",           path: "admin/brands",           icon: <SellIcon fontSize="small" /> },
+                { label: "Edit Data",        path: "admin/edit-data",        icon: <TuneIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Orders",
+            items: [
+                { label: "Orders",            path: "orders",            icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Marketplaces",      path: "marketplaces",      icon: <StorefrontIcon fontSize="small" /> },
+                { label: "Inventory",         path: "inventory",         icon: <WarehouseIcon fontSize="small" /> },
+                { label: "Product Inventory", path: "inventory/product", icon: <InventoryIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Production",
+            items: [
+                { label: "Print Labels",  path: "production/print-labels",    icon: <PrintIcon fontSize="small" /> },
+                { label: "Bulk Orders",   path: "production/bulk",            icon: <ViewListIcon fontSize="small" /> },
+                { label: "Load DTF",      path: "production/dtf-send",        icon: <FileUploadIcon fontSize="small" /> },
+                { label: "Find DTF",      path: "production/dtf-find",        icon: <FindInPageIcon fontSize="small" /> },
+                { label: "GTX",           path: "production/gtx",             icon: <LocalPrintshopIcon fontSize="small" /> },
+                { label: "Embroidery",    path: "production/embroidery",      icon: <AutoFixHighIcon fontSize="small" /> },
+                { label: "Sublimation",   path: "production/sublimation",     icon: <PhotoCameraIcon fontSize="small" /> },
+                { label: "Folder",        path: "production/roq-folder",      icon: <FolderIcon fontSize="small" /> },
+                { label: "Ship Orders",   path: "production/shipping",        icon: <LocalShippingIcon fontSize="small" /> },
+                { label: "Ship Labels",   path: "production/shipping-labels", icon: <LabelIcon fontSize="small" /> },
+                { label: "Returns",       path: "production/returns",         icon: <AssignmentReturnIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Account",
+            items: [
+                { label: "Reports",             path: "reports",             icon: <BarChartIcon fontSize="small" /> },
+                { label: "Analytics",           path: "admin/analytics",     icon: <TimelineIcon fontSize="small" /> },
+                { label: "Sales",               path: "admin/sales",         icon: <TrendingUpIcon fontSize="small" /> },
+                { label: "Integrations",        path: "integrations",        icon: <IntegrationInstructionsIcon fontSize="small" /> },
+                { label: "Track Labels",        path: "admin/track-labels",  icon: <TrackChangesIcon fontSize="small" /> },
+                { label: "Licenses",            path: "admin/license",       icon: <GavelIcon fontSize="small" /> },
+                { label: "Users",               path: "users",               icon: <PeopleIcon fontSize="small" /> },
+                { label: "Settings",            path: "settings",            icon: <SettingsIcon fontSize="small" /> },
+                { label: "Shipping & Hardware", path: "settings/shipping",   icon: <LocalShippingIcon fontSize="small" /> },
+                { label: "Label Creator",       path: "settings/labels",     icon: <LabelIcon fontSize="small" /> },
+                { label: "Picklist Settings",   path: "settings/picklist",   icon: <SettingsIcon fontSize="small" /> },
+                { label: "Commerce Cloud",      path: "admin/commerce-cloud", icon: <HubIcon fontSize="small" /> },
+                { label: "Billing",             path: "billing",             icon: <PaymentIcon fontSize="small" /> },
+                { label: "Support",             path: "support",             icon: <SupportAgentIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Help",
+            items: [
+                { label: "Guides",       path: "guides",     icon: <MenuBookIcon fontSize="small" /> },
+                { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <IntegrationInstructionsIcon fontSize="small" />, target: "_blank" },
+            ],
+        },
+    ];
+}
+
+function buildCommerceSections(base) {
+    return [
+        {
+            label: "Overview",
+            items: [
+                { label: "Dashboard", path: "dashboard", icon: <DashboardIcon fontSize="small" />, exact: true },
+            ],
+        },
+        {
+            label: "Catalog",
+            items: [
+                { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
+                { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
+                { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },
+                { label: "Converters",       path: "admin/converters",       icon: <CompareArrowsIcon fontSize="small" /> },
+                { label: "Downloads",        path: "admin/downloads",        icon: <DownloadIcon fontSize="small" /> },
+                { label: "Brands",           path: "admin/brands",           icon: <SellIcon fontSize="small" /> },
+                { label: "Edit Data",        path: "admin/edit-data",        icon: <TuneIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Orders",
+            items: [
+                { label: "Orders",            path: "orders",            icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Marketplaces",      path: "marketplaces",      icon: <StorefrontIcon fontSize="small" /> },
+                { label: "Product Inventory", path: "inventory/product", icon: <InventoryIcon fontSize="small" /> },
+            ],
+        },
+        {
+            // Commerce Cloud customers don't run production themselves —
+            // their orders are routed to fulfillment providers.
+            label: "Fulfillment",
+            items: [
+                { label: "Provider Catalog",  path: "fulfillment/catalog",  icon: <HubIcon fontSize="small" /> },
+                { label: "Routing Status",    path: "fulfillment/routing",  icon: <AltRouteIcon fontSize="small" /> },
+                { label: "Wallet",            path: "fulfillment/wallet",   icon: <AccountBalanceWalletIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Account",
+            items: [
+                { label: "Reports",      path: "reports",          icon: <BarChartIcon fontSize="small" /> },
+                { label: "Analytics",    path: "admin/analytics",  icon: <TimelineIcon fontSize="small" /> },
+                { label: "Sales",        path: "admin/sales",      icon: <TrendingUpIcon fontSize="small" /> },
+                { label: "Integrations", path: "integrations",     icon: <IntegrationInstructionsIcon fontSize="small" /> },
+                { label: "Licenses",     path: "admin/license",    icon: <GavelIcon fontSize="small" /> },
+                { label: "Users",        path: "users",            icon: <PeopleIcon fontSize="small" /> },
+                { label: "Settings",     path: "settings",         icon: <SettingsIcon fontSize="small" /> },
+                { label: "Billing",      path: "billing",          icon: <PaymentIcon fontSize="small" /> },
+                { label: "Support",      path: "support",          icon: <SupportAgentIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Help",
+            items: [
+                { label: "Guides",       path: "guides",     icon: <MenuBookIcon fontSize="small" /> },
+                { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <IntegrationInstructionsIcon fontSize="small" />, target: "_blank" },
+            ],
+        },
+    ];
+}
+
 export default function Navbar() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const { data: session } = useSession();
     const { org } = useOrg() ?? {};
     const pathname = usePathname();
     const base = org?.slug ? `/${org.slug}` : "";
+
+    const isCommerce = org?.orgType === "commerce";
+    const logo = isCommerce ? CommerceLogoImg : LogoImg;
 
     const initials = session?.user
         ? ((session.user.firstName?.[0] ?? "") + (session.user.lastName?.[0] ?? "")).toUpperCase() || session.user.userName?.[0]?.toUpperCase() || "?"
@@ -183,7 +262,7 @@ export default function Navbar() {
 
                     <Link href={`${base}/dashboard`} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
                         <Image
-                            src={LogoImg}
+                            src={logo}
                             alt="Pythias Technologies"
                             width={160}
                             height={74}
@@ -232,7 +311,7 @@ export default function Navbar() {
 }
 
 function NavDrawer({ open, onClose, initials, base, pathname, session, org }) {
-    const sections = buildSections(base);
+    const sections = buildSections(base, org);
 
     const isActive = (item) =>
         item.exact ? pathname === item.href : pathname?.startsWith(item.href);
@@ -255,7 +334,11 @@ function NavDrawer({ open, onClose, initials, base, pathname, session, org }) {
             <Box sx={{ px: 2.5, pt: 2.5, pb: 2, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                 <Box sx={{ mb: 1.5, display: "flex", justifyContent: "center" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/fullfilment_cloud_transparant.png" alt="Pythias Technologies" style={{ width: "80%", maxWidth: 200, height: "auto" }} />
+                    <img
+                        src={org?.orgType === "commerce" ? "/commerce-cloud-logo.png" : "/fullfilment_cloud_transparant.png"}
+                        alt="Pythias Technologies"
+                        style={{ width: "80%", maxWidth: 200, height: "auto" }}
+                    />
                 </Box>
                 <Link href={`${base}/dashboard`} onClick={onClose} style={{ textDecoration: "none" }}>
                     {org?.name && (

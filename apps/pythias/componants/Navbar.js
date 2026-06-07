@@ -11,13 +11,13 @@ import Image from "next/image";
 import Logo from "../public/logo_vertical.png";
 
 const NAV_LINKS = [
-  { label: "Products",      href: "/services" },
-  { label: "Pricing",       href: "/pricing" },
-  { label: "Pythias Connect", href: "/integrations" },
-  { label: "How It Works",  href: "/how-it-works" },
-  { label: "Blog",          href: "/blog" },
-  { label: "About Us",      href: "/about" },
-  { label: "Contact Us",    href: "/contact" },
+  { label: "Fulfillment Cloud", href: "/pricing" },
+  { label: "Commerce Cloud",    href: "/commerce-cloud" },
+  { label: "Integrations",      href: "/integrations" },
+  { label: "How It Works",      href: "/how-it-works" },
+  { label: "Blog",              href: "/blog" },
+  { label: "About Us",          href: "/about" },
+  { label: "Contact Us",        href: "/contact" },
 ];
 
 export default function Navbar() {

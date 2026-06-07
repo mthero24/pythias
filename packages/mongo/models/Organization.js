@@ -4,6 +4,9 @@ import { PlatformDB } from "../lib/connection";
 const schema = new mongoose.Schema({
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    // "fulfillment" = Fulfillment Cloud (has own production floor)
+    // "commerce"    = Commerce Cloud (orders routed to fulfillment providers)
+    orgType: { type: String, enum: ["fulfillment", "commerce"], default: "fulfillment" },
     tier: {
         type: String,
         enum: ['starter', 'professional', 'business', 'scale', 'enterprise'],
@@ -48,6 +51,15 @@ const schema = new mongoose.Schema({
             secondaryKey: { type: String },
             accountNumber: { type: String },
         },
+    },
+    // ── Commerce Cloud wallet ──────────────────────────────────────
+    wallet: {
+        balance:              { type: Number, default: 0 },       // USD cents
+        minimumBalance:       { type: Number, default: 20000 },   // $200 default floor
+        autoRechargeAmount:   { type: Number, default: 50000 },   // amount added on auto-recharge
+        autoRechargeEnabled:  { type: Boolean, default: false },
+        stripePaymentMethodId: { type: String },
+        lastRechargedAt:      { type: Date },
     },
     trialEndsAt: { type: Date },
     createdAt: { type: Date, default: Date.now },
