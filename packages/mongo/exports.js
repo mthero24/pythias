@@ -86,6 +86,7 @@ export { default as PlatformProductInventory } from "./models/ProductInventory";
 export { default as PlatformInventoryOrder } from "./models/InventoryOrders";
 export { default as PlatformColor } from "./models/Color";
 export { default as PlatformEditData } from "./models/EditData";
+export { default as PlatformBrand } from "./models/PlatformBrand";
 export { default as PlatformConverter } from "./models/converters";
 export { default as PlatformForecastCache } from "./models/ForecastCache";
 export { default as PlatformBlankForecastCache } from "./models/BlankForecastCache";

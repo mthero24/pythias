@@ -1,89 +1,131 @@
-import {Items, Inventory, ProductInventory} from "@pythias/mongo";
+import { Items, Inventory, ProductInventory, Settings } from "@pythias/mongo";
+import { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL } from "@pythias/backend/lib/labelConstants.js";
 
-export const buildLabelData = async (item, i, poNumber, opts={}, totalQuantity) => {
-    if (totalQuantity == null) {
-      totalQuantity = await Items.find({_id: { $in: item.order.items },canceled: false,}).countDocuments();
-    }
-    if(!item.inventory) item.inventory = {};
-    if(!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
-    if(!item.inventory.inventory) {
-      item.inventory.inventory = await Inventory.findOne({blank: item.blank._id? item.blank._id: item.blank, color: item.color._id? item.color._id: item.color, sizeId: item.size._id? item.size._id: item.size}).select("row bin shelf unit quantity onhold");
-      if(item.inventory?.inventory){
-        item.inventory.inventory.quantity -= 1;
-        if (item.inventory.inventory.inStock) item.inventory.inventory.inStock = item.inventory.inventory.inStock.filter(i => i.toString() != item._id.toString());
-        if (item.inventory.inventory.attached) item.inventory.inventory.attached = item.inventory.inventory.attached.filter(i => i.toString() != item._id.toString());
-        await item.inventory.inventory?.save();
-      }
-    }
-    if(item.inventory?.inventoryType == "productInventory") {
-      let productInventory = await ProductInventory.findOne({_id: item.inventory.productInventory._id}).select("location quantity onhold inStock");
-      productInventory.quantity -= 1;
-      if(productInventory.inStock) productInventory.inStock = productInventory.inStock.filter(i => i.toString() != item._id.toString());
-      await productInventory.save();
-    }else if(item.inventory?.inventoryType == "inventory") {
-      let inventory = await Inventory.findOne({_id: item.inventory?.inventory?._id}).select("quantity onhold");
-      if(inventory){
-        inventory.quantity -= 1;
-        if (inventory.inStock)inventory.inStock = inventory.inStock.filter(i => i.toString() != item._id.toString());
-        if (inventory.attached) inventory.attached = inventory.attached.filter(i => i.toString() != item._id.toString());
-        await inventory.save();
-      }
-    }
-    console.log(item.inventory, "item inventory in label string")
-    let frontBackString = "";
-    for(let loc of Object.keys(item.design?item.design: {})){
-      if(item.design[loc]){
-        frontBackString = `${frontBackString}${frontBackString != ""? "&": ""}${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
-      }
-    }
-    frontBackString = `^LH12,18^CFS,25,12^AXN,40,50^FO100,355^FD${frontBackString}^FS`;
-    if(!item.design) frontBackString = "Missing Design";
-  if (!item.isBlank) frontBackString = "Blank Item";
-    let printPO = poNumber ? `^LH12,18^CFS,25,12^AXN,22,30^FO150,540^FDPO:${poNumber}^FS`: "";
-    let printTypeAbbr = item.designRef && item.designRef.printType ? item.designRef.printType : "DTF";
+const DPI = 203;
 
-    let labelString = `
-      ${item.order.marketplace == "target" || item.order.marketplace == "Target Plus US Marketplace"? `^XA
-        ^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc? item.upc: "no upc present"}^FS
-        ^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS
-        ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
-            item.colorName
-        }, Size: ${item.sizeName}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-            item.isBlank ? "Blank Item" : item.designRef && item.designRef.sku ? item.designRef.sku : item.sku
-        }^FS
-    ^XZ` : ""}
-      ^XA
-        ^FO50,55^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS
-        ^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPO#: ${
-            item.order ? item.order.poNumber : "no order"
-        }^FS
-         ^LH6,6^CFS,30,6^AXN,22,30^FO10,35^FDPiece: ${item.pieceId}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#${i + 1}^FS
-        ^LH12,18^CFS,25,12^AXN,75,90^FO100,175^FD${item.styleCode}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,70^FD${new Date(item.shipByDate ?? item.date).toLocaleDateString("En-us")}^FS
-        ${item.inventory?.inventoryType == "productInventory" ? `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDR LOC: ${item.inventory?.productInventory?.location}^FS` : `^LH12,18^CFS,25,12^AXN,22,30^FO320,100^FDAisle:${item.inventory?.inventory?.row}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,130^FDUnit:${item.inventory?.inventory?.unit}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,160^FDShelf:${item.inventory?.inventory?.shelf}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO320,190^FDBin:${item.inventory?.inventory?.bin}^FS`}
-        ^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${
-            item.colorName
-        }^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,260^FDSize: ${item.sizeName} Shipping: ${item.shippingType}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${
-          item.isBlank ? "Blank Item" : item.designRef && item.designRef.sku? item.designRef.sku: item.sku
-        } CNT ${totalQuantity}^FS
-        ^LH12,18^CFS,25,12^AXN,22,30^FO10,320^FD Title: ${
-          item.isBlank ? "Blank Item" : item.designRef && item.designRef.name? item.designRef.name: item.sku
-        }^FS
-        ${
-          `^LH12,18^CFS,25,12^AXN,40,50^FO10,355^FD${printTypeAbbr}^FS`
+// ── Template loader (60s cache) ───────────────────────────────────────────────
+let _tplCache = null;
+let _tplCacheTs = 0;
+const TEMPLATE_TTL = 60_000;
+
+export async function loadTemplate() {
+    if (_tplCache && Date.now() - _tplCacheTs < TEMPLATE_TTL) return _tplCache;
+    const doc = await Settings.findOne({ key: "labelTemplate" }).lean();
+    const tpl = doc?.value ? { ...LABEL_TEMPLATE_DEFAULT, ...JSON.parse(doc.value) } : { ...LABEL_TEMPLATE_DEFAULT };
+    _tplCache = tpl;
+    _tplCacheTs = Date.now();
+    return tpl;
+}
+
+// ── Field text resolvers ──────────────────────────────────────────────────────
+function fieldText(key, item, i, totalQuantity) {
+    switch (key) {
+        case "itemNumber":     return `#${i + 1}`;
+        case "styleCode":      return item.styleCode ?? "";
+        case "shipByDate":     return new Date(item.shipByDate ?? item.date).toLocaleDateString("en-US");
+        case "inventoryLoc":
+            if (item.inventory?.inventoryType === "productInventory")
+                return `R LOC: ${item.inventory?.productInventory?.location ?? ""}`;
+            return [
+                `Aisle:${item.inventory?.inventory?.row ?? ""}`,
+                `Unit:${item.inventory?.inventory?.unit ?? ""}`,
+                `Shelf:${item.inventory?.inventory?.shelf ?? ""}`,
+                `Bin:${item.inventory?.inventory?.bin ?? ""}`,
+            ].join(" ");
+        case "color":          return `Color: ${item.colorName ?? ""}`;
+        case "size":           return `Size: ${item.sizeName ?? ""}`;
+        case "shippingType":   return `Shipping: ${item.shippingType ?? ""}`;
+        case "designSku":      return `SKU: ${item.isBlank ? "Blank Item" : (item.designRef?.sku ?? item.sku ?? "")}`;
+        case "orderCount":     return `CNT ${totalQuantity}`;
+        case "designName":     return `Title: ${item.isBlank ? "Blank Item" : (item.designRef?.name ?? item.sku ?? "")}`;
+        case "printType":      return item.designRef?.printType ?? "DTF";
+        case "printLocations": {
+            const locs = Object.keys(item.design ?? {}).filter(l => item.design[l]);
+            if (!locs.length) return "";
+            return locs.join(" & ") + (locs.length === 1 ? " Only" : "");
         }
-        ${printPO}
-        ${frontBackString}
-    ^XZ`;
-    //console.log(labelString)
-    return labelString;
-    
-  }
+        case "blankCode":      return `Blank: ${item.blank?.code ?? item.blank?.styleCode ?? ""}`;
+        case "orderDate":      return new Date(item.order?.date ?? item.date).toLocaleDateString("en-US");
+        default:               return "";
+    }
+}
+
+function buildZPL(item, i, poNumber, totalQuantity, template) {
+    const widthDots  = Math.round((template.width  ?? 2) * DPI);
+    const heightDots = Math.round((template.height ?? 2) * DPI);
+    const positions  = { ...DEFAULT_FIELD_POSITIONS, ...(template.fieldPositions ?? {}) };
+    const barcodePos = positions.barcode ?? { x: 50, y: 55 };
+
+    const lines = [
+        "^XA",
+        `^PW${widthDots}`,
+        `^LL${heightDots}`,
+        `^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPO#: ${item.order?.poNumber ?? poNumber ?? ""}^FS`,
+        `^LH6,6^CFS,30,6^AXN,22,30^FO10,35^FDPiece: ${item.pieceId}^FS`,
+        `^FO${barcodePos.x},${barcodePos.y}^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS`,
+    ];
+
+    for (const key of (template.fields ?? [])) {
+        const text = fieldText(key, item, i, totalQuantity);
+        if (!text) continue;
+        const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
+        const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
+        const rot = pos.rotation ?? "N";
+        lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y}^FD${text}^FS`);
+    }
+
+    lines.push("^XZ");
+    return lines.join("\n");
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
+export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity, template = null) => {
+    // Resolve total quantity
+    if (totalQuantity == null) {
+        totalQuantity = await Items.find({ _id: { $in: item.order?.items ?? [] }, canceled: false }).countDocuments();
+    }
+
+    // Inventory management (unchanged from original)
+    if (!item.inventory) item.inventory = {};
+    if (!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
+
+    if (!item.inventory.inventory) {
+        item.inventory.inventory = await Inventory.findOne({
+            blank:  item.blank?._id  ?? item.blank,
+            color:  item.color?._id  ?? item.color,
+            sizeId: item.size?._id   ?? item.size,
+        }).select("row bin shelf unit quantity onhold");
+        if (item.inventory?.inventory) {
+            item.inventory.inventory.quantity -= 1;
+            if (item.inventory.inventory.inStock)
+                item.inventory.inventory.inStock = item.inventory.inventory.inStock.filter(id => id.toString() !== item._id.toString());
+            if (item.inventory.inventory.attached)
+                item.inventory.inventory.attached = item.inventory.inventory.attached.filter(id => id.toString() !== item._id.toString());
+            await item.inventory.inventory.save();
+        }
+    }
+
+    if (item.inventory?.inventoryType === "productInventory") {
+        const pi = await ProductInventory.findById(item.inventory.productInventory._id).select("location quantity onhold inStock");
+        pi.quantity -= 1;
+        if (pi.inStock) pi.inStock = pi.inStock.filter(id => id.toString() !== item._id.toString());
+        await pi.save();
+    } else if (item.inventory?.inventoryType === "inventory") {
+        const inv = await Inventory.findById(item.inventory?.inventory?._id).select("quantity onhold");
+        if (inv) {
+            inv.quantity -= 1;
+            if (inv.inStock)    inv.inStock    = inv.inStock.filter(id => id.toString() !== item._id.toString());
+            if (inv.attached)   inv.attached   = inv.attached.filter(id => id.toString() !== item._id.toString());
+            await inv.save();
+        }
+    }
+
+    const tpl = template ?? await loadTemplate();
+
+    // Target marketplace requires a UPC label printed first
+    const targetLabel = (item.order?.marketplace === "target" || item.order?.marketplace === "Target Plus US Marketplace")
+        ? `^XA\n^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc ?? "no upc present"}^FS\n^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS\n^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${item.colorName}, Size: ${item.sizeName}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${item.isBlank ? "Blank Item" : (item.designRef?.sku ?? item.sku)}^FS\n^XZ`
+        : "";
+
+    return targetLabel + buildZPL(item, i, poNumber, totalQuantity, tpl);
+};

@@ -57,4 +57,5 @@ export { ContactMessages } from "./components/contact/ContactMessages";
 export { ShippingSettingsMain } from "./components/settings/ShippingSettingsMain";
 export { ShippingSetupGuide } from "./components/settings/ShippingSetupGuide";
 export { LabelSettingsMain } from "./components/settings/LabelSettingsMain";
+export { BrandsMain } from "./components/brands/BrandsMain";
 export { CreateNFProduct } from "./components/product/CreateNFProduct";

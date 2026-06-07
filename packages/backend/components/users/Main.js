@@ -26,6 +26,7 @@ import ShoppingCartIcon     from "@mui/icons-material/ShoppingCart";
 import PrintIcon            from "@mui/icons-material/Print";
 import SyncAltIcon          from "@mui/icons-material/SyncAlt";
 import ManageAccountsIcon   from "@mui/icons-material/ManageAccounts";
+import LabelIcon            from "@mui/icons-material/Label";
 import { useState } from "react";
 import axios from "axios";
 
@@ -43,7 +44,8 @@ const PERMISSIONS = [
     { key: "upc",          label: "Fix UPC",      icon: <QrCode2Icon sx={{ fontSize: 14 }} /> },
     { key: "orders",       label: "Orders",       icon: <ShoppingCartIcon sx={{ fontSize: 14 }} /> },
     { key: "production",   label: "Production",   icon: <PrintIcon sx={{ fontSize: 14 }} /> },
-    { key: "integrations", label: "Integrations", icon: <SyncAltIcon sx={{ fontSize: 14 }} /> },
+    { key: "integrations",  label: "Integrations",  icon: <SyncAltIcon sx={{ fontSize: 14 }} /> },
+    { key: "labelCreator",  label: "Label Creator", icon: <LabelIcon  sx={{ fontSize: 14 }} /> },
 ];
 
 const BLANK_USER = { userName: "", password: "", email: "", firstName: "", lastName: "", permissions: {} };
@@ -100,11 +102,19 @@ function displayName(u) {
     return u.userName;
 }
 
-function permCount(u) {
-    return Object.values(u.permissions ?? {}).filter(Boolean).length;
+const ALL_PERMISSIONS = Object.fromEntries(PERMISSIONS.map(p => [p.key, true]));
+
+function effectivePermissions(u) {
+    return u.role === "owner" ? ALL_PERMISSIONS : (u.permissions ?? {});
 }
 
-function PermGrid({ permissions, onToggle }) {
+function permCount(u) {
+    return u.role === "owner"
+        ? PERMISSIONS.length
+        : Object.values(u.permissions ?? {}).filter(Boolean).length;
+}
+
+function PermGrid({ permissions, onToggle, readOnly = false }) {
     return (
         <Grid2 container spacing={1}>
             {PERMISSIONS.map(p => {
@@ -112,7 +122,7 @@ function PermGrid({ permissions, onToggle }) {
                 return (
                     <Grid2 key={p.key} size={{ xs: 6, sm: 4, md: 3 }}>
                         <Box
-                            onClick={() => onToggle(p.key, !active)}
+                            onClick={readOnly ? undefined : () => onToggle(p.key, !active)}
                             sx={{
                                 display: "flex", alignItems: "center", gap: 1,
                                 px: 1.25, py: 0.9,
@@ -121,14 +131,17 @@ function PermGrid({ permissions, onToggle }) {
                                 borderColor: active ? "primary.main" : "divider",
                                 backgroundColor: active ? "primary.main" : "#fff",
                                 color: active ? "#fff" : "text.secondary",
-                                cursor: "pointer",
+                                cursor: readOnly ? "default" : "pointer",
                                 userSelect: "none",
+                                opacity: readOnly ? 0.75 : 1,
                                 transition: "all 140ms",
-                                "&:hover": {
-                                    borderColor: "primary.main",
-                                    backgroundColor: active ? "primary.dark" : "rgba(99,102,241,0.06)",
-                                    color: active ? "#fff" : "primary.main",
-                                },
+                                ...(!readOnly && {
+                                    "&:hover": {
+                                        borderColor: "primary.main",
+                                        backgroundColor: active ? "primary.dark" : "rgba(99,102,241,0.06)",
+                                        color: active ? "#fff" : "primary.main",
+                                    },
+                                }),
                             }}
                         >
                             <Box sx={{ display: "flex", alignItems: "center", flexShrink: 0, opacity: active ? 1 : 0.6 }}>
@@ -199,12 +212,13 @@ export function Main({ user }) {
                     )}
 
                     {users.map(u => {
-                        const isOpen = opened === u._id;
-                        const count  = permCount(u);
-                        const color  = avatarColor(u.userName);
-                        const name   = displayName(u);
-                        // color still used for permission chip/icon tinting
-                        const activePerms = PERMISSIONS.filter(p => u.permissions?.[p.key]);
+                        const isOpen   = opened === u._id;
+                        const isOwner  = u.role === "owner";
+                        const effPerms = effectivePermissions(u);
+                        const count    = permCount(u);
+                        const color    = avatarColor(u.userName);
+                        const name     = displayName(u);
+                        const activePerms = PERMISSIONS.filter(p => effPerms[p.key]);
 
                         return (
                             <Card key={u._id} variant="outlined" sx={{
@@ -290,9 +304,15 @@ export function Main({ user }) {
                                         <Typography variant="caption" sx={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "text.disabled", display: "block", mb: 1.5 }}>
                                             Access Permissions
                                         </Typography>
+                                        {isOwner && (
+                                            <Typography variant="caption" color="text.disabled" sx={{ display: "block", mb: 1, fontStyle: "italic" }}>
+                                                Owners have all permissions.
+                                            </Typography>
+                                        )}
                                         <PermGrid
-                                            permissions={u.permissions}
+                                            permissions={effPerms}
                                             onToggle={(key, value) => updatePermissions(u, key, value)}
+                                            readOnly={isOwner}
                                         />
                                         <Divider sx={{ my: 2 }} />
                                         <Stack direction="row" spacing={1}>

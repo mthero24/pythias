@@ -65,7 +65,9 @@ export async function GET() {
 export async function PATCH(req) {
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!["admin", "manager"].includes(session.user.role)) {
+    const { role, permissions } = session.user;
+    const canSave = role === "owner" || permissions?.labelCreator === true;
+    if (!canSave) {
         return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 

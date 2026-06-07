@@ -52,6 +52,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import TuneIcon from "@mui/icons-material/Tune";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import SellIcon from "@mui/icons-material/Sell";
 
 const DRAWER_WIDTH = 268;
 const SIDEBAR_BG = "#1a1f2e";
@@ -82,6 +83,7 @@ function buildSections(base) {
                 { label: "Products",          path: "products",                icon: <InventoryIcon fontSize="small" /> },
                 { label: "Converters",        path: "admin/converters",        icon: <CompareArrowsIcon fontSize="small" /> },
                 { label: "Downloads",         path: "admin/downloads",         icon: <DownloadIcon fontSize="small" /> },
+                { label: "Brands",            path: "admin/brands",            icon: <SellIcon fontSize="small" /> },
                 { label: "Edit Data",         path: "admin/edit-data",         icon: <TuneIcon fontSize="small" /> },
             ],
         },

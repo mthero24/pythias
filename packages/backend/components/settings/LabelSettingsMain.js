@@ -1,13 +1,21 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
-    Box, Container, Typography, Stack, Button, Alert,
-    FormControl, InputLabel, Select, MenuItem,
-    Divider, Switch, FormControlLabel, Paper,
+    Box, Typography, Stack, Button, Alert, Container,
+    FormControl, InputLabel, Select, MenuItem, Paper,
+    Switch, FormControlLabel, Divider,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
-import { PREMIER_DEFAULT_FIELDS, LABEL_TEMPLATE_DEFAULT } from "../../lib/labelConstants.js";
+import {
+    LABEL_TEMPLATE_DEFAULT, PREMIER_DEFAULT_FIELDS,
+    DEFAULT_FIELD_POSITIONS, FIELD_SIZES, SIZE_TO_PX,
+    FIELD_ROTATIONS, ROTATION_TO_DEG, ROTATION_LABELS,
+} from "../../lib/labelConstants.js";
+
+const DPI = 203;
+const MAX_PREVIEW_W = 340;
+const MAX_PREVIEW_H = 500;
 
 const LABEL_SIZES = [
     { label: '2×2" (Recommended)', width: 2, height: 2 },
@@ -18,86 +26,329 @@ const LABEL_SIZES = [
 ];
 
 const OPTIONAL_FIELDS = [
-    { key: "itemNumber",     label: "Item Number",        hint: "#1, #2…" },
-    { key: "styleCode",      label: "Style Code",         hint: "Blank style code" },
-    { key: "shipByDate",     label: "Ship By Date",       hint: "" },
-    { key: "inventoryLoc",   label: "Inventory Location", hint: "Aisle / Unit / Shelf / Bin" },
-    { key: "color",          label: "Color",              hint: "" },
-    { key: "size",           label: "Size",               hint: "" },
-    { key: "shippingType",   label: "Shipping Type",      hint: "Standard / Expedited" },
-    { key: "designSku",      label: "Design SKU",         hint: "" },
-    { key: "orderCount",     label: "Order Count",        hint: "Total items in order" },
-    { key: "designName",     label: "Design Name",        hint: "" },
-    { key: "printType",      label: "Print Type",         hint: "DTF, Embroidery…" },
-    { key: "printLocations", label: "Print Locations",    hint: "Front / Back" },
-    { key: "blankCode",      label: "Blank Code",         hint: "" },
-    { key: "orderDate",      label: "Order Date",         hint: "" },
+    { key: "itemNumber",     label: "Item Number",        sample: "#1" },
+    { key: "styleCode",      label: "Style Code",         sample: "GI64000" },
+    { key: "shipByDate",     label: "Ship By Date",       sample: "06/15/2026" },
+    { key: "inventoryLoc",   label: "Inventory Location", sample: "Aisle:A Unit:1 Shelf:2 Bin:3" },
+    { key: "color",          label: "Color",              sample: "Color: Black" },
+    { key: "size",           label: "Size",               sample: "Size: L" },
+    { key: "shippingType",   label: "Shipping Type",      sample: "Shipping: Standard" },
+    { key: "designSku",      label: "Design SKU",         sample: "SKU: ABC-123" },
+    { key: "orderCount",     label: "Order Count",        sample: "CNT 5" },
+    { key: "designName",     label: "Design Name",        sample: "Title: Classic Tee" },
+    { key: "printType",      label: "Print Type",         sample: "DTF" },
+    { key: "printLocations", label: "Print Locations",    sample: "Front Only" },
+    { key: "blankCode",      label: "Blank Code",         sample: "Blank: GI64000" },
+    { key: "orderDate",      label: "Order Date",         sample: "06/01/2026" },
 ];
 
-function LabelPreview({ width, height, enabledFields }) {
-    const previewW = 220;
-    const previewH = Math.round((height / width) * previewW);
-    const rows = OPTIONAL_FIELDS.filter(f => enabledFields.includes(f.key));
+// ── Draggable field element ───────────────────────────────────────────────────
+function DraggableField({ fieldKey, sample, pos, scale, dotW, dotH, selected, onSelect, onMove, onResize, onRotate }) {
+    const dragging = useRef(null);
+    const fontSize = SIZE_TO_PX[pos.size ?? "sm"];
+    const rotateDeg = ROTATION_TO_DEG[pos.rotation ?? "N"] ?? 0;
+
+    const handleMouseDown = useCallback((e) => {
+        if (e.button !== 0) return; // left-click only for drag
+        e.preventDefault();
+        e.stopPropagation();
+        dragging.current = { startMX: e.clientX, startMY: e.clientY, startX: pos.x, startY: pos.y };
+
+        const onMouseMove = (me) => {
+            const dx = (me.clientX - dragging.current.startMX) / scale;
+            const dy = (me.clientY - dragging.current.startMY) / scale;
+            onMove(fieldKey,
+                Math.max(0, Math.min(dotW - 10, Math.round(dragging.current.startX + dx))),
+                Math.max(0, Math.min(dotH - 10, Math.round(dragging.current.startY + dy))),
+            );
+        };
+        const onMouseUp = () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+            dragging.current = null;
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+    }, [fieldKey, pos, scale, dotW, dotH, onMove]);
+
+    const handleContextMenu = useCallback((e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onSelect(fieldKey);
+    }, [fieldKey, onSelect]);
 
     return (
-        <Paper variant="outlined" sx={{
-            width: previewW, height: Math.max(previewH, 120),
-            p: 1.5, boxSizing: "border-box", overflow: "hidden",
-            display: "flex", flexDirection: "column", gap: 0.5,
-        }}>
-            {/* Fixed top */}
-            <Box sx={{ pb: 0.5, borderBottom: "1px dashed", borderColor: "divider" }}>
-                {["PO#", "Piece"].map(label => (
-                    <Stack key={label} direction="row" alignItems="center" spacing={0.5}>
-                        <LockIcon sx={{ fontSize: 9, color: "text.disabled" }} />
-                        <Typography sx={{ fontSize: 8, fontFamily: "monospace", color: "text.secondary" }}>
-                            {label} ———
-                        </Typography>
-                    </Stack>
-                ))}
-            </Box>
-
-            {/* Barcode */}
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1px", py: 0.5 }}>
-                <LockIcon sx={{ fontSize: 9, color: "text.disabled", mr: 0.5 }} />
-                {Array.from({ length: 24 }).map((_, i) => (
-                    <Box key={i} sx={{ width: i % 3 === 0 ? 2 : 1, height: 24, bgcolor: "text.primary", opacity: 0.65 }} />
-                ))}
-            </Box>
-
-            {/* Optional fields */}
-            {rows.length > 0 && (
-                <Box sx={{ pt: 0.5, borderTop: "1px dashed", borderColor: "divider", flex: 1, overflow: "hidden" }}>
-                    {rows.map(f => (
-                        <Typography key={f.key} sx={{ fontSize: 7, fontFamily: "monospace", color: "text.secondary", lineHeight: 1.6 }}>
-                            {f.label}: ———
-                        </Typography>
-                    ))}
-                </Box>
-            )}
-        </Paper>
+        <Box
+            onMouseDown={handleMouseDown}
+            onContextMenu={handleContextMenu}
+            sx={{
+                position: "absolute",
+                left: pos.x * scale,
+                top: pos.y * scale,
+                cursor: "grab",
+                userSelect: "none",
+                bgcolor: selected ? "rgba(99,102,241,0.18)" : "rgba(99,102,241,0.08)",
+                border: "1px solid",
+                borderColor: selected ? "#6366f1" : "rgba(99,102,241,0.35)",
+                borderRadius: 0.5,
+                px: 0.5,
+                py: "1px",
+                whiteSpace: "nowrap",
+                fontSize,
+                fontFamily: "monospace",
+                lineHeight: 1.4,
+                zIndex: selected ? 10 : 1,
+                boxShadow: selected ? "0 0 0 2px rgba(99,102,241,0.3)" : "none",
+                transform: rotateDeg ? `rotate(${rotateDeg}deg)` : undefined,
+                transformOrigin: "top left",
+            }}
+        >
+            {sample}
+        </Box>
     );
 }
 
+// ── Size + rotation toolbar shown when a field is selected ────────────────────
+function SizeToolbar({ selectedKey, pos, scale, onResize, onRotate }) {
+    if (!selectedKey || !pos) return null;
+    const px = pos.x * scale;
+    const py = Math.max(0, (pos.y * scale) - 52);
+
+    const btnStyle = (active) => ({
+        fontSize: 9, fontWeight: 700, px: 0.75, py: 0.25,
+        borderRadius: 0.5, cursor: "pointer", color: "#fff",
+        bgcolor: active ? "#6366f1" : "transparent",
+        textTransform: "uppercase",
+        "&:hover": { bgcolor: "rgba(99,102,241,0.5)" },
+    });
+
+    return (
+        <Box
+            onClick={e => e.stopPropagation()}
+            onContextMenu={e => { e.preventDefault(); e.stopPropagation(); }}
+            sx={{ position: "absolute", left: px, top: py, zIndex: 20, display: "flex", flexDirection: "column", gap: "2px" }}
+        >
+            {/* Size row */}
+            <Box sx={{ display: "flex", gap: "2px", bgcolor: "#1a1f2e", borderRadius: 1, px: 0.75, py: 0.4, boxShadow: 3 }}>
+                {FIELD_SIZES.map(s => (
+                    <Box key={s} onClick={(e) => { e.stopPropagation(); onResize(selectedKey, s); }} sx={btnStyle((pos.size ?? "sm") === s)}>
+                        {s}
+                    </Box>
+                ))}
+            </Box>
+            {/* Rotation row */}
+            <Box sx={{ display: "flex", gap: "2px", bgcolor: "#1a1f2e", borderRadius: 1, px: 0.75, py: 0.4, boxShadow: 3 }}>
+                {FIELD_ROTATIONS.map(r => (
+                    <Box key={r} onClick={(e) => { e.stopPropagation(); onRotate(selectedKey, r); }} sx={btnStyle((pos.rotation ?? "N") === r)}>
+                        {ROTATION_LABELS[r]}
+                    </Box>
+                ))}
+            </Box>
+        </Box>
+    );
+}
+
+// ── Draggable barcode element ─────────────────────────────────────────────────
+function DraggableBarcode({ pos, scale, dotW, dotH, selected, onSelect, onMove }) {
+    const dragging = useRef(null);
+
+    const handleMouseDown = useCallback((e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        dragging.current = { startMX: e.clientX, startMY: e.clientY, startX: pos.x, startY: pos.y };
+
+        const onMouseMove = (me) => {
+            const dx = (me.clientX - dragging.current.startMX) / scale;
+            const dy = (me.clientY - dragging.current.startMY) / scale;
+            onMove("barcode",
+                Math.max(0, Math.min(dotW - 50, Math.round(dragging.current.startX + dx))),
+                Math.max(0, Math.min(dotH - 100, Math.round(dragging.current.startY + dy))),
+            );
+        };
+        const onMouseUp = () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+            dragging.current = null;
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+    }, [pos, scale, dotW, dotH, onMove]);
+
+    return (
+        <Box
+            onMouseDown={handleMouseDown}
+            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onSelect("barcode"); }}
+            sx={{
+                position: "absolute",
+                left: pos.x * scale,
+                top: pos.y * scale,
+                display: "flex",
+                alignItems: "center",
+                gap: "1px",
+                cursor: "grab",
+                userSelect: "none",
+                outline: selected ? "2px solid #6366f1" : "none",
+                outlineOffset: 2,
+                borderRadius: 0.5,
+            }}
+        >
+            {Array.from({ length: 32 }).map((_, i) => (
+                <Box key={i} sx={{ width: i % 3 === 0 ? 2 : 1, height: 100 * scale, bgcolor: "#111", opacity: 0.8 }} />
+            ))}
+        </Box>
+    );
+}
+
+// ── Label preview canvas ──────────────────────────────────────────────────────
+function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRotate }) {
+    const dotW = Math.round(template.width * DPI);
+    const dotH = Math.round(template.height * DPI);
+    const scaleX = MAX_PREVIEW_W / dotW;
+    const scaleY = MAX_PREVIEW_H / dotH;
+    const scale  = Math.min(scaleX, scaleY);
+    const canvasW = dotW * scale;
+    const canvasH = dotH * scale;
+
+    const positions = { ...DEFAULT_FIELD_POSITIONS, ...(template.fieldPositions ?? {}) };
+
+    return (
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1 }}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                PREVIEW — {template.width}×{template.height}&quot; · {template.format}
+            </Typography>
+            <Box
+                onContextMenu={(e) => { e.preventDefault(); onSelect(null); }}
+                sx={{
+                    position: "relative", width: canvasW, height: canvasH,
+                    bgcolor: "#fff", border: "1px solid", borderColor: "divider",
+                    boxShadow: 3, flexShrink: 0, overflow: "hidden",
+                }}
+            >
+                {/* Fixed: PO# */}
+                <Box sx={{ position: "absolute", left: 10 * scale, top: 15 * scale, display: "flex", alignItems: "center", gap: "2px", fontSize: 8, fontFamily: "monospace", color: "text.disabled" }}>
+                    <LockIcon sx={{ fontSize: 8 }} />PO#: 12345678
+                </Box>
+
+                {/* Fixed: Piece ID */}
+                <Box sx={{ position: "absolute", left: 10 * scale, top: 35 * scale, display: "flex", alignItems: "center", gap: "2px", fontSize: 8, fontFamily: "monospace", color: "text.disabled" }}>
+                    <LockIcon sx={{ fontSize: 8 }} />Piece: AB-001
+                </Box>
+
+                {/* Draggable: Barcode */}
+                {(() => {
+                    const barcodePos = { ...DEFAULT_FIELD_POSITIONS.barcode, ...(template.fieldPositions?.barcode ?? {}) };
+                    return (
+                        <DraggableBarcode
+                            pos={barcodePos}
+                            scale={scale}
+                            dotW={dotW}
+                            dotH={dotH}
+                            selected={selectedKey === "barcode"}
+                            onSelect={onSelect}
+                            onMove={onMove}
+                        />
+                    );
+                })()}
+
+                {/* Size + rotation toolbar for selected field */}
+                <SizeToolbar
+                    selectedKey={selectedKey}
+                    pos={selectedKey ? positions[selectedKey] : null}
+                    scale={scale}
+                    onResize={onResize}
+                    onRotate={onRotate}
+                />
+
+                {/* Draggable optional fields */}
+                {(template.fields ?? []).map(key => (
+                    <DraggableField
+                        key={key}
+                        fieldKey={key}
+                        sample={OPTIONAL_FIELDS.find(f => f.key === key)?.sample ?? key}
+                        pos={positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" }}
+                        scale={scale}
+                        dotW={dotW}
+                        dotH={dotH}
+                        selected={selectedKey === key}
+                        onSelect={onSelect}
+                        onMove={onMove}
+                        onResize={onResize}
+                        onRotate={onRotate}
+                    />
+                ))}
+            </Box>
+            <Typography variant="caption" color="text.disabled">
+                Left-drag to reposition · Right-click a field to resize and rotate
+            </Typography>
+        </Box>
+    );
+}
+
+// ── Main settings page ────────────────────────────────────────────────────────
 export function LabelSettingsMain() {
     const { data: session } = useSession();
     const [template, setTemplate] = useState(LABEL_TEMPLATE_DEFAULT);
     const [loading, setLoading]   = useState(true);
     const [saving, setSaving]     = useState(false);
     const [msg, setMsg]           = useState(null);
+    const [selected, setSelected] = useState(null);
+
+    // Always tracks the latest template so save() never captures stale state
+    const templateRef = useRef(template);
+    templateRef.current = template;
 
     useEffect(() => {
         fetch("/api/admin/settings/integrations")
             .then(r => r.json())
             .then(d => {
-                if (d.creds?.labelTemplate) setTemplate({ ...LABEL_TEMPLATE_DEFAULT, ...d.creds.labelTemplate });
+                if (d.creds?.labelTemplate) {
+                    const saved = d.creds.labelTemplate;
+                    setTemplate({
+                        ...LABEL_TEMPLATE_DEFAULT,
+                        ...saved,
+                        fieldPositions: {
+                            ...DEFAULT_FIELD_POSITIONS,
+                            ...(saved.fieldPositions ?? {}),
+                        },
+                    });
+                }
                 setLoading(false);
             });
     }, []);
 
-    function set(key, val) {
-        setTemplate(t => ({ ...t, [key]: val }));
-    }
+    const handleMove = useCallback((key, x, y) => {
+        setTemplate(t => ({
+            ...t,
+            fieldPositions: {
+                ...DEFAULT_FIELD_POSITIONS,
+                ...(t.fieldPositions ?? {}),
+                [key]: { ...(t.fieldPositions?.[key] ?? DEFAULT_FIELD_POSITIONS[key] ?? {}), x, y },
+            },
+        }));
+    }, []);
+
+    const handleResize = useCallback((key, size) => {
+        setTemplate(t => ({
+            ...t,
+            fieldPositions: {
+                ...DEFAULT_FIELD_POSITIONS,
+                ...(t.fieldPositions ?? {}),
+                [key]: { ...(t.fieldPositions?.[key] ?? DEFAULT_FIELD_POSITIONS[key] ?? {}), size },
+            },
+        }));
+    }, []);
+
+    const handleRotate = useCallback((key, rotation) => {
+        setTemplate(t => ({
+            ...t,
+            fieldPositions: {
+                ...DEFAULT_FIELD_POSITIONS,
+                ...(t.fieldPositions ?? {}),
+                [key]: { ...(t.fieldPositions?.[key] ?? DEFAULT_FIELD_POSITIONS[key] ?? {}), rotation },
+            },
+        }));
+    }, []);
 
     function toggleField(key) {
         setTemplate(t => {
@@ -106,48 +357,52 @@ export function LabelSettingsMain() {
         });
     }
 
+    function set(key, val) {
+        setTemplate(t => ({ ...t, [key]: val }));
+    }
+
     async function save() {
         setSaving(true);
         setMsg(null);
         const res = await fetch("/api/admin/settings/integrations", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ labelTemplate: template }),
+            body: JSON.stringify({ labelTemplate: templateRef.current }),
         });
         const d = await res.json();
         setMsg(d.error ? { type: "error", text: d.error } : { type: "success", text: "Label settings saved" });
         setSaving(false);
     }
 
-    const isAdmin = session?.user?.role === "admin" || session?.user?.role === "manager";
+    const role = session?.user?.role;
+    // Owners have all permissions implicitly; everyone else needs labelCreator explicitly granted
+    const canSave = role === "owner" || session?.user?.permissions?.labelCreator === true;
     if (loading) return null;
 
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
-            <Container maxWidth="md" sx={{ py: 4 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3 }} flexWrap="wrap" gap={2}>
-                    <Box>
-                        <Typography variant="h6" fontWeight={700}>Label Creator</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Configure the layout of production pick labels. PO number, piece ID, and barcode are always printed.
-                        </Typography>
-                    </Box>
-                </Stack>
+            <Container maxWidth="lg" sx={{ py: 4 }}>
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" fontWeight={700}>Label Creator</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Design your production pick label. Left-drag fields to reposition. Right-click a field to resize or rotate it.
+                    </Typography>
+                </Box>
 
                 {msg && <Alert severity={msg.type} sx={{ mb: 3 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
 
-                <Stack direction={{ xs: "column", md: "row" }} spacing={4} alignItems="flex-start">
+                <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems="flex-start">
 
-                    {/* ── Controls ── */}
-                    <Stack spacing={3} sx={{ flex: 1 }}>
+                    {/* ── Sidebar controls ── */}
+                    <Stack spacing={2} sx={{ width: { xs: "100%", md: 260 }, flexShrink: 0 }}>
 
-                        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-                            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2 }}>Label Settings</Typography>
-                            <Stack spacing={2}>
+                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>Label Settings</Typography>
+                            <Stack spacing={1.5}>
                                 <FormControl size="small" fullWidth>
-                                    <InputLabel>Label Size</InputLabel>
+                                    <InputLabel>Size</InputLabel>
                                     <Select
-                                        label="Label Size"
+                                        label="Size"
                                         value={`${template.width}x${template.height}`}
                                         onChange={e => {
                                             const sz = LABEL_SIZES.find(s => `${s.width}x${s.height}` === e.target.value) ?? LABEL_SIZES[0];
@@ -155,16 +410,13 @@ export function LabelSettingsMain() {
                                         }}
                                     >
                                         {LABEL_SIZES.map(s => (
-                                            <MenuItem key={`${s.width}x${s.height}`} value={`${s.width}x${s.height}`}>
-                                                {s.label}
-                                            </MenuItem>
+                                            <MenuItem key={`${s.width}x${s.height}`} value={`${s.width}x${s.height}`}>{s.label}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
-
                                 <FormControl size="small" fullWidth>
-                                    <InputLabel>Output Format</InputLabel>
-                                    <Select label="Output Format" value={template.format} onChange={e => set("format", e.target.value)}>
+                                    <InputLabel>Format</InputLabel>
+                                    <Select label="Format" value={template.format} onChange={e => set("format", e.target.value)}>
                                         <MenuItem value="ZPL">ZPL (Zebra direct)</MenuItem>
                                         <MenuItem value="PDF">PDF</MenuItem>
                                     </Select>
@@ -172,32 +424,32 @@ export function LabelSettingsMain() {
                             </Stack>
                         </Paper>
 
-                        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-                            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>Fixed Fields</Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-                                These fields are always printed and cannot be removed.
-                            </Typography>
+                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>Fixed Fields</Typography>
                             <Stack spacing={0.75}>
                                 {[
-                                    { label: "PO Number",  hint: "always at top" },
-                                    { label: "Piece ID",   hint: "always at top" },
-                                    { label: "Barcode",    hint: "always in center" },
+                                    { label: "PO Number", hint: "top" },
+                                    { label: "Piece ID",  hint: "top" },
                                 ].map(f => (
                                     <Stack key={f.label} direction="row" alignItems="center" spacing={1}>
-                                        <LockIcon sx={{ fontSize: 14, color: "text.disabled" }} />
-                                        <Typography variant="body2">{f.label}</Typography>
-                                        <Typography variant="caption" color="text.disabled">({f.hint})</Typography>
+                                        <LockIcon sx={{ fontSize: 13, color: "text.disabled" }} />
+                                        <Typography variant="body2" color="text.secondary">{f.label}</Typography>
+                                        <Typography variant="caption" color="text.disabled" sx={{ ml: "auto" }}>({f.hint})</Typography>
                                     </Stack>
                                 ))}
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                    <Typography variant="body2" color="text.secondary">Barcode</Typography>
+                                    <Typography variant="caption" color="text.disabled" sx={{ ml: "auto" }}>(draggable)</Typography>
+                                </Stack>
                             </Stack>
                         </Paper>
 
-                        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+                        <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>Optional Fields</Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
-                                Toggle the fields you want printed below the barcode.
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                                Toggle to show on label
                             </Typography>
-                            <Stack spacing={0.25}>
+                            <Stack spacing={0}>
                                 {OPTIONAL_FIELDS.map(f => (
                                     <FormControlLabel
                                         key={f.key}
@@ -208,41 +460,30 @@ export function LabelSettingsMain() {
                                                 onChange={() => toggleField(f.key)}
                                             />
                                         }
-                                        label={
-                                            <Stack direction="row" spacing={0.75} alignItems="center">
-                                                <Typography variant="body2">{f.label}</Typography>
-                                                {f.hint && (
-                                                    <Typography variant="caption" color="text.disabled">{f.hint}</Typography>
-                                                )}
-                                            </Stack>
-                                        }
+                                        label={<Typography variant="body2">{f.label}</Typography>}
                                         sx={{ m: 0 }}
                                     />
                                 ))}
                             </Stack>
                         </Paper>
 
-                        {isAdmin && (
+                        {canSave && (
                             <Button variant="contained" size="large" disabled={saving} onClick={save} fullWidth>
                                 {saving ? "Saving…" : "Save label settings"}
                             </Button>
                         )}
                     </Stack>
 
-                    {/* ── Preview ── */}
-                    <Box sx={{ flexShrink: 0, position: { md: "sticky" }, top: { md: 80 } }}>
-                        <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>Preview</Typography>
-                        <LabelPreview
-                            width={template.width}
-                            height={template.height}
-                            enabledFields={template.fields ?? PREMIER_DEFAULT_FIELDS}
+                    {/* ── Canvas preview ── */}
+                    <Box sx={{ flex: 1, position: { md: "sticky" }, top: { md: 80 } }}>
+                        <LabelCanvas
+                            template={template}
+                            selectedKey={selected}
+                            onSelect={setSelected}
+                            onMove={handleMove}
+                            onResize={handleResize}
+                            onRotate={handleRotate}
                         />
-                        <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 1 }}>
-                            {template.width}×{template.height}&quot; · {template.format}
-                        </Typography>
-                        <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.25 }}>
-                            Default label layout
-                        </Typography>
                     </Box>
                 </Stack>
             </Container>

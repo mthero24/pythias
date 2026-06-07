@@ -1,5 +1,5 @@
 import { Settings } from "@pythias/mongo";
-import { LABEL_TEMPLATE_DEFAULT, PREMIER_DEFAULT_FIELDS } from "../lib/labelConstants.js";
+import { LABEL_TEMPLATE_DEFAULT, PREMIER_DEFAULT_FIELDS, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL } from "../lib/labelConstants.js";
 
 const DPI = 203;
 
@@ -64,20 +64,18 @@ function buildZPL(item, poNumber, idx, totalQuantity, template) {
     lines.push(`^LH6,6^CFS,25,12^AXN,22,30^FO10,15^FDPO#: ${poNumber}^FS`);
     lines.push(`^LH6,6^CFS,25,12^AXN,22,30^FO10,35^FDPiece: ${item.pieceId}^FS`);
 
-    // Fixed center — barcode of pieceId
-    lines.push(`^FO50,55^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS`);
+    // Barcode — position from template
+    const barcodePos = template.fieldPositions?.barcode ?? DEFAULT_FIELD_POSITIONS.barcode;
+    lines.push(`^FO${barcodePos.x},${barcodePos.y}^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS`);
 
-    // Optional fields stacked below barcode
-    let y = 175;
-    const rowHeight = 30;
-
+    const positions = { ...DEFAULT_FIELD_POSITIONS, ...(template.fieldPositions ?? {}) };
     for (const key of (template.fields ?? [])) {
         const text = fieldText(key, item, idx, totalQuantity);
         if (!text) continue;
-        lines.push(`^LH12,18^CFS,25,12^AXN,22,30^FO10,${y}^FD${text}^FS`);
-        y += rowHeight;
-        // Stop if we'd overflow the label
-        if (y + rowHeight > heightDots) break;
+        const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
+        const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
+        const rot = pos.rotation ?? "N";
+        lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y}^FD${text}^FS`);
     }
 
     lines.push("^XZ");

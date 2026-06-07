@@ -3,7 +3,7 @@ import { Items, ReturnBins, Batches } from "@pythias/mongo";
 import { LabelsData } from "@/functions/labels";
 import btoa from "btoa";
 import axios from "axios";
-import {buildLabelData} from "@/functions/labelString"
+import { buildLabelData, loadTemplate } from "@/functions/labelString"
 import { Types } from "mongoose";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
@@ -62,7 +62,7 @@ export async function POST(req=NextApiRequest){
     console.log(printableItems.length)
     for(let i of printableItems){
         const totalQuantity = orderCountMap[(i.order?._id || i.order)?.toString()] ?? null;
-        let label = await buildLabelData(i, j, data.poNumber, {}, totalQuantity)
+        let label = await buildLabelData(i, j, data.poNumber, {}, totalQuantity, template)
         pieceIds.push(i.pieceId)
         preLabels.push(label)
         j++
@@ -71,14 +71,15 @@ export async function POST(req=NextApiRequest){
     preLabels.map(l=> labelsString += l)
     console.log(preLabels)
     labelsString = btoa(labelsString)
-    const sc = await getShippingCreds();
+    const [sc, template] = await Promise.all([getShippingCreds(), loadTemplate()]);
     const headers = {
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${sc.localKey}`
         }
     };
-    let res = await axios.post(`http://${sc.localIP}/api/print-labels`, {label: labelsString, printer: printerName}, headers).catch(e=>{console.log(e.response)})
+    const printEndpoint = template.format === "PDF" ? "cpu" : "print-labels";
+    let res = await axios.post(`http://${sc.localIP}/api/${printEndpoint}`, {label: labelsString, printer: printerName}, headers).catch(e=>{console.log(e.response)})
     let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
     await batch.save()
     await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, stockStatus: null, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})

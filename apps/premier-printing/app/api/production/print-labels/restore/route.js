@@ -1,56 +1,44 @@
-import {Items, Order} from "@pythias/mongo";
-import {NextApiResponse, NextResponse} from "next/server";
-import {Sort} from "@pythias/labels";
-import { buildLabelData } from "@/functions/labelString";
-import axios from "axios"
+import { Items, Order } from "@pythias/mongo";
+import { NextResponse } from "next/server";
+import { Sort } from "@pythias/labels";
+import { buildLabelData, loadTemplate } from "@/functions/labelString";
 import { LabelsData } from "@/functions/labels";
-import { Inventory } from "@pythias/mongo";
-import btoa from "btoa"
+import axios from "axios";
+import btoa from "btoa";
 import { getShippingCreds } from "@/lib/getShippingCreds";
-export async function POST(req=NextApiResponse) {
-    let data = await req.json()
-    console.log(data)
-    let labelsString = ``
-    let items = await Items.find({batchID: data.batchID}).populate("designRef inventory.inventory inventory.productInventory").lean()
 
-    console.log(items.length, "length of items +++")
-    let standardOrders = items.map(s=> s.order)
-    standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items, marketplace").lean()
-    console.log(standardOrders.length, "standatd orders")
-    items = items.map(s=> { s.order = standardOrders.filter(o=> o._id.toString() == s.order.toString())[0];  return {...s}})
-    console.log(items.length, "before filter")
-    items = items.filter(s=> s.order != undefined)
-    items = Sort(items)
-    console.log(items.length)
-    let preLabels = items.map(async (i, j)=>{
-        console.log(j)
-        //if(j >= parseInt(data.lastIndex)){
-            let label = await buildLabelData(i, j)
-            //console.log(label)
-            return label
-        //}
-    })
+export async function POST(req) {
+    const data = await req.json();
 
-    // full fill promises
-    preLabels = await Promise.all(preLabels);
-    preLabels.slice(parseInt(data.lastIndex), preLabels.length).map(l=> labelsString += l)
-    console.log(preLabels.length, "+++++++", preLabels.slice(parseInt(data.lastIndex), preLabels.length))
-    //create label string
-    //console.log(labelsString)
-    //convert to base64
-    labelsString = btoa(labelsString)
+    const [sc, template] = await Promise.all([getShippingCreds(), loadTemplate()]);
 
-    //print labels
-    const sc = await getShippingCreds();
-    let headers = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sc.localKey}`,
-      },
-    };
-    let res = await axios.post(`http://${sc.localIP}/api/print-labels`, {label: labelsString, printer: "printer1"}, headers).catch(e=>{console.log(e.response)})
-    console.log(res?.data)
-    const {labels, giftMessages, rePulls, batches} = await LabelsData()
-    //console.log(giftMessages)
-    return NextResponse.json({error: false, msg: "reprinted", labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
+    let items = await Items.find({ batchID: data.batchID })
+        .populate("designRef inventory.inventory inventory.productInventory")
+        .lean();
+
+    const orderIds = items.map(i => i.order);
+    const orders = await Order.find({ _id: { $in: orderIds } }).select("poNumber items marketplace").lean();
+    const orderMap = new Map(orders.map(o => [o._id.toString(), o]));
+
+    items = items
+        .map(i => ({ ...i, order: orderMap.get(i.order?.toString()) }))
+        .filter(i => i.order);
+    items = await Sort(items);
+
+    const preLabels = await Promise.all(
+        items.map((item, j) => buildLabelData(item, j, item.order?.poNumber, {}, null, template))
+    );
+
+    let labelsString = "";
+    preLabels.slice(parseInt(data.lastIndex ?? 0)).forEach(l => { labelsString += l; });
+    labelsString = btoa(labelsString);
+
+    const headers = { headers: { "Content-Type": "application/json", Authorization: `Bearer ${sc.localKey}` } };
+    const printEndpoint = template.format === "PDF" ? "cpu" : "print-labels";
+    await axios
+        .post(`http://${sc.localIP}/api/${printEndpoint}`, { label: labelsString, printer: "printer1" }, headers)
+        .catch(e => console.error("restore/print-labels:", e.message));
+
+    const { labels, giftMessages, rePulls, batches } = await LabelsData();
+    return NextResponse.json({ error: false, msg: "reprinted", labels, giftMessages: giftMessages ?? [], rePulls, batches });
 }

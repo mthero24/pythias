@@ -53,6 +53,8 @@ import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import AppsIcon from "@mui/icons-material/Apps";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import LabelIcon from "@mui/icons-material/Label";
+import SellIcon from "@mui/icons-material/Sell";
 
 const DRAWER_WIDTH = 268;
 
@@ -74,6 +76,7 @@ const NAV_SECTIONS = [
       { label: "Users",           href: "/admin/users",     icon: <PeopleIcon fontSize="small" />,           showCSV: false },
       { label: "Licenses",        href: "/admin/license",   icon: <CardMembershipIcon fontSize="small" />,   showCSV: false },
       { label: "Colors",          href: "/admin/colors",    icon: <PaletteIcon fontSize="small" />,          showCSV: false },
+      { label: "Brands",          href: "/admin/brands",    icon: <SellIcon fontSize="small" />,             showCSV: false },
       { label: "Edit Data",       href: "/admin/edit-data", icon: <EditIcon fontSize="small" />,             showCSV: false },
       { label: "Converters",      href: "/admin/converters",icon: <SyncAltIcon fontSize="small" />,         showCSV: false },
       { label: "Marketplace Data",href: "/marketplaces",         icon: <StorefrontIcon fontSize="small" />,              showCSV: false },
@@ -87,6 +90,7 @@ const NAV_SECTIONS = [
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
       { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },
       { label: "Shipping & Hardware", href: "/admin/settings/shipping", icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false },
+      { label: "Label Creator",       href: "/admin/settings/labels",   icon: <LabelIcon fontSize="small" />,                  showCSV: false },
     ],
   },
   {

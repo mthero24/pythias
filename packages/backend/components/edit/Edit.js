@@ -28,7 +28,7 @@ const CATEGORY_META = {
     themes:         { label: "Themes",          Icon: StyleIcon,          color: "#ec4899" },
     sportUsedFor:   { label: "Sport Used For",  Icon: FitnessCenterIcon,  color: "#ef4444" },
     departments:    { label: "Departments",     Icon: CategoryIcon,       color: "#6366f1" },
-    brands:         { label: "Brands",          Icon: SellIcon,           color: "#0ea5e9" },
+    // brands removed — managed on the dedicated Brands page
     suppliers:      { label: "Suppliers",       Icon: LocalShippingIcon,  color: "#f97316" },
     vendors:        { label: "Vendors",         Icon: StorefrontIcon,     color: "#10b981" },
     printTypes:     { label: "Print Types",     Icon: PrintIcon,          color: "#14b8a6" },
@@ -37,7 +37,7 @@ const CATEGORY_META = {
     printLocations: { label: "Print Locations", Icon: LocationOnIcon,     color: "#f43f5e" },
 };
 
-export function Edit({ data, priceFields = [] }) {
+export function Edit({ data, priceFields = [], brandsPath = null }) {
     const [values, setValues]           = useState(data);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [globalSearch, setGlobalSearch] = useState("");
@@ -112,6 +112,21 @@ export function Edit({ data, priceFields = [] }) {
                             ) : null,
                         }}
                     />
+                </Box>
+
+                {/* Brands moved banner */}
+                <Box sx={{ mb: 2, p: 1.5, bgcolor: "action.hover", borderRadius: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <SellIcon fontSize="small" sx={{ color: "#0ea5e9" }} />
+                        <Typography variant="body2" color="text.secondary">
+                            Brands are now managed on their own page, including logo uploads.
+                        </Typography>
+                    </Stack>
+                    {brandsPath && (
+                        <Button size="small" variant="outlined" href={brandsPath} sx={{ borderRadius: 1.5, flexShrink: 0 }}>
+                            Go to Brands
+                        </Button>
+                    )}
                 </Box>
 
                 {/* No results */}

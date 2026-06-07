@@ -1,11 +1,7 @@
 import { PlatformItem, Settings } from "@pythias/mongo";
+import { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL } from "@pythias/backend/lib/labelConstants.js";
 
 const DPI = 203;
-
-const LABEL_TEMPLATE_DEFAULT = {
-    width: 2, height: 2, format: "ZPL",
-    fields: ["itemNumber", "styleCode", "shipByDate", "color", "size", "shippingType", "designSku", "orderCount", "designName", "printType", "printLocations"],
-};
 
 function fieldText(key, item, idx, totalQuantity) {
     switch (key) {
@@ -35,8 +31,8 @@ function fieldText(key, item, idx, totalQuantity) {
 }
 
 function buildZPL(item, idx, poNumber, totalQuantity, template) {
-    const widthDots  = Math.round((template.width  ?? 2) * DPI);
-    const heightDots = Math.round((template.height ?? 2) * DPI);
+    const widthDots = Math.round((template.width  ?? 2) * DPI);
+    const heightDots = Math.round((template.height ?? 2) * DPI); // used for ^LL
 
     const lines = [
         "^XA",
@@ -45,18 +41,18 @@ function buildZPL(item, idx, poNumber, totalQuantity, template) {
         // Fixed top
         `^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPO#: ${item.order?.poNumber ?? poNumber ?? ""}^FS`,
         `^LH6,6^CFS,30,6^AXN,22,30^FO10,35^FDPiece: ${item.pieceId}^FS`,
-        // Fixed center barcode
-        `^FO50,55^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS`,
+        // Barcode — position from template
+        `^FO${(template.fieldPositions?.barcode?.x ?? 50)},${(template.fieldPositions?.barcode?.y ?? 55)}^BY2^BC,100,N,N,N,A^FD${item.pieceId}^FS`,
     ];
 
-    let y = 175;
-    const rowH = 30;
+    const positions = { ...DEFAULT_FIELD_POSITIONS, ...(template.fieldPositions ?? {}) };
     for (const key of (template.fields ?? [])) {
         const text = fieldText(key, item, idx, totalQuantity);
         if (!text) continue;
-        lines.push(`^LH12,18^CFS,25,12^AXN,22,30^FO10,${y}^FD${text}^FS`);
-        y += rowH;
-        if (y + rowH > heightDots) break;
+        const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
+        const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
+        const rot = pos.rotation ?? "N";
+        lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y}^FD${text}^FS`);
     }
 
     lines.push("^XZ");

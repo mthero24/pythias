@@ -1,26 +1,26 @@
-import { Seasons, Genders, Themes, SportUsedFor, Departments, Brands, Suppliers, Vendors, PrintTypes, RepullReasons, Categories, PrintLocations } from "@pythias/mongo";
+import { Seasons, Genders, Themes, SportUsedFor, Departments, Suppliers, Vendors, PrintTypes, RepullReasons, Categories, PrintLocations } from "@pythias/mongo";
 import { serialize, Edit } from "@pythias/backend";
 export const dynamic = 'force-dynamic';
 export default async function EditPage() {
     try {
-        let seasons = await Seasons.find().lean();
-        let genders = await Genders.find().lean();
-        let themes = await Themes.find().lean();
-        let sportUsedFor = await SportUsedFor.find().lean();
-        let departments = await Departments.find().lean();
-        let brands = await Brands.find().lean();
-        let suppliers = await Suppliers.find().lean();
-        let vendors = await Vendors.find().lean();
-        let printTypes = await PrintTypes.find().lean();
-        let repullReasons = await RepullReasons.find().lean();
-        let categories = await Categories.find().lean();
-        let printLocations = await PrintLocations.find().lean();
-        console.log("brands", brands)
-        let data = serialize({ seasons, genders, themes, sportUsedFor, departments, brands, suppliers, vendors, printTypes, repullReasons, categories, printLocations })
-        return <Edit data={data} />
+        const [seasons, genders, themes, sportUsedFor, departments, suppliers, vendors, printTypes, repullReasons, categories, printLocations] = await Promise.all([
+            Seasons.find().lean(),
+            Genders.find().lean(),
+            Themes.find().lean(),
+            SportUsedFor.find().lean(),
+            Departments.find().lean(),
+            Suppliers.find().lean(),
+            Vendors.find().lean(),
+            PrintTypes.find().lean(),
+            RepullReasons.find().lean(),
+            Categories.find().lean(),
+            PrintLocations.find().lean(),
+        ]);
+        const data = serialize({ seasons, genders, themes, sportUsedFor, departments, suppliers, vendors, printTypes, repullReasons, categories, printLocations });
+        return <Edit data={data} brandsPath="/admin/brands" />;
     } catch (e) {
-        console.log(e)
-        let data = { seasons: [], genders: [], themes: [], sportUsedFor: [], departments: [], brands: [], suppliers: [], vendors: [], printTypes: [], repullReasons: [], categories: [], printLocations: [] }
-        return <Edit data={data} />
+        console.error(e);
+        const data = { seasons: [], genders: [], themes: [], sportUsedFor: [], departments: [], suppliers: [], vendors: [], printTypes: [], repullReasons: [], categories: [], printLocations: [] };
+        return <Edit data={data} brandsPath="/admin/brands" />;
     }
 }
