@@ -148,6 +148,7 @@ const EMPTY = {
     fedex: { accountNumber: "", clientId: "", clientSecret: "" },
     dhl: { accountNumber: "", clientId: "", clientSecret: "" },
     productionLabelPrinters: [],
+    picklistLabelPrinters: [],
     production: { shippingStations: [], dtfPrinters: [], gtxPrinters: [], roqFolders: [], sublimationMachines: [], embroideryMachines: [] },
 };
 
@@ -448,6 +449,38 @@ export function ShippingSettingsMain({ defaultStationFormat = "ZPL" }) {
                                                 port: "9100",
                                             })}>
                                             Add Printer
+                                        </Button>
+                                    </Box>
+                                </Stack>
+                            </AccordionDetails>
+                        </Accordion>
+
+                        {/* ── Picklist Printer ─────────────────────────────── */}
+                        <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography fontWeight={700}>Picklist Printer</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Stack spacing={2}>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Printer(s) used for PDF pick lists on bulk orders. Kept separate from production label printers.
+                                        Pick lists always print as full-page PDFs, so PDF format is recommended.
+                                    </Typography>
+                                    <Stack spacing={1}>
+                                        {(creds.picklistLabelPrinters ?? []).map((p, i) => (
+                                            <LabelPrinterRow key={i} printer={p}
+                                                onChange={(f, v) => setArrayItem("picklistLabelPrinters", i, f, v)}
+                                                onDelete={() => removeArrayItem("picklistLabelPrinters", i)} />
+                                        ))}
+                                    </Stack>
+                                    <Box>
+                                        <Button size="small" startIcon={<AddIcon />} variant="outlined"
+                                            onClick={() => addArrayItem("picklistLabelPrinters", {
+                                                name: `printer${(creds.picklistLabelPrinters?.length ?? 0) + 1}`,
+                                                format: "PDF",
+                                                port: "9100",
+                                            })}>
+                                            Add Picklist Printer
                                         </Button>
                                     </Box>
                                 </Stack>

@@ -13,5 +13,5 @@ export default async function Bulk() {
     for (const order of orders) {
         order.items = order.items.filter(item => item.canceled == false);
     }
-    return <BulkMain orders={serialize(orders)} printers={sc.labelPrinters} />;
+    return <BulkMain orders={serialize(orders)} printers={sc.labelPrinters} picklistPrinters={sc.picklistPrinters} />;
 }

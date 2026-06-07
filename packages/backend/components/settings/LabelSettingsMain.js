@@ -480,8 +480,12 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
     }
 
     const role = session?.user?.role;
-    // Owners have all permissions implicitly; everyone else needs labelCreator explicitly granted
-    const canSave = role === "owner" || session?.user?.permissions?.labelCreator === true;
+    const canSave =
+        role === "owner" ||
+        role === "admin" ||
+        role === "production" ||
+        role === "manager" ||
+        session?.user?.permissions?.labelCreator === true;
     if (loading) return null;
 
     return (

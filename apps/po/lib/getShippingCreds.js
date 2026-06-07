@@ -6,6 +6,7 @@ const TTL = 30_000;
 
 const KEYS = [
     "localIP", "localKey",
+    "picklistLabelPrinters",
     "usps.clientId", "usps.clientSecret", "usps.accountNumber", "usps.crid", "usps.mid", "usps.manifestMid",
     "ups.clientId", "ups.clientSecret", "ups.accountNumber",
     "fedex.accountNumber", "fedex.clientId", "fedex.clientSecret",
@@ -111,6 +112,9 @@ export async function getShippingCreds() {
         })(),
         labelPrinters: (() => {
             try { return JSON.parse(m["productionLabelPrinters"] || "[]"); } catch { return []; }
+        })(),
+        picklistPrinters: (() => {
+            try { return JSON.parse(m["picklistLabelPrinters"] || "[]"); } catch { return []; }
         })(),
     };
 }

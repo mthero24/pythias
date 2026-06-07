@@ -313,9 +313,10 @@ function OrderRow({ order, index, printers, picklistPrinter }) {
     );
 }
 
-export function BulkMain({ orders, printers = [] }) {
-    const printerList = printers.length > 0 ? printers : [{ name: "printer1", format: "PDF" }];
-    const [picklistPrinter, setPicklistPrinter] = useState(printerList[0]?.name ?? "printer1");
+export function BulkMain({ orders, printers = [], picklistPrinters = [] }) {
+    const printerList         = printers.length > 0         ? printers         : [{ name: "printer1", format: "ZPL" }];
+    const picklistPrinterList = picklistPrinters.length > 0 ? picklistPrinters : [{ name: "printer1", format: "PDF" }];
+    const [picklistPrinter, setPicklistPrinter] = useState(picklistPrinterList[0]?.name ?? "printer1");
 
     const allStats = orders.reduce((acc, o) => {
         const { total, inStock, outOfStock } = orderStats(o);
@@ -356,7 +357,7 @@ export function BulkMain({ orders, printers = [] }) {
                                 onChange={e => setPicklistPrinter(e.target.value)}
                                 sx={{ fontSize: "0.8rem" }}
                             >
-                                {printerList.map(p => (
+                                {picklistPrinterList.map(p => (
                                     <MenuItem key={p.name} value={p.name} sx={{ fontSize: "0.8rem" }}>
                                         {p.name}
                                     </MenuItem>

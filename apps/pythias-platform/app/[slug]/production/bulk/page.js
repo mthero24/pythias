@@ -14,7 +14,7 @@ export default async function BulkOrdersPage() {
 
     const orgId = new mongoose.Types.ObjectId(session.user.orgId);
 
-    const [org, orders, printersDoc] = await Promise.all([
+    const [org, orders, printersDoc, picklistDoc] = await Promise.all([
         Organization.findById(orgId).lean(),
         PlatformOrder.find({
             orgId,
@@ -26,8 +26,10 @@ export default async function BulkOrdersPage() {
             .populate("items")
             .lean(),
         Settings.findOne({ key: "productionLabelPrinters" }).lean(),
+        Settings.findOne({ key: "picklistLabelPrinters" }).lean(),
     ]);
-    const printers = (() => { try { return JSON.parse(printersDoc?.value ?? "[]"); } catch { return []; } })();
+    const printers          = (() => { try { return JSON.parse(printersDoc?.value ?? "[]");        } catch { return []; } })();
+    const picklistPrinters  = (() => { try { return JSON.parse(picklistDoc?.value  ?? "[]");       } catch { return []; } })();
 
     if (!org) redirect("/login");
 
@@ -47,5 +49,5 @@ export default async function BulkOrdersPage() {
             })),
     }));
 
-    return <BulkMain orders={serialize(shaped)} bulkThreshold={bulkThreshold} printers={printers} />;
+    return <BulkMain orders={serialize(shaped)} bulkThreshold={bulkThreshold} printers={printers} picklistPrinters={picklistPrinters} />;
 }
