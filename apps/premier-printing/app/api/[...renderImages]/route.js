@@ -128,8 +128,13 @@ export async function GET(req) {
     if (!result) return new NextResponse(null, { status: 500 });
 
     const buffer = Buffer.from(result.replace(/^data:image\/\w+;base64,/, ""), "base64");
+    const cacheTag = blankImage.image?.match(/\/(\d+)\.\w+/)?.[1];
     return new NextResponse(buffer, {
-        headers: { "Content-Type": "image/jpeg", "Access-Control-Allow-Origin": "*" },
+        headers: {
+            "Content-Type": "image/jpeg",
+            "Access-Control-Allow-Origin": "*",
+            ...(cacheTag ? { "Cache-Tag": cacheTag } : {}),
+        },
     });
 }
 

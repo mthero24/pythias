@@ -4,6 +4,19 @@ import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 import { deleteFromS3, blankImageUrls } from "@/lib/s3";
 
+const purgeCloudflareForBlank = (blankImages) => {
+    const token = process.env.CloudFlare_Token;
+    const zone  = process.env.CLoudFlare_ZoneId;
+    if (!token || !zone) return;
+    const tags = (blankImages ?? []).map(i => i.image?.match(/\/(\d+)\.\w+/)?.[1]).filter(Boolean);
+    if (!tags.length) return;
+    fetch(`https://api.cloudflare.com/client/v4/zones/${zone}/purge_cache`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ tags }),
+    }).catch(() => {});
+};
+
 export async function GET() {
   try {
     const blanks = await Blanks.find({}).populate("colors").lean();
@@ -120,6 +133,9 @@ export async function POST(req = NextApiRequest) {
         Inventory.deleteMany({ blank: blank._id }); // fire-and-forget
       } else {
         updateInventory(blank); // fire-and-forget
+      }
+      if (JSON.stringify(beforeBlank?.images) !== JSON.stringify(blank.images)) {
+        purgeCloudflareForBlank(blank.images); // fire-and-forget
       }
       const logAction = action || "blank_update";
       logActivity({ action: logAction, entity: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", userName, email });

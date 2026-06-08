@@ -71,54 +71,68 @@ export const updateInventory = async () => {
 };
 
 export const recomputeStockStatus = async () => {
-    const allWithInv = await Item.find({
-        labelPrinted: false, canceled: false, shipped: false, paid: true,
-        "inventory.inventory": { $exists: true, $ne: null },
-    }).select("_id inventory.inventory stockStatus date").sort({ date: 1 }).lean();
-
-    if (!allWithInv.length) return;
-
-    const allInvIds = [...new Set(allWithInv.map(i => i.inventory.inventory.toString()))];
-    const [allInvDocs, activeOrders] = await Promise.all([
-        Inventory.find({ _id: { $in: allInvIds } }, "quantity allocated").lean(),
-        InventoryOrders.find(
-            { received: { $ne: true }, "locations.items.inventory": { $in: allInvIds } },
-            "locations"
-        ).lean(),
+    const [allWithInv, productInvItems] = await Promise.all([
+        Item.find({
+            labelPrinted: false, canceled: false, shipped: false, paid: true,
+            "inventory.inventory": { $exists: true, $ne: null },
+        }).select("_id inventory.inventory stockStatus date").sort({ date: 1 }).lean(),
+        Item.find({
+            labelPrinted: false, canceled: false, shipped: false, paid: true,
+            "inventory.productInventory": { $exists: true, $ne: null },
+            stockStatus: { $ne: "inStock" },
+        }).select("_id").lean(),
     ]);
 
-    const orderedCapMap = new Map();
-    for (const po of activeOrders) {
-        for (const loc of po.locations || []) {
-            if (loc.received) continue;
-            for (const item of loc.items || []) {
-                const k = item.inventory?.toString();
-                if (!k) continue;
-                orderedCapMap.set(k, (orderedCapMap.get(k) ?? 0) + (item.quantity ?? 0));
+    const updateOps = [];
+
+    if (allWithInv.length) {
+        const allInvIds = [...new Set(allWithInv.map(i => i.inventory.inventory.toString()))];
+        const [allInvDocs, activeOrders] = await Promise.all([
+            Inventory.find({ _id: { $in: allInvIds } }, "quantity allocated").lean(),
+            InventoryOrders.find(
+                { received: { $ne: true }, "locations.items.inventory": { $in: allInvIds } },
+                "locations"
+            ).lean(),
+        ]);
+
+        const orderedCapMap = new Map();
+        for (const po of activeOrders) {
+            for (const loc of po.locations || []) {
+                if (loc.received) continue;
+                for (const item of loc.items || []) {
+                    const k = item.inventory?.toString();
+                    if (!k) continue;
+                    orderedCapMap.set(k, (orderedCapMap.get(k) ?? 0) + (item.quantity ?? 0));
+                }
+            }
+        }
+
+        const invMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
+            quantity: Math.max(0, inv.quantity ?? 0),
+            orderedCapacity: orderedCapMap.get(inv._id.toString()) ?? 0,
+            slotsUsed: 0,
+            orderedUsed: 0,
+        }]));
+
+        for (const item of allWithInv) {
+            const invId = item.inventory.inventory.toString();
+            const data = invMap.get(invId);
+            if (!data) continue;
+            let computed;
+            if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
+            else if (data.orderedUsed < data.orderedCapacity) { computed = "ordered"; data.orderedUsed++; }
+            else { computed = "attached"; }
+            if (item.stockStatus !== computed) {
+                updateOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: computed } } } });
             }
         }
     }
 
-    const invMap = new Map(allInvDocs.map(inv => [inv._id.toString(), {
-        quantity: Math.max(0, inv.quantity ?? 0),
-        orderedCapacity: orderedCapMap.get(inv._id.toString()) ?? 0,
-        slotsUsed: 0,
-        orderedUsed: 0,
-    }]));
-
-    const updateOps = [];
-    for (const item of allWithInv) {
-        const invId = item.inventory.inventory.toString();
-        const data = invMap.get(invId);
-        if (!data) continue;
-        let computed;
-        if (data.slotsUsed < data.quantity) { computed = "inStock"; data.slotsUsed++; }
-        else if (data.orderedUsed < data.orderedCapacity) { computed = "ordered"; data.orderedUsed++; }
-        else { computed = "attached"; }
-        if (item.stockStatus !== computed) {
-            updateOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: computed } } } });
-        }
+    // productInventory items are pre-reserved at order time — always inStock
+    for (const item of productInvItems) {
+        updateOps.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: "inStock" } } } });
     }
+
     if (updateOps.length) await Item.bulkWrite(updateOps, { ordered: false });
 };
 const createItemVariant = async (variant, product, order, price) => {

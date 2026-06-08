@@ -3,6 +3,19 @@ import { PlatformBlank, PlatformInventory, PlatformColor } from "@pythias/mongo"
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 
+const purgeCloudflareForBlank = (blankImages) => {
+    const token = process.env.CloudFlare_Token;
+    const zone  = process.env.CLoudFlare_ZoneId;
+    if (!token || !zone) return;
+    const tags = (blankImages ?? []).map(i => i.image?.match(/\/(\d+)\.\w+/)?.[1]).filter(Boolean);
+    if (!tags.length) return;
+    fetch(`https://api.cloudflare.com/client/v4/zones/${zone}/purge_cache`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ tags }),
+    }).catch(() => {});
+};
+
 const generateSizeSku = (name) => {
     if (!name) return "";
     const n = name.trim().toLowerCase().replace(/\s+/g, "").replace(/-/g, "");
@@ -155,6 +168,9 @@ export async function POST(req) {
                 PlatformInventory.deleteMany({ blank: blank._id, orgId }); // fire-and-forget
             } else {
                 updateInventory(blank, orgId); // fire-and-forget
+            }
+            if (JSON.stringify(beforeBlank?.images) !== JSON.stringify(blank.images)) {
+                purgeCloudflareForBlank(blank.images); // fire-and-forget
             }
 
             const logAction = action || "blank_update";
