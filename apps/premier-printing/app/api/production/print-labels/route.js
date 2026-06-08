@@ -89,6 +89,6 @@ export async function POST(req=NextApiRequest){
         return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
     } catch(e) {
         console.error("[print-labels] 500:", e);
-        return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
+        return NextResponse.json({ error: true, msg: e.message ?? e.toString() });
     }
 }

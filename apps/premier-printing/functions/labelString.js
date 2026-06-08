@@ -132,48 +132,41 @@ export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity
         totalQuantity = await Items.find({ _id: { $in: item.order?.items ?? [] }, canceled: false }).countDocuments();
     }
 
-    // Inventory management — skip for gift items and items without a blank reference
-    if (item.type !== "gift" && (item.blank?._id ?? item.blank)) {
+    // Gift items have no inventory — skip all inventory management
+    if (item.type !== "gift") {
         if (!item.inventory) item.inventory = {};
         if (!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
 
-        if (!item.inventory.inventory) {
-            item.inventory.inventory = await Inventory.findOne({
-                blank:  item.blank?._id  ?? item.blank,
-                color:  item.color?._id  ?? item.color,
-                sizeId: item.size?._id   ?? item.size,
-            }).select("row bin shelf unit quantity onhold");
-            if (item.inventory?.inventory) {
-                item.inventory.inventory.quantity -= 1;
-                if (item.inventory.inventory.inStock)
-                    item.inventory.inventory.inStock = item.inventory.inventory.inStock.filter(id => id.toString() !== item._id.toString());
-                if (item.inventory.inventory.attached)
-                    item.inventory.inventory.attached = item.inventory.inventory.attached.filter(id => id.toString() !== item._id.toString());
-                await item.inventory.inventory.save();
+        if (item.inventory.inventoryType === "productInventory") {
+            const piId = item.inventory.productInventory?._id ?? item.inventory.productInventory;
+            if (piId) {
+                const pi = await ProductInventory.findById(piId).select("location quantity onhold inStock");
+                if (pi) {
+                    pi.quantity -= 1;
+                    if (pi.inStock) pi.inStock = pi.inStock.filter(id => id.toString() !== item._id.toString());
+                    await pi.save();
+                }
+            }
+        } else if (item.inventory.inventoryType === "inventory" && (item.blank?._id ?? item.blank)) {
+            if (!item.inventory.inventory) {
+                item.inventory.inventory = await Inventory.findOne({
+                    blank:  item.blank?._id  ?? item.blank,
+                    color:  item.color?._id  ?? item.color,
+                    sizeId: item.size?._id   ?? item.size,
+                }).select("row bin shelf unit quantity onhold");
+            }
+            const inv = item.inventory.inventory
+                ? await Inventory.findById(item.inventory.inventory?._id ?? item.inventory.inventory).select("quantity onhold inStock attached")
+                : null;
+            if (inv) {
+                inv.quantity -= 1;
+                if (inv.inStock)  inv.inStock  = inv.inStock.filter(id => id.toString() !== item._id.toString());
+                if (inv.attached) inv.attached = inv.attached.filter(id => id.toString() !== item._id.toString());
+                await inv.save();
             }
         }
     } else if (!item.inventory) {
         item.inventory = {};
-    }
-
-    if (item.inventory?.inventoryType === "productInventory") {
-        const piId = item.inventory.productInventory?._id ?? item.inventory.productInventory;
-        if (piId) {
-            const pi = await ProductInventory.findById(piId).select("location quantity onhold inStock");
-            if (pi) {
-                pi.quantity -= 1;
-                if (pi.inStock) pi.inStock = pi.inStock.filter(id => id.toString() !== item._id.toString());
-                await pi.save();
-            }
-        }
-    } else if (item.inventory?.inventoryType === "inventory") {
-        const inv = await Inventory.findById(item.inventory?.inventory?._id).select("quantity onhold");
-        if (inv) {
-            inv.quantity -= 1;
-            if (inv.inStock)    inv.inStock    = inv.inStock.filter(id => id.toString() !== item._id.toString());
-            if (inv.attached)   inv.attached   = inv.attached.filter(id => id.toString() !== item._id.toString());
-            await inv.save();
-        }
     }
 
     const tpl = template ?? await loadTemplate();
