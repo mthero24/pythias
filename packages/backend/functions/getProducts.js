@@ -41,7 +41,7 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
         query[0].$search.compound.must.push({
             text: {
                 query: q,
-                    path: ["title", "sku", "variantsArray.sku", "tags"],
+                    path: ["brand", "sku", "title", "variantsArray.sku"],
                         fuzzy: {
                     maxEdits: 2,
                         prefixLength: 3,
