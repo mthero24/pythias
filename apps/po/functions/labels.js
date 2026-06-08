@@ -31,7 +31,6 @@ export async function LabelsData() {
         }).lean(),
         Items.find({
             labelPrinted: false, paid: true, canceled: false, type: "gift",
-            sku: "gift-bag",
         }).lean(),
         Batches.find({}).limit(20).sort({ _id: -1 }).lean(),
         Items.find({

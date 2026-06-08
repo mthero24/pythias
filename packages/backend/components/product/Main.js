@@ -13,7 +13,7 @@ import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import {useCSV} from "../reusable/CSVProvider";
 import {CreateNFProduct} from "./CreateNFProduct";
 import LoaderOverlay from "../reusable/LoaderOverlay";
-export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts, printTypes, licenses, canManageMarketplaces, searchUrl }) => {
+export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUsedFor, brands, marketplaces, colors, themes, query, filter, CreateSku, source, totalProducts, printTypes, licenses, canManageMarketplaces, searchUrl, orgType }) => {
     const [products, setProducts] = useState(prods ?? []);
     const [count, setCount] = useState(co ?? 0);
     const [page, setPage] = useState(pa ?? 1);
@@ -349,7 +349,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                 </Stack>
                 <CreateProductModal open={createProduct} setOpen={setCreateProduct} product={selectedProduct} setProduct={setSelectedProduct} blanks={blanks} design={des} setDesign={setDesign} updateDesign={updateDesign} colors={colors} imageGroups={imageGroups} brands={bran} genders={gen} seasons={seas} setBrands={setBrands} setGenders={setGenders} setSeasons={setSeasons} CreateSku={CreateSku} source={source} loading={loading} setLoading={setLoading} preview={preview} setPreview={setPreview} themes={them} sportUsedFor={sport} setThemes={setThemes} setSportUsedFor={setSportUsedFor} pageProducts={products} setPageProducts={setProducts} printTypes={printTypes} licenses={licenses} />
                 <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} product={selectedProduct} setProduct={setSelectedProduct} marketPlaces={market} setMarketPlaces={setMarketPlaces} sizes={blanks.map(b => {return b.sizes.map(s => {return s.name})})} design={des} setDesign={setDesign} source={source} setProducts={setProducts} products={products} canManage={canManageMarketplaces} canEdit={canManageMarketplaces} />
-                <CreateNFProduct open={NFProduct} setOpen={setNFProduct} stage={start} setStage={setStart} product={selectedProduct} setProduct={setSelectedProduct} setProducts={setProducts} brands={bran} setBrands={setBrands} seasons={seas} setSeasons={setSeasons} genders={gen} setGenders={setGenders} CreateSku={CreateSku} themes={them} setThemes={setThemes} sportUsedFor={sport} setSportUsedFor={setSportUsedFor} />
+                <CreateNFProduct open={NFProduct} setOpen={setNFProduct} stage={start} setStage={setStart} product={selectedProduct} setProduct={setSelectedProduct} setProducts={setProducts} brands={bran} setBrands={setBrands} seasons={seas} setSeasons={setSeasons} genders={gen} setGenders={setGenders} CreateSku={CreateSku} themes={them} setThemes={setThemes} sportUsedFor={sport} setSportUsedFor={setSportUsedFor} orgType={orgType} />
             </Container>
             <Footer />
             {loading && <LoaderOverlay />}

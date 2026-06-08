@@ -63,7 +63,25 @@ const ZoomModal = ({ image, onClose }) => (
     </Modal>
 );
 
-export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, setStage, brands: brandsProp, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor }) => {
+const catalogEntriesToBlanks = (catalog) => {
+    const sizeOrder = ["XS","S","M","L","XL","2XL","3XL","4XL"];
+    return catalog.map(entry => {
+        const colors = entry.colors.map(({ color }) => color);
+        const sizeMap = {};
+        for (const { sizes } of entry.colors) {
+            for (const { size, providers } of sizes) {
+                if (!sizeMap[size]) {
+                    const minPrice = providers.length > 0 ? Math.min(...providers.map(p => p.wholesalePrice ?? 0)) : 0;
+                    sizeMap[size] = { _id: size, name: size, wholesaleCost: minPrice, costPerItem: minPrice, retailPrice: 0, compareAtPrice: 0 };
+                }
+            }
+        }
+        const sizes = Object.values(sizeMap).sort((a, z) => sizeOrder.indexOf(a.name) - sizeOrder.indexOf(z.name));
+        return { ...entry.blank, colors, sizes };
+    });
+};
+
+export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, setStage, brands: brandsProp, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor, orgType }) => {
     const [type, setType] = useState("From Blank");
     const [blanks, setBlanks] = useState([]);
     const [localBrands, setLocalBrands] = useState(brandsProp || []);
@@ -92,8 +110,13 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
     useEffect(() => {
         const fetchBlanks = async () => {
             try {
-                const response = await axios.get('/api/admin/blanks');
-                setBlanks(response.data.blanks);
+                if (orgType === "commerce") {
+                    const response = await axios.get('/api/fulfillment/catalog');
+                    setBlanks(catalogEntriesToBlanks(response.data.catalog || []));
+                } else {
+                    const response = await axios.get('/api/admin/blanks');
+                    setBlanks(response.data.blanks);
+                }
             } catch (error) {
                 console.error("Error fetching blanks:", error);
             }

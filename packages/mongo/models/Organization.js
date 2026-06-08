@@ -9,7 +9,9 @@ const schema = new mongoose.Schema({
     orgType: { type: String, enum: ["fulfillment", "commerce"], default: "fulfillment" },
     tier: {
         type: String,
-        enum: ['starter', 'professional', 'business', 'scale', 'enterprise'],
+        // Fulfillment Cloud: starter, professional, business, scale, enterprise
+        // Commerce Cloud:    free, launch, growth, scale, enterprise
+        enum: ['starter', 'professional', 'business', 'free', 'launch', 'growth', 'scale', 'enterprise'],
         default: 'starter',
     },
     status: {

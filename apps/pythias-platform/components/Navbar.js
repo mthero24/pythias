@@ -242,7 +242,7 @@ export default function Navbar() {
                 position="static"
                 elevation={0}
                 sx={{
-                    backgroundColor: "#0f172a",
+                    backgroundColor: isCommerce ? "#2c2c3a" : "#0f172a",
                     borderBottom: "1px solid rgba(255,255,255,0.07)",
                     color: "#fff",
                     mb: 2,
@@ -312,6 +312,8 @@ export default function Navbar() {
 
 function NavDrawer({ open, onClose, initials, base, pathname, session, org }) {
     const sections = buildSections(base, org);
+    const isCommerce = org?.orgType === "commerce";
+    const drawerBg = isCommerce ? "#32323f" : SIDEBAR_BG;
 
     const isActive = (item) =>
         item.exact ? pathname === item.href : pathname?.startsWith(item.href);
@@ -323,7 +325,7 @@ function NavDrawer({ open, onClose, initials, base, pathname, session, org }) {
             PaperProps={{
                 sx: {
                     width: DRAWER_WIDTH,
-                    backgroundColor: SIDEBAR_BG,
+                    backgroundColor: drawerBg,
                     borderRight: "none",
                     display: "flex",
                     flexDirection: "column",

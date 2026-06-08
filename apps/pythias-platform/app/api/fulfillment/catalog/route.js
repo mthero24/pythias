@@ -20,7 +20,7 @@ export async function GET(req) {
 
     const entries = await ProviderCatalog.find({ active: true })
         .populate("blankId",  "code name images")
-        .populate("colorId",  "name hexcode image")
+        .populate("colorId",  "name hexcode image sku color_type")
         .populate("providerId", "name slug")
         .lean();
 

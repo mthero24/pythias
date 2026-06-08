@@ -14,6 +14,7 @@ export default async function ProductsPage(req) {
     const session = await getServerSession(authOptions);
     const orgId = session?.user?.orgId;
     const orgSlug = session?.user?.orgSlug;
+    const orgType = session?.user?.orgType ?? "fulfillment";
 
     const [blanks, seasons, genders, sportsUsedFor, platformBrands, marketplaces, themes, colors, printTypes, licenses, totalProducts] = await Promise.all([
         Blanks.find(orgId ? { orgId } : {}).populate("colors").lean(),
@@ -53,6 +54,7 @@ export default async function ProductsPage(req) {
             licenses={serialize(licenses)}
             canManageMarketplaces={canManageMarketplaces}
             searchUrl="/api/admin/products"
+            orgType={orgType}
         />
     );
 }

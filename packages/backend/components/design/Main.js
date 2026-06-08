@@ -2,7 +2,7 @@
 import {
     Box, Grid2, TextField, Button, Typography, Card, CardContent, Container,
     Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Divider,
-    Stack, Chip, IconButton, Tooltip,
+    Stack, Chip, IconButton, Tooltip, CircularProgress,
 } from "@mui/material";
 import axios from "axios";
 import { useState, useEffect, useRef } from "react";
@@ -85,6 +85,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [preview, setPreview] = useState(false);
     const [copied, setCopied] = useState(false);
     const [sublimationOpen, setSublimationOpen] = useState(false);
+    const [aiGenerating, setAiGenerating] = useState(false);
     const { setShow } = useCSV();
 
     useEffect(() => { setShow(true); }, []);
@@ -125,6 +126,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
 
     const getAiDescription = async () => {
         let d = { ...des };
+        setAiGenerating(true);
         try {
             const blankNames = (des.blanks || []).map(b => b.blank?.name).filter(Boolean);
             const brandNames = (des.brands || []).map(b => b.name).filter(Boolean);
@@ -153,6 +155,8 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
             updateDesign({ ...d });
         } catch (err) {
             alert("Something went wrong...");
+        } finally {
+            setAiGenerating(false);
         }
     };
 
@@ -602,11 +606,12 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                 {canEdit && (
                                     <Button
                                         size="small"
-                                        startIcon={<AutoAwesomeIcon />}
+                                        startIcon={aiGenerating ? <CircularProgress size={14} color="inherit" /> : <AutoAwesomeIcon />}
                                         onClick={getAiDescription}
+                                        disabled={aiGenerating}
                                         sx={{ mt: 0.75, fontSize: "0.72rem" }}
                                     >
-                                        Generate description &amp; tags with AI
+                                        {aiGenerating ? "Generating…" : "Generate description & tags with AI"}
                                     </Button>
                                 )}
                             </Box>

@@ -4,57 +4,58 @@ import { Items, Inventory } from "@pythias/mongo";
 export async function POST(req=NextApiRequest){
     let data = await req.json()
     try{
-        let item = await Items.findOne({
-            pieceId: data.pieceId,
-          });
-    
-            console.log(item);
-        
-            let inventory = await Inventory.findOne({
-                color_name: item.colorName,
-                size_name: item.sizeName,
-                style_code: item.styleCode,
-            });
-            if (inventory) {
-                inventory.quantity = 0;
-                inventory.markModified("quantity");
-                await inventory.save();
-            }
-            item.steps.push({ status: "Out of Stock", date: new Date() })
-            item.labelPrinted = false;
-            await item.save();
+        let item = await Items.findOne({ pieceId: data.pieceId });
+        let inventory = await Inventory.findOne({
+            color_name: item.colorName,
+            size_name:  item.sizeName,
+            style_code: item.styleCode,
+        });
+        if (inventory) {
+            inventory.quantity = 0;
+            inventory.inStock    = (inventory.inStock    ?? []).filter(id => id.toString() !== item._id.toString());
+            inventory.outOfStock = [...(inventory.outOfStock ?? []).filter(id => id.toString() !== item._id.toString()), item._id];
+            inventory.markModified("quantity");
+            inventory.markModified("inStock");
+            inventory.markModified("outOfStock");
+            await inventory.save();
+        }
+        item.stockStatus = "outOfStock";
+        item.labelPrinted = false;
+        item.steps.push({ status: "Out of Stock", date: new Date() });
+        await item.save();
         const {labels, giftMessages, rePulls, batches} = await LabelsData()
         return NextResponse.json({error: false, labels, giftMessages, rePulls, batches})
     }catch(e){
-        return NextResponse.json({error: true, msg: e})
+        return NextResponse.json({error: true, msg: e.message ?? e})
     }
 }
 export async function PUT(req=NextApiRequest){
     let data = await req.json()
     try{
-        let item = await Items.findOne({
-            pieceId: data.pieceId,
-        });
-
-        console.log(item);
-
+        let item = await Items.findOne({ pieceId: data.pieceId });
         let inventory = await Inventory.findOne({
             color_name: item.colorName,
-            size_name: item.sizeName,
+            size_name:  item.sizeName,
             style_code: item.styleCode,
         });
-        console.log(inventory)
         if (inventory) {
-            inventory.quantity += 1;
+            inventory.quantity  += 1;
+            inventory.inStock    = [...(inventory.inStock    ?? []).filter(id => id.toString() !== item._id.toString()), item._id];
+            inventory.outOfStock = (inventory.outOfStock ?? []).filter(id => id.toString() !== item._id.toString());
+            inventory.ordered    = (inventory.ordered    ?? []).filter(id => id.toString() !== item._id.toString());
             inventory.markModified("quantity");
+            inventory.markModified("inStock");
+            inventory.markModified("outOfStock");
+            inventory.markModified("ordered");
             await inventory.save();
         }
+        item.stockStatus = "inStock";
         item.labelPrinted = false;
-        item.steps.push({status: "returned to inventory", date: new Date()})
+        item.steps.push({ status: "returned to inventory", date: new Date() });
         await item.save();
         const {labels, giftMessages, rePulls, batches} = await LabelsData()
         return NextResponse.json({error: false, labels, giftMessages, rePulls, batches})
     }catch(e){
-        return NextResponse.json({error: true, msg: e})
+        return NextResponse.json({error: true, msg: e.message ?? e})
     }
 }

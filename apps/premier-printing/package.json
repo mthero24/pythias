@@ -14,7 +14,7 @@
     "fluent-ffmpeg": "^2.1.3",
     "next": "15.5.18",
     "next-auth": "^4.24.14",
-    "pdfkit": "^0.16.0",
+    "pdfkit": "^0.17.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "stripe": "^22.1.1"
