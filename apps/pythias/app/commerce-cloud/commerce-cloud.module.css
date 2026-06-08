@@ -82,7 +82,7 @@
 .featureDesc  { font-size: 0.83rem; color: #6b7280; line-height: 1.65; }
 
 /* ── Pricing cards ───────────────────────────────────────────────────────── */
-.pricingGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch; }
+.pricingGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: stretch; }
 .card { background: #fff; border: 1.5px solid #e5e7eb; border-radius: 20px; padding: 28px 24px; display: flex; flex-direction: column; position: relative; transition: box-shadow 0.2s, transform 0.2s; }
 .card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.09); transform: translateY(-3px); }
 .cardPopular { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.2), 0 8px 32px rgba(99,102,241,0.12); transform: scale(1.03); }
@@ -164,6 +164,7 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (min-width: 768px) { .hero { padding: 112px 0 128px; } .section { padding: 96px 0; } .sectionDark { padding: 96px 0; } .cta { padding: 112px 0; } .head { margin-bottom: 72px; } }
-@media (max-width: 960px) { .pricingGrid { grid-template-columns: 1fr 1fr; } .cardPopular { transform: none; } .cardPopular:hover { transform: translateY(-3px); } .featureGrid { grid-template-columns: 1fr 1fr; } .noWarehouse { grid-template-columns: 1fr; } .explainer { grid-template-columns: 1fr; padding: 32px 28px; } }
+@media (max-width: 1200px) { .pricingGrid { grid-template-columns: 1fr 1fr 1fr; } .cardPopular { transform: none; } .cardPopular:hover { transform: translateY(-3px); } }
+@media (max-width: 960px) { .pricingGrid { grid-template-columns: 1fr 1fr; } .featureGrid { grid-template-columns: 1fr 1fr; } .noWarehouse { grid-template-columns: 1fr; } .explainer { grid-template-columns: 1fr; padding: 32px 28px; } }
 @media (max-width: 720px) { .steps { grid-template-columns: 1fr; } .steps::before { display: none; } .decideGrid { grid-template-columns: 1fr; } .heroStats { gap: 28px; } }
 @media (max-width: 600px) { .pricingGrid { grid-template-columns: 1fr; } .featureGrid { grid-template-columns: 1fr; } .btns { flex-direction: column; align-items: center; } .heroBtns { flex-direction: column; align-items: center; } }

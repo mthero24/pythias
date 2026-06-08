@@ -61,6 +61,23 @@ const FEATURES = [
 
 const TIERS = [
     {
+        name: "Free",
+        price: 0,
+        marginFee: "15%",
+        popular: false,
+        desc: "Try Commerce Cloud with no monthly cost — pay only when you make a sale.",
+        features: [
+            { label: "Unlimited orders" },
+            { label: "1 marketplace integration" },
+            { label: "50 products" },
+            { label: "1 user" },
+            { label: "Standard routing" },
+        ],
+        cta: "Get Started Free",
+        ctaStyle: "outline",
+        href: "https://platform.pythiastechnologies.com/register?plan=free&type=commerce",
+    },
+    {
         name: "Launch",
         price: 79,
         marginFee: "8%",
@@ -340,7 +357,7 @@ export default function CommerceCloudPage() {
                             >
                                 {tier.popular && <span className={s.popularBadge}>Most Popular</span>}
                                 <meta itemProp="name" content={`Pythias Commerce Cloud — ${tier.name}`} />
-                                {tier.price && <meta itemProp="price" content={tier.price} />}
+                                {tier.price > 0 && <meta itemProp="price" content={tier.price} />}
                                 <meta itemProp="priceCurrency" content="USD" />
 
                                 <p className={s.tierName}>{tier.name}</p>
@@ -354,7 +371,9 @@ export default function CommerceCloudPage() {
                                         </>
                                     )}
                                 </div>
-                                <span className={s.pricePer}>{tier.price ? "/ month" : "contact us"}</span>
+                                <span className={s.pricePer}>
+                                    {tier.price == null ? "contact us" : tier.price === 0 ? "forever free" : "/ month"}
+                                </span>
 
                                 <div className={s.marginFee}>
                                     <span className={s.marginFeeVal}>{tier.marginFee}</span>

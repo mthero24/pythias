@@ -20,7 +20,6 @@ declare -A APP_PM2=(
   ["pythias"]="nextjs-pythias"
   ["premier-printing"]="nextjs-premier"
   ["po"]="nextjs-po"
-  ["printthreads"]="nextjs-printthreads"
   ["pythias-platform"]="nextjs-platform"
 )
 
@@ -28,14 +27,13 @@ declare -A APP_DIR=(
   ["pythias"]="apps/pythias"
   ["premier-printing"]="apps/premier-printing"
   ["po"]="apps/po"
-  ["printthreads"]="apps/printthreads"
   ["pythias-platform"]="apps/pythias-platform"
 )
 
 if [ $# -gt 0 ]; then
   APPS=("$@")
 else
-  APPS=("pythias" "premier-printing" "po" "printthreads" "pythias-platform")
+  APPS=("pythias" "premier-printing" "po" "pythias-platform")
 fi
 
 BUILT_APPS=()
