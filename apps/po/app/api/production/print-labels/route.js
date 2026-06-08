@@ -42,6 +42,7 @@ export const config = {
     },
   }
 export async function POST(req=NextApiRequest){
+  try {
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
     let data = await req.json();
@@ -101,4 +102,8 @@ export async function POST(req=NextApiRequest){
     const {labels, giftMessages, rePulls, batches} = await LabelsData()
     //console.log(giftMessages)
     return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
+  } catch(e) {
+    console.error("[po/print-labels] 500:", e);
+    return NextResponse.json({ error: true, msg: e.message ?? e.toString() });
+  }
 }

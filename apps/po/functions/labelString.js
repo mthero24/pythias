@@ -7,7 +7,7 @@ export const buildLabelData = async (item, i, poNumber, opts={}, totalQuantity) 
     }
     let frontBackString = "";
     //console.log(totalQuantity, "TQ");
-    for(let loc of Object.keys(item.design)){
+    for(let loc of Object.keys(item.design ?? {})){
       if(item.design[loc]){
         frontBackString = `${frontBackString}${frontBackString != ""? "&": ""}${loc} ${Object.keys(item.design).length == 1? "Only": ""}`
       }
