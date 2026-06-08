@@ -218,7 +218,7 @@ export default function CommerceCloudPage() {
                         <span className={s.accent}>Fulfill everywhere.</span>
                     </h1>
                     <p className={s.heroSub}>
-                        List products across TikTok, Shopify, Etsy, Amazon, and 15+ more marketplaces.
+                        List your printed products across TikTok, Shopify, Etsy, Amazon, and 15+ more marketplaces.
                         When orders come in, we route them to vetted fulfillment partners automatically —
                         no warehouse, no equipment, no staff.
                     </p>

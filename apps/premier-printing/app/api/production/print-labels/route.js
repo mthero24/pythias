@@ -35,56 +35,60 @@ export const config = {
     },
   }
 export async function POST(req=NextApiRequest){
+    try {
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
-    let data = await req.json();
-    const printerName = data.printer ?? "printer1";
-    let labelsString = ``
-    //create batchId
-    let batchID = ''
-    for(let i = 0; i< 9; i++)
-        batchID += letters[Math.floor(Math.random() * letters.length)]
-    // batch order-item counts in one aggregation instead of one query per item
-    const printableItems = data.items.filter(i => !i.labelPrinted);
-    const uniqueOrderIds = [...new Set(printableItems.filter(i => i.order).map(i => (i.order._id || i.order).toString()))];
-    const countAgg = uniqueOrderIds.length
-        ? await Items.aggregate([
-            { $match: { order: { $in: uniqueOrderIds.map(id => new Types.ObjectId(id)) }, canceled: false } },
-            { $group: { _id: "$order", count: { $sum: 1 } } }
-          ])
-        : [];
-    const orderCountMap = Object.fromEntries(countAgg.map(r => [r._id.toString(), r.count]));
+        let data = await req.json();
+        const printerName = data.printer ?? "printer1";
+        let labelsString = ``
+        //create batchId
+        let batchID = ''
+        for(let i = 0; i< 9; i++)
+            batchID += letters[Math.floor(Math.random() * letters.length)]
+        // batch order-item counts in one aggregation instead of one query per item
+        const printableItems = data.items.filter(i => !i.labelPrinted);
+        const uniqueOrderIds = [...new Set(printableItems.filter(i => i.order).map(i => (i.order._id || i.order).toString()))];
+        const countAgg = uniqueOrderIds.length
+            ? await Items.aggregate([
+                { $match: { order: { $in: uniqueOrderIds.map(id => new Types.ObjectId(id)) }, canceled: false } },
+                { $group: { _id: "$order", count: { $sum: 1 } } }
+              ])
+            : [];
+        const orderCountMap = Object.fromEntries(countAgg.map(r => [r._id.toString(), r.count]));
 
-    // build labels
-    let preLabels = [];
-    let j = 0
-    let pieceIds = []
-    console.log(printableItems.length)
-    for(let i of printableItems){
-        const totalQuantity = orderCountMap[(i.order?._id || i.order)?.toString()] ?? null;
-        let label = await buildLabelData(i, j, data.poNumber, {}, totalQuantity, template)
-        pieceIds.push(i.pieceId)
-        preLabels.push(label)
-        j++
-    }
-    console.log(preLabels.length)
-    preLabels.map(l=> labelsString += l)
-    console.log(preLabels)
-    labelsString = btoa(labelsString)
-    const [sc, template] = await Promise.all([getShippingCreds(), loadTemplate()]);
-    const headers = {
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${sc.localKey}`
+        // build labels
+        const [sc, template] = await Promise.all([getShippingCreds(), loadTemplate()]);
+        let preLabels = [];
+        let j = 0
+        let pieceIds = []
+        console.log(printableItems.length)
+        for(let i of printableItems){
+            const totalQuantity = orderCountMap[(i.order?._id || i.order)?.toString()] ?? null;
+            let label = await buildLabelData(i, j, data.poNumber, {}, totalQuantity, template)
+            pieceIds.push(i.pieceId)
+            preLabels.push(label)
+            j++
         }
-    };
-    const printEndpoint = template.format === "PDF" ? "cpu" : "print-labels";
-    let res = await axios.post(`http://${sc.localIP}/api/${printEndpoint}`, {label: labelsString, printer: printerName}, headers).catch(e=>{console.log(e.response)})
-    let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
-    await batch.save()
-    await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, stockStatus: null, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
-    logActivity({ action: "label_print", entity: "order", count: pieceIds.length, userName, email });
-    const {labels, giftMessages, rePulls, batches} = await LabelsData()
-    //console.log(giftMessages)
-    return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
+        console.log(preLabels.length)
+        preLabels.map(l=> labelsString += l)
+        // btoa fails on non-Latin1 characters — sanitise first
+        labelsString = btoa(unescape(encodeURIComponent(labelsString)))
+        const headers = {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${sc.localKey}`
+            }
+        };
+        const printEndpoint = template.format === "PDF" ? "print-labels-pdf" : "print-labels";
+        let res = await axios.post(`http://${sc.localIP}/api/${printEndpoint}`, {label: labelsString, printer: printerName}, headers).catch(e=>{console.log(e.response)})
+        let batch = new Batches({batchID, date: new Date(Date.now()), count: preLabels.length })
+        await batch.save()
+        await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, stockStatus: null, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
+        logActivity({ action: "label_print", entity: "order", count: pieceIds.length, userName, email });
+        const {labels, giftMessages, rePulls, batches} = await LabelsData()
+        return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
+    } catch(e) {
+        console.error("[print-labels] 500:", e);
+        return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
+    }
 }
