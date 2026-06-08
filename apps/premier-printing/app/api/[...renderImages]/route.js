@@ -58,23 +58,7 @@ const createImage = async (data) => {
             const out = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
             return `data:image/jpeg;base64,${out.toString("base64")}`;
         }
-        console.log("[createImage] compositing", composits.length, "layers");
-        let rendered;
-        try {
-            rendered = await base64.composite(composits).jpeg({ quality: 100, effort: 5 }).toBuffer();
-        } catch (e) {
-            console.log("[createImage] bulk composite failed:", e.message, "- trying individually");
-            let img = base64;
-            for (const c of composits) {
-                try {
-                    const buf = await img.composite([c]).toBuffer();
-                    img = sharp(buf);
-                } catch (e2) {
-                    console.log("[createImage] single composite failed (top:", c.top, "left:", c.left, "):", e2.message);
-                }
-            }
-            rendered = await img.jpeg({ quality: 100, effort: 5 }).toBuffer();
-        }
+        const rendered = await base64.composite(composits).jpeg({ quality: 100, effort: 5 }).toBuffer();
         return `data:image/jpeg;base64,${rendered.toString("base64")}`;
     } else if (data.styleImage && base64) {
         const out = await base64.jpeg({ quality: 100, effort: 5 }).toBuffer();
@@ -139,12 +123,6 @@ export async function GET(req) {
     const box = Object.keys(blankImage.boxes ?? {})
         .filter(k => sides.includes(k))
         .map(k => ({ ...blankImage.boxes[k], side: k }));
-
-    console.log("[renderImages] sides:", sides);
-    console.log("[renderImages] blankImage url:", blankImage.image);
-    console.log("[renderImages] blankImage box keys:", Object.keys(blankImage.boxes ?? {}));
-    console.log("[renderImages] boxes selected:", box.map(b => b.side));
-    console.log("[renderImages] designImage keys:", designImage ? Object.keys(designImage) : "null/undefined");
 
     const result = await createImage({ box, styleImage: blankImage.image, designImage, width });
     if (!result) return new NextResponse(null, { status: 500 });

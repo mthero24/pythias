@@ -62,7 +62,9 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
                 const normUrl = url => url ? url.replace(/^https?:\/\/[^/]+/, "").replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
                 const imgMatch = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
                 const productImageGroups = [...new Set(product.blanks.flatMap(b => (b.images || []).map(img => img.imageGroup || "default")))];
-                const allImages = [...(images[product.id] || []), ...(product.tempImages || [])];
+                const activeGroup = product.imageGroup || "default";
+                const allImages = [...(images[product.id] || []), ...(product.tempImages || [])]
+                    .filter(img => productImageGroups.length <= 1 || (img.imageGroup || "default") === activeGroup);
                 const groups = {};
                 const noColor = [];
                 for (const img of allImages) {
