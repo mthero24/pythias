@@ -750,9 +750,11 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                                 <Divider sx={{ mb: 2 }} />
                                 <Typography variant="h6" fontWeight={700} sx={{ mb: 1.5 }}>Selected Marketplaces</Typography>
                                 {marketPlaces.filter(m => product.marketPlacesArray.map(mp => (mp._id ? mp._id.toString() : mp.toString())).includes(m._id.toString())).map((marketPlace) => {
-                                    if (connections?.length > 0) {
+                                    if (connections?.length > 0 || tiktokAuth?.length > 0) {
                                         marketPlace.connections = marketPlace.connections?.map(c => {
-                                            const conn = connections.find(conn => conn._id.toString() === c.toString());
+                                            const id = c?._id?.toString() ?? c?.toString();
+                                            const conn = connections.find(conn => conn._id.toString() === id)
+                                                ?? tiktokAuth.find(conn => conn._id.toString() === id);
                                             return conn ?? c;
                                         });
                                     }

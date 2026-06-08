@@ -18,7 +18,7 @@ const createVariants = async ({design, b, blank})=>{
                 }
                 if(images.length < 9){
                     for(let im of filteredStyleImages){
-                        images.push(`https://simplysage.pythiastechnologies.com/api/renderImages/${blank.code}-${c.name}-${design.sku}-${key}.jpg?blank=${blank.code}&blankImage=${im.image}&colorName=${c.name}&design=${design.images[key]}&side=${key}&width=2400`)
+                        images.push(`${process.env.NEXTAUTH_URL}/api/renderImages/${blank.code}-${c.name}-${design.sku}-${key}.jpg?blank=${blank.code}&blankImage=${im.image}&colorName=${c.name}&design=${design.images[key]}&side=${key}&width=2400`)
                     }
                 }
             }
@@ -61,7 +61,7 @@ const createProduct = async ({design, b, blanks})=>{
             }
             //console.log(filteredStyleImages[0], filteredStyleImages.length)
             for(let im of filteredStyleImages){
-                images.push(`https://simplysage.pythiastechnologies.com/api/renderImages/${product.blank.code}-${product.blankObj.defaultColor.name}-${design.sku}-${key}.jpg?blank=${product.blank.code}&blankImage=${im.image}&colorName=${product.blankObj.defaultColor.name}&design=${design.images[key]}&side=${key}&width=2400`)
+                images.push(`${process.env.NEXTAUTH_URL}/api/renderImages/${product.blank.code}-${product.blankObj.defaultColor.name}-${design.sku}-${key}.jpg?blank=${product.blank.code}&blankImage=${im.image}&colorName=${product.blankObj.defaultColor.name}&design=${design.images[key]}&side=${key}&width=2400`)
             }
         }    
     }
@@ -76,7 +76,7 @@ const createProduct = async ({design, b, blanks})=>{
             //onsole.log(filteredStyleImages[0], filteredStyleImages.length)
             if(images.length < 9){
                 for(let im of filteredStyleImages){
-                    images.push(`https://simplysage.pythiastechnologies.com/api/renderImages/${product.blank.code}-${c.name}-${design.sku}-${key}.jpg?blank=${product.blank.code}&blankImage=${im.image}&colorName=${c.name}&design=${design.images[key]}&side=${key}&width=2400`)
+                    images.push(`${process.env.NEXTAUTH_URL}/api/renderImages/${product.blank.code}-${c.name}-${design.sku}-${key}.jpg?blank=${product.blank.code}&blankImage=${im.image}&colorName=${c.name}&design=${design.images[key]}&side=${key}&width=2400`)
                 }
             }
         }
@@ -87,22 +87,27 @@ const createProduct = async ({design, b, blanks})=>{
 }
 
 export async function POST(req=NextApiRequest){
-    let blanks = await Blanks.find({}).select("colors code name sizes multiImages sizeGuide").populate("colors").lean();
     const data = await req.json();
-    console.log(data, "Data")
-    let design = await Design.findById(data.design).populate("blanks.colors blanks.defaultColor")
-    let products = []
-    for(let b of design.blanks){
-        if(data.blank && b._id.toString() == data.blank.toString()){
-            products.push(await createProduct({design, b, blanks}))
-        }else if(!data.blank){
-            products.push(await createProduct({design, b, blanks}))
-        }
-    }
-    
-    console.log(products[0], products.length)
-    for(let product of products){
-        createTikTokProduct({product})
-    }
-    return NextResponse.json({error: false})
+    const p = data.product;
+
+    const hires = (url) => url?.replace(/(\?|&)width=\d+/, '$1width=2400') ?? url;
+
+    const product = {
+        name:        p.title,
+        description: p.description,
+        design:      p.design,
+        blank:       p.blanks?.[0],
+        images:      (p.productImages ?? []).map(pi => hires(pi.image)).filter(Boolean),
+        variants:    (p.variantsArray ?? []).map(v => ({
+            color:  v.color,
+            size:   v.size?.name ?? v.size,
+            sku:    v.sku,
+            upc:    v.upc,
+            price:  v.price,
+            images: [v.image, ...(v.images ?? [])].filter(Boolean).map(hires),
+        })),
+    };
+
+    const result = await createTikTokProduct({ product });
+    return NextResponse.json({ error: false, tiktokProductId: result?.tiktokProductId });
 }

@@ -97,6 +97,20 @@ export async function uploadTikTokImage({image,type}){
 }
 export async function createTikTokProduct({product}){
     let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
+    if (!credentials) throw new Error("No TikTok credentials found for premierPrinting");
+    if (!credentials.shop_list?.length) {
+        let shop = await getAuthorizedShops(credentials);
+        if (shop?.error) {
+            credentials = await refresh(credentials);
+            shop = await getAuthorizedShops(credentials);
+        }
+        if (shop?.shop_list?.length) {
+            credentials.shop_list = shop.shop_list;
+            await credentials.save();
+        } else {
+            throw new Error("TikTok shop_list is empty — no authorized shops found");
+        }
+    }
     let tiktokProduct = {
         save_mode: "LISTING",
         description: product.description,
@@ -244,18 +258,8 @@ export async function createTikTokProduct({product}){
         credentials = await refresh(credentials);
         res = await createProduct({tiktokProduct, credentials})
     }
-    console.log(res.product?.skus[0].sales_attributes)
-    let design = await Design.findById(product.design._id)
-    for(let bl of design.blanks){
-        if(bl._id.toString() == product.blankObj._id.toString()){
-            if(!bl.marketPlaceIds){
-                bl.marketPlaceIds = {}
-            }
-            bl.marketPlaceIds["tiktok"] = res.product.product_id
-        }
-    }
-    design.markModified("blanks")
-    await design.save()
+    console.log(res)
+    return { tiktokProductId: res.product?.product_id }
 }
 
 export const getOrders = async (auths)=>{

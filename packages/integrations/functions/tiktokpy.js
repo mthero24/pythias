@@ -10,7 +10,9 @@ const getConfig = async () => {
     const res = await axios.get("https://www.pythiastechnologies.com/api/tiktok/config", {
         headers: { Authorization: `Basic ${btoa(process.env.pythiasTiktokConfigAuth)}` },
     });
-    return res?.data?.config;
+    const config = res?.data?.config;
+    if (!config?.app_key || !config?.app_secret) throw new Error("TikTok config not found — set TIK_TOK_APP_KEY and tiktok_app_secret in your app env, or set pythiasTiktokConfigAuth for remote config");
+    return config;
 }
 export const getAccessTokenUsingAuthCode = async (config, authCode) => {
     // How to get Auth Code: https://partner.tiktokshop.com/doc/page/63fd743c715d622a338c4e5a
