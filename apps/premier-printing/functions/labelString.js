@@ -153,10 +153,15 @@ export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity
     }
 
     if (item.inventory?.inventoryType === "productInventory") {
-        const pi = await ProductInventory.findById(item.inventory.productInventory._id).select("location quantity onhold inStock");
-        pi.quantity -= 1;
-        if (pi.inStock) pi.inStock = pi.inStock.filter(id => id.toString() !== item._id.toString());
-        await pi.save();
+        const piId = item.inventory.productInventory?._id ?? item.inventory.productInventory;
+        if (piId) {
+            const pi = await ProductInventory.findById(piId).select("location quantity onhold inStock");
+            if (pi) {
+                pi.quantity -= 1;
+                if (pi.inStock) pi.inStock = pi.inStock.filter(id => id.toString() !== item._id.toString());
+                await pi.save();
+            }
+        }
     } else if (item.inventory?.inventoryType === "inventory") {
         const inv = await Inventory.findById(item.inventory?.inventory?._id).select("quantity onhold");
         if (inv) {
