@@ -96,7 +96,7 @@ export async function POST(req=NextApiRequest){
         name:        p.title,
         description: p.description,
         design:      p.design,
-        blank:       p.blanks?.[0],
+        blank:       p.blanks?.[0] ? { ...p.blanks[0], sizeGuide: p.blanks[0].sizeGuide ? { ...p.blanks[0].sizeGuide, images: (p.blanks[0].sizeGuide.images ?? []).map(hires) } : undefined } : undefined,
         images:      (p.productImages ?? []).map(pi => hires(pi.image)).filter(Boolean),
         variants:    (p.variantsArray ?? []).map(v => ({
             color:  v.color,
