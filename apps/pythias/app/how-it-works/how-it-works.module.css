@@ -70,6 +70,27 @@
 .ctaTitle { font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 800; color: #111827; letter-spacing: -0.02em; margin-bottom: 16px; }
 .ctaSub { color: #6b7280; font-size: 1.0625rem; line-height: 1.7; margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto; }
 
+/* Tab toggle */
+.tabRow { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+.tab { padding: 10px 24px; border-radius: 24px; font-weight: 700; font-size: 0.875rem; border: 1.5px solid #e5e7eb; background: transparent; color: #6b7280; cursor: pointer; transition: all 0.15s; }
+.tab:hover { border-color: var(--tab-color); color: var(--tab-color); }
+.tabActive { border-color: var(--tab-color); background: color-mix(in srgb, var(--tab-color) 12%, transparent); color: var(--tab-color); }
+.tabTagline { text-align: center; color: #111827; font-weight: 600; font-size: 1rem; margin-bottom: 6px; }
+.tabAudience { text-align: center; color: #6b7280; font-size: 0.85rem; margin-bottom: 40px; }
+
+/* Differentiator */
+.diffGrid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden; }
+.diffCard { padding: 32px; }
+.diffDivider { display: flex; align-items: center; justify-content: center; padding: 0 20px; border-left: 1px solid rgba(255,255,255,0.08); border-right: 1px solid rgba(255,255,255,0.08); }
+.diffVs { color: rgba(255,255,255,0.25); font-weight: 800; font-size: 1.4rem; }
+.diffLabelRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.diffLabel { font-weight: 700; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0; }
+.diffBadge { background: rgba(211,167,61,0.15); border: 1px solid rgba(211,167,61,0.3); border-radius: 4px; padding: 2px 8px; font-size: 0.62rem; font-weight: 700; color: #D3A73D; letter-spacing: 0.05em; white-space: nowrap; }
+.diffTitle { font-weight: 700; font-size: 0.975rem; color: #fff; margin-bottom: 10px; }
+.diffDesc { font-size: 0.875rem; color: rgba(255,255,255,0.5); line-height: 1.65; margin-bottom: 16px; }
+.diffLink { font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+.diffLink:hover { text-decoration: underline; }
+
 @media (min-width: 768px) { .hero { padding: 112px 0; } .section { padding: 96px 0; } .sectionDark { padding: 80px 0; } .sectionWhite { padding: 96px 0; } .cta { padding: 96px 0; } .head { margin-bottom: 64px; } }
-@media (max-width: 768px) { .grid2 { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .grid2 { grid-template-columns: 1fr; } .diffGrid { grid-template-columns: 1fr; } .diffDivider { display: none; } }
 @media (max-width: 600px) { .btns { flex-direction: column; align-items: center; } }

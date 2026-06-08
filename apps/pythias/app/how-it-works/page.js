@@ -1,9 +1,8 @@
-import s from "./how-it-works.module.css";
-import Link from "next/link";
+import HowItWorksContent from "./HowItWorksContent";
 
 export const metadata = {
-    title: "How It Works",
-    description: "Learn how Pythias Technologies gets your print-on-demand operation up and running in under two weeks — from equipment hookup to full automation.",
+    title: "How It Works — Pythias Technologies",
+    description: "Learn how Fulfillment Cloud and Commerce Cloud work — step by step, with onboarding timelines for both. Fulfillment Cloud runs your print shop. Commerce Cloud lets you sell without one.",
     alternates: { canonical: "https://pythiastechnologies.com/how-it-works" },
 };
 
@@ -91,146 +90,11 @@ const FAQS = [
 
 export default function HowItWorksPage() {
     return (
-        <div className={s.bg}>
+        <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-
-            {/* Hero */}
-            <section className={s.hero}>
-                <div className={s.glow + " " + s.glow1} />
-                <div className={s.glow + " " + s.glow2} />
-                <div className={s.wrap}>
-                    <p className={s.tag}>How It Works</p>
-                    <h1 className={s.h1}>
-                        Up and running in{" "}
-                        <span className={s.accent}>under two weeks.</span>
-                    </h1>
-                    <p className={s.heroSub}>
-                        Our team handles the setup — you focus on production. Here&apos;s exactly what the process looks like.
-                    </p>
-                    <div className={s.btns}>
-                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
-                        <Link href="/features" className={s.btnWhite}>See All Features</Link>
-                    </div>
-                </div>
-            </section>
-
-            {/* 4 Steps */}
-            <section className={s.section} itemScope itemType="https://schema.org/HowTo">
-                <meta itemProp="name" content="How to Get Started with Pythias Technologies" />
-                <meta itemProp="totalTime" content="P14D" />
-                <div className={s.wrap}>
-                    <div className={s.head}>
-                        <p className={s.sectionTag}>The Process</p>
-                        <h2 className={s.h2}>Four steps to full automation.</h2>
-                    </div>
-                    <ol className={s.grid2} style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                        {STEPS.map((step, i) => (
-                            <li
-                                key={step.id}
-                                id={step.id}
-                                className={s.step}
-                                itemProp="step"
-                                itemScope
-                                itemType="https://schema.org/HowToStep"
-                            >
-                                <div className={s.stepHeader}>
-                                    <div className={s.stepIconWrap}>
-                                        <div className={s.stepIcon}>{step.icon}</div>
-                                        <div className={s.stepNum}>{String(i + 1).padStart(2, "0")}</div>
-                                    </div>
-                                    <div>
-                                        <h3 className={s.stepTitle} itemProp="name">{step.title}</h3>
-                                        <p className={s.stepDesc} itemProp="text">{step.desc}</p>
-                                    </div>
-                                </div>
-                                <hr className={s.hr} />
-                                <ul className={s.details} style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                                    {step.details.map((d) => (
-                                        <li key={d} className={s.detailRow}>
-                                            <span className={s.checkIcon}>✓</span>
-                                            {d}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </li>
-                        ))}
-                    </ol>
-                </div>
-            </section>
-
-            {/* Onboarding Timeline */}
-            <section className={s.sectionDark}>
-                <div className={s.sectionGlow} />
-                <div className={s.wrap} style={{ position: "relative" }}>
-                    <div className={s.head}>
-                        <p className={s.sectionTag}>Onboarding Timeline</p>
-                        <h2 className={s.h2Light}>What to expect, day by day.</h2>
-                    </div>
-                    <ol className={s.timeline} style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                        {TIMELINE.map((t, i) => (
-                            <li key={t.day} className={s.timelineItem}>
-                                <div className={s.timelineLine}>
-                                    <div className={s.timelineDot} />
-                                    {i < TIMELINE.length - 1 && <div className={s.timelineConnector} />}
-                                </div>
-                                <div className={s.timelineContent}>
-                                    <p className={s.timelineDay}>{t.day}</p>
-                                    <p className={s.timelineLabel}>{t.label}</p>
-                                    <p className={s.timelineDesc}>{t.desc}</p>
-                                </div>
-                            </li>
-                        ))}
-                    </ol>
-                </div>
-            </section>
-
-            {/* FAQ */}
-            <section className={s.sectionWhite} itemScope itemType="https://schema.org/FAQPage">
-                <div className={s.wrapMd}>
-                    <div className={s.head}>
-                        <p className={s.sectionTag}>FAQ</p>
-                        <h2 className={s.h2}>Common questions.</h2>
-                        <p className={s.sectionSub}>Everything you need to know about getting started with Pythias.</p>
-                    </div>
-                    <div className={s.faqList}>
-                        {FAQS.map((faq) => (
-                            <details
-                                key={faq.question}
-                                className={s.faqItem}
-                                itemProp="mainEntity"
-                                itemScope
-                                itemType="https://schema.org/Question"
-                            >
-                                <summary itemProp="name">{faq.question}</summary>
-                                <div
-                                    className={s.faqAnswer}
-                                    itemProp="acceptedAnswer"
-                                    itemScope
-                                    itemType="https://schema.org/Answer"
-                                >
-                                    <p itemProp="text">{faq.answer}</p>
-                                </div>
-                            </details>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* CTA */}
-            <section className={s.cta}>
-                <div className={s.wrapMd}>
-                    <h2 className={s.ctaTitle}>Ready to get started?</h2>
-                    <p className={s.ctaSub}>
-                        Book a free demo and we&apos;ll walk through exactly how Pythias fits your operation — no commitment required.
-                    </p>
-                    <div className={s.btns}>
-                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Demo</Link>
-                        <Link href="/contact" className={s.btnGray}>Contact Us</Link>
-                    </div>
-                </div>
-            </section>
-        </div>
+            <HowItWorksContent />
+        </>
     );
 }

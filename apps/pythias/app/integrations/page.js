@@ -28,6 +28,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Pull orders, route to production, and confirm shipment via SP-API. Supports FBM and multi-channel fulfillment.",
                 highlight: "SP-API",
+                href: "https://sell.amazon.com",
             },
             {
                 name: "Walmart",
@@ -36,6 +37,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Sync orders, acknowledge, and confirm shipment on Walmart Marketplace. Includes listing management and feed tracking.",
                 highlight: "Full API",
+                href: "https://marketplace.walmart.com",
             },
             {
                 name: "Target Plus",
@@ -44,6 +46,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Receive and fulfill Target Plus marketplace orders with acknowledgment, shipment confirmation, and tracking sync.",
                 highlight: "Direct API",
+                href: "https://partners.target.com",
             },
             {
                 name: "eBay",
@@ -52,6 +55,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Full eBay Sell API integration — pull orders, ship with tracking, manage listings, analytics, finances, messages, feedback, and disputes from one dashboard.",
                 highlight: "Full API",
+                href: "https://www.ebay.com/sl/sell",
             },
             {
                 name: "Wayfair",
@@ -60,6 +64,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "One of the largest home goods marketplaces in North America. Direct integration via Wayfair's Supplier GraphQL API for dropship purchase orders.",
                 highlight: "GraphQL API",
+                href: "https://partners.wayfair.com",
             },
         ],
     },
@@ -74,6 +79,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Pull open Etsy receipts, mark orders as shipped with tracking, and sync fulfillment status — all via OAuth.",
                 highlight: "OAuth API",
+                href: "https://www.etsy.com/sell",
             },
             {
                 name: "Faire",
@@ -82,6 +88,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Accept wholesale Faire orders, confirm shipments with tracking, and sync inventory levels across your catalog.",
                 highlight: "Wholesale",
+                href: "https://www.faire.com/brand",
             },
         ],
     },
@@ -96,6 +103,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Connect your TikTok Shop seller account and route orders directly into your production queue for fulfillment.",
                 highlight: "Shop API",
+                href: "https://seller-us.tiktok.com",
             },
             {
                 name: "SHEIN",
@@ -104,6 +112,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Receive SHEIN Open Platform orders, print and ship, then confirm fulfillment — all automated from one dashboard.",
                 highlight: "Open Platform",
+                href: "https://seller.shein.com",
             },
             {
                 name: "Temu",
@@ -112,6 +121,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Pull Temu Partner Open Platform orders and confirm shipments with carrier and tracking number automatically.",
                 highlight: "POP API",
+                href: "https://seller.temu.com",
             },
             {
                 name: "Meta Shops",
@@ -120,6 +130,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Sell across Facebook and Instagram from a single connection using the Meta Commerce Platform Shop API.",
                 highlight: "Shop API",
+                href: "https://www.facebook.com/business/shops",
             },
             {
                 name: "Pinterest Shopping",
@@ -128,6 +139,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Sync your product catalog with Pinterest and capture orders through Pinterest's native shopping experience.",
                 highlight: "Shopping API",
+                href: "https://business.pinterest.com/en/sell",
             },
         ],
     },
@@ -151,6 +163,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Connect your Wix store with an API key and pull orders directly into your production queue with automatic fulfillment sync.",
                 highlight: "REST API",
+                href: "https://www.wix.com/upgrade/ecommerce",
             },
             {
                 name: "WooCommerce",
@@ -159,6 +172,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Connect your WooCommerce store via the REST API using consumer keys. Pull orders and push product listings automatically.",
                 highlight: "REST API",
+                href: "https://woo.com",
             },
             {
                 name: "Squarespace",
@@ -167,6 +181,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Link your Squarespace Commerce store with a developer API key to pull pending orders and sync products.",
                 highlight: "Commerce API",
+                href: "https://www.squarespace.com/ecommerce-website",
             },
         ],
     },
@@ -181,6 +196,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "A single Mirakl connection opens Zalando, Otto, Allegro, Catch, Macy's, Nordstrom, Best Buy (US & Canada), Bloomingdale's, Carrefour, Castorama, Fnac, Conrad, Bunnings, and 50+ more channels — all through one API.",
                 highlight: "50+ Markets",
+                href: "https://www.mirakl.com",
             },
             {
                 name: "Acenda",
@@ -189,6 +205,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "A single Acenda connection reaches Kohl's, Target Plus, Macy's, Nordstrom, Bloomingdale's, Wayfair, Home Depot, Lowe's, Best Buy, Costco, Dick's Sporting Goods, and 150+ more channels.",
                 highlight: "150+ Channels",
+                href: "https://www.acenda.com",
             },
             {
                 name: "Rithum",
@@ -197,6 +214,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Formerly ChannelAdvisor/DSCO — a single Rithum connection unlocks Zulily and other Rithum-powered dropship channels.",
                 highlight: "Dropship Platform",
+                href: "https://www.rithum.com",
             },
         ],
     },
@@ -211,6 +229,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Sell across UAE, Saudi Arabia, and Egypt on Noon — orders pull automatically and shipment confirmation syncs back.",
                 highlight: "UAE · SA · EG",
+                href: "https://sell.noon.com",
             },
             {
                 name: "bol.com",
@@ -219,6 +238,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "The leading marketplace in the Netherlands and Belgium. OAuth2 integration with PostNL, DPD, DHL, and more carriers.",
                 highlight: "NL · BE",
+                href: "https://partnerplatform.bol.com",
             },
             {
                 name: "Rakuten",
@@ -227,6 +247,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "Japan's leading e-commerce platform with 100M+ members globally. Direct integration via the Rakuten Marketplace Seller API.",
                 highlight: "Seller API",
+                href: "https://marketplace.rakuten.com",
             },
             {
                 name: "OnBuy",
@@ -235,6 +256,7 @@ const CATEGORIES = [
                 status: "live",
                 description: "The UK's fastest-growing marketplace and a strong Amazon alternative for British shoppers. Direct seller API integration.",
                 highlight: "UK Market",
+                href: "https://www.onbuy.com/gb/sell-on-onbuy/",
             },
         ],
     },

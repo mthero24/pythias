@@ -18,23 +18,27 @@ export default function HeroSection() {
             <div className={s.wrap}>
                 <div className={s.heroRow}>
                     <div className={s.heroText}>
-                        <span className={s.heroChip}>Pythias Fulfillment Cloud</span>
+                        <span className={s.heroChip}>For print shops &amp; print-on-demand businesses</span>
                         <h1 className={s.heroH1}>
                             One platform to run your entire{" "}
                             <span className={s.heroAccent}>print operation.</span>
                         </h1>
                         <p className={s.heroSub}>
-                            Pythias Fulfillment Cloud, Inventory, Shipping, Connect, and AI — five integrated products built for
-                            print-on-demand operations, from production floor to final delivery.
+                            Manage your production queue, sync orders from 18+ marketplaces, auto-generate shipping labels,
+                            and track inventory — all in one dashboard. Built for print shops scaling beyond spreadsheets.
                         </p>
                         <div className={s.heroBtns}>
                             <a href="#calendar-booking-section" className={s.btnGold}>
-                                📅 Book a Demo
+                                📅 Book a Free Demo
                             </a>
                             <a href="#lead-capture-section" className={s.btnWhiteOutline}>
                                 🚀 Get Early Access
                             </a>
                         </div>
+                        <p className={s.heroCta}>
+                            30-min call &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; No credit card &nbsp;·&nbsp;{" "}
+                            <a href="/pricing" className={s.heroPricingLink}>See pricing →</a>
+                        </p>
                         <div className={s.heroStats}>
                             {STATS.map((st) => (
                                 <div key={st.label} className={s.heroStat}>

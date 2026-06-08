@@ -18,13 +18,13 @@ const STEPS = [
         num: "1",
         icon: "🔗",
         title: "Connect your stores",
-        desc: "Link TikTok Shop, Shopify, Etsy, Amazon, Walmart, and 15+ more in minutes. Orders from every channel flow into one dashboard.",
+        desc: "Link TikTok Shop, Shopify, Etsy, Amazon, Walmart Marketplace, and 15+ more in minutes. Orders from every channel flow into one dashboard.",
     },
     {
         num: "2",
         icon: "📦",
         title: "Build your product catalog",
-        desc: "Browse blanks from fulfillment partners, add your designs, set your retail prices. Products sync automatically to your connected storefronts.",
+        desc: "Pick from hundreds of blank products — apparel, accessories, home goods — stocked by fulfillment partners. Upload your artwork, set your retail price. Commerce Cloud builds ready-to-sell listings and syncs them to every connected store. Nothing is printed or purchased until a customer places an order.",
     },
     {
         num: "3",
@@ -51,7 +51,7 @@ const YOU_GET = [
 ];
 
 const FEATURES = [
-    { icon: "🛒", title: "18+ Marketplace Integrations", desc: "TikTok Shop, Shopify, Etsy, Amazon, Walmart, eBay, Faire, and more — connect every channel you sell on." },
+    { icon: "🛒", title: "18+ Marketplace Integrations", desc: "TikTok Shop, Shopify, Etsy, Amazon, Walmart Marketplace, eBay, Faire, and more — connect every channel you sell on." },
     { icon: "🎨", title: "Design & Product Studio", desc: "Create products, attach designs, manage variants, and sync listings across every connected storefront automatically." },
     { icon: "🗺️", title: "Intelligent Order Routing", desc: "Every order is scored by geography, price, and provider reliability — then routed to the best available fulfillment partner." },
     { icon: "💳", title: "Pre-Funded Wallet", desc: "Fund your wallet, set auto-recharge thresholds. Wholesale costs are deducted automatically at order placement — no invoice chasing." },
@@ -99,7 +99,7 @@ const TIERS = [
         price: 299,
         marginFee: "5%",
         popular: true,
-        desc: "For growing brands scaling across multiple channels — margin fee pays for itself above ~$22k/mo wholesale.",
+        desc: "For growing brands scaling across multiple channels. Example: 100 orders/month at $21 avg margin — you keep ~$1,700 after subscription and fees.",
         features: [
             { label: "Unlimited orders" },
             { label: "All integrations", gold: true },
@@ -170,6 +170,14 @@ const FAQS = [
         a: "Your wallet is a pre-funded balance used to pay fulfillment partners wholesale cost at the moment each order is placed. You set a minimum balance threshold and an auto-recharge amount — when your balance drops below the threshold, your card on file is charged automatically to top it up. No invoice delays, no payment holds.",
     },
     {
+        q: "How does money actually work? Does Pythias handle my payments?",
+        a: "No — each marketplace pays you directly. When a customer buys on Amazon, Etsy, Shopify, or any connected channel, that marketplace collects the payment and deposits it into your seller account on their platform, exactly as it would without Pythias. Pythias only touches the wholesale side: when an order routes to a fulfillment partner, the wholesale cost is debited from your pre-funded Pythias wallet. You keep everything above that cost, minus the platform fee.",
+    },
+    {
+        q: "Does it work with Etsy or niche platforms that have heavy customization?",
+        a: "Yes. Etsy is a supported integration, including personalization and variation handling — custom text, color options, and buyer-specified details flow through with the order so fulfillment partners receive exactly what needs to be produced. If you sell on a niche platform not yet in our integration list, the discovery call is the right place to ask — we add integrations regularly and can tell you what's on the roadmap.",
+    },
+    {
         q: "Can I use Commerce Cloud and Fulfillment Cloud together?",
         a: "Yes. If you run your own production operation on Fulfillment Cloud, you can opt in to receive Commerce Cloud orders as a fulfillment partner — turning excess capacity into revenue. The two products are designed to work side by side.",
     },
@@ -218,18 +226,25 @@ export default function CommerceCloudPage() {
                         <span className={s.accent}>Fulfill everywhere.</span>
                     </h1>
                     <p className={s.heroSub}>
-                        List your printed products across TikTok, Shopify, Etsy, Amazon, and 15+ more marketplaces.
-                        When orders come in, we route them to vetted fulfillment partners automatically —
-                        no warehouse, no equipment, no staff.
+                        You design the products, set the prices, and own the customer relationship.
+                        When a customer buys, a vetted fulfillment partner physically prints, packs, and ships the order straight to their door — automatically, with tracking.
+                        Sell across TikTok, Shopify, Etsy, Amazon, and 15+ more with no warehouse or production equipment required.
                     </p>
                     <div className={s.heroBtns}>
                         <Link href="https://platform.pythiastechnologies.com/register?type=commerce" className={s.btnHeroGold}>
                             Start Free Trial
                         </Link>
                         <Link href="/#calendar-booking-section" className={s.btnHeroGhost}>
-                            Book a Demo
+                            Book a Discovery Call
                         </Link>
                     </div>
+                    <p className={s.heroFor}>
+                        Built for print-on-demand sellers, independent brands, and multi-channel boutiques — from side hustles to high-volume operations.
+                        <Link href="#faq" className={s.heroFaqLink}>Questions? See FAQ ↓</Link>
+                    </p>
+                    <p className={s.heroDiscovery}>
+                        Not sure it&apos;s a fit for your niche? The discovery call is just a conversation — no commitment, no pitch.
+                    </p>
                     <div className={s.heroStats}>
                         <div className={s.stat}>
                             <div className={s.statNum}>18+</div>
@@ -256,7 +271,7 @@ export default function CommerceCloudPage() {
                 <div className={s.wrap}>
                     <div className={s.head}>
                         <p className={s.sectionTag}>How It Works</p>
-                        <h2 className={s.h2}>From store connection to customer delivery — <span style={{ color: "#6366f1" }}>automated.</span></h2>
+                        <h2 className={s.h2}>From store connection to customer delivery — <span style={{ color: "#D3A73D" }}>automated.</span></h2>
                         <p className={s.sectionSub}>Three steps to get your first Commerce Cloud order fulfilled.</p>
                     </div>
                     <ul className={s.steps} style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -288,6 +303,9 @@ export default function CommerceCloudPage() {
                                 Most e-commerce platforms assume you already have production infrastructure.
                                 Commerce Cloud assumes you don&apos;t — and fills the gap with a network of
                                 vetted fulfillment partners who handle everything physical.
+                            </p>
+                            <p className={s.noWarehouseSub} style={{ marginTop: "-8px" }}>
+                                In plain terms: the fulfillment partners own the printers, the warehouse, and the production team — not you. A customer buys a shirt with your design; a partner prints it and ships it to their door. You never touch the product.
                             </p>
                             <ul className={s.noList}>
                                 {NO_NEED.map((item) => (
@@ -503,7 +521,7 @@ export default function CommerceCloudPage() {
             </section>
 
             {/* ── FAQ ── */}
-            <section className={s.section} style={{ paddingTop: 0 }}>
+            <section id="faq" className={s.section} style={{ paddingTop: 0 }}>
                 <div className={s.wrapMd}>
                     <div className={s.head}>
                         <p className={s.sectionTag}>FAQ</p>
@@ -535,7 +553,7 @@ export default function CommerceCloudPage() {
                             Start Free Trial
                         </Link>
                         <Link href="/#calendar-booking-section" className={s.ctaBtnGhost}>
-                            Book a Demo
+                            Book a Discovery Call
                         </Link>
                     </div>
                 </div>

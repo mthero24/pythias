@@ -1,7 +1,7 @@
 import s from "./home.module.css";
 
 const features = [
-    { color: "#D3A73D", icon: "🖨️", title: "Pythias Fulfillment Cloud",     desc: "The production OS for your print floor — DTF, embroidery, sublimation, and screen print queues managed by deadline, type, and priority." },
+    { color: "#D3A73D", icon: "🖨️", title: "Pythias Fulfillment Cloud",     desc: "The production OS for your print shop — manage job queues for DTF (direct-to-film), embroidery, sublimation, and screen print by deadline and priority. No whiteboards, no spreadsheets." },
     { color: "#6366f1", icon: "🚚", title: "Pythias Shipping",               desc: "Auto-generate USPS, FedEx, and UPS labels on order completion. Tracking syncs back to every marketplace — no manual steps." },
     { color: "#10b981", icon: "📦", title: "Pythias Inventory",              desc: "Real-time blank inventory tracking across all SKUs. Automated reorder alerts and supplier management prevent costly stockouts." },
     { color: "#ef4444", icon: "🛒", title: "Pythias Connect",                desc: "Amazon, Etsy, Walmart, TikTok, Shopify, and 15+ more — all orders unified in a single production view, auto-routed and fulfilled." },

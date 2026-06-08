@@ -2,8 +2,9 @@
 
 const ROUTES = [
     { url: "/",                          priority: 1.0,  changeFrequency: "weekly" },
+    { url: "/fulfillment-cloud",          priority: 0.95, changeFrequency: "monthly" },
+    { url: "/commerce-cloud",            priority: 0.95, changeFrequency: "monthly" },
     { url: "/features",                  priority: 0.9,  changeFrequency: "monthly" },
-    { url: "/pricing",                   priority: 0.95, changeFrequency: "monthly" },
     { url: "/how-it-works",              priority: 0.9,  changeFrequency: "monthly" },
     { url: "/integrations",              priority: 0.85, changeFrequency: "monthly" },
     { url: "/setup-guides/integrations",         priority: 0.9,  changeFrequency: "monthly" },
@@ -42,6 +43,7 @@ const ROUTES = [
     { url: "/services/design",           priority: 0.8,  changeFrequency: "monthly" },
     { url: "/services/image-creation",       priority: 0.8,  changeFrequency: "monthly" },
     { url: "/services/product-creation-ai", priority: 0.8,  changeFrequency: "monthly" },
+    { url: "/faq",                       priority: 0.85, changeFrequency: "monthly" },
     { url: "/blog",                      priority: 0.85, changeFrequency: "weekly" },
     { url: "/tutorials",                 priority: 0.7,  changeFrequency: "weekly" },
     { url: "/about",                     priority: 0.75, changeFrequency: "monthly" },

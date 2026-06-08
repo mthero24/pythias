@@ -125,6 +125,16 @@
 @media (min-width: 600px) { .heroBtns { flex-direction: row; } }
 @media (min-width: 900px) { .heroBtns { justify-content: flex-start; } }
 
+.heroCta {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 14px;
+  text-align: center;
+}
+@media (min-width: 900px) { .heroCta { text-align: left; } }
+.heroPricingLink { color: #D3A73D; text-decoration: none; font-weight: 600; }
+.heroPricingLink:hover { text-decoration: underline; }
+
 .btnGold {
   display: inline-flex;
   align-items: center;

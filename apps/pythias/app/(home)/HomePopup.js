@@ -20,8 +20,19 @@ export default function HomePopup() {
 
     useEffect(() => {
         if (sessionStorage.getItem(SESSION_KEY)) return;
-        const t = setTimeout(() => setOpen(true), 5000);
-        return () => clearTimeout(t);
+        let timer = null;
+        const onScroll = () => {
+            const pct = (window.scrollY + window.innerHeight) / document.body.scrollHeight;
+            if (pct >= 0.5 && !timer) {
+                // User has read at least half the page — wait 8 more seconds then show
+                timer = setTimeout(() => setOpen(true), 8000);
+            }
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+            if (timer) clearTimeout(timer);
+        };
     }, []);
 
     const dismiss = () => {
