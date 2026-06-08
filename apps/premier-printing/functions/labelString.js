@@ -132,24 +132,28 @@ export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity
         totalQuantity = await Items.find({ _id: { $in: item.order?.items ?? [] }, canceled: false }).countDocuments();
     }
 
-    // Inventory management (unchanged from original)
-    if (!item.inventory) item.inventory = {};
-    if (!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
+    // Inventory management — skip for gift items and items without a blank reference
+    if (item.type !== "gift" && (item.blank?._id ?? item.blank)) {
+        if (!item.inventory) item.inventory = {};
+        if (!item.inventory.inventoryType) item.inventory.inventoryType = "inventory";
 
-    if (!item.inventory.inventory) {
-        item.inventory.inventory = await Inventory.findOne({
-            blank:  item.blank?._id  ?? item.blank,
-            color:  item.color?._id  ?? item.color,
-            sizeId: item.size?._id   ?? item.size,
-        }).select("row bin shelf unit quantity onhold");
-        if (item.inventory?.inventory) {
-            item.inventory.inventory.quantity -= 1;
-            if (item.inventory.inventory.inStock)
-                item.inventory.inventory.inStock = item.inventory.inventory.inStock.filter(id => id.toString() !== item._id.toString());
-            if (item.inventory.inventory.attached)
-                item.inventory.inventory.attached = item.inventory.inventory.attached.filter(id => id.toString() !== item._id.toString());
-            await item.inventory.inventory.save();
+        if (!item.inventory.inventory) {
+            item.inventory.inventory = await Inventory.findOne({
+                blank:  item.blank?._id  ?? item.blank,
+                color:  item.color?._id  ?? item.color,
+                sizeId: item.size?._id   ?? item.size,
+            }).select("row bin shelf unit quantity onhold");
+            if (item.inventory?.inventory) {
+                item.inventory.inventory.quantity -= 1;
+                if (item.inventory.inventory.inStock)
+                    item.inventory.inventory.inStock = item.inventory.inventory.inStock.filter(id => id.toString() !== item._id.toString());
+                if (item.inventory.inventory.attached)
+                    item.inventory.inventory.attached = item.inventory.inventory.attached.filter(id => id.toString() !== item._id.toString());
+                await item.inventory.inventory.save();
+            }
         }
+    } else if (!item.inventory) {
+        item.inventory = {};
     }
 
     if (item.inventory?.inventoryType === "productInventory") {
