@@ -2,8 +2,10 @@ import { Box, Grid2, Button, Typography, Divider, FormControlLabel, Checkbox, Ch
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useState } from "react";
 import { RetryImage } from "./RetryImage";
+import { renderUrlParts } from "./renderUrl";
 
 export const BlankStage = ({products, setProducts, setStage, blanks, design, source, slug, combined, setCombined, colors, sizes, setSizes, cols, setColors, getUpcs, showToast})=>{
+    const { base: renderBase, suffix: renderSuffix } = renderUrlParts(source, slug);
     const [department, setDepartment] = useState(null)
     const [category, setCategory] = useState(null)
     const [departments] = useState(blanks.map(b => b.department).filter((value, index, self) => value && self.indexOf(value) === index))
@@ -54,31 +56,12 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                 let designImages = Object.keys(design.images ? design.images : {})
                 let styleImages = []
                 let color;
-                if(b.images && b.images.length > 0){
-                   // console.log(designImages, "design images")
-                    if(!color) color = b.images[0].color
-                    for(let im of b.images){
-                        //console.log(Object.keys(im.boxes? im.boxes: {}), designImages.join("-"), "checking image boxes")
-                        if (Object.keys(im.boxes ? im.boxes : {}).filter(e => designImages.includes(e)).length > 0){
+                if (b.images && b.images.length > 0) {
+                    if (!color) color = b.images[0].color
+                    for (let im of b.images) {
+                        if (Object.keys(im.boxes ? im.boxes : {}).filter(e => designImages.includes(e)).length > 0) {
                             styleImages.push({ blankImage: im, designImages: design.images, sides: designImages.join("_"), colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
                             break;
-                        }
-                    }
-                }else{
-                    for (let di of designImages) {
-                        if (di != null) {
-                            if (b.multiImages && b.multiImages[di] && b.multiImages[di].length > 0) {
-                                if (!color) {
-                                    color = b.multiImages[di][0].color
-                                    if (b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] && b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] != null) {
-                                        styleImages.push({ blankImage: b.multiImages[di][0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
-                                    }
-                                } else {
-                                    if (b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] && b.multiImages[di].filter(i => i.color.toString() == color.toString())[0] != null) {
-                                        styleImages.push({ blankImage: b.multiImages[di].filter(i => i.color.toString() == color.toString())[0], designImage: design.images[di], side: di, colorName: colors.filter(c => c._id.toString() == color.toString())[0]?.name })
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -133,9 +116,16 @@ export const BlankStage = ({products, setProducts, setStage, blanks, design, sou
                                     </Box>
                                 )}
                                 <Box sx={{ aspectRatio: "1 / 1", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "background.default", padding: 1 }}>
-                                    {styleImages.map((si, i) => (
-                                        <RetryImage key={i} src={`/api/renderImages/${design.sku}-${b.code?.replace(/-/g, "_")}-${si.blankImage?.image.split("/")[si.blankImage?.image.split("/").length - 1].split(".")[0]}-${si.colorName?.replace(/\//g, "_")}-${si.side? si.side: si.sides}.jpg?width=400&orgSlug=${slug}`} alt={`${b.code} image`} style={{ maxWidth: `${100 / styleImages.length}%`, maxHeight: "100%", objectFit: "contain" }} />
-                                    ))}
+                                    {styleImages.map((si, i) => {
+                                        const side = si.side ?? si.sides?.split("_")[0];
+                                        const designImg = si.designImage ?? (si.designImages ? si.designImages[side] : null);
+                                        const params = new URLSearchParams({ blank: b.code, width: 400 });
+                                        if (si.blankImage?.image) params.set("blankImage", si.blankImage.image);
+                                        if (designImg) params.set("design", designImg);
+                                        if (side) params.set("side", side);
+                                        if (renderSuffix) params.set("orgSlug", renderSuffix.replace("&orgSlug=", ""));
+                                        return <RetryImage key={i} src={`${renderBase}/render.jpg?${params}`} alt={`${b.code} image`} style={{ maxWidth: `${100 / styleImages.length}%`, maxHeight: "100%", objectFit: "contain" }} />;
+                                    })}
                                 </Box>
                                 <Divider />
                                 <Box sx={{ padding: 1 }}>

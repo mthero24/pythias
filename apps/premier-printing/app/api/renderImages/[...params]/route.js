@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 import { Design, Blank as Blanks } from "@pythias/mongo";
 
+
 const CDN = (url) => url?.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");
 
 const fetchBuf = async (url) => {
@@ -97,32 +98,65 @@ const createImage = async (data) => {
 };
 
 export async function GET(req) {
-    const url = req.url;
-    const base = url.split("/").pop().split(".")[0].replace(/%20/g, " ");
-    const params = base.split("-");
     const width = parseInt(req.nextUrl.searchParams.get("width")) || 400;
-    const side = req.nextUrl.searchParams.get("side");
-    const sides = side ? [side] : (params[3] ? [params[3]] : []);
 
-    const blankCode = req.nextUrl.searchParams.get("blank");
-    const bm = req.nextUrl.searchParams.get("blankImage");
-    const designImage = req.nextUrl.searchParams.get("design");
+    // Parse filename from URL path: {designSku}-{blankCode}-{fileBase}-{colorName}-{side}.jpg
+    const urlPath  = req.nextUrl.pathname;
+    const filename = urlPath.split("/").pop().split(".")[0];
+    const parts    = filename.split("-");
 
-    const blank = await Blanks.findOne({ code: blankCode }).lean();
-    if (!blank) return new NextResponse(null, { status: 404 });
+    let blankImage = null;
+    let designImageData = null;
+    let sides = [];
 
-    let blankImage = bm
-        ? blank.images?.find(i => i.image === bm) ?? null
-        : blank.images?.find(i => i.boxes && i.boxes[side]) ?? null;
+    if (parts.length >= 3 && parts[0] !== "render") {
+        // Path-based format from colorStage/variantImageStage
+        const designSku   = parts[0];
+        const blankCode   = parts[1].replace(/_/g, "-");
+        const fileBase    = parts[2];
+        const side        = parts[4] ?? parts[3] ?? null;
+        const threadColor = parts.length >= 6 ? parts[5] : null;
 
-    if (!blankImage) return new NextResponse(null, { status: 404 });
+        const [design, blank] = await Promise.all([
+            Design.findOne({ sku: designSku }).select("images threadImages").lean(),
+            Blanks.findOne({ code: blankCode }).lean(),
+        ]);
+
+        if (!blank) return new NextResponse(null, { status: 404 });
+
+        blankImage = blank.images?.find(i => i.image?.includes(fileBase)) ?? null;
+        if (!blankImage) return new NextResponse(null, { status: 404 });
+
+        designImageData = threadColor
+            ? design?.threadImages?.[threadColor] ?? null
+            : design?.images ?? null;
+
+        sides = side ? [side] : Object.keys(blankImage.boxes ?? {});
+    } else {
+        // Query-params format from blankStage
+        const side       = req.nextUrl.searchParams.get("side");
+        const blankCode  = req.nextUrl.searchParams.get("blank");
+        const bm         = req.nextUrl.searchParams.get("blankImage");
+        const designImage = req.nextUrl.searchParams.get("design");
+
+        const blank = await Blanks.findOne({ code: blankCode }).lean();
+        if (!blank) return new NextResponse(null, { status: 404 });
+
+        blankImage = bm
+            ? blank.images?.find(i => i.image === bm) ?? blank.images?.find(i => side && i.boxes?.[side]) ?? null
+            : blank.images?.find(i => side && i.boxes?.[side]) ?? null;
+
+        if (!blankImage) return new NextResponse(null, { status: 404 });
+
+        sides = side ? [side] : Object.keys(blankImage.boxes ?? {});
+        designImageData = side ? { [side]: designImage } : designImage;
+    }
 
     const boxEntries = blankImage.boxes
         ? Object.keys(blankImage.boxes).filter(k => sides.includes(k)).map(k => ({ ...blankImage.boxes[k], side: k }))
         : [];
 
-    const designImageObj = side ? { [side]: designImage } : designImage;
-    const data = { box: boxEntries, styleImage: blankImage.image, designImage: designImageObj, width };
+    const data = { box: boxEntries, styleImage: blankImage.image, designImage: designImageData, width };
     const result = await createImage(data);
 
     if (result) {

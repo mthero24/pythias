@@ -474,6 +474,57 @@ export const updateProductPrice = async (product_id, skus, credentials, shop_cip
     return { error: false };
 };
 
+export const searchBrands = async (brand_name, credentials, shop_cipher) => {
+    const config = await getConfig();
+    const baseUrl = "https://open-api.tiktokglobalshop.com/product/202309/brands";
+    const accessToken = credentials.access_token;
+    const params = { app_key: config.app_key, shop_cipher, version: "202309", brand_name, page_size: 10 };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret);
+    params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
+    let errRes;
+    const result = await axios.get(buildUrl(baseUrl, params), {
+        headers: { "x-tts-access-token": accessToken },
+    }).catch(e => { errRes = e.response?.data; });
+    if (errRes) {
+        if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
+        return { error: true, msg: errRes.code };
+    }
+    return { error: false, brands: result?.data?.data?.brands ?? [] };
+};
+
+export const createBrand = async (brand_name, credentials, shop_cipher) => {
+    const config = await getConfig();
+    const baseUrl = "https://open-api.tiktokglobalshop.com/product/202309/brands";
+    const accessToken = credentials.access_token;
+    const params = { app_key: config.app_key, shop_cipher, version: "202309" };
+    const body = { name: brand_name };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);
+    params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
+    let errRes;
+    const result = await axios.post(buildUrl(baseUrl, params), body, {
+        headers: { "Content-Type": "application/json", "x-tts-access-token": accessToken },
+    }).catch(e => { errRes = e.response?.data; });
+    if (errRes) {
+        if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
+        return { error: true, msg: errRes.code };
+    }
+    return { error: false, brand_id: result?.data?.data?.brand_id ?? result?.data?.data?.id };
+};
+
+// Returns the TikTok brand_id for a given brand name, creating it if it doesn't exist yet.
+export const getOrCreateBrand = async (brand_name, credentials, shop_cipher) => {
+    if (!brand_name) return null;
+    const search = await searchBrands(brand_name, credentials, shop_cipher);
+    if (search.error) return null;
+    const exact = search.brands.find(b => b.name?.toLowerCase() === brand_name.toLowerCase());
+    if (exact) return exact.id ?? exact.brand_id;
+    const created = await createBrand(brand_name, credentials, shop_cipher);
+    if (created.error) return null;
+    return created.brand_id;
+};
+
 export const getProductQuality = async (product_id, credentials, shop_cipher) => {
     const config = await getConfig();
     const baseUrl = `https://open-api.tiktokglobalshop.com/product/202309/products/${product_id}`;

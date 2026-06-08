@@ -94,6 +94,7 @@ export async function POST(req=NextApiRequest){
 
     const product = {
         name:        p.title,
+        brand:       p.brand ?? null,
         description: p.description,
         design:      p.design,
         blank:       p.blanks?.[0] ? { ...p.blanks[0], sizeGuide: p.blanks[0].sizeGuide ? { ...p.blanks[0].sizeGuide, images: (p.blanks[0].sizeGuide.images ?? []).map(hires) } : undefined } : undefined,

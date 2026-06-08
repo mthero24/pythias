@@ -1,4 +1,5 @@
 import { Box, Grid2, Button, Typography, Card, CardContent, Chip, Stack, Tooltip, Divider } from "@mui/material";
+import { renderUrlParts } from "./renderUrl";
 import CheckIcon from '@mui/icons-material/Check';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
@@ -27,10 +28,7 @@ const ColorSwatch = ({ color, selected, premium, onClick, size = 48 }) => (
 
 export const ColorStage = ({ products, setProducts, setStage, design, source, slug, combined, colors, cols, sizes, setImages, upcs, getTempUpcs }) => {
     const hasThreadColors = design.threadColors?.length > 0;
-    const renderBase = source === "platform"
-        ? "https://platform.pythiastechnologies.com/api/renderImages"
-        : "/api/renderImages";
-    const renderSuffix = source === "platform" && slug ? `&orgSlug=${slug}` : "";
+    const { base: renderBase, suffix: renderSuffix } = renderUrlParts(source, slug);
     return (
         <Box sx={{ padding: { xs: 1.5, sm: 2 } }}>
             {products.map((product, i) => {

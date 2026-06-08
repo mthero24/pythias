@@ -1,4 +1,5 @@
 import { Box, Grid2, Button, Typography, Card, CardContent, Chip, IconButton, Tooltip, Modal, ToggleButton, ToggleButtonGroup, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import { renderUrlParts } from "./renderUrl";
 import { useState } from "react";
 import CloseIcon from '@mui/icons-material/Close';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
@@ -81,10 +82,7 @@ export const VariantImageStage = ({ products, setProducts, design, source, slug,
 const CreateVariantImages = ({ product, products, setProducts, design, designObj, threadColors, source, slug }) => {
     const dSku = product.design?.sku ?? designObj?.sku ?? "";
     const dPrintType = product.design?.printType ?? designObj?.printType ?? "";
-    const renderBase = source === "platform"
-        ? "https://platform.pythiastechnologies.com/api/renderImages"
-        : "/api/renderImages";
-    const renderSuffix = source === "platform" && slug ? `&orgSlug=${slug}` : "";
+    const { base: renderBase, suffix: renderSuffix } = renderUrlParts(source, slug);
     const [mainImage, setMainImage] = useState(true);
     const [zoomImage, setZoomImage] = useState(null);
     const cdn = (url) => url.replace("https://images1.pythiastechnologies.com", "https://images2.pythiastechnologies.com/origin");

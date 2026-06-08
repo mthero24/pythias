@@ -43,6 +43,7 @@ export {
   updateProductPrice as updateProductPriceTikTok,
   getProductQuality as getProductQualityTikTok,
   getProductAnalytics as getProductAnalyticsTikTok,
+  getOrCreateBrand as getOrCreateBrandTikTok,
   getShippingProvidersTikTok,
   fulfillOrderTikTok,
 } from "./functions/tiktokpy";

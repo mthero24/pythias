@@ -9,6 +9,7 @@ import {
   createProduct,
   getOrdersTikTok,
   generatePieceID,
+  getOrCreateBrandTikTok,
 } from "@pythias/integrations";
 const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
 const refresh = async (creds, cipher) => {
@@ -111,10 +112,15 @@ export async function createTikTokProduct({product}){
             throw new Error("TikTok shop_list is empty — no authorized shops found");
         }
     }
+    const brand_id = product.brand
+        ? await getOrCreateBrandTikTok(product.brand, credentials, credentials.shop_list[0].shop_cipher)
+        : null;
+
     let tiktokProduct = {
         save_mode: "LISTING",
         description: product.description,
         title: product.name,
+        ...(brand_id ? { brand_id } : {}),
         is_cod_allowed: false,
         package_dimensions: {
             length: "13",
