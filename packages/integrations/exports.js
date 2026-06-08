@@ -41,6 +41,8 @@ export {
   searchProducts as searchProductsTikTok,
   updateInventory as updateInventoryTikTok,
   updateProductPrice as updateProductPriceTikTok,
+  getProductQuality as getProductQualityTikTok,
+  getProductAnalytics as getProductAnalyticsTikTok,
   getShippingProvidersTikTok,
   fulfillOrderTikTok,
 } from "./functions/tiktokpy";

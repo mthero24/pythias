@@ -2,6 +2,28 @@ import tiktokShop from "tiktok-shop";
 import axios from "axios"
 import btoa from "btoa"
 import FormData from "form-data"
+import crypto from "crypto"
+
+// The tiktok-shop library uses naive split("=") which corrupts base64 token values.
+// This replacement uses URLSearchParams for correct parsing.
+const signByUrlFixed = (url, appSecret, body = {}) => {
+    const decoded = decodeURIComponent(url);
+    const qIdx = decoded.indexOf("?");
+    const path = decoded.substring(decoded.indexOf(".com") + 4, qIdx);
+    const query = decoded.substring(qIdx + 1);
+    const sp = new URLSearchParams(query);
+    const exclude = new Set(["app_secret", "token", "access_token", "sign"]);
+    const keys = [...sp.keys()].filter(k => !exclude.has(k)).sort();
+    const timestamp = Math.floor(Date.now() / 1000) - 100;
+    const modKeys = keys.includes("timestamp") ? keys : [...keys, "timestamp"].sort();
+    const allParams = Object.fromEntries(sp);
+    allParams.timestamp = String(timestamp);
+    let input = path + modKeys.map(k => k + allParams[k]).join("");
+    if (Object.keys(body).length > 0) input += JSON.stringify(body);
+    const plainText = appSecret + input + appSecret;
+    const signature = crypto.createHmac("sha256", appSecret).update(plainText).digest("hex");
+    return { signature, timestamp };
+};
 const baseUrl = "https://open-api.tiktokglobalshop.com"
 const getConfig = async () => {
     const localKey    = process.env.TIK_TOK_APP_KEY || process.env.tiktok_app_key || process.env.Tik_Tok_AppKey;
@@ -131,7 +153,6 @@ export async function createProduct({tiktokProduct, credentials, update}){
         if (code == 36009004 || code == 105002) return { error: true, msg: "refresh" };
         return { error: true, msg: data.message ?? `code ${code}` };
     }
-    console.log("createProduct result:", data?.data.product_id)
     return { error: false, product: data?.data };
 }
 export const getRecommendedCategory = async (product_name, credentials) => {
@@ -388,15 +409,17 @@ export const getOrders = async ({next_page_token, credentials}) => {
     }
 };
 
-export const searchProducts = async (credentials, shop_cipher, { status = "ACTIVATE", page_size = 20, page_token = null } = {}) => {
+export const searchProducts = async (credentials, shop_cipher, { status = "ACTIVATE", page_size = 20, page_token = null, keyword = null, seller_skus = null } = {}) => {
     const config = await getConfig();
     const baseUrl = "https://open-api.tiktokglobalshop.com/product/202309/products/search";
     const accessToken = credentials.access_token;
     const params = { app_key: config.app_key, shop_cipher, version: "202309", category_version: "v2", page_size };
-    if (page_token) params.page_token = page_token;
+    if (page_token) params["page_token"] = page_token;
     const body = { status };
+    if (keyword) body.keyword = keyword;
+    if (seller_skus?.length) body.seller_skus = seller_skus;
     let signUrl = buildUrl(baseUrl, params);
-    const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);
+    const { signature, timestamp } = signByUrlFixed(signUrl, config.app_secret, body);
     params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
     let errRes;
     const result = await axios.post(buildUrl(baseUrl, params), body, {
@@ -406,7 +429,9 @@ export const searchProducts = async (credentials, shop_cipher, { status = "ACTIV
         if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
         return { error: true, msg: errRes.code };
     }
-    return { error: false, products: result?.data?.data?.products ?? [], total: result?.data?.data?.total_count ?? 0 };
+    const d = result?.data?.data;
+    console.log("TikTok search keys:", d ? Object.keys(d) : "null", "next_page_token:", d?.next_page_token);
+    return { error: false, products: d?.products ?? [], total: d?.total_count ?? 0, next_page_token: d?.next_page_token ?? null };
 };
 
 export const updateInventory = async (product_id, skus, credentials, shop_cipher) => {
@@ -447,6 +472,57 @@ export const updateProductPrice = async (product_id, skus, credentials, shop_cip
         return { error: true, msg: errRes.code };
     }
     return { error: false };
+};
+
+export const getProductQuality = async (product_id, credentials, shop_cipher) => {
+    const config = await getConfig();
+    const baseUrl = `https://open-api.tiktokglobalshop.com/product/202309/products/${product_id}`;
+    const accessToken = credentials.access_token;
+    const params = { app_key: config.app_key, shop_cipher, version: "202309", return_under_review_version: false };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret);
+    params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
+    let errRes;
+    const result = await axios.get(buildUrl(baseUrl, params), {
+        headers: { "x-tts-access-token": accessToken },
+    }).catch(e => { errRes = e.response?.data; });
+    if (errRes) {
+        if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
+        return { error: true, msg: errRes.code };
+    }
+    const p = result?.data?.data;
+    const issues = [];
+    if (p) {
+        if (!p.main_images?.length || p.main_images.length < 3) issues.push({ field: "Images", tip: `Add more product images — TikTok recommends at least 9 (currently ${p.main_images?.length ?? 0})` });
+        if (!p.description || p.description.replace(/<[^>]+>/g, "").trim().length < 100) issues.push({ field: "Description", tip: "Write a longer product description (100+ characters recommended)" });
+        if (!p.size_chart?.image) issues.push({ field: "Size Chart", tip: "Add a size chart image to improve shopper confidence" });
+        if (!p.product_attributes?.length || p.product_attributes.length < 3) issues.push({ field: "Attributes", tip: "Fill in more product attributes (material, origin, care instructions)" });
+        if (!p.skus?.every(s => s.identifier_code?.code)) issues.push({ field: "UPC/Barcode", tip: "Add UPC barcodes to all SKUs" });
+    }
+    return { error: false, quality_tier: p?.listing_quality_tier, issues, product: p };
+};
+
+export const getProductAnalytics = async (product_id, credentials, shop_cipher, { days = 30 } = {}) => {
+    const config = await getConfig();
+    const baseUrl = "https://open-api.tiktokglobalshop.com/analytics/202309/products";
+    const accessToken = credentials.access_token;
+    const end_date   = new Date().toISOString().slice(0, 10);
+    const start_date = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+    const params = { app_key: config.app_key, shop_cipher, version: "202309" };
+    const body = { product_ids: [product_id], start_date, end_date, metrics: ["product_impressions","product_clicks","product_orders","product_gmv","ctr","cvr"] };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);
+    params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
+    let errRes;
+    const result = await axios.post(buildUrl(baseUrl, params), body, {
+        headers: { "Content-Type": "application/json", "x-tts-access-token": accessToken },
+    }).catch(e => { errRes = e.response?.data; });
+    if (errRes) {
+        if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
+        return { error: true, msg: errRes.code };
+    }
+    const data = result?.data?.data;
+    return { error: false, analytics: data?.products?.[0] ?? data ?? null };
 };
 
 export const getShippingProvidersTikTok = async (credentials, shop_cipher) => {

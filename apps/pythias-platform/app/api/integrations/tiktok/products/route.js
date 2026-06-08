@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { TikTokAuth } from "@pythias/mongo";
+import { TikTokAuth, PlatformProduct } from "@pythias/mongo";
 import {
     searchProductsTikTok,
     updateInventoryTikTok,
@@ -19,17 +19,20 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const shopId     = searchParams.get("shopId");
     const shopCipher = searchParams.get("shopCipher");
-    const status     = searchParams.get("status") ?? "ACTIVATE";
-    const page_size  = Number(searchParams.get("page_size") ?? 20);
+    const status          = searchParams.get("status") ?? "ACTIVATE";
+    const page_size       = Number(searchParams.get("page_size") ?? 50);
+    const page_token      = searchParams.get("page_token") || null;
+    const sku             = searchParams.get("sku") || null;
     if (!shopId || !shopCipher) return NextResponse.json({ error: "shopId and shopCipher required" }, { status: 400 });
 
     let credentials = await TikTokAuth.findById(shopId);
     if (!credentials) return NextResponse.json({ error: "Shop not found" }, { status: 404 });
 
-    let res = await searchProductsTikTok(credentials, shopCipher, { status, page_size });
+    const searchOpts = { status, page_size, page_token, ...(sku ? { seller_skus: [sku] } : {}) };
+    let res = await searchProductsTikTok(credentials, shopCipher, searchOpts);
     if (res.error && res.msg === "refresh") {
         credentials = await refreshCredentials(credentials);
-        res = await searchProductsTikTok(credentials, shopCipher, { status, page_size });
+        res = await searchProductsTikTok(credentials, shopCipher, searchOpts);
     }
     if (res.error) return NextResponse.json({ error: res.msg }, { status: 500 });
 
@@ -41,7 +44,24 @@ export async function GET(req) {
         if (!wRes.error) warehouseId = wRes.warehouses?.find(w => w.is_default)?.id ?? wRes.warehouses?.[0]?.id ?? null;
     } catch (_) {}
 
-    return NextResponse.json({ products: res.products, total: res.total, warehouseId });
+    const sellerSkus = res.products.map(p => p.skus?.[0]?.seller_sku).filter(Boolean);
+    const dbProducts = sellerSkus.length
+        ? await PlatformProduct.find({ "variantsArray.sku": { $in: sellerSkus } })
+            .select("variantsArray.sku variantsArray.image")
+            .lean()
+        : [];
+    const skuToImage = {};
+    for (const dbp of dbProducts) {
+        for (const v of dbp.variantsArray ?? []) {
+            if (v.sku && v.image) skuToImage[v.sku] = v.image;
+        }
+    }
+    const products = res.products.map(p => {
+        const sku = p.skus?.[0]?.seller_sku;
+        return sku && skuToImage[sku] ? { ...p, _dbImage: skuToImage[sku] } : p;
+    });
+
+    return NextResponse.json({ products, total: res.total, next_page_token: res.next_page_token ?? null, warehouseId });
 }
 
 export async function PUT(req) {

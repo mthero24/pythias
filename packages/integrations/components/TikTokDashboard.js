@@ -9,6 +9,7 @@ import {
 import { useState, useCallback, useEffect } from "react";
 import axios from "axios";
 import SyncIcon from "@mui/icons-material/Sync";
+import SearchIcon from "@mui/icons-material/Search";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import InventoryIcon from "@mui/icons-material/Inventory2";
@@ -301,9 +302,51 @@ function InlineEdit({ value, onSave, prefix = "", suffix = "" }) {
     );
 }
 
+const skuPrice = (sku) => sku?.price?.tax_exclusive_price ?? sku?.price?.original_price ?? sku?.price?.sale_price ?? sku?.price?.amount ?? null;
+const cleanImgUrl = (url) => url?.replace(/%7[Dd]/g, "").replace(/[{}]/g, "") ?? url;
+
+const qualityColor = (tier) => {
+    if (!tier) return "default";
+    const t = tier.toUpperCase();
+    if (t === "GOOD" || t === "HIGH") return "success";
+    if (t === "NORMAL" || t === "MEDIUM") return "warning";
+    return "error";
+};
+
 function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
-    const [expanded, setExpanded] = useState(false);
-    const [skus, setSkus]         = useState(product.skus ?? []);
+    const [expanded, setExpanded]     = useState(false);
+    const [skus, setSkus]             = useState(product.skus ?? []);
+    const [quality, setQuality]       = useState(null);
+    const [qualityIssues, setIssues]  = useState([]);
+    const [qualityLoading, setQualityLoading] = useState(false);
+    const [analytics, setAnalytics]   = useState(null);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+    const fetchQuality = async () => {
+        if (quality !== null || qualityLoading) return;
+        setQualityLoading(true);
+        try {
+            const res = await axios.get(`/api/integrations/tiktok/quality?shopId=${shopId}&shopCipher=${encodeURIComponent(shopCipher)}&productId=${product.id}`);
+            setQuality(res.data.quality_tier ?? "N/A");
+            setIssues(res.data.issues ?? []);
+        } catch (e) { setQuality("N/A"); }
+        setQualityLoading(false);
+    };
+
+    const fetchAnalytics = async () => {
+        if (analytics !== null || analyticsLoading) return;
+        setAnalyticsLoading(true);
+        try {
+            const res = await axios.get(`/api/integrations/tiktok/analytics?shopId=${shopId}&shopCipher=${encodeURIComponent(shopCipher)}&productId=${product.id}&days=30`);
+            setAnalytics(res.data.analytics ?? {});
+        } catch (e) { setAnalytics({}); }
+        setAnalyticsLoading(false);
+    };
+
+    const toggle = () => {
+        setExpanded(p => !p);
+        if (!expanded) { fetchQuality(); fetchAnalytics(); }
+    };
 
     const updateInventory = async (skuId, quantity) => {
         try {
@@ -333,11 +376,11 @@ function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
         }
     };
 
-    const thumbUrl = product.main_images?.[0]?.urls?.[0] ?? product.main_images?.[0]?.uri ?? null;
+    const thumbUrl = product._dbImage ?? product.main_images?.[0]?.thumb_urls?.[0] ?? product.main_images?.[0]?.urls?.[0] ?? null;
 
     return (
         <>
-            <TableRow hover sx={{ cursor: "pointer" }} onClick={() => setExpanded(p => !p)}>
+            <TableRow hover sx={{ cursor: "pointer" }} onClick={toggle}>
                 <TableCell>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
                         {thumbUrl
@@ -360,7 +403,7 @@ function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
                 </TableCell>
                 <TableCell>
                     <Typography variant="body2">
-                        {skus?.[0]?.price?.amount ? `$${skus[0].price.amount}` : "—"}
+                        {skuPrice(skus?.[0]) ? `$${skuPrice(skus[0])}` : "—"}
                         {skus?.length > 1 ? " +" : ""}
                     </Typography>
                 </TableCell>
@@ -369,10 +412,18 @@ function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
                         {skus?.reduce((sum, s) => sum + (s.inventory?.[0]?.quantity ?? 0), 0)}
                     </Typography>
                 </TableCell>
+                <TableCell>
+                    {qualityLoading
+                        ? <CircularProgress size={14} />
+                        : quality
+                            ? <Chip label={quality} size="small" color={qualityColor(quality)} variant="outlined" sx={{ fontSize: "0.7rem" }} />
+                            : <Typography variant="caption" color="text.disabled">—</Typography>
+                    }
+                </TableCell>
             </TableRow>
             {expanded && (
                 <TableRow>
-                    <TableCell colSpan={5} sx={{ p: 0, bgcolor: "#f8fafc" }}>
+                    <TableCell colSpan={6} sx={{ p: 0, bgcolor: "#f8fafc" }}>
                         <Box sx={{ px: 3, py: 2 }}>
                             <Typography variant="caption" fontWeight={700} color="text.secondary" mb={1} display="block">
                                 SKUs — click values to edit inventory or price
@@ -394,12 +445,16 @@ function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
                                             </TableCell>
                                             <TableCell>
                                                 <Typography variant="caption">
-                                                    {(sku.sales_attributes ?? []).map(a => a.value_name).join(" / ")}
+                                                    {(() => {
+                                                        if (sku.sales_attributes?.length) return sku.sales_attributes.map(a => `${a.name}: ${a.value_name}`).join(" / ");
+                                                        const parts = sku.seller_sku?.split("_") ?? [];
+                                                        return [parts[1], parts[2]].filter(Boolean).join(" / ") || "—";
+                                                    })()}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
                                                 <InlineEdit
-                                                    value={sku.price?.amount ?? "0"}
+                                                    value={skuPrice(sku) ?? "0"}
                                                     prefix="$"
                                                     onSave={v => updatePrice(sku.id, v)}
                                                 />
@@ -415,6 +470,60 @@ function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
                                 </TableBody>
                             </Table>
                         </Box>
+
+                        {/* Analytics */}
+                        <Box sx={{ px: 3, pb: 1.5 }}>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+                                Performance · Last 30 Days
+                            </Typography>
+                            {analyticsLoading ? (
+                                <CircularProgress size={14} />
+                            ) : analytics && Object.keys(analytics).length > 0 ? (
+                                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                                    {[
+                                        { key: "product_impressions", label: "Impressions" },
+                                        { key: "product_clicks",      label: "Clicks" },
+                                        { key: "product_orders",      label: "Orders" },
+                                        { key: "product_gmv",         label: "GMV" },
+                                        { key: "ctr",                 label: "CTR" },
+                                        { key: "cvr",                 label: "CVR" },
+                                    ].filter(m => analytics[m.key] != null).map(m => (
+                                        <Box key={m.key} sx={{ textAlign: "center", minWidth: 70 }}>
+                                            <Typography variant="caption" color="text.secondary" display="block">{m.label}</Typography>
+                                            <Typography variant="body2" fontWeight={700}>
+                                                {m.key === "product_gmv" ? `$${Number(analytics[m.key]).toFixed(2)}` :
+                                                 m.key === "ctr" || m.key === "cvr" ? `${(Number(analytics[m.key]) * 100).toFixed(1)}%` :
+                                                 Number(analytics[m.key]).toLocaleString()}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                    {Object.keys(analytics).filter(k => !["product_impressions","product_clicks","product_orders","product_gmv","ctr","cvr"].includes(k)).length > 0 && (
+                                        <Typography variant="caption" color="text.disabled" sx={{ alignSelf: "center" }}>
+                                            (analytics endpoint active — check logs for full response shape)
+                                        </Typography>
+                                    )}
+                                </Stack>
+                            ) : analytics !== null ? (
+                                <Typography variant="caption" color="text.disabled">No analytics data for this period</Typography>
+                            ) : null}
+                        </Box>
+
+                        {/* Quality Issues */}
+                        {qualityIssues.length > 0 && (
+                            <Box sx={{ px: 3, pb: 2 }}>
+                                <Typography variant="caption" fontWeight={700} color="error.main" display="block" mb={0.75}>
+                                    Quality Issues — why this listing scores POOR
+                                </Typography>
+                                <Stack spacing={0.5}>
+                                    {qualityIssues.map((issue, i) => (
+                                        <Box key={i} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                                            <Chip label={issue.field} size="small" color="warning" variant="outlined" sx={{ fontSize: "0.65rem", height: 18, flexShrink: 0 }} />
+                                            <Typography variant="caption" color="text.secondary">{issue.tip}</Typography>
+                                        </Box>
+                                    ))}
+                                </Stack>
+                            </Box>
+                        )}
                     </TableCell>
                 </TableRow>
             )}
@@ -423,45 +532,68 @@ function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
 }
 
 function TikTokProductsPanel({ shopId, shopCipher }) {
-    const [products,    setProducts]    = useState([]);
-    const [loading,     setLoading]     = useState(false);
-    const [error,       setError]       = useState("");
-    const [fetched,     setFetched]     = useState(false);
-    const [total,       setTotal]       = useState(0);
-    const [warehouseId, setWarehouseId] = useState(null);
-    const [status,      setStatus]      = useState("ACTIVATE");
+    const [products,       setProducts]      = useState([]);
+    const [loading,        setLoading]       = useState(false);
+    const [error,          setError]         = useState("");
+    const [fetched,        setFetched]       = useState(false);
+    const [total,          setTotal]         = useState(0);
+    const [warehouseId,    setWarehouseId]   = useState(null);
+    const [status,         setStatus]        = useState("ACTIVATE");
+    const [skuSearch,      setSkuSearch]     = useState("");
+    const [nextToken,      setNextToken]     = useState(null);
+    const [tokenStack,     setTokenStack]    = useState([]);  // stack of prev tokens for Back
 
-    const pull = useCallback(async () => {
+    const fetchPage = useCallback(async (pageToken = null, sku = "") => {
         setLoading(true); setError(""); setFetched(true);
         try {
-            const res = await axios.get(
-                `/api/integrations/tiktok/products?shopId=${shopId}&shopCipher=${encodeURIComponent(shopCipher)}&status=${status}&page_size=50`
-            );
+            const params = new URLSearchParams({ shopId, shopCipher, status, page_size: 50 });
+            if (pageToken) params.set("page_token", pageToken);
+            if (sku.trim()) params.set("sku", sku.trim());
+            const res = await axios.get(`/api/integrations/tiktok/products?${params}`);
+            console.log("pagination response keys:", Object.keys(res.data), "next_page_token:", res.data.next_page_token);
             setProducts(res.data.products ?? []);
             setTotal(res.data.total ?? 0);
+            setNextToken(res.data.next_page_token ?? null);
             setWarehouseId(res.data.warehouseId ?? null);
         } catch (e) {
             setError(e.response?.data?.error ?? "Failed to load products");
         } finally { setLoading(false); }
     }, [shopId, shopCipher, status]);
 
+    const handleLoad = () => { setTokenStack([]); fetchPage(null, skuSearch); };
+    const handleNext = () => { setTokenStack(s => [...s, null]); fetchPage(nextToken, skuSearch); };
+    // TikTok cursor pagination is forward-only; Back re-fetches from the token before current
+    const handleBack = () => {
+        const stack = [...tokenStack];
+        const prev  = stack.pop() ?? null;
+        setTokenStack(stack);
+        fetchPage(prev, skuSearch);
+    };
+
     return (
         <Box>
             <Stack direction="row" alignItems="center" spacing={2} mb={2} flexWrap="wrap">
                 <Typography variant="body2" fontWeight={600} color="text.secondary">Products</Typography>
-                <Select size="small" value={status} onChange={e => setStatus(e.target.value)} sx={{ minWidth: 140 }}>
+                <Select size="small" value={status} onChange={e => { setStatus(e.target.value); setTokenStack([]); setNextToken(null); }} sx={{ minWidth: 140 }}>
                     <MenuItem value="ACTIVATE">Active</MenuItem>
                     <MenuItem value="DRAFT">Draft</MenuItem>
                     <MenuItem value="SELLER_DEACTIVATED">Deactivated</MenuItem>
                 </Select>
+                <TextField
+                    size="small" placeholder="Search by SKU..." value={skuSearch}
+                    onChange={e => setSkuSearch(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") handleLoad(); }}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 16 }} /></InputAdornment> }}
+                    sx={{ width: 200 }}
+                />
                 <Button size="small" variant="outlined"
                     startIcon={loading ? <CircularProgress size={12} /> : <SyncIcon sx={{ fontSize: 14 }} />}
-                    onClick={pull} disabled={loading}
+                    onClick={handleLoad} disabled={loading}
                     sx={{ borderColor: TIKTOK_TEAL, color: TIKTOK_TEAL }}>
                     {fetched ? "Refresh" : "Load Products"}
                 </Button>
                 {fetched && !loading && (
-                    <Chip label={`${products.length} / ${total}`} size="small"
+                    <Chip label={`${products.length} shown / ${total} total`} size="small"
                         sx={{ bgcolor: "#e0e7ff", color: "#3730a3", fontWeight: 600 }} />
                 )}
                 {!warehouseId && fetched && (
@@ -481,6 +613,7 @@ function TikTokProductsPanel({ shopId, shopCipher }) {
                                 <TableCell sx={{ fontWeight: 700 }}>SKUs</TableCell>
                                 <TableCell sx={{ fontWeight: 700 }}>Price</TableCell>
                                 <TableCell sx={{ fontWeight: 700 }}>Total Stock</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Quality</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -501,6 +634,14 @@ function TikTokProductsPanel({ shopId, shopCipher }) {
 
             {fetched && !loading && products.length === 0 && !error && (
                 <Typography variant="body2" color="text.secondary">No products found for status: {status}.</Typography>
+            )}
+
+            {fetched && !loading && (tokenStack.length > 0 || nextToken) && (
+                <Stack direction="row" spacing={1} justifyContent="flex-end" mt={1.5}>
+                    <Button size="small" variant="outlined" disabled={tokenStack.length === 0} onClick={handleBack}>← Back</Button>
+                    <Button size="small" variant="outlined" disabled={!nextToken} onClick={handleNext}
+                        sx={{ borderColor: TIKTOK_TEAL, color: TIKTOK_TEAL }}>Next →</Button>
+                </Stack>
             )}
         </Box>
     );
