@@ -17,50 +17,55 @@ export async function GET(req) {
     const active = url.searchParams.get("active");
 
     const filter = { orgId };
-    if (q) filter.$or = [{ title: { $regex: q, $options: "i" } }, { sku: { $regex: q, $options: "i" } }];
+    if (q) filter.$text = { $search: q };
     if (active === "true") filter.active = true;
     if (active === "false") filter.active = false;
 
-    const [products, count] = await Promise.all([
-        PlatformProduct.find(filter)
-            .sort({ _id: -1 })
-            .skip((page - 1) * PER_PAGE)
-            .limit(PER_PAGE)
-            .populate("design", "sku name printType")
-            .populate("blanks", "code name sizes colors")
-            .populate("colors", "name hexcode sku")
-            .populate("productImages.color", "name hexcode sku")
-            .populate("variantsArray.blank", "code name")
-            .populate("variantsArray.color", "name hexcode sku")
-            .lean(),
-        PlatformProduct.countDocuments(filter),
-    ]);
+    try {
+        const [products, count] = await Promise.all([
+            PlatformProduct.find(filter)
+                .sort(q ? { score: { $meta: "textScore" }, _id: -1 } : { _id: -1 })
+                .skip((page - 1) * PER_PAGE)
+                .limit(PER_PAGE)
+                .populate("design", "sku name printType")
+                .populate("blanks", "code name sizes colors")
+                .populate("colors", "name hexcode sku")
+                .populate("productImages.color", "name hexcode sku")
+                .populate("variantsArray.blank", "code name")
+                .populate("variantsArray.color", "name hexcode sku")
+                .lean(),
+            PlatformProduct.countDocuments(filter),
+        ]);
 
-    // For products saved before colors/blanks were stored, derive from populated variantsArray
-    for (const product of products) {
-        if (!product.colors?.length && product.variantsArray?.length) {
-            const seen = new Map();
-            for (const v of product.variantsArray) {
-                if (v.color?._id) {
-                    const id = v.color._id.toString();
-                    if (!seen.has(id)) seen.set(id, v.color);
+        // For products saved before colors/blanks were stored, derive from populated variantsArray
+        for (const product of products) {
+            if (!product.colors?.length && product.variantsArray?.length) {
+                const seen = new Map();
+                for (const v of product.variantsArray) {
+                    if (v.color?._id) {
+                        const id = v.color._id.toString();
+                        if (!seen.has(id)) seen.set(id, v.color);
+                    }
                 }
+                product.colors = [...seen.values()];
             }
-            product.colors = [...seen.values()];
-        }
-        if (!product.blanks?.length && product.variantsArray?.length) {
-            const seen = new Map();
-            for (const v of product.variantsArray) {
-                if (v.blank?._id) {
-                    const id = v.blank._id.toString();
-                    if (!seen.has(id)) seen.set(id, v.blank);
+            if (!product.blanks?.length && product.variantsArray?.length) {
+                const seen = new Map();
+                for (const v of product.variantsArray) {
+                    if (v.blank?._id) {
+                        const id = v.blank._id.toString();
+                        if (!seen.has(id)) seen.set(id, v.blank);
+                    }
                 }
+                product.blanks = [...seen.values()];
             }
-            product.blanks = [...seen.values()];
         }
+
+        return NextResponse.json({ error: false, products: JSON.parse(JSON.stringify(products)), count });
+    } catch (e) {
+        console.error("[products GET]", e);
+        return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
     }
-
-    return NextResponse.json({ error: false, products: JSON.parse(JSON.stringify(products)), count });
 }
 
 function flattenVariants(raw) {

@@ -9,7 +9,8 @@ export default async function ProductsPage(req) {
     const query = await req.searchParams;
     const page = parseInt(query.page ?? "1");
     const q = query.q ?? null;
-    const filters = query.filters ? JSON.parse(query.filters) : {};
+    let filters = {};
+    try { if (query.filters) filters = JSON.parse(query.filters); } catch {}
 
     const session = await getServerSession(authOptions);
     const orgId = session?.user?.orgId;

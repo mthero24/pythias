@@ -114,4 +114,10 @@ const schema = new mongoose.Schema({
     },
     designTemplateId: { type: mongoose.Schema.Types.ObjectId, ref: "DesignTemplate" },
 });
+
+// Compound index for efficient paginated listing per org
+schema.index({ orgId: 1, _id: -1 });
+// Text index for fast title/sku search across large catalogs
+schema.index({ title: "text", sku: "text" });
+
 export default PremierPrinting.model("Products", schema);

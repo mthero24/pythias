@@ -30,7 +30,8 @@ export async function LabelsData() {
             shippingType: { $ne: "Standard" },
         }).lean(),
         Items.find({
-            labelPrinted: false, paid: true, canceled: false, type: "gift",
+            type: "gift", labelPrinted: false, paid: true, canceled: false,
+            sku: { $in: ["gift-message", "gift-bag"] },
         }).lean(),
         Batches.find({}).limit(20).sort({ _id: -1 }).lean(),
         Items.find({

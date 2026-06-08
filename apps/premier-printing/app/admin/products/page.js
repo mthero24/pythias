@@ -8,7 +8,8 @@ export default async function ProductsPage(req) {
     let query = await req.searchParams
     let page = parseInt(query.page ? query.page : 1)
     let q = query.q ? query.q : null;
-    let filters = query.filters ? JSON.parse(query.filters) : {};
+    let filters = {};
+    try { if (query.filters) filters = JSON.parse(query.filters); } catch {}
     const headersList = await headers();
     const user = await User.findOne({ userName: headersList.get("user") }).select("permissions").lean();
     const canManageMarketplaces = Boolean(user?.permissions?.marketplaces);

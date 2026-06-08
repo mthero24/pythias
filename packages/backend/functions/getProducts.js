@@ -127,24 +127,52 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
     return products;
 }
 
+const hasFilters = (filters) => filters && Object.keys(filters).length > 0;
+
+const fallbackProducts = async ({ Products, q, page, productsPerPage }) => {
+    const skip = (page - 1) * productsPerPage;
+    const filter = q ? { $text: { $search: q } } : {};
+    const [products, count] = await Promise.all([
+        Products.find(filter)
+            .sort({ lastUpdated: -1 })
+            .skip(skip)
+            .limit(productsPerPage)
+            .populate("design colors productImages.blank productImages.color productImages.threadColor threadColors")
+            .populate({ path: "blanks", populate: "colors" })
+            .lean(),
+        Products.countDocuments(filter),
+    ]);
+    return { products, count };
+};
+
 // Product-only search — no inventory populate, used by the API search route and getProducts
 export const searchProducts = async ({ Products, q, page, filters }) => {
-    const searchResults = await search({ Products, q, page, filters, productsPerPage: 24, skip: (page - 1) * 24 });
-    if (!searchResults?.length) return { products: [], count: 0 };
+    const productsPerPage = 24;
+    const skip = (page - 1) * productsPerPage;
 
-    const count = searchResults[0].meta.count.total;
-    const orderedIds = searchResults.map(p => p._id.toString());
-    let products = await Products.find({ _id: { $in: searchResults.map(p => p._id) } })
-        .populate("design colors productImages.blank productImages.color productImages.threadColor threadColors")
-        .populate({ path: "blanks", populate: "colors" })
-        .lean();
+    // Use Atlas Search only when there is an actual query or filter to apply
+    if (q || hasFilters(filters)) {
+        try {
+            const searchResults = await search({ Products, q, page, filters, productsPerPage, skip });
+            if (!searchResults?.length) return { products: [], count: 0 };
 
-    if (q) {
-        products.sort((a, b) => orderedIds.indexOf(a._id.toString()) - orderedIds.indexOf(b._id.toString()));
-    } else {
-        products.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
+            const count = searchResults[0].meta.count.total;
+            const orderedIds = searchResults.map(p => p._id.toString());
+            let products = await Products.find({ _id: { $in: searchResults.map(p => p._id) } })
+                .populate("design colors productImages.blank productImages.color productImages.threadColor threadColors")
+                .populate({ path: "blanks", populate: "colors" })
+                .lean();
+
+            products.sort((a, b) => orderedIds.indexOf(a._id.toString()) - orderedIds.indexOf(b._id.toString()));
+            return { products, count };
+        } catch (e) {
+            console.error("[searchProducts] Atlas Search failed, falling back:", e.message);
+            return fallbackProducts({ Products, q, page, productsPerPage });
+        }
     }
-    return { products, count };
+
+    // No query/filters — use regular pagination, no Atlas Search needed
+    return fallbackProducts({ Products, q: null, page, productsPerPage });
 };
 
 // Full page load — search and all filter lookups run in parallel
