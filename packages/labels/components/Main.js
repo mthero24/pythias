@@ -51,6 +51,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
     const [selectedPrinter, setSelectedPrinter] = useState(printerList[0]?.name ?? "printer1");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo]     = useState("");
+    const [stackLocation, setStackLocation] = useState(false);
 
     useEffect(() => {
         let pt = [], sc = [], mp = [];
@@ -310,6 +311,11 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                     {updatingInv ? "Updating…" : "Update Inventory"}
                                 </Button>
                             )}
+                            <Button variant="outlined" size="small"
+                                onClick={() => setStackLocation(s => !s)}
+                                sx={{ borderColor: stackLocation ? "primary.main" : undefined, bgcolor: stackLocation ? "primary.50" : undefined }}>
+                                Location: {stackLocation ? "Stacked" : "Inline"}
+                            </Button>
                         </Stack>
                     </Box>
 
@@ -638,9 +644,19 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                                         {/* Location row */}
                                                         {(inv?.inventoryType === "inventory" && inv?.inventory?.row) && (
                                                             <Box sx={{ px: 2, pb: 0.75 }}>
-                                                                <Typography sx={{ fontFamily: "monospace", fontSize: "0.65rem", color: isSelected ? "#c7d2fe" : "text.disabled" }}>
-                                                                    Row: {inv.inventory.row} · Unit: {inv.inventory.unit} · Shelf: {inv.inventory.shelf} · Bin: {inv.inventory.bin}
-                                                                </Typography>
+                                                                {stackLocation ? (
+                                                                    <Box>
+                                                                        {[["Aisle", inv.inventory.row], ["Unit", inv.inventory.unit], ["Shelf", inv.inventory.shelf], ["Bin", inv.inventory.bin]].map(([label, val]) => val != null && (
+                                                                            <Typography key={label} sx={{ fontFamily: "monospace", fontSize: "0.65rem", color: isSelected ? "#c7d2fe" : "text.disabled" }}>
+                                                                                {label}: {val}
+                                                                            </Typography>
+                                                                        ))}
+                                                                    </Box>
+                                                                ) : (
+                                                                    <Typography sx={{ fontFamily: "monospace", fontSize: "0.65rem", color: isSelected ? "#c7d2fe" : "text.disabled" }}>
+                                                                        Aisle: {inv.inventory.row} · Unit: {inv.inventory.unit} · Shelf: {inv.inventory.shelf} · Bin: {inv.inventory.bin}
+                                                                    </Typography>
+                                                                )}
                                                             </Box>
                                                         )}
                                                         {(inv?.inventoryType === "productInventory" && inv?.productInventory?.location) && (

@@ -55,7 +55,6 @@ export async function LabelsData(){
             canceled: false,
             paid: true,
             type: "gift",
-            sku: { $in: ["gift-bag"] },
         }).lean(),
         Batches.find({}).limit(20).sort({ _id: -1 }).lean(),
     ]);

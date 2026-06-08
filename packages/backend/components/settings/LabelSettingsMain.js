@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { useSession } from "next-auth/react";
 import {
     Box, Typography, Stack, Button, Alert, Container,
@@ -127,7 +127,7 @@ function DraggableField({ fieldKey, sample, pos, scale, dotW, dotH, selected, on
                 borderRadius: 0.5,
                 px: 0.5,
                 py: "1px",
-                whiteSpace: "nowrap",
+                whiteSpace: "pre",
                 fontSize,
                 fontFamily: "monospace",
                 lineHeight: 1.4,
@@ -235,7 +235,7 @@ function DraggableBarcode({ pos, scale, dotW, dotH, selected, onSelect, onMove }
 }
 
 // ── Label preview canvas ──────────────────────────────────────────────────────
-function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRotate }) {
+function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRotate, fieldSamples = {} }) {
     const dotW = Math.round(template.width * DPI);
     const dotH = Math.round(template.height * DPI);
     const scaleX = MAX_PREVIEW_W / dotW;
@@ -299,7 +299,7 @@ function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRota
                     <DraggableField
                         key={key}
                         fieldKey={key}
-                        sample={([...(template._specialFields ?? []), ...OPTIONAL_FIELDS]).find(f => f.key === key)?.sample ?? key}
+                        sample={fieldSamples[key] ?? ([...(template._specialFields ?? []), ...OPTIONAL_FIELDS]).find(f => f.key === key)?.sample ?? key}
                         pos={positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" }}
                         scale={scale}
                         dotW={dotW}
@@ -719,18 +719,32 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
                             </Typography>
                             <Stack spacing={0}>
                                 {OPTIONAL_FIELDS.map(f => (
-                                    <FormControlLabel
-                                        key={f.key}
-                                        control={
-                                            <Switch
-                                                size="small"
-                                                checked={(template.fields ?? []).includes(f.key)}
-                                                onChange={() => toggleField(f.key)}
+                                    <Fragment key={f.key}>
+                                        <FormControlLabel
+                                            control={
+                                                <Switch
+                                                    size="small"
+                                                    checked={(template.fields ?? []).includes(f.key)}
+                                                    onChange={() => toggleField(f.key)}
+                                                />
+                                            }
+                                            label={<Typography variant="body2">{f.label}</Typography>}
+                                            sx={{ m: 0 }}
+                                        />
+                                        {f.key === "inventoryLoc" && (template.fields ?? []).includes("inventoryLoc") && (
+                                            <FormControlLabel
+                                                control={
+                                                    <Switch
+                                                        size="small"
+                                                        checked={!!template.stackInventoryLoc}
+                                                        onChange={() => set("stackInventoryLoc", !template.stackInventoryLoc)}
+                                                    />
+                                                }
+                                                label={<Typography variant="caption" color="text.secondary">Stack fields</Typography>}
+                                                sx={{ m: 0, ml: 3 }}
                                             />
-                                        }
-                                        label={<Typography variant="body2">{f.label}</Typography>}
-                                        sx={{ m: 0 }}
-                                    />
+                                        )}
+                                    </Fragment>
                                 ))}
                             </Stack>
                         </Paper>
@@ -751,6 +765,7 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
                             onMove={handleMove}
                             onResize={handleResize}
                             onRotate={handleRotate}
+                            fieldSamples={template.stackInventoryLoc ? { inventoryLoc: "Aisle:A\nUnit:1\nShelf:2\nBin:3" } : {}}
                         />
                     </Box>
                 </Stack>}

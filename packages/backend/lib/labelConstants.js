@@ -48,6 +48,7 @@ export const LABEL_TEMPLATE_DEFAULT = {
     format: "ZPL",
     fields: PREMIER_DEFAULT_FIELDS,
     fieldPositions: DEFAULT_FIELD_POSITIONS,
+    stackInventoryLoc: false,
 };
 
 // PO default — mirrors the existing bulkLabelString.js layout

@@ -70,11 +70,28 @@ function buildZPL(item, poNumber, idx, totalQuantity, template) {
 
     const positions = { ...DEFAULT_FIELD_POSITIONS, ...(template.fieldPositions ?? {}) };
     for (const key of (template.fields ?? [])) {
-        const text = fieldText(key, item, idx, totalQuantity);
-        if (!text) continue;
         const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
         const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
         const rot = pos.rotation ?? "N";
+
+        if (key === "inventoryLoc" && template.stackInventoryLoc) {
+            const inv = item.inventory;
+            const parts = inv?.inventoryType === "productInventory"
+                ? [`R LOC: ${inv?.productInventory?.location ?? ""}`]
+                : [
+                    inv?.inventory?.row   != null ? `Aisle:${inv.inventory.row}`   : null,
+                    inv?.inventory?.unit  != null ? `Unit:${inv.inventory.unit}`   : null,
+                    inv?.inventory?.shelf != null ? `Shelf:${inv.inventory.shelf}` : null,
+                    inv?.inventory?.bin   != null ? `Bin:${inv.inventory.bin}`     : null,
+                  ].filter(Boolean);
+            parts.forEach((part, i) => {
+                lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y + i * (h + 3)}^FD${part}^FS`);
+            });
+            continue;
+        }
+
+        const text = fieldText(key, item, idx, totalQuantity);
+        if (!text) continue;
         lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y}^FD${text}^FS`);
     }
 

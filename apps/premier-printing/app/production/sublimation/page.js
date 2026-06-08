@@ -36,15 +36,6 @@ export default async function Sublimation(req, res){
         order: {$ne: null},
         date: { $gt: new Date(Date.now() - 14 * (24 * 60 * 60 * 1000)) }
     }).lean()
-    let giftMessages = await Items.find({
-        type: "gift",
-        sku: "gift-message",
-        inBin: false,
-        canceled: false,
-        shipped: false,
-        paid: true,
-        order: {$ne: null}
-    })
     let posters = await Items.find({
         type: "sublimation",
         inBin: false,
@@ -73,8 +64,8 @@ export default async function Sublimation(req, res){
         order: {$ne: null},
         paid: true,
     }).lean()
-    console.log(sublimation.length,  posters.length, premiumPoster.length, stickers.length, giftMessages.length, buttons.length, epson.length )
-    let labels = {sublimation, epson, posters, premiumPoster, stickers, giftMessages, buttons}
+    console.log(sublimation.length,  posters.length, premiumPoster.length, stickers.length, buttons.length, epson.length )
+    let labels = {sublimation, epson, posters, premiumPoster, stickers, buttons}
     for(let k of Object.keys(labels)){
         let standardOrders = labels[k].map(s=> s.order)
         standardOrders = await Order.find({_id: {$in: standardOrders}}).select("poNumber items status")
