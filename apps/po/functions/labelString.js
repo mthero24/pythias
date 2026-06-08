@@ -29,7 +29,7 @@ export const buildLabelData = async (item, i, poNumber, opts={}, totalQuantity) 
           ^LH12,18^CFS,25,12^AXN,75,90^FO120,250^FD${item.type}^FS
             ^LH12,18^CFS,25,12^AXN,60,35^FO20,360^FDColor: ${item.colorName}, Size: ${item.sizeName}^FS
             ^LH12,18^CFS,25,12^AXN,45,30^FO20,430^FDVendor: ${item.vendor ? item.vendor : "TSP"}, Shipping: ${item.shippingType}^FS
-            ^LH12,18^CFS,25,12^AXN,45,30^FO20,480^FD PrintO Design: ${item.sku} CNT: ${item.order.items.length}^FS
+            ^LH12,18^CFS,25,12^AXN,45,30^FO20,480^FD PrintO Design: ${item.sku} CNT: ${totalQuantity ?? ""}^FS
             ^XZ`
     }else{
       labelString = `^XA
