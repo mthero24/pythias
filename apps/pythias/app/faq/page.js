@@ -247,7 +247,7 @@ export default function FAQPage() {
                         and tell you honestly whether Pythias is the right fit for your business.
                     </p>
                     <div className={s.ctaBtns}>
-                        <a href="/#calendar-booking-section" className={s.btnGold}>Book a Free Discovery Call</a>
+                        <Link href="/#calendar-booking-section" className={s.btnGold}>Book a Free Discovery Call</Link>
                         <Link href="/contact" className={s.btnGhost}>Send a Message</Link>
                     </div>
                 </div>
