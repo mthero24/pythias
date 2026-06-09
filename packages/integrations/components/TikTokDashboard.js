@@ -4,7 +4,7 @@ import {
     Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
     CircularProgress, Alert, Select, MenuItem, TextField, Avatar,
     Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment,
-    FormControl, InputLabel, IconButton, Tooltip,
+    FormControl, InputLabel, IconButton, Tooltip, Switch, FormControlLabel,
 } from "@mui/material";
 import { useState, useCallback, useEffect } from "react";
 import axios from "axios";
@@ -509,7 +509,7 @@ function ProductRow({ product, shopId, shopCipher, warehouseId, onError }) {
                         </Box>
 
                         {/* Quality Issues */}
-                        {qualityIssues.length > 0 && (
+                        {qualityIssues.length > 0 && qualityColor(quality) !== "success" && (
                             <Box sx={{ px: 3, pb: 2 }}>
                                 <Typography variant="caption" fontWeight={700} color="error.main" display="block" mb={0.75}>
                                     Quality Issues — why this listing scores POOR
@@ -652,10 +652,18 @@ export function TikTokDashboard({ shops }) {
     const [selectedShopIdx,   setSelectedShopIdx]   = useState(0);
     const [selectedCipherIdx, setSelectedCipherIdx] = useState(0);
     const [tab, setTab] = useState(0);
+    const [pullOrdersMap, setPullOrdersMap] = useState(
+        Object.fromEntries(shops.map(s => [s._id, s.pullOrders !== false]))
+    );
 
     const shop   = shops[selectedShopIdx] ?? {};
     const stores = shop.shop_list ?? [];
     const cipher = stores[selectedCipherIdx]?.shop_cipher ?? "";
+
+    const togglePullOrders = async (shopId, val) => {
+        setPullOrdersMap(m => ({ ...m, [shopId]: val }));
+        await axios.patch("/api/admin/integrations/tiktok", { shopId, pullOrders: val }).catch(() => {});
+    };
 
     return (
         <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh", pb: 6 }}>
@@ -720,19 +728,41 @@ export function TikTokDashboard({ shops }) {
                             )}
                             <Chip label="Active" size="small"
                                 sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, border: "none" }} />
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        size="small"
+                                        checked={!!pullOrdersMap[shop._id]}
+                                        onChange={e => togglePullOrders(shop._id, e.target.checked)}
+                                    />
+                                }
+                                label={<Typography variant="body2" color="text.secondary">Pull orders from TikTok</Typography>}
+                                sx={{ m: 0, ml: 1 }}
+                            />
                         </Stack>
                     </Paper>
                 )}
 
                 {/* Shop summary strip */}
                 {stores.length === 1 && (
-                    <Stack direction="row" spacing={1} alignItems="center" mb={3}>
+                    <Stack direction="row" spacing={1} alignItems="center" mb={3} flexWrap="wrap">
                         <StorefrontIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                         <Typography variant="body2" color="text.secondary">
                             {shop.seller_name} · {stores[0]?.shop_name ?? stores[0]?.shop_id}
                         </Typography>
                         <Chip label="Active" size="small"
                             sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, border: "none" }} />
+                        <FormControlLabel
+                            control={
+                                <Switch
+                                    size="small"
+                                    checked={!!pullOrdersMap[shop._id]}
+                                    onChange={e => togglePullOrders(shop._id, e.target.checked)}
+                                />
+                            }
+                            label={<Typography variant="body2" color="text.secondary">Pull orders from TikTok</Typography>}
+                            sx={{ m: 0, ml: 0.5 }}
+                        />
                     </Stack>
                 )}
 

@@ -2336,12 +2336,159 @@ function ConnectionCard({ name, type, apiKey, organization, id, manageHref, pull
     );
 }
 
+// ─── ChannelEngine connection card ───────────────────────────────────────────
+function ChannelEngineConnectionCard({ adminBase = "/admin" }) {
+    const [confirming, setConfirming]     = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
+    const [deactivated, setDeactivated]   = useState(false);
+
+    const deactivate = async () => {
+        setDeactivating(true);
+        try {
+            await axios.delete("/api/admin/integrations?type=channelengine");
+            setDeactivated(true);
+        } catch (e) {
+            console.error("Deactivate failed", e);
+            setDeactivating(false);
+            setConfirming(false);
+        }
+    };
+
+    if (deactivated) return null;
+    return (
+        <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+            <Box sx={{ display: "flex", alignItems: "stretch" }}>
+                <Box sx={{ width: 6, bgcolor: "#0078d7", flexShrink: 0 }} />
+                <Box sx={{ flexGrow: 1, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", px: 2.5, py: 2, gap: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                        <Avatar sx={{ bgcolor: "#0078d7", width: 38, height: 38 }}>
+                            <img src="/channelengine.png" alt="ChannelEngine" style={{ width: 28, height: 28, objectFit: "contain" }} />
+                        </Avatar>
+                        <Box>
+                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                <Typography fontWeight={700} fontSize="0.95rem">ChannelEngine</Typography>
+                                <Chip label="ChannelEngine" size="small" sx={{ bgcolor: "#0078d718", color: "#0078d7", fontWeight: 600, fontSize: "0.7rem" }} />
+                                <Chip label="Active" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem" }} />
+                            </Stack>
+                            <Typography variant="caption" color="text.secondary">Connected via environment variables</Typography>
+                        </Box>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center" flexShrink={0}>
+                        {!confirming && (
+                            <Button component={Link} href={`${adminBase}/integrations/channelengine`}
+                                variant="contained" size="small"
+                                endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                                sx={{ bgcolor: "#0078d7", "&:hover": { bgcolor: "#0078d7", filter: "brightness(0.88)" }, borderRadius: 1.5 }}>
+                                Manage
+                            </Button>
+                        )}
+                        {confirming ? (
+                            <>
+                                <Typography variant="caption" color="error" fontWeight={600}>Remove this connection?</Typography>
+                                <Button size="small" variant="contained" color="error" onClick={deactivate}
+                                    disabled={deactivating} sx={{ borderRadius: 1.5 }}
+                                    startIcon={deactivating ? <CircularProgress size={12} color="inherit" /> : null}>
+                                    Confirm
+                                </Button>
+                                <Button size="small" onClick={() => setConfirming(false)} disabled={deactivating} sx={{ borderRadius: 1.5 }}>Cancel</Button>
+                            </>
+                        ) : (
+                            <Button variant="outlined" size="small" color="error" sx={{ borderRadius: 1.5 }} onClick={() => setConfirming(true)}>
+                                Deactivate
+                            </Button>
+                        )}
+                    </Stack>
+                </Box>
+            </Box>
+        </Paper>
+    );
+}
+
+// ─── GS1 connection card ──────────────────────────────────────────────────────
+function Gs1ConnectionCard({ adminBase = "/admin", onDeactivate }) {
+    const [confirming, setConfirming]     = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
+
+    const deactivate = async () => {
+        setDeactivating(true);
+        try {
+            await axios.delete("/api/admin/integrations?type=gs1");
+            onDeactivate?.();
+        } catch (e) {
+            console.error("Deactivate failed", e);
+            setDeactivating(false);
+            setConfirming(false);
+        }
+    };
+
+    return (
+        <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+            <Box sx={{ display: "flex", alignItems: "stretch" }}>
+                <Box sx={{ width: 6, bgcolor: "#009a44", flexShrink: 0 }} />
+                <Box sx={{ flexGrow: 1, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", px: 2.5, py: 2, gap: 2 }}>
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                        <Avatar sx={{ bgcolor: "#fff", border: "1px solid #e5e7eb", width: 38, height: 38 }}>
+                            <img src="/gs1.png" alt="GS1 US" style={{ width: 30, height: 30, objectFit: "contain" }} />
+                        </Avatar>
+                        <Box>
+                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                <Typography fontWeight={700} fontSize="0.95rem">GS1 US</Typography>
+                                <Chip label="UPC/GTIN" size="small" sx={{ bgcolor: "#009a4418", color: "#009a44", fontWeight: 600, fontSize: "0.7rem" }} />
+                                <Chip label="Active" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem" }} />
+                            </Stack>
+                            <Typography variant="caption" color="text.secondary">UPC generation enabled</Typography>
+                        </Box>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center" flexShrink={0}>
+                        {!confirming && (
+                            <Button component={Link} href={`${adminBase}/integrations/gs1`}
+                                variant="outlined" size="small"
+                                endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
+                                sx={{ borderColor: "#009a44", color: "#009a44", "&:hover": { borderColor: "#007a35", bgcolor: "#009a4408" }, borderRadius: 1.5 }}>
+                                Dashboard
+                            </Button>
+                        )}
+                        {confirming ? (
+                            <>
+                                <Typography variant="caption" color="error" fontWeight={600}>Remove this connection?</Typography>
+                                <Button size="small" variant="contained" color="error" onClick={deactivate}
+                                    disabled={deactivating} sx={{ borderRadius: 1.5 }}
+                                    startIcon={deactivating ? <CircularProgress size={12} color="inherit" /> : null}>
+                                    Confirm
+                                </Button>
+                                <Button size="small" onClick={() => setConfirming(false)} disabled={deactivating} sx={{ borderRadius: 1.5 }}>Cancel</Button>
+                            </>
+                        ) : (
+                            <Button variant="outlined" size="small" color="error" sx={{ borderRadius: 1.5 }} onClick={() => setConfirming(true)}>
+                                Deactivate
+                            </Button>
+                        )}
+                    </Stack>
+                </Box>
+            </Box>
+        </Paper>
+    );
+}
+
 // ─── TikTok connection row ─────────────────────────────────────────────────────
 function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin", orgId }) {
     const color = "#010101";
+    const accentColor = "#69C9D0";
     const [confirming, setConfirming]     = useState(false);
     const [deactivating, setDeactivating] = useState(false);
     const [authorizing, setAuthorizing]   = useState(false);
+    const [pullEnabled, setPullEnabled]   = useState(shop.pullOrders !== false);
+    const [toggling, setToggling]         = useState(false);
+
+    const togglePullOrders = async (checked) => {
+        setToggling(true);
+        try {
+            await axios.patch("/api/admin/integrations/tiktok", { shopId: shop._id, pullOrders: checked });
+            setPullEnabled(checked);
+        } catch (e) {
+            console.error("Toggle failed", e);
+        } finally { setToggling(false); }
+    };
 
     const authorize = async () => {
         setAuthorizing(true);
@@ -2433,6 +2580,33 @@ function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin", orgId 
                             </Button>
                         )}
                     </Stack>
+                </Box>
+            </Box>
+
+            {/* Pull Orders strip */}
+            <Box sx={{
+                borderTop: "1px solid #f1f5f9",
+                bgcolor: pullEnabled ? "#f0fdf4" : "#f8fafc",
+                px: 2.5, py: 1.25,
+                display: "flex", alignItems: "center", gap: 2,
+            }}>
+                <Switch
+                    checked={pullEnabled}
+                    onChange={e => togglePullOrders(e.target.checked)}
+                    disabled={toggling}
+                    size="small"
+                    sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": { color: accentColor },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: accentColor },
+                    }}
+                />
+                <Box>
+                    <Typography variant="body2" fontWeight={600} color={pullEnabled ? accentColor : "text.secondary"}>
+                        Pull Orders {toggling && <CircularProgress size={10} sx={{ ml: 0.5 }} />}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                        {pullEnabled ? "Pulling open orders from TikTok Shop" : "Disabled — orders will come through ShipStation instead"}
+                    </Typography>
                 </Box>
             </Box>
         </Paper>
@@ -2757,70 +2931,8 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     </Paper>
                 ) : (
                     <Stack spacing={1.5} sx={{ mt: 1 }}>
-                        {channelEngineConnected && (
-                            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
-                                <Box sx={{ display: "flex", alignItems: "stretch" }}>
-                                    <Box sx={{ width: 6, bgcolor: "#0078d7", flexShrink: 0 }} />
-                                    <Box sx={{ flexGrow: 1, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", px: 2.5, py: 2, gap: 2 }}>
-                                        <Stack direction="row" alignItems="center" spacing={2}>
-                                            <Avatar sx={{ bgcolor: "#0078d7", width: 38, height: 38 }}>
-                                                <img src="/channelengine.png" alt="ChannelEngine" style={{ width: 28, height: 28, objectFit: "contain" }} />
-                                            </Avatar>
-                                            <Box>
-                                                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                                                    <Typography fontWeight={700} fontSize="0.95rem">ChannelEngine</Typography>
-                                                    <Chip label="ChannelEngine" size="small" sx={{ bgcolor: "#0078d718", color: "#0078d7", fontWeight: 600, fontSize: "0.7rem" }} />
-                                                    <Chip label="Active" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem" }} />
-                                                </Stack>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Connected via environment variables
-                                                </Typography>
-                                            </Box>
-                                        </Stack>
-                                        <Button
-                                            component={Link} href={`${adminBase}/integrations/channelengine`}
-                                            variant="contained" size="small"
-                                            endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
-                                            sx={{ bgcolor: "#0078d7", "&:hover": { bgcolor: "#0078d7", filter: "brightness(0.88)" }, borderRadius: 1.5 }}
-                                        >
-                                            Manage
-                                        </Button>
-                                    </Box>
-                                </Box>
-                            </Paper>
-                        )}
-                        {gs1IsConnected && (
-                            <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
-                                <Box sx={{ display: "flex", alignItems: "stretch" }}>
-                                    <Box sx={{ width: 6, bgcolor: "#009a44", flexShrink: 0 }} />
-                                    <Box sx={{ flexGrow: 1, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "center" }, justifyContent: "space-between", px: 2.5, py: 2, gap: 2 }}>
-                                        <Stack direction="row" alignItems="center" spacing={2}>
-                                            <Avatar sx={{ bgcolor: "#fff", border: "1px solid #e5e7eb", width: 38, height: 38 }}>
-                                                <img src="/gs1.png" alt="GS1 US" style={{ width: 30, height: 30, objectFit: "contain" }} />
-                                            </Avatar>
-                                            <Box>
-                                                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                                                    <Typography fontWeight={700} fontSize="0.95rem">GS1 US</Typography>
-                                                    <Chip label="UPC/GTIN" size="small" sx={{ bgcolor: "#009a4418", color: "#009a44", fontWeight: 600, fontSize: "0.7rem" }} />
-                                                    <Chip label="Active" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.7rem" }} />
-                                                </Stack>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    UPC generation enabled
-                                                </Typography>
-                                            </Box>
-                                        </Stack>
-                                        <Button
-                                            component={Link} href={`${adminBase}/integrations/gs1`}
-                                            variant="outlined" size="small"
-                                            endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
-                                            sx={{ borderColor: "#009a44", color: "#009a44", "&:hover": { borderColor: "#007a35", bgcolor: "#009a4408" }, borderRadius: 1.5 }}
-                                        >
-                                            Dashboard
-                                        </Button>
-                                    </Box>
-                                </Box>
-                            </Paper>
-                        )}
+                        {channelEngineConnected && <ChannelEngineConnectionCard adminBase={adminBase} />}
+                        {gs1IsConnected && <Gs1ConnectionCard adminBase={adminBase} onDeactivate={() => setGs1IsConnected(false)} />}
                         {tiktokConnections.map(tt => (
                             <TikTokConnectionCard key={tt._id} shop={tt} adminBase={adminBase} orgId={orgId}
                                 onDeactivate={id => setTiktokConnections(prev => prev.filter(t => t._id !== id))} />

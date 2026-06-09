@@ -13,6 +13,7 @@ let schema = new mongoose.Schema({
     provider: String,
     orgId: { type: mongoose.Schema.Types.ObjectId, default: null },
     user: String,
-    shop_list: Array
+    shop_list: Array,
+    pullOrders: { type: Boolean, default: true }
 })
 export default Pythias.model("TikTokAuth", schema);

@@ -330,6 +330,7 @@ export async function createTikTokProduct({product}){
 export const getOrders = async (auths)=>{
     let orders = []
     for(let a of auths){
+        if(a.pullOrders === false) continue  // user opted to pull via ShipStation instead
         for(let store of a.shop_list){
             let credentials = a
             //console.log(store.shop_cipher);

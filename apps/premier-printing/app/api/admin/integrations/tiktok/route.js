@@ -112,3 +112,10 @@ export async function POST(req=NextApiRequest){
     const result = await createTikTokProduct({ product });
     return NextResponse.json({ error: false, tiktokProductId: result?.tiktokProductId, warning: result?.warning ?? null });
 }
+
+export async function PATCH(req) {
+    const { shopId, pullOrders } = await req.json();
+    if (!shopId) return NextResponse.json({ error: true, msg: "shopId required" }, { status: 400 });
+    await TikTokAuth.findByIdAndUpdate(shopId, { pullOrders });
+    return NextResponse.json({ error: false });
+}

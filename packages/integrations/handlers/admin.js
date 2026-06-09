@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
+import { ApiKeyIntegrations, TikTokAuth, Settings } from "@pythias/mongo";
 import { generateAuthorizationUrl } from "../functions/tiktokpy.js";
 
 const ALLOWED_SETTINGS_FIELDS = new Set(["pullOrdersEnabled"]);
@@ -115,8 +115,16 @@ export async function handleAdminIntegrationsDELETE(req) {
     const { searchParams } = new URL(req.url);
     const connectionId = searchParams.get("connectionId");
     const type = searchParams.get("type");
-    if (!connectionId) return NextResponse.json({ error: true, message: "connectionId required" }, { status: 400 });
     try {
+        if (type === "channelengine") {
+            await Settings.deleteMany({ key: { $in: ["channelengine.apiUrl", "channelengine.apiKey"] } });
+            return NextResponse.json({ error: false });
+        }
+        if (type === "gs1") {
+            await Settings.deleteMany({ key: { $in: ["gs1.apiKey", "gs1.secondaryKey", "gs1.accountNumber"] } });
+            return NextResponse.json({ error: false });
+        }
+        if (!connectionId) return NextResponse.json({ error: true, message: "connectionId required" }, { status: 400 });
         if (type === "tiktok") {
             await TikTokAuth.findByIdAndDelete(connectionId);
         } else {
