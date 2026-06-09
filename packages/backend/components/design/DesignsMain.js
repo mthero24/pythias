@@ -30,12 +30,31 @@ export function Main({ designs, ct, query, pa, canEdit = true, designBasePath = 
     const [csvResult, setCsvResult] = useState(null);
     const [csvLocations, setCsvLocations] = useState([]);
     const csvInputRef = useRef(null);
+    const [skuDownloading, setSkuDownloading] = useState(false);
 
     useEffect(() => {
         if (search === initialQueryRef.current) return;
         const t = setTimeout(runSearch, 400);
         return () => clearTimeout(t);
     }, [search]);
+
+    const downloadSkuCsv = async () => {
+        setSkuDownloading(true);
+        try {
+            const res  = await fetch("/api/admin/designs/sku-csv");
+            const blob = await res.blob();
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement("a");
+            a.href     = url;
+            a.download = `design-skus-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert("Failed to download SKU CSV");
+        } finally {
+            setSkuDownloading(false);
+        }
+    };
 
     const openCsvDialog = async () => {
         setCsvFile(null);
@@ -132,9 +151,11 @@ export function Main({ designs, ct, query, pa, canEdit = true, designBasePath = 
                     </Stack>
                     <Stack direction="row" spacing={1} flexWrap="wrap">
                         {skuExportEnabled && (
-                            <Button variant="outlined" startIcon={<DownloadIcon />}
-                                component="a" href="/api/admin/designs/sku-csv" download>
-                                Download SKU CSV
+                            <Button variant="outlined"
+                                startIcon={skuDownloading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon />}
+                                onClick={downloadSkuCsv}
+                                disabled={skuDownloading}>
+                                {skuDownloading ? "Downloading…" : "Download SKU CSV"}
                             </Button>
                         )}
                         {canEdit && (
