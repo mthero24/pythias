@@ -63,8 +63,24 @@ export const ProductImageStage = ({ products, setProducts, setStage, design, sou
                 const imgMatch = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
                 const productImageGroups = [...new Set(product.blanks.flatMap(b => (b.images || []).map(img => img.imageGroup || "default")))];
                 const activeGroup = product.imageGroup || "default";
-                const allImages = [...(images[product.id] || []), ...(product.tempImages || [])]
-                    .filter(img => productImageGroups.length <= 1 || (img.imageGroup || "default") === activeGroup);
+                const rawImages = [...(images[product.id] || []), ...(product.tempImages || [])];
+                // Per-color fallback: if a color has images for the active theme use them,
+                // otherwise fall back to that color's default images.
+                const colorsWithActiveGroup = new Set(
+                    rawImages
+                        .filter(img => (img.imageGroup || "default") === activeGroup)
+                        .map(img => img.color?._id?.toString() || img.color?.name)
+                        .filter(Boolean)
+                );
+                const allImages = productImageGroups.length <= 1
+                    ? rawImages
+                    : rawImages.filter(img => {
+                        if (product.productImages.some(sel => imgMatch(sel.image, img.image))) return true;
+                        const colorKey = img.color?._id?.toString() || img.color?.name;
+                        const imgGroup = img.imageGroup || "default";
+                        if (colorsWithActiveGroup.has(colorKey)) return imgGroup === activeGroup;
+                        return imgGroup === "default";
+                    });
                 const groups = {};
                 const noColor = [];
                 for (const img of allImages) {

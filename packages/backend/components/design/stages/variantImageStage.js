@@ -92,12 +92,26 @@ const CreateVariantImages = ({ product, products, setProducts, design, designObj
     const normUrl = url => url ? url.replace(/^https?:\/\/[^/]+/, "").replace(/%7D/gi, "").replace(/\?.*$/, "").replace(/\.jpg$/i, "") : url;
     const imgEq = (a, b) => { const na = normUrl(a), nb = normUrl(b); return na === nb || nb.startsWith(na + "-") || na.startsWith(nb + "-"); };
 
+    // Per blank+color: use activeGroup if it has images, otherwise fall back to "default"
+    const colorGroupMap = new Map();
+    for (const blank of product.blanks) {
+        for (const color of product.colors) {
+            const key = `${blank.code}-${color._id}`;
+            const hasActive = (blank.images || []).some(i =>
+                i.color?.toString() === color._id.toString() &&
+                (i.imageGroup || "default") === activeGroup
+            );
+            colorGroupMap.set(key, hasActive ? activeGroup : "default");
+        }
+    }
+    const effectiveGroup = (blank, color) => colorGroupMap.get(`${blank.code}-${color._id}`) ?? activeGroup;
+
     let imgs = {}
     if (!threadColors) {
         for (let blank of product.blanks) {
             if (!(blank.images && blank.images.length > 0)) continue;
             for (let color of product.colors) {
-                for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length && (i.imageGroup || "default") === activeGroup)) {
+                for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length && (i.imageGroup || "default") === effectiveGroup(blank, color))) {
                     if (!imgs[blank.code]) imgs[blank.code] = {};
                     if (!imgs[blank.code][color.name]) imgs[blank.code][color.name] = [];
                     const rawUrl = `${cdn(img.image)}?width=400`;
@@ -114,7 +128,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, designObj
                 for (let color of product.colors) {
                     for (let img of (blank.images || []).filter(i =>
                         (!i.color || i.color.toString() == color._id.toString()) &&
-                        (i.isModel === true || i.imageGroup === "model" || (i.imageGroup || "default") === activeGroup) &&
+                        (i.isModel === true || i.imageGroup === "model" || (i.imageGroup || "default") === effectiveGroup(blank, color)) &&
                         (Object.keys(i.boxes ? i.boxes : {}).includes(side) || (Object.keys(i.boxes ? i.boxes : {}).includes("back") && !Object.keys(design ? design : {}).includes("back")))
                     )) {
                         if (!imgs[blank.code]) imgs[blank.code] = {};
@@ -136,7 +150,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, designObj
             for (let blank of product.blanks) {
                 if (!(blank.images && blank.images.length > 0)) continue;
                 for (let color of product.colors) {
-                    for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length && (i.imageGroup || "default") === activeGroup)) {
+                    for (let img of blank.images.filter(i => i.color?.toString() == color._id.toString() && !Object.keys(i.boxes ? i.boxes : {}).length && (i.imageGroup || "default") === effectiveGroup(blank, color))) {
                         if (!imgs[blank.code]) imgs[blank.code] = {};
                         if (!imgs[blank.code][threadColor]) imgs[blank.code][threadColor] = {};
                         if (!imgs[blank.code][threadColor][color.name]) imgs[blank.code][threadColor][color.name] = [];
@@ -156,7 +170,7 @@ const CreateVariantImages = ({ product, products, setProducts, design, designObj
                     for (let color of product.colors) {
                         for (let img of (blank.images || []).filter(i =>
                             i.color.toString() == color._id.toString() &&
-                            (i.imageGroup || "default") === activeGroup &&
+                            (i.imageGroup || "default") === effectiveGroup(blank, color) &&
                             Object.keys(i.boxes ? i.boxes : {}).includes(side)
                         )) {
                             if (!imgs[blank.code]) imgs[blank.code] = {};
@@ -172,6 +186,53 @@ const CreateVariantImages = ({ product, products, setProducts, design, designObj
             }
         }
     }
+    // Re-inject any already-selected images into imgs so theme changes don't drop them
+    if (!threadColors) {
+        for (const bCode of Object.keys(product.variantImages || {})) {
+            for (const cName of Object.keys(product.variantImages[bCode] || {})) {
+                const sel = product.variantImages[bCode][cName];
+                if (!sel) continue;
+                if (!imgs[bCode]) imgs[bCode] = {};
+                if (!imgs[bCode][cName]) imgs[bCode][cName] = [];
+                if (!imgs[bCode][cName].find(i => imgEq(i.image, sel.image))) imgs[bCode][cName].push(sel);
+            }
+        }
+        for (const bCode of Object.keys(product.variantSecondaryImages || {})) {
+            for (const cName of Object.keys(product.variantSecondaryImages[bCode] || {})) {
+                if (!imgs[bCode]) imgs[bCode] = {};
+                if (!imgs[bCode][cName]) imgs[bCode][cName] = [];
+                for (const sec of (product.variantSecondaryImages[bCode][cName] || [])) {
+                    if (!imgs[bCode][cName].find(i => imgEq(i.image, sec.image))) imgs[bCode][cName].push(sec);
+                }
+            }
+        }
+    } else {
+        for (const bCode of Object.keys(product.variantImages || {})) {
+            for (const tc of Object.keys(product.variantImages[bCode] || {})) {
+                for (const cName of Object.keys(product.variantImages[bCode][tc] || {})) {
+                    const sel = product.variantImages[bCode][tc][cName];
+                    if (!sel) continue;
+                    if (!imgs[bCode]) imgs[bCode] = {};
+                    if (!imgs[bCode][tc]) imgs[bCode][tc] = {};
+                    if (!imgs[bCode][tc][cName]) imgs[bCode][tc][cName] = [];
+                    if (!imgs[bCode][tc][cName].find(i => imgEq(i.image, sel.image))) imgs[bCode][tc][cName].push(sel);
+                }
+            }
+        }
+        for (const bCode of Object.keys(product.variantSecondaryImages || {})) {
+            for (const tc of Object.keys(product.variantSecondaryImages[bCode] || {})) {
+                for (const cName of Object.keys(product.variantSecondaryImages[bCode][tc] || {})) {
+                    if (!imgs[bCode]) imgs[bCode] = {};
+                    if (!imgs[bCode][tc]) imgs[bCode][tc] = {};
+                    if (!imgs[bCode][tc][cName]) imgs[bCode][tc][cName] = [];
+                    for (const sec of (product.variantSecondaryImages[bCode][tc][cName] || [])) {
+                        if (!imgs[bCode][tc][cName].find(i => imgEq(i.image, sec.image))) imgs[bCode][tc][cName].push(sec);
+                    }
+                }
+            }
+        }
+    }
+
     for(let key of Object.keys(imgs)){
         for(let key2 of Object.keys(imgs[key])){
             if(threadColors){

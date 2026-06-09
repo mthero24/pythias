@@ -181,7 +181,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, sl
                                                         const rawUrl = `${cdn(bm.image)}?width=400`;
                                                         if (!im.find(i => i.image === rawUrl)) {
                                                             const fileBase = bm.image.split("/").pop().split(".")[0];
-                                                            im.push({ image: rawUrl, color: col, threadColor: tc, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${fileBase}-${col.name.replace(/\//g, "_")}-other-${tc.name}` });
+                                                            im.push({ image: rawUrl, color: col, threadColor: tc, blank: b, imageGroup: bm.imageGroup || "default", sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${fileBase}-${col.name.replace(/\//g, "_")}-other-${tc.name}` });
                                                         }
                                                     }
                                                 }
@@ -193,13 +193,8 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, sl
                                                     if(b.images && b.images.length > 0){
                                                         for (let bm of b.images.filter(m => m.color.toString() == col._id.toString())) {
                                                             if(!im.filter(i => i.image == encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400${renderSuffix}`)).length > 0){
-                                                                im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400${renderSuffix}`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
+                                                                im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400${renderSuffix}`), color: col, threadColor: tc, side: ti, blank: b, imageGroup: bm.imageGroup || "default", sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                             }
-                                                            
-                                                        }
-                                                    }else{
-                                                        for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes("default"))) {
-                                                            im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400${renderSuffix}`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                         }
                                                     }
                                                 }
@@ -213,7 +208,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, sl
                                                     const rawUrl = `${cdn(bm.image)}?width=400`;
                                                     if (!im.find(i => i.image === rawUrl)) {
                                                         const fileBase = bm.image.split("/").pop().split(".")[0];
-                                                        im.push({ image: rawUrl, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${fileBase}-${col.name.replace(/\//g, "_")}-other` });
+                                                        im.push({ image: rawUrl, color: col, blank: b, imageGroup: bm.imageGroup || "default", sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${fileBase}-${col.name.replace(/\//g, "_")}-other` });
                                                     }
                                                 }
                                             }
@@ -223,16 +218,11 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, sl
                                                 if (b.images && b.images.length > 0) {
                                                     for (let bm of b.images.filter(m => m.color?.toString() == col._id?.toString() && (Object.keys(m.boxes ? m.boxes : {}).includes(ti) || Object.keys(m.boxes ? m.boxes : {}).includes("back")))) {
                                                         if (!im.filter(i => i.image == encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${Object.keys(design.images ? design.images : {}).join("_") }.jpg?width=400${renderSuffix}`)).length > 0 && Object.keys(bm.boxes ? bm.boxes : {}).includes(ti) && Object.keys(design.images ? design.images : {}).includes(ti)) {
-                                                            im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${Object.keys(design.images ? design.images : {}).join("_") }.jpg?width=400${renderSuffix}`), color: col, sides: Object.keys(design.images ? design.images : {}).join("_"), blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
+                                                            im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${Object.keys(design.images ? design.images : {}).join("_") }.jpg?width=400${renderSuffix}`), color: col, sides: Object.keys(design.images ? design.images : {}).join("_"), blank: b, imageGroup: bm.imageGroup || "default", sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}` })
                                                         }
                                                         if (!Object.keys(design.images ? design.images : {}).includes("back") && Object.keys(bm.boxes ? bm.boxes : {}).includes("back") && !im.filter(i => i.image == encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back.jpg?width=400${renderSuffix}`)).length > 0) {
-                                                            console.log("________back___________")
-                                                            im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back.jpg?width=400${renderSuffix}`), color: col, sides: "back", blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back` })
+                                                            im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back.jpg?width=400${renderSuffix}`), color: col, sides: "back", blank: b, imageGroup: bm.imageGroup || "default", sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-back` })
                                                         }
-                                                    }
-                                                } else {
-                                                    for (let bm of b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)).length > 0 ? b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes(product.imageGroup)) : b.multiImages[ti].filter(m => m.color.toString() == col._id.toString() && m.imageGroup?.includes("default"))) {
-                                                        im.push({ image: encodeURI(`${renderBase}/${design.sku}-${b.code.replace(/-/g, "_")}-${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}.jpg?width=400${renderSuffix}`), color: col, threadColor: tc, side: ti, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${b.code.replace(/-/g, "_")}_${bm.image.split("/")[bm.image.split("/").length - 1].split(".")[0]}-${col.name.replace(/\//g, "_")}-${ti}-${tc.name}` })
                                                     }
                                                 }
                                             }
@@ -247,20 +237,7 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, sl
                                             const fileBase = bm.image.split("/").pop().split(".")[0];
                                             const url = encodeURI(`${renderBase}/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400${renderSuffix}`);
                                             if (!im.find(i => i.image === url)) {
-                                                im.push({ image: url, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${codeKey}_${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}`, ...extra });
-                                            }
-                                        }
-                                    };
-                                    const pushBackFromMultiImages = (col, urlSideSuffix, extra) => {
-                                        const backList = b.multiImages?.back;
-                                        if (!backList || backList.length === 0) return;
-                                        const matches = backList.filter(m => m.color?.toString() == col._id?.toString() && m.imageGroup?.includes(product.imageGroup));
-                                        const pool = matches.length > 0 ? matches : backList.filter(m => m.color?.toString() == col._id?.toString() && m.imageGroup?.includes("default"));
-                                        for (const bm of pool) {
-                                            const fileBase = bm.image.split("/").pop().split(".")[0];
-                                            const url = encodeURI(`${renderBase}/${design.sku}-${codeKey}-${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}.jpg?width=400${renderSuffix}`);
-                                            if (!im.find(i => i.image === url)) {
-                                                im.push({ image: url, color: col, blank: b, sku: `${design.printType}_${design.sku}_${col.sku}_${codeKey}_${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}`, ...extra });
+                                                im.push({ image: url, color: col, blank: b, imageGroup: bm.imageGroup || "default", sku: `${design.printType}_${design.sku}_${col.sku}_${codeKey}_${fileBase}-${col.name.replace(/\//g, "_")}-${urlSideSuffix}`, ...extra });
                                             }
                                         }
                                     };
@@ -270,13 +247,11 @@ export const ColorStage = ({ products, setProducts, setStage, design, source, sl
                                             if (Object.keys(design.threadImages?.[tc.name] || {}).includes("back")) continue;
                                             for (const col of product.colors) {
                                                 pushBackFromImages(col, `back-${tc.name}`, { threadColor: tc, side: "back" });
-                                                pushBackFromMultiImages(col, `back-${tc.name}`, { threadColor: tc, side: "back" });
                                             }
                                         }
                                     } else if (!Object.keys(design.images || {}).includes("back")) {
                                         for (const col of product.colors) {
                                             pushBackFromImages(col, "back", { sides: "back" });
-                                            pushBackFromMultiImages(col, "back", { sides: "back" });
                                         }
                                     }
                                 })
