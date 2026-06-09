@@ -232,23 +232,20 @@ export async function createTikTokProduct({product}){
         }]
     })
     console.log(attributes.attributes.filter(a=> a.is_requried == true))
-    if(product.blank.tikTokHeader){
-        for(let key of Object.keys(product.blank.tikTokHeader)){
-            if(key.toLowerCase() != "CA Prop 65: Repro. Chems".toLowerCase() && key.toLowerCase() != "CA Prop 65: Carcinogens".toLowerCase()){
-                let at = attributes.attributes.filter(a=> a.name.toLowerCase() == key.toLowerCase())[0]
-                if(at){
-                     attrs.push({
-                        id: at.id,
-                        values: [{
-                            name: product.blank.tikTokHeader[key]
-                        }]
-                    })
-                }
-            }
-        }
+    // Apply blank.marketPlaceOverrides["TikTok"] — keyed by attribute ID.
+    const mpOverrides = product.blank.marketPlaceOverrides?.["TikTok"]
+                     ?? product.blank.marketPlaceOverrides?.["tik tok"]
+                     ?? {};
+    for (const [id, value] of Object.entries(mpOverrides)) {
+        if (!value) continue;
+        const idx = attrs.findIndex(a => String(a.id) === String(id));
+        const entry = { id, values: [{ name: value }] };
+        if (idx >= 0) attrs[idx] = entry;
+        else attrs.push(entry);
     }
+
     console.log(attrs)
-    
+
     tiktokProduct.product_attributes = attrs
     //console.log(product.blank.sizeGuide)
     if(product.blank.sizeGuide?.images[0]){
