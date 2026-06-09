@@ -13,7 +13,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            stockStatus: "inStock",
+            stockStatus: { $ne: "noInv" },
             shippingType: { $ne: "Expedited" },
         }).populate("color", "name _id")
           .populate("designRef", "sku name printType")
@@ -29,7 +29,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            stockStatus: "inStock",
+            stockStatus: { $ne: "noInv" },
             shippingType: "Expedited",
         }).populate("color", "name _id")
           .populate("designRef", "sku name printType")
@@ -44,7 +44,7 @@ export async function LabelsData(){
             labelPrinted: false,
             canceled: false,
             paid: true,
-            stockStatus: "inStock",
+            stockStatus: { $ne: "noInv" },
         }).populate("color", "name _id")
           .populate("designRef", "sku name printType")
           .populate("inventory.inventory", "row unit shelf bin quantity")

@@ -1,8 +1,48 @@
-import {Inventory, Blank as Blanks, Items }from "@pythias/mongo";
+import { Inventory, InventoryOrders, Blank as Blanks, Items } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import {getInv} from "@pythias/inventory"
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
+
+const recomputeForInventory = async (invId) => {
+    const [inv, linkedItems, activeOrders] = await Promise.all([
+        Inventory.findById(invId, "quantity").lean(),
+        Items.find({
+            "inventory.inventory": invId,
+            labelPrinted: false, canceled: false, shipped: false, paid: true,
+        }).select("_id stockStatus date").sort({ date: 1 }).lean(),
+        InventoryOrders.find(
+            { received: { $ne: true }, "locations.items.inventory": invId },
+            "locations"
+        ).lean(),
+    ]);
+
+    if (!linkedItems.length) return;
+
+    const quantity = Math.max(0, inv?.quantity ?? 0);
+    let orderedCap = 0;
+    for (const po of activeOrders) {
+        for (const loc of po.locations ?? []) {
+            if (loc.received) continue;
+            for (const item of loc.items ?? []) {
+                if (item.inventory?.toString() === invId.toString()) orderedCap += item.quantity ?? 0;
+            }
+        }
+    }
+
+    let slotsUsed = 0, orderedUsed = 0;
+    const ops = [];
+    for (const item of linkedItems) {
+        let computed;
+        if (slotsUsed < quantity)       { computed = "inStock";  slotsUsed++; }
+        else if (orderedUsed < orderedCap) { computed = "ordered";  orderedUsed++; }
+        else                               { computed = "attached"; }
+        if (item.stockStatus !== computed) {
+            ops.push({ updateOne: { filter: { _id: item._id }, update: { $set: { stockStatus: computed } } } });
+        }
+    }
+    if (ops.length) await Items.bulkWrite(ops, { ordered: false });
+};
 export async function GET(req=NextApiRequest){
     let term = req.nextUrl.searchParams.get("q");
     let res = await getInv({ Blanks, Inventory, term, page: 1})
@@ -48,6 +88,7 @@ export async function POST(req=NextApiRequest){
     }
     data.inventory.inStock = [...data.inventory.inStock, ...updateItems];
     await Inventory.findByIdAndUpdate(data.inventory._id, data.inventory).catch(e => { console.log(e) });
+    recomputeForInventory(data.inventory._id); // fire-and-forget
     logActivity({ action: "inventory_update", entity: "inventory", entityId: data.inventory._id, entityName: `${data.inventory.style_code} ${data.inventory.color_name} ${data.inventory.size_name}`, userName, email, provider: "premierPrinting" });
     return NextResponse.json({ error: false, inventory: data.inventory })
 }

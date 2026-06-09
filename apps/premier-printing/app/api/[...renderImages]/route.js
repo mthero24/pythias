@@ -109,13 +109,20 @@ export async function GET(req) {
         const blankCode  = req.nextUrl.searchParams.get("blank");
         const bm         = req.nextUrl.searchParams.get("blankImage");
         const side       = req.nextUrl.searchParams.get("side");
+        const colorName  = req.nextUrl.searchParams.get("colorName");
         designImage      = req.nextUrl.searchParams.get("design");
         if (side) { sides = [side]; designImage = { [side]: designImage }; }
-        const blank = await Blank.findOne({ code: blankCode }).lean();
+        const blank = await Blank.findOne({ code: blankCode }).populate("colors").lean();
         if (!blank) return new NextResponse(null, { status: 404 });
+        const colorObj = colorName
+            ? blank.colors?.find(c => c.name?.toLowerCase() === colorName.toLowerCase())
+            : null;
+        const matchesColor = (img) => !colorObj || img.color?.toString() === colorObj._id?.toString();
         blankImage = bm
-            ? blank.images?.find(i => i.image === bm) ?? blank.images?.find(i => side && i.boxes?.[side])
-            : blank.images?.find(i => side && i.boxes?.[side]);
+            ? blank.images?.find(i => i.image === bm)
+              ?? blank.images?.find(i => matchesColor(i) && side && i.boxes?.[side])
+            : blank.images?.find(i => matchesColor(i) && side && i.boxes?.[side])
+              ?? blank.images?.find(i => side && i.boxes?.[side]);
     }
 
     if (!blankImage) return new NextResponse(null, { status: 404 });

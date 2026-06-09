@@ -71,6 +71,45 @@ export const updateInventory = async () => {
 };
 
 export const recomputeStockStatus = async () => {
+    // Step 1: Find items with no inventory assigned and try to attach one
+    const unattached = await Item.find({
+        labelPrinted: false, canceled: false, shipped: false, paid: true,
+        "inventory.inventory": null, "inventory.productInventory": null,
+    }).select("_id blank color size colorName sizeName styleCode").lean();
+
+    if (unattached.length) {
+        const blanks  = [...new Set(unattached.map(i => i.blank).filter(Boolean))];
+        const colors  = [...new Set(unattached.map(i => i.color).filter(Boolean))];
+        const sizes   = [...new Set(unattached.map(i => i.size).filter(Boolean))];
+        const invIds  = [...new Set(unattached.map(i => `${i.colorName}-${i.sizeName}-${i.styleCode}`).filter(s => s !== "--"))];
+
+        const orClauses = [];
+        if (blanks.length) orClauses.push({ blank: { $in: blanks }, color: { $in: colors }, sizeId: { $in: sizes } });
+        if (invIds.length)  orClauses.push({ inventory_id: { $in: invIds } });
+
+        const inventories = orClauses.length
+            ? await Inventory.find({ $or: orClauses }).lean()
+            : [];
+
+        const byBCS   = new Map(inventories.map(inv => [`${inv.blank}-${inv.color}-${inv.sizeId}`, inv]));
+        const byInvId = new Map(inventories.filter(inv => inv.inventory_id).map(inv => [inv.inventory_id, inv]));
+
+        const attachOps = [];
+        for (const item of unattached) {
+            const bcsKey   = item.blank && item.color && item.size ? `${item.blank}-${item.color}-${item.size}` : null;
+            const invIdKey = `${item.colorName}-${item.sizeName}-${item.styleCode}`;
+            const found = (bcsKey && byBCS.get(bcsKey)) ?? byInvId.get(invIdKey) ?? null;
+            if (found) {
+                attachOps.push({ updateOne: {
+                    filter: { _id: item._id },
+                    update: { $set: { "inventory.inventory": found._id, "inventory.inventoryType": "inventory" } },
+                }});
+            }
+        }
+        if (attachOps.length) await Item.bulkWrite(attachOps, { ordered: false });
+    }
+
+    // Step 2: Compute stock status for all inventory-backed items (including just-attached ones)
     const [allWithInv, productInvItems] = await Promise.all([
         Item.find({
             labelPrinted: false, canceled: false, shipped: false, paid: true,
@@ -134,6 +173,14 @@ export const recomputeStockStatus = async () => {
     }
 
     if (updateOps.length) await Item.bulkWrite(updateOps, { ordered: false });
+
+    // Anything still without inventory after the attachment pass → noInv
+    await Item.updateMany(
+        { labelPrinted: false, canceled: false, shipped: false, paid: true,
+          "inventory.inventory": null, "inventory.productInventory": null,
+          stockStatus: { $ne: "noInv" } },
+        { $set: { stockStatus: "noInv" } }
+    );
 };
 const createItemVariant = async (variant, product, order, price) => {
     let item = new Item({
