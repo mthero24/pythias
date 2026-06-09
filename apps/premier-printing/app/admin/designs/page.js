@@ -40,5 +40,5 @@ export default async function Designs(req) {
         return plain
     })
 
-    return <Main designs={JSON.parse(JSON.stringify(designs))} ct={count} pa={page} query={query.q} canEdit={canEdit} />
+    return <Main designs={JSON.parse(JSON.stringify(designs))} ct={count} pa={page} query={query.q} canEdit={canEdit} skuExportEnabled />
 }

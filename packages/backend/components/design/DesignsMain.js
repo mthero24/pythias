@@ -17,7 +17,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 
 const MAX_THUMBS = 5;
 
-export function Main({ designs, ct, query, pa, canEdit = true, designBasePath = "/admin/design" }) {
+export function Main({ designs, ct, query, pa, canEdit = true, designBasePath = "/admin/design", skuExportEnabled = false }) {
     const [designss, setDesigns] = useState(designs);
     const [search, setSearch] = useState(query ?? "");
     const [page, setPage] = useState(pa ? parseInt(pa) : 1);
@@ -130,16 +130,24 @@ export function Main({ designs, ct, query, pa, canEdit = true, designBasePath = 
                             <Typography variant="body2" color="text.secondary">Browse and manage artwork designs</Typography>
                         </Box>
                     </Stack>
-                    {canEdit && (
-                        <Stack direction="row" spacing={1}>
-                            <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={openCsvDialog}>
-                                Import CSV
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                        {skuExportEnabled && (
+                            <Button variant="outlined" startIcon={<DownloadIcon />}
+                                component="a" href="/api/admin/designs/sku-csv" download>
+                                Download SKU CSV
                             </Button>
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={createDesign}>
-                                Create Design
-                            </Button>
-                        </Stack>
-                    )}
+                        )}
+                        {canEdit && (
+                            <>
+                                <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={openCsvDialog}>
+                                    Import CSV
+                                </Button>
+                                <Button variant="contained" startIcon={<AddIcon />} onClick={createDesign}>
+                                    Create Design
+                                </Button>
+                            </>
+                        )}
+                    </Stack>
                 </Box>
 
                 {/* Search */}
