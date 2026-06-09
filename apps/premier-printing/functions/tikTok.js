@@ -135,7 +135,13 @@ export async function createTikTokProduct({product}){
         main_images: [],
         skus: [],
         category_version: "v2",
-        idempotency_key: `${product.design.sku}_${product.blank.code}`
+        idempotency_key: `${product.design.sku}_${product.blank.code}`,
+        ...(product.blank.bulletPoints?.length ? {
+            product_highlights: product.blank.bulletPoints
+                .slice(0, 5)
+                .map(bp => [bp.title, bp.description].filter(Boolean).join(": "))
+                .filter(Boolean),
+        } : {}),
     }
     let categories = await getRecommendedCategory(product.name, credentials)
     console.log(categories)
