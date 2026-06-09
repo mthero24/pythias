@@ -46,7 +46,7 @@ export async function POST(req=NextApiRequest){
         for(let i = 0; i< 9; i++)
             batchID += letters[Math.floor(Math.random() * letters.length)]
         // batch order-item counts in one aggregation instead of one query per item
-        const printableItems = data.items.filter(i => !i.labelPrinted);
+        const printableItems = data.items.filter(i => !i.labelPrinted && i.stockStatus === "inStock");
         const uniqueOrderIds = [...new Set(printableItems.filter(i => i.order).map(i => (i.order._id || i.order).toString()))];
         const countAgg = uniqueOrderIds.length
             ? await Items.aggregate([

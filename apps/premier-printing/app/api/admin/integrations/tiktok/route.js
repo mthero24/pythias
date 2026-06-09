@@ -110,5 +110,5 @@ export async function POST(req=NextApiRequest){
     };
 
     const result = await createTikTokProduct({ product });
-    return NextResponse.json({ error: false, tiktokProductId: result?.tiktokProductId });
+    return NextResponse.json({ error: false, tiktokProductId: result?.tiktokProductId, warning: result?.warning ?? null });
 }

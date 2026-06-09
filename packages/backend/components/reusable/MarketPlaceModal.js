@@ -632,6 +632,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 await axios.post("/api/admin/products", { products: [p] });
                 setProduct({ ...p });
                 if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                if (res.data.warning) alert(`TikTok listing created.\n\nNote: ${res.data.warning}`);
             }
             setLoading(false);
         }

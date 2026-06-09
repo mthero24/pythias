@@ -23,7 +23,7 @@ export async function POST(req) {
         let batchID = "";
         for (let i = 0; i < 9; i++) batchID += LETTERS[Math.floor(Math.random() * LETTERS.length)];
 
-        const printableItems = data.items.filter(i => !i.labelPrinted);
+        const printableItems = data.items.filter(i => !i.labelPrinted && i.stockStatus === "inStock");
 
         // Pre-compute per-order item counts in one aggregation instead of one query per item
         const { Types } = await import("mongoose");

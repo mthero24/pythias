@@ -20,9 +20,11 @@ function marketplaceKey(marketplace) {
     return MK_KEY_MAP[(marketplace ?? "").toLowerCase()] ?? null;
 }
 
-function fieldText(key, item, idx, totalQuantity) {
+function fieldText(key, item, idx, totalQuantity, poNumber) {
     switch (key) {
         case "upc":            return item.upc ?? "";
+        case "poNumber":       return `PO#: ${item.order?.poNumber ?? poNumber ?? ""}`;
+        case "pieceId":        return `Piece: ${item.pieceId ?? ""}`;
         case "itemNumber":     return `#${idx + 1}`;
         case "styleCode":      return item.styleCode ?? "";
         case "shipByDate":     return new Date(item.shipByDate ?? item.date).toLocaleDateString("en-US");
@@ -90,7 +92,7 @@ async function loadTemplate() {
     return tpl;
 }
 
-function buildSpecialCaseZPL(item, idx, sc, template, totalQuantity) {
+function buildSpecialCaseZPL(item, idx, sc, template, totalQuantity, poNumber) {
     const widthDots  = Math.round((template.width  ?? 2) * DPI);
     const heightDots = Math.round((template.height ?? 2) * DPI);
     const positions  = { ...DEFAULT_FIELD_POSITIONS, ...(sc.fieldPositions ?? {}) };
@@ -105,7 +107,7 @@ function buildSpecialCaseZPL(item, idx, sc, template, totalQuantity) {
     ];
 
     for (const key of (sc.fields ?? [])) {
-        const text = fieldText(key, item, idx, totalQuantity);
+        const text = fieldText(key, item, idx, totalQuantity, poNumber);
         if (!text) continue;
         const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
         const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
@@ -133,7 +135,7 @@ export async function buildLabelData(item, idx, poNumber, totalQuantity, templat
 
     const mkKey = marketplaceKey(item.order?.marketplace);
     const sc = mkKey ? (tpl.specialCases?.[mkKey] ?? null) : null;
-    const specialLabel = sc?.enabled ? buildSpecialCaseZPL(item, idx, sc, tpl, totalQuantity) : "";
+    const specialLabel = sc?.enabled ? buildSpecialCaseZPL(item, idx, sc, tpl, totalQuantity, poNumber) : "";
 
     return specialLabel + buildZPL(item, idx, poNumber, totalQuantity, tpl);
 }

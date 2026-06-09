@@ -264,8 +264,67 @@ export async function createTikTokProduct({product}){
         credentials = await refresh(credentials);
         res = await createProduct({tiktokProduct, credentials})
     }
+
+    // TikTok error 12052247 — attribute does not support custom value names.
+    // Try to find a matching valid value from TikTok's attribute list and substitute it.
+    // Only drop the attribute if no valid match can be found.
+    const fixedAttributes = []
+    const droppedAttributes = []
+    while (res.error && res.msg?.includes('Custom names are not supported')) {
+        const attrIdMatch = res.msg.match(/\(ID:\s*(\d+)\)/)
+        if (!attrIdMatch) break
+        const attrId = attrIdMatch[1]
+        const attrNameMatch = res.msg.match(/attribute\s+([\w][\w\s]*?)\s+\(ID:/)
+        const attrLabel = attrNameMatch?.[1]?.trim() ?? `ID ${attrId}`
+
+        // Find the bad attribute entry and its current custom value
+        const badAttr = (tiktokProduct.product_attributes ?? []).find(a => String(a.id) === attrId)
+        const customValue = badAttr?.values?.[0]?.name ?? ""
+
+        // Look up valid values for this attribute from TikTok
+        let validAttrs = await getAttributes(tiktokProduct.category_id, credentials)
+        if (validAttrs.error && validAttrs.msg === "refresh") {
+            credentials = await refresh(credentials)
+            validAttrs = await getAttributes(tiktokProduct.category_id, credentials)
+        }
+        const validAttr = (validAttrs.attributes ?? []).find(a => String(a.id) === attrId)
+        const validValues = validAttr?.values ?? []
+
+        // Try to find the closest matching valid value (case-insensitive, partial match)
+        const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "")
+        const normCustom = norm(customValue)
+        const match = validValues.find(v => norm(v.name) === normCustom)
+            ?? validValues.find(v => norm(v.name).includes(normCustom) || normCustom.includes(norm(v.name)))
+            ?? validValues.find(v => {
+                const words = normCustom.split(/\s+/).filter(w => w.length > 2)
+                return words.some(w => norm(v.name).includes(w))
+            })
+
+        if (match) {
+            // Swap in the valid value id+name
+            tiktokProduct.product_attributes = (tiktokProduct.product_attributes ?? []).map(a =>
+                String(a.id) === attrId ? { ...a, values: [{ id: match.id, name: match.name }] } : a
+            )
+            fixedAttributes.push(`${attrLabel} ("${customValue}" → "${match.name}")`)
+        } else {
+            // No valid match — drop the attribute from the TikTok payload only
+            tiktokProduct.product_attributes = (tiktokProduct.product_attributes ?? []).filter(a => String(a.id) !== attrId)
+            droppedAttributes.push(`${attrLabel} ("${customValue}" had no matching valid value)`)
+        }
+
+        res = await createProduct({tiktokProduct, credentials})
+        if (res.error && res.msg === "refresh") {
+            credentials = await refresh(credentials)
+            res = await createProduct({tiktokProduct, credentials})
+        }
+    }
+
     console.log(res)
-    return { tiktokProductId: res.product?.product_id }
+    const warningParts = []
+    if (fixedAttributes.length) warningParts.push(`Attribute values auto-corrected to match TikTok's accepted values: ${fixedAttributes.join('; ')}.`)
+    if (droppedAttributes.length) warningParts.push(`Attributes removed because no matching TikTok value was found: ${droppedAttributes.join('; ')}.`)
+    const warning = warningParts.length ? warningParts.join(' ') : null
+    return { tiktokProductId: res.product?.product_id, warning }
 }
 
 export const getOrders = async (auths)=>{

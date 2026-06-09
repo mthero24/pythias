@@ -36,9 +36,11 @@ function marketplaceKey(marketplace) {
 }
 
 // ── Field text resolvers ──────────────────────────────────────────────────────
-function fieldText(key, item, i, totalQuantity) {
+function fieldText(key, item, i, totalQuantity, poNumber) {
     switch (key) {
         case "upc":            return item.upc ?? "";
+        case "poNumber":       return `PO#: ${item.order?.poNumber ?? poNumber ?? ""}`;
+        case "pieceId":        return `Piece: ${item.pieceId ?? ""}`;
         case "itemNumber":     return `#${i + 1}`;
         case "styleCode":      return item.styleCode ?? "";
         case "shipByDate":     return new Date(item.shipByDate ?? item.date).toLocaleDateString("en-US");
@@ -98,7 +100,7 @@ function buildZPL(item, i, poNumber, totalQuantity, template) {
 }
 
 // ── Special-case label builder ────────────────────────────────────────────────
-function buildSpecialCaseZPL(item, i, sc, template, totalQuantity) {
+function buildSpecialCaseZPL(item, i, sc, template, totalQuantity, poNumber) {
     const widthDots  = Math.round((template.width  ?? 2) * DPI);
     const heightDots = Math.round((template.height ?? 2) * DPI);
     const positions  = { ...DEFAULT_FIELD_POSITIONS, ...(sc.fieldPositions ?? {}) };
@@ -113,7 +115,7 @@ function buildSpecialCaseZPL(item, i, sc, template, totalQuantity) {
     ];
 
     for (const key of (sc.fields ?? [])) {
-        const text = fieldText(key, item, i, totalQuantity);
+        const text = fieldText(key, item, i, totalQuantity, poNumber);
         if (!text) continue;
         const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
         const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
@@ -179,7 +181,7 @@ export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity
 
     let specialLabel = "";
     if (sc?.enabled) {
-        specialLabel = buildSpecialCaseZPL(item, i, sc, tpl, totalQuantity);
+        specialLabel = buildSpecialCaseZPL(item, i, sc, tpl, totalQuantity, poNumber);
     } else if (item.order?.marketplace === "target" || item.order?.marketplace === "Target Plus US Marketplace") {
         specialLabel = `^XA\n^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc ?? "no upc present"}^FS\n^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS\n^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${item.colorName}, Size: ${item.sizeName}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${item.isBlank ? "Blank Item" : (item.designRef?.sku ?? item.sku)}^FS\n^XZ`;
     }

@@ -54,6 +54,8 @@ const SPECIAL_CASE_MARKETPLACES = [
 
 const SPECIAL_OPTIONAL_FIELDS = [
     { key: "upc",          label: "UPC / GTIN",      sample: "012345678901" },
+    { key: "poNumber",     label: "PO Number",        sample: "PO#: 12345678" },
+    { key: "pieceId",      label: "Piece ID",         sample: "Piece: AB-001" },
     { key: "itemNumber",   label: "Item Number",      sample: "#1" },
     { key: "color",        label: "Color",            sample: "Color: Black" },
     { key: "size",         label: "Size",             sample: "Size: L" },

@@ -25,7 +25,7 @@ import { UntrackedLabels } from "./untracked";
 import { Footer } from "@pythias/backend";
 import LoaderOverlay from "./LoaderOverlay";
 
-export function Main({ labels, rePulls, giftLabels = [], batches, source, printers = [], useShipByDate = false }) {
+export function Main({ labels, rePulls, giftLabels = [], batches, source, printers = [], useShipByDate = false, stackInventoryLoc = false }) {
     const printerList = printers.length > 0 ? printers : [{ name: "printer1", format: "ZPL" }];
     const [useLabels, setLabels]         = useState(labels);
     const [rePull, setRePulls]           = useState(rePulls);
@@ -51,7 +51,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
     const [selectedPrinter, setSelectedPrinter] = useState(printerList[0]?.name ?? "printer1");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo]     = useState("");
-    const [stackLocation, setStackLocation] = useState(false);
+    const stackLocation = stackInventoryLoc;
 
     useEffect(() => {
         let pt = [], sc = [], mp = [];
@@ -311,11 +311,6 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                     {updatingInv ? "Updating…" : "Update Inventory"}
                                 </Button>
                             )}
-                            <Button variant="outlined" size="small"
-                                onClick={() => setStackLocation(s => !s)}
-                                sx={{ borderColor: stackLocation ? "primary.main" : undefined, bgcolor: stackLocation ? "primary.50" : undefined }}>
-                                Location: {stackLocation ? "Stacked" : "Inline"}
-                            </Button>
                         </Stack>
                     </Box>
 

@@ -23,6 +23,7 @@ export default async function PrintLabels() {
             batches={batches}
             source="PLATFORM"
             useShipByDate={useShipByDate}
+            stackInventoryLoc={!!tpl.stackInventoryLoc}
         />
     );
 }
