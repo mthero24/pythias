@@ -113,5 +113,8 @@ export async function getShippingCreds() {
         labelPrinters: (() => {
             try { return JSON.parse(m["productionLabelPrinters"] || "[]"); } catch { return []; }
         })(),
+        dtfPrinters: (() => {
+            try { return JSON.parse(m["production"] || "{}").dtfPrinters ?? []; } catch { return []; }
+        })(),
     };
 }

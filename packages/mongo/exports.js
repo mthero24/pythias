@@ -92,6 +92,7 @@ export { default as PlatformForecastCache } from "./models/ForecastCache";
 export { default as PlatformBlankForecastCache } from "./models/BlankForecastCache";
 export { default as SupportTicket } from "./models/SupportTicket";
 export { default as ReturnScan } from "./models/ReturnScan";
+export { default as DemoBooking } from "./models/DemoBooking";
 
 // ── Commerce Cloud ─────────────────────────────────────────────────────────────
 export { default as ProviderCatalog }   from "./models/ProviderCatalog";

@@ -3,7 +3,7 @@ import {
     Box, Container, Card, Grid2, Typography, Button, Fab, Select, TextField,
     MenuItem, InputLabel, FormControl, Stack, Chip, Divider, Collapse,
     IconButton, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent,
-    DialogActions,
+    DialogActions, LinearProgress,
 } from "@mui/material";
 import PrintIcon          from "@mui/icons-material/Print";
 import LabelIcon          from "@mui/icons-material/Label";
@@ -25,7 +25,7 @@ import { UntrackedLabels } from "./untracked";
 import { Footer } from "@pythias/backend";
 import LoaderOverlay from "./LoaderOverlay";
 
-export function Main({ labels, rePulls, giftLabels = [], batches, source, printers = [], useShipByDate = false, stackInventoryLoc = false }) {
+export function Main({ labels, rePulls, giftLabels = [], batches, source, printers = [], dtfPrinters = [], useShipByDate = false, stackInventoryLoc = false }) {
     const printerList = printers.length > 0 ? printers : [{ name: "printer1", format: "ZPL" }];
     const [useLabels, setLabels]         = useState(labels);
     const [rePull, setRePulls]           = useState(rePulls);
@@ -52,6 +52,14 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo]     = useState("");
     const stackLocation = stackInventoryLoc;
+
+    const [oosModalOpen,         setOosModalOpen]         = useState(false);
+    const [oosConfirmOpen,       setOosConfirmOpen]       = useState(false);
+    const [oosSelectedPrinters,  setOosSelectedPrinters]  = useState({}); // { [TYPE]: string[] }
+    const [oosDateFrom,          setOosDateFrom]          = useState("");
+    const [oosDateTo,            setOosDateTo]            = useState("");
+    const [oosSending,           setOosSending]           = useState(false);
+    const [oosSendProgress,      setOosSendProgress]      = useState(null); // null | { sent, total, done }
 
     useEffect(() => {
         let pt = [], sc = [], mp = [];
@@ -239,6 +247,70 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
         }
     };
 
+    const toggleOosPrinter = (name, type) => {
+        setOosSelectedPrinters(prev => {
+            const cur = prev[type] ?? [];
+            return {
+                ...prev,
+                [type]: cur.includes(name) ? cur.filter(p => p !== name) : [...cur, name],
+            };
+        });
+    };
+
+    const sendOOSImages = async () => {
+        setOosSending(true);
+        setOosSendProgress({ sent: 0, total: null, done: false }); // total filled in by server
+        try {
+            const res = await fetch("/api/production/dtf/oos", {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify({
+                    printersByType: oosSelectedPrinters,
+                    dateFrom:       oosDateFrom || null,
+                    dateTo:         oosDateTo   || null,
+                }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.msg || "Failed to send OOS images");
+                setOosSendProgress(null);
+                return;
+            }
+            const reader  = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = "";
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buf += decoder.decode(value, { stream: true });
+                const lines = buf.split("\n");
+                buf = lines.pop();
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.error) { alert(data.msg || "Error during send"); return; }
+                        setOosSendProgress({ sent: data.sent, total: data.total, done: !!data.done });
+                    } catch {}
+                }
+            }
+        } catch (e) {
+            alert(`Error sending OOS images: ${e.message}`);
+            setOosSendProgress(null);
+        } finally {
+            setOosSending(false);
+        }
+    };
+
+    const closeOosAfterSend = () => {
+        setOosConfirmOpen(false);
+        setOosModalOpen(false);
+        setOosSendProgress(null);
+        setOosSelectedPrinters({});
+        setOosDateFrom("");
+        setOosDateTo("");
+    };
+
     const selectByDateRange = (from, to) => {
         if (!from && !to) { setSelected([]); return; }
         const sel = [];
@@ -252,6 +324,28 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
         });
         setSelected(sel);
     };
+
+    // Count OOS+ordered DTF-family items by type for the modal info display
+    const oosCountByType = (() => {
+        const counts = {};
+        for (const cat of Object.values(useLabels)) {
+            for (const item of cat) {
+                if (item.stockStatus !== "attached" && item.stockStatus !== "ordered") continue;
+                const t = item.type?.toUpperCase();
+                if (!t?.includes("DTF")) continue;
+                if (oosDateFrom || oosDateTo) {
+                    const raw = item.shipByDate || item.order?.date;
+                    if (!raw) continue;
+                    const d = new Date(raw).toLocaleDateString("en-CA");
+                    if (oosDateFrom && d < oosDateFrom) continue;
+                    if (oosDateTo   && d > oosDateTo)   continue;
+                }
+                counts[t] = (counts[t] ?? 0) + 1;
+            }
+        }
+        return counts;
+    })();
+    const oosTotalCount = Object.values(oosCountByType).reduce((s, n) => s + n, 0);
 
     const totalLabels = Object.values(useLabels).reduce((sum, arr) => sum + arr.length, 0);
 
@@ -311,6 +405,11 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                     {updatingInv ? "Updating…" : "Update Inventory"}
                                 </Button>
                             )}
+                            <Button variant="outlined" size="small" startIcon={<PrintIcon />}
+                                onClick={() => setOosModalOpen(true)}
+                                sx={{ borderColor: "error.light", color: "error.main", "&:hover": { borderColor: "error.main", bgcolor: "#fef2f2" } }}>
+                                Print OOS Images
+                            </Button>
                         </Stack>
                     </Box>
 
@@ -577,6 +676,17 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                                                 <Typography variant="caption" sx={{ fontWeight: 700, color: stockColor, fontSize: "0.68rem", display: "block" }}>
                                                                     {stockLabel}
                                                                 </Typography>
+                                                                {item.isBlank && (
+                                                                    <Typography variant="caption" sx={{
+                                                                        fontSize: "0.6rem", fontWeight: 700, display: "inline-block",
+                                                                        px: 0.6, py: 0.1, borderRadius: 0.75,
+                                                                        bgcolor: isSelected ? "rgba(255,255,255,0.18)" : "#f1f5f9",
+                                                                        color:   isSelected ? "#fff" : "#475569",
+                                                                        border: "1px solid", borderColor: isSelected ? "rgba(255,255,255,0.3)" : "#cbd5e1",
+                                                                    }}>
+                                                                        No Design
+                                                                    </Typography>
+                                                                )}
                                                                 {inv?.inventoryType === "inventory" && inv?.inventory?.quantity !== undefined && (
                                                                     <Typography variant="caption" sx={{ fontSize: "0.62rem", color: isSelected ? "#fff" : "text.secondary", display: "block" }}>
                                                                         {`Stock: ${inv.inventory.quantity}`}
@@ -595,6 +705,11 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                                                 {item.labelPrintedDates?.length > 0 && (
                                                                     <Typography variant="caption" sx={{ fontSize: "0.62rem", color: isSelected ? "#fed7aa" : "#ea580c", display: "block" }}>
                                                                         Last printed: {new Date(item.labelPrintedDates[item.labelPrintedDates.length - 1]).toLocaleDateString("en-US")}
+                                                                    </Typography>
+                                                                )}
+                                                                {item.steps?.some(s => s.status === "OOS Image Sent") && (
+                                                                    <Typography variant="caption" sx={{ fontSize: "0.62rem", color: isSelected ? "#bfdbfe" : "#1d4ed8", display: "block", fontWeight: 600 }}>
+                                                                        ✓ DTF image sent
                                                                     </Typography>
                                                                 )}
                                                             </Box>
@@ -690,6 +805,191 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
             )}
 
             {loading && <LoaderOverlay />}
+
+            {/* Print OOS Images modal */}
+            <Dialog open={oosModalOpen} onClose={() => !oosSending && setOosModalOpen(false)} maxWidth="sm" fullWidth disableEscapeKeyDown={oosSending}>
+                <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    Print OOS Images
+                    {!oosSending && <IconButton size="small" onClick={() => setOosModalOpen(false)}><CloseIcon fontSize="small" /></IconButton>}
+                </DialogTitle>
+                <DialogContent sx={{ pt: 1 }}>
+                    {/* One printer-group per distinct DTF-family type found in the queue */}
+                    {Object.keys(oosCountByType).length === 0 ? (
+                        <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
+                            No OOS or on-order DTF items in the current queue.
+                        </Typography>
+                    ) : (
+                        Object.entries(oosCountByType).map(([type, count]) => {
+                            const selected = oosSelectedPrinters[type] ?? [];
+                            return (
+                                <Box key={type} sx={{ mb: 2 }}>
+                                    <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", display: "block", mb: 0.75 }}>
+                                        {type} — {count} item{count !== 1 ? "s" : ""} queued
+                                    </Typography>
+                                    <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                                        {dtfPrinters.length === 0
+                                            ? <Typography variant="caption" color="text.disabled">No DTF printers configured in settings</Typography>
+                                            : dtfPrinters.map(name => {
+                                                const active = selected.includes(name);
+                                                return (
+                                                    <Box key={name} onClick={() => toggleOosPrinter(name, type)}
+                                                        sx={{
+                                                            display: "flex", alignItems: "center", gap: 0.75,
+                                                            px: 1.5, py: 0.5, borderRadius: 1.5, cursor: "pointer",
+                                                            fontSize: "0.8125rem", fontWeight: active ? 700 : 500,
+                                                            lineHeight: 1.5, textTransform: "capitalize", userSelect: "none",
+                                                            transition: "background 0.12s, color 0.12s",
+                                                            bgcolor: active ? "primary.main" : "background.paper",
+                                                            color: active ? "#fff" : "text.primary",
+                                                            border: "1px solid",
+                                                            borderColor: active ? "primary.main" : "divider",
+                                                            "&:hover": { bgcolor: active ? "primary.dark" : "action.hover" },
+                                                        }}>
+                                                        <PrintIcon sx={{ fontSize: 13, opacity: active ? 0.9 : 0.55, flexShrink: 0 }} />
+                                                        {name}
+                                                    </Box>
+                                                );
+                                            })
+                                        }
+                                    </Stack>
+                                </Box>
+                            );
+                        })
+                    )}
+
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", display: "block", mb: 0.5, mt: 1 }}>
+                        Date Range — optional (uses ship-by date when available, otherwise order date)
+                    </Typography>
+                    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 2 }}>
+                        <TextField size="small" fullWidth type="date" label="From" InputLabelProps={{ shrink: true }}
+                            value={oosDateFrom}
+                            onChange={(e) => setOosDateFrom(e.target.value)} />
+                        <Typography variant="body2" color="text.disabled" sx={{ flexShrink: 0 }}>–</Typography>
+                        <TextField size="small" fullWidth type="date" label="To" InputLabelProps={{ shrink: true }}
+                            value={oosDateTo}
+                            onChange={(e) => setOosDateTo(e.target.value)} />
+                    </Stack>
+
+                    {oosTotalCount > 0 && (
+                        <Box sx={{ p: 1.5, borderRadius: 1.5, bgcolor: "#f0f9ff", border: "1px solid #bae6fd" }}>
+                            {Object.entries(oosCountByType).map(([type, count]) => {
+                                const prns = oosSelectedPrinters[type] ?? [];
+                                if (!prns.length || !count) return null;
+                                return (
+                                    <Typography key={type} variant="body2" sx={{ color: "#0369a1", fontWeight: 600 }}>
+                                        {count} {type} item{count !== 1 ? "s" : ""} → {prns.length} printer{prns.length !== 1 ? "s" : ""}
+                                    </Typography>
+                                );
+                            })}
+                            <Typography variant="caption" color="text.secondary">
+                                A 24″-wide header image will be sent first to each selected printer.
+                            </Typography>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={() => setOosModalOpen(false)} disabled={oosSending}>Cancel</Button>
+                    <Button variant="contained" color="error"
+                        onClick={() => setOosConfirmOpen(true)}
+                        disabled={
+                            oosTotalCount === 0 ||
+                            !Object.entries(oosCountByType).some(
+                                ([type, count]) => count > 0 && (oosSelectedPrinters[type]?.length ?? 0) > 0
+                            )
+                        }>
+                        Submit
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Print OOS Images confirmation + live progress */}
+            <Dialog
+                open={oosConfirmOpen}
+                onClose={() => !oosSending && !oosSendProgress?.sent && setOosConfirmOpen(false)}
+                maxWidth="xs" fullWidth
+                disableEscapeKeyDown={oosSending || (oosSendProgress && !oosSendProgress.done)}
+            >
+                <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    {oosSendProgress ? (oosSendProgress.done ? "Send Complete" : "Sending OOS Images…") : "Confirm Send OOS Images"}
+                    {!oosSending && !oosSendProgress && (
+                        <IconButton size="small" onClick={() => setOosConfirmOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+                    )}
+                </DialogTitle>
+                <DialogContent>
+                    {oosSendProgress ? (
+                        /* ── Progress view ── */
+                        <Box>
+                            {(oosSending || !oosSendProgress.done) && (
+                                <Box sx={{ p: 1.5, mb: 2, borderRadius: 1.5, bgcolor: "#fffbeb", border: "1px solid #fcd34d", display: "flex", alignItems: "center", gap: 1 }}>
+                                    <WarningAmberIcon sx={{ color: "#b45309", fontSize: 18, flexShrink: 0 }} />
+                                    <Typography variant="body2" sx={{ color: "#92400e", fontWeight: 600 }}>
+                                        Do not refresh or close this page until complete.
+                                    </Typography>
+                                </Box>
+                            )}
+                            <Typography variant="body2" sx={{ mb: 1.5, fontWeight: 600 }}>
+                                {oosSendProgress.total === null
+                                    ? "Preparing…"
+                                    : `${oosSendProgress.sent} of ${oosSendProgress.total} item${oosSendProgress.total !== 1 ? "s" : ""} sent`
+                                }
+                            </Typography>
+                            <LinearProgress
+                                variant={oosSendProgress.total === null ? "indeterminate" : "determinate"}
+                                value={oosSendProgress.total > 0 ? (oosSendProgress.sent / oosSendProgress.total) * 100 : 0}
+                                sx={{ height: 10, borderRadius: 5, mb: 1 }}
+                                color={oosSendProgress.done ? "success" : "primary"}
+                            />
+                            {oosSendProgress.done && (
+                                <Typography variant="body2" color="success.main" sx={{ mt: 1, fontWeight: 600 }}>
+                                    All images sent successfully.
+                                </Typography>
+                            )}
+                        </Box>
+                    ) : (
+                        /* ── Pre-send confirmation view ── */
+                        <Box>
+                            {Object.entries(oosCountByType).map(([type, count]) => {
+                                const prns = oosSelectedPrinters[type] ?? [];
+                                if (!prns.length || !count) return null;
+                                return (
+                                    <Box key={type} sx={{ mb: 1.5 }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                            <strong style={{ color: "#111827" }}>{count}</strong> {type} item{count !== 1 ? "s" : ""} →
+                                        </Typography>
+                                        <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                                            {prns.map(p => <Chip key={p} label={p} size="small" color="primary" />)}
+                                        </Stack>
+                                    </Box>
+                                );
+                            })}
+                            {(oosDateFrom || oosDateTo) ? (
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    Date range: <strong>{oosDateFrom || "any"}</strong> – <strong>{oosDateTo || "any"}</strong>
+                                </Typography>
+                            ) : (
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    No date filter — all qualifying OOS items will be included.
+                                </Typography>
+                            )}
+                            <Typography variant="body2" color="text.secondary">
+                                A header image prints first on each printer. Items stay in the label queue and will show a blue "DTF image sent" indicator.
+                            </Typography>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    {oosSendProgress?.done ? (
+                        <Button variant="contained" onClick={closeOosAfterSend}>Close</Button>
+                    ) : (
+                        <>
+                            <Button onClick={() => setOosConfirmOpen(false)} disabled={oosSending}>Cancel</Button>
+                            <Button variant="contained" color="error" onClick={sendOOSImages} disabled={oosSending}>
+                                Confirm Send
+                            </Button>
+                        </>
+                    )}
+                </DialogActions>
+            </Dialog>
 
             {/* Return to Queue confirmation */}
             <Dialog open={confirmReturnToQue} onClose={() => setConfirmReturnToQue(false)} maxWidth="xs" fullWidth>

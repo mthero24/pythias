@@ -138,6 +138,78 @@ export async function sendInternalAlert({ name, email, company, message, source 
     await sendEmail({ to: process.env.ALERT_EMAIL || "info@pythiastechnologies.com", subject: `New lead: ${name} <${email}>`, html });
 }
 
+// ── Demo booking emails ────────────────────────────────────────────────────────
+
+const DAYS   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function formatBookingDate(dateStr) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    return `${DAYS[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${d}, ${y}`;
+}
+
+function formatBookingTime(time24) {
+    const [h, mn] = time24.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    return `${h % 12 || 12}:${String(mn).padStart(2, "0")} ${ampm}`;
+}
+
+export function sendBookingConfirmation({ to, name, date, startTime, meetLink }) {
+    const dateDisplay = formatBookingDate(date);
+    const timeDisplay = formatBookingTime(startTime);
+    const meetSection = meetLink
+        ? `<p style="margin-top:28px;text-align:center;">${btn("Join Google Meet →", meetLink)}</p>
+           <p style="color:#6b7280;font-size:13px;margin-top:8px;text-align:center;">Save this link — you'll use it to join your demo.</p>`
+        : `<p style="color:#374151;line-height:1.7;">We'll send your Google Meet link shortly before your demo.</p>`;
+
+    const html = baseTemplate(`
+        <h2 style="margin:0 0 16px;color:#111827;font-size:24px;">You're booked, ${name || "there"}!</h2>
+        <p style="color:#374151;line-height:1.7;">Your Pythias Technologies demo is confirmed. Here are your details:</p>
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+          <tr style="background:#f9fafb;">
+            <td style="padding:12px 16px;font-weight:700;color:#374151;width:100px;border:1px solid #e5e7eb;">Date</td>
+            <td style="padding:12px 16px;color:#111827;border:1px solid #e5e7eb;">${dateDisplay}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;font-weight:700;color:#374151;border:1px solid #e5e7eb;">Time</td>
+            <td style="padding:12px 16px;color:#111827;border:1px solid #e5e7eb;">${timeDisplay} Eastern Time</td>
+          </tr>
+          <tr style="background:#f9fafb;">
+            <td style="padding:12px 16px;font-weight:700;color:#374151;border:1px solid #e5e7eb;">Duration</td>
+            <td style="padding:12px 16px;color:#111827;border:1px solid #e5e7eb;">30 minutes</td>
+          </tr>
+        </table>
+        ${meetSection}
+        <p style="color:#374151;line-height:1.7;margin-top:24px;">During the demo we'll walk through your exact workflow — not a generic slide deck. Come with questions.</p>
+        <p style="color:#6b7280;font-size:13px;margin-top:28px;">Need to reschedule? Reply to this email or call (844) 579-8442.</p>
+    `);
+
+    return sendEmail({ to, subject: `Your Pythias demo — ${dateDisplay} at ${timeDisplay} ET`, html });
+}
+
+export function sendBookingInternalAlert({ name, email, company, phone, date, startTime, meetLink }) {
+    const dateDisplay = formatBookingDate(date);
+    const timeDisplay = formatBookingTime(startTime);
+    const html = baseTemplate(`
+        <h2 style="margin:0 0 12px;color:#111827;">New demo booking</h2>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><td style="padding:8px;font-weight:700;color:#374151;width:120px;">Name</td><td style="padding:8px;color:#374151;">${name}</td></tr>
+          <tr style="background:#f9fafb;"><td style="padding:8px;font-weight:700;color:#374151;">Email</td><td style="padding:8px;"><a href="mailto:${email}" style="color:#D3A73D;">${email}</a></td></tr>
+          <tr><td style="padding:8px;font-weight:700;color:#374151;">Company</td><td style="padding:8px;color:#374151;">${company || "—"}</td></tr>
+          <tr style="background:#f9fafb;"><td style="padding:8px;font-weight:700;color:#374151;">Phone</td><td style="padding:8px;color:#374151;">${phone || "—"}</td></tr>
+          <tr><td style="padding:8px;font-weight:700;color:#374151;">Date</td><td style="padding:8px;color:#374151;">${dateDisplay}</td></tr>
+          <tr style="background:#f9fafb;"><td style="padding:8px;font-weight:700;color:#374151;">Time</td><td style="padding:8px;color:#374151;">${timeDisplay} ET</td></tr>
+          ${meetLink ? `<tr><td style="padding:8px;font-weight:700;color:#374151;">Meet</td><td style="padding:8px;"><a href="${meetLink}" style="color:#D3A73D;">${meetLink}</a></td></tr>` : ""}
+        </table>
+    `);
+    return sendEmail({
+        to:      process.env.ALERT_EMAIL || "info@pythiastechnologies.com",
+        subject: `Demo booked: ${name}${company ? ` (${company})` : ""} — ${dateDisplay} ${timeDisplay}`,
+        html,
+    });
+}
+
 // Schedule the first send immediately, subsequent ones at delay offsets
 export function nextSendDate(step) {
     const days = SEQUENCE[step]?.delayDays ?? 0;
