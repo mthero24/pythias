@@ -55,14 +55,7 @@ export default function FinalCTASection() {
           with Pythias Technologies
         </Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            gap: 3,
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           <Button
             variant="contained"
             size="large"
@@ -71,42 +64,24 @@ export default function FinalCTASection() {
               backgroundColor: Theme.colors.secondary,
               padding: "1rem 2.5rem",
               fontSize: "1.125rem",
-              "&:hover": {
-                backgroundColor: "#A67C52",
-              },
+              fontWeight: 700,
+              "&:hover": { backgroundColor: "#b8860b" },
             }}
           >
-            Get Started Today
+            Book a Free Demo
           </Button>
+          <Typography variant="body2" sx={{ color: "#999999", fontStyle: "italic" }}>
+            30-min demo &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; Setup in under 2 weeks
+          </Typography>
           <Button
-            variant="outlined"
-            size="large"
-            onClick={() => scrollToSection("calendar-booking-section")}
-            sx={{
-              borderColor: "white",
-              color: "white",
-              padding: "1rem 2.5rem",
-              fontSize: "1.125rem",
-              "&:hover": {
-                backgroundColor: "white",
-                color: "#1a1a1a",
-              },
-            }}
+            component="a"
+            href="/pricing"
+            variant="text"
+            sx={{ color: "#cccccc", textDecoration: "underline", fontSize: "0.9rem", "&:hover": { color: "#fff" } }}
           >
-            Schedule Demo
+            View pricing →
           </Button>
         </Box>
-
-        <Typography
-          variant="body2"
-          sx={{
-            color: "#999999",
-            marginTop: 3,
-            fontStyle: "italic",
-          }}
-        >
-          14-day free trial • Setup in under 2 weeks • No long-term contracts
-        </Typography>
       </Container>
     </Box>
   );

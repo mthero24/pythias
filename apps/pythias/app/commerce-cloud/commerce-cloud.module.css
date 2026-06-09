@@ -6,7 +6,7 @@
 
 /* ── Hero ────────────────────────────────────────────────────────────────── */
 .hero {
-    background: linear-gradient(155deg, #1e293b 0%, #2d3a4a 55%, #1a2d3d 100%);
+    background: linear-gradient(155deg, #0a0f1e 0%, #0f172a 55%, #0c1628 100%);
     padding: 80px 0 96px;
     position: relative;
     overflow: hidden;
@@ -68,7 +68,7 @@
 .noWarehouseSub { color: rgba(255,255,255,0.5); line-height: 1.75; font-size: 0.95rem; margin-bottom: 28px; }
 .noList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .noItem { display: flex; align-items: flex-start; gap: 12px; }
-.noBadge { width: 28px; height: 28px; border-radius: 8px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+.noBadge { width: 28px; height: 28px; border-radius: 8px; background: rgba(239,68,68,0.28); border: 1px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; color: #fca5a5; }
 .noItemText { font-size: 0.9rem; color: rgba(255,255,255,0.65); line-height: 1.5; padding-top: 2px; }
 .noWarehouseVisual { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 32px; }
 .yesLabel { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #4ade80; margin-bottom: 16px; }

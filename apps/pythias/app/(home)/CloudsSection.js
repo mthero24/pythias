@@ -20,10 +20,10 @@ export default function CloudsSection() {
         <section className={s.clouds}>
             <div className={s.wrap} style={{ padding: "0 24px" }}>
                 <p className={s.sectionLabel}>Two Products. One Platform.</p>
-                <h2 className={s.sectionTitle} style={{ marginBottom: 12 }}>
+                <h2 className={s.sectionTitle} style={{ marginBottom: 12, color: "#fff" }}>
                     Run fulfillment — or just sell.
                 </h2>
-                <p className={s.sectionSub} style={{ marginBottom: 56 }}>
+                <p className={s.sectionSub} style={{ marginBottom: 56, color: "rgba(255,255,255,0.72)" }}>
                     Whether you own production equipment or want to sell without it,
                     Pythias has a product built for your business model.
                 </p>

@@ -15,8 +15,8 @@ const NAV_LINKS = [
   { label: "Commerce Cloud",    href: "/commerce-cloud" },
   { label: "Integrations",      href: "/integrations" },
   { label: "How It Works",      href: "/how-it-works" },
+  { label: "Pricing",           href: "/pricing" },
   { label: "FAQ",               href: "/faq" },
-  { label: "Blog",              href: "/blog" },
   { label: "About Us",          href: "/about" },
   { label: "Contact Us",        href: "/contact" },
 ];

@@ -237,11 +237,11 @@ export default function HowItWorksContent() {
             </section>
 
             {/* Onboarding Timeline */}
-            <section className={s.section}>
+            <section className={s.sectionDark}>
                 <div className={s.wrap}>
                     <div className={s.head}>
                         <p className={s.sectionTag}>Onboarding Timeline</p>
-                        <h2 className={s.h2}>What to expect, day by day.</h2>
+                        <h2 className={s.h2} style={{ color: "#fff" }}>What to expect, day by day.</h2>
                     </div>
 
                     {/* Tab toggle */}
