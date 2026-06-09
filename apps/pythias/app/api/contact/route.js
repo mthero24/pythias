@@ -8,6 +8,18 @@ export async function POST(req) {
         if (!name?.trim() || !email?.trim() || !message?.trim()) {
             return NextResponse.json({ success: false, error: "Name, email, and message are required." }, { status: 400 });
         }
+        const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        const PHONE_RE = /^[+\d\s\-(). ]{7,20}$/;
+        const URL_RE   = /https?:\/\//i;
+        if (!EMAIL_RE.test(email.trim())) {
+            return NextResponse.json({ success: false, error: "Invalid email address." }, { status: 400 });
+        }
+        if (phone?.trim() && (!PHONE_RE.test(phone.trim()) || URL_RE.test(phone))) {
+            return NextResponse.json({ success: false, error: "Invalid phone number." }, { status: 400 });
+        }
+        if (URL_RE.test(name) || URL_RE.test(company ?? "")) {
+            return NextResponse.json({ success: false, error: "Invalid submission." }, { status: 400 });
+        }
 
         // Save contact message
         await ContactMessage.create({ name, company, phone, email, message, source: "contact_form" });

@@ -27,6 +27,17 @@ export async function GET(req) {
     }
 }
 
+export async function DELETE(req) {
+    if (!await auth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    try {
+        const id = req.nextUrl.searchParams.get("id");
+        await ContactMessage.findByIdAndDelete(id);
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        return NextResponse.json({ success: false, error: "Failed to delete message." }, { status: 500 });
+    }
+}
+
 export async function PATCH(req) {
     if (!await auth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     try {

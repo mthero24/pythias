@@ -22,10 +22,26 @@ export function ContactForm({
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const PHONE_RE = /^[+\d\s\-(). ]{7,20}$/;
+  const URL_RE   = /https?:\/\//i;
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
       setSnack({ open: true, msg: "Please fill in all required fields.", sev: "error" });
+      return;
+    }
+    if (!EMAIL_RE.test(form.email.trim())) {
+      setSnack({ open: true, msg: "Please enter a valid email address.", sev: "error" });
+      return;
+    }
+    if (form.phone && (!PHONE_RE.test(form.phone.trim()) || URL_RE.test(form.phone))) {
+      setSnack({ open: true, msg: "Please enter a valid phone number.", sev: "error" });
+      return;
+    }
+    if (URL_RE.test(form.name) || URL_RE.test(form.company)) {
+      setSnack({ open: true, msg: "Invalid submission.", sev: "error" });
       return;
     }
     setSubmitting(true);

@@ -12,9 +12,10 @@ import BusinessIcon from "@mui/icons-material/Business";
 import EmailIcon from "@mui/icons-material/Email";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
 import axios from "axios";
 
-function MessageCard({ msg, onToggleRead, detailBase }) {
+function MessageCard({ msg, onToggleRead, onDelete, detailBase }) {
   const date = new Date(msg.createdAt).toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
@@ -36,9 +37,9 @@ function MessageCard({ msg, onToggleRead, detailBase }) {
       transition: "border-color .15s",
     }}>
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
-        <Stack spacing={0.25}>
+        <Stack spacing={0.25} sx={{ minWidth: 0, overflow: "hidden", flex: 1 }}>
           <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-            <Typography fontWeight={700} fontSize="0.95rem">{msg.name}</Typography>
+            <Typography fontWeight={700} fontSize="0.95rem" sx={{ wordBreak: "break-word" }}>{msg.name}</Typography>
             {!msg.read && (
               <Chip label="New" size="small" sx={{ fontSize: "0.65rem", height: 18, bgcolor: "#7c3aed", color: "#fff" }} />
             )}
@@ -51,13 +52,13 @@ function MessageCard({ msg, onToggleRead, detailBase }) {
             {msg.company && (
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <BusinessIcon sx={{ fontSize: 13, color: "text.disabled" }} />
-                <Typography variant="caption" color="text.secondary">{msg.company}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ wordBreak: "break-all" }}>{msg.company}</Typography>
               </Stack>
             )}
             {msg.phone && (
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <PhoneIcon sx={{ fontSize: 13, color: "text.disabled" }} />
-                <Typography variant="caption" color="text.secondary">{msg.phone}</Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ wordBreak: "break-all" }}>{msg.phone}</Typography>
               </Stack>
             )}
             <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -65,7 +66,7 @@ function MessageCard({ msg, onToggleRead, detailBase }) {
               <Typography
                 variant="caption" color="text.secondary"
                 component="a" href={`mailto:${msg.email}`}
-                sx={{ textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+                sx={{ textDecoration: "none", wordBreak: "break-all", "&:hover": { textDecoration: "underline" } }}
               >
                 {msg.email}
               </Typography>
@@ -90,11 +91,16 @@ function MessageCard({ msg, onToggleRead, detailBase }) {
               </IconButton>
             </Tooltip>
           )}
+          <Tooltip title="Delete message">
+            <IconButton size="small" onClick={() => onDelete(msg._id)} sx={{ color: "#ef4444", "&:hover": { bgcolor: "#fef2f2" } }}>
+              <DeleteIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
         </Stack>
       </Stack>
 
       <Divider sx={{ mb: 1.5 }} />
-      <Typography variant="body2" color="text.primary" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.7, mb: msg.notes ? 1.5 : 0 }}>
+      <Typography variant="body2" color="text.primary" sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: 1.7, mb: msg.notes ? 1.5 : 0 }}>
         {msg.message}
       </Typography>
       {msg.notes && (
@@ -118,6 +124,14 @@ export function ContactMessages({ messages: initial = [], apiUrl = "/api/admin/c
     try {
       await axios.patch(apiUrl, { id, read });
       setMessages(ms => ms.map(m => m._id === id ? { ...m, read } : m));
+    } catch {}
+  };
+
+  const deleteMsg = async (id) => {
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await axios.delete(`${apiUrl}?id=${id}`);
+      setMessages(ms => ms.filter(m => m._id !== id));
     } catch {}
   };
 
@@ -189,7 +203,7 @@ export function ContactMessages({ messages: initial = [], apiUrl = "/api/admin/c
             </Box>
           )}
           {visible.map(m => (
-            <MessageCard key={m._id} msg={m} onToggleRead={toggleRead} detailBase={detailBase} />
+            <MessageCard key={m._id} msg={m} onToggleRead={toggleRead} onDelete={deleteMsg} detailBase={detailBase} />
           ))}
         </Stack>
       </Container>
