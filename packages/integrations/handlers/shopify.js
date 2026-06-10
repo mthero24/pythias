@@ -130,7 +130,12 @@ export async function handleShopifySendPOST(req) {
             "Authorization": `Bearer ${body.connection.apiKey}`,
         },
     };
-    let res = await axios.post("https://shopapp.pythiastechnologies.com/webhooks/products", { ...body }, reqHeaders).catch(e => { console.log(e.response.data); });
+    let res = await axios.post("https://shopapp.pythiastechnologies.com/webhooks/products", { ...body }, reqHeaders)
+        .catch(e => {
+            const data = e.response?.data ?? { error: true, msg: "Failed to reach Shopify integration service." };
+            console.error("Shopify send error:", data);
+            return { data };
+        });
     return NextResponse.json({ ...res?.data });
 }
 

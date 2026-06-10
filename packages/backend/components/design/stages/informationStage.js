@@ -10,9 +10,42 @@ const selectMenuPortalProps = {
     styles: { menuPortal: (base) => ({ ...base, zIndex: 9999 }) },
 };
 
+const toOpts = (arr) => arr.map(v => ({ value: v, label: v }));
+
+const PLATFORM_ATTRS = {
+    tiktok: [
+        { field: "Holiday/Occasion", opts: ["Christmas","Halloween","Thanksgiving","Valentine's Day","Easter","Mother's Day","Father's Day","Independence Day","New Year","Graduation","Birthday","Wedding","Anniversary","Back to School","Hanukkah","St. Patrick's Day","Mardi Gras","Kwanzaa","Eid","Diwali","Memorial Day","Labor Day","Juneteenth"] },
+        { field: "Occasion",         opts: ["Casual","Sports & Outdoors","Party","Holiday","Vacation","Beach","Work","School","Gym & Fitness","Yoga","Running","Formal","Date Night","Concert","Festival"] },
+        { field: "Design",           opts: ["Graphic","Text","Logo","Abstract","Floral","Geometric","Animal","Character","Vintage","Retro","Novelty","Paisley","Tie Dye","Stripe","Plaid","Solid","Camouflage"] },
+    ],
+    shopify: [
+        { field: "Product Type", opts: ["T-Shirt","Hoodie","Sweatshirt","Tank Top","Long Sleeve","Polo","Jacket","Hat","Tote Bag","Youth Tee","Ladies Tee","Jogger"] },
+    ],
+    etsy: [
+        { field: "Occasion",  opts: ["Birthday","Wedding","Anniversary","Graduation","Baby Shower","Bridal Shower","Christmas","Valentine's Day","Mother's Day","Father's Day","Easter","Halloween","Thanksgiving","New Year","All Occasions"] },
+        { field: "Recipient", opts: ["Women","Men","Kids","Baby","Teens - Boys","Teens - Girls","Unisex Adults"] },
+        { field: "Style",     opts: ["Boho","Minimalist","Rustic","Vintage","Modern","Classic","Funny","Graphic","Artsy","Trendy"] },
+    ],
+    walmart: [
+        { field: "Occasion",   opts: ["Everyday","Holiday","Birthday","Sports & Outdoors","Casual","Work","Party","Patriotic"] },
+        { field: "Age Group",  opts: ["Adult","Kids","Baby","Toddler","Youth"] },
+        { field: "Theme",      opts: ["Graphic","Holiday","Sports","Patriotic","Nature","Animal","Funny","Inspirational","Music","Gaming"] },
+    ],
+    faire: [
+        { field: "Season",     opts: ["Spring/Summer","Fall/Winter","Holiday","Year Round"] },
+        { field: "Age Group",  opts: ["Adult","Kids","Baby","Toddler"] },
+    ],
+    shein: [
+        { field: "Style",     opts: ["Casual","Streetwear","Vintage","Preppy","Sporty","Boho","Minimalist","Y2K","Cottagecore"] },
+        { field: "Occasion",  opts: ["Daily","Party","Work","Weekend","Vacation","Sports","Holiday","Date Night"] },
+    ],
+};
+
 export const InformationStage = ({products, setProducts, product, design, setStage, brands, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, upcs, tempUpcs, colors, themes, sportUsedFor, setThemes, setSportUsedFor, printTypes, licenses, showToast }) => {
     const [markets, setMarkets] = useState([]);
     const [aiDescLoading, setAiDescLoading] = useState({});
+    const [tiktokAuthIds, setTiktokAuthIds] = useState(new Set());
+    const [connectionTypes, setConnectionTypes] = useState({});
 
     // Re-resolve all titleGenerator fields when a template variable (brand, gender, etc.) changes.
     const reResolveTitleGenerators = (p, overrides = {}) => {
@@ -55,12 +88,26 @@ export const InformationStage = ({products, setProducts, product, design, setSta
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [products.length]);
     useEffect(() => {
-       const fetchMarkets = async () => {
+        const fetchMarkets = async () => {
             let res = await axios.get("/api/marketplaces");
             console.log(res.data.marketplaces, "marketplaces in InformationStage")
             setMarkets(res.data.marketplaces);
         };
+        const fetchTiktokAuth = async () => {
+            try {
+                const res = await axios.get("/api/admin/integrations");
+                setTiktokAuthIds(new Set((res.data.tiktokAuth ?? []).map(a => a._id.toString())));
+                const types = {};
+                for (const conn of res.data.integration ?? []) {
+                    const id = conn._id.toString();
+                    if (conn.type) types[id] = conn.type;
+                    else if (conn.displayName?.toLowerCase().includes("shopify")) types[id] = "shopify";
+                }
+                setConnectionTypes(types);
+            } catch {}
+        };
         fetchMarkets();
+        fetchTiktokAuth();
     }, []);
     return (
         <Grid2 size={12} sx={{ padding: { xs: 1, sm: 3 } }}>
@@ -166,6 +213,43 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                         </Card>
                     </Grid2>
 
+                    <Grid2 size={12}>
+                        <Card variant="outlined">
+                            <CardContent>
+                                <Typography variant="subtitle1" sx={{ marginBottom: 1, fontWeight: 600 }}>Packaging</Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+                                    Dimensions (inches) used when listing on TikTok, Shopify, Etsy, Walmart, Faire, SHEIN and others.
+                                    Weight is taken from the blank ({((product.blanks?.[0]?.sizes?.[0]?.weight ?? 0) / 16).toFixed(2)} lbs).
+                                </Typography>
+                                <Grid2 container spacing={2}>
+                                    {[
+                                        { key: "packageLength", label: "Length", placeholder: "13" },
+                                        { key: "packageWidth",  label: "Width",  placeholder: "10" },
+                                        { key: "packageHeight", label: "Height", placeholder: "1"  },
+                                    ].map(({ key, label, placeholder }) => (
+                                        <Grid2 key={key} size={{ xs: 12, sm: 4 }}>
+                                            <TextField
+                                                size="small"
+                                                fullWidth
+                                                label={`${label} (in)`}
+                                                type="number"
+                                                inputProps={{ min: 0, step: 0.1 }}
+                                                placeholder={placeholder}
+                                                value={product[key] ?? ""}
+                                                onChange={e => {
+                                                    let prods = [...products];
+                                                    let p = prods.find(p => p.id == product.id);
+                                                    p[key] = e.target.value;
+                                                    setProducts([...prods]);
+                                                }}
+                                            />
+                                        </Grid2>
+                                    ))}
+                                </Grid2>
+                            </CardContent>
+                        </Card>
+                    </Grid2>
+
                     {markets.map((market, k) => {
                         const mpId = market._id?.toString();
                         const mpVals = product.marketplaceValues?.[mpId] ?? {};
@@ -178,6 +262,18 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                             setProducts([...prods]);
                         };
                         const hasDDs = market.productDropDowns && Object.keys(market.productDropDowns).length > 0;
+                        const isTikTok = market.connections?.some(c => tiktokAuthIds.has((c?._id ?? c)?.toString()));
+                        const connectionTypeSet = new Set(
+                            (market.connections ?? [])
+                                .map(c => connectionTypes[(c?._id ?? c)?.toString()])
+                                .filter(Boolean)
+                        );
+                        if (isTikTok) connectionTypeSet.add("tiktok");
+                        const platformAttrEntries = Object.entries(PLATFORM_ATTRS)
+                            .filter(([type]) => connectionTypeSet.has(type))
+                            .flatMap(([, attrs]) => attrs)
+                            // dedupe fields — first platform wins if two platforms share a name
+                            .filter((attr, i, arr) => arr.findIndex(a => a.field === attr.field) === i);
                         return (
                             <Grid2 key={k} size={12}>
                                 <Card variant="outlined">
@@ -240,6 +336,20 @@ export const InformationStage = ({products, setProducts, product, design, setSta
                                                     </Grid2>
                                                 );
                                             })}
+                                            {/* Platform-specific product attributes (TikTok, Shopify, Etsy, Walmart, Faire, SHEIN) */}
+                                            {platformAttrEntries.map(({ field, opts }) => (
+                                                <Grid2 key={field} size={4}>
+                                                    <Typography variant="caption" sx={{ display: "block", mb: 0.5 }}>{field}</Typography>
+                                                    <CreatableSelect
+                                                        {...selectMenuPortalProps}
+                                                        placeholder={`Select ${field}`}
+                                                        isClearable
+                                                        value={mpVals[field] ? { value: mpVals[field], label: mpVals[field] } : null}
+                                                        options={toOpts(opts)}
+                                                        onChange={newValue => setMpField(field, newValue?.value ?? null)}
+                                                    />
+                                                </Grid2>
+                                            ))}
                                         </Grid2>
                                     </CardContent>
                                 </Card>

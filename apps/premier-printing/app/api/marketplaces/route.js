@@ -2,7 +2,7 @@ import { NextApiRequest, NextResponse } from "next/server";
 import { MarketPlaces } from "@pythias/mongo";
 
 export async function GET(req = NextApiRequest) {
-    let marketplaces = await MarketPlaces.find().select("_id name productDropDowns required variantTitle").lean();
+    let marketplaces = await MarketPlaces.find().select("_id name productDropDowns required variantTitle connections").lean();
     return NextResponse.json({ error: false, marketplaces });
 }
 export async function PUT(req = NextApiRequest) {

@@ -1,4 +1,4 @@
-﻿import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider, Checkbox, FormControlLabel, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+﻿import { Box, Grid2, TextField, Modal, Button, Typography, Card, Container, IconButton, Divider, Checkbox, FormControlLabel, Chip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert } from "@mui/material";
 import LoaderOverlay from "./LoaderOverlay";
 import DeleteIcon from '@mui/icons-material/Delete';
 import DeleteModel from "../reusable/DeleteModal";
@@ -166,7 +166,7 @@ const RemoveMarketPlaceModal = ({ open, setOpen, mp, removeMarketplaceConnection
     )
 }
 
-export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source, products, setProducts, canManage, canEdit }) => {
+export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces, sizes, blank, setBlank, product, setProduct, design, setDesign, source, orgId, products, setProducts, canManage, canEdit }) => {
     const [size, setSize] = useState([]);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteTitle, setDeleteTitle] = useState();
@@ -190,7 +190,10 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         setSize(sizeArray);
         const getConnections = async () => {
             console.log("getConnections called");
-            let res = await axios.get("/api/admin/integrations", { params: { provider: source.includes("test") ? "pythias-test" : source === "simplysage" ? "premierPrinting" : source } });
+            const integrationParams = orgId
+                ? { orgId }
+                : { provider: source.includes("test") ? "pythias-test" : source === "simplysage" ? "premierPrinting" : source };
+            let res = await axios.get("/api/admin/integrations", { params: integrationParams });
             console.log(res?.data, "res in getConnections");
             if(res.data && res.data.integration) {
                 setLoading(true);
@@ -349,290 +352,358 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             setMarketPlaces(prev => prev.filter(m => m._id.toString() !== mp._id.toString()));
             setConfirmDeleteMp(null);
         } catch {
-            alert("Failed to delete marketplace. Please try again.");
+            notify("error", "Failed to delete marketplace. Please try again.");
         }
     };
     const [addMarketPlace, setAddMarketPlace] = useState(false);
+    const [sendMsg, setSendMsg] = useState(null); // { severity, text }
+
+    const notify = (severity, text) => setSendMsg({ severity, text });
+
+    // Extract the most descriptive error string from an axios error or a raw value
+    const extractErr = (e, fallback) => {
+        if (typeof e === "string") return e;
+        const d = e?.response?.data;
+        if (d?.error && typeof d.error === "string") return d.error;
+        if (d?.msg   && typeof d.msg   === "string") return d.msg;
+        return e?.message ?? fallback ?? "Something went wrong";
+    };
+
+    // Show error from a 200-OK body that still carries an error field
+    const bodyErr = (data, marketplace) => {
+        const msg = typeof data?.error === "string" ? data.error : (data?.msg ?? null);
+        if (msg) notify("error", `${marketplace}: ${msg}`);
+        return !!msg;
+    };
+
     const sendToConnection = async (c, mpName, mp) => {
         if (c.displayName?.includes("shopify")) {
             setLoading(true);
-            const res = await axios.post("/api/integrations/shopify/send", { product, connection: c }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${c.apiKey}` } }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
+            const res = await axios.post("/api/integrations/shopify/send", { product, connection: c }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${c.apiKey}` } })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Shopify.")); setLoading(false); });
             if (res?.data) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.productId;
-                for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = res.data.variantIds?.find(vId => vId.sku === v.sku)?.id; }
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-            }
-            setLoading(false);
-        } else if (c.displayName?.toLowerCase().includes("etsy")) {
-            setLoading(true);
-            const existingListingId = product.ids?.[c.displayName];
-            if (existingListingId) {
-                await axios.put("/api/admin/integrations/etsy", { product, connection: c, listingId: existingListingId }).catch(() => { alert("Something went wrong updating the Etsy listing. Please try again."); });
-            } else {
-                const res = await axios.post("/api/admin/integrations/etsy", { product, connection: c }).catch(() => { alert("Something went wrong. Please try again."); setLoading(false); });
-                if (res?.data) {
+                if (res.data.limitReached) {
+                    notify("warning", `You've hit your daily listing limit for ${c.displayName}. The product has been added to the queue and will be processed tomorrow — it will update in the system automatically.`);
+                } else if (bodyErr(res.data, "Shopify")) { /* error shown */
+                } else {
                     let p = { ...product };
                     if (!p.ids) p.ids = {};
                     p.ids[c.displayName] = res.data.productId;
+                    for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = res.data.variantIds?.find(vId => vId.sku === v.sku)?.id; }
                     await axios.post("/api/admin/products", { products: [p] });
                     setProduct({ ...p });
                     if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
                 }
             }
             setLoading(false);
+        } else if (c.displayName?.toLowerCase().includes("etsy")) {
+            setLoading(true);
+            const existingListingId = product.ids?.[c.displayName];
+            if (existingListingId) {
+                const res = await axios.put("/api/admin/integrations/etsy", { product, connection: c, listingId: existingListingId })
+                    .catch((e) => { notify("error", extractErr(e, "Something went wrong updating the Etsy listing.")); });
+                if (res?.data && bodyErr(res.data, "Etsy")) { /* error shown */ }
+            } else {
+                const res = await axios.post("/api/admin/integrations/etsy", { product, connection: c })
+                    .catch((e) => { notify("error", extractErr(e, "Something went wrong creating the Etsy listing.")); setLoading(false); });
+                if (res?.data) {
+                    if (bodyErr(res.data, "Etsy")) { /* error shown */ }
+                    else {
+                        let p = { ...product };
+                        if (!p.ids) p.ids = {};
+                        p.ids[c.displayName] = res.data.productId;
+                        await axios.post("/api/admin/products", { products: [p] });
+                        setProduct({ ...p });
+                        if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                    }
+                }
+            }
+            setLoading(false);
         } else if (c.type === "faire") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/faire/send", { product, connectionId: c._id }).catch((e) => {
-                const msg = e.response?.data?.error ?? "Something went wrong sending to Faire.";
-                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
-                setLoading(false);
-            });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.faireProductId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-                alert(`Sent to Faire. Product ID: ${res.data.faireProductId}`);
+            const res = await axios.post("/api/integrations/faire/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Faire.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Faire")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.faireProductId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                    notify("success", `Sent to Faire. Product ID: ${res.data.faireProductId}`);
+                }
             }
             setLoading(false);
         } else if (c.type === "shein") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/shein/send", { product, connectionId: c._id }).catch((e) => {
-                const msg = e.response?.data?.error ?? "Something went wrong sending to SHEIN.";
-                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
-                setLoading(false);
-            });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.sheinSpuName;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-                alert(`Sent to SHEIN. SPU Name: ${res.data.sheinSpuName}`);
+            const res = await axios.post("/api/integrations/shein/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to SHEIN.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "SHEIN")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.sheinSpuName;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                    notify("success", `Sent to SHEIN. SPU Name: ${res.data.sheinSpuName}`);
+                }
             }
             setLoading(false);
         } else if (c.type === "temu") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/temu/send", { product, connectionId: c._id }).catch((e) => {
-                const msg = e.response?.data?.error ?? "Something went wrong sending to Temu.";
-                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
-                setLoading(false);
-            });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.goodsId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-                alert(`Sent to Temu. Goods ID: ${res.data.goodsId}`);
+            const res = await axios.post("/api/integrations/temu/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Temu.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Temu")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.goodsId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                    notify("success", `Sent to Temu. Goods ID: ${res.data.goodsId}`);
+                }
             }
             setLoading(false);
         } else if (c.type === "walmart") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/walmart/send", { product, connectionId: c._id }).catch((e) => {
-                const msg = e.response?.data?.error ?? "Something went wrong sending to Walmart.";
-                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
-                // If not authorized, deselect the Walmart marketplace from this product
-                if (e.response?.data?.notAuthorized) {
-                    const parentMp = marketPlaces.find(mp => mp.connections?.some(conn => (conn._id?.toString() ?? conn.toString()) === c._id.toString()));
-                    if (parentMp) {
-                        const p = { ...product };
-                        p.marketPlacesArray = (p.marketPlacesArray ?? []).filter(m => (m._id ? m._id.toString() : m.toString()) !== parentMp._id.toString());
-                        axios.post("/api/admin/products", { products: [p] }).then(() => {
-                            setProduct({ ...p });
-                            if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-                        });
+            const res = await axios.post("/api/integrations/walmart/send", { product, connectionId: c._id })
+                .catch((e) => {
+                    notify("error", extractErr(e, "Something went wrong sending to Walmart."));
+                    if (e.response?.data?.notAuthorized) {
+                        const parentMp = marketPlaces.find(mp => mp.connections?.some(conn => (conn._id?.toString() ?? conn.toString()) === c._id.toString()));
+                        if (parentMp) {
+                            const p = { ...product };
+                            p.marketPlacesArray = (p.marketPlacesArray ?? []).filter(m => (m._id ? m._id.toString() : m.toString()) !== parentMp._id.toString());
+                            axios.post("/api/admin/products", { products: [p] }).then(() => {
+                                setProduct({ ...p });
+                                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                            });
+                        }
                     }
+                    setLoading(false);
+                });
+            if (res?.data) {
+                if (bodyErr(res.data, "Walmart")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.feedId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                    notify("success", `Sent to Walmart. Feed ID: ${res.data.feedId}`);
                 }
-                setLoading(false);
-            });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.feedId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-                alert(`Sent to Walmart. Feed ID: ${res.data.feedId}`);
             }
             setLoading(false);
         } else if (c.displayName?.toLowerCase().includes("acenda") || c.type === "acenda") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/acenda", { connectionId: c._id, product }).catch((e) => {
-                const msg = e.response?.data?.error ?? "Something went wrong sending to Acenda.";
-                alert(typeof msg === "string" ? msg : JSON.stringify(msg));
-                setLoading(false);
-            });
-            if (res?.data && !res.data.error) {
-                const p = res.data.product;
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            const res = await axios.post("/api/integrations/acenda", { connectionId: c._id, product })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Acenda.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Acenda")) { /* error shown */ }
+                else {
+                    const p = res.data.product;
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
             }
             setLoading(false);
         } else if (c.type === "wix") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/wix/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Wix."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.wixProductId;
-                for (let v of p.variantsArray) {
-                    if (!v.ids) v.ids = {};
-                    const wv = res.data.variantIds?.find(vi => vi.sku === v.sku);
-                    if (wv) v.ids[c.displayName] = wv.id;
+            const res = await axios.post("/api/integrations/wix/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Wix.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Wix")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.wixProductId;
+                    for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; const wv = res.data.variantIds?.find(vi => vi.sku === v.sku); if (wv) v.ids[c.displayName] = wv.id; }
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
                 }
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }
             setLoading(false);
         } else if (c.type === "woocommerce") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/woocommerce/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to WooCommerce."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.wooProductId;
-                for (let v of p.variantsArray) {
-                    if (!v.ids) v.ids = {};
-                    const wv = res.data.variantIds?.find(vi => vi.sku === v.sku);
-                    if (wv) v.ids[c.displayName] = wv.id;
+            const res = await axios.post("/api/integrations/woocommerce/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to WooCommerce.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "WooCommerce")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.wooProductId;
+                    for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; const wv = res.data.variantIds?.find(vi => vi.sku === v.sku); if (wv) v.ids[c.displayName] = wv.id; }
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
                 }
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }
             setLoading(false);
         } else if (c.type === "squarespace") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/squarespace/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Squarespace."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.squarespaceProductId;
-                for (let v of p.variantsArray) {
-                    if (!v.ids) v.ids = {};
-                    const sv = res.data.variantIds?.find(vi => vi.sku === v.sku);
-                    if (sv) v.ids[c.displayName] = sv.id;
+            const res = await axios.post("/api/integrations/squarespace/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Squarespace.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Squarespace")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.squarespaceProductId;
+                    for (let v of p.variantsArray) { if (!v.ids) v.ids = {}; const sv = res.data.variantIds?.find(vi => vi.sku === v.sku); if (sv) v.ids[c.displayName] = sv.id; }
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
                 }
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
             }
             setLoading(false);
         } else if (c.type === "meta") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/meta/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Meta Shops."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.metaProductId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            const res = await axios.post("/api/integrations/meta/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Meta Shops.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Meta Shops")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.metaProductId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
             }
             setLoading(false);
         } else if (c.type === "pinterest") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/pinterest/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Pinterest."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.pinterestBatchId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            const res = await axios.post("/api/integrations/pinterest/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Pinterest.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Pinterest")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.pinterestBatchId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
             }
             setLoading(false);
         } else if (c.type === "onbuy") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/onbuy/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to OnBuy."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.onbuyListingId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            const res = await axios.post("/api/integrations/onbuy/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to OnBuy.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "OnBuy")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.onbuyListingId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
             }
             setLoading(false);
         } else if (c.type === "rakuten") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/rakuten/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Rakuten."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.rakutenItemId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            const res = await axios.post("/api/integrations/rakuten/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Rakuten.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Rakuten")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.rakutenItemId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
             }
             setLoading(false);
         } else if (c.type === "rithum") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/rithum/send", { product, connectionId: c._id }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to Rithum."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.rithumProductId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            const res = await axios.post("/api/integrations/rithum/send", { product, connectionId: c._id })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Rithum.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "Rithum")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.rithumProductId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
             }
             setLoading(false);
         } else if (c.type === "channelengine") {
             setLoading(true);
-            const res = await axios.post("/api/admin/channelengine/products/send", { product }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong sending to ChannelEngine."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = res.data.channelEngineProductId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+            const res = await axios.post("/api/admin/channelengine/products/send", { product })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to ChannelEngine.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "ChannelEngine")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = res.data.channelEngineProductId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                }
             }
             setLoading(false);
         } else if (c.type === "ebay") {
             setLoading(true);
             const offer = mp?.defaultValues ? { ...mp.defaultValues } : {};
-            const res = await axios.post("/api/integrations/ebay", { connectionId: c._id, product, offer }).catch((e) => {
-                alert(e.response?.data?.error ?? "Something went wrong sending to eBay.");
-                setLoading(false);
-            });
-            if (res?.data?.success) {
-                const results = res.data.results ?? [];
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[c.displayName] = results[0]?.offerId ?? results[0]?.sku ?? "sent";
-                for (const v of p.variantsArray ?? []) {
-                    const r = results.find(r => r.sku === v.sku);
-                    if (r?.offerId) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = r.offerId; }
+            const res = await axios.post("/api/integrations/ebay", { connectionId: c._id, product, offer })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to eBay.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "eBay")) { /* error shown */ }
+                else if (res.data.success) {
+                    const results = res.data.results ?? [];
+                    const failed  = results.filter(r => r.error);
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[c.displayName] = results[0]?.offerId ?? results[0]?.sku ?? "sent";
+                    for (const v of p.variantsArray ?? []) {
+                        const r = results.find(r => r.sku === v.sku);
+                        if (r?.offerId) { if (!v.ids) v.ids = {}; v.ids[c.displayName] = r.offerId; }
+                    }
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                    if (failed.length) {
+                        notify("warning", `Sent to eBay — ${results.length - failed.length} variant(s) created, ${failed.length} failed: ${failed.map(f => `${f.sku}: ${f.error}`).join("; ")}`);
+                    } else {
+                        notify("success", `Sent to eBay. ${results.length} variant(s) created.`);
+                    }
                 }
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-                alert(`Sent to eBay. ${results.length} variant(s) created.`);
             }
             setLoading(false);
         } else if (c.seller_name) {
             setLoading(true);
-            const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c, marketplaceName: mpName }).catch((e) => { alert(e.response?.data?.msg ?? "Something went wrong. Please try again."); setLoading(false); });
-            if (res?.data && !res.data.error) {
-                let p = { ...product };
-                if (!p.ids) p.ids = {};
-                p.ids[mpName] = res.data.tiktokProductId;
-                await axios.post("/api/admin/products", { products: [p] });
-                setProduct({ ...p });
-                if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
-                if (res.data.warning) alert(`TikTok listing created.\n\nNote: ${res.data.warning}`);
+            const res = await axios.post("/api/admin/integrations/tiktok", { product, connection: c, marketplaceName: mpName })
+                .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to TikTok.")); setLoading(false); });
+            if (res?.data) {
+                if (bodyErr(res.data, "TikTok")) { /* error shown */ }
+                else {
+                    let p = { ...product };
+                    if (!p.ids) p.ids = {};
+                    p.ids[mpName] = res.data.tiktokProductId;
+                    await axios.post("/api/admin/products", { products: [p] });
+                    setProduct({ ...p });
+                    if (products?.length) setProducts(products.map(prod => prod._id.toString() === p._id.toString() ? { ...p } : prod));
+                    if (res.data.warning) notify("warning", `TikTok listing created. Note: ${res.data.warning}`);
+                }
             }
             setLoading(false);
         }
@@ -645,6 +716,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
         display: "flex", flexDirection: "column", overflow: "hidden",
     };
     return (
+        <>
         <Modal open={open} onClose={() => setOpen(false)}>
             <Box sx={style}>
                 {loading && <LoaderOverlay />}
@@ -951,6 +1023,23 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                 <RemoveMarketPlaceModal open={openRemoveModal} setOpen={setOpenRemoveModal} mp={marketplace} removeMarketplaceConnection={removeMarketplaceConnection} />
             </Box>
         </Modal>
+
+        <Snackbar
+            open={!!sendMsg}
+            autoHideDuration={8000}
+            onClose={() => setSendMsg(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+            <Alert
+                onClose={() => setSendMsg(null)}
+                severity={sendMsg?.severity ?? "info"}
+                variant="filled"
+                sx={{ width: "100%", maxWidth: 600, whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+            >
+                {sendMsg?.text}
+            </Alert>
+        </Snackbar>
+        </>
     );
 }
 export const MarketPlaceList = ({ marketPlace, header, addMarketPlace, products, productLine, disableDefault, connections }) => {
@@ -1136,6 +1225,13 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
     const [update, setUpdate] = useState(false);
     const [header, setHeader] = useState({});
     const [newHeaderTexts, setNewHeaderTexts] = useState([]);
+    const [tikTokAttrOpen, setTikTokAttrOpen] = useState(false);
+    const [tikTokAttrData, setTikTokAttrData] = useState(null);
+    const [tikTokAttrLoading, setTikTokAttrLoading] = useState(false);
+    const [tikTokAttrError, setTikTokAttrError] = useState(null);
+    const [copiedId, setCopiedId] = useState(null);
+    const [expandedAttrs, setExpandedAttrs] = useState(new Set());
+    const [tikTokSearchTerm, setTikTokSearchTerm] = useState("");
 
     useEffect(() => {
         if (open) {
@@ -1202,6 +1298,33 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
     };
 
     const connIds = (marketPlace.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
+    const hasTikTokSelected = tiktokAuth?.some(a => connIds.includes(a._id.toString()));
+
+    const fetchTikTokAttributes = async (term) => {
+        setTikTokAttrLoading(true);
+        setTikTokAttrError(null);
+        try {
+            const productName = term || blank?.name || "t-shirt";
+            const res = await axios.get(`/api/admin/integrations/tiktok?productName=${encodeURIComponent(productName)}`);
+            if (res.data.error) setTikTokAttrError(res.data.msg);
+            else setTikTokAttrData(res.data);
+        } catch (e) {
+            setTikTokAttrError(e?.response?.data?.msg ?? "Failed to load attributes");
+        }
+        setTikTokAttrLoading(false);
+    };
+
+    const handleViewTikTokAttributes = async () => {
+        setTikTokAttrOpen(true);
+        if (tikTokAttrData) return;
+        await fetchTikTokAttributes();
+    };
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard?.writeText(text);
+        setCopiedId(text);
+        setTimeout(() => setCopiedId(null), 1500);
+    };
 
     return (
         <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, maxHeight: "92vh" } }}>
@@ -1259,6 +1382,11 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                                     );
                                 })}
                             </Box>
+                            {hasTikTokSelected && (
+                                <Button size="small" variant="text" onClick={handleViewTikTokAttributes} sx={{ alignSelf: "flex-start", mt: 0.5, pl: 0, fontSize: "0.78rem" }}>
+                                    View TikTok attribute reference →
+                                </Button>
+                            )}
                         </Box>
                     )}
 
@@ -1488,6 +1616,120 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
             </DialogActions>
 
             <UpdateModal open={update} setOpen={setUpdate} ori={header} marketPlace={marketPlace} setMarketPlace={setMarketPlace} />
+
+            {/* TikTok attribute reference dialog */}
+            <Dialog open={tikTokAttrOpen} onClose={() => { setTikTokAttrOpen(false); setExpandedAttrs(new Set()); }} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, maxHeight: "88vh" } }}>
+                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Box>
+                        <Typography variant="h6" fontWeight={700}>TikTok Attribute Reference</Typography>
+                        {tikTokAttrData?.categoryName && (
+                            <Typography variant="caption" color="text.secondary">Category: {tikTokAttrData.categoryName} (ID: {tikTokAttrData.categoryId})</Typography>
+                        )}
+                    </Box>
+                    <IconButton onClick={() => setTikTokAttrOpen(false)} size="small"><CloseIcon fontSize="small" /></IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ py: 2 }}>
+                    {tikTokAttrLoading && <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>Loading attributes from TikTok…</Typography>}
+                    {tikTokAttrError && <Typography variant="body2" color="error" sx={{ py: 2 }}>{tikTokAttrError}</Typography>}
+                    {(tikTokAttrData || tikTokAttrError) && !tikTokAttrLoading && (
+                        <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                            <TextField
+                                size="small"
+                                placeholder={`Product type (e.g. "${blank?.name || "t-shirt"}")`}
+                                value={tikTokSearchTerm}
+                                onChange={e => setTikTokSearchTerm(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter") fetchTikTokAttributes(tikTokSearchTerm); }}
+                                sx={{ flex: 1 }}
+                            />
+                            <Button variant="outlined" size="small" onClick={() => fetchTikTokAttributes(tikTokSearchTerm)} sx={{ whiteSpace: "nowrap" }}>
+                                Reload Attributes
+                            </Button>
+                        </Box>
+                    )}
+                    {tikTokAttrData && !tikTokAttrLoading && (
+                        <Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Use the <strong>attribute name</strong> as the field key in <code>marketPlaceOverrides</code> (e.g. <code>"Dangerous Goods": "None"</code>). Click a value chip to copy it. The system will also auto-translate common compliance phrases like "No Dangerous Goods" to the correct TikTok value.
+                            </Typography>
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                {[...(tikTokAttrData.attributes ?? [])].filter(a => !["size", "color"].includes(a.name?.toLowerCase())).sort((a, b) => (b.is_required ? 1 : 0) - (a.is_required ? 1 : 0)).map((attr) => (
+                                    <Card key={attr.id} variant="outlined" sx={{ borderRadius: 1.5, borderColor: attr.is_required ? "primary.light" : "divider" }}>
+                                        {(() => {
+                                            const currentVal = blank?.marketPlaceOverrides?.[marketPlace.name]?.[attr.name];
+                                            const addOverride = (valueName) => {
+                                                if (!blank) return;
+                                                let b = { ...blank };
+                                                if (!b.marketPlaceOverrides) b.marketPlaceOverrides = {};
+                                                if (!b.marketPlaceOverrides[marketPlace.name]) b.marketPlaceOverrides[marketPlace.name] = {};
+                                                b.marketPlaceOverrides[marketPlace.name][attr.name] = valueName;
+                                                setBlank(b);
+                                            };
+                                            return (
+                                                <Box sx={{ px: 2, py: 1, display: "flex", alignItems: "flex-start", gap: 1.5, flexWrap: "wrap" }}>
+                                                    <Box sx={{ flex: 1, minWidth: 160 }}>
+                                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                                                            <Typography variant="body2" fontWeight={600}>{attr.name}</Typography>
+                                                            {attr.is_required && <Chip label="Required" size="small" color="primary" sx={{ height: 16, fontSize: "0.6rem" }} />}
+                                                            {currentVal && <Chip label="Added" size="small" color="success" sx={{ height: 16, fontSize: "0.6rem" }} />}
+                                                        </Box>
+                                                        {currentVal && (
+                                                            <Typography variant="caption" color="success.main" sx={{ mt: 0.25, display: "block", fontWeight: 600 }}>
+                                                                Set to: {currentVal}
+                                                            </Typography>
+                                                        )}
+                                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                                                            <Button size="small" variant="outlined" sx={{ fontSize: "0.65rem", py: 0.2, px: 0.75, lineHeight: 1.4 }} onClick={() => copyToClipboard(attr.name)}>
+                                                                {copiedId === attr.name ? "✓ copied field name" : "copy field name"}
+                                                            </Button>
+                                                        </Box>
+                                                        <Typography variant="caption" color="text.disabled" sx={{ mt: 0.25, display: "block" }}>ID: {attr.id}</Typography>
+                                                    </Box>
+                                                    <Box sx={{ flex: 2, minWidth: 200 }}>
+                                                        {attr.values?.length > 0 ? (
+                                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                                                {(expandedAttrs.has(attr.id) ? attr.values : attr.values.slice(0, 30)).map(v => {
+                                                                    const isSelected = currentVal === v.name;
+                                                                    return (
+                                                                        <Chip
+                                                                            key={v.id ?? v.name}
+                                                                            label={v.name}
+                                                                            size="small"
+                                                                            variant={isSelected ? "filled" : "outlined"}
+                                                                            color={isSelected ? "primary" : "default"}
+                                                                            sx={{ fontSize: "0.65rem", height: 20, cursor: "pointer" }}
+                                                                            onClick={() => blank ? addOverride(v.name) : copyToClipboard(v.name)}
+                                                                            title={blank ? `Click to set: ${v.name}` : `Click to copy: ${v.name}`}
+                                                                        />
+                                                                    );
+                                                                })}
+                                                                {attr.values.length > 30 && !expandedAttrs.has(attr.id) && (
+                                                                    <Typography
+                                                                        variant="caption"
+                                                                        color="primary"
+                                                                        sx={{ alignSelf: "center", cursor: "pointer", textDecoration: "underline" }}
+                                                                        onClick={() => setExpandedAttrs(prev => new Set([...prev, attr.id]))}
+                                                                    >
+                                                                        +{attr.values.length - 30} more
+                                                                    </Typography>
+                                                                )}
+                                                            </Box>
+                                                        ) : (
+                                                            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>Custom text accepted</Typography>
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            );
+                                        })()}
+                                    </Card>
+                                ))}
+                            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                    <Button onClick={() => setTikTokAttrOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     );
 };

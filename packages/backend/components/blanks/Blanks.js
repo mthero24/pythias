@@ -18,7 +18,7 @@ import {useState, useMemo, useRef} from "react";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import axios from "axios"
 
-export function BlanksComponent({blanks, mPs, source, basePath = "/admin/blanks"}){
+export function BlanksComponent({blanks, mPs, source, orgId, basePath = "/admin/blanks"}){
     const [blank, setBlank] = useState({})
     const [marketPlaces, setMarketPlaces] = useState(mPs)
     const [marketplaceModal, setMarketplaceModal] = useState(false)
@@ -229,7 +229,7 @@ export function BlanksComponent({blanks, mPs, source, basePath = "/admin/blanks"
                     })}
                 </Grid2>
 
-                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => b.sizes?.map(s => s.name))} blank={blank} setBlank={setBlank} source={source} canEdit />
+                <MarketplaceModal open={marketplaceModal} setOpen={setMarketplaceModal} marketPlaces={marketPlaces} setMarketPlaces={setMarketPlaces} sizes={blanks?.map(b => b.sizes?.map(s => s.name))} blank={blank} setBlank={setBlank} source={source} orgId={orgId} canEdit />
                 <AliasModal open={aliasOpen} setOpen={setAliasOpen} blanks={blanks} />
 
                 <Dialog open={classifyOpen} onClose={() => !classifyRunning && setClassifyOpen(false)} maxWidth="sm" fullWidth>

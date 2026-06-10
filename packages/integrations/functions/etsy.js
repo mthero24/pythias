@@ -3,6 +3,16 @@ import axios from "axios";
 import FormData from "form-data";
 import {Order, Products, Item, Inventory, ProductInventory} from "@pythias/mongo"
 import { generatePieceID } from "./createPiceId.js";
+export const getEtsyTaxonomyAttributes = async (taxonomy_id = 482) => {
+    let errData;
+    const res = await axios.get(
+        `https://openapi.etsy.com/v3/application/seller-taxonomy/nodes/${taxonomy_id}/attributes`,
+        { headers: { "x-api-key": process.env.etsyApiKey } }
+    ).catch(e => { errData = e.response?.data; });
+    if (errData) return { error: true, msg: errData.error ?? "Failed to fetch Etsy attributes" };
+    return { error: false, taxonomy_id, attributes: res.data.results ?? [] };
+};
+
 export const getToken = async (code, baseUrl) => {
     const authCode = code;
     const tokenUrl = "https://api.etsy.com/v3/public/oauth/token";
@@ -326,7 +336,7 @@ const createRedinessState = async (credentials) => {
     }
     return {listing: response.data, updatedCredentials: credentials};
 }
-const createListing = async (product, returnPolicyId, shipping_profile_id, credentials) => {
+const createListing = async (product, returnPolicyId, shipping_profile_id, credentials, marketplaceValues = {}) => {
     let {readinessStates, updatedCredentials} = await getRedinessStates(credentials);
     credentials = updatedCredentials;
     if (readinessStates.count == 0) {
@@ -398,22 +408,23 @@ const createListing = async (product, returnPolicyId, shipping_profile_id, crede
         materials: product.materials || ["cotton"],
         item_weight: product.sizes[0]?.weight ?? 0.2,
         item_weight_unit: "oz",
-        item_length: 13,
-        item_width: 9,
-        item_height: 0.5,
+        item_length: parseFloat(product.packageLength ?? marketplaceValues["Package Length"] ?? 13),
+        item_width:  parseFloat(product.packageWidth  ?? marketplaceValues["Package Width"]  ?? 9),
+        item_height: parseFloat(product.packageHeight ?? marketplaceValues["Package Height"] ?? 0.5),
         item_dimensions_unit: "in",
         should_auto_renew: true,
         is_taxable: true,
-        tags: [
-            ...new Set(
-                product.tags
-                    .filter(
-                        (tag) =>
-                            tag && tag?.length > 0 && tag?.length < 20 && !tag?.match(/[^a-zA-Z0-9 ]/gi)
-                    )
-                    .slice(0, 12)
-            ),
-        ],
+        tags: (() => {
+            const SKIP = new Set(["name","titleGenerator","Package Length","Package Width","Package Height"]);
+            const mpTags = Object.entries(marketplaceValues)
+                .filter(([k, v]) => v && !SKIP.has(k))
+                .map(([, v]) => String(v).toLowerCase().replace(/[^a-z0-9 ]/g, "").trim().slice(0, 20))
+                .filter(Boolean);
+            return [...new Set([
+                ...product.tags.filter(t => t && t.length > 0 && t.length < 20 && !t.match(/[^a-zA-Z0-9 ]/gi)),
+                ...mpTags,
+            ])].slice(0, 13);
+        })(),
         is_supply: true,
         type: "physical",
         readiness_state_id: readinessStates.results[0].readiness_state_id,

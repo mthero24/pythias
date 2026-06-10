@@ -227,7 +227,10 @@ export const getAttributes = async (category_id, credentials)=>{
           return { error: true, msg: "refresh" };
         }
     } 
-    return {error: false, attributes: result.data.data.attributes};
+    const data = result.data.data;
+    // Return the flat attributes array AND the full data object so callers can
+    // access any additional attribute groups TikTok returns (e.g. packaging_attributes).
+    return { error: false, attributes: data.attributes, rawData: data };
 }
 export const getWarehouses = async (credentials) => {
     const config = await getConfig()
@@ -514,13 +517,21 @@ export const createBrand = async (brand_name, credentials, shop_cipher) => {
 };
 
 // Returns the TikTok brand_id for a given brand name, creating it if it doesn't exist yet.
+// TikTok's brand search is case-sensitive, so we try both the raw name and a title-cased
+// version to handle brands stored in the system as lowercase (e.g. "simply sage market").
 export const getOrCreateBrand = async (brand_name, credentials, shop_cipher) => {
     if (!brand_name) return null;
-    const search = await searchBrands(brand_name, credentials, shop_cipher);
-    if (search.error) return null;
-    const exact = search.brands.find(b => b.name?.toLowerCase() === brand_name.toLowerCase());
+    const titleCase = brand_name.replace(/\b\w/g, c => c.toUpperCase());
+    const findInResults = (brands) => brands.find(b => b.name?.toLowerCase() === brand_name.toLowerCase());
+    const trySearch = async (name) => {
+        const search = await searchBrands(name, credentials, shop_cipher);
+        if (search.error) return null;
+        return findInResults(search.brands) ?? null;
+    };
+    let exact = await trySearch(brand_name);
+    if (!exact && titleCase !== brand_name) exact = await trySearch(titleCase);
     if (exact) return exact.id ?? exact.brand_id;
-    const created = await createBrand(brand_name, credentials, shop_cipher);
+    const created = await createBrand(titleCase, credentials, shop_cipher);
     if (created.error) return null;
     return created.brand_id;
 };

@@ -15,6 +15,6 @@ export default async function Blanks() {
   if (marketPlaces) marketPlaces = serialize(marketPlaces)
   else marketPlaces = []
   return (
-    <BlanksComponent blanks={blanks} mPs={marketPlaces} source="test" />
+    <BlanksComponent blanks={blanks} mPs={marketPlaces} source="premierPrinting" />
   )
 }

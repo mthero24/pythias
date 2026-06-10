@@ -12,6 +12,57 @@ import {
   getOrCreateBrandTikTok,
 } from "@pythias/integrations";
 const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
+
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "")
+
+// Maps normalized user-supplied compliance strings to hints for finding TikTok's accepted enum value.
+// Used to pre-normalize attribute values before sending so TikTok doesn't reject them.
+const COMPLIANCE_HINTS = [
+    {
+        // "No dangerous goods / not hazardous / none / N/A" → find TikTok value containing "none" or "no"
+        inputs: new Set(["none","no","na","notapplicable","nodangerousgoods","nodangerousgood",
+                         "nohazardousmaterials","nohazardousmaterial","nohazmat","nohazard",
+                         "notdangerous","nondangerous","notahazardousmaterial","notahazard",
+                         "notahazardousgood","notadangerousgood","false","0","notdangerousgoods"]),
+        hints: ["none", "no"]
+    },
+    {
+        inputs: new Set(["lithiumbattery","lithiumbatteries","liion","lipo","lithiumion",
+                         "lithiumionbattery","lithiumionbatteries"]),
+        hints: ["lithium", "battery", "batteries"]
+    },
+    {
+        inputs: new Set(["flammable","flammableliquid","flammableliquids"]),
+        hints: ["flammable"]
+    },
+    {
+        inputs: new Set(["aerosol","aerosols"]),
+        hints: ["aerosol"]
+    },
+]
+
+function normalizeAttrValuePreSend(customValue, validValues) {
+    if (!validValues?.length) return null
+    const normCustom = norm(customValue)
+
+    // Exact normalized match
+    let match = validValues.find(v => norm(v.name) === normCustom)
+    if (match) return match
+
+    // Compliance table lookup — translate known compliance phrasing to TikTok's enum
+    for (const rule of COMPLIANCE_HINTS) {
+        if (rule.inputs.has(normCustom)) {
+            const hintMatch = validValues.find(v => rule.hints.some(h => norm(v.name).includes(h)))
+            if (hintMatch) return hintMatch
+        }
+    }
+
+    // Partial string match fallback
+    match = validValues.find(v => norm(v.name).includes(normCustom) || normCustom.includes(norm(v.name)))
+    if (match) return match
+
+    return null
+}
 const refresh = async (creds, cipher) => {
     let credentials = await TikTokAuth.findOne({ _id: creds._id });
     const tokens = await getAccessTokenFromRefreshToken(credentials.refresh_token);
@@ -96,7 +147,7 @@ export async function uploadTikTokImage({image,type}){
     }
     return res
 }
-export async function createTikTokProduct({product}){
+export async function createTikTokProduct({ product, marketplaceName = null }){
     let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
     if (!credentials) throw new Error("No TikTok credentials found for premierPrinting");
     if (!credentials.shop_list?.length) {
@@ -123,13 +174,13 @@ export async function createTikTokProduct({product}){
         ...(brand_id ? { brand_id } : {}),
         is_cod_allowed: false,
         package_dimensions: {
-            length: "13",
-            height: "1",
-            width: "10",
+            length: String(product.packageLength ?? product.marketplaceValues?.["Package Length"] ?? "13"),
+            width:  String(product.packageWidth  ?? product.marketplaceValues?.["Package Width"]  ?? "10"),
+            height: String(product.packageHeight ?? product.marketplaceValues?.["Package Height"] ?? "1"),
             unit: "INCH"
         },
         package_weight: {
-            value:( product.blank.sizes[0].weight / 16).toFixed(2),
+            value: (product.blank.sizes[0].weight / 16).toFixed(2),
             unit: "POUND"
         },
         main_images: [],
@@ -238,16 +289,56 @@ export async function createTikTokProduct({product}){
         }]
     })
     console.log(attributes.attributes.filter(a=> a.is_requried == true))
-    // Apply blank.marketPlaceOverrides["TikTok"] — keyed by attribute ID.
-    const mpOverrides = product.blank.marketPlaceOverrides?.["TikTok"]
-                     ?? product.blank.marketPlaceOverrides?.["tik tok"]
-                     ?? {};
-    for (const [id, value] of Object.entries(mpOverrides)) {
+    // Apply blank.marketPlaceOverrides keyed by attribute name OR attribute ID.
+    // Name keys ("Dangerous Goods") are preferred over numeric ID keys for readability.
+    // Use the actual marketplace name passed in; fall back to a case-insensitive TikTok search.
+    const allOverrides = product.blank.marketPlaceOverrides ?? {};
+    const mpOverrides = (marketplaceName && allOverrides[marketplaceName])
+        ? allOverrides[marketplaceName]
+        : (Object.entries(allOverrides).find(([k]) => k.toLowerCase().includes("tiktok") || k.toLowerCase() === "tik tok")?.[1] ?? {});
+    for (const [key, value] of Object.entries(mpOverrides)) {
         if (!value) continue;
-        const idx = attrs.findIndex(a => String(a.id) === String(id));
-        const entry = { id, values: [{ name: value }] };
+        // Match by name first, then fall back to numeric ID (backward compat)
+        const tikAttr = (attributes.attributes ?? []).find(a =>
+            a.name?.toLowerCase() === key.toLowerCase() || String(a.id) === String(key)
+        );
+        const attrId = tikAttr ? String(tikAttr.id) : String(key);
+        const idx = attrs.findIndex(a => String(a.id) === attrId);
+        const entry = { id: attrId, values: [{ name: value }] };
         if (idx >= 0) attrs[idx] = entry;
         else attrs.push(entry);
+    }
+
+    // Apply product-specific TikTok attributes from product.marketplaceValues
+    // (Holiday/Occasion, Design, Occasion, etc. set during product creation/edit)
+    // These take precedence over blank-level overrides if both specify the same attribute.
+    const PACKAGE_DIMENSION_KEYS = new Set(["package length", "package width", "package height"])
+    for (const [key, value] of Object.entries(product.marketplaceValues ?? {})) {
+        if (!value || key === 'name' || key === 'titleGenerator') continue;
+        if (PACKAGE_DIMENSION_KEYS.has(key.toLowerCase())) continue;
+        const tikAttr = (attributes.attributes ?? []).find(a =>
+            a.name?.toLowerCase() === key.toLowerCase() || String(a.id) === String(key)
+        );
+        if (!tikAttr) continue;
+        const attrId = String(tikAttr.id);
+        const idx = attrs.findIndex(a => String(a.id) === attrId);
+        const entry = { id: attrId, values: [{ name: value }] };
+        if (idx >= 0) attrs[idx] = entry;
+        else attrs.push(entry);
+    }
+
+    // Pre-send normalization: for any attribute that still has a plain custom string value
+    // (no TikTok value id), try to resolve it against TikTok's valid enum values now so
+    // the submission doesn't get rejected.  This handles compliance phrasing like
+    // "No Dangerous Goods" or "Hazardous Materials: None" which fuzzy matching misses.
+    for (const attr of attrs) {
+        if (!attr.values?.[0]?.name) continue
+        if (attr.values[0].id) continue  // already has a valid TikTok value id
+        const tikAttr = (attributes.attributes ?? []).find(a => String(a.id) === String(attr.id))
+        const validValues = tikAttr?.values ?? []
+        if (!validValues.length) continue
+        const resolved = normalizeAttrValuePreSend(attr.values[0].name, validValues)
+        if (resolved) attr.values = [{ id: resolved.id, name: resolved.name }]
     }
 
     console.log(attrs)
@@ -294,7 +385,6 @@ export async function createTikTokProduct({product}){
         const validValues = validAttr?.values ?? []
 
         // Try to find the closest matching valid value (case-insensitive, partial match)
-        const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "")
         const normCustom = norm(customValue)
         const match = validValues.find(v => norm(v.name) === normCustom)
             ?? validValues.find(v => norm(v.name).includes(normCustom) || normCustom.includes(norm(v.name)))
@@ -328,6 +418,50 @@ export async function createTikTokProduct({product}){
     if (droppedAttributes.length) warningParts.push(`Attributes removed because no matching TikTok value was found: ${droppedAttributes.join('; ')}.`)
     const warning = warningParts.length ? warningParts.join(' ') : null
     return { tiktokProductId: res.product?.product_id, warning }
+}
+
+export async function getTikTokAttributes(productName = "t-shirt") {
+    let credentials = await TikTokAuth.findOne({ provider: "premierPrinting" })
+    if (!credentials) return { error: true, msg: "No TikTok credentials found" }
+    let categories = await getRecommendedCategory(productName, credentials)
+    if (categories.error && categories.msg === "refresh") {
+        credentials = await refresh(credentials)
+        categories = await getRecommendedCategory(productName, credentials)
+    }
+    if (categories.error || !categories.categories?.length) {
+        return { error: true, msg: categories.msg ?? "No categories found" }
+    }
+    const category = categories.categories.find(c => c.is_leaf)
+    if (!category) return { error: true, msg: "No leaf category found" }
+    let attributes = await getAttributes(category.id, credentials)
+    if (attributes.error && attributes.msg === "refresh") {
+        credentials = await refresh(credentials)
+        attributes = await getAttributes(category.id, credentials)
+    }
+    if (attributes.error) return { error: true, msg: attributes.msg }
+
+    // Merge all attribute arrays TikTok may return under different keys
+    // (e.g. attributes, packaging_attributes, compliance_attributes, etc.)
+    const raw = attributes.rawData ?? {}
+    const allAttrs = Object.entries(raw)
+        .filter(([, v]) => Array.isArray(v))
+        .flatMap(([, v]) => v)
+        .filter(a => a && (a.id || a.name))
+    // Dedupe by id
+    const seen = new Set()
+    const merged = allAttrs.filter(a => {
+        const key = String(a.id ?? a.name)
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+    })
+
+    return {
+        error: false,
+        categoryId: category.id,
+        categoryName: category.local_name,
+        attributes: merged.length ? merged : (attributes.attributes ?? [])
+    }
 }
 
 export const getOrders = async (auths)=>{

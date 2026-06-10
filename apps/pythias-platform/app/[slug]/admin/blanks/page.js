@@ -29,6 +29,7 @@ export default async function Blanks({ params }) {
             blanks={JSON.parse(JSON.stringify(blanksWithSales))}
             mPs={[]}
             source="platform"
+            orgId={orgId}
             basePath={`/${slug}/admin/blanks`}
         />
     );

@@ -14,6 +14,20 @@ export async function handleAdminIntegrationsGET(req) {
     try {
         const { searchParams } = new URL(req.url);
         const provider = searchParams.get("provider");
+        const orgId = searchParams.get("orgId");
+
+        // Platform orgs: filter strictly by orgId
+        if (orgId) {
+            const [baseIntegrations, tiktokAuth] = await Promise.all([
+                ApiKeyIntegrations.find({ orgId }).lean(),
+                TikTokAuth.find({ orgId }),
+            ]);
+            const integration = baseIntegrations.map(a =>
+                (!a.type && a.displayName?.startsWith("shopify-")) ? { ...a, type: "shopify" } : a
+            );
+            return NextResponse.json({ error: false, integration, tiktokAuth });
+        }
+
         const filter = provider ? { provider } : {};
 
         const [baseIntegrations, tiktokAuth] = await Promise.all([

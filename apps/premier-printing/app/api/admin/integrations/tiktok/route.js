@@ -1,6 +1,6 @@
 import {NextApiRequest, NextResponse} from "next/server"
 import { TikTokAuth, SkuToUpc, Design, Blank as Blanks } from "@pythias/mongo";
-import { createTikTokProduct } from "@/functions/tikTok";
+import { createTikTokProduct, getTikTokAttributes } from "@/functions/tikTok";
 const createVariants = async ({design, b, blank})=>{
     let vs = await SkuToUpc.find({design: design._id, blank: blank._id})
     let skus = []
@@ -89,17 +89,32 @@ const createProduct = async ({design, b, blanks})=>{
 export async function POST(req=NextApiRequest){
     const data = await req.json();
     const p = data.product;
+    const marketplaceName = data.marketplaceName ?? null;
 
     const hires = (url) => url?.replace(/(\?|&)width=\d+/, '$1width=2400') ?? url;
 
+    // Fetch the full blank from DB so marketPlaceOverrides and all fields are guaranteed present
+    const blankId = p.blanks?.[0]?._id ?? p.blanks?.[0];
+    const fullBlank = blankId ? await Blanks.findById(blankId).lean() : null;
+    const blankData = fullBlank ?? p.blanks?.[0];
+
+    // Extract product-specific marketplace values for this TikTok marketplace
+    const tiktokMp = (p.marketPlacesArray ?? []).find(m =>
+        (m.name ?? "").toLowerCase() === (marketplaceName ?? "").toLowerCase()
+    );
+    const tiktokMpId = tiktokMp?._id?.toString() ?? tiktokMp?.toString();
+    const marketplaceValues = (tiktokMpId && p.marketplaceValues?.[tiktokMpId])
+        ? p.marketplaceValues[tiktokMpId]
+        : {};
+
     const product = {
-        name:        p.title,
-        brand:       p.brand ?? null,
-        description: p.description,
-        design:      p.design,
-        blank:       p.blanks?.[0] ? { ...p.blanks[0], sizeGuide: p.blanks[0].sizeGuide ? { ...p.blanks[0].sizeGuide, images: (p.blanks[0].sizeGuide.images ?? []).map(hires) } : undefined } : undefined,
-        images:      (p.productImages ?? []).map(pi => hires(pi.image)).filter(Boolean),
-        variants:    (p.variantsArray ?? []).map(v => ({
+        name:              p.title,
+        brand:             p.brand ?? null,
+        description:       p.description,
+        design:            p.design,
+        blank:             blankData ? { ...blankData, sizeGuide: blankData.sizeGuide ? { ...blankData.sizeGuide, images: (blankData.sizeGuide.images ?? []).map(hires) } : undefined } : undefined,
+        images:            (p.productImages ?? []).map(pi => hires(pi.image)).filter(Boolean),
+        variants:          (p.variantsArray ?? []).map(v => ({
             color:  v.color,
             size:   v.size?.name ?? v.size,
             sku:    v.sku,
@@ -107,10 +122,22 @@ export async function POST(req=NextApiRequest){
             price:  v.price,
             images: [v.image, ...(v.images ?? [])].filter(Boolean).map(hires),
         })),
+        marketplaceValues,
+        packageLength:     p.packageLength ?? null,
+        packageWidth:      p.packageWidth  ?? null,
+        packageHeight:     p.packageHeight ?? null,
     };
 
-    const result = await createTikTokProduct({ product });
+    const result = await createTikTokProduct({ product, marketplaceName });
     return NextResponse.json({ error: false, tiktokProductId: result?.tiktokProductId, warning: result?.warning ?? null });
+}
+
+export async function GET(req) {
+    const { searchParams } = new URL(req.url);
+    const productName = searchParams.get("productName") || "t-shirt";
+    const result = await getTikTokAttributes(productName);
+    if (result.error) return NextResponse.json({ error: true, msg: result.msg }, { status: 400 });
+    return NextResponse.json(result);
 }
 
 export async function PATCH(req) {

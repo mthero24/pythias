@@ -12,14 +12,14 @@ export async function POST(req=NextApiRequest){
         });
         if (inventory) {
             inventory.quantity = 0;
-            inventory.inStock    = (inventory.inStock    ?? []).filter(id => id.toString() !== item._id.toString());
-            inventory.outOfStock = [...(inventory.outOfStock ?? []).filter(id => id.toString() !== item._id.toString()), item._id];
+            inventory.inStock  = (inventory.inStock  ?? []).filter(id => id.toString() !== item._id.toString());
+            inventory.attached = [...(inventory.attached ?? []).filter(id => id.toString() !== item._id.toString()), item._id.toString()];
             inventory.markModified("quantity");
             inventory.markModified("inStock");
-            inventory.markModified("outOfStock");
+            inventory.markModified("attached");
             await inventory.save();
         }
-        item.stockStatus = "outOfStock";
+        item.stockStatus = "attached";
         item.labelPrinted = false;
         item.steps.push({ status: "Out of Stock", date: new Date() });
         await item.save();
@@ -40,13 +40,11 @@ export async function PUT(req=NextApiRequest){
         });
         if (inventory) {
             inventory.quantity  += 1;
-            inventory.inStock    = [...(inventory.inStock    ?? []).filter(id => id.toString() !== item._id.toString()), item._id];
-            inventory.outOfStock = (inventory.outOfStock ?? []).filter(id => id.toString() !== item._id.toString());
-            inventory.ordered    = (inventory.ordered    ?? []).filter(id => id.toString() !== item._id.toString());
+            inventory.inStock  = [...(inventory.inStock  ?? []).filter(id => id.toString() !== item._id.toString()), item._id.toString()];
+            inventory.attached = (inventory.attached ?? []).filter(id => id.toString() !== item._id.toString());
             inventory.markModified("quantity");
             inventory.markModified("inStock");
-            inventory.markModified("outOfStock");
-            inventory.markModified("ordered");
+            inventory.markModified("attached");
             await inventory.save();
         }
         item.stockStatus = "inStock";
