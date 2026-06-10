@@ -101,6 +101,52 @@ export const getTaxonomyTypesFaire = async ({ apiKey }) => {
     return { taxonomyTypes: data?.taxonomy_types ?? [] };
 };
 
+// Returns Faire taxonomy types + static configurable product fields for the attribute reference UI.
+export const getFaireAttributes = async ({ apiKey, category }) => {
+    const { taxonomyTypes, error } = await getTaxonomyTypesFaire({ apiKey });
+    if (error) return { error };
+
+    // Flatten taxonomy tree into a searchable list of leaf types
+    const flatten = (nodes, ancestors = []) => {
+        const result = [];
+        for (const node of nodes ?? []) {
+            const path = [...ancestors, node.display_name ?? node.name].filter(Boolean).join(" > ");
+            if (!node.children?.length) result.push({ id: node.id, name: path });
+            else result.push(...flatten(node.children, [...ancestors, node.display_name ?? node.name]));
+        }
+        return result;
+    };
+    const allTypes = flatten(taxonomyTypes);
+
+    // Filter to types that match the blank's category keywords
+    const flatTypes = (() => {
+        if (!category) return allTypes;
+        const keywords = category.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w => w.length > 2);
+        const filtered = allTypes.filter(t => keywords.some(kw => t.name.toLowerCase().includes(kw)));
+        return filtered.length > 0 ? filtered : allTypes;
+    })();
+
+    const staticAttributes = [
+        {
+            name: "Product Type",
+            field: "product_type",
+            values: flatTypes.map(t => ({ id: t.id, name: t.name })),
+        },
+        {
+            name: "Season",
+            field: "season",
+            values: ["Spring/Summer", "Fall/Winter", "Holiday", "Year Round"].map(v => ({ id: v, name: v })),
+        },
+        {
+            name: "Made In Country",
+            field: "made_in_country",
+            values: ["United States", "China", "Bangladesh", "Vietnam", "India", "Mexico", "Portugal"].map(v => ({ id: v, name: v })),
+        },
+    ];
+
+    return { error: false, attributes: staticAttributes };
+};
+
 // POST /products/upload-image — upload base64 image, get CDN url back
 export const uploadImageFaire = async ({ apiKey, base64 }) => {
     const { data, error } = await faireRequest({ apiKey, method: "post", path: "/products/upload-image", data: { attachment: base64 } });

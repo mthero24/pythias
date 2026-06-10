@@ -379,7 +379,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
     const sendToConnection = async (c, mpName, mp) => {
         if (c.displayName?.includes("shopify")) {
             setLoading(true);
-            const res = await axios.post("/api/integrations/shopify/send", { product, connection: c }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${c.apiKey}` } })
+            const res = await axios.post("/api/integrations/shopify/send", { product, connection: c, marketplaceName: mpName }, { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${c.apiKey}` } })
                 .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Shopify.")); setLoading(false); });
             if (res?.data) {
                 if (res.data.limitReached) {
@@ -421,7 +421,7 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
             setLoading(false);
         } else if (c.type === "faire") {
             setLoading(true);
-            const res = await axios.post("/api/integrations/faire/send", { product, connectionId: c._id })
+            const res = await axios.post("/api/integrations/faire/send", { product, connectionId: c._id, marketplaceName: mpName })
                 .catch((e) => { notify("error", extractErr(e, "Something went wrong sending to Faire.")); setLoading(false); });
             if (res?.data) {
                 if (bodyErr(res.data, "Faire")) { /* error shown */ }
@@ -1232,6 +1232,21 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
     const [copiedId, setCopiedId] = useState(null);
     const [expandedAttrs, setExpandedAttrs] = useState(new Set());
     const [tikTokSearchTerm, setTikTokSearchTerm] = useState("");
+    const [etsyAttrOpen, setEtsyAttrOpen] = useState(false);
+    const [etsyAttrData, setEtsyAttrData] = useState(null);
+    const [etsyAttrLoading, setEtsyAttrLoading] = useState(false);
+    const [etsyAttrError, setEtsyAttrError] = useState(null);
+    const [etsyExpandedAttrs, setEtsyExpandedAttrs] = useState(new Set());
+    const [faireAttrOpen, setFaireAttrOpen] = useState(false);
+    const [faireAttrData, setFaireAttrData] = useState(null);
+    const [faireAttrLoading, setFaireAttrLoading] = useState(false);
+    const [faireAttrError, setFaireAttrError] = useState(null);
+    const [faireExpandedAttrs, setFaireExpandedAttrs] = useState(new Set());
+    const [shopifyAttrOpen, setShopifyAttrOpen] = useState(false);
+    const [shopifyAttrData, setShopifyAttrData] = useState(null);
+    const [shopifyAttrLoading, setShopifyAttrLoading] = useState(false);
+    const [shopifyAttrError, setShopifyAttrError] = useState(null);
+    const [shopifyExpandedAttrs, setShopifyExpandedAttrs] = useState(new Set());
 
     useEffect(() => {
         if (open) {
@@ -1299,6 +1314,9 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
 
     const connIds = (marketPlace.connections || []).map(c => c?._id ? c._id.toString() : c?.toString());
     const hasTikTokSelected = tiktokAuth?.some(a => connIds.includes(a._id.toString()));
+    const hasEtsySelected    = connections?.some(c => connIds.includes(c._id.toString()) && c.type === "etsy");
+    const hasFaireSelected   = connections?.some(c => connIds.includes(c._id.toString()) && c.type === "faire");
+    const hasShopifySelected = connections?.some(c => connIds.includes(c._id.toString()) && (c.type === "shopify" || c.displayName?.toLowerCase().includes("shopify")));
 
     const fetchTikTokAttributes = async (term) => {
         setTikTokAttrLoading(true);
@@ -1318,6 +1336,80 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
         setTikTokAttrOpen(true);
         if (tikTokAttrData) return;
         await fetchTikTokAttributes();
+    };
+
+    const etsyTaxonomyForBlank = (b) => {
+        const cat = b?.category?.[0] ?? "";
+        if (cat.includes("Hoodie")) return 1853;
+        if (cat.includes("Sweatshirt")) return 2202;
+        if (cat.includes("Tank")) return 481;
+        if (cat.includes("Long Sleeve")) return 482;
+        return 482;
+    };
+
+    const fetchEtsyAttributes = async () => {
+        setEtsyAttrLoading(true);
+        setEtsyAttrError(null);
+        try {
+            const taxonomyId = etsyTaxonomyForBlank(blank);
+            const res = await axios.get(`/api/admin/integrations/etsy?taxonomyId=${taxonomyId}`);
+            if (res.data.error) setEtsyAttrError(res.data.msg);
+            else setEtsyAttrData(res.data);
+        } catch (e) {
+            setEtsyAttrError(e?.response?.data?.msg ?? "Failed to load Etsy attributes");
+        }
+        setEtsyAttrLoading(false);
+    };
+
+    const handleViewEtsyAttributes = async () => {
+        setEtsyAttrOpen(true);
+        if (etsyAttrData) return;
+        await fetchEtsyAttributes();
+    };
+
+    const fetchFaireAttributes = async (connectionId, category = "") => {
+        setFaireAttrLoading(true);
+        setFaireAttrError(null);
+        try {
+            const res = await axios.get(`/api/integrations/faire/attributes?connectionId=${connectionId}&category=${category}`);
+            if (res.data.error) setFaireAttrError(typeof res.data.error === "string" ? res.data.error : "Failed to load Faire attributes");
+            else setFaireAttrData(res.data);
+        } catch (e) {
+            setFaireAttrError(e?.response?.data?.error ?? "Failed to load Faire attributes");
+        }
+        setFaireAttrLoading(false);
+    };
+
+    const fetchShopifyAttributes = async (category = "") => {
+        setShopifyAttrLoading(true);
+        setShopifyAttrError(null);
+        try {
+            const shopifyConn = connections?.find(c => connIds.includes(c._id.toString()) && (c.type === "shopify" || c.displayName?.toLowerCase().includes("shopify")));
+            const params = new URLSearchParams({ category });
+            if (shopifyConn?.organization) params.set("shop", shopifyConn.organization);
+            if (shopifyConn?.apiKey)       params.set("token", shopifyConn.apiKey);
+            const res = await axios.get(`/api/integrations/shopify/attributes?${params}`);
+            if (res.data.error) setShopifyAttrError(typeof res.data.error === "string" ? res.data.error : "Failed to load");
+            else setShopifyAttrData(res.data);
+        } catch (e) {
+            setShopifyAttrError(e?.response?.data?.error ?? "Failed to load Shopify attributes");
+        }
+        setShopifyAttrLoading(false);
+    };
+
+    const handleViewShopifyAttributes = async () => {
+        setShopifyAttrOpen(true);
+        if (shopifyAttrData) return;
+        await fetchShopifyAttributes(blank?.category?.[0] ?? "");
+    };
+
+    const handleViewFaireAttributes = async () => {
+        setFaireAttrOpen(true);
+        if (faireAttrData) return;
+        const faireConn = connections?.find(c => connIds.includes(c._id.toString()) && c.type === "faire");
+        if (!faireConn) { setFaireAttrError("No Faire connection found"); return; }
+        const category = encodeURIComponent(blank?.category?.[0] ?? "");
+        await fetchFaireAttributes(faireConn._id.toString(), category);
     };
 
     const copyToClipboard = (text) => {
@@ -1385,6 +1477,21 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                             {hasTikTokSelected && (
                                 <Button size="small" variant="text" onClick={handleViewTikTokAttributes} sx={{ alignSelf: "flex-start", mt: 0.5, pl: 0, fontSize: "0.78rem" }}>
                                     View TikTok attribute reference →
+                                </Button>
+                            )}
+                            {hasEtsySelected && (
+                                <Button size="small" variant="text" onClick={handleViewEtsyAttributes} sx={{ alignSelf: "flex-start", mt: 0.5, pl: 0, fontSize: "0.78rem" }}>
+                                    View Etsy attribute reference →
+                                </Button>
+                            )}
+                            {hasFaireSelected && (
+                                <Button size="small" variant="text" onClick={handleViewFaireAttributes} sx={{ alignSelf: "flex-start", mt: 0.5, pl: 0, fontSize: "0.78rem" }}>
+                                    View Faire attribute reference →
+                                </Button>
+                            )}
+                            {hasShopifySelected && (
+                                <Button size="small" variant="text" onClick={handleViewShopifyAttributes} sx={{ alignSelf: "flex-start", mt: 0.5, pl: 0, fontSize: "0.78rem" }}>
+                                    View Shopify attribute reference →
                                 </Button>
                             )}
                         </Box>
@@ -1728,6 +1835,285 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
                     <Button onClick={() => setTikTokAttrOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Etsy attribute reference dialog */}
+            <Dialog open={etsyAttrOpen} onClose={() => { setEtsyAttrOpen(false); setEtsyExpandedAttrs(new Set()); }} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, maxHeight: "88vh" } }}>
+                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Box>
+                        <Typography variant="h6" fontWeight={700}>Etsy Attribute Reference</Typography>
+                        {etsyAttrData?.taxonomy_id && (
+                            <Typography variant="caption" color="text.secondary">Taxonomy ID: {etsyAttrData.taxonomy_id}</Typography>
+                        )}
+                    </Box>
+                    <IconButton onClick={() => setEtsyAttrOpen(false)} size="small"><CloseIcon fontSize="small" /></IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ py: 2 }}>
+                    {etsyAttrLoading && <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>Loading attributes from Etsy…</Typography>}
+                    {etsyAttrError && <Typography variant="body2" color="error" sx={{ py: 2 }}>{etsyAttrError}</Typography>}
+                    {etsyAttrData && !etsyAttrLoading && (
+                        <Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Use the <strong>attribute name</strong> as the field key in <code>marketPlaceOverrides</code>. Selected values are added to the Etsy listing as tags and included in searchable attributes. Click a value chip to set it.
+                            </Typography>
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                {(etsyAttrData.attributes ?? [])
+                                    .filter(a => !["color","size"].includes((a.display_name ?? a.name)?.toLowerCase()))
+                                    .sort((a, b) => (b.is_required ? 1 : 0) - (a.is_required ? 1 : 0))
+                                    .map((attr) => {
+                                        const fieldName = attr.display_name ?? attr.name;
+                                        // Etsy uses possible_values (with value_id + name)
+                                        const values = attr.possible_values ?? attr.values ?? [];
+                                        const attrKey = attr.property_id ?? attr.id;
+                                        const currentVal = blank?.marketPlaceOverrides?.[marketPlace.name]?.[fieldName];
+                                        const addOverride = (valueName) => {
+                                            if (!blank) return;
+                                            let b = { ...blank };
+                                            if (!b.marketPlaceOverrides) b.marketPlaceOverrides = {};
+                                            if (!b.marketPlaceOverrides[marketPlace.name]) b.marketPlaceOverrides[marketPlace.name] = {};
+                                            b.marketPlaceOverrides[marketPlace.name][fieldName] = valueName;
+                                            setBlank(b);
+                                        };
+                                        return (
+                                            <Card key={attrKey} variant="outlined" sx={{ borderRadius: 1.5, borderColor: attr.is_required ? "primary.light" : "divider" }}>
+                                                <Box sx={{ px: 2, py: 1, display: "flex", alignItems: "flex-start", gap: 1.5, flexWrap: "wrap" }}>
+                                                    <Box sx={{ flex: 1, minWidth: 160 }}>
+                                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                                                            <Typography variant="body2" fontWeight={600}>{fieldName}</Typography>
+                                                            {attr.is_required && <Chip label="Required" size="small" color="primary" sx={{ height: 16, fontSize: "0.6rem" }} />}
+                                                            {currentVal && <Chip label="Added" size="small" color="success" sx={{ height: 16, fontSize: "0.6rem" }} />}
+                                                        </Box>
+                                                        {currentVal && (
+                                                            <Typography variant="caption" color="success.main" sx={{ mt: 0.25, display: "block", fontWeight: 600 }}>
+                                                                Set to: {currentVal}
+                                                            </Typography>
+                                                        )}
+                                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                                                            <Button size="small" variant="outlined" sx={{ fontSize: "0.65rem", py: 0.2, px: 0.75, lineHeight: 1.4 }} onClick={() => copyToClipboard(fieldName)}>
+                                                                {copiedId === fieldName ? "✓ copied field name" : "copy field name"}
+                                                            </Button>
+                                                        </Box>
+                                                    </Box>
+                                                    <Box sx={{ flex: 2, minWidth: 200 }}>
+                                                        {values.length > 0 ? (
+                                                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                                                {(etsyExpandedAttrs.has(attrKey) ? values : values.slice(0, 30)).map(v => {
+                                                                    const label = v.name ?? v;
+                                                                    const isSelected = currentVal === label;
+                                                                    return (
+                                                                        <Chip
+                                                                            key={v.value_id ?? v.id ?? label}
+                                                                            label={label}
+                                                                            size="small"
+                                                                            variant={isSelected ? "filled" : "outlined"}
+                                                                            color={isSelected ? "primary" : "default"}
+                                                                            sx={{ fontSize: "0.65rem", height: 20, cursor: "pointer" }}
+                                                                            onClick={() => blank ? addOverride(label) : copyToClipboard(label)}
+                                                                            title={blank ? `Click to set: ${label}` : `Click to copy: ${label}`}
+                                                                        />
+                                                                    );
+                                                                })}
+                                                                {values.length > 30 && !etsyExpandedAttrs.has(attrKey) && (
+                                                                    <Typography variant="caption" color="primary" sx={{ alignSelf: "center", cursor: "pointer", textDecoration: "underline" }}
+                                                                        onClick={() => setEtsyExpandedAttrs(prev => new Set([...prev, attrKey]))}>
+                                                                        +{values.length - 30} more
+                                                                    </Typography>
+                                                                )}
+                                                            </Box>
+                                                        ) : (
+                                                            <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>Custom text accepted</Typography>
+                                                        )}
+                                                    </Box>
+                                                </Box>
+                                            </Card>
+                                        );
+                                    })}
+                            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                    <Button onClick={() => { setEtsyAttrOpen(false); setEtsyExpandedAttrs(new Set()); }}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Faire attribute reference dialog */}
+            <Dialog open={faireAttrOpen} onClose={() => { setFaireAttrOpen(false); setFaireExpandedAttrs(new Set()); }} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, maxHeight: "88vh" } }}>
+                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Typography variant="h6" fontWeight={700}>Faire Attribute Reference</Typography>
+                    <IconButton onClick={() => setFaireAttrOpen(false)} size="small"><CloseIcon fontSize="small" /></IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ py: 2 }}>
+                    {faireAttrLoading && <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>Loading attributes from Faire…</Typography>}
+                    {faireAttrError && <Typography variant="body2" color="error" sx={{ py: 2 }}>{faireAttrError}</Typography>}
+                    {faireAttrData && !faireAttrLoading && (
+                        <Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Use the <strong>field key</strong> in <code>marketPlaceOverrides</code> (shown below each attribute name). Selected values are sent directly to Faire when the product is listed.
+                            </Typography>
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                {(faireAttrData.attributes ?? []).map((attr) => {
+                                    const fieldKey = attr.field ?? attr.name?.toLowerCase().replace(/\s+/g, "_");
+                                    const currentVal = blank?.marketPlaceOverrides?.[marketPlace.name]?.[fieldKey];
+                                    const addOverride = (valueId, valueName) => {
+                                        if (!blank) return;
+                                        let b = { ...blank };
+                                        if (!b.marketPlaceOverrides) b.marketPlaceOverrides = {};
+                                        if (!b.marketPlaceOverrides[marketPlace.name]) b.marketPlaceOverrides[marketPlace.name] = {};
+                                        b.marketPlaceOverrides[marketPlace.name][fieldKey] = valueId;
+                                        setBlank(b);
+                                    };
+                                    const currentLabel = attr.values?.find(v => v.id === currentVal)?.name ?? currentVal;
+                                    return (
+                                        <Card key={fieldKey} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                                            <Box sx={{ px: 2, py: 1, display: "flex", alignItems: "flex-start", gap: 1.5, flexWrap: "wrap" }}>
+                                                <Box sx={{ flex: 1, minWidth: 160 }}>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                                                        <Typography variant="body2" fontWeight={600}>{attr.name}</Typography>
+                                                        {currentVal && <Chip label="Added" size="small" color="success" sx={{ height: 16, fontSize: "0.6rem" }} />}
+                                                    </Box>
+                                                    {currentVal && (
+                                                        <Typography variant="caption" color="success.main" sx={{ mt: 0.25, display: "block", fontWeight: 600 }}>
+                                                            Set to: {currentLabel}
+                                                        </Typography>
+                                                    )}
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                                                        <Button size="small" variant="outlined" sx={{ fontSize: "0.65rem", py: 0.2, px: 0.75, lineHeight: 1.4 }} onClick={() => copyToClipboard(fieldKey)}>
+                                                            {copiedId === fieldKey ? "✓ copied" : `copy key: ${fieldKey}`}
+                                                        </Button>
+                                                    </Box>
+                                                </Box>
+                                                <Box sx={{ flex: 2, minWidth: 200 }}>
+                                                    {attr.values?.length > 0 ? (
+                                                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                                            {(faireExpandedAttrs.has(fieldKey) ? attr.values : attr.values.slice(0, 30)).map(v => {
+                                                                const isSelected = currentVal === v.id;
+                                                                return (
+                                                                    <Chip
+                                                                        key={v.id}
+                                                                        label={v.name}
+                                                                        size="small"
+                                                                        variant={isSelected ? "filled" : "outlined"}
+                                                                        color={isSelected ? "primary" : "default"}
+                                                                        sx={{ fontSize: "0.65rem", height: 20, cursor: "pointer" }}
+                                                                        onClick={() => blank ? addOverride(v.id, v.name) : copyToClipboard(v.id)}
+                                                                        title={blank ? `Click to set: ${v.name}` : `Click to copy ID: ${v.id}`}
+                                                                    />
+                                                                );
+                                                            })}
+                                                            {attr.values.length > 30 && !faireExpandedAttrs.has(fieldKey) && (
+                                                                <Typography variant="caption" color="primary" sx={{ alignSelf: "center", cursor: "pointer", textDecoration: "underline" }}
+                                                                    onClick={() => setFaireExpandedAttrs(prev => new Set([...prev, fieldKey]))}>
+                                                                    +{attr.values.length - 30} more
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    ) : (
+                                                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>Custom text accepted</Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </Card>
+                                    );
+                                })}
+                            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                    <Button onClick={() => { setFaireAttrOpen(false); setFaireExpandedAttrs(new Set()); }}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Shopify attribute reference dialog */}
+            <Dialog open={shopifyAttrOpen} onClose={() => { setShopifyAttrOpen(false); setShopifyExpandedAttrs(new Set()); }} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, maxHeight: "88vh" } }}>
+                <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+                    <Box>
+                        <Typography variant="h6" fontWeight={700}>Shopify Attribute Reference</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {shopifyAttrData?.source === "live" ? `Live from store — filtered for: ${blank?.category?.[0] ?? "all"}` : blank?.category?.[0] ? `Suggested types for: ${blank.category[0]}` : "Suggested types"}
+                        </Typography>
+                    </Box>
+                    <IconButton onClick={() => setShopifyAttrOpen(false)} size="small"><CloseIcon fontSize="small" /></IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ py: 2 }}>
+                    {shopifyAttrLoading && <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>Loading…</Typography>}
+                    {shopifyAttrError && <Typography variant="body2" color="error" sx={{ py: 2 }}>{shopifyAttrError}</Typography>}
+                    {shopifyAttrData && !shopifyAttrLoading && (
+                        <Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Use the <strong>field key</strong> in <code>marketPlaceOverrides</code>. These values are sent to Shopify when the product is listed.
+                            </Typography>
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                {(shopifyAttrData.attributes ?? []).map((attr) => {
+                                    const fieldKey = attr.field ?? attr.name?.toLowerCase().replace(/\s+/g, "_");
+                                    const currentVal = blank?.marketPlaceOverrides?.[marketPlace.name]?.[fieldKey];
+                                    const addOverride = (valueId) => {
+                                        if (!blank) return;
+                                        let b = { ...blank };
+                                        if (!b.marketPlaceOverrides) b.marketPlaceOverrides = {};
+                                        if (!b.marketPlaceOverrides[marketPlace.name]) b.marketPlaceOverrides[marketPlace.name] = {};
+                                        b.marketPlaceOverrides[marketPlace.name][fieldKey] = valueId;
+                                        setBlank(b);
+                                    };
+                                    return (
+                                        <Card key={fieldKey} variant="outlined" sx={{ borderRadius: 1.5 }}>
+                                            <Box sx={{ px: 2, py: 1, display: "flex", alignItems: "flex-start", gap: 1.5, flexWrap: "wrap" }}>
+                                                <Box sx={{ flex: 1, minWidth: 160 }}>
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                                                        <Typography variant="body2" fontWeight={600}>{attr.name}</Typography>
+                                                        {currentVal && <Chip label="Added" size="small" color="success" sx={{ height: 16, fontSize: "0.6rem" }} />}
+                                                    </Box>
+                                                    {currentVal && (
+                                                        <Typography variant="caption" color="success.main" sx={{ mt: 0.25, display: "block", fontWeight: 600 }}>
+                                                            Set to: {currentVal}
+                                                        </Typography>
+                                                    )}
+                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.25 }}>
+                                                        <Button size="small" variant="outlined" sx={{ fontSize: "0.65rem", py: 0.2, px: 0.75, lineHeight: 1.4 }} onClick={() => copyToClipboard(fieldKey)}>
+                                                            {copiedId === fieldKey ? "✓ copied" : `copy key: ${fieldKey}`}
+                                                        </Button>
+                                                    </Box>
+                                                </Box>
+                                                <Box sx={{ flex: 2, minWidth: 200 }}>
+                                                    {attr.values?.length > 0 ? (
+                                                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                                            {(shopifyExpandedAttrs.has(fieldKey) ? attr.values : attr.values.slice(0, 30)).map(v => {
+                                                                const isSelected = currentVal === v.id;
+                                                                return (
+                                                                    <Chip
+                                                                        key={v.id}
+                                                                        label={v.name}
+                                                                        size="small"
+                                                                        variant={isSelected ? "filled" : "outlined"}
+                                                                        color={isSelected ? "primary" : "default"}
+                                                                        sx={{ fontSize: "0.65rem", height: 20, cursor: "pointer" }}
+                                                                        onClick={() => blank ? addOverride(v.id) : copyToClipboard(v.id)}
+                                                                    />
+                                                                );
+                                                            })}
+                                                            {attr.values.length > 30 && !shopifyExpandedAttrs.has(fieldKey) && (
+                                                                <Typography variant="caption" color="primary" sx={{ alignSelf: "center", cursor: "pointer", textDecoration: "underline" }}
+                                                                    onClick={() => setShopifyExpandedAttrs(prev => new Set([...prev, fieldKey]))}>
+                                                                    +{attr.values.length - 30} more
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    ) : (
+                                                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>Custom text accepted</Typography>
+                                                    )}
+                                                </Box>
+                                            </Box>
+                                        </Card>
+                                    );
+                                })}
+                            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                    <Button onClick={() => { setShopifyAttrOpen(false); setShopifyExpandedAttrs(new Set()); }}>Close</Button>
                 </DialogActions>
             </Dialog>
         </Dialog>

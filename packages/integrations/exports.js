@@ -49,7 +49,7 @@ export {
 } from "./functions/tiktokpy";
 export { TikTokDashboard } from "./components/TikTokDashboard";
 
-export {generateRedirectURI, getToken, refreshToken, createDraftListing, updateListingFrom, fetchOrders, createReceiptShipment, getOpenReceiptsEtsy} from "./functions/etsy";
+export {generateRedirectURI, getToken, refreshToken, createDraftListing, updateListingFrom, fetchOrders, createReceiptShipment, getOpenReceiptsEtsy, getEtsyTaxonomyAttributes} from "./functions/etsy";
 
 // amazon
 export { getAmazonAccessToken, getOrdersAmazon, getOrderItemsAmazon, confirmShipmentAmazon, createListingAmazon, getCatalogItemsAmazon } from "./functions/amazon";
@@ -83,10 +83,12 @@ export { handleAcendaPOST, handleAcendaPUT, handleAcendaGET, handleAcendaOrdersG
 export { handleEtsyGET, handleEtsyPOST, handleEtsyPUT, handleEtsyOrdersGET, handleEtsyOrdersPOST, handleAdminEtsyGET, handleAdminEtsyPOST, handleAdminEtsyPUT, makeEtsyOAuthRedirectGET } from "./handlers/etsy";
 export {
     handleFaireSendPOST,
+    handleFaireAttributesGET,
     handleFaireInventoryGET, handleFaireInventoryPATCH,
     handleFaireOrdersGET, handleFaireOrdersPOST,
     handleFaireProductsGET,
 } from "./handlers/faire";
+export { getFaireAttributes } from "./functions/faire";
 export { handleSheinSendPOST, handleSheinOrdersGET, handleSheinOrdersPOST } from "./handlers/shein";
 export { handleTemuSendPOST, handleTemuOrdersGET, handleTemuOrdersPOST } from "./handlers/temu";
 export {
@@ -108,6 +110,7 @@ export {
     handleShopifyDeletePOST, handleShopifyProductsDeletePOST,
     handleShopifyRemoveConnectionPOST, handleShopifyUninstallPOST,
     handleShopifyBrandsGET, handleShopifyProductsGET,
+    handleShopifyAttributesGET,
 } from "./handlers/shopify";
 export {
     handleShopifyAdminGET,

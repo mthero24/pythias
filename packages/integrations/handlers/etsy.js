@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { ApiKeyIntegrations } from "@pythias/mongo";
 import axios from "axios";
-import { createDraftListing, updateListingFrom, getOpenReceiptsEtsy, createReceiptShipment } from "../functions/etsy.js";
+import { createDraftListing, updateListingFrom, getOpenReceiptsEtsy, createReceiptShipment, getEtsyTaxonomyAttributes } from "../functions/etsy.js";
 
 const CLIENT_ID = process.env.etsyApiKey?.split(":")[0];
 const CLIENT_VERIFIER = "catsaregreat";
@@ -43,13 +43,27 @@ export async function handleEtsyOrdersGET(req) {
 }
 
 export async function handleAdminEtsyGET(req) {
-    return Response.json({ error: "not implemented" });
+    const { searchParams } = new URL(req.url);
+    const taxonomyId = parseInt(searchParams.get("taxonomyId") ?? "482", 10);
+    const result = await getEtsyTaxonomyAttributes(taxonomyId);
+    if (result.error) return NextResponse.json({ error: true, msg: result.msg }, { status: 400 });
+    return NextResponse.json(result);
 }
+
+const extractMpValues = (product, connectionId) => {
+    const connId = connectionId?.toString();
+    const mp = (product.marketPlacesArray ?? []).find(m =>
+        (m.connections ?? []).some(c => (c?._id ?? c)?.toString() === connId)
+    );
+    const mpId = mp?._id?.toString();
+    return (mpId && product.marketplaceValues?.[mpId]) ? product.marketplaceValues[mpId] : {};
+};
 
 export async function handleAdminEtsyPOST(req) {
     const body = await req.json();
     let connection = await ApiKeyIntegrations.findOne({ _id: body.connection._id });
-    let res = await createDraftListing(body.product, connection);
+    const marketplaceValues = extractMpValues(body.product, body.connection._id);
+    let res = await createDraftListing(body.product, connection, marketplaceValues);
     return NextResponse.json({ success: true, productId: res });
 }
 

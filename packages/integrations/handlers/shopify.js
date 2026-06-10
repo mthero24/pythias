@@ -122,6 +122,65 @@ export function createShopifyPOSTHandler(provider) {
 
 export const handleShopifyPOST = createShopifyPOSTHandler("pythias-test");
 
+const SHOPIFY_PRODUCT_TYPES = {
+    "T-Shirt":     ["T-Shirt", "Graphic Tee", "Unisex Tee", "Short Sleeve Shirt", "Custom Tee"],
+    "Hoodie":      ["Hoodie", "Pullover Hoodie", "Zip-Up Hoodie", "Fleece Hoodie"],
+    "Sweatshirt":  ["Sweatshirt", "Crewneck Sweatshirt", "Fleece Sweatshirt"],
+    "Tank":        ["Tank Top", "Sleeveless Shirt", "Muscle Tank"],
+    "Long Sleeve": ["Long Sleeve Shirt", "Long Sleeve Tee"],
+    "Polo":        ["Polo Shirt", "Golf Shirt"],
+    "Jogger":      ["Jogger Pants", "Sweatpants"],
+    "Hat":         ["Hat", "Baseball Cap", "Dad Hat", "Trucker Hat"],
+    "Tote":        ["Tote Bag", "Canvas Tote"],
+    "Bodysuit":    ["Bodysuit", "Baby Bodysuit", "Onesie"],
+};
+const SHOPIFY_DEFAULT_TYPES = Object.values(SHOPIFY_PRODUCT_TYPES).flat();
+
+export async function handleShopifyAttributesGET(req) {
+    const { searchParams } = new URL(req.url);
+    const category    = (searchParams.get("category") ?? "").toLowerCase();
+    const shop        = searchParams.get("shop") ?? "";
+    const pythiasToken = searchParams.get("token") ?? "";
+
+    // Try to fetch live product types from the pythias-app Shopify integration
+    let liveTypes = null;
+    if (shop && pythiasToken) {
+        try {
+            const res = await fetch(
+                `https://shopapp.pythiastechnologies.com/api/product-types?shop=${encodeURIComponent(shop)}&category=${encodeURIComponent(category)}`,
+                { headers: { Authorization: `Bearer ${pythiasToken}` } }
+            );
+            const data = await res.json();
+            if (!data.error && data.productTypes?.length) liveTypes = data.productTypes;
+        } catch {}
+    }
+
+    // Fall back to static category-matched list if live fetch unavailable
+    const matchedKey = Object.keys(SHOPIFY_PRODUCT_TYPES).find(k =>
+        category.includes(k.toLowerCase()) || k.toLowerCase().includes(category.split(/\s+/).find(w => w.length > 3) ?? "__none__")
+    );
+    const staticTypes = (matchedKey ? SHOPIFY_PRODUCT_TYPES[matchedKey] : SHOPIFY_DEFAULT_TYPES).map(t => ({ id: t, name: t }));
+
+    const attributes = [
+        {
+            name: "Product Type",
+            field: "product_type",
+            values: liveTypes ?? staticTypes,
+        },
+        {
+            name: "Tags",
+            field: "tags",
+            values: ["Graphic Tee","Custom Print","Gift","Holiday","Birthday","Funny","Vintage","Retro","Streetwear","Unisex","Limited Edition","New Arrival"].map(t => ({ id: t, name: t })),
+        },
+        {
+            name: "Vendor",
+            field: "vendor",
+            values: [],
+        },
+    ];
+    return NextResponse.json({ error: false, attributes, source: liveTypes ? "live" : "static" });
+}
+
 export async function handleShopifySendPOST(req) {
     const body = await req.json();
     const reqHeaders = {

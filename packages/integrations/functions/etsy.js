@@ -4,10 +4,11 @@ import FormData from "form-data";
 import {Order, Products, Item, Inventory, ProductInventory} from "@pythias/mongo"
 import { generatePieceID } from "./createPiceId.js";
 export const getEtsyTaxonomyAttributes = async (taxonomy_id = 482) => {
+    const clientId = process.env.etsyApiKey?.split(":")[0];
     let errData;
     const res = await axios.get(
-        `https://openapi.etsy.com/v3/application/seller-taxonomy/nodes/${taxonomy_id}/attributes`,
-        { headers: { "x-api-key": process.env.etsyApiKey } }
+        `https://openapi.etsy.com/v3/application/seller-taxonomy/nodes/${taxonomy_id}/properties`,
+        { headers: { "x-api-key": clientId } }
     ).catch(e => { errData = e.response?.data; });
     if (errData) return { error: true, msg: errData.error ?? "Failed to fetch Etsy attributes" };
     return { error: false, taxonomy_id, attributes: res.data.results ?? [] };
@@ -425,7 +426,7 @@ const createListing = async (product, returnPolicyId, shipping_profile_id, crede
                 ...mpTags,
             ])].slice(0, 13);
         })(),
-        is_supply: true,
+        is_supply: false,
         type: "physical",
         readiness_state_id: readinessStates.results[0].readiness_state_id,
         // taxonomy_id: 374 /* 2830?? */,
@@ -863,7 +864,7 @@ export const updateListingFrom = async (listing_id, product, credentials)=> {
         getInventory.products[0].product_id,
     );
 }
-export const createDraftListing = async (product, credentials) => {
+export const createDraftListing = async (product, credentials, marketplaceValues = {}) => {
     let access_token = credentials.apiKey;
     const requestOptions = {
         headers: {
@@ -913,7 +914,8 @@ export const createDraftListing = async (product, credentials) => {
             product,
             returnPolicyId,
             shipping_profile_id,
-            credentials
+            credentials,
+            marketplaceValues
         );
         let listing = response.listing;
         credentials = response.updatedCredentials;

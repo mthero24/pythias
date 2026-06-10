@@ -4,6 +4,7 @@ import {
     getProductsFaire, createProductFaire, updateProductFaire,
     getInventoryBySkusFaire, updateInventoryBySkusFaire,
     getOrdersFaire, acceptOrderFaire, shipOrderFaire, cancelOrderFaire,
+    getFaireAttributes,
 } from "../functions/faire.js";
 
 function toMinor(dollars) {
@@ -52,6 +53,18 @@ function buildVariant(v, blank, blankOverrides = {}) {
     };
 }
 
+export async function handleFaireAttributesGET(req) {
+    const { searchParams } = new URL(req.url);
+    const connectionId = searchParams.get("connectionId");
+    const category = searchParams.get("category") ?? "";
+    if (!connectionId) return NextResponse.json({ error: "connectionId required" }, { status: 400 });
+    const connection = await ApiKeyIntegrations.findById(connectionId).lean();
+    if (!connection) return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+    const result = await getFaireAttributes({ apiKey: connection.apiKey, category });
+    if (result.error) return NextResponse.json({ error: result.error }, { status: 502 });
+    return NextResponse.json(result);
+}
+
 export async function handleFaireSendPOST(req) {
     const body = await req.json();
     const { connectionId } = body;
@@ -72,10 +85,13 @@ export async function handleFaireSendPOST(req) {
     const apiKey = connection.apiKey;
     const blank  = product.blanks?.[0] ?? null;
 
-    const blankOverrides = blank?.marketPlaceOverrides?.[connection.displayName]
-        ?? blank?.marketPlaceOverrides?.["Faire"]
-        ?? blank?.marketPlaceOverrides?.["faire"]
-        ?? {};
+    const marketplaceName = body.marketplaceName ?? "";
+    const blankOverrides = (marketplaceName && blank?.marketPlaceOverrides?.[marketplaceName])
+        ? blank.marketPlaceOverrides[marketplaceName]
+        : (blank?.marketPlaceOverrides?.[connection.displayName]
+            ?? blank?.marketPlaceOverrides?.["Faire"]
+            ?? blank?.marketPlaceOverrides?.["faire"]
+            ?? {});
 
     const SKIP_KEYS = new Set(["titleGenerator"]);
     const productOverrides = Object.fromEntries(
@@ -116,6 +132,12 @@ export async function handleFaireSendPOST(req) {
         Object.entries(productOverrides).filter(([k]) => !PAYLOAD_HANDLED.has(k))
     );
 
+    // Blank-level Faire attribute overrides (product_type, season, made_in_country)
+    const BLANK_ATTR_FIELDS = new Set(["product_type", "season", "made_in_country"]);
+    const blankAttrOverrides = Object.fromEntries(
+        Object.entries(blankOverrides).filter(([k, v]) => BLANK_ATTR_FIELDS.has(k) && v)
+    );
+
     const payload = {
         name: title,
         description,
@@ -124,7 +146,8 @@ export async function handleFaireSendPOST(req) {
         variants,
         ...(variant_option_sets.length > 0 ? { variant_option_sets } : {}),
         ...(images.length > 0 ? { images } : {}),
-        ...extraOverrides,
+        ...blankAttrOverrides,  // blank-level: product_type, season, made_in_country
+        ...extraOverrides,      // product-level values win
     };
 
     const existingFaireId = product.ids?.[connection.displayName]
