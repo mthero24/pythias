@@ -2,18 +2,27 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { Tutorial } from "@pythias/mongo";
 
-export async function GET() {
-    const tutorials = await Tutorial.find().sort({ category: 1, order: 1, createdAt: -1 }).lean();
+export async function GET(req) {
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get("type"); // optional filter
+    const query = type ? { videoType: type } : {};
+    const tutorials = await Tutorial.find(query).sort({ order: 1, createdAt: -1 }).lean();
     return NextResponse.json({ tutorials });
 }
 
 export async function POST(req) {
     const body = await req.json();
-    const { title, description, category, videoUrl, thumbnailUrl, order } = body;
-    if (!title || !category || !videoUrl) {
-        return NextResponse.json({ error: "title, category, and videoUrl are required" }, { status: 400 });
-    }
-    const tutorial = await Tutorial.create({ title, description, category, videoUrl, thumbnailUrl, order: order ?? 0 });
+    const { videoUrl, videoType = "tutorial" } = body;
+
+    if (!videoUrl) return NextResponse.json({ error: "videoUrl is required" }, { status: 400 });
+
+    // Type-specific required field validation
+    if (videoType === "tutorial"    && (!body.title || !body.category)) return NextResponse.json({ error: "title and category required" }, { status: 400 });
+    if (videoType === "testimonial" && !body.customerName)              return NextResponse.json({ error: "customerName required" }, { status: 400 });
+    if (videoType === "demo"        && !body.title)                     return NextResponse.json({ error: "title required" }, { status: 400 });
+    if (videoType === "page-video"  && (!body.title || !body.targetPage)) return NextResponse.json({ error: "title and targetPage required" }, { status: 400 });
+
+    const tutorial = await Tutorial.create(body);
     return NextResponse.json({ tutorial });
 }
 

@@ -15,32 +15,82 @@ const NAV_LINKS = [
   { label: "Fulfillment Cloud", href: "/fulfillment-cloud" },
   { label: "Commerce Cloud",    href: "/commerce-cloud" },
   { label: "Integrations",      href: "/integrations" },
-  { label: "How It Works",      href: "/how-it-works" },
-  { label: "FAQ",               href: "/faq" },
-  { label: "About Us",          href: "/about" },
   { label: "Contact Us",        href: "/contact" },
 ];
 
+const LEARN_LINKS = [
+  { label: "How It Works",  href: "/how-it-works" },
+  { label: "Testimonials",  href: "/testimonials" },
+  { label: "FAQ",           href: "/faq" },
+  { label: "About Us",      href: "/about" },
+];
+
 const COMPARE_LINKS = [
-  { label: "Pythias vs ShipStation",            href: "/compare/pythias-vs-shipstation" },
-  { label: "Pythias vs Shopify",                href: "/compare/pythias-vs-shopify" },
-  { label: "Pythias vs Printify",               href: "/compare/pythias-vs-printify" },
-  { label: "Best DTF Fulfillment Software",     href: "/compare/best-dtf-fulfillment-software" },
-  { label: "Best POD Automation Software",      href: "/compare/best-print-on-demand-automation-software" },
+  { label: "Pythias vs ShipStation",        href: "/compare/pythias-vs-shipstation" },
+  { label: "Pythias vs Shopify",            href: "/compare/pythias-vs-shopify" },
+  { label: "Pythias vs Printify",           href: "/compare/pythias-vs-printify" },
+  { label: "Best DTF Fulfillment Software", href: "/compare/best-dtf-fulfillment-software" },
+  { label: "Best POD Automation Software",  href: "/compare/best-print-on-demand-automation-software" },
 ];
 
 const BTN_SX = { color: "rgba(255,255,255,0.65)", fontWeight: 500, px: 2, borderRadius: 2, "&:hover": { color: "#fff", bgcolor: "rgba(255,255,255,0.06)" } };
 
+function DropdownMenu({ label, links, sectionLabel, footer }) {
+  const [open, setOpen]       = useState(false);
+  const [anchor, setAnchor]   = useState(null);
+  return (
+    <>
+      <Button
+        onClick={(e) => { setAnchor(e.currentTarget); setOpen(true); }}
+        endIcon={<ExpandMoreIcon sx={{ fontSize: "1rem !important", transition: "transform 0.15s", transform: open ? "rotate(180deg)" : "none" }} />}
+        sx={{ ...BTN_SX, gap: 0 }}
+      >
+        {label}
+      </Button>
+      <Popper open={open} anchorEl={anchor} placement="bottom-start" transition style={{ zIndex: 1400 }}>
+        {({ TransitionProps }) => (
+          <Grow {...TransitionProps} timeout={120}>
+            <Paper elevation={8} sx={{ mt: 1, borderRadius: 2, overflow: "hidden", minWidth: 260, bgcolor: "#1e293b", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <ClickAwayListener onClickAway={() => setOpen(false)}>
+                <Box>
+                  {sectionLabel && (
+                    <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
+                      <Box component="span" sx={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#D3A73D" }}>
+                        {sectionLabel}
+                      </Box>
+                    </Box>
+                  )}
+                  {links.map((l) => (
+                    <Box key={l.href} component={Link} href={l.href} onClick={() => setOpen(false)}
+                      sx={{ display: "block", px: 2, py: 1.25, fontSize: "0.875rem", color: "rgba(255,255,255,0.75)", fontWeight: 500, textDecoration: "none", "&:hover": { bgcolor: "rgba(255,255,255,0.06)", color: "#fff" }, transition: "background 0.12s, color 0.12s" }}>
+                      {l.label}
+                    </Box>
+                  ))}
+                  {footer && (
+                    <>
+                      <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.07)", m: 1, mt: 0.5 }} />
+                      <Box component={Link} href={footer.href} onClick={() => setOpen(false)}
+                        sx={{ display: "block", px: 2, py: 1.25, mb: 0.5, fontSize: "0.875rem", color: "#D3A73D", fontWeight: 600, textDecoration: "none", "&:hover": { bgcolor: "rgba(255,255,255,0.06)" } }}>
+                        {footer.label}
+                      </Box>
+                    </>
+                  )}
+                </Box>
+              </ClickAwayListener>
+            </Paper>
+          </Grow>
+        )}
+      </Popper>
+    </>
+  );
+}
+
 export default function Navbar() {
-  const [mobileOpen, setMobileOpen]       = useState(false);
-  const [compareOpen, setCompareOpen]     = useState(false);
+  const [mobileOpen,    setMobileOpen]    = useState(false);
+  const [mobileLearn,   setMobileLearn]   = useState(false);
   const [mobileCompare, setMobileCompare] = useState(false);
-  const [anchorEl, setAnchorEl]           = useState(null);
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
-
-  function openCompare(e) { setAnchorEl(e.currentTarget); setCompareOpen(true); }
-  function closeCompare() { setCompareOpen(false); }
 
   return (
     <AppBar position="sticky" elevation={0} sx={{ bgcolor: "#0f172a", borderBottom: "1px solid rgba(255,255,255,0.07)", borderRadius: 0 }}>
@@ -62,62 +112,18 @@ export default function Navbar() {
               </Button>
             ))}
 
-            {/* Compare dropdown */}
-            <Button
-              onClick={openCompare}
-              endIcon={<ExpandMoreIcon sx={{ fontSize: "1rem !important", transition: "transform 0.15s", transform: compareOpen ? "rotate(180deg)" : "none" }} />}
-              sx={{ ...BTN_SX, gap: 0 }}
-            >
-              Compare
-            </Button>
-            <Popper open={compareOpen} anchorEl={anchorEl} placement="bottom-start" transition style={{ zIndex: 1400 }}>
-              {({ TransitionProps }) => (
-                <Grow {...TransitionProps} timeout={120}>
-                  <Paper elevation={8} sx={{ mt: 1, borderRadius: 2, overflow: "hidden", minWidth: 280, bgcolor: "#1e293b", border: "1px solid rgba(255,255,255,0.1)" }}>
-                    <ClickAwayListener onClickAway={closeCompare}>
-                      <Box>
-                        <Box sx={{ px: 2, pt: 1.5, pb: 0.5 }}>
-                          <Box component="span" sx={{ fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#D3A73D" }}>
-                            Compare &amp; Reviews
-                          </Box>
-                        </Box>
-                        {COMPARE_LINKS.map((l) => (
-                          <Box
-                            key={l.href}
-                            component={Link}
-                            href={l.href}
-                            onClick={closeCompare}
-                            sx={{
-                              display: "block", px: 2, py: 1.25,
-                              fontSize: "0.875rem", color: "rgba(255,255,255,0.75)", fontWeight: 500,
-                              textDecoration: "none",
-                              "&:hover": { bgcolor: "rgba(255,255,255,0.06)", color: "#fff" },
-                              transition: "background 0.12s, color 0.12s",
-                            }}
-                          >
-                            {l.label}
-                          </Box>
-                        ))}
-                        <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.07)", m: 1, mt: 0.5 }} />
-                        <Box
-                          component={Link}
-                          href="/pricing"
-                          onClick={closeCompare}
-                          sx={{
-                            display: "block", px: 2, py: 1.25, mb: 0.5,
-                            fontSize: "0.875rem", color: "#D3A73D", fontWeight: 600,
-                            textDecoration: "none",
-                            "&:hover": { bgcolor: "rgba(255,255,255,0.06)" },
-                          }}
-                        >
-                          See Pricing →
-                        </Box>
-                      </Box>
-                    </ClickAwayListener>
-                  </Paper>
-                </Grow>
-              )}
-            </Popper>
+            <DropdownMenu
+              label="Learn"
+              links={LEARN_LINKS}
+              sectionLabel="Resources"
+            />
+
+            <DropdownMenu
+              label="Compare"
+              links={COMPARE_LINKS}
+              sectionLabel="Compare & Reviews"
+              footer={{ label: "See Pricing →", href: "/pricing" }}
+            />
 
             <Button component={Link} href="/login" sx={{ ...BTN_SX, ml: 0.5 }}>Login</Button>
             <Button
@@ -152,7 +158,22 @@ export default function Navbar() {
             </ListItem>
           ))}
 
-          {/* Compare section in mobile */}
+          {/* Learn section */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => setMobileLearn((v) => !v)} sx={{ color: "rgba(255,255,255,0.75)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)" } }}>
+              <ListItemText primary="Learn" />
+              <ExpandMoreIcon sx={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.4)", transition: "transform 0.15s", transform: mobileLearn ? "rotate(180deg)" : "none" }} />
+            </ListItemButton>
+          </ListItem>
+          {mobileLearn && LEARN_LINKS.map((l) => (
+            <ListItem key={l.href} disablePadding>
+              <ListItemButton component={Link} href={l.href} onClick={() => { setMobileOpen(false); setMobileLearn(false); }} sx={{ pl: 4, color: "rgba(255,255,255,0.55)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.85)" } }}>
+                <ListItemText primary={l.label} primaryTypographyProps={{ fontSize: "0.85rem" }} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+
+          {/* Compare section */}
           <ListItem disablePadding>
             <ListItemButton onClick={() => setMobileCompare((v) => !v)} sx={{ color: "rgba(255,255,255,0.75)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)" } }}>
               <ListItemText primary="Compare" />

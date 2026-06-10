@@ -33,14 +33,20 @@ export async function middleware(req = NextRequest) {
     }
   }
 
-  const requestHeaders = new Headers(req.headers);
-  if (token) {
+  // Skip header rewrite for binary/multipart upload routes — rewriting the request
+  // object in the Edge Runtime corrupts the body stream for multipart/form-data.
+  const isUpload = pathname.includes("/upload");
+
+  if (token?.userName && !isUpload) {
+    const requestHeaders = new Headers(req.headers);
     requestHeaders.set("user", token.userName);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth|api/email-webhook|api/unsubscribe).*)"],
+  // api/admin/tutorials/upload is excluded so the middleware never buffers the video body
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth|api/email-webhook|api/unsubscribe|api/admin/tutorials/upload).*)"],
 };

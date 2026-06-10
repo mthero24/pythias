@@ -132,6 +132,37 @@ const data = {
     ],
 };
 
+const schema = [
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Best Print-on-Demand Automation Software in 2026",
+        "description": metadata.description,
+        "url": "https://pythiastechnologies.com/compare/best-print-on-demand-automation-software",
+        "articleSection": "Buyer's Guide",
+        "author":    { "@type": "Organization", "name": "Pythias Technologies", "url": "https://pythiastechnologies.com" },
+        "publisher": { "@type": "Organization", "name": "Pythias Technologies", "url": "https://pythiastechnologies.com" },
+        "dateModified": "2026-06-10",
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Best Print-on-Demand Automation Software 2026",
+        "url": "https://pythiastechnologies.com/compare/best-print-on-demand-automation-software",
+        "itemListElement": data.tools.map((tool, i) => ({
+            "@type": "ListItem",
+            "position": i + 1,
+            "name": tool.name,
+            "description": tool.tagline,
+        })),
+    },
+];
+
 export default function Page() {
-    return <BestOfLayout {...data} />;
+    return (
+        <>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+            <BestOfLayout {...data} />
+        </>
+    );
 }

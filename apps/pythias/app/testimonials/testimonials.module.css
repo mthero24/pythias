@@ -1,0 +1,86 @@
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.bg   { background: #f8fafc; min-height: 100vh; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero { background: linear-gradient(155deg, #0a0f1e 0%, #0f172a 55%, #0c1628 100%); padding: 80px 0 72px; text-align: center; position: relative; overflow: hidden; }
+.glow { position: absolute; border-radius: 50%; pointer-events: none; top: -80px; left: 50%; transform: translateX(-50%); width: 700px; height: 700px; background: radial-gradient(circle, rgba(211,167,61,0.09) 0%, transparent 65%); }
+.tag  { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #D3A73D; margin-bottom: 14px; }
+.h1   { font-size: clamp(2.2rem, 4.5vw, 3.2rem); font-weight: 800; color: #fff; letter-spacing: -0.03em; line-height: 1.12; margin: 0 auto 18px; max-width: 680px; }
+.accent { background: linear-gradient(90deg, #D3A73D, #f0c66a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.sub  { font-size: clamp(1rem, 1.8vw, 1.125rem); color: rgba(255,255,255,0.62); max-width: 520px; margin: 0 auto; line-height: 1.75; }
+
+/* ── Stats bar ───────────────────────────────────────────────────────────── */
+.statsBar { background: #fff; border-bottom: 1px solid #f0f0f0; padding: 28px 0; }
+.statsGrid { display: flex; justify-content: center; gap: 64px; flex-wrap: wrap; }
+.stat { text-align: center; }
+.statNum   { font-size: 2rem; font-weight: 800; color: #111827; letter-spacing: -0.04em; line-height: 1; }
+.statGold  { font-size: 2rem; font-weight: 800; color: #D3A73D; letter-spacing: -0.04em; line-height: 1; }
+.statLabel { font-size: 0.8rem; color: #6b7280; font-weight: 500; margin-top: 4px; }
+
+/* ── Grid ────────────────────────────────────────────────────────────────── */
+.section { padding: 72px 0 88px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+@media (max-width: 960px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+.card {
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+.card:hover .playOverlay { opacity: 1; }
+
+.thumbWrap { position: relative; aspect-ratio: 16/9; background: #0f172a; overflow: hidden; }
+.thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumbPlaceholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a, #1e293b); }
+.playOverlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+}
+.playBtn {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: rgba(211,167,61,0.9);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.playIcon { width: 0; height: 0; border-top: 11px solid transparent; border-bottom: 11px solid transparent; border-left: 18px solid #111; margin-left: 4px; }
+
+.cardBody { padding: 20px; }
+.stars { display: flex; gap: 3px; margin-bottom: 12px; }
+.star { color: #fbbf24; font-size: 1rem; }
+.quote { font-size: 0.9rem; color: #374151; line-height: 1.65; margin-bottom: 16px; font-style: italic; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.person { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #D3A73D, #b8860b); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: #111; flex-shrink: 0; }
+.name { font-weight: 700; font-size: 0.9rem; color: #111827; }
+.meta { font-size: 0.78rem; color: #6b7280; }
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.empty { text-align: center; padding: 80px 0; color: #6b7280; }
+
+/* ── Video modal ─────────────────────────────────────────────────────────── */
+.modalVideo { width: 100%; border-radius: 8px; display: block; background: #000; }
+.modalPerson { display: flex; align-items: center; gap: 14px; padding: 16px 0 4px; }
+.modalAvatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #D3A73D, #b8860b); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: #111; flex-shrink: 0; }
+.modalName { font-weight: 700; font-size: 1rem; color: #111827; }
+.modalMeta { font-size: 0.85rem; color: #6b7280; }
+.modalStars { display: flex; gap: 3px; margin-top: 2px; }
+
+/* ── CTA ─────────────────────────────────────────────────────────────────── */
+.cta { padding: 80px 0; background: linear-gradient(155deg, #0a0f1e, #0f172a, #0c1628); text-align: center; }
+.ctaTitle { font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: 800; color: #fff; letter-spacing: -0.025em; margin-bottom: 14px; }
+.ctaSub   { color: rgba(255,255,255,0.55); font-size: 1rem; line-height: 1.75; margin-bottom: 36px; max-width: 440px; margin-left: auto; margin-right: auto; }
+.ctaBtns  { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.ctaGold  { background: #D3A73D; color: #111; font-weight: 700; padding: 14px 36px; border-radius: 10px; font-size: 1rem; text-decoration: none; transition: background 0.2s; display: inline-block; }
+.ctaGold:hover  { background: #b8860b; }
+.ctaGhost { border: 1.5px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.75); font-weight: 600; padding: 14px 36px; border-radius: 10px; font-size: 1rem; text-decoration: none; transition: border-color 0.2s; display: inline-block; }
+.ctaGhost:hover { border-color: rgba(255,255,255,0.45); }
+
+@media (min-width: 768px) { .hero { padding: 112px 0 88px; } }

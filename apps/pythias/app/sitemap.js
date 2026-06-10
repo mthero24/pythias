@@ -49,6 +49,7 @@ const ROUTES = [
     { url: "/compare/pythias-vs-printify",                        priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/best-dtf-fulfillment-software",              priority: 0.88, changeFrequency: "monthly" },
     { url: "/compare/best-print-on-demand-automation-software",   priority: 0.88, changeFrequency: "monthly" },
+    { url: "/testimonials",                                       priority: 0.85, changeFrequency: "weekly" },
     { url: "/faq",                       priority: 0.85, changeFrequency: "monthly" },
     { url: "/blog",                      priority: 0.85, changeFrequency: "weekly" },
     { url: "/tutorials",                 priority: 0.7,  changeFrequency: "weekly" },

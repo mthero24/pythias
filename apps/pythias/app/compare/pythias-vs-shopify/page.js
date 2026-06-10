@@ -95,6 +95,23 @@ const data = {
     ],
 };
 
+const schema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Pythias vs Shopify — Print-on-Demand Operations Compared",
+    "description": metadata.description,
+    "url": "https://pythiastechnologies.com/compare/pythias-vs-shopify",
+    "articleSection": "Software Comparison",
+    "author":    { "@type": "Organization", "name": "Pythias Technologies", "url": "https://pythiastechnologies.com" },
+    "publisher": { "@type": "Organization", "name": "Pythias Technologies", "url": "https://pythiastechnologies.com" },
+    "dateModified": "2026-06-10",
+};
+
 export default function Page() {
-    return <VsLayout {...data} />;
+    return (
+        <>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+            <VsLayout {...data} />
+        </>
+    );
 }

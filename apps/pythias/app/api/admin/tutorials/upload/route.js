@@ -13,29 +13,30 @@ const s3 = new S3Client({
 
 const BUCKET = process.env.WASABI_BUCKET || "images1.pythiastechnologies.com";
 
-async function uploadFile(file, folder) {
-    const ext  = file.name.split(".").pop();
-    const key  = `tutorials/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const buf  = Buffer.from(await file.arrayBuffer());
-    await s3.send(new PutObjectCommand({
-        Bucket:      BUCKET,
-        Key:         key,
-        Body:        buf,
-        ACL:         "public-read",
-        ContentType: file.type,
-    }));
-    return `https://${BUCKET}/${key}`;
-}
-
 export async function POST(req) {
-    const formData = await req.formData();
-    const result   = {};
+    try {
+        const { searchParams } = new URL(req.url);
+        const folder      = searchParams.get("folder")      || "videos";
+        const filename    = searchParams.get("filename")    || `file-${Date.now()}`;
+        const contentType = searchParams.get("contentType") || "application/octet-stream";
 
-    const video     = formData.get("video");
-    const thumbnail = formData.get("thumbnail");
+        const ext = filename.includes(".") ? filename.split(".").pop() : "bin";
+        const key = `tutorials/${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    if (video && video.size > 0)         result.videoUrl     = await uploadFile(video,     "videos");
-    if (thumbnail && thumbnail.size > 0) result.thumbnailUrl = await uploadFile(thumbnail, "thumbnails");
+        const buf = Buffer.from(await req.arrayBuffer());
+        if (!buf.length) return NextResponse.json({ error: "Empty body" }, { status: 400 });
 
-    return NextResponse.json(result);
+        await s3.send(new PutObjectCommand({
+            Bucket:      BUCKET,
+            Key:         key,
+            Body:        buf,
+            ACL:         "public-read",
+            ContentType: contentType,
+        }));
+
+        return NextResponse.json({ url: `https://${BUCKET}/${key}` });
+    } catch (err) {
+        console.error("[tutorials/upload]", err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
 }

@@ -23,6 +23,32 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ── Custom scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #2d3f55;
+  border-radius: 4px;
+  border: 2px solid #0f172a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #D3A73D;
+}
+::-webkit-scrollbar-corner {
+  background: #0f172a;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2d3f55 #0f172a;
+}
+
 body {
   background: #fafafa;
   color: var(--foreground);
