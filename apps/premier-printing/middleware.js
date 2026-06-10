@@ -159,7 +159,8 @@ export async function middleware(req=NextRequest, res) {
     permissions.designsView = true;
     // Only check permission when the route actually requires one
     if (protectedRoute.permission && !permissions[protectedRoute.permission]) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      // Authenticated but lacks permission — send to home, not login
+      return NextResponse.redirect(new URL("/", req.url));
     }
   }
   if(token){
