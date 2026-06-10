@@ -162,7 +162,7 @@ export function VsLayout({ hero, overview, table, differences, decide, faqs }) {
             <section className={s.cta}>
                 <div className={s.wrap}>
                     <h2 className={s.ctaTitle}>See Pythias in action</h2>
-                    <p className={s.ctaSub}>Book a free 30-minute demo and we'll walk through your exact workflow.</p>
+                    <p className={s.ctaSub}>Book a free 30-minute demo and we&apos;ll walk through your exact workflow.</p>
                     <div className={s.ctaBtns}>
                         <Link href="/#calendar-booking-section" className={s.ctaGold}>Book a Free Demo</Link>
                         <Link href="/pricing" className={s.ctaGhost}>See Pricing →</Link>
@@ -252,7 +252,7 @@ export function BestOfLayout({ hero, intro, tools, faqs }) {
             <section className={s.cta}>
                 <div className={s.wrap}>
                     <h2 className={s.ctaTitle}>Ready to see the best in action?</h2>
-                    <p className={s.ctaSub}>Book a free 30-minute Pythias demo and we'll walk through your exact workflow.</p>
+                    <p className={s.ctaSub}>Book a free 30-minute Pythias demo and we&apos;ll walk through your exact workflow.</p>
                     <div className={s.ctaBtns}>
                         <Link href="/#calendar-booking-section" className={s.ctaGold}>Book a Free Demo</Link>
                         <Link href="/pricing" className={s.ctaGhost}>See Pricing →</Link>
