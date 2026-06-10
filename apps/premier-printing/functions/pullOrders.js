@@ -38,11 +38,12 @@ const CreateSku = async ({ blank, color, size, design, threadColor, designSku })
     return sku;
 }
 export const updateInventory = async () => {
-    // Sort oldest first so FIFO slot assignment is correct
+    // Sort by soonest ship-by date first; fall back to order date so urgent orders get stock first
     const activeItems = await Item.find({
         "inventory.inventory": { $exists: true, $ne: null },
         labelPrinted: false, canceled: false, shipped: false, paid: true,
-    }).select("_id inventory.inventory date").sort({ date: 1 }).lean();
+    }).select("_id inventory.inventory date shipByDate").lean();
+    activeItems.sort((a, b) => new Date(a.shipByDate || a.date) - new Date(b.shipByDate || b.date));
 
     const itemsByInvId = {};
     for (const item of activeItems) {
@@ -114,13 +115,16 @@ export const recomputeStockStatus = async () => {
         Item.find({
             labelPrinted: false, canceled: false, shipped: false, paid: true,
             "inventory.inventory": { $exists: true, $ne: null },
-        }).select("_id inventory.inventory stockStatus date").sort({ date: 1 }).lean(),
+        }).select("_id inventory.inventory stockStatus date shipByDate").lean(),
         Item.find({
             labelPrinted: false, canceled: false, shipped: false, paid: true,
             "inventory.productInventory": { $exists: true, $ne: null },
             stockStatus: { $ne: "inStock" },
         }).select("_id").lean(),
     ]);
+
+    // Sort by soonest ship-by date first so urgent orders claim inStock slots first
+    allWithInv.sort((a, b) => new Date(a.shipByDate || a.date) - new Date(b.shipByDate || b.date));
 
     const updateOps = [];
 

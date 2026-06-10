@@ -57,9 +57,10 @@ export default function FinalCTASection() {
 
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
           <Button
+            component="a"
+            href="/pricing"
             variant="contained"
             size="large"
-            onClick={() => scrollToSection("calendar-booking-section")}
             sx={{
               backgroundColor: Theme.colors.secondary,
               padding: "1rem 2.5rem",
@@ -68,18 +69,17 @@ export default function FinalCTASection() {
               "&:hover": { backgroundColor: "#b8860b" },
             }}
           >
-            Book a Free Demo
+            See Pricing
           </Button>
           <Typography variant="body2" sx={{ color: "#999999", fontStyle: "italic" }}>
             30-min demo &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; Setup in under 2 weeks
           </Typography>
           <Button
-            component="a"
-            href="/pricing"
             variant="text"
+            onClick={() => scrollToSection("calendar-booking-section")}
             sx={{ color: "#cccccc", textDecoration: "underline", fontSize: "0.9rem", "&:hover": { color: "#fff" } }}
           >
-            View pricing →
+            Book a free demo →
           </Button>
         </Box>
       </Container>

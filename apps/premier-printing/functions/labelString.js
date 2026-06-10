@@ -87,6 +87,30 @@ function buildZPL(item, i, poNumber, totalQuantity, template) {
     ];
 
     for (const key of (template.fields ?? [])) {
+        // Stacked inventory location — each component on its own ZPL line
+        if (key === "inventoryLoc" && template.stackInventoryLoc) {
+            const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
+            const { h, w } = SIZE_TO_ZPL[pos.size ?? "sm"] ?? SIZE_TO_ZPL.sm;
+            const rot = pos.rotation ?? "N";
+            if (item.inventory?.inventoryType === "productInventory") {
+                const loc = item.inventory?.productInventory?.location;
+                if (loc) lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y}^FDR LOC: ${loc}^FS`);
+            } else {
+                const inv = item.inventory?.inventory;
+                const parts = [
+                    inv?.row   != null ? `Aisle: ${inv.row}`   : null,
+                    inv?.unit  != null ? `Unit:  ${inv.unit}`  : null,
+                    inv?.shelf != null ? `Shelf: ${inv.shelf}` : null,
+                    inv?.bin   != null ? `Bin:   ${inv.bin}`   : null,
+                ].filter(Boolean);
+                const lineSpacing = h + 6;
+                for (let li = 0; li < parts.length; li++) {
+                    lines.push(`^LH12,18^CFS,25,12^AX${rot},${h},${w}^FO${pos.x},${pos.y + li * lineSpacing}^FD${parts[li]}^FS`);
+                }
+            }
+            continue;
+        }
+
         const text = fieldText(key, item, i, totalQuantity);
         if (!text) continue;
         const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };
@@ -183,7 +207,16 @@ export const buildLabelData = async (item, i, poNumber, opts = {}, totalQuantity
     if (sc?.enabled) {
         specialLabel = buildSpecialCaseZPL(item, i, sc, tpl, totalQuantity, poNumber);
     } else if (item.order?.marketplace === "target" || item.order?.marketplace === "Target Plus US Marketplace") {
-        specialLabel = `^XA\n^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc ?? "no upc present"}^FS\n^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPiece: ${item.pieceId}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS\n^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${item.colorName}, Size: ${item.sizeName}^FS\n^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FD Sku: ${item.isBlank ? "Blank Item" : (item.designRef?.sku ?? item.sku)}^FS\n^XZ`;
+        specialLabel = [
+            "^XA",
+            `^FO100,50^BY2^BC,100,N,N,N,A^FD${item.upc ?? "no upc present"}^FS`,
+            `^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPO#: ${item.order?.poNumber ?? poNumber ?? ""}^FS`,
+            `^LH6,6^CFS,30,6^AXN,22,30^FO10,35^FDPiece: ${item.pieceId}^FS`,
+            `^LH12,18^CFS,25,12^AXN,22,30^FO10,175^FD#1^FS`,
+            `^LH12,18^CFS,25,12^AXN,30,35^FO10,230^FDColor: ${item.colorName}, Size: ${item.sizeName}^FS`,
+            `^LH12,18^CFS,25,12^AXN,22,30^FO10,290^FDSku: ${item.isBlank ? "Blank Item" : (item.designRef?.sku ?? item.sku)}^FS`,
+            "^XZ",
+        ].join("\n");
     }
 
     // Special-case label always prints alongside (before) the standard pick label — never instead of it.

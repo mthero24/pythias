@@ -325,7 +325,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
         setSelected(sel);
     };
 
-    // Count OOS+ordered DTF-family items by type for the modal info display
+    // Count OOS+ordered DTF-family items by type — exclude already-sent items
     const oosCountByType = (() => {
         const counts = {};
         for (const cat of Object.values(useLabels)) {
@@ -333,6 +333,8 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                 if (item.stockStatus !== "attached" && item.stockStatus !== "ordered") continue;
                 const t = item.type?.toUpperCase();
                 if (!t?.includes("DTF")) continue;
+                if (item.isBlank) continue;
+                if (item.steps?.some(s => s.status === "OOS Image Sent")) continue;
                 if (oosDateFrom || oosDateTo) {
                     const raw = item.shipByDate || item.order?.date;
                     if (!raw) continue;

@@ -110,6 +110,11 @@ export async function POST(req) {
         });
     }
 
+    // Skip items already sent or blank (no design to print)
+    allItems = allItems.filter(
+        (item) => !item.isBlank && !item.steps?.some((s) => s.status === "OOS Image Sent"),
+    );
+
     const itemsByType = {};
     for (const item of allItems) {
         const type = item.type?.toUpperCase();
