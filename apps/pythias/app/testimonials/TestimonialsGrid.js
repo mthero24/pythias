@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Dialog, DialogContent, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import s from "./testimonials.module.css";
@@ -39,7 +40,7 @@ function VideoModal({ item, onClose }) {
                     </div>
                     {item.description && (
                         <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.7, marginTop: 12, fontStyle: "italic" }}>
-                            "{item.description}"
+                            &ldquo;{item.description}&rdquo;
                         </p>
                     )}
                 </div>
@@ -81,7 +82,7 @@ export default function TestimonialsGrid() {
                     <div key={item._id} className={s.card} onClick={() => setActive(item)}>
                         <div className={s.thumbWrap}>
                             {item.thumbnailUrl ? (
-                                <img src={item.thumbnailUrl} alt={item.customerName} className={s.thumb} />
+                                <Image src={item.thumbnailUrl} alt={item.customerName} className={s.thumb} fill style={{ objectFit: "cover" }} unoptimized />
                             ) : (
                                 <div className={s.thumbPlaceholder}>
                                     <div className={s.avatar} style={{ width: 64, height: 64, fontSize: "1.4rem" }}>
@@ -97,7 +98,7 @@ export default function TestimonialsGrid() {
                         </div>
                         <div className={s.cardBody}>
                             <Stars rating={item.rating} />
-                            {item.description && <p className={s.quote}>"{item.description}"</p>}
+                            {item.description && <p className={s.quote}>&ldquo;{item.description}&rdquo;</p>}
                             <div className={s.person}>
                                 <div className={s.avatar}>{initials(item.customerName)}</div>
                                 <div>
