@@ -1,10 +1,13 @@
 import { NextResponse, NextApiRequest } from "next/server";
 import Order from "@/models/Order"
+import Manifest from "../../../../models/manifest";
 import {getRefund} from "@pythias/shipping"
+
 export async function POST(req= NextApiRequest){
     let data = await req.json()
-    console.log(data)
-    await getRefund({providers: ["usps", "fedex"], PIC: data.label.trackingNumber,  enSettings: {
+    const tn = data.label?.trackingNumber?.toString();
+
+    await getRefund({providers: ["usps", "fedex"], PIC: tn, enSettings: {
         requesterID: process.env.endiciaRequesterID,
         accountNumber: process.env.endiciaAccountNUmber,
         passPhrase: process.env.endiciaPassPhrase,
@@ -33,13 +36,21 @@ export async function POST(req= NextApiRequest){
         clientID: process.env.UPSClientID,
         clientSecret: process.env.UPSClientSecret,
     },})
+
+    // Remove tracking number from manifest
+    if (tn) {
+        await Manifest.deleteOne({ pic: tn }).catch(e =>
+            console.error("[refund] manifest delete error:", e.message)
+        );
+    }
+
     let order = await Order.findOne({_id: data.order._id})
-    console.log(order.shippingInfo.labels.length)
     if(order){
-        order.shippingInfo.labels.map(l=> {
-            console.log(l.trackingNumber.toString() == data.label.trackingNumber.toString(), l.trackingNumber, data.label.trackingNumber)
-            if(l.trackingNumber.toString() == data.label.trackingNumber.toString()) l.delivered = true
-            return l
+        order.shippingInfo.labels.forEach(l => {
+            if(l.trackingNumber?.toString() === tn) {
+                l.refunded = true;
+                l.delivered = true;
+            }
         })
         order.markModified("shippingInfo.labels")
         await order.save()
