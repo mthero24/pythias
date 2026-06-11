@@ -20,7 +20,7 @@ export async function POST(req=NextApiRequest){
             inventory.markModified("outOfStock");
             await inventory.save();
         }
-        item.stockStatus = "outOfStock";
+        item.stockStatus = null;
         item.labelPrinted = false;
         await item.save();
         const {labels, giftMessages, rePulls, batches} = await LabelsData()
@@ -40,16 +40,18 @@ export async function PUT(req=NextApiRequest){
         });
         if (inventory) {
             inventory.quantity  += 1;
-            inventory.inStock    = [...(inventory.inStock    ?? []).filter(id => id.toString() !== item._id.toString()), item._id];
+            inventory.attached   = [...(inventory.attached   ?? []).filter(id => id.toString() !== item._id.toString()), item._id];
+            inventory.inStock    = (inventory.inStock    ?? []).filter(id => id.toString() !== item._id.toString());
             inventory.outOfStock = (inventory.outOfStock ?? []).filter(id => id.toString() !== item._id.toString());
             inventory.ordered    = (inventory.ordered    ?? []).filter(id => id.toString() !== item._id.toString());
             inventory.markModified("quantity");
+            inventory.markModified("attached");
             inventory.markModified("inStock");
             inventory.markModified("outOfStock");
             inventory.markModified("ordered");
             await inventory.save();
         }
-        item.stockStatus = "inStock";
+        item.stockStatus = "attached";
         item.labelPrinted = false;
         await item.save();
         const {labels, giftMessages, rePulls, batches} = await LabelsData()

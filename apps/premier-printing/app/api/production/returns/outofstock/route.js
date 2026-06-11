@@ -38,10 +38,14 @@ export async function PUT(req = NextApiRequest) {
         console.log(item.inventory.inventory, "inventory assigned to item")      
         if(item.inventory.inventory && item.inventory.inventory.quantity > 0 && item.inventory.inventory.quantity > item.inventory.inventory.inStock.length){
             item.inventory.inventory.inStock.push(item._id.toString())
+            item.inventory.inventory.markModified("inStock")
             await item.inventory.inventory.save()
+            item.stockStatus = "inStock"
         }else if(item.inventory.inventory){
             item.inventory.inventory.attached.push(item._id.toString())
+            item.inventory.inventory.markModified("attached")
             await item.inventory.inventory.save()
+            item.stockStatus = "attached"
         }
         item.labelPrinted = false
         item.steps.push({ status: "sent to production", date: new Date() })
