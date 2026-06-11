@@ -2,7 +2,7 @@ import HowItWorksContent from "./HowItWorksContent";
 
 export const metadata = {
     title: "How It Works — Pythias Technologies",
-    description: "Learn how Fulfillment Cloud and Commerce Cloud work — step by step, with onboarding timelines for both. Fulfillment Cloud runs your print shop. Commerce Cloud lets you sell without one.",
+    description: "Sell on Shopify, Amazon, Etsy, Walmart, TikTok Shop & Kohl's with Pythias Connect—production queue, real-time 60s sync, auto-tracking, and centralized listings.",
     alternates: { canonical: "https://pythiastechnologies.com/how-it-works" },
 };
 

@@ -1642,6 +1642,46 @@ const AddMarketplaceModal = ({ open, setOpen, sizes, marketPlace, setMarketPlace
                         + Add CSV Group
                     </Button>
 
+                    {/* Attribute overrides set via TikTok/Etsy/etc. reference dialogs */}
+                    {blank && (() => {
+                        const overrides = blank.marketPlaceOverrides?.[marketPlace.name] ?? {};
+                        const allHeaderIds = new Set((marketPlace.headers ?? []).flat().map(h => h.id));
+                        const attrEntries = Object.entries(overrides).filter(([key]) => !allHeaderIds.has(key));
+                        if (!attrEntries.length) return null;
+                        return (
+                            <Card variant="outlined" sx={{ borderRadius: 2 }}>
+                                <Box sx={{ px: 2, py: 1.25, borderBottom: "1px solid", borderColor: "divider", bgcolor: "action.hover" }}>
+                                    <Typography variant="subtitle2" fontWeight={700}>Attribute Overrides</Typography>
+                                    <Typography variant="caption" color="text.secondary">Set via attribute reference — applied to listings for this blank</Typography>
+                                </Box>
+                                <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+                                    {attrEntries.map(([key, val]) => (
+                                        <Box key={key} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                            <TextField
+                                                size="small"
+                                                label={key}
+                                                value={val ?? ""}
+                                                fullWidth
+                                                onChange={(e) => {
+                                                    let b = { ...blank };
+                                                    b.marketPlaceOverrides[marketPlace.name][key] = e.target.value;
+                                                    setBlank(b);
+                                                }}
+                                            />
+                                            <IconButton size="small" color="error" onClick={() => {
+                                                let b = { ...blank };
+                                                delete b.marketPlaceOverrides[marketPlace.name][key];
+                                                setBlank({ ...b });
+                                            }}>
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </Card>
+                        );
+                    })()}
+
                     {/* Color Family Converter */}
                     <Card variant="outlined" sx={{ borderRadius: 2 }}>
                         <Box

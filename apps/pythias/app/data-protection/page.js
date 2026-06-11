@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 
 export const metadata = {
-    title: "Data Protection Policy",
+    title: "Data Protection Policy: Privacy, Security & Compliance",
     description: "Pythias Technologies internal data protection policy — how we classify, handle, and safeguard personal and business data across our platform and operations.",
     alternates: { canonical: "https://pythiastechnologies.com/data-protection" },
 };

@@ -316,7 +316,7 @@ function IntegrationCard({ name, logo, logoText, logoBg, status, description, hi
                 }}>
                     {logo ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={logo} alt={name} style={{ maxHeight: 48, maxWidth: "100%", objectFit: "contain", width: "auto" }} />
+                        <img src={logo} alt={`${name} marketplace integration logo`} style={{ maxHeight: 48, maxWidth: "100%", objectFit: "contain", width: "auto" }} />
                     ) : (
                         <Typography sx={{ fontSize: "1.8rem", fontWeight: 900, color: "#fff", lineHeight: 1 }}>
                             {logoText}

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import s from "./pricing.module.css";
 
 // ── Fulfillment Cloud data ────────────────────────────────────────────────
@@ -227,15 +228,19 @@ export default function PricingContent() {
                 <div className={s.wrap}>
                     {/* Dual logo */}
                     <div className={s.heroLogos}>
-                        <img
+                        <Image
                             src="/fullfilment_cloud_transparant.png"
                             alt="Pythias Fulfillment Cloud"
+                            width={260} height={130}
+                            quality={75}
                             className={`${s.heroLogo} ${isFC ? s.heroLogoActive : s.heroLogoDim}`}
                             onClick={() => setProduct("fc")}
                         />
-                        <img
+                        <Image
                             src="/commerce-cloud-logo.png"
                             alt="Pythias Commerce Cloud"
+                            width={260} height={130}
+                            quality={75}
                             className={`${s.heroLogo} ${!isFC ? s.heroLogoActive : s.heroLogoDim}`}
                             onClick={() => setProduct("cc")}
                         />

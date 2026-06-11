@@ -2,7 +2,7 @@ import { ServiceHero, ServiceFeatures, ServiceSteps, ServiceCTA, ServiceRelated,
 
 export const metadata = {
     title: "Inventory Management for Print Shops",
-    description: "Real-time blank inventory tracking, automated reorder alerts, SKU management, and supplier integration built specifically for print-on-demand and custom apparel businesses.",
+    description: "Pythias real-time blank inventory tracking, automated reorder alerts, SKU management, and supplier integration for print-on-demand and custom apparel.",
     keywords: "print shop inventory management, blank inventory tracking, DTF inventory, embroidery blank stock, SKU management, reorder alerts, apparel inventory software, print on demand inventory, stock management print shop",
     openGraph: {
         title: "Inventory Management for Print Shops | Pythias Technologies",

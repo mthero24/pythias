@@ -99,16 +99,18 @@ export async function POST(req) {
         .populate("blank",  "code envelopes")
         .populate("order",  "date");
 
-    if (dateFrom || dateTo) {
-        allItems = allItems.filter((item) => {
-            const raw = item.shipByDate || item.order?.date;
-            if (!raw) return false;
-            const d = new Date(raw).toLocaleDateString("en-CA");
-            if (dateFrom && d < dateFrom) return false;
-            if (dateTo   && d > dateTo)   return false;
-            return true;
-        });
-    }
+    const defaultFrom = !dateFrom && !dateTo
+        ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA")
+        : null;
+
+    allItems = allItems.filter((item) => {
+        const raw = item.shipByDate || item.order?.date;
+        if (!raw) return false;
+        const d = new Date(raw).toLocaleDateString("en-CA");
+        if ((dateFrom || defaultFrom) && d < (dateFrom || defaultFrom)) return false;
+        if (dateTo && d > dateTo) return false;
+        return true;
+    });
 
     // Skip items already sent or blank (no design to print)
     allItems = allItems.filter(

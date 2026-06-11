@@ -1,7 +1,7 @@
 import { ContactForm } from "@pythias/backend";
 
 export const metadata = {
-    title: "Contact Us",
+    title: "Contact Pythias Technologies — Print Fulfillment Support",
     description: "Get in touch with Pythias Technologies. Phone: (844) 579-8442. Located in Southfield, MI.",
     alternates: { canonical: "https://pythiastechnologies.com/contact" },
 };
@@ -40,6 +40,9 @@ const breadcrumbSchema = {
 export default function ContactPage() {
     return (
         <>
+            <h1 style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>
+                Contact Pythias Technologies
+            </h1>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contactPageSchema) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             <ContactForm
