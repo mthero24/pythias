@@ -11,7 +11,8 @@ import LoaderOverlay from "./LoaderOverlay";
 import axios from "axios";
 import ScaleIcon from "@mui/icons-material/Scale";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import PrintIcon from "@mui/icons-material/Print";
+import PrintIcon               from "@mui/icons-material/Print";
+import StorefrontIcon          from "@mui/icons-material/Storefront";
 
 const IMAGE_MAP = {
     mailer:   multiple,
@@ -27,6 +28,7 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false);
     const [processing, setProcessing]             = useState(false);
     const [saterdayDelivery, setSaterdayDelivery] = useState(false);
+    const [pickupDone,  setPickupDone]            = useState(false);
 
     useEffect(() => {
         if (shippingPrices) {
@@ -71,6 +73,15 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
             setProcessing(false);
             onAction?.();
         }
+    };
+
+    const markPickedUp = async () => {
+        setProcessing(true);
+        try {
+            const res = await axios.post("/api/production/shipping/pickup", { orderId: order._id });
+            if (res.data.error) { alert(res.data.msg || "Failed"); }
+            else { setPickupDone(true); setBins(res.data.bins); onAction?.(); }
+        } finally { setProcessing(false); }
     };
 
     const reprint = async (lbl) => {
@@ -125,11 +136,55 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
                             Order is ready to ship — ship now?
                         </Button>
                     )}
+                    {action === "bin/pickup" && (
+                        <Box sx={{ mt: 3 }}>
+                            <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+                                <StorefrontIcon sx={{ fontSize: 48, color: "success.main" }} />
+                            </Box>
+                            <Typography variant="h5" fontWeight={700} color="success.main" gutterBottom>
+                                Ready for Pickup
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
+                                All items are in bin — customer can pick up
+                            </Typography>
+                        </Box>
+                    )}
+                </Box>
+            )}
+
+            {/* In-store pickup flow — shown when bin is ready for pickup */}
+            {(action === "bin/pickup" || (action === "ship" && order?.inStorePickup)) && (
+                <Box sx={{ p: 4, textAlign: "center" }}>
+                    {pickupDone ? (
+                        <>
+                            <CheckCircleOutlineIcon sx={{ fontSize: 72, color: "success.main", mb: 1 }} />
+                            <Typography variant="h4" fontWeight={800} color="success.main">Picked Up!</Typography>
+                        </>
+                    ) : (
+                        <>
+                            <StorefrontIcon sx={{ fontSize: 64, color: "primary.main", mb: 2 }} />
+                            <Typography variant="h5" fontWeight={700} gutterBottom>In-Store Pickup</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                Bin {bin?.number ?? "—"} · {order?.shippingAddress?.name ?? "Customer"}
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                color="success"
+                                size="large"
+                                fullWidth
+                                onClick={markPickedUp}
+                                disabled={processing}
+                                startIcon={processing ? <CircularProgress size={20} color="inherit" /> : <CheckCircleOutlineIcon />}
+                            >
+                                {processing ? "Processing…" : "Picked Up"}
+                            </Button>
+                        </>
+                    )}
                 </Box>
             )}
 
             {/* Ship flow */}
-            {action === "ship" && (
+            {action === "ship" && !order?.inStorePickup && (
                 <Box sx={{ p: 3 }}>
                     <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                         <Typography variant="subtitle1" fontWeight={700}>

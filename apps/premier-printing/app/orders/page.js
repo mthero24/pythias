@@ -15,6 +15,7 @@ export default async function OrdersPage(req) {
         orderIds = await Item.find({ isBlank: true }).select("order").distinct("order");
     } else if (query.filter === "missinginfo") {
         orderIds = await Item.find({
+            custom: { $ne: true },
             $or: [
                 { colorName: { $in: [null, ""] } },
                 { sizeName: { $in: [null, ""] } },

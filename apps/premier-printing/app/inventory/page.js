@@ -1,4 +1,4 @@
-import { Inventory, Blank as Blanks } from "@pythias/mongo";
+import { Inventory, Blank as Blanks, Settings } from "@pythias/mongo";
 import { serialize } from "@/functions/serialize";
 import { Main, getInv } from "@pythias/inventory";
 
@@ -9,11 +9,15 @@ export default async function InventoryPage(req) {
     const term   = search.q;
     const page   = search.page ? parseInt(search.page) : 1;
 
-    const [res, allInventory, allBlanks] = await Promise.all([
+    const [res, allInventory, allBlanks, sanmarConn, ssConn] = await Promise.all([
         getInv({ Blanks, Inventory, term, page }),
         Inventory.find({ quantity: { $gt: 0 } }).select("quantity style_code size_name").lean(),
         Blanks.find({}).select("code sizes").lean(),
+        Settings.findOne({ key: "sanmar.connected" }).lean(),
+        Settings.findOne({ key: "ssactivewear.connected" }).lean(),
     ]);
+    const sanmarConnected = sanmarConn?.value === "true";
+    const ssConnected     = ssConn?.value     === "true";
 
     const blankSizeMap = {};
     for (const b of allBlanks) {
@@ -38,6 +42,8 @@ export default async function InventoryPage(req) {
             pa={page}
             q={term}
             totalValue={totalValue}
+            sanmarConnected={sanmarConnected}
+            ssConnected={ssConnected}
         />
     );
 }

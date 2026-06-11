@@ -221,3 +221,10 @@ export { RithumModal } from "./components/RithumModal";
 // gs1
 export { handleGs1DashboardGET } from "./handlers/gs1";
 export { Gs1Dashboard } from "./components/Gs1Dashboard";
+
+// sanmar supplier
+export { SanmarConnectCard } from "./components/SanmarConnectCard";
+export { SanmarModal } from "./components/SanmarModal";
+
+// ss activewear supplier
+export { SSActivewearModal } from "./components/SSActivewearModal";

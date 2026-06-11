@@ -5,9 +5,11 @@ export const metadata = {
     description: "Pythias Commerce Cloud vs Printify: a full comparison for print-on-demand sellers. Compare pricing models, marketplace integrations, routing control, and margin economics.",
     alternates: { canonical: "https://pythiastechnologies.com/compare/pythias-vs-printify" },
     openGraph: {
+        type: "article",
         title: "Pythias Commerce Cloud vs Printify — POD Comparison",
         description: "Printify is simple and free to start. Pythias Commerce Cloud gives you more control, better routing transparency, and economics that scale. See the full comparison.",
         url: "https://pythiastechnologies.com/compare/pythias-vs-printify",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Pythias vs Printify Comparison" }],
     },
 };
 
@@ -108,10 +110,17 @@ const schema = {
     "dateModified": "2026-06-10",
 };
 
+const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": data.faqs.map(f => ({ "@type": "Question", "name": f.q, "acceptedAnswer": { "@type": "Answer", "text": f.a } })),
+};
+
 export default function Page() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
             <VsLayout {...data} />
         </>
     );

@@ -9,6 +9,7 @@ export const metadata = {
         title: "Software for TikTok Shop Sellers | Pythias Technologies",
         description: "Built for TikTok Shop sellers — automate order routing, hit shipping SLAs, sync tracking, and manage print production from one dashboard.",
         url: "https://pythiastechnologies.com/software-for-tiktok-shop-sellers",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Software for TikTok Shop Sellers | Pythias Technologies" }],
     },
 };
 

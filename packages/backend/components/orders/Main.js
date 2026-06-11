@@ -4,6 +4,7 @@ import {
     Chip, Card, Collapse, Divider, InputAdornment, IconButton, Tooltip,
     Button, Dialog, DialogTitle, DialogContent, DialogActions,
     Alert, CircularProgress, MenuItem, Select, FormControl, InputLabel,
+    Checkbox, FormControlLabel,
 } from "@mui/material";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import axios from "axios";
 import { RetryImage } from "../reusable/RetryImage";
+import { CustomOrderBuilder } from "./CustomOrderBuilder";
 
 // ─── Create Order Modal ────────────────────────────────────────────────────────
 const COUNTRIES = ["US", "CA"];
@@ -57,14 +59,15 @@ function CreateOrderModal({ open, onClose, onCreated }) {
     const [cartItems, setCartItems] = useState([]);
 
     // ── Order info ──────────────────────────────────────────────────────────────
-    const [po, setPo]       = useState("");
-    const [market, setMkt]  = useState("");
-    const [addr, setAddr]   = useState({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" });
-    const [saving, setSaving] = useState(false);
-    const [saveErr, setSaveErr] = useState("");
+    const [po, setPo]               = useState("");
+    const [market, setMkt]          = useState("");
+    const [addr, setAddr]           = useState({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" });
+    const [inStorePickup, setInStorePickup] = useState(false);
+    const [saving, setSaving]       = useState(false);
+    const [saveErr, setSaveErr]     = useState("");
 
     const resetLookup = () => { setSku(""); setProduct(null); setLookupErr(""); setSelColor(null); setSelSizeId(null); setQty(1); };
-    const handleClose = () => { resetLookup(); setCartItems([]); setPo(""); setMkt(""); setAddr({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" }); setSaving(false); setSaveErr(""); onClose(); };
+    const handleClose = () => { resetLookup(); setCartItems([]); setPo(""); setMkt(""); setAddr({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" }); setInStorePickup(false); setSaving(false); setSaveErr(""); onClose(); };
 
     // ── Lookup ──────────────────────────────────────────────────────────────────
     const lookupSku = useCallback(async () => {
@@ -142,9 +145,10 @@ function CreateOrderModal({ open, onClose, onCreated }) {
     const submit = async () => {
         if (cartItems.length === 0) { setSaveErr("Add at least one item"); return; }
         if (!po.trim()) { setSaveErr("PO number is required"); return; }
-        if (!addr.name || !addr.address1 || !addr.city || !addr.country) {
+        if (!inStorePickup && (!addr.name || !addr.address1 || !addr.city || !addr.country)) {
             setSaveErr("Name, address, city, and country are required"); return;
         }
+        if (inStorePickup && !addr.name) { setSaveErr("Customer name is required for pickup"); return; }
         setSaving(true); setSaveErr("");
         try {
             const res = await axios.post("/api/orders/create", {
@@ -152,6 +156,7 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                 marketplace:     market.trim() || "Manual",
                 poNumber:        po.trim(),
                 shippingAddress: addr,
+                inStorePickup,
             });
             onCreated?.(res.data.orderId);
             handleClose();
@@ -374,46 +379,58 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                         </Stack>
                     </Box>
 
+                    {/* ── In-store pickup toggle ── */}
+                    <Box>
+                        <FormControlLabel
+                            control={<Checkbox checked={inStorePickup} onChange={e => setInStorePickup(e.target.checked)} />}
+                            label={<Stack direction="row" alignItems="center" spacing={0.75}><Typography variant="body2" fontWeight={600}>In-Store Pickup</Typography><Typography variant="caption" color="text.secondary">— customer will pick up, no shipping required</Typography></Stack>}
+                        />
+                    </Box>
+
                     {/* ── Shipping address ── */}
                     <Box>
                         <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
-                            Shipping Address
+                            {inStorePickup ? "Customer Name" : "Shipping Address"}
                         </Typography>
                         <Stack spacing={1.25}>
                             <Stack direction="row" spacing={1.5}>
                                 <TextField {...fs} fullWidth label="Full Name" value={addr.name} onChange={addrChange("name")} required />
                                 <TextField {...fs} fullWidth label="Phone" value={addr.phone} onChange={addrChange("phone")} />
                             </Stack>
-                            <TextField {...fs} fullWidth label="Address Line 1" value={addr.address1} onChange={addrChange("address1")} required />
-                            <TextField {...fs} fullWidth label="Address Line 2 (optional)" value={addr.address2} onChange={addrChange("address2")} />
-                            <Stack direction="row" spacing={1.5}>
-                                <TextField {...fs} fullWidth label="City" value={addr.city} onChange={addrChange("city")} required />
-                                <FormControl {...fs} sx={{ width: 160, flexShrink: 0 }}>
-                                    <InputLabel>{addr.country === "CA" ? "Province" : "State"}</InputLabel>
-                                    <Select
-                                        value={addr.state}
-                                        label={addr.country === "CA" ? "Province" : "State"}
-                                        onChange={e => setAddr(p => ({ ...p, state: e.target.value }))}
-                                        MenuProps={{ PaperProps: { sx: { maxHeight: 280 } } }}
-                                    >
-                                        <MenuItem value=""><em>—</em></MenuItem>
-                                        {(REGIONS[addr.country] ?? []).map(([code, name]) => (
-                                            <MenuItem key={code} value={code}>{code} — {name}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <TextField {...fs} sx={{ width: 96, flexShrink: 0 }} label="ZIP" value={addr.zip} onChange={addrChange("zip")} />
-                                <FormControl {...fs} sx={{ width: 80, flexShrink: 0 }}>
-                                    <InputLabel>Country</InputLabel>
-                                    <Select
-                                        value={addr.country}
-                                        label="Country"
-                                        onChange={e => setAddr(p => ({ ...p, country: e.target.value, state: "" }))}
-                                    >
-                                        {COUNTRIES.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                                    </Select>
-                                </FormControl>
-                            </Stack>
+                            {!inStorePickup && (
+                                <>
+                                    <TextField {...fs} fullWidth label="Address Line 1" value={addr.address1} onChange={addrChange("address1")} required />
+                                    <TextField {...fs} fullWidth label="Address Line 2 (optional)" value={addr.address2} onChange={addrChange("address2")} />
+                                    <Stack direction="row" spacing={1.5}>
+                                        <TextField {...fs} fullWidth label="City" value={addr.city} onChange={addrChange("city")} required />
+                                        <FormControl {...fs} sx={{ width: 160, flexShrink: 0 }}>
+                                            <InputLabel>{addr.country === "CA" ? "Province" : "State"}</InputLabel>
+                                            <Select
+                                                value={addr.state}
+                                                label={addr.country === "CA" ? "Province" : "State"}
+                                                onChange={e => setAddr(p => ({ ...p, state: e.target.value }))}
+                                                MenuProps={{ PaperProps: { sx: { maxHeight: 280 } } }}
+                                            >
+                                                <MenuItem value=""><em>—</em></MenuItem>
+                                                {(REGIONS[addr.country] ?? []).map(([code, name]) => (
+                                                    <MenuItem key={code} value={code}>{code} — {name}</MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                        <TextField {...fs} sx={{ width: 96, flexShrink: 0 }} label="ZIP" value={addr.zip} onChange={addrChange("zip")} />
+                                        <FormControl {...fs} sx={{ width: 80, flexShrink: 0 }}>
+                                            <InputLabel>Country</InputLabel>
+                                            <Select
+                                                value={addr.country}
+                                                label="Country"
+                                                onChange={e => setAddr(p => ({ ...p, country: e.target.value, state: "" }))}
+                                            >
+                                                {COUNTRIES.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                                            </Select>
+                                        </FormControl>
+                                    </Stack>
+                                </>
+                            )}
                         </Stack>
                     </Box>
 
@@ -425,7 +442,7 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                 <Button onClick={handleClose} disabled={saving}>Cancel</Button>
                 <Button
                     variant="contained" onClick={submit}
-                    disabled={saving || cartItems.length === 0 || !po.trim() || !addr.name || !addr.address1 || !addr.city}
+                    disabled={saving || cartItems.length === 0 || !po.trim() || !addr.name || (!inStorePickup && (!addr.address1 || !addr.city))}
                     startIcon={saving ? <CircularProgress size={14} color="inherit" /> : null}
                     sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)" }}
                 >
@@ -463,7 +480,8 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
     const [orders] = useState(ords);
     const [search, setSearch] = useState(q ?? "");
     const [opened, setOpened] = useState("");
-    const [createOpen, setCreateOpen] = useState(false);
+    const [createOpen,       setCreateOpen]       = useState(false);
+    const [customOrderOpen,  setCustomOrderOpen]  = useState(false);
 
     const buildUrl = ({ pg = 1, f = filter, all = showAll, sq = search } = {}) => {
         const params = new URLSearchParams();
@@ -524,6 +542,14 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                             sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)", borderRadius: 1.5, fontWeight: 600, mr: 0.5 }}
                         >
                             New Order
+                        </Button>
+                        <Button
+                            variant="outlined" size="small"
+                            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+                            onClick={() => setCustomOrderOpen(true)}
+                            sx={{ borderRadius: 1.5, fontWeight: 600, borderColor: "#D3A73D", color: "#b8860b", "&:hover": { borderColor: "#b8860b", bgcolor: "rgba(211,167,61,0.06)" }, mr: 0.5 }}
+                        >
+                            Custom Order
                         </Button>
                         {/* Status toggle */}
                         <Chip
@@ -838,6 +864,11 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                 open={createOpen}
                 onClose={() => setCreateOpen(false)}
                 onCreated={(orderId) => router.push(`/orders/${orderId}`)}
+            />
+            <CustomOrderBuilder
+                open={customOrderOpen}
+                setOpen={setCustomOrderOpen}
+                onSaved={() => setCustomOrderOpen(false)}
             />
         </Box>
     );

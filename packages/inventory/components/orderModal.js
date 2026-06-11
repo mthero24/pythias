@@ -8,10 +8,11 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import AddIcon from "@mui/icons-material/Add";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import axios from "axios";
 import { AddModal } from "./addModel";
 
-export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, defaultLocation }) {
+export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, defaultLocation, sanmarConnected, ssConnected }) {
     const [needsOrdered, setNeedsOrdered]               = useState([]);
     const [order, setOrder]                             = useState({ poNumber: "", company: "", dateOrdered: "", dateExpected: "" });
     const [blankCodes, setBlankCodes]                   = useState([]);
@@ -50,6 +51,7 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
             const no = [], bl = [], cl = [];
             for (const blank of currentBlanks) {
                 for (const inv of blank.inventories) {
+                    const invWithSanmar = { ...inv, sanmarStyle: blank.blank.sanmarStyle || "", ssActivewearStyle: blank.blank.ssActivewearStyle || "" };
                     if (type === "Out Of Stock") {
                         const attached = inv.attachedCount ?? 0;
                         const alreadyOnOrder = inv.activeOnOrder ?? 0;
@@ -57,7 +59,7 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                         if (stillNeeded > 0) {
                             if (!bl.includes(inv.style_code)) bl.push(inv.style_code);
                             if (!cl.includes(inv.color_name)) cl.push(inv.color_name);
-                            no.push({ inv, order: stillNeeded, included: false, location: defaultLocation });
+                            no.push({ inv: invWithSanmar, order: stillNeeded, included: false, location: defaultLocation });
                         }
                     }
                     if (type === "Inventory Order") {
@@ -65,7 +67,7 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                         if (inStock - inv.order_at_quantity < 0) {
                             if (!bl.includes(inv.style_code)) bl.push(inv.style_code);
                             if (!cl.includes(inv.color_name)) cl.push(inv.color_name);
-                            no.push({ inv, order: inv.quantity_to_order + (inv.order_at_quantity - inStock), included: false, location: defaultLocation });
+                            no.push({ inv: invWithSanmar, order: inv.quantity_to_order + (inv.order_at_quantity - inStock), included: false, location: defaultLocation });
                         }
                     }
                 }
@@ -118,6 +120,18 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
     const totalItems    = needsOrdered.length;
     const totalIncluded = needsOrdered.filter(n => n.included).length;
     const totalQty      = needsOrdered.reduce((acc, n) => acc + (n.included ? n.order : 0), 0);
+
+    const sanmarIncluded = useMemo(() => {
+        if (!sanmarConnected) return [];
+        return needsOrdered.filter(n => n.included && n.inv.sanmarStyle);
+    }, [needsOrdered, sanmarConnected]);
+    const sanmarQty = sanmarIncluded.reduce((acc, n) => acc + n.order, 0);
+
+    const ssIncluded = useMemo(() => {
+        if (!ssConnected) return [];
+        return needsOrdered.filter(n => n.included && n.inv.ssActivewearStyle);
+    }, [needsOrdered, ssConnected]);
+    const ssQty = ssIncluded.reduce((acc, n) => acc + n.order, 0);
 
     const isInventoryOrder = type === "Inventory Order";
 
@@ -184,6 +198,36 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                             </Box>
                         </Card>
 
+                        {/* SanMar auto-order notice */}
+                        {sanmarConnected && sanmarIncluded.length > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5, borderRadius: 2, bgcolor: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.25)" }}>
+                                <LocalShippingIcon sx={{ color: "#10b981", fontSize: 20, flexShrink: 0 }} />
+                                <Box sx={{ flex: 1 }}>
+                                    <Typography variant="body2" fontWeight={700} sx={{ color: "#065f46" }}>
+                                        {sanmarIncluded.length} SanMar item{sanmarIncluded.length > 1 ? "s" : ""} ({sanmarQty} units) will be automatically ordered from SanMar.
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                                        A purchase order will be sent directly to SanMar for all selected items linked to a SanMar style.
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
+
+                        {/* S&S Activewear auto-order notice */}
+                        {ssConnected && ssIncluded.length > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 2, py: 1.5, borderRadius: 2, bgcolor: "rgba(211,47,47,0.05)", border: "1px solid rgba(211,47,47,0.2)" }}>
+                                <LocalShippingIcon sx={{ color: "#d32f2f", fontSize: 20, flexShrink: 0 }} />
+                                <Box sx={{ flex: 1 }}>
+                                    <Typography variant="body2" fontWeight={700} sx={{ color: "#7f1d1d" }}>
+                                        {ssIncluded.length} S&amp;S Activewear item{ssIncluded.length > 1 ? "s" : ""} ({ssQty} units) will be automatically ordered from S&amp;S Activewear.
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                                        A purchase order will be sent directly to S&amp;S Activewear for all selected items linked to an S&amp;S style.
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        )}
+
                         {/* Items section */}
                         <Card variant="outlined" sx={{ borderRadius: 2 }}>
                             {/* Items header */}
@@ -241,6 +285,12 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                                                     onClick={(e) => { e.stopPropagation(); setBlankIncluded(code, !allIncluded); }}
                                                 />
                                                 <Chip label={code} size="small" color="primary" variant="outlined" sx={{ fontWeight: 700, fontFamily: "monospace" }} />
+                                                {sanmarConnected && codeItems[0]?.inv?.sanmarStyle && (
+                                                    <Chip label="SanMar" size="small" sx={{ bgcolor: "rgba(16,185,129,0.1)", color: "#065f46", fontWeight: 700, fontSize: "0.65rem" }} />
+                                                )}
+                                                {ssConnected && codeItems[0]?.inv?.ssActivewearStyle && (
+                                                    <Chip label="S&S" size="small" sx={{ bgcolor: "rgba(211,47,47,0.08)", color: "#991b1b", fontWeight: 700, fontSize: "0.65rem" }} />
+                                                )}
                                                 <Chip
                                                     label={`${codeIncluded} / ${codeItems.length}`}
                                                     size="small"

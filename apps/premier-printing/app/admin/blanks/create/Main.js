@@ -251,6 +251,12 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
                 <TextField fullWidth size="small" label="Fixer Code" {...register("fixerCode")} />
               </Grid2>
               <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField fullWidth size="small" label="SanMar Style" placeholder="e.g. PC61" {...register("sanmarStyle")} helperText="Links this blank to SanMar for direct ordering" />
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField fullWidth size="small" label="S&S Activewear Style" placeholder="e.g. PC61" {...register("ssActivewearStyle")} helperText="Links this blank to S&S Activewear for direct ordering" />
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField fullWidth size="small" label="Slug" {...register("slug")} />
               </Grid2>
             </Grid2>

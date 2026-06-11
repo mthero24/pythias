@@ -26,6 +26,7 @@ export default async function OrdersPage(req) {
     } else if (query.filter === "missinginfo") {
         orderIds = await PlatformItem.find({
             orgId,
+            custom: { $ne: true },
             $or: [
                 { colorName: { $in: [null, ""] } },
                 { sizeName: { $in: [null, ""] } },

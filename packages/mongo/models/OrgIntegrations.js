@@ -150,6 +150,21 @@ const schema = new mongoose.Schema({
         apiKey: { type: String, default: "" },
     },
 
+    // ── SanMar ────────────────────────────────────────────────────
+    sanmar: {
+        customerNumber: { type: String, default: "" },
+        userName:       { type: String, default: "" },
+        password:       { type: String, default: "" },
+        connected:      { type: Boolean, default: false },
+    },
+
+    // ── S&S Activewear ────────────────────────────────────────────
+    ssactivewear: {
+        accountNumber: { type: String, default: "" },
+        apiKey:        { type: String, default: "" },
+        connected:     { type: Boolean, default: false },
+    },
+
     // ── Wasabi / S3 ────────────────────────────────────────────────
     wasabi: {
         keyId: { type: String, default: "" },

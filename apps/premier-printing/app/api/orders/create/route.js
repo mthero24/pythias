@@ -44,7 +44,7 @@ export async function POST(req) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { items, marketplace, poNumber, shippingAddress } = body;
+    const { items, marketplace, poNumber, shippingAddress, inStorePickup } = body;
 
     if (!Array.isArray(items) || !items.length) {
         return NextResponse.json({ error: "items array is required" }, { status: 400 });
@@ -60,9 +60,10 @@ export async function POST(req) {
     const order = await new Order({
         orderId,
         poNumber,
-        status:       "awaiting_shipment",
-        shippingType: "Standard",
-        marketplace:  marketplace?.trim() || "Manual",
+        status:        "awaiting_shipment",
+        shippingType:  inStorePickup ? "In-Store Pickup" : "Standard",
+        marketplace:   marketplace?.trim() || "Manual",
+        inStorePickup: !!inStorePickup,
         shippingAddress: {
             name:     shippingAddress.name.trim(),
             phone:    shippingAddress.phone?.trim() ?? "",
@@ -103,7 +104,7 @@ export async function POST(req) {
                 order:        order._id,
                 orderId,
                 poNumber,
-                shippingType: "Standard",
+                shippingType: inStorePickup ? "In-Store Pickup" : "Standard",
                 quantity:     "1",
                 status:       "awaiting_shipment",
                 paid:         true,

@@ -42,5 +42,15 @@ export default async function Integrations(){
     const hasChannelEngine = !!(process.env.ChannelEnginAPIURL && process.env.ChannelEnginAPIKey);
     const gs1ApiKeyDoc = await Settings.findOne({ key: "gs1.apiKey" }).lean();
     const hasGs1 = !!(gs1ApiKeyDoc?.value);
-    return <Main tiktokShops={tiktokShops} apiKeyIntegrations={apiKeyIntegrations} provider={"premierPrinting"} etsyRedirectURI={etsyRedirectURI} shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"} channelEngineConnected={hasChannelEngine} gs1Connected={hasGs1} />;
+    return (
+        <Main
+            tiktokShops={tiktokShops}
+            apiKeyIntegrations={apiKeyIntegrations}
+            provider={"premierPrinting"}
+            etsyRedirectURI={etsyRedirectURI}
+            shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"}
+            channelEngineConnected={hasChannelEngine}
+            gs1Connected={hasGs1}
+        />
+    );
 }

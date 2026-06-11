@@ -11,7 +11,9 @@ import tiktok  from "./tiktoksm.jpeg";
 import etsy    from "./etsy2.jpeg";
 import amazon  from "./amazon.png";
 import acenda  from "./Acenda.png";
-import { TikTokModal }  from "./TikTokModal";
+import { TikTokModal }       from "./TikTokModal";
+import { SanmarModal }       from "./SanmarModal";
+import { SSActivewearModal } from "./SSActivewearModal";
 import { AcendaModal }  from "./AcendaModal";
 import { WalmartModal } from "./WalmartModal";
 import { FaireModal }   from "./FaireModal";
@@ -2614,7 +2616,26 @@ function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin", orgId 
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp, slug, orgId }) {
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp, slug, orgId, supplierSection, showSupplierIntegrations = true }) {
+    const [sanmarOpen,        setSanmarOpen]        = useState(false);
+    const [sanmarIsConnected, setSanmarIsConnected] = useState(false);
+    const [sanmarInfo,        setSanmarInfo]        = useState(null);
+
+    const [ssOpen,        setSSOpen]        = useState(false);
+    const [ssIsConnected, setSSIsConnected] = useState(false);
+    const [ssInfo,        setSSInfo]        = useState(null);
+
+    useEffect(() => {
+        fetch("/api/admin/integrations/sanmar")
+            .then(r => r.json())
+            .then(d => { if (d.connected) { setSanmarIsConnected(true); setSanmarInfo({ customerNumber: d.customerNumber, userName: d.userName }); } })
+            .catch(() => {});
+        fetch("/api/admin/integrations/ssactivewear")
+            .then(r => r.json())
+            .then(d => { if (d.connected) { setSSIsConnected(true); setSSInfo({ accountNumber: d.accountNumber }); } })
+            .catch(() => {});
+    }, []);
+
     const [tikTokOpen,  setTikTokOpen]  = useState(false);
     const [acendaOpen,  setAcendaOpen]  = useState(false);
     const [walmartOpen, setWalmartOpen] = useState(false);
@@ -2916,6 +2937,34 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     </Grid2>
                 </Grid2>
 
+                {/* ── Supplier platforms (Fulfillment Cloud only) ── */}
+                {showSupplierIntegrations && <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2} sx={{ display: "block", mt: 1, mb: 1 }}>
+                    Supplier Integrations
+                </Typography>}
+                {showSupplierIntegrations && <Grid2 container spacing={2.5} sx={{ mb: 5 }}>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/sanmar.svg" alt="SanMar"
+                            logoBg="#1a4c8b"
+                            name="SanMar"
+                            description="Connect your SanMar account to automatically submit purchase orders for SanMar-linked blanks directly from your inventory orders."
+                            connected={sanmarIsConnected}
+                            onClick={sanmarIsConnected ? undefined : () => setSanmarOpen(true)}
+                        />
+                    </Grid2>
+                    <Grid2 size={{ xs: 6, sm: 4, md: 2 }}>
+                        <PlatformCard
+                            logoSrc="/ssactivewear.svg" alt="S&S Activewear"
+                            logoBg="#d32f2f"
+                            name="S&S Activewear"
+                            description="Connect your S&S Activewear account to automatically submit purchase orders for S&S-linked blanks from your inventory orders."
+                            connected={ssIsConnected}
+                            onClick={ssIsConnected ? undefined : () => setSSOpen(true)}
+                        />
+                    </Grid2>
+                    {supplierSection && <Grid2 size={{ xs: 12 }}>{supplierSection}</Grid2>}
+                </Grid2>}
+
                 {/* ── Active connections ── */}
                 <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2}>
                     Active Connections ({allConnections.length + (channelEngineConnected ? 1 : 0) + (gs1IsConnected ? 1 : 0)})
@@ -2952,9 +3001,80 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                         ))}
                     </Stack>
                 )}
+
+                {/* ── Supplier active connections (Fulfillment Cloud only) ── */}
+                {showSupplierIntegrations && (sanmarIsConnected || ssIsConnected) && (
+                    <Box sx={{ mt: 4 }}>
+                        <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2}>
+                            Supplier Active Connections ({(sanmarIsConnected ? 1 : 0) + (ssIsConnected ? 1 : 0)})
+                        </Typography>
+                        <Stack spacing={1.5} sx={{ mt: 1 }}>
+                            {sanmarIsConnected && (
+                                <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                                    <Box sx={{ px: 2.5, py: 1.75, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                                        <img src="/sanmar.svg" alt="SanMar" style={{ height: 28, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />
+                                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                                <Typography variant="subtitle2" fontWeight={700}>SanMar</Typography>
+                                                <Chip label="Supplier" size="small" variant="outlined" sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#6b7280", borderColor: "#e5e7eb" }} />
+                                                <Chip label="Connected" size="small" icon={<CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                                                    sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, "& .MuiChip-icon": { color: "#065f46" } }} />
+                                            </Stack>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Account: {sanmarInfo?.customerNumber} · {sanmarInfo?.userName}
+                                            </Typography>
+                                        </Box>
+                                        <Stack direction="row" spacing={1} flexShrink={0}>
+                                            <Button size="small" variant="outlined" onClick={() => setSanmarOpen(true)}>Edit Credentials</Button>
+                                            <Button size="small" color="error" variant="outlined"
+                                                onClick={async () => {
+                                                    if (!confirm("Disconnect SanMar?")) return;
+                                                    await fetch("/api/admin/integrations/sanmar", { method: "DELETE" });
+                                                    setSanmarIsConnected(false); setSanmarInfo(null);
+                                                }}>
+                                                Disconnect
+                                            </Button>
+                                        </Stack>
+                                    </Box>
+                                </Paper>
+                            )}
+                            {ssIsConnected && (
+                                <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                                    <Box sx={{ px: 2.5, py: 1.75, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                                        <img src="/ssactivewear.svg" alt="S&S Activewear" style={{ height: 28, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} />
+                                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                                                <Typography variant="subtitle2" fontWeight={700}>S&amp;S Activewear</Typography>
+                                                <Chip label="Supplier" size="small" variant="outlined" sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#6b7280", borderColor: "#e5e7eb" }} />
+                                                <Chip label="Connected" size="small" icon={<CheckCircleOutlineIcon sx={{ fontSize: 14 }} />}
+                                                    sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, "& .MuiChip-icon": { color: "#065f46" } }} />
+                                            </Stack>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Account: {ssInfo?.accountNumber}
+                                            </Typography>
+                                        </Box>
+                                        <Stack direction="row" spacing={1} flexShrink={0}>
+                                            <Button size="small" variant="outlined" onClick={() => setSSOpen(true)}>Edit Credentials</Button>
+                                            <Button size="small" color="error" variant="outlined"
+                                                onClick={async () => {
+                                                    if (!confirm("Disconnect S&S Activewear?")) return;
+                                                    await fetch("/api/admin/integrations/ssactivewear", { method: "DELETE" });
+                                                    setSSIsConnected(false); setSSInfo(null);
+                                                }}>
+                                                Disconnect
+                                            </Button>
+                                        </Stack>
+                                    </Box>
+                                </Paper>
+                            )}
+                        </Stack>
+                    </Box>
+                )}
             </Container>
 
             {/* Modals */}
+            <SanmarModal open={sanmarOpen} setOpen={setSanmarOpen} onConnected={info => { setSanmarIsConnected(true); setSanmarInfo(info); }} />
+            <SSActivewearModal open={ssOpen} setOpen={setSSOpen} onConnected={info => { setSSIsConnected(true); setSSInfo(info); }} />
             <TikTokModal  open={tikTokOpen}  setOpen={setTikTokOpen}  provider={provider} orgId={orgId} />
             <AcendaModal  open={acendaOpen}  setOpen={setAcendaOpen}  provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <WalmartModal open={walmartOpen} setOpen={setWalmartOpen} provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />

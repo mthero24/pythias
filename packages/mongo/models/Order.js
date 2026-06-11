@@ -173,6 +173,10 @@ const schema = new mongoose.Schema({
   shopifyShop: { type: String, sparse: true },
   shipByDate: { type: Date },
   discountName: { type: String },
+  customerEmail:   { type: String },
+  taxRate:         { type: Number, default: 0 },
+  embroideryFiles: [{ location: String, dst: String }],
+  inStorePickup:   { type: Boolean, default: false },
 });
 
 // schema.pre("save", async function (next) {

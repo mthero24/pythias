@@ -24,7 +24,11 @@ var schema = new mongoose.Schema({
     items: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: Items,
-    }]
+    }],
+    // SanMar auto-submission
+    submittedToSanmar:  { type: Boolean, default: false },
+    sanmarPONumber:     { type: String, default: "" },
+    sanmarResponse:     { type: String, default: "" },
 })
 
 var InventoryOrders = PremierPrinting.model('InventoryOrders', schema);

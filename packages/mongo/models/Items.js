@@ -134,6 +134,8 @@ const schema = new mongoose.Schema(
     shipByDate: { type: Date },
     discount: { type: Number, default: 0 },
     discountName: { type: String },
+    custom:  { type: Boolean, default: false },
+    dstFile: { type: Object },  // { locationName: dstUrl } — one key per print location
   },
   { suppressWarning: true }
 );

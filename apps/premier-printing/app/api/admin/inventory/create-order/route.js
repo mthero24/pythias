@@ -70,7 +70,7 @@ export async function GET() {
 
     const blankCodes = [...new Set(inventory.map(i => i.style_code))];
     const blanks = await Blanks.find({ code: { $in: blankCodes } })
-        .select("code name colors sizes department")
+        .select("code name colors sizes department sanmarStyle ssActivewearStyle")
         .collation({ locale: "en", strength: 2 })
         .lean();
 

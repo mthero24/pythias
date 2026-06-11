@@ -1,9 +1,10 @@
 "use client";
 import { Card, Typography, Box, Grid2, Chip } from "@mui/material";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import InventoryIcon from "@mui/icons-material/Inventory";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import ErrorIcon from "@mui/icons-material/Error";
+import StorefrontIcon    from "@mui/icons-material/Storefront";
+import InventoryIcon     from "@mui/icons-material/Inventory";
+import WarningAmberIcon  from "@mui/icons-material/WarningAmber";
+import ErrorIcon         from "@mui/icons-material/Error";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -99,6 +100,7 @@ export function Bins({ bins, setBins, setOrder, setAuto, setBin, setShow, setAct
                                         const age = getAge(b.order.date);
                                         const warn = getWarning(age);
                                         const remaining = b.order.items.filter(item => !item.canceled && !item.shipped).length - b.items.length;
+                                        const isPickup = !!b.order.inStorePickup;
                                         return (
                                             <Box
                                                 key={i}
@@ -107,7 +109,7 @@ export function Bins({ bins, setBins, setOrder, setAuto, setBin, setShow, setAct
                                                     setOrder(b.order);
                                                     setBin(b);
                                                     setShow(true);
-                                                    if (isReady) setAction("ship");
+                                                    if (isReady) setAction(isPickup ? "bin/pickup" : "ship");
                                                 }}
                                                 sx={{
                                                     px: 2, py: 1,
@@ -147,11 +149,23 @@ export function Bins({ bins, setBins, setOrder, setAuto, setBin, setShow, setAct
                                                         </Typography>
                                                     </Grid2>
                                                     <Grid2 size={{ md: 2 }} display={{ xs: "none", md: "block" }}>
-                                                        <Chip
-                                                            label={b.order.status}
-                                                            size="small"
-                                                            sx={{ fontSize: "0.7rem", height: 20 }}
-                                                        />
+                                                        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                                                            <Chip
+                                                                label={b.order.status}
+                                                                size="small"
+                                                                sx={{ fontSize: "0.7rem", height: 20 }}
+                                                            />
+                                                            {isPickup && (
+                                                                <Chip
+                                                                    icon={<StorefrontIcon sx={{ fontSize: "12px !important" }} />}
+                                                                    label="Pickup"
+                                                                    size="small"
+                                                                    color="success"
+                                                                    variant="outlined"
+                                                                    sx={{ fontSize: "0.65rem", height: 20 }}
+                                                                />
+                                                            )}
+                                                        </Box>
                                                     </Grid2>
                                                     <Grid2 size={{ lg: 2 }} display={{ xs: "none", lg: "block" }}>
                                                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>

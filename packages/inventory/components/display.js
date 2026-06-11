@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import {
     Box, Grid2, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions,
     Card, Divider, Chip, Accordion, AccordionDetails, AccordionSummary, TextField,
-    Stack, IconButton, InputAdornment, CircularProgress,
+    Stack, IconButton, InputAdornment, CircularProgress, Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import axios from "axios";
@@ -13,6 +13,59 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import SearchIcon from "@mui/icons-material/Search";
 import HistoryIcon from "@mui/icons-material/History";
+import EmailIcon from "@mui/icons-material/Email";
+import DownloadIcon from "@mui/icons-material/Download";
+
+function InvoiceActions({ orderId, poNumber }) {
+    const [showForm, setShowForm] = useState(false);
+    const [email,    setEmail]    = useState("");
+    const [sending,  setSending]  = useState(false);
+    const [sent,     setSent]     = useState(false);
+    const [err,      setErr]      = useState("");
+
+    async function send() {
+        if (!email) return;
+        setSending(true); setErr("");
+        try {
+            const res  = await axios.post("/api/admin/inventory/order/invoice", { orderId, email });
+            if (res.data.ok) { setSent(true); setTimeout(() => { setSent(false); setShowForm(false); setEmail(""); }, 2500); }
+            else setErr(res.data.error || "Failed");
+        } catch (e) {
+            setErr(e.response?.data?.error || "Failed");
+        } finally { setSending(false); }
+    }
+
+    return (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
+            <Tooltip title="Download PDF">
+                <IconButton size="small" component="a" href={`/api/admin/inventory/order/invoice?orderId=${orderId}`} download={`invoice-${poNumber}.pdf`}>
+                    <DownloadIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            <Tooltip title="Email invoice">
+                <IconButton size="small" onClick={() => setShowForm(v => !v)} color={showForm ? "primary" : "default"}>
+                    <EmailIcon fontSize="small" />
+                </IconButton>
+            </Tooltip>
+            {showForm && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                    <TextField
+                        size="small" placeholder="recipient@email.com" type="email"
+                        value={email} onChange={e => setEmail(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && send()}
+                        sx={{ width: 200, "& input": { fontSize: 13 } }}
+                        error={!!err}
+                        helperText={err || undefined}
+                    />
+                    <Button size="small" variant="contained" onClick={send} disabled={sending || !email}
+                        sx={{ bgcolor: "#D3A73D", color: "#111", "&:hover": { bgcolor: "#b8860b" }, whiteSpace: "nowrap", minWidth: 80 }}>
+                        {sent ? "Sent ✓" : sending ? "Sending…" : "Send"}
+                    </Button>
+                </Box>
+            )}
+        </Box>
+    );
+}
 
 function OrderCard({ o, editable, edit, orderEdit, setEdit, setOrderEdit, updateQuantity, deleteItem, setConfirmReceive, receiving }) {
     return (
@@ -30,13 +83,13 @@ function OrderCard({ o, editable, edit, orderEdit, setEdit, setOrderEdit, update
                         <Button
                             size="small"
                             variant={edit && orderEdit === o._id.toString() ? "contained" : "outlined"}
-                            sx={{ ml: "auto" }}
                             onClick={() => { setEdit(p => !p); setOrderEdit(o._id.toString()); }}
                         >
                             {edit && orderEdit === o._id.toString() ? "Done" : "Edit"}
                         </Button>
                     )
                 }
+                <InvoiceActions orderId={o._id.toString()} poNumber={o.poNumber} />
             </Box>
 
             <Box sx={{ p: 1 }}>

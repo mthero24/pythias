@@ -9,6 +9,7 @@ export const metadata = {
         title: "Software for DTF Shops | Pythias Technologies",
         description: "Purpose-built software for DTF print shops — gang sheet queuing, multi-marketplace orders, blank inventory, and automatic shipping labels.",
         url: "https://pythiastechnologies.com/software-for-dtf-shops",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Software for DTF Shops | Pythias Technologies" }],
     },
 };
 

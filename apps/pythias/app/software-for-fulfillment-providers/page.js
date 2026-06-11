@@ -9,6 +9,7 @@ export const metadata = {
         title: "Software for Fulfillment Providers | Pythias Technologies",
         description: "Built for print fulfillment providers — multi-client management, SLA tracking, client-level reporting, and automated order routing from 18+ channels.",
         url: "https://pythiastechnologies.com/software-for-fulfillment-providers",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Software for Fulfillment Providers | Pythias Technologies" }],
     },
 };
 

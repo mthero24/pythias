@@ -5,9 +5,11 @@ export const metadata = {
     description: "Pythias vs Shopify for print-on-demand businesses. Shopify is your storefront. Pythias is the production and fulfillment engine behind it. See why top print shops use both — or why Pythias alone covers more channels.",
     alternates: { canonical: "https://pythiastechnologies.com/compare/pythias-vs-shopify" },
     openGraph: {
+        type: "article",
         title: "Pythias vs Shopify — Print Operations Comparison",
         description: "Shopify runs your store. Pythias runs your production floor, syncs 18+ marketplaces, and ships orders. See the full comparison.",
         url: "https://pythiastechnologies.com/compare/pythias-vs-shopify",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Pythias vs Shopify Comparison" }],
     },
 };
 
@@ -107,10 +109,17 @@ const schema = {
     "dateModified": "2026-06-10",
 };
 
+const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": data.faqs.map(f => ({ "@type": "Question", "name": f.q, "acceptedAnswer": { "@type": "Answer", "text": f.a } })),
+};
+
 export default function Page() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
             <VsLayout {...data} />
         </>
     );

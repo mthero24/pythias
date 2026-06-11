@@ -128,6 +128,8 @@ const SchemaObj = new Schema(
     searchTagKeywords: [{ type: String }],
     searchTagModifiers: [{ type: String }],
     tags: [{ type: String }],
+    sanmarStyle:      { type: String, default: "" },
+    ssActivewearStyle: { type: String, default: "" },
     fixerCode: String,
     kohlsHeader: Object,
     targetHeader: Object,

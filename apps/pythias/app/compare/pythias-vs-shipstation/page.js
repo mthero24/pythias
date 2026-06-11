@@ -5,9 +5,11 @@ export const metadata = {
     description: "Pythias vs ShipStation: a detailed feature-by-feature comparison for print-on-demand businesses. ShipStation handles shipping. Pythias handles everything — production queues, marketplace sync, inventory, labels, and analytics.",
     alternates: { canonical: "https://pythiastechnologies.com/compare/pythias-vs-shipstation" },
     openGraph: {
+        type: "article",
         title: "Pythias vs ShipStation — Print Shop Software Comparison",
         description: "ShipStation is a shipping tool. Pythias is a complete print operations platform. See the full comparison.",
         url: "https://pythiastechnologies.com/compare/pythias-vs-shipstation",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Pythias vs ShipStation Comparison" }],
     },
 };
 
@@ -108,10 +110,17 @@ const schema = {
     "dateModified": "2026-06-10",
 };
 
+const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": data.faqs.map(f => ({ "@type": "Question", "name": f.q, "acceptedAnswer": { "@type": "Answer", "text": f.a } })),
+};
+
 export default function Page() {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
             <VsLayout {...data} />
         </>
     );

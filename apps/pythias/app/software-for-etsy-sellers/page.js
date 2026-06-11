@@ -9,6 +9,7 @@ export const metadata = {
         title: "Software for Etsy Sellers | Pythias Technologies",
         description: "Built for Etsy sellers — automate order routing, protect your Star Seller status, sync tracking, and manage print production from one dashboard.",
         url: "https://pythiastechnologies.com/software-for-etsy-sellers",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Software for Etsy Sellers | Pythias Technologies" }],
     },
 };
 

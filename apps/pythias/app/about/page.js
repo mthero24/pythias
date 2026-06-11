@@ -143,6 +143,35 @@ export default function AboutPage() {
                 </div>
             </section>
 
+            {/* Featured media */}
+            <section style={{ background: "#0f172a", padding: "80px 0" }}>
+                <div className={s.wrap}>
+                    <div style={{ textAlign: "center", marginBottom: 48 }}>
+                        <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#D3A73D", marginBottom: 10 }}>
+                            Featured Podcast
+                        </p>
+                        <h2 style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 800, color: "#fff", letterSpacing: "-0.025em", marginBottom: 12 }}>
+                            Hear from our founder.
+                        </h2>
+                        <p style={{ color: "rgba(255,255,255,0.5)", maxWidth: 520, margin: "0 auto", lineHeight: 1.75, fontSize: "1rem" }}>
+                            We sat down to talk about the chaos inside most print shops, why existing software falls short,
+                            and how Pythias was built to fix it — from the production floor up.
+                        </p>
+                    </div>
+                    <div style={{ maxWidth: 820, margin: "0 auto" }}>
+                        <div style={{ position: "relative", width: "100%", paddingBottom: "56.25%", borderRadius: 16, overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                            <iframe
+                                src="https://www.youtube.com/embed/gNssMTukPQk?rel=0&modestbranding=1"
+                                title="Pythias Technologies Podcast Interview"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none" }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* CTA */}
             <section className={s.cta}>
                 <div className={s.wrapMd}>

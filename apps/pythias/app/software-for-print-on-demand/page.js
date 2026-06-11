@@ -9,6 +9,7 @@ export const metadata = {
         title: "Software for Print on Demand | Pythias Technologies",
         description: "Complete print-on-demand software — automate order routing, production queues, inventory tracking, and shipping labels across 18+ marketplaces.",
         url: "https://pythiastechnologies.com/software-for-print-on-demand",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Software for Print on Demand | Pythias Technologies" }],
     },
 };
 

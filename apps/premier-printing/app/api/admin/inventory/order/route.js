@@ -1,8 +1,49 @@
 import {NextApiRequest, NextResponse} from "next/server"
-import {Blank as Blanks, Item as Items, Inventory, InventoryOrders} from "@pythias/mongo";
+import {Blank as Blanks, Item as Items, Inventory, InventoryOrders, Settings} from "@pythias/mongo";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
+import { getProductInfoByStyleColorSize, preSubmitPO, submitPO, submitSSOrder } from "@pythias/inventory";
+
+async function getSanmarCredentials() {
+    const [cn, un, pw, conn] = await Promise.all([
+        Settings.findOne({ key: "sanmar.customerNumber" }).lean(),
+        Settings.findOne({ key: "sanmar.userName" }).lean(),
+        Settings.findOne({ key: "sanmar.password" }).lean(),
+        Settings.findOne({ key: "sanmar.connected" }).lean(),
+    ]);
+    if (conn?.value !== "true") return null;
+    return { customerNumber: cn?.value, userName: un?.value, password: pw?.value };
+}
+
+async function getSSCredentials() {
+    const [acc, key, conn] = await Promise.all([
+        Settings.findOne({ key: "ssactivewear.accountNumber" }).lean(),
+        Settings.findOne({ key: "ssactivewear.apiKey" }).lean(),
+        Settings.findOne({ key: "ssactivewear.connected" }).lean(),
+    ]);
+    if (conn?.value !== "true") return null;
+    return { accountNumber: acc?.value, apiKey: key?.value };
+}
+
+async function buildSanmarLineItems(sanmarItems, credentials) {
+    const lineItems = [];
+    for (const item of sanmarItems) {
+        // Fetch inventoryKey + sizeIndex from product info
+        const info = await getProductInfoByStyleColorSize(item.style, item.color, item.size, credentials);
+        const product = info.products?.[0];
+        lineItems.push({
+            style:        item.style,
+            color:        item.color,
+            size:         item.size,
+            inventoryKey: product?.INVENTORY_KEY || product?.inventoryKey || "",
+            sizeIndex:    product?.SIZE_INDEX    || product?.sizeIndex    || "",
+            qty:          item.qty,
+            warehouse:    0, // auto-select closest warehouse
+        });
+    }
+    return lineItems;
+}
 
 const recomputeForInventory = async (invId) => {
     const [inv, linkedItems, activeOrders] = await Promise.all([
@@ -120,6 +161,79 @@ export async function POST(req=NextApiRequest){
             })
         }
     }
+    // ── SanMar auto-submission ──────────────────────────────────────────────
+    // Collect all included items whose blank has a sanmarStyle set
+    const sanmarCredentials = await getSanmarCredentials();
+    if (sanmarCredentials) {
+        const sanmarLineData = [];
+        for (const i of data.needsOrdered) {
+            if (!i.included) continue;
+            const inv   = await Inventory.findById(i.inv._id).lean();
+            const blank = await Blanks.findById(inv?.blank).select("sanmarStyle").lean();
+            if (blank?.sanmarStyle) {
+                sanmarLineData.push({
+                    style: blank.sanmarStyle,
+                    color: inv.color_name,
+                    size:  inv.size_name,
+                    qty:   i.order,
+                });
+            }
+        }
+
+        if (sanmarLineData.length > 0) {
+            try {
+                const shipToDoc = await Settings.findOne({ key: "sanmar.shipTo" }).lean();
+                const shipTo    = shipToDoc?.value ? JSON.parse(shipToDoc.value) : { name: "Premier Printing", address1: "", city: "", state: "", zip: "", country: "US" };
+                const lineItems = await buildSanmarLineItems(sanmarLineData, sanmarCredentials);
+
+                // Validate first
+                const preCheck = await preSubmitPO(data.order.poNumber, lineItems, shipTo, sanmarCredentials);
+                if (!preCheck.error) {
+                    const poResult = await submitPO(data.order.poNumber, lineItems, shipTo, sanmarCredentials);
+                    order.submittedToSanmar = !poResult.error;
+                    order.sanmarPONumber    = poResult.sanmarPONumber || "";
+                    order.sanmarResponse    = poResult.message || "";
+                } else {
+                    order.sanmarResponse = `Pre-submit failed: ${preCheck.message}`;
+                }
+            } catch (err) {
+                order.sanmarResponse = `Submission error: ${err.message}`;
+                console.error("[SanMar submitPO]", err);
+            }
+        }
+    }
+    // ── S&S Activewear auto-submission ──────────────────────────────────────
+    const ssCredentials = await getSSCredentials();
+    if (ssCredentials) {
+        const ssLineData = [];
+        for (const i of data.needsOrdered) {
+            if (!i.included) continue;
+            const inv   = await Inventory.findById(i.inv._id).lean();
+            const blank = await Blanks.findById(inv?.blank).select("ssActivewearStyle").lean();
+            if (blank?.ssActivewearStyle) {
+                // SS Activewear SKU format: StyleCode-ColorName-SizeName
+                const sku = `${blank.ssActivewearStyle}-${inv.color_name}-${inv.size_name}`;
+                ssLineData.push({ sku, qty: i.order });
+            }
+        }
+
+        if (ssLineData.length > 0) {
+            try {
+                const shipToDoc = await Settings.findOne({ key: "ssactivewear.shipTo" }).lean();
+                const shipTo    = shipToDoc?.value ? JSON.parse(shipToDoc.value) : { address: "", city: "", state: "", zip: "" };
+                const result    = await submitSSOrder(data.order.poNumber, ssLineData, shipTo, ssCredentials);
+                if (!order.sanmarResponse) order.sanmarResponse = "";
+                order.sanmarResponse += result.error
+                    ? `\nSS Activewear error: ${result.message}`
+                    : `\nSS Activewear order(s): ${result.orderNumbers.join(", ")}`;
+            } catch (err) {
+                order.sanmarResponse = (order.sanmarResponse || "") + `\nSS Activewear error: ${err.message}`;
+                console.error("[SS Activewear submitOrder]", err);
+            }
+        }
+    }
+    // ───────────────────────────────────────────────────────────────────────
+
     console.log(order)
     await order.save()
     logActivity({ action: "inventory_order_create", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email, provider: "premierPrinting" });

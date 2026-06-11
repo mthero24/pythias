@@ -1,6 +1,20 @@
 /* ── Shared ──────────────────────────────────────────────────────── */
-.wrap { max-width: 1200px; margin: 0 auto; }
-.wrapMd { max-width: 900px; margin: 0 auto; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.wrapMd { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Podcast section ─────────────────────────────────────────────── */
+.podcastSection { background: #0f172a; padding: 80px 0; position: relative; overflow: hidden; }
+.podcastInner { display: grid; grid-template-columns: 1fr 1.4fr; gap: 64px; align-items: center; }
+.podcastTag { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #D3A73D; margin-bottom: 16px; }
+.podcastH2 { font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 800; color: #fff; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 16px; }
+.podcastSub { font-size: 1rem; color: rgba(255,255,255,0.5); line-height: 1.75; margin-bottom: 24px; }
+.podcastMeta { display: flex; align-items: center; gap: 10px; }
+.podcastDot { width: 8px; height: 8px; border-radius: 50%; background: #D3A73D; flex-shrink: 0; }
+.podcastMetaText { font-size: 0.82rem; color: rgba(255,255,255,0.35); font-weight: 500; }
+.podcastEmbed { width: 100%; }
+.podcastFrame { position: relative; width: 100%; padding-bottom: 56.25%; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+.podcastFrame iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+@media (max-width: 860px) { .podcastInner { grid-template-columns: 1fr; gap: 36px; } }
 
 .sectionLabel {
   display: block;
@@ -436,3 +450,4 @@
   white-space: nowrap;
 }
 .cloudBtnGhost:hover { background: rgba(255,255,255,0.06); }
+

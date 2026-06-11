@@ -6,6 +6,7 @@ import HowItWorksSection from "./HowItWorksSection";
 import FeaturesSection from "./FeaturesSection";
 import TestimonialsSection from "./TestimonialsSection";
 import LeadCaptureSection from "./LeadCaptureSection";
+import PodcastSection from "./PodcastSection";
 import FAQSection from "./FAQSection";
 import FinalCTASection from "./FinalCTASection";
 import HomePopup from "./HomePopup";
@@ -102,6 +103,7 @@ export default function Home() {
       <HowItWorksSection />
       <FeaturesSection />
       <TestimonialsSection />
+      <PodcastSection />
       <LeadCaptureSection />
       <CalendarBookingSection />
       <FAQSection />

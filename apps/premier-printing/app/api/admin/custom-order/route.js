@@ -1,0 +1,127 @@
+import { NextResponse } from "next/server";
+import { Order, Item } from "@pythias/mongo";
+import { getToken } from "next-auth/jwt";
+import { logActivity, userFromToken } from "@pythias/backend/server";
+import { generatePieceID } from "@pythias/integrations";
+
+async function uniquePieceId() {
+    let id, exists = true;
+    while (exists) {
+        id = generatePieceID();
+        exists = await Item.exists({ pieceId: id });
+    }
+    return id;
+}
+
+// GET /api/admin/custom-order?q=search&skip=0
+export async function GET(request) {
+    const { searchParams } = new URL(request.url);
+    const q     = searchParams.get("q") || "";
+    const skip  = parseInt(searchParams.get("skip") || "0");
+    const limit = 25;
+
+    const filter = { marketplace: "custom" };
+    if (q) {
+        filter.$or = [
+            { poNumber:      { $regex: q, $options: "i" } },
+            { "shippingAddress.name": { $regex: q, $options: "i" } },
+            { customerEmail: { $regex: q, $options: "i" } },
+        ];
+    }
+
+    const [orders, total] = await Promise.all([
+        Order.find(filter).sort({ date: -1 }).skip(skip).limit(limit).populate("items").lean(),
+        Order.countDocuments(filter),
+    ]);
+    return NextResponse.json({ orders, total });
+}
+
+// POST /api/admin/custom-order — create Order + Items
+export async function POST(request) {
+    const token = await getToken({ req: request });
+    const { userName, email } = userFromToken(token);
+    const data = await request.json();
+
+    const subtotal = (data.items || []).reduce((s, i) => s + (i.quantity || 0) * (i.unitPrice || 0), 0);
+    const tax      = subtotal * (data.taxRate || 0);
+    const total    = subtotal + (data.shippingCost || 0) + tax;
+
+    const orderId  = `CUSTOM-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+
+    // Collect DST files from designs that have them
+    const embroideryFiles = (data.designs || [])
+        .filter(d => d.location && d.dst)
+        .map(d => ({ location: d.location, dst: d.dst }));
+
+    const order = new Order({
+        orderId,
+        poNumber:      data.poNumber,
+        marketplace:   "custom order",
+        status:        "custom_pending",
+        paid:          false,
+        date:          new Date(),
+        shipByDate:    data.dateNeeded ? new Date(data.dateNeeded) : null,
+        shippingType:  data.inStorePickup ? "In-Store Pickup" : (data.shippingType || "Standard"),
+        inStorePickup: !!data.inStorePickup,
+        total,
+        shippingCost:  data.shippingCost || 0,
+        taxRate:       data.taxRate      || 0,
+        customerEmail: data.customerEmail || "",
+        shippingAddress: {
+            name:     data.customer?.name     || "",
+            phone:    data.customer?.phone    || "",
+            address1: data.customer?.address?.street || "",
+            address2: data.customer?.company  || "",
+            city:     data.customer?.address?.city   || "",
+            state:    data.customer?.address?.state  || "",
+            zip:      data.customer?.address?.zip    || "",
+            country:  data.customer?.address?.country || "US",
+        },
+        notes:           data.notes ? [{ note: data.notes, date: new Date(), userName }] : [],
+        embroideryFiles: embroideryFiles.length ? embroideryFiles : [],
+    });
+
+    // DST map from order-level designs { locationName: dstUrl }
+    const dstMap = {};
+    for (const d of (data.designs || [])) {
+        if (d.location && d.dst) dstMap[d.location] = d.dst;
+    }
+    const dstFileObj = Object.keys(dstMap).length ? dstMap : null;
+
+    // Create one Item per unit per line
+    const itemIds = [];
+    for (const line of (data.items || [])) {
+        const qty = Math.max(1, parseInt(line.quantity) || 1);
+        for (let u = 0; u < qty; u++) {
+            const item = new Item({
+                pieceId:    await uniquePieceId(),
+                status:     "custom_pending",
+                paid:       false,
+                custom:     true,
+                order:      order._id,
+                poNumber:   data.poNumber,
+                blank:      line.blank || null,
+                styleCode:  line.styleCode || "",
+                colorName:  line.color    || "",
+                sizeName:   line.size     || "",
+                price:      line.unitPrice || 0,
+                quantity:   "1",
+                type:       line.printType || "",
+                design:     line.design && Object.keys(line.design).length ? line.design : undefined,
+                dstFile:    dstFileObj || undefined,
+                designRef:  null,
+                date:       new Date(),
+                shipByDate: data.dateNeeded ? new Date(data.dateNeeded) : null,
+            });
+            await item.save();
+            itemIds.push(item._id);
+        }
+    }
+
+    order.items = itemIds;
+    await order.save();
+
+    logActivity({ action: "custom_order_create", entity: "order", entityId: order._id, entityName: data.poNumber || "", userName, email, provider: "premierPrinting" });
+    const populated = await Order.findById(order._id).populate("items").lean();
+    return NextResponse.json({ order: populated });
+}

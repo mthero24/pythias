@@ -9,6 +9,7 @@ export const metadata = {
         title: "Software for DTG Shops | Pythias Technologies",
         description: "Built for direct-to-garment shops — color profile routing, art file management, multi-marketplace orders, and automatic shipping labels.",
         url: "https://pythiastechnologies.com/software-for-dtg-shops",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Software for DTG Shops | Pythias Technologies" }],
     },
 };
 

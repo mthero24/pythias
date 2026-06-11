@@ -1,6 +1,7 @@
 import EditablePolygon from "./components/blanks/test";
 import Footer from "./components/reusable/Footer";
 export { isSingleItem, isShipped, canceled } from "./functions/itemFunctions.js";
+export { upscaleImage } from "./functions/upscale.js";
 export { createImage } from "./functions/image.js";
 export { CreateSku } from "./functions/CreateSku.js";
 
@@ -14,6 +15,7 @@ export {Search} from "./components/design/Search";
 export {Footer} from "./components/reusable/Footer";
 export {serialize} from "./functions/serialize";
 export {Uploader} from "./components/reusable/uploader";
+export {UpscaleButton} from "./components/reusable/UpscaleButton";
 export {default as LoaderOverlay} from "./components/reusable/LoaderOverlay";
 export {downloadProduct, preCacheImages} from "./functions/download";
 export {saveProducts} from "./functions/saveProduct";
@@ -60,3 +62,6 @@ export { LabelSettingsMain } from "./components/settings/LabelSettingsMain";
 export { PicklistSettingsMain } from "./components/settings/PicklistSettingsMain";
 export { BrandsMain } from "./components/brands/BrandsMain";
 export { CreateNFProduct } from "./components/product/CreateNFProduct";
+export { CustomOrderBuilder }      from "./components/orders/CustomOrderBuilder";
+export { CustomOrdersList }        from "./components/orders/CustomOrdersList";
+export { EmbroideryDesignPicker }  from "./components/orders/EmbroideryDesignPicker";

@@ -3,9 +3,9 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Link from "next/link";
 
 export const metadata = {
-    title: "Marketplace Integrations — Every Channel You Sell On",
-    description: "Pythias connects your print-on-demand fulfillment to Amazon, Walmart, eBay, Etsy, Shopify, Wix, WooCommerce, Squarespace, TikTok Shop, Faire, SHEIN, Temu, Noon, bol.com, and more — with automatic order sync and shipping confirmation.",
-    keywords: "print on demand integrations, Amazon fulfillment, Walmart marketplace, eBay seller, Etsy fulfillment, Shopify print on demand, TikTok Shop, Faire wholesale, SHEIN vendor, marketplace integration",
+    title: "Integrations — Every Marketplace and Supplier Connected",
+    description: "Pythias connects your print-on-demand fulfillment to Amazon, Walmart, eBay, Etsy, Shopify, TikTok Shop, and more — plus direct supplier integrations with SanMar and S&S Activewear for automatic purchase orders.",
+    keywords: "print on demand integrations, Amazon fulfillment, Walmart marketplace, eBay seller, Etsy fulfillment, Shopify print on demand, TikTok Shop, SanMar integration, SS Activewear integration, supplier catalog integration",
     openGraph: {
         title: "Integrations | Pythias Technologies",
         description: "Connect your print-on-demand operation to every marketplace — automatic order sync, production routing, and shipping confirmation.",
@@ -257,6 +257,30 @@ const CATEGORIES = [
                 description: "The UK's fastest-growing marketplace and a strong Amazon alternative for British shoppers. Direct seller API integration.",
                 highlight: "UK Market",
                 href: "https://www.onbuy.com/gb/sell-on-onbuy/",
+            },
+        ],
+    },
+    {
+        label: "Supplier Catalogs",
+        description: "Connect your blank suppliers to order inventory directly from your production dashboard — no manual POs.",
+        integrations: [
+            {
+                name: "SanMar",
+                logo: "/sanmar.svg",
+                logoBg: "#1a4c8b",
+                status: "live",
+                description: "Connect your SanMar account to browse their full catalog of 3,000+ styles, link blanks to SanMar style codes, and automatically submit purchase orders when you restock from the inventory page.",
+                highlight: "SOAP API",
+                href: "https://www.sanmar.com",
+            },
+            {
+                name: "S&S Activewear",
+                logo: "/ssactivewear.svg",
+                logoBg: "#d32f2f",
+                status: "live",
+                description: "Connect your S&S Activewear account to link blanks to S&S style codes and submit purchase orders automatically from the inventory page — including Alpha Broder catalog access.",
+                highlight: "REST API",
+                href: "https://www.ssactivewear.com",
             },
         ],
     },

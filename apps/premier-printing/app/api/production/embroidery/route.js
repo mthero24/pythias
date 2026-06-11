@@ -75,10 +75,21 @@ export async function POST(req = NextApiRequest) {
     }).populate("designRef", "embroideryFiles").populate("blank", "code envelopes box sizes multiImages")
     console.log(item, "item", item.color, "item color")
     if (item && !item.canceled) {
-        await Promise.all(Object.keys(item.designRef.embroideryFiles).map(async key => {
-            if (key != undefined && item.designRef.embroideryFiles[key]) {
+        // ── Resolve DST source ─────────────────────────────────────────────────
+        // Custom orders store DSTs in item.dstFile (JSON: { locationName: url })
+        // Regular orders use designRef.embroideryFiles
+        let dstFiles = {}; // { key: url }
+        if (item.custom && item.dstFile) {
+            dstFiles = item.dstFile; // already an Object: { locationName: dstUrl }
+        } else if (item.designRef?.embroideryFiles) {
+            dstFiles = item.designRef.embroideryFiles;
+        }
+
+        // Send each DST file to the embroidery printer
+        await Promise.all(Object.entries(dstFiles).map(async ([key, url]) => {
+            if (url) {
                 await sendFile({
-                    url: item.designRef.embroideryFiles[key],
+                    url,
                     pieceID: `${item.pieceId}-${key}`,
                     style: item.blank.code,
                     styleSize: item.sizeName,
@@ -87,15 +98,16 @@ export async function POST(req = NextApiRequest) {
                     printer: data.printer,
                     key: sc.localKey,
                     localIP: sc.localIP
-                })
+                });
             }
-        }))
+        }));
 
-        // Queue DST file on the Tajima spooler if present
-        if (item.designRef?.embroideryFiles?.dst) {
+        // Queue the first DST on the Tajima spooler
+        const tajimaUrl = dstFiles.dst || Object.values(dstFiles).find(Boolean);
+        if (tajimaUrl) {
             try {
-                const dstRes = await axios.get(item.designRef.embroideryFiles.dst, { responseType: "arraybuffer" });
-                const dstBase64 = Buffer.from(dstRes.data).toString("base64");
+                const dstRes = await axios.get(tajimaUrl, { responseType: "arraybuffer" });
+                const dstBase64  = Buffer.from(dstRes.data).toString("base64");
                 const designName = `${item.pieceId}-${item.sku}.dst`;
                 await axios.post(
                     `http://${sc.localIP}/api/tajima/send`,

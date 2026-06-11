@@ -16,7 +16,7 @@ import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 
-export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue }) {
+export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue, sanmarConnected, ssConnected }) {
     const [fullStyles, setFullStyles] = useState(bla);
     const [styles, setStyles]         = useState(bla);
     const [items, setItems]           = useState(it);
@@ -292,6 +292,8 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue
                 blanks={fullStyles} items={items}
                 setBlanks={setFullStyles} setItems={setItems}
                 defaultLocation={defaultLocation}
+                sanmarConnected={sanmarConnected}
+                ssConnected={ssConnected}
             />
             <Footer fixed={true} />
         </Box>

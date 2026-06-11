@@ -9,6 +9,7 @@ export const metadata = {
         title: "Software for Embroidery Businesses | Pythias Technologies",
         description: "Built for embroidery shops — machine queue management, DST file routing, thread inventory, multi-marketplace orders, and shipping automation.",
         url: "https://pythiastechnologies.com/software-for-embroidery-businesses",
+        images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Software for Embroidery Businesses | Pythias Technologies" }],
     },
 };
 

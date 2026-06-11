@@ -81,7 +81,9 @@ export async function POST(req= NextApiRequest){
                 res.msg = "Order already shipped"
                 console.log(res)
             }else{
-                if(isSingleItem(item)) {
+                const isPickup = !!res.order.inStorePickup;
+                // In-store pickup: always bin (even single items — no shipping label)
+                if(isSingleItem(item) && !isPickup) {
                     console.log(item, "item")
                     res.activate = "ship"
                     if(item.order.shippingType == "Standard" || item.order.shippingType == "Expedited"){
@@ -96,8 +98,9 @@ export async function POST(req= NextApiRequest){
                     res.item = addResult.item;
                     res.bin = addResult.bin
                     res.bin.ready = isReady(res.bin)
-                    if(res.bin.ready) res.activate = "bin/ship"
-                    //console.log(res.item)
+                    if(res.bin.ready) {
+                        res.activate = isPickup ? "bin/pickup" : "bin/ship"
+                    }
                     if (!item.steps) item.steps = [];
                     res.item.steps.push({
                         status: `In Bin ${res.bin.number}`,
@@ -115,9 +118,10 @@ export async function POST(req= NextApiRequest){
                 res.bin.ready = isReady(res.bin)
                 await res.bin.save()
             }
-            res.activate = "ship"
+            res.activate = order.inStorePickup ? "bin/pickup" : "ship"
         }else if(bin){
             res.order = bin.order
+            if(bin.order?.inStorePickup && bin.ready) res.activate = "bin/pickup"
         }
         console.log(res.activate, "activate")
         return NextResponse.json({...res})
