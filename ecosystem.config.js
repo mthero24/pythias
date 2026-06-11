@@ -309,9 +309,8 @@ module.exports = {
     {
       name: "embroidery-service",
       cwd: "services/embroidery",
-      script: "uvicorn",
-      args: "api:app --host 0.0.0.0 --port 8765",
-      interpreter: "none",
+      script: "start.sh",
+      interpreter: "bash",
       exec_mode: "fork",
       instances: 1,
       autorestart: true,
