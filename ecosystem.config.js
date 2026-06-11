@@ -306,6 +306,23 @@ module.exports = {
       min_uptime: "60s",
       max_restarts: 5,
     },
+    {
+      name: "embroidery-service",
+      cwd: "services/embroidery",
+      script: "uvicorn",
+      args: "api:app --host 0.0.0.0 --port 8765",
+      interpreter: "none",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      out_file: "logs/embroidery-out.log",
+      error_file: "logs/embroidery-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+      min_uptime: "10s",
+      max_restarts: 5,
+    },
   ],
 };
   
