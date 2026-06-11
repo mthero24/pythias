@@ -51,5 +51,5 @@ def stitches_to_dst(color_layers, output_path):
         pattern.add_command(pyembroidery.TRIM)
 
     pattern.add_command(pyembroidery.END)
-    pattern.write_embroidery("dst", output_path)
+    pyembroidery.write_embroidery("dst", pattern, output_path)
     return output_path
