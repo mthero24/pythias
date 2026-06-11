@@ -6,8 +6,8 @@ bezier curves with line segments, then builds Shapely Polygons.
 """
 
 import math
-from fonttools.ttLib import TTFont
-from fonttools.pens.recordingPen import RecordingPen
+from fontTools.ttLib import TTFont
+from fontTools.pens.recordingPen import RecordingPen
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
