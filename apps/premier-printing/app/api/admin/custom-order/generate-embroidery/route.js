@@ -36,20 +36,27 @@ export async function POST(request) {
 
         const ts = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-        // 1. Vectorize the artwork
-        const vecRes = await axios.post(`${EMB}/vectorize`, {
-            url:      artworkUrl,
-            width_mm: widthMm,
-        }, { timeout: 60000 });
+        // 1. Fetch the artwork as a buffer
+        const imgRes = await axios.get(artworkUrl, { responseType: "arraybuffer", timeout: 30000 });
+        const imgBuffer = Buffer.from(imgRes.data);
+        const imgContentType = imgRes.headers["content-type"] || "image/png";
+        const imgExt = imgContentType.includes("jpeg") ? "jpg" : "png";
 
-        const { job_id, preview_svg, layers } = vecRes.data;
+        // 2. Vectorize via multipart file upload
+        const formData = new FormData();
+        formData.append("file", new Blob([imgBuffer], { type: imgContentType }), `artwork.${imgExt}`);
+        formData.append("size_mm", String(widthMm));
+
+        const vecFetch = await fetch(`${EMB}/vectorize`, { method: "POST", body: formData });
+        if (!vecFetch.ok) {
+            const errText = await vecFetch.text();
+            return NextResponse.json({ error: errText }, { status: 500 });
+        }
+        const { job_id, preview_svg, layers } = await vecFetch.json();
         if (!job_id) return NextResponse.json({ error: "Vectorize failed — no job_id returned" }, { status: 500 });
 
-        // Auto-select closest thread per layer
-        const colors = (layers || []).map(l => ({
-            index:      l.index,
-            thread_hex: l.closest_thread?.hex || l.color_hex,
-        }));
+        // Auto-select closest thread per layer — API expects plain hex strings in layer order
+        const colors = (layers || []).map(l => l.closest_thread?.hex || l.color_hex || "");
 
         // 2. Generate DST binary
         const dstRes = await axios.post(`${EMB}/generate/from-job`, {
