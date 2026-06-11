@@ -141,4 +141,48 @@
 .ctaBtnGhost { border: 1.5px solid rgba(255,255,255,0.22); color: rgba(255,255,255,0.75); font-weight: 600; padding: 15px 38px; border-radius: 10px; font-size: 1rem; text-decoration: none; transition: border-color 0.2s, background 0.2s; display: inline-block; }
 .ctaBtnGhost:hover { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.05); }
 
+/* ── Screenshots ── */
+.screenshotsSection { background: #f8fafc; padding: 80px 0; border-top: 1px solid #f1f5f9; }
+.screenshotsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+.screenshotCard { border-radius: 16px; overflow: hidden; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 4px 24px rgba(0,0,0,0.07); transition: box-shadow 0.2s, transform 0.2s; }
+.screenshotCard:hover { box-shadow: 0 8px 36px rgba(0,0,0,0.12); transform: translateY(-4px); }
+.screenshotCard:nth-child(1) { grid-column: 1 / 3; }
+.screenshotCard:nth-child(2) { grid-column: 3 / 5; }
+.screenshotCard:nth-child(3) { grid-column: 2 / 4; }
+.screenshotImg { width: 100%; height: auto; display: block; aspect-ratio: 16/10; object-fit: cover; background: #e5e7eb; }
+.screenshotCaption { padding: 18px 22px; }
+.screenshotCaptionTitle { font-size: 0.95rem; font-weight: 700; color: #111827; margin-bottom: 5px; }
+.screenshotCaptionSub   { font-size: 0.82rem; color: #6b7280; line-height: 1.55; }
+@media (max-width: 800px) { .screenshotsGrid { grid-template-columns: 1fr; } .screenshotCard:nth-child(1), .screenshotCard:nth-child(2), .screenshotCard:nth-child(3) { grid-column: 1; } }
+
+/* ── Demo video ── */
+.videoSection { background: #0f172a; padding: 80px 0; position: relative; overflow: hidden; }
+.videoGlow { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(211,167,61,0.08) 0%, transparent 65%); pointer-events: none; }
+.videoContainer { position: relative; max-width: 820px; margin: 0 auto; padding: 0 24px; }
+.videoFrame { position: relative; width: 100%; padding-bottom: 56.25%; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+.videoFrame iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+/* ── Decision guide ── */
+.decideSection { background: #fff; padding: 80px 0; border-top: 1px solid #f1f5f9; }
+.decideGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.decideCard { border-radius: 20px; padding: 36px 32px; border: 1.5px solid; }
+.decideCardFC { background: linear-gradient(135deg, #0f172a, #1e293b); border-color: rgba(211,167,61,0.3); }
+.decideCardCC { background: #f8fafc; border-color: #e5e7eb; }
+.decideIcon  { font-size: 2rem; display: block; margin-bottom: 14px; }
+.decideTitle { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+.decideTitleLight { color: #fff; }
+.decideTitleDark  { color: #111827; }
+.decideSub   { font-size: 0.875rem; line-height: 1.65; margin-bottom: 20px; }
+.decideSubLight { color: rgba(255,255,255,0.55); }
+.decideSubDark  { color: #6b7280; }
+.decideList  { list-style: none; padding: 0; margin: 0 0 24px; display: flex; flex-direction: column; gap: 9px; }
+.decideItem  { font-size: 0.85rem; display: flex; gap: 8px; align-items: flex-start; }
+.decideItemLight { color: rgba(255,255,255,0.75); }
+.decideItemDark  { color: #374151; }
+.decideBtnGold   { display: inline-block; background: #D3A73D; color: #111; font-weight: 700; padding: 11px 24px; border-radius: 10px; font-size: 0.875rem; text-decoration: none; transition: background 0.2s; }
+.decideBtnGold:hover { background: #b8860b; }
+.decideBtnIndigo { display: inline-block; background: #6366f1; color: #fff; font-weight: 700; padding: 11px 24px; border-radius: 10px; font-size: 0.875rem; text-decoration: none; transition: background 0.2s; }
+.decideBtnIndigo:hover { background: #4f46e5; }
+@media (max-width: 700px) { .decideGrid { grid-template-columns: 1fr; } }
+
 @media (min-width: 768px) { .hero { padding: 112px 0 96px; } .section { padding: 96px 0; } .sectionDark { padding: 96px 0; } .head { margin-bottom: 72px; } }

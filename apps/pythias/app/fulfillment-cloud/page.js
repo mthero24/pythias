@@ -1,5 +1,7 @@
 import Link from "next/link";
 import s from "./fulfillment-cloud.module.css";
+import ScreenshotGallery from "../solutions/ScreenshotGallery";
+import { Tutorial } from "@pythias/mongo";
 
 export const metadata = {
     title: "Pythias Fulfillment Cloud — The Production OS for Print Shops",
@@ -222,7 +224,14 @@ const breadcrumbSchema = {
     ],
 };
 
-export default function FulfillmentCloudPage() {
+export default async function FulfillmentCloudPage() {
+    let walkthrough = null;
+    try {
+        walkthrough = await Tutorial.findOne({ videoType: "walkthrough", targetPage: "/fulfillment-cloud", published: true })
+            .select("videoUrl title description thumbnailUrl")
+            .lean();
+    } catch { /* db unavailable — skip the section */ }
+
     return (
         <div className={s.bg}>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageSchema) }} />
@@ -375,6 +384,47 @@ export default function FulfillmentCloudPage() {
                 </div>
             </section>
 
+            {/* ── Screenshots ── */}
+            <section className={s.screenshotsSection}>
+                <div className={s.wrap}>
+                    <div className={s.head}>
+                        <p className={s.sectionTag}>Platform Screenshots</p>
+                        <h2 className={s.h2}>See exactly what your team will use every day.</h2>
+                        <p className={s.sectionSub}>Fulfillment Cloud is designed to be used on the production floor — clean, fast, and scannable without training.</p>
+                    </div>
+                    <ScreenshotGallery screenshots={[
+                        { src: "https://images1.pythiastechnologies.com/screenshots/fc-production-queue.png", title: "Production Queue",    sub: "All orders sorted by deadline, print type, and priority — your team always knows what to work on next." },
+                        { src: "https://images1.pythiastechnologies.com/screenshots/fc-order-detail.png",     title: "Order Detail View",   sub: "Every job shows the design file, blank spec, size, and shipping destination in one scan-ready view." },
+                        { src: "https://images1.pythiastechnologies.com/screenshots/fc-analytics.png",        title: "Analytics Dashboard", sub: "Daily output, revenue by channel, and inventory levels — all in one place without building a single report." },
+                    ]} />
+                </div>
+            </section>
+
+            {/* ── Demo video — only shown once a walkthrough is uploaded ── */}
+            {walkthrough && (
+                <section className={s.videoSection}>
+                    <div className={s.videoGlow} />
+                    <div className={s.wrap} style={{ position: "relative" }}>
+                        <div className={s.head}>
+                            <p className={s.sectionTag}>See It In Action</p>
+                            <h2 className={s.h2Light}>{walkthrough.title || "Watch a full walkthrough of Fulfillment Cloud."}</h2>
+                            {walkthrough.description && <p className={s.sectionSubLight}>{walkthrough.description}</p>}
+                        </div>
+                    </div>
+                    <div className={s.videoContainer}>
+                        <div className={s.videoFrame}>
+                            <video
+                                src={walkthrough.videoUrl}
+                                poster={walkthrough.thumbnailUrl || undefined}
+                                controls
+                                preload="metadata"
+                                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                            />
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* ── Pricing ── */}
             <section id="pricing" className={s.section}>
                 <div className={s.wrap}>
@@ -509,6 +559,55 @@ export default function FulfillmentCloudPage() {
                                 </div>
                             </li>
                         ))}
+                    </ul>
+                </div>
+            </section>
+
+            {/* ── Decision guide ── */}
+            <section className={s.decideSection}>
+                <div className={s.wrap}>
+                    <div className={s.head}>
+                        <p className={s.sectionTag}>Not Sure Which Is Right?</p>
+                        <h2 className={s.h2}>Fulfillment Cloud vs. Commerce Cloud.</h2>
+                        <p className={s.sectionSub}>One question decides it: do you own production equipment, or do you want to sell without it?</p>
+                    </div>
+                    <ul className={s.decideGrid} style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                        <li className={`${s.decideCard} ${s.decideCardFC}`}>
+                            <span className={s.decideIcon}>🏭</span>
+                            <h3 className={`${s.decideTitle} ${s.decideTitleLight}`}>Choose Fulfillment Cloud</h3>
+                            <p className={`${s.decideSub} ${s.decideSubLight}`}>You run the production floor. Fulfillment Cloud runs the software that manages it.</p>
+                            <ul className={s.decideList}>
+                                {[
+                                    "You own DTG printers, embroidery machines, or other equipment",
+                                    "You have production staff and a physical facility",
+                                    "You want to manage orders, inventory, and shipping from one platform",
+                                    "You may want to accept overflow orders from Commerce Cloud sellers",
+                                ].map(item => (
+                                    <li key={item} className={`${s.decideItem} ${s.decideItemLight}`}>
+                                        <span style={{ color: "#D3A73D", flexShrink: 0 }}>✓</span>{item}
+                                    </li>
+                                ))}
+                            </ul>
+                            <Link href="/#calendar-booking-section" className={s.decideBtnGold}>Book a Fulfillment Cloud Demo →</Link>
+                        </li>
+                        <li className={`${s.decideCard} ${s.decideCardCC}`}>
+                            <span className={s.decideIcon}>🛍️</span>
+                            <h3 className={`${s.decideTitle} ${s.decideTitleDark}`}>Choose Commerce Cloud</h3>
+                            <p className={`${s.decideSub} ${s.decideSubDark}`}>You own the brand and the customer. Fulfillment partners handle everything physical.</p>
+                            <ul className={s.decideList}>
+                                {[
+                                    "You want to sell products without owning production equipment",
+                                    "You're expanding into new categories without capital risk",
+                                    "You sell across multiple marketplaces and want one dashboard",
+                                    "You want orders fulfilled automatically with no vendor coordination",
+                                ].map(item => (
+                                    <li key={item} className={`${s.decideItem} ${s.decideItemDark}`}>
+                                        <span style={{ color: "#6366f1", flexShrink: 0 }}>✓</span>{item}
+                                    </li>
+                                ))}
+                            </ul>
+                            <Link href="/commerce-cloud" className={s.decideBtnIndigo}>Learn About Commerce Cloud →</Link>
+                        </li>
                     </ul>
                 </div>
             </section>

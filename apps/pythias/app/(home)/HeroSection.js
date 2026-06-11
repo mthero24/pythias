@@ -31,8 +31,8 @@ export default function HeroSection() {
                             <a href="#calendar-booking-section" className={s.btnGold}>
                                 Book a Free Demo
                             </a>
-                            <a href="/pricing" className={s.btnWhiteOutline}>
-                                See Pricing
+                            <a href="https://platform.pythiastechnologies.com/register" className={s.btnWhiteOutline}>
+                                Start Free Trial
                             </a>
                         </div>
                         <p className={s.heroCta}>

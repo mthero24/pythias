@@ -1,5 +1,7 @@
 import Link from "next/link";
 import s from "./commerce-cloud.module.css";
+import { Tutorial } from "@pythias/mongo";
+import ScreenshotGallery from "../solutions/ScreenshotGallery";
 
 export const metadata = {
     title: "Pythias Commerce Cloud — Sell Anywhere. Fulfill Everywhere.",
@@ -204,7 +206,14 @@ const breadcrumbSchema = {
     ],
 };
 
-export default function CommerceCloudPage() {
+export default async function CommerceCloudPage() {
+    let walkthrough = null;
+    try {
+        walkthrough = await Tutorial.findOne({ videoType: "walkthrough", targetPage: "/commerce-cloud", published: true })
+            .select("videoUrl title description thumbnailUrl")
+            .lean();
+    } catch { /* db unavailable — skip the section */ }
+
     return (
         <div className={s.bg}>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageSchema) }} />
@@ -266,28 +275,7 @@ export default function CommerceCloudPage() {
                 </div>
             </section>
 
-            {/* ── How it works ── */}
-            <section className={s.section}>
-                <div className={s.wrap}>
-                    <div className={s.head}>
-                        <p className={s.sectionTag}>How It Works</p>
-                        <h2 className={s.h2}>From store connection to customer delivery — <span style={{ color: "#D3A73D" }}>automated.</span></h2>
-                        <p className={s.sectionSub}>Three steps to get your first Commerce Cloud order fulfilled.</p>
-                    </div>
-                    <ul className={s.steps} style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                        {STEPS.map((step) => (
-                            <li key={step.num} className={s.step}>
-                                <div className={s.stepNum}>{step.num}</div>
-                                <span className={s.stepIcon}>{step.icon}</span>
-                                <h3 className={s.stepTitle}>{step.title}</h3>
-                                <p className={s.stepDesc}>{step.desc}</p>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </section>
-
-            {/* ── No warehouse needed ── */}
+            {/* ── No warehouse needed (Problem) ── */}
             <section className={s.sectionDark}>
                 <div className={s.sectionGlow} />
                 <div className={s.sectionGlow2} />
@@ -331,6 +319,27 @@ export default function CommerceCloudPage() {
                 </div>
             </section>
 
+            {/* ── How it works (Solution) ── */}
+            <section className={s.section}>
+                <div className={s.wrap}>
+                    <div className={s.head}>
+                        <p className={s.sectionTag}>How It Works</p>
+                        <h2 className={s.h2}>From store connection to customer delivery — <span style={{ color: "#D3A73D" }}>automated.</span></h2>
+                        <p className={s.sectionSub}>Three steps to get your first Commerce Cloud order fulfilled.</p>
+                    </div>
+                    <ul className={s.steps} style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                        {STEPS.map((step) => (
+                            <li key={step.num} className={s.step}>
+                                <div className={s.stepNum}>{step.num}</div>
+                                <span className={s.stepIcon}>{step.icon}</span>
+                                <h3 className={s.stepTitle}>{step.title}</h3>
+                                <p className={s.stepDesc}>{step.desc}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </section>
+
             {/* ── Features ── */}
             <section className={s.section}>
                 <div className={s.wrap}>
@@ -350,6 +359,47 @@ export default function CommerceCloudPage() {
                     </ul>
                 </div>
             </section>
+
+            {/* ── Screenshots ── */}
+            <section className={s.screenshotsSection}>
+                <div className={s.wrap}>
+                    <div className={s.head}>
+                        <p className={s.sectionTag}>Platform Screenshots</p>
+                        <h2 className={s.h2}>Everything managed from one clean dashboard.</h2>
+                        <p className={s.sectionSub}>Commerce Cloud gives you full visibility into every order, every channel, and every fulfillment partner — without touching a single spreadsheet.</p>
+                    </div>
+                    <ScreenshotGallery screenshots={[
+                        { src: "https://images1.pythiastechnologies.com/screenshots/cc-order-routing.png",  title: "Order Routing Dashboard", sub: "See every order as it routes to a fulfillment partner — with routing score, partner selected, and expected ship date." },
+                        { src: "https://images1.pythiastechnologies.com/screenshots/cc-product-studio.png", title: "Product Studio",           sub: "Build products, upload designs, set pricing, and push listings to every connected store in minutes." },
+                        { src: "https://images1.pythiastechnologies.com/screenshots/cc-analytics.png",      title: "Channel Analytics",        sub: "Revenue, margin, and fulfillment rate broken down by channel — so you know where to focus your selling." },
+                    ]} />
+                </div>
+            </section>
+
+            {/* ── Demo video — only shown once a walkthrough is uploaded ── */}
+            {walkthrough && (
+                <section className={s.videoSection}>
+                    <div className={s.videoGlow} />
+                    <div className={s.wrap} style={{ position: "relative" }}>
+                        <div className={s.head}>
+                            <p className={s.sectionTag}>See It In Action</p>
+                            <h2 className={s.h2Light}>{walkthrough.title || "Watch how Commerce Cloud handles your first order end-to-end."}</h2>
+                            {walkthrough.description && <p className={s.sectionSubLight}>{walkthrough.description}</p>}
+                        </div>
+                    </div>
+                    <div className={s.videoContainer}>
+                        <div className={s.videoFrame}>
+                            <video
+                                src={walkthrough.videoUrl}
+                                poster={walkthrough.thumbnailUrl || undefined}
+                                controls
+                                preload="metadata"
+                                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                            />
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* ── Pricing ── */}
             <section className={s.sectionDark}>

@@ -21,6 +21,7 @@ import AppsIcon from "@mui/icons-material/Apps";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import ImageIcon from "@mui/icons-material/Image";
 import Link from "next/link";
 
 const DRAWER_WIDTH = 240;
@@ -31,13 +32,14 @@ const NAV_ITEMS = [
     { label: "Analytics",        href: "/admin/analytics",        icon: <BarChartIcon fontSize="small" /> },
     { label: "Contact Messages", href: "/admin/contact-messages", icon: <MailOutlineIcon fontSize="small" /> },
     { label: "Articles",         href: "/admin/articles",         icon: <ArticleIcon fontSize="small" /> },
-    { label: "Tutorials",        href: "/admin/tutorials",        icon: <PlayCircleIcon fontSize="small" /> },
+    { label: "Video Library",     href: "/admin/video-library",    icon: <PlayCircleIcon fontSize="small" /> },
     { label: "API Tokens",       href: "/admin/api-tokens",       icon: <KeyIcon fontSize="small" /> },
     { label: "Service Plans",    href: "/admin/service-plans",    icon: <AppsIcon fontSize="small" /> },
     { label: "Service Invoices", href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" /> },
     { label: "Kling Invoices",   href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" /> },
     { label: "Finance",          href: "/admin/finance",          icon: <TrendingUpIcon fontSize="small" /> },
     { label: "Support Tickets", href: "/admin/support-tickets", icon: <SupportAgentIcon fontSize="small" /> },
+    { label: "Screenshots",     href: "/admin/screenshots",     icon: <ImageIcon fontSize="small" /> },
 ];
 
 function SidebarContent({ onClose }) {

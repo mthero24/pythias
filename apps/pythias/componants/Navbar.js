@@ -25,6 +25,16 @@ const LEARN_LINKS = [
   { label: "About Us",      href: "/about" },
 ];
 
+const SOLUTIONS_LINKS = [
+  { label: "Software for DTF Shops",             href: "/software-for-dtf-shops" },
+  { label: "Software for DTG Shops",             href: "/software-for-dtg-shops" },
+  { label: "Software for Embroidery Businesses", href: "/software-for-embroidery-businesses" },
+  { label: "Software for Print on Demand",       href: "/software-for-print-on-demand" },
+  { label: "Software for Fulfillment Providers", href: "/software-for-fulfillment-providers" },
+  { label: "Software for TikTok Shop Sellers",   href: "/software-for-tiktok-shop-sellers" },
+  { label: "Software for Etsy Sellers",          href: "/software-for-etsy-sellers" },
+];
+
 const COMPARE_LINKS = [
   { label: "Pythias vs ShipStation",        href: "/compare/pythias-vs-shipstation" },
   { label: "Pythias vs Shopify",            href: "/compare/pythias-vs-shopify" },
@@ -86,9 +96,10 @@ function DropdownMenu({ label, links, sectionLabel, footer }) {
 }
 
 export default function Navbar() {
-  const [mobileOpen,    setMobileOpen]    = useState(false);
-  const [mobileLearn,   setMobileLearn]   = useState(false);
-  const [mobileCompare, setMobileCompare] = useState(false);
+  const [mobileOpen,      setMobileOpen]      = useState(false);
+  const [mobileSolutions, setMobileSolutions] = useState(false);
+  const [mobileLearn,     setMobileLearn]     = useState(false);
+  const [mobileCompare,   setMobileCompare]   = useState(false);
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
 
@@ -105,12 +116,19 @@ export default function Navbar() {
           </Box>
 
           {/* Desktop nav */}
-          <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 0.5 }}>
+          <Box sx={{ display: { xs: "none", lg: "flex" }, alignItems: "center", gap: 0.5 }}>
             {NAV_LINKS.map((link) => (
               <Button key={link.label} component={Link} href={link.href} sx={BTN_SX}>
                 {link.label}
               </Button>
             ))}
+
+            <DropdownMenu
+              label="Solutions"
+              links={SOLUTIONS_LINKS}
+              sectionLabel="By Industry"
+              footer={{ label: "See All Features →", href: "/features" }}
+            />
 
             <DropdownMenu
               label="Learn"
@@ -135,7 +153,7 @@ export default function Navbar() {
           </Box>
 
           {/* Mobile menu icon */}
-          <IconButton sx={{ display: { xs: "flex", md: "none" }, color: "#fff" }} onClick={() => setMobileOpen(true)}>
+          <IconButton sx={{ display: { xs: "flex", lg: "none" }, color: "#fff" }} onClick={() => setMobileOpen(true)}>
             <MenuIcon />
           </IconButton>
         </Toolbar>
@@ -154,6 +172,21 @@ export default function Navbar() {
             <ListItem key={link.label} disablePadding>
               <ListItemButton component={Link} href={link.href} onClick={() => setMobileOpen(false)} sx={{ color: "rgba(255,255,255,0.75)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)" } }}>
                 <ListItemText primary={link.label} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+
+          {/* Solutions section */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => setMobileSolutions((v) => !v)} sx={{ color: "rgba(255,255,255,0.75)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)" } }}>
+              <ListItemText primary="Solutions" />
+              <ExpandMoreIcon sx={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.4)", transition: "transform 0.15s", transform: mobileSolutions ? "rotate(180deg)" : "none" }} />
+            </ListItemButton>
+          </ListItem>
+          {mobileSolutions && SOLUTIONS_LINKS.map((l) => (
+            <ListItem key={l.href} disablePadding>
+              <ListItemButton component={Link} href={l.href} onClick={() => { setMobileOpen(false); setMobileSolutions(false); }} sx={{ pl: 4, color: "rgba(255,255,255,0.55)", "&:hover": { bgcolor: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.85)" } }}>
+                <ListItemText primary={l.label} primaryTypographyProps={{ fontSize: "0.85rem" }} />
               </ListItemButton>
             </ListItem>
           ))}

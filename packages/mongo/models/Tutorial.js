@@ -3,7 +3,7 @@ import { Pythias } from "../lib/connection";
 
 const schema = new mongoose.Schema(
     {
-        videoType:    { type: String, default: "tutorial", enum: ["tutorial", "testimonial", "demo", "page-video"] },
+        videoType:    { type: String, default: "tutorial", enum: ["tutorial", "walkthrough", "testimonial", "demo", "page-video"] },
 
         // Shared fields
         title:        { type: String, default: "" },
