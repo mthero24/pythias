@@ -10,6 +10,7 @@ import {ApiKeyIntegrations, Item as Items} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 import { getShippingCreds } from "@/lib/getShippingCreds";
+import { postProviderStatus } from "@/functions/notifyPlatform";
 export async function POST(req= NextApiRequest){
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
@@ -20,10 +21,19 @@ export async function POST(req= NextApiRequest){
     const stationCfg = sc.stations.find(s => s.name === data.station);
     const stationFormat = stationCfg?.format ?? "PDF";
     const printEndpoint = stationFormat === "ZPL" ? "printers" : "cpu";
+
+    // Commerce Cloud orders ship blind under the seller's return address (not Premier's).
+    const ccOrder = await Order.findById(data.orderId).select("marketplace returnAddress").lean();
+    const clientReturnAddress = (ccOrder?.marketplace === "Commerce Cloud" && ccOrder.returnAddress?.address)
+        ? ccOrder.returnAddress
+        : null;
+
     const buyOpts = {
         ...data,
         imageType: stationFormat,
-        businessAddress: data.marketplace == "TCS" ? { name: "TSC Distribution Center", businessName: "ATTN: Online Orders", address: "100 Rains Drive", city: "Fanklin", state: "KY", postalCode: "42134", country: "US" } : sc.businessAddress,
+        businessAddress: clientReturnAddress
+            ? clientReturnAddress
+            : data.marketplace == "TCS" ? { name: "TSC Distribution Center", businessName: "ATTN: Online Orders", address: "100 Rains Drive", city: "Fanklin", state: "KY", postalCode: "42134", country: "US" } : sc.businessAddress,
         providers: ["usps", "ups"],
         enSettings: sc.enSettings,
         credentials: sc.credentials,
@@ -114,6 +124,16 @@ export async function POST(req= NextApiRequest){
                 const lines = (order.items ?? []).map((item, idx) => ({ MerchantProductNo: item.sku || item.pieceId || String(idx + 1), Quantity: 1, ShipmentLineNo: String(idx + 1) }));
                 await ceCreateShipment({ MerchantOrderNo: `CE-${order.marketplaceOrderId}`, Lines: lines, TrackTraceNo: primaryLabel.trackingNumber, Method: CE_CARRIER[data.selectedShipping.provider?.toLowerCase()] ?? data.selectedShipping.provider ?? "Other", ShippedAt: new Date().toISOString() });
             } catch (e) { console.error("Failed to update ChannelEngine shipment:", e.message); }
+        }
+        // Commerce Cloud order — report shipment + actual label cost back to the platform
+        if (order.marketplace === "Commerce Cloud") {
+            await postProviderStatus({
+                providerOrderId: order._id.toString(),
+                status:          "shipped",
+                trackingNumber:  primaryLabel.trackingNumber,
+                carrier:         data.selectedShipping.provider,
+                shippingCost:    Math.round(totalCost * 100), // dollars → cents
+            });
         }
         // clear bin and print all labels
         await Bin.findOneAndUpdate({order: order._id}, {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null});

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextResponse } from "next/server";
-import { Items, ReturnBins, Batches } from "@pythias/mongo";
+import { Items, ReturnBins, Batches, Order } from "@pythias/mongo";
+import { postProviderStatus } from "@/functions/notifyPlatform";
 import { LabelsData } from "@/functions/labels";
 import btoa from "btoa";
 import axios from "axios";
@@ -85,6 +86,11 @@ export async function POST(req=NextApiRequest){
         await batch.save()
         await Items.updateMany({pieceId: {$in: pieceIds}}, {labelPrinted: true, stockStatus: null, $push: {labelPrintedDates: {$each: [new Date(Date.now())]}, steps: {$each: [{status: "label Printed", date: new Date(Date.now())}]}}, batchID})
         logActivity({ action: "label_print", entity: "order", count: pieceIds.length, userName, email });
+        // Commerce Cloud orders entering production — notify the platform (callback is idempotent, so reprints are no-ops)
+        if (uniqueOrderIds.length) {
+            const ccOrders = await Order.find({ _id: { $in: uniqueOrderIds }, marketplace: "Commerce Cloud" }).select("_id").lean();
+            await Promise.all(ccOrders.map(o => postProviderStatus({ providerOrderId: o._id.toString(), status: "in_production" })));
+        }
         const {labels, giftMessages, rePulls, batches} = await LabelsData()
         return NextResponse.json({error: false, labels, giftMessages: giftMessages? giftMessages: [], rePulls, batches})
     } catch(e) {

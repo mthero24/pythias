@@ -2,6 +2,8 @@ import { NextApiRequest, NextResponse } from "next/server";
 import { PlatformOrder as Order } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { notifyPartner } from "@/lib/notifyPartner";
+import { shapeOrder } from "@/lib/partnerShape";
 
 export async function POST(req = NextApiRequest) {
     const token = await getToken({ req });
@@ -19,5 +21,6 @@ export async function POST(req = NextApiRequest) {
     order = await order.save();
     logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email });
     logChange({ entityType: "order", entityId: order._id, entityName: order.poNumber || "", action: "order_shipped", before: { status: beforeStatus }, after: { status: "shipped", trackingNumber: data.trackingNumber || null }, userName, email, provider: "premierPrinting" });
+    notifyPartner(orgId, "order.shipped", shapeOrder(order.toObject()));
     return NextResponse.json({ error: false, order });
 }

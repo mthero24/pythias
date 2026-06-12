@@ -70,6 +70,18 @@ const schema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  // Return/from address for the label. Set for Commerce Cloud orders so the
+  // provider ships blind under the seller's brand (not the provider's).
+  returnAddress: {
+    name:         String,
+    businessName: String,
+    address:      String,
+    address2:     String,
+    city:         String,
+    state:        String,
+    postalCode:   String,
+    country:      String,
+  },
   marketplace: { type: String },
   brand:  {
     type: mongoose.Schema.Types.ObjectId,

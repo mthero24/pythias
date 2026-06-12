@@ -257,6 +257,12 @@ export function Main({ colors, blanks, bla, printPricing, locations }) {
                 <TextField fullWidth size="small" label="S&S Activewear Style" placeholder="e.g. PC61" {...register("ssActivewearStyle")} helperText="Links this blank to S&S Activewear for direct ordering" />
               </Grid2>
               <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField fullWidth size="small" label="Premier Code" placeholder="e.g. C" {...register("providerCodes.premier")} helperText="Internal style code at Premier Printing" />
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                <POCodeField register={register} setValue={setValue} watch={watch} />
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField fullWidth size="small" label="Slug" {...register("slug")} />
               </Grid2>
             </Grid2>
@@ -591,6 +597,51 @@ const FieldLabel = ({ children }) => (
     {children}
   </Typography>
 );
+
+function POCodeField({ register, setValue, watch }) {
+  const [matches,   setMatches]   = useState([]);
+  const [searching, setSearching] = useState(false);
+  const name = watch("name");
+
+  const search = async () => {
+    if (!name?.trim()) return;
+    setSearching(true);
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_PO_URL || "https://po.pythiastechnologies.com"}/api/internal/style-search?q=${encodeURIComponent(name)}`
+      );
+      setMatches(res.data?.matches ?? []);
+    } catch { setMatches([]); }
+    finally { setSearching(false); }
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: "flex", gap: 0.75, alignItems: "flex-start" }}>
+        <TextField fullWidth size="small" label="PO Code" placeholder="e.g. AT"
+          {...register("providerCodes.po")}
+          helperText="Internal style code at PO" />
+        <Tooltip title="Fuzzy-search PO styles by blank name">
+          <span>
+            <Button size="small" variant="outlined" onClick={search} disabled={searching || !name}
+              sx={{ mt: 0.25, whiteSpace: "nowrap", minWidth: 0, px: 1 }}>
+              {searching ? <CircularProgress size={14} /> : "Find"}
+            </Button>
+          </span>
+        </Tooltip>
+      </Box>
+      {matches.length > 0 && (
+        <Box sx={{ mt: 0.75, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+          {matches.map(m => (
+            <Chip key={m.code} size="small" label={`${m.code} — ${m.name}`}
+              onClick={() => { setValue("providerCodes.po", m.code); setMatches([]); }}
+              sx={{ fontSize: "0.7rem", cursor: "pointer" }} />
+          ))}
+        </Box>
+      )}
+    </Box>
+  );
+}
 
 const Rectangle = ({ isSelected, onSelect, onChange, ...props }) => {
   const shapeRef = React.useRef();

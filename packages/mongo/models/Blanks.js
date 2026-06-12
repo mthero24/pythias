@@ -130,6 +130,7 @@ const SchemaObj = new Schema(
     tags: [{ type: String }],
     sanmarStyle:      { type: String, default: "" },
     ssActivewearStyle: { type: String, default: "" },
+    manufacturerStyle: { type: String, default: "" },
     fixerCode: String,
     kohlsHeader: Object,
     targetHeader: Object,

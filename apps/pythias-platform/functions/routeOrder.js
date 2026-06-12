@@ -6,6 +6,29 @@ import {
     RoutingLog,
     Organization,
 } from "@pythias/mongo";
+import { sendOrderToProvider } from "@/functions/sendToProvider";
+import { recordApiNotification } from "@/lib/recordApiNotification";
+
+// Record a seller-facing alert and return the unroutable result.
+const UNROUTABLE_MSG = {
+    no_routable_items:           "This order has no items that can be matched to a fulfillable blank, color, and size.",
+    no_providers_available:      "No fulfillment providers are currently available (all paused or at daily capacity).",
+    no_catalog_coverage:         "No single provider carries every item in this order.",
+    insufficient_wallet_balance: "Your wallet balance is too low to fulfill this order. Add funds to route it.",
+};
+async function unroutable(org, order, reason) {
+    const lowBalance = reason === "insufficient_wallet_balance";
+    await recordApiNotification(org?._id, {
+        level:  lowBalance ? "warning" : "error",
+        source: "order.route",
+        title:  lowBalance
+            ? `Order ${order?.poNumber ?? ""} couldn't route — wallet balance too low`
+            : `Order ${order?.poNumber ?? ""} couldn't be routed to a provider`,
+        message: UNROUTABLE_MSG[reason] ?? reason,
+        detail:  { orderId: order?._id?.toString(), poNumber: order?.poNumber, reason },
+    });
+    return { unroutable: true, reason };
+}
 
 // US state → region map for geography scoring
 const STATE_REGION = {
@@ -75,19 +98,32 @@ export async function routeOrder(order, items, org) {
     })).filter(r => r.blankId && r.colorId && r.size);
 
     if (!required.length) {
-        return { unroutable: true, reason: "no_routable_items" };
+        return unroutable(org, order, "no_routable_items");
     }
 
     // Step 2 — Eligibility filter: providers that accept Commerce Cloud, are not paused,
     //           and have not hit their daily cap
     const capacities = await ProviderCapacity.find({ acceptsCommerceCloud: true, isPaused: false }).lean();
+
+    // Reset-on-read: zero any provider's daily counter that has rolled over to a new day,
+    // so caps don't silently stick from a previous day (avoids needing a midnight cron).
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+    const toReset = capacities.filter(c => c.lastResetDate !== today);
+    if (toReset.length) {
+        await ProviderCapacity.updateMany(
+            { _id: { $in: toReset.map(c => c._id) } },
+            { $set: { currentDailyCount: 0, lastResetDate: today } }
+        );
+        for (const c of toReset) { c.currentDailyCount = 0; c.lastResetDate = today; }
+    }
+
     const eligible = capacities.filter(c => {
         if (c.pauseUntil && new Date(c.pauseUntil) > new Date()) return false;
         return c.currentDailyCount < c.maxDailyOrders;
     });
 
     if (!eligible.length) {
-        return { unroutable: true, reason: "no_providers_available" };
+        return unroutable(org, order, "no_providers_available");
     }
 
     const eligibleIds = eligible.map(c => c.providerId.toString());
@@ -124,7 +160,7 @@ export async function routeOrder(order, items, org) {
     }
 
     if (!candidates.length) {
-        return { unroutable: true, reason: "no_catalog_coverage" };
+        return unroutable(org, order, "no_catalog_coverage");
     }
 
     // Step 4 — Pull location and score data in bulk
@@ -157,7 +193,7 @@ export async function routeOrder(order, items, org) {
 
     // Step 6 — Verify the commerce org wallet has enough funds
     if ((org.wallet?.balance ?? 0) < best.totalWholesale) {
-        return { unroutable: true, reason: "insufficient_wallet_balance" };
+        return unroutable(org, order, "insufficient_wallet_balance");
     }
 
     // Step 7 — Persist routing log
@@ -196,5 +232,31 @@ export async function routeOrder(order, items, org) {
         ),
     ]);
 
+    // Step 9 — Hand off to the provider's production system.
+    // Auto-accept (internal) providers get the order immediately; external providers
+    // are handed off when they accept (see the provider accept action).
+    if (isAutoAccept) {
+        const providerOrg = await Organization.findById(best.providerId).select("slug").lean();
+        await handOff(routingLog, providerOrg?.slug, order, items);
+    }
+
     return { routingLog, providerId: best.providerId };
+}
+
+// Send the order to the provider and record the result on the routing log.
+export async function handOff(routingLog, providerSlug, order, items) {
+    if (!providerSlug) {
+        await RoutingLog.updateOne({ _id: routingLog._id }, { $set: { handoffStatus: "skipped", handoffError: "no_provider_slug" } });
+        return;
+    }
+    const result = await sendOrderToProvider(providerSlug, order, items);
+    if (result.skipped) {
+        await RoutingLog.updateOne({ _id: routingLog._id }, { $set: { handoffStatus: "skipped", handoffError: result.reason } });
+        console.warn(`[handoff] order ${order._id} → ${providerSlug}: skipped (${result.reason})`);
+    } else if (result.ok) {
+        await RoutingLog.updateOne({ _id: routingLog._id }, { $set: { handoffStatus: "sent", handoffAt: new Date(), providerOrderId: result.providerOrderId ?? null } });
+    } else {
+        await RoutingLog.updateOne({ _id: routingLog._id }, { $set: { handoffStatus: "failed", handoffError: result.error } });
+        console.error(`[handoff] order ${order._id} → ${providerSlug}: FAILED ${result.status ?? ""} ${result.error}`);
+    }
 }

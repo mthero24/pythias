@@ -18,6 +18,31 @@ import {useState, useMemo, useRef} from "react";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import axios from "axios"
 
+function FillManufacturerStylesButton() {
+    const [running,  setRunning]  = useState(false);
+    const [result,   setResult]   = useState(null);
+
+    const run = async () => {
+        if (!confirm("Auto-fill Manufacturer Style for all blanks that have a SanMar Style set but no Manufacturer Style yet?")) return;
+        setRunning(true); setResult(null);
+        try {
+            const res = await axios.post("/api/admin/blanks/manufacturer-style", { all: true });
+            setResult(`Updated ${res.data.updated} of ${res.data.total} blanks.`);
+        } catch { setResult("Failed — check console"); }
+        finally { setRunning(false); }
+    };
+
+    return (
+        <Tooltip title={result || "Auto-fill Manufacturer Style from SanMar for all blanks that have a SanMar Style set"}>
+            <span>
+                <Button variant="outlined" onClick={run} disabled={running}>
+                    {running ? "Looking up…" : "Fill Manufacturer Styles"}
+                </Button>
+            </span>
+        </Tooltip>
+    );
+}
+
 export function BlanksComponent({blanks, mPs, source, orgId, basePath = "/admin/blanks"}){
     const [blank, setBlank] = useState({})
     const [marketPlaces, setMarketPlaces] = useState(mPs)
@@ -111,6 +136,7 @@ export function BlanksComponent({blanks, mPs, source, orgId, basePath = "/admin/
                     <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                         <Button variant="outlined" onClick={() => setAliasOpen(true)}>Alias / Combined</Button>
                         <Button variant="outlined" startIcon={<AutoAwesomeIcon />} onClick={() => { setClassifyOpen(true); setClassifyLog([]); setClassifySummary(null); runClassify(); }}>Classify Model Images</Button>
+                        <FillManufacturerStylesButton />
                         <Button variant="contained" color="primary" startIcon={<AddIcon />} href={`${basePath}/create`}>Create Blank</Button>
                     </Box>
                 </Box>

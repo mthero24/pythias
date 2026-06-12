@@ -51,6 +51,7 @@ export default async function AdminIntegrationsPage({ params }) {
     const channelEngineConnected = !!(creds?.channelengine?.apiUrl && creds?.channelengine?.apiKey);
     const gs1Connected           = !!org?.settings?.gs1?.apiKey;
     const isFulfillment          = org?.orgType !== "commerce"; // default to fulfillment
+    const showPartnerApi         = true; // Partner API available to all platform orgs (Commerce + Fulfillment Cloud)
 
     return (
         <Main
@@ -64,6 +65,7 @@ export default async function AdminIntegrationsPage({ params }) {
             channelEngineConnected={channelEngineConnected}
             gs1Connected={gs1Connected}
             showSupplierIntegrations={isFulfillment}
+            showPartnerApi={showPartnerApi}
         />
     );
 }

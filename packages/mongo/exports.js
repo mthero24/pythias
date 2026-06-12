@@ -64,6 +64,7 @@ export { default as Expense } from "./models/Expense";
 export { default as CESale } from "./models/CESale";
 export { default as Settings } from "./models/Settings";
 export { default as Organization } from "./models/Organization";
+export { PartnerApiKey } from "./models/PartnerApiKey";
 export { default as UsageLedger } from "./models/UsageLedger";
 export { default as OrgIntegrations } from "./models/OrgIntegrations";
 export { default as KlingVideoPlatform } from "./models/KlingVideoPlatform";
@@ -91,6 +92,7 @@ export { default as PlatformConverter } from "./models/converters";
 export { default as PlatformForecastCache } from "./models/ForecastCache";
 export { default as PlatformBlankForecastCache } from "./models/BlankForecastCache";
 export { default as SupportTicket } from "./models/SupportTicket";
+export { default as ApiNotification } from "./models/ApiNotification";
 export { default as ReturnScan } from "./models/ReturnScan";
 export { default as DemoBooking } from "./models/DemoBooking";
 

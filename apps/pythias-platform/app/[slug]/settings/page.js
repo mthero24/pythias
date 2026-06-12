@@ -65,6 +65,21 @@ export default function SettingsPage() {
         setSaving(false);
     }
 
+    async function saveReturnAddress(e) {
+        e.preventDefault();
+        setSaving(true);
+        setMsg(null);
+        const res = await fetch("/api/settings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ returnAddress: org.returnAddress ?? {} }),
+        });
+        const d = await res.json();
+        setMsg(d.error ? { type: "error", text: d.error } : { type: "success", text: "Return address saved" });
+        setSaving(false);
+    }
+    const setRA = (k, v) => setOrg(o => ({ ...o, returnAddress: { ...(o.returnAddress ?? {}), [k]: v } }));
+
     if (!org) return null;
 
     const isOwnerOrAdmin = session?.user?.role === "owner" || session?.user?.role === "admin";
@@ -75,9 +90,9 @@ export default function SettingsPage() {
                 <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>Settings</Typography>
 
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 3 }}>
-                    {["org", "production", "sku"].map(t => (
+                    {[["org","Organization"],["returnAddress","Return Address"],["production","Production"],["sku","SKU Format"]].map(([t, label]) => (
                         <Button key={t} variant={tab === t ? "contained" : "outlined"} size="small" onClick={() => setTab(t)}>
-                            {t === "org" ? "Organization" : t === "production" ? "Production" : "SKU Format"}
+                            {label}
                         </Button>
                     ))}
                     <Button variant="outlined" size="small" href="settings/labels">
@@ -120,6 +135,44 @@ export default function SettingsPage() {
                                     {isOwnerOrAdmin && (
                                         <Button type="submit" variant="contained" size="small" disabled={saving}>
                                             {saving ? "Saving..." : "Save changes"}
+                                        </Button>
+                                    )}
+                                </Stack>
+                            </form>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {tab === "returnAddress" && (
+                    <Card variant="outlined">
+                        <CardContent>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>Return / From Address</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                This is the return address printed on shipping labels. For Commerce Cloud orders, your fulfillment provider ships blind under this address — your customers see your brand, not the provider&apos;s.
+                            </Typography>
+                            <form onSubmit={saveReturnAddress}>
+                                <Stack spacing={2}>
+                                    <TextField label="Business name (shown on label)" value={org.returnAddress?.businessName || ""}
+                                        onChange={e => setRA("businessName", e.target.value)} fullWidth size="small" disabled={!isOwnerOrAdmin} />
+                                    <TextField label="Contact name" value={org.returnAddress?.name || ""}
+                                        onChange={e => setRA("name", e.target.value)} fullWidth size="small" disabled={!isOwnerOrAdmin} />
+                                    <TextField label="Street address" value={org.returnAddress?.address || ""}
+                                        onChange={e => setRA("address", e.target.value)} fullWidth size="small" disabled={!isOwnerOrAdmin} />
+                                    <TextField label="Address line 2 (optional)" value={org.returnAddress?.address2 || ""}
+                                        onChange={e => setRA("address2", e.target.value)} fullWidth size="small" disabled={!isOwnerOrAdmin} />
+                                    <Stack direction="row" spacing={2}>
+                                        <TextField label="City" value={org.returnAddress?.city || ""}
+                                            onChange={e => setRA("city", e.target.value)} fullWidth size="small" disabled={!isOwnerOrAdmin} />
+                                        <TextField label="State" value={org.returnAddress?.state || ""}
+                                            onChange={e => setRA("state", e.target.value)} sx={{ width: 120 }} size="small" disabled={!isOwnerOrAdmin} />
+                                        <TextField label="ZIP / Postal" value={org.returnAddress?.postalCode || ""}
+                                            onChange={e => setRA("postalCode", e.target.value)} sx={{ width: 140 }} size="small" disabled={!isOwnerOrAdmin} />
+                                        <TextField label="Country" value={org.returnAddress?.country || "US"}
+                                            onChange={e => setRA("country", e.target.value)} sx={{ width: 110 }} size="small" disabled={!isOwnerOrAdmin} />
+                                    </Stack>
+                                    {isOwnerOrAdmin && (
+                                        <Button type="submit" variant="contained" size="small" disabled={saving} sx={{ alignSelf: "flex-start" }}>
+                                            {saving ? "Saving..." : "Save return address"}
                                         </Button>
                                     )}
                                 </Stack>

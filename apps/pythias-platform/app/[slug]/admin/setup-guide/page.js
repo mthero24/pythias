@@ -5,6 +5,7 @@ import {
     SetupGuide,
     PlatformBlank, PlatformColor, PlatformDesign, PlatformProduct,
     PlatformMarketPlace, PlatformEditData, ApiKeyIntegrations,
+    PlatformOrder, PartnerApiKey, Organization,
 } from "@pythias/mongo";
 import SetupGuideClient from "./SetupGuideClient";
 
@@ -43,14 +44,37 @@ async function getSetupData(orgId, slug) {
     };
 }
 
+async function getCommerceSetupData(orgId) {
+    const [org, hasChannel, hasPartnerKey, hasProducts, hasOrders, guide] = await Promise.all([
+        Organization.findById(orgId).select("wallet").lean(),
+        ApiKeyIntegrations.countDocuments({ orgId }),
+        PartnerApiKey.countDocuments({ orgId, active: true }),
+        PlatformProduct.countDocuments({ orgId }),
+        PlatformOrder.countDocuments({ orgId }),
+        SetupGuide.findOne({ orgId }).lean(),
+    ]);
+    const manual = guide?.manualSteps ?? {};
+    return {
+        fundWallet:    (org?.wallet?.balance ?? 0) > 0,
+        autoRecharge:  !!org?.wallet?.autoRechargeEnabled,
+        salesChannel:  hasChannel > 0 || hasPartnerKey > 0,
+        addProducts:   hasProducts > 0,
+        testOrder:     hasOrders > 0,
+        reviewRouting: !!manual.reviewRouting,
+    };
+}
+
 export default async function SetupGuidePage({ params }) {
     const session = await getServerSession(authOptions);
     if (!session) redirect("/login");
 
     const { slug } = await params;
     const orgId    = session.user.orgId;
+    const orgType  = session.user.orgType;
 
-    const steps = await getSetupData(orgId, slug);
+    const steps = orgType === "commerce"
+        ? await getCommerceSetupData(orgId)
+        : await getSetupData(orgId, slug);
     const total     = Object.keys(steps).length;
     const completed = Object.values(steps).filter(Boolean).length;
 
@@ -60,6 +84,7 @@ export default async function SetupGuidePage({ params }) {
             completed={completed}
             total={total}
             slug={slug}
+            orgType={orgType}
         />
     );
 }

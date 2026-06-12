@@ -4,7 +4,7 @@ const SHIPPED_STATUSES = ["shipped", "Shipped", "Out For Delivery", "out_for_del
 
 // Returns { trackOrder, runTracking, runTrackingAll } bound to the provided Order model and credential getters.
 // Each credential getter is a zero-arg function called at request time so env vars are resolved lazily.
-export function createTracking({ Order, uspsCredentials, fedexCredentials, upsCredentials }) {
+export function createTracking({ Order, uspsCredentials, fedexCredentials, upsCredentials, onDelivered }) {
 
     async function processOrderTracking(order) {
         if (!order.shippingInfo?.labels?.length) return false;
@@ -53,8 +53,9 @@ export function createTracking({ Order, uspsCredentials, fedexCredentials, upsCr
         }
 
         if (changed) {
-            if (order.shippingInfo.labels.every(l => l.delivered || l.refunded)) {
+            if (order.status !== "Delivered" && order.shippingInfo.labels.every(l => l.delivered || l.refunded)) {
                 order.status = "Delivered";
+                if (onDelivered) { try { onDelivered(order); } catch (e) { console.error("[tracking] onDelivered failed:", e.message); } }
             }
             order.markModified("shippingInfo.labels");
         }
@@ -63,7 +64,7 @@ export function createTracking({ Order, uspsCredentials, fedexCredentials, upsCr
     }
 
     const trackOrder = async (orderId) => {
-        const order = await Order.findById(orderId).select("status shippingInfo poNumber");
+        const order = await Order.findById(orderId).select("status shippingInfo poNumber marketplace");
         if (!order) return;
         if (await processOrderTracking(order)) await order.save();
     };
@@ -80,7 +81,7 @@ export function createTracking({ Order, uspsCredentials, fedexCredentials, upsCr
                 status: { $in: SHIPPED_STATUSES },
                 "shippingInfo.labels.0": { $exists: true },
                 date: { $gt: cutoff },
-            }).select("status shippingInfo poNumber date").sort({ date: 1 }).skip(skip).limit(BATCH);
+            }).select("status shippingInfo poNumber date marketplace").sort({ date: 1 }).skip(skip).limit(BATCH);
 
             if (!orders.length) break;
             total += orders.length;
@@ -126,7 +127,7 @@ export function createTracking({ Order, uspsCredentials, fedexCredentials, upsCr
         const orders = await Order.find({
             "shippingInfo.labels.0": { $exists: true },
             status: { $nin: ["Delivered", "Cancelled", "cancelled", "cancelled_by_buyer"] },
-        }).select("status shippingInfo poNumber").limit(100);
+        }).select("status shippingInfo poNumber marketplace").limit(100);
         console.log(`Found ${orders.length} orders to track.`);
         let updated = 0;
         for (const order of orders) {

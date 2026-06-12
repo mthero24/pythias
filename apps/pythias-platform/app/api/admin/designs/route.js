@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { PlatformDesign } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
+import { notifyPartner } from "@/lib/notifyPartner";
+import { shapeDesign } from "@/lib/partnerShape";
 
 export async function GET(req) {
     const token = await getToken({ req });
@@ -52,6 +54,7 @@ export async function POST(req) {
         } else {
             saved = await PlatformDesign.create(design);
         }
+        notifyPartner(token.orgId, "design.updated", shapeDesign(saved.toObject ? saved.toObject() : saved));
         return NextResponse.json({ error: false, design: saved });
     } catch (e) {
         return NextResponse.json({ error: true, msg: e.message });
@@ -104,6 +107,7 @@ export async function PUT(req) {
             { new: true, runValidators: false },
         );
         if (!saved) return NextResponse.json({ error: true, msg: "Design not found" }, { status: 404 });
+        notifyPartner(orgId, "design.updated", shapeDesign(saved.toObject ? saved.toObject() : saved));
         return NextResponse.json({ error: false, design: saved });
     } catch (e) {
         return NextResponse.json({ error: true, msg: e.message });

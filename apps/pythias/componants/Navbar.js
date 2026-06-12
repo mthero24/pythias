@@ -14,6 +14,7 @@ import Logo from "../public/logo_vertical.png";
 const NAV_LINKS = [
   { label: "Fulfillment Cloud", href: "/fulfillment-cloud" },
   { label: "Commerce Cloud",    href: "/commerce-cloud" },
+  { label: "Community",         href: "/community" },
   { label: "Integrations",      href: "/integrations" },
   { label: "Contact Us",        href: "/contact" },
 ];
@@ -23,6 +24,7 @@ const LEARN_LINKS = [
   { label: "Testimonials",  href: "/testimonials" },
   { label: "FAQ",           href: "/faq" },
   { label: "About Us",      href: "/about" },
+  { label: "Developer API", href: "/developer" },
 ];
 
 const SOLUTIONS_LINKS = [

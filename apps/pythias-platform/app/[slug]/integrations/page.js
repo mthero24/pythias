@@ -63,6 +63,7 @@ export default async function IntegrationsPage({ params }) {
             shopifyAppUrl={process.env.SHOPIFY_APP_URL || "https://shopapp.pythiastechnologies.com"}
             channelEngineConnected={channelEngineConnected}
             gs1Connected={gs1Connected}
+            showPartnerApi={true} // Partner API available to all platform orgs (Commerce + Fulfillment Cloud)
         />
     );
 }

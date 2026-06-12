@@ -3,6 +3,8 @@ import { PlatformProduct, PlatformInventory, SkuToUpc } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { createTempUpcs, updateTempUpc } from "@pythias/integrations";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { notifyPartner } from "@/lib/notifyPartner";
+import { shapeProduct } from "@/lib/partnerShape";
 
 const PER_PAGE = 50;
 
@@ -269,6 +271,7 @@ export async function POST(req) {
                 })
             ));
 
+            saved.forEach(p => notifyPartner(token.orgId, "product.updated", shapeProduct(p.toObject ? p.toObject() : p)));
             return NextResponse.json({ error: false, products: JSON.parse(JSON.stringify(saved)) });
         } catch (e) {
             console.error("[products POST products]", e);
@@ -283,6 +286,7 @@ export async function POST(req) {
     try {
         const saved = await PlatformProduct.create(product);
         logActivity({ action: "product_update", entity: "product", count: 1, userName, email });
+        notifyPartner(token.orgId, "product.updated", shapeProduct(saved.toObject ? saved.toObject() : saved));
         return NextResponse.json({ error: false, product: JSON.parse(JSON.stringify(saved)) });
     } catch (e) {
         console.error("[products POST product]", e);

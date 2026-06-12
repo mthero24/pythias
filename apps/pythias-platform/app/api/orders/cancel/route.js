@@ -3,6 +3,8 @@ import { cancelOrder as cancelShipStation, cancelOrderFaire, cancelOrderMirakl }
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { notifyPartner } from "@/lib/notifyPartner";
+import { shapeOrder } from "@/lib/partnerShape";
 
 async function cancelMarketplace(order) {
     if (!order.marketplaceConnectionId) return null;
@@ -76,6 +78,8 @@ export async function POST(req) {
         after: { status: "cancelled" },
         userName, email, provider: "premierPrinting",
     });
+
+    notifyPartner(orgId, "order.cancelled", shapeOrder({ ...order, status: "cancelled", canceled: true }));
 
     return NextResponse.json({
         success: true,

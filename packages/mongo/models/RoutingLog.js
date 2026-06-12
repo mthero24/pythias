@@ -30,6 +30,23 @@ const schema = new mongoose.Schema({
     routedAt:           { type: Date, default: Date.now },
     acceptedAt:         { type: Date },
     totalWholesaleCost: { type: Number },                // USD cents — what was charged to the Commerce Cloud wallet
+    // Handoff to the provider's production system (e.g. Premier's floor)
+    handoffStatus:      { type: String, enum: ["pending", "sent", "failed", "skipped"], default: "pending" },
+    handoffAt:          { type: Date },
+    handoffError:       { type: String },
+    providerOrderId:    { type: String },                // the order id created in the provider's own system
+    // ── Fulfillment status synced back from the provider ──────────────────────
+    fulfillmentStatus:  { type: String, enum: ["received", "in_production", "shipped", "delivered", "cancelled"], default: "received" },
+    trackingNumber:     { type: String },
+    carrier:            { type: String },
+    shippedAt:          { type: Date },
+    deliveredAt:        { type: Date },
+    // ── Money (USD cents). Wholesale is charged at routing; shipping+handling at ship ──
+    providerShippingPaid: { type: Number, default: 0 },  // actual label cost reimbursed to provider
+    providerHandlingFee:  { type: Number, default: 0 },  // handling fee credited to provider
+    platformFee:          { type: Number, default: 0 },  // platform's cut of wholesale
+    providerOwed:         { type: Number, default: 0 },  // wholesale + shipping + handling − platformFee, accrued for payout
+    settledAt:            { type: Date },                 // when ship-time settlement ran
 }, { timestamps: true });
 
 schema.index({ routedAt: -1 });

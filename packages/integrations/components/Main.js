@@ -5,6 +5,7 @@ import {
     Collapse, Table, TableHead, TableBody, TableRow, TableCell,
     TableContainer, CircularProgress, Alert, Tooltip, Select, MenuItem,
     TextField, Dialog, DialogTitle, DialogContent, DialogActions,
+    Tabs, Tab, Checkbox, FormControlLabel,
 } from "@mui/material";
 import Image from "next/image";
 import tiktok  from "./tiktoksm.jpeg";
@@ -2616,7 +2617,7 @@ function TikTokConnectionCard({ shop, onDeactivate, adminBase = "/admin", orgId 
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp, slug, orgId, supplierSection, showSupplierIntegrations = true }) {
+export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRedirectURI, shopifyAppUrl, channelEngineConnected, gs1Connected: gs1ConnectedProp, slug, orgId, supplierSection, showSupplierIntegrations = true, showPartnerApi = false }) {
     const [sanmarOpen,        setSanmarOpen]        = useState(false);
     const [sanmarIsConnected, setSanmarIsConnected] = useState(false);
     const [sanmarInfo,        setSanmarInfo]        = useState(null);
@@ -2659,6 +2660,7 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
     const [bolOpen,     setBolOpen]     = useState(false);
     const [gs1Open,     setGs1Open]     = useState(false);
     const [gs1IsConnected, setGs1IsConnected] = useState(!!gs1ConnectedProp);
+    const [partnerApiOpen, setPartnerApiOpen] = useState(false);
     const [apiConnections, setApiConnections] = useState(apiKeyIntegrations || []);
     const [tiktokConnections, setTiktokConnections] = useState(tiktokShops || []);
 
@@ -2965,6 +2967,36 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
                     {supplierSection && <Grid2 size={{ xs: 12 }}>{supplierSection}</Grid2>}
                 </Grid2>}
 
+                {/* ── Partner API ── */}
+                {showPartnerApi && (
+                    <>
+                        <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2} sx={{ display: "block", mt: 1, mb: 1 }}>
+                            Developer
+                        </Typography>
+                        <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+                            <Stack direction="row" alignItems="center" spacing={2}>
+                                <Box sx={{ width: 40, height: 40, borderRadius: 1.5, bgcolor: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                    <span style={{ fontSize: "1.3rem" }}>🔌</span>
+                                </Box>
+                                <Box>
+                                    <Typography variant="subtitle2" fontWeight={700}>Partner API</Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Manage API keys and webhooks to sync products, designs, and orders from your own storefront.
+                                    </Typography>
+                                </Box>
+                            </Stack>
+                            <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+                                <Button variant="text" size="small" component={Link} href={`${adminBase.replace(/\/admin$/, "")}/developer`}>
+                                    Dashboard
+                                </Button>
+                                <Button variant="outlined" size="small" onClick={() => setPartnerApiOpen(true)}>
+                                    Configure
+                                </Button>
+                            </Stack>
+                        </Paper>
+                    </>
+                )}
+
                 {/* ── Active connections ── */}
                 <Typography variant="overline" color="text.secondary" fontWeight={700} letterSpacing={1.2}>
                     Active Connections ({allConnections.length + (channelEngineConnected ? 1 : 0) + (gs1IsConnected ? 1 : 0)})
@@ -3097,7 +3129,251 @@ export function Main({ tiktokShops, apiKeyIntegrations, provider, source, etsyRe
             <WayfairModal      open={wayfairOpen}      setOpen={setWayfairOpen}      provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <RithumModal       open={rithumOpen}       setOpen={setRithumOpen}       provider={provider} apiConnections={apiConnections} setConnections={setApiConnections} />
             <Gs1Modal open={gs1Open} setOpen={setGs1Open} onConnected={() => setGs1IsConnected(true)} />
+            {showPartnerApi && <PartnerApiModal open={partnerApiOpen} setOpen={setPartnerApiOpen} />}
         </Box>
+    );
+}
+
+// ─── Partner API Modal ────────────────────────────────────────────────────────
+
+function CopyField({ label, value, secret }) {
+    const [shown,  setShown]  = useState(false);
+    const [copied, setCopied] = useState(false);
+    const copy = () => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+    return (
+        <Box>
+            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>{label}</Typography>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                <Box sx={{ flex: 1, fontFamily: "monospace", fontSize: "0.82rem", bgcolor: "action.hover", borderRadius: 1, px: 1.5, py: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "text.primary" }}>
+                    {secret && !shown ? "•".repeat(24) : value}
+                </Box>
+                {secret && (
+                    <Button size="small" onClick={() => setShown(v => !v)} sx={{ minWidth: 0, px: 1 }}>{shown ? "Hide" : "Show"}</Button>
+                )}
+                <Button size="small" onClick={copy} sx={{ minWidth: 0, px: 1 }}>{copied ? "Copied!" : "Copy"}</Button>
+            </Box>
+        </Box>
+    );
+}
+
+function PartnerApiModal({ open, setOpen }) {
+    const [tab,       setTab]       = useState(0); // 0=keys 1=webhook
+    const [keys,      setKeys]      = useState([]);
+    const [newKeyName, setNewKeyName] = useState("");
+    const [generating, setGenerating] = useState(false);
+    const [newKey,    setNewKey]    = useState(null); // shown once after creation
+    const [revoking,  setRevoking]  = useState(null);
+    const [webhookUrl,   setWebhookUrl]   = useState("");
+    const [webhookActive, setWebhookActive] = useState(false);
+    const [webhookEvents, setWebhookEvents] = useState(["order.received", "order.updated", "order.shipped", "order.delivered", "order.cancelled", "product.updated", "design.updated"]);
+    const [webhookSecret, setWebhookSecret] = useState(null); // shown once after rotate
+    const [hasSecret,     setHasSecret]     = useState(false);
+    const [savingWh,      setSavingWh]      = useState(false);
+    const [rotatingSecret, setRotatingSecret] = useState(false);
+    const loaded = useRef(false);
+
+    const ALL_EVENTS = ["order.received", "order.updated", "order.shipped", "order.delivered", "order.cancelled", "product.updated", "design.updated"];
+
+    useEffect(() => {
+        if (!open || loaded.current) return;
+        loaded.current = true;
+        Promise.all([
+            fetch("/api/partner/keys").then(r => r.json()),
+            fetch("/api/partner/webhook").then(r => r.json()),
+        ]).then(([k, w]) => {
+            setKeys(k.keys ?? []);
+            setWebhookUrl(w.url ?? "");
+            setWebhookActive(w.active ?? false);
+            setWebhookEvents(w.events ?? ["order.received", "order.updated", "order.shipped", "order.delivered", "order.cancelled", "product.updated", "design.updated"]);
+            setHasSecret(w.hasSecret ?? false);
+        }).catch(() => {});
+    }, [open]);
+
+    useEffect(() => { if (!open) { loaded.current = false; setNewKey(null); setWebhookSecret(null); } }, [open]);
+
+    const generateKey = async () => {
+        if (!newKeyName.trim()) return;
+        setGenerating(true);
+        try {
+            const res  = await fetch("/api/partner/keys", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newKeyName.trim() }),
+            });
+            const data = await res.json();
+            if (data.key) {
+                setNewKey(data);
+                setKeys(prev => [{ keyPrefix: data.prefix, name: data.name, createdAt: new Date() }, ...prev]);
+                setNewKeyName("");
+            }
+        } catch { /* noop */ } finally { setGenerating(false); }
+    };
+
+    const revokeKey = async (prefix) => {
+        setRevoking(prefix);
+        try {
+            await fetch("/api/partner/keys", {
+                method: "DELETE", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ keyPrefix: prefix }),
+            });
+            setKeys(prev => prev.filter(k => k.keyPrefix !== prefix));
+        } catch { /* noop */ } finally { setRevoking(null); }
+    };
+
+    const saveWebhook = async () => {
+        setSavingWh(true);
+        try {
+            await fetch("/api/partner/webhook", {
+                method: "PUT", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: webhookUrl, active: webhookActive, events: webhookEvents }),
+            });
+        } catch { /* noop */ } finally { setSavingWh(false); }
+    };
+
+    const rotateSecret = async () => {
+        setRotatingSecret(true);
+        try {
+            const res  = await fetch("/api/partner/webhook", { method: "POST" });
+            const data = await res.json();
+            if (data.secret) { setWebhookSecret(data.secret); setHasSecret(true); }
+        } catch { /* noop */ } finally { setRotatingSecret(false); }
+    };
+
+    const toggleEvent = (e) => setWebhookEvents(prev => prev.includes(e) ? prev.filter(x => x !== e) : [...prev, e]);
+
+    return (
+        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
+            <DialogTitle sx={{ fontWeight: 700, display: "flex", justifyContent: "space-between", alignItems: "center", pb: 1 }}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: "1.1rem" }}>🔌</span>
+                    </Box>
+                    <span>Partner API</span>
+                </Stack>
+                <IconButton size="small" onClick={() => setOpen(false)}><CloseIcon fontSize="small" /></IconButton>
+            </DialogTitle>
+
+            <Box sx={{ borderBottom: 1, borderColor: "divider", px: 3 }}>
+                <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ minHeight: 36 }}>
+                    <Tab label="API Keys" sx={{ minHeight: 36, py: 0.5 }} />
+                    <Tab label="Webhook" sx={{ minHeight: 36, py: 0.5 }} />
+                </Tabs>
+            </Box>
+
+            <DialogContent sx={{ pt: 2.5 }}>
+                {tab === 0 && (
+                    <Stack spacing={2.5}>
+                        <Typography variant="body2" color="text.secondary">
+                            Generate API keys to authenticate requests from your system to the Pythias partner API. Keys start with <code>pk_live_</code> and are shown once — store them securely.
+                        </Typography>
+
+                        {/* New key shown once */}
+                        {newKey && (
+                            <Box sx={{ bgcolor: "success.50", border: "1px solid", borderColor: "success.main", borderRadius: 1.5, p: 2 }}>
+                                <Typography variant="caption" color="success.dark" fontWeight={700} display="block" sx={{ mb: 1 }}>
+                                    ✓ Key generated — copy it now, it won{"'"}t be shown again
+                                </Typography>
+                                <CopyField label={newKey.name} value={newKey.key} secret />
+                            </Box>
+                        )}
+
+                        {/* Generate form */}
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                            <TextField size="small" fullWidth placeholder="Key name, e.g. My Shopify Store"
+                                value={newKeyName} onChange={e => setNewKeyName(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && generateKey()} />
+                            <Button variant="contained" size="small" onClick={generateKey}
+                                disabled={generating || !newKeyName.trim()}
+                                startIcon={generating ? <CircularProgress size={14} color="inherit" /> : null}
+                                sx={{ whiteSpace: "nowrap" }}>
+                                Generate
+                            </Button>
+                        </Box>
+
+                        {/* Existing keys */}
+                        {keys.length > 0 && (
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 1 }}>Active Keys</Typography>
+                                <Stack spacing={1}>
+                                    {keys.map(k => (
+                                        <Box key={k.keyPrefix} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1.5, py: 1, border: "1px solid", borderColor: "divider", borderRadius: 1.5 }}>
+                                            <Box>
+                                                <Typography variant="body2" fontWeight={600}>{k.name}</Typography>
+                                                <Typography variant="caption" color="text.disabled" sx={{ fontFamily: "monospace" }}>{k.keyPrefix}…</Typography>
+                                            </Box>
+                                            <Button size="small" color="error" onClick={() => revokeKey(k.keyPrefix)}
+                                                disabled={revoking === k.keyPrefix}>
+                                                {revoking === k.keyPrefix ? "Revoking…" : "Revoke"}
+                                            </Button>
+                                        </Box>
+                                    ))}
+                                </Stack>
+                            </Box>
+                        )}
+
+                        <Button size="small" variant="text" href="https://pythiastechnologies.com/developer" target="_blank"
+                            endIcon={<OpenInNewIcon sx={{ fontSize: 12 }} />}
+                            sx={{ alignSelf: "flex-start", p: 0, fontSize: "0.78rem", textTransform: "none" }}>
+                            View API documentation
+                        </Button>
+                    </Stack>
+                )}
+
+                {tab === 1 && (
+                    <Stack spacing={2.5}>
+                        <Typography variant="body2" color="text.secondary">
+                            Pythias will POST signed JSON payloads to your URL when orders, products, or designs change on our side. Your endpoint must respond with a 2xx status within 10 seconds.
+                        </Typography>
+
+                        <TextField size="small" fullWidth label="Webhook URL"
+                            placeholder="https://yoursite.com/webhooks/pythias"
+                            value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} />
+
+                        <Box>
+                            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 1 }}>Events to receive</Typography>
+                            <Stack spacing={0.5}>
+                                {ALL_EVENTS.map(ev => (
+                                    <FormControlLabel key={ev} control={
+                                        <Checkbox size="small" checked={webhookEvents.includes(ev)} onChange={() => toggleEvent(ev)} />
+                                    } label={<Typography variant="body2" sx={{ fontFamily: "monospace" }}>{ev}</Typography>} />
+                                ))}
+                            </Stack>
+                        </Box>
+
+                        <FormControlLabel control={
+                            <Switch checked={webhookActive} onChange={e => setWebhookActive(e.target.checked)} size="small" />
+                        } label={<Typography variant="body2">Webhook active</Typography>} />
+
+                        <Button variant="contained" size="small" onClick={saveWebhook} disabled={savingWh}
+                            startIcon={savingWh ? <CircularProgress size={14} color="inherit" /> : null}
+                            sx={{ alignSelf: "flex-start" }}>
+                            Save Webhook Settings
+                        </Button>
+
+                        <Divider />
+
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight={700} gutterBottom>Signing Secret</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                                Use this secret to verify webhook payloads came from Pythias. Rotating generates a new secret — update your server immediately.
+                            </Typography>
+                            {webhookSecret && (
+                                <Box sx={{ mb: 1.5 }}>
+                                    <CopyField label="New signing secret — copy now" value={webhookSecret} secret />
+                                </Box>
+                            )}
+                            <Button size="small" variant="outlined" color="warning" onClick={rotateSecret} disabled={rotatingSecret}
+                                startIcon={rotatingSecret ? <CircularProgress size={14} color="inherit" /> : null}>
+                                {hasSecret ? "Rotate Secret" : "Generate Secret"}
+                            </Button>
+                        </Box>
+                    </Stack>
+                )}
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, py: 1.5 }}>
+                <Button onClick={() => setOpen(false)}>Close</Button>
+            </DialogActions>
+        </Dialog>
     );
 }
 

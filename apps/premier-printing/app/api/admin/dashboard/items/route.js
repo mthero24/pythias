@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Order, Items, addCogs } from "@pythias/mongo";
 
-const VALID_SORT_FIELDS = new Set(["date", "styleCode", "colorName", "sizeName", "pieceId"]);
+const VALID_SORT_FIELDS = new Set(["date", "shipByDate", "styleCode", "colorName", "sizeName", "pieceId"]);
 
 export async function GET(req) {
     try {

@@ -24,11 +24,16 @@ export async function PATCH(req) {
         return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
-    const { orgName, timezone, bulkThreshold } = await req.json();
+    const { orgName, timezone, bulkThreshold, returnAddress } = await req.json();
     const update = {};
     if (orgName) update.name = orgName;
     if (timezone) update['settings.timezone'] = timezone;
     if (bulkThreshold !== undefined) update['settings.bulkThreshold'] = Number(bulkThreshold);
+    if (returnAddress && typeof returnAddress === "object") {
+        for (const k of ["name", "businessName", "address", "address2", "city", "state", "postalCode", "country"]) {
+            if (returnAddress[k] !== undefined) update[`returnAddress.${k}`] = returnAddress[k];
+        }
+    }
 
     await Organization.findByIdAndUpdate(session.user.orgId, update);
     return NextResponse.json({ ok: true });

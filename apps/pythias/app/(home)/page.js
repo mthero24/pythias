@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import HeroSection from "./HeroSection";
 import CloudsSection from "./CloudsSection";
+import CommunitySection from "./CommunitySection";
 import OutcomesSection from "./OutcomesSection";
 import HowItWorksSection from "./HowItWorksSection";
 import FeaturesSection from "./FeaturesSection";
@@ -100,6 +101,7 @@ export default function Home() {
       <HeroSection />
       <OutcomesSection />
       <CloudsSection />
+      <CommunitySection />
       <HowItWorksSection />
       <FeaturesSection />
       <TestimonialsSection />

@@ -5,6 +5,7 @@ import {
     SetupGuide,
     PlatformBlank, PlatformColor, PlatformDesign, PlatformProduct,
     PlatformMarketPlace, PlatformEditData, ApiKeyIntegrations,
+    PlatformOrder, PartnerApiKey, Organization,
 } from "@pythias/mongo";
 
 async function detectSteps(orgId, slug) {
@@ -46,19 +47,37 @@ export async function GET() {
 
     const orgId = session.user.orgId;
     const slug  = session.user.orgSlug;
+    const isCommerce = session.user.orgType === "commerce";
 
-    const [guide, autoSteps] = await Promise.all([
-        SetupGuide.findOne({ orgId }).lean(),
-        detectSteps(orgId, slug),
-    ]);
-
+    const guide = await SetupGuide.findOne({ orgId }).lean();
     const manual = guide?.manualSteps ?? {};
-    const steps = {
-        ...autoSteps,
-        shippingHardware: !!manual.shippingHardware,
-        internalServer:   !!manual.internalServer,
-        fileWriter:       !!manual.fileWriter,
-    };
+
+    let steps;
+    if (isCommerce) {
+        const [org, hasChannel, hasPartnerKey, hasProducts, hasOrders] = await Promise.all([
+            Organization.findById(orgId).select("wallet").lean(),
+            ApiKeyIntegrations.countDocuments({ orgId }),
+            PartnerApiKey.countDocuments({ orgId, active: true }),
+            PlatformProduct.countDocuments({ orgId }),
+            PlatformOrder.countDocuments({ orgId }),
+        ]);
+        steps = {
+            fundWallet:    (org?.wallet?.balance ?? 0) > 0,
+            autoRecharge:  !!org?.wallet?.autoRechargeEnabled,
+            salesChannel:  hasChannel > 0 || hasPartnerKey > 0,
+            addProducts:   hasProducts > 0,
+            testOrder:     hasOrders > 0,
+            reviewRouting: !!manual.reviewRouting,
+        };
+    } else {
+        const autoSteps = await detectSteps(orgId, slug);
+        steps = {
+            ...autoSteps,
+            shippingHardware: !!manual.shippingHardware,
+            internalServer:   !!manual.internalServer,
+            fileWriter:       !!manual.fileWriter,
+        };
+    }
 
     const total     = Object.keys(steps).length;
     const completed = Object.values(steps).filter(Boolean).length;
@@ -81,7 +100,7 @@ export async function PATCH(req) {
 
     const update = {};
     if (dismissed !== undefined) update.dismissed = dismissed;
-    if (step && ["shippingHardware", "internalServer", "fileWriter"].includes(step)) {
+    if (step && ["shippingHardware", "internalServer", "fileWriter", "reviewRouting"].includes(step)) {
         update[`manualSteps.${step}`] = value ?? true;
     }
 

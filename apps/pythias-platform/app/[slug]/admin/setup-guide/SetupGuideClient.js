@@ -12,7 +12,7 @@ import ExpandLessIcon     from "@mui/icons-material/ExpandLess";
 import OpenInNewIcon      from "@mui/icons-material/OpenInNew";
 import axios from "axios";
 
-const STEPS = [
+const STEPS_FULFILLMENT = [
     {
         key: "dataCategories",
         title: "Add data categories",
@@ -95,6 +95,54 @@ const STEPS = [
     },
 ];
 
+// Commerce Cloud orgs don't run a production floor — they sell and route orders to
+// fulfillment providers. Their onboarding is funding, channels, catalog, and a test order.
+const STEPS_COMMERCE = [
+    {
+        key: "fundWallet",
+        title: "Add funds to your wallet",
+        description: "Commerce Cloud runs on a prepaid wallet. When an order comes in, Pythias charges your wallet the provider's wholesale cost and routes it for fulfillment. Add a payment method and a starting balance so your first orders can route.",
+        action: { label: "Open wallet", path: "fulfillment/wallet" },
+        manual: false,
+    },
+    {
+        key: "autoRecharge",
+        title: "Turn on auto-recharge",
+        description: "So orders never fail to route for a low balance, set an auto-recharge amount and minimum threshold. When your balance drops below the floor, Pythias tops it up automatically from your saved payment method.",
+        action: { label: "Set auto-recharge", path: "fulfillment/wallet" },
+        manual: false,
+    },
+    {
+        key: "salesChannel",
+        title: "Connect a sales channel",
+        description: "Connect where your orders come from — a marketplace (Amazon, Walmart, TikTok, Etsy, eBay, Shopify), or your own storefront via the Partner API. Orders from any connected channel flow into Pythias and route to a fulfillment provider automatically.",
+        action: { label: "Manage integrations", path: "admin/integrations" },
+        manual: false,
+    },
+    {
+        key: "addProducts",
+        title: "Add products to sell",
+        description: "Build your catalog of sellable products. Each product maps to a blank (garment) and design so Pythias knows how to fulfill it. You can also send orders with the design artwork inline — but cataloged products list and route the most smoothly.",
+        action: { label: "Add products", path: "admin/products" },
+        manual: false,
+    },
+    {
+        key: "testOrder",
+        title: "Place a test order",
+        description: "Send a test order through the pipeline to confirm it routes to a provider and reaches fulfillment. Watch it land in Routing Status with a selected provider and score breakdown.",
+        action: { label: "Create an order", path: "admin/products" },
+        manual: false,
+    },
+    {
+        key: "reviewRouting",
+        title: "Review routing & fulfillment",
+        description: "See how orders are scored and assigned to providers, and where they are in fulfillment. The Commerce Cloud dashboard shows routing decisions, provider assignments, wholesale costs, and order status.",
+        action: { label: "Open Commerce Cloud", path: "admin/commerce-cloud" },
+        manual: true,
+        manualNote: "Review the Commerce Cloud dashboard and routing status, then mark it done here.",
+    },
+];
+
 function StepRow({ step, done, slug, open, onToggle, onMarkDone }) {
     return (
         <Box sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
@@ -163,8 +211,10 @@ function StepRow({ step, done, slug, open, onToggle, onMarkDone }) {
     );
 }
 
-export default function SetupGuideClient({ steps: initialSteps, completed: initialCompleted, total, slug }) {
+export default function SetupGuideClient({ steps: initialSteps, completed: initialCompleted, total, slug, orgType }) {
     const router = useRouter();
+    const STEPS = orgType === "commerce" ? STEPS_COMMERCE : STEPS_FULFILLMENT;
+    const isCommerce = orgType === "commerce";
     const [steps, setSteps]         = useState(initialSteps);
     const [completed, setCompleted] = useState(initialCompleted);
     const [openKey, setOpenKey]     = useState(
@@ -194,7 +244,9 @@ export default function SetupGuideClient({ steps: initialSteps, completed: initi
                 <Box>
                     <Typography variant="h4" fontWeight={800} gutterBottom>Setup Guide</Typography>
                     <Typography color="text.secondary">
-                        Follow these steps to get your Pythias platform fully configured.
+                        {isCommerce
+                            ? "Follow these steps to start selling and routing orders to fulfillment providers."
+                            : "Follow these steps to get your Pythias platform fully configured."}
                     </Typography>
                 </Box>
                 {allDone && (

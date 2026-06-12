@@ -54,6 +54,18 @@ const schema = new mongoose.Schema({
             accountNumber: { type: String },
         },
     },
+    // Return/from address printed on shipping labels for this org's orders.
+    // For Commerce Cloud, the provider (e.g. Premier) ships blind under this address.
+    returnAddress: {
+        name:         { type: String },   // contact / person
+        businessName: { type: String },   // brand shown on the label
+        address:      { type: String },
+        address2:     { type: String },
+        city:         { type: String },
+        state:        { type: String },
+        postalCode:   { type: String },
+        country:      { type: String, default: "US" },
+    },
     // ── Commerce Cloud wallet ──────────────────────────────────────
     wallet: {
         balance:              { type: Number, default: 0 },       // USD cents
@@ -62,6 +74,37 @@ const schema = new mongoose.Schema({
         autoRechargeEnabled:  { type: Boolean, default: false },
         stripePaymentMethodId: { type: String },
         lastRechargedAt:      { type: Date },
+    },
+    // ── Partner API / webhook settings ───────────────────────────────
+    partnerWebhook: {
+        url:       { type: String },           // partner's endpoint Pythias POSTs to
+        secret:    { type: String },           // HMAC-SHA256 signing secret (shown once)
+        active:    { type: Boolean, default: false },
+        events:    { type: [String], default: ["order.routed", "order.cancelled"] },
+    },
+    // ── Terms of service acceptance ───────────────────────────────────
+    termsAccepted: {
+        platform: {
+            acceptedAt: { type: Date },
+            version:    { type: String },
+            ip:         { type: String },
+        },
+        fulfillmentPartner: {
+            acceptedAt: { type: Date },
+            version:    { type: String },
+            ip:         { type: String },
+        },
+    },
+    // ── Fulfillment partner eligibility ───────────────────────────────
+    fulfillmentPartner: {
+        eligible:          { type: Boolean, default: false },  // auto-set when criteria met
+        offered:           { type: Boolean, default: false },  // Pythias admin offered them
+        offeredAt:         { type: Date },
+        accepted:          { type: Boolean, default: false },  // org accepted the offer
+        acceptedAt:        { type: Date },
+        avgShipDays30d:    { type: Number },                   // rolling avg, updated nightly
+        lastCheckedAt:     { type: Date },
+        platformFeePercent: { type: Number, default: 2 },      // % of wholesale order value Pythias keeps (1–3%)
     },
     trialEndsAt: { type: Date },
     createdAt: { type: Date, default: Date.now },

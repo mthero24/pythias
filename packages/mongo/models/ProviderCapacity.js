@@ -16,6 +16,9 @@ const schema = new mongoose.Schema({
     acceptsCommerceCloud: { type: Boolean, default: false },
     // Internal providers (Premier, PO) skip the 2-hour acceptance window and auto-accept immediately
     autoAccept:        { type: Boolean, default: false },
+    // Per-order handling fee this provider charges (USD cents). Flat for now; later
+    // providers set their own and the routing engine filters out fees above the seller's max.
+    handlingFee:       { type: Number, default: 200 },
     // Controls whether this Fulfillment Cloud customer accepts overflow orders from other providers
     allowOverflowIn:   { type: Boolean, default: false },
     // Controls whether this Fulfillment Cloud customer can send overflow orders out

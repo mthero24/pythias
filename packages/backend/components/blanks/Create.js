@@ -345,6 +345,146 @@ const ColorImageCard = ({ blank, color, allColors, setAllColors, setBlank, updat
     );
 };
 
+
+function parseHandlingTime(str) {
+    // Accepts "1-3", "1-3 days", "2", "2 days"
+    const clean  = str.replace(/\s*days?\s*/i, "").trim();
+    const range  = clean.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+    if (range) return { min: parseInt(range[1]), max: parseInt(range[2]) };
+    const single = clean.match(/^(\d+)$/);
+    if (single) { const n = parseInt(single[1]); return { min: n, max: n }; }
+    return null;
+}
+
+function HandlingTimeField({ blank, setBlank, debouncedUpdate }) {
+    const toDisplay = (ht) => {
+        if (!ht) return "";
+        // Already a proper object
+        if (typeof ht === "object" && ht.min != null) {
+            return ht.min === ht.max ? `${ht.min}` : `${ht.min}-${ht.max}`;
+        }
+        // String stored from old bad save — extract numbers and display them
+        if (typeof ht === "string") {
+            const parsed = parseHandlingTime(ht);
+            if (parsed) return parsed.min === parsed.max ? `${parsed.min}` : `${parsed.min}-${parsed.max}`;
+        }
+        return "";
+    };
+
+    const [raw, setRaw] = useState(() => toDisplay(blank.handlingTime));
+
+    // On load, if handlingTime is a bad string, normalize and save it immediately
+    const normalizedRef = React.useRef(false);
+    React.useEffect(() => {
+        if (normalizedRef.current) return;
+        normalizedRef.current = true;
+        const ht = blank.handlingTime;
+        if (ht && typeof ht !== "object") {
+            const parsed = parseHandlingTime(String(ht));
+            if (parsed) {
+                const bla = { ...blank, handlingTime: parsed };
+                setBlank(bla);
+                debouncedUpdate({ blank: bla });
+            }
+        }
+    }, []);
+
+    // Keep raw in sync if blank changes externally (e.g. switching blanks)
+    const prevId = React.useRef(blank._id);
+    if (blank._id !== prevId.current) {
+        prevId.current = blank._id;
+        normalizedRef.current = false;
+        setRaw(toDisplay(blank.handlingTime));
+    }
+
+    const commit = (value) => {
+        const parsed = parseHandlingTime(value);
+        if (!parsed) return;
+        const bla = { ...blank, handlingTime: parsed };
+        setBlank(bla);
+        debouncedUpdate({ blank: bla });
+    };
+
+    return (
+        <TextField label="Handling Time (days)" fullWidth
+            placeholder="e.g. 1-3"
+            value={raw}
+            helperText="e.g. 1-3 or 2"
+            onChange={(e) => setRaw(e.target.value)}
+            onBlur={(e) => commit(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") commit(e.target.value); }}
+        />
+    );
+}
+
+function ManufacturerStyleField({ blank, setBlank, debouncedUpdate }) {
+    const [looking, setLooking] = useState(false);
+    const [msg,     setMsg]     = useState("");
+    const [options, setOptions] = useState([]);
+
+    const select = (value) => {
+        const bla = { ...blank, manufacturerStyle: value };
+        setBlank(bla);
+        debouncedUpdate({ blank: bla });
+        setOptions([]);
+        setMsg("✓ Selected");
+    };
+
+    const lookup = async () => {
+        if (!blank?._id) return;
+        setLooking(true);
+        setMsg("");
+        setOptions([]);
+        try {
+            const res = await axios.post("/api/admin/blanks/manufacturer-style", { blankId: blank._id });
+            if (res.data.confident && res.data.manufacturerStyle) {
+                select(res.data.manufacturerStyle);
+                setMsg("✓ Auto-filled");
+            } else if (res.data.options?.length) {
+                setOptions(res.data.options);
+                setMsg("Pick the correct one:");
+            } else {
+                setMsg(res.data.msg || "Could not identify — enter manually");
+            }
+        } catch { setMsg("Lookup failed"); }
+        finally { setLooking(false); }
+    };
+
+    return (
+        <Box>
+            <Box sx={{ display: "flex", gap: 0.75, alignItems: "flex-start" }}>
+                <TextField label="Manufacturer Style" fullWidth placeholder="e.g. Comfort Colors 1717"
+                    value={blank.manufacturerStyle ?? ""}
+                    helperText={msg || "Universal industry style code"}
+                    FormHelperTextProps={{ sx: { color: msg?.startsWith("✓") ? "success.main" : undefined, whiteSpace: "nowrap" } }}
+                    onChange={(e) => {
+                        const bla = { ...blank, manufacturerStyle: e.target.value };
+                        setBlank(bla);
+                        debouncedUpdate({ blank: bla });
+                    }} />
+                <Tooltip title="Ask Claude to identify the manufacturer and style number from the blank name">
+                    <span>
+                        <Button size="small" variant="outlined" onClick={lookup}
+                            disabled={looking || !blank?.name}
+                            sx={{ mt: 0.75, whiteSpace: "nowrap", minWidth: 0, px: 1.5 }}>
+                            {looking ? "…" : "Lookup"}
+                        </Button>
+                    </span>
+                </Tooltip>
+            </Box>
+            {options.length > 0 && (
+                <Box sx={{ mt: 0.75, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {options.map(o => (
+                        <Chip key={o} size="small" label={o}
+                            onClick={() => select(o)}
+                            sx={{ fontSize: "0.7rem", cursor: "pointer" }} />
+                    ))}
+                </Box>
+            )}
+        </Box>
+    );
+}
+
 export function Create({ colors, blanks, bla, printPricing, locations, vendors, departments, categories, brands, suppliers, printTypes }) {
     const [extraGroups, setExtraGroups] = useState([])
     const [allColors, setAllColors] = useState(colors)
@@ -447,7 +587,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                     debouncedUpdate({blank: bla});
                                 }}/>
                             </Grid2>
-                            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
                                 <TextField label="Code" fullWidth value={blank.code ?? ""} onChange={(e) => {
                                     let bla = {...blank};
                                     bla.code = e.target.value;
@@ -455,16 +595,14 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                     debouncedUpdate({blank: bla});
                                 }} />
                             </Grid2>
-                            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-                                <TextField label="Handling Time (days)" fullWidth value={blank.handlingTime ? `${blank.handlingTime.min}-${blank.handlingTime.max} days` : ""} onChange={(e) => {
-                                    let bla = {...blank};
-                                    bla.handlingTime = e.target.value;
-                                    setBlank(bla);
-                                    debouncedUpdate({blank: bla});
-                                }} />
+                            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
+                                <HandlingTimeField blank={blank} setBlank={setBlank} debouncedUpdate={debouncedUpdate} />
                             </Grid2>
                             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                                 <TextField label="Slug" disabled fullWidth value={blank.slug ?? ""} />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
+                                <ManufacturerStyleField blank={blank} setBlank={setBlank} debouncedUpdate={debouncedUpdate} />
                             </Grid2>
 
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>

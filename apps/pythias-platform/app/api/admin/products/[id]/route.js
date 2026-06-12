@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { PlatformProduct } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import mongoose from "mongoose";
+import { notifyPartner } from "@/lib/notifyPartner";
+import { shapeProduct } from "@/lib/partnerShape";
 
 export async function GET(req, { params }) {
     const token = await getToken({ req });
@@ -34,6 +36,7 @@ export async function PATCH(req, { params }) {
             { new: true },
         ).lean();
         if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+        notifyPartner(token.orgId, "product.updated", shapeProduct(updated));
         return NextResponse.json({ error: false, product: JSON.parse(JSON.stringify(updated)) });
     } catch (e) {
         return NextResponse.json({ error: e.message?.includes("duplicate") ? "SKU already exists" : e.message });
