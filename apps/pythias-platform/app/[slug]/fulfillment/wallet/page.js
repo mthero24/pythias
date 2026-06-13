@@ -58,8 +58,13 @@ function AddFundsCard({ onSuccess }) {
             body: JSON.stringify({ action: "add-funds", amountCents: cents }),
         });
         const data = await res.json();
+        if (!data.error && data.url) {
+            // Redirect to Stripe Checkout; we return to the wallet page on completion.
+            window.location.href = data.url;
+            return;
+        }
         setLoading(false);
-        if (!data.error) { onSuccess(data.wallet); setAmount(""); }
+        if (data.error) onSuccess({ __error: data.error });
     };
 
     const customCents = Math.round(parseFloat(amount) * 100) || 0;
@@ -92,7 +97,7 @@ function AddFundsCard({ onSuccess }) {
                     </Button>
                 </Box>
                 <Typography variant="caption" sx={{ color: "#555", mt: 1, display: "block" }}>
-                    Stripe payment processing will be connected at launch. Funds added here go directly to your wallet balance.
+                    Secure payment via Stripe. Your card is saved so auto-recharge can top up your balance automatically.
                 </Typography>
             </CardContent>
         </Card>
@@ -154,14 +159,27 @@ export default function WalletPage() {
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState({ open: false, msg: "" });
 
+    const refetch = () => fetch("/api/fulfillment/wallet").then(r => r.json()).then(d => { if (!d.error) setWallet(d.wallet); });
+
     useEffect(() => {
-        fetch("/api/fulfillment/wallet")
-            .then(r => r.json())
-            .then(d => { if (!d.error) setWallet(d.wallet); })
-            .finally(() => setLoading(false));
+        refetch().finally(() => setLoading(false));
+
+        // Returned from Stripe Checkout
+        const params = new URLSearchParams(window.location.search);
+        const funded = params.get("funded");
+        if (funded === "success") {
+            setToast({ open: true, msg: "Payment received — updating your balance…" });
+            // The webhook credits asynchronously; poll briefly for the new balance.
+            [1500, 4000, 8000].forEach(ms => setTimeout(refetch, ms));
+            window.history.replaceState({}, "", window.location.pathname);
+        } else if (funded === "cancel") {
+            setToast({ open: true, msg: "Payment canceled — no funds added." });
+            window.history.replaceState({}, "", window.location.pathname);
+        }
     }, []);
 
     const handleUpdate = (newWallet) => {
+        if (newWallet?.__error) { setToast({ open: true, msg: newWallet.__error }); return; }
         setWallet(newWallet);
         setToast({ open: true, msg: "Wallet updated" });
     };

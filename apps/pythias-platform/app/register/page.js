@@ -1,8 +1,20 @@
 "use client";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider, Chip } from "@mui/material";
+import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider, Chip, IconButton, InputAdornment } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { TIERS } from "@/lib/tiers";
+
+const revealAdornment = (show, toggle) => ({
+    endAdornment: (
+        <InputAdornment position="end">
+            <IconButton onClick={toggle} edge="end" size="small" tabIndex={-1} aria-label="toggle password visibility">
+                {show ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+            </IconButton>
+        </InputAdornment>
+    ),
+});
 
 // ── Fulfillment Cloud tiers ───────────────────────────────────────────────────
 const FC_TIER_OPTIONS = ['starter', 'professional', 'business', 'scale'];
@@ -35,6 +47,7 @@ function RegisterForm() {
     });
     const [error, setError]   = useState("");
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
@@ -43,14 +56,19 @@ function RegisterForm() {
         if (form.password !== form.confirm) { setError("Passwords do not match"); return; }
         setLoading(true);
         setError("");
-        const res = await fetch("/api/orgs", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...form, orgType: isCommerce ? "commerce" : "fulfillment" }),
-        });
-        const data = await res.json();
-        if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
-        router.push("/login?registered=1");
+        try {
+            const res = await fetch("/api/orgs", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...form, orgType: isCommerce ? "commerce" : "fulfillment" }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
+            router.push("/login?registered=1");
+        } catch (err) {
+            setError("Could not reach the server. Please try again.");
+            setLoading(false);
+        }
     }
 
     const selectedCCTier = CC_TIERS.find(t => t.key === form.tier);
@@ -191,8 +209,10 @@ function RegisterForm() {
                                             <TextField label="Last name"  value={form.lastName}  onChange={set("lastName")}  required fullWidth size="small" />
                                         </Stack>
                                         <TextField label="Email"            type="email"    value={form.email}    onChange={set("email")}    required fullWidth size="small" />
-                                        <TextField label="Password"         type="password" value={form.password} onChange={set("password")} required fullWidth size="small" />
-                                        <TextField label="Confirm password" type="password" value={form.confirm}  onChange={set("confirm")}  required fullWidth size="small" />
+                                        <TextField label="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} required fullWidth size="small"
+                                            InputProps={revealAdornment(showPassword, () => setShowPassword(s => !s))} />
+                                        <TextField label="Confirm password" type={showPassword ? "text" : "password"} value={form.confirm} onChange={set("confirm")} required fullWidth size="small"
+                                            InputProps={revealAdornment(showPassword, () => setShowPassword(s => !s))} />
                                         <Stack direction="row" spacing={1}>
                                             <Button variant="outlined" onClick={() => setStep(2)} fullWidth>Back</Button>
                                             <Button type="submit" variant="contained" fullWidth disabled={loading}

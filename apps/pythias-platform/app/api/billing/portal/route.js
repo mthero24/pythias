@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { Organization } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
+import { getStripe } from "@/lib/stripe";
 
 export async function POST(req) {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const stripe = getStripe();
     const token = await getToken({ req });
     if (!token?.orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

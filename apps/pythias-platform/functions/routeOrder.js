@@ -8,6 +8,7 @@ import {
 } from "@pythias/mongo";
 import { sendOrderToProvider } from "@/functions/sendToProvider";
 import { recordApiNotification } from "@/lib/recordApiNotification";
+import { ensureWalletFunds } from "@/lib/walletRecharge";
 
 // Record a seller-facing alert and return the unroutable result.
 const UNROUTABLE_MSG = {
@@ -192,7 +193,12 @@ export async function routeOrder(order, items, org) {
     const best = scored[0];
 
     // Step 6 — Verify the commerce org wallet has enough funds
-    if ((org.wallet?.balance ?? 0) < best.totalWholesale) {
+    let availableBalance = org.wallet?.balance ?? 0;
+    if (availableBalance < best.totalWholesale) {
+        // Try auto-recharge (off-session) before giving up.
+        availableBalance = await ensureWalletFunds(org._id, best.totalWholesale);
+    }
+    if (availableBalance < best.totalWholesale) {
         return unroutable(org, order, "insufficient_wallet_balance");
     }
 

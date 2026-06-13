@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { Organization, UsageLedger } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
+import { getStripe } from "@/lib/stripe";
 
 export async function POST(req) {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const stripe = getStripe();
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
@@ -18,6 +18,28 @@ export async function POST(req) {
 
     try {
         switch (event.type) {
+            // Wallet top-up via Stripe Checkout — credit the wallet and save the card.
+            case "checkout.session.completed": {
+                const s = event.data.object;
+                if (s.metadata?.kind !== "wallet_topup" || s.payment_status !== "paid") break;
+                const amount = parseInt(s.metadata.amountCents, 10) || 0;
+                const set = { "wallet.lastRechargedAt": new Date() };
+                if (s.customer) set.stripeCustomerId = s.customer;
+                if (s.payment_intent) {
+                    try {
+                        const pi = await stripe.paymentIntents.retrieve(s.payment_intent);
+                        if (pi.payment_method) set["wallet.stripePaymentMethodId"] = pi.payment_method;
+                    } catch (e) { console.error("[billing/webhook] PI retrieve failed:", e.message); }
+                }
+                if (s.metadata.orgId && amount > 0) {
+                    await Organization.findByIdAndUpdate(s.metadata.orgId, {
+                        $inc: { "wallet.balance": amount },
+                        $set: set,
+                    });
+                }
+                break;
+            }
+
             case "customer.subscription.created":
             case "customer.subscription.updated": {
                 const sub = event.data.object;
