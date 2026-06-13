@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -10,7 +10,7 @@ const CATEGORIES = [
     { slug: "wins-announcements",        label: "Wins, Announcements & General", icon: "🎉" },
 ];
 
-export default function NewThreadPage() {
+function NewThreadForm() {
     const router       = useRouter();
     const searchParams = useSearchParams();
     const [category, setCategory] = useState(searchParams.get("category") ?? "");
@@ -114,5 +114,13 @@ export default function NewThreadPage() {
                 </form>
             </div>
         </main>
+    );
+}
+
+export default function NewThreadPage() {
+    return (
+        <Suspense>
+            <NewThreadForm />
+        </Suspense>
     );
 }

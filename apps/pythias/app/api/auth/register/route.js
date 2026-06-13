@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import User from "@pythias/mongo";
-import inventory from "@pythias/mongo";
+import { User } from "@pythias/mongo";
 
 export async function POST(request) {
   try {
