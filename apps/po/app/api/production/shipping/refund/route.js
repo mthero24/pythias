@@ -1,6 +1,6 @@
 import { NextResponse, NextApiRequest } from "next/server";
 import Order from "@/models/Order"
-import Manifest from "../../../../models/manifest";
+import Manifest from "@/models/manifest";
 import {getRefund} from "@pythias/shipping"
 
 export async function POST(req= NextApiRequest){
