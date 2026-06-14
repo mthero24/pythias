@@ -56,6 +56,7 @@ export default async function ProductsPage(req) {
             canManageMarketplaces={canManageMarketplaces}
             searchUrl="/api/admin/products"
             orgType={orgType}
+            orgId={orgId}
         />
     );
 }

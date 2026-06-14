@@ -18,13 +18,22 @@ export async function sendOrderToProvider(providerSlug, order, items) {
     const cfg = PROVIDER_INGEST[providerSlug];
     if (!cfg?.url || !cfg?.secret) return { skipped: true, reason: "no_ingest_config" };
 
+    const { Organization, PlatformBlank } = await import("@pythias/mongo");
+
     // The seller's return address — provider ships blind under the seller's brand.
     let returnAddress = order.returnAddress ?? null;
     if (!returnAddress && order.orgId) {
-        const { Organization } = await import("@pythias/mongo");
         const org = await Organization.findById(order.orgId).select("returnAddress").lean();
         returnAddress = org?.returnAddress ?? null;
     }
+
+    // Resolve each item's garment to its MANUFACTURER STYLE — the provider-agnostic
+    // identity. The provider maps the manufacturer style to its own blank.
+    const blankIds = [...new Set(items.map(i => i.blank?.toString()).filter(Boolean))];
+    const blanks = blankIds.length
+        ? await PlatformBlank.find({ _id: { $in: blankIds } }).select("manufacturerStyle code").lean()
+        : [];
+    const mfrOf = Object.fromEntries(blanks.map(b => [b._id.toString(), (b.manufacturerStyle?.trim() || b.code || "")]));
 
     const payload = {
         poNumber:        order.poNumber,
@@ -40,6 +49,8 @@ export async function sendOrderToProvider(providerSlug, order, items) {
         returnAddress,
         items: items.map((i) => ({
             sku:       i.sku,
+            // Manufacturer style is the provider-agnostic garment key; styleCode kept as fallback.
+            manufacturerStyle: mfrOf[i.blank?.toString()] || i.styleCode || "",
             styleCode: i.styleCode,
             colorName: i.colorName,
             sizeName:  i.sizeName,

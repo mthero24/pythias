@@ -222,6 +222,24 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
+      name: "commerce-catalog-sync",
+      cwd: "apps/pythias-platform",
+      script: "scripts/importPremierCatalog.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "0 */12 * * *", // every 12 hours — sync Premier catalog + pricing into Commerce Cloud
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3010,
+      },
+      out_file: "logs/commerce-catalog-sync-out.log",
+      error_file: "logs/commerce-catalog-sync-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "generate-invoices",
       cwd: "apps/pythias",
       script: "scripts/runGenerateInvoices.js",

@@ -5,7 +5,7 @@ import {
     SetupGuide,
     PlatformBlank, PlatformColor, PlatformDesign, PlatformProduct,
     PlatformMarketPlace, PlatformEditData, ApiKeyIntegrations,
-    PlatformOrder, PartnerApiKey, Organization,
+    PlatformOrder, PartnerApiKey, Organization, PlatformUser,
 } from "@pythias/mongo";
 import SetupGuideClient from "./SetupGuideClient";
 
@@ -15,16 +15,18 @@ export const metadata = { title: "Setup Guide" };
 async function getSetupData(orgId, slug) {
     const [
         hasEditData, hasColors, hasBlanks, hasDesigns,
-        hasProducts, hasIntegrations, hasMarketplace, hasListing, guide,
+        hasProducts, hasTeam, hasIntegrations, hasMarketplace, hasListing, org, guide,
     ] = await Promise.all([
         PlatformEditData.countDocuments({ orgId }),
         PlatformColor.countDocuments({ orgId }),
         PlatformBlank.countDocuments({ orgId }),
         PlatformDesign.countDocuments({ orgId }),
         PlatformProduct.countDocuments({ orgId }),
+        PlatformUser.countDocuments({ orgId }),
         ApiKeyIntegrations.countDocuments({ $or: [{ orgId }, { provider: slug }] }),
         PlatformMarketPlace.countDocuments({ orgId, connections: { $exists: true, $not: { $size: 0 } } }),
         PlatformProduct.countDocuments({ orgId, marketPlacesArray: { $exists: true, $not: { $size: 0 } } }),
+        Organization.findById(orgId).select("returnAddress").lean(),
         SetupGuide.findOne({ orgId }).lean(),
     ]);
 
@@ -35,9 +37,11 @@ async function getSetupData(orgId, slug) {
         firstBlank:       hasBlanks        > 0,
         firstDesign:      hasDesigns       > 0,
         firstProduct:     hasProducts      > 0,
+        team:             hasTeam          > 1,
         firstIntegration: hasIntegrations  > 0,
         marketplace:      hasMarketplace   > 0,
         firstListing:     hasListing       > 0,
+        returnAddress:    !!org?.returnAddress?.address,
         shippingHardware: !!manual.shippingHardware,
         internalServer:   !!manual.internalServer,
         fileWriter:       !!manual.fileWriter,

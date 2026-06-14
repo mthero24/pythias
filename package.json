@@ -11,11 +11,11 @@
   },
   "devDependencies": {
     "prettier": "^3.2.5",
-    "turbo": "^2.4.0",
+    "turbo": "^2.9.18",
     "typescript": "5.5.4"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22 <23"
   },
   "packageManager": "npm@10.2.3",
   "workspaces": [

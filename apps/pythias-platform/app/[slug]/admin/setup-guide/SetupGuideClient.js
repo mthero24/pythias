@@ -49,6 +49,13 @@ const STEPS_FULFILLMENT = [
         manual: false,
     },
     {
+        key: "team",
+        title: "Invite your team",
+        description: "Add the people who'll work in Pythias — production, shipping, designers, and admins. Each member gets their own login with role-based permissions, so they only see what they need.",
+        action: { label: "Manage users", path: "admin/users" },
+        manual: false,
+    },
+    {
         key: "firstIntegration",
         title: "Connect your first integration",
         description: "Go to Integrations and add your marketplace API credentials (Amazon, Walmart, TikTok Shop, Etsy, eBay, Shopify, and more). This authorizes Pythias to push listings and receive orders on your behalf.",
@@ -67,6 +74,13 @@ const STEPS_FULFILLMENT = [
         title: "Send your first listing",
         description: "From the product page, open the marketplace modal and click Send Listing. Make sure all required product and blank variables are filled in first — the modal will highlight any that are missing before sending.",
         action: { label: "Go to products", path: "admin/products" },
+        manual: false,
+    },
+    {
+        key: "returnAddress",
+        title: "Set your return address",
+        description: "Add the return / from address printed on your shipping labels — the address and brand your customers see on the package. Set it once and it's used on every label you print.",
+        action: { label: "Return address settings", path: "settings" },
         manual: false,
     },
     {

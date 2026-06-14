@@ -1,4 +1,4 @@
-import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Seasons, Genders, SportUsedFor, Brands, PlatformMarketPlace as MarketPlaces, Themes, PrintTypes, PlatformLicenseHolder as LicenseHolders } from "@pythias/mongo";
+import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Seasons, Genders, SportUsedFor, Brands, PlatformMarketPlace as MarketPlaces, Themes, PlatformEditData, PlatformLicenseHolder as LicenseHolders } from "@pythias/mongo";
 import { ProductsMain as Main, serialize } from "@pythias/backend";
 import { CreateSku } from "@/functions/CreateSku";
 import { getServerSession } from "next-auth";
@@ -25,7 +25,9 @@ export default async function ProductsPage(req) {
         MarketPlaces.find(orgId ? { orgId } : {}).lean(),
         Themes.find().lean(),
         Color.find(orgId ? { orgId } : {}).lean(),
-        PrintTypes.find().lean(),
+        // Print types are org-scoped and seller-editable (PlatformEditData) — same store the
+        // Edit Data UI and design pages use. Carries each print type's price into product build.
+        orgId ? PlatformEditData.find({ orgId, type: "printTypes" }).lean() : [],
         LicenseHolders.find(orgId ? { orgId } : {}).lean(),
         orgId ? PlatformProduct.countDocuments({ orgId }) : Promise.resolve(0),
     ]);
@@ -54,6 +56,7 @@ export default async function ProductsPage(req) {
             licenses={serialize(licenses)}
             canManageMarketplaces={canManageMarketplaces}
             searchUrl="/api/admin/products"
+            orgId={orgId}
         />
     );
 }

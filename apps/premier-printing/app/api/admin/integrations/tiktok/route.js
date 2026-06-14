@@ -93,10 +93,28 @@ export async function POST(req=NextApiRequest){
 
     const hires = (url) => url?.replace(/(\?|&)width=\d+/, '$1width=2400') ?? url;
 
-    // Fetch the full blank from DB so marketPlaceOverrides and all fields are guaranteed present
+    // Fetch the full blank from DB so all fields are guaranteed present, then overlay any
+    // marketplace overrides / bullet points the user set in the modal but didn't persist to
+    // the Blank document — otherwise the DB copy silently discards those fresh selections.
     const blankId = p.blanks?.[0]?._id ?? p.blanks?.[0];
     const fullBlank = blankId ? await Blanks.findById(blankId).lean() : null;
-    const blankData = fullBlank ?? p.blanks?.[0];
+    const sentBlank = p.blanks?.[0] && typeof p.blanks[0] === "object" ? p.blanks[0] : null;
+    const baseBlank = fullBlank ?? sentBlank;
+    const blankData = baseBlank ? {
+        ...baseBlank,
+        // Deep-merge marketPlaceOverrides per marketplace name; the sent (modal-edited) values win.
+        marketPlaceOverrides: (() => {
+            const dbOv = baseBlank.marketPlaceOverrides ?? {};
+            const sentOv = sentBlank?.marketPlaceOverrides ?? {};
+            const merged = { ...dbOv };
+            for (const [mp, vals] of Object.entries(sentOv)) {
+                merged[mp] = { ...(dbOv[mp] ?? {}), ...(vals ?? {}) };
+            }
+            return merged;
+        })(),
+        // Prefer modal-edited bullet points when the frontend provides any.
+        bulletPoints: (sentBlank?.bulletPoints?.length ? sentBlank.bulletPoints : baseBlank.bulletPoints),
+    } : null;
 
     // Extract product-specific marketplace values for this TikTok marketplace
     const tiktokMp = (p.marketPlacesArray ?? []).find(m =>
@@ -111,6 +129,7 @@ export async function POST(req=NextApiRequest){
         name:              p.title,
         brand:             p.brand ?? null,
         description:       p.description,
+        tags:              p.tags ?? [],
         design:            p.design,
         blank:             blankData ? { ...blankData, sizeGuide: blankData.sizeGuide ? { ...blankData.sizeGuide, images: (blankData.sizeGuide.images ?? []).map(hires) } : undefined } : undefined,
         images:            (p.productImages ?? []).map(pi => hires(pi.image)).filter(Boolean),

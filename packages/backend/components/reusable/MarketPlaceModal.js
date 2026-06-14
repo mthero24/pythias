@@ -741,10 +741,11 @@ export const MarketplaceModal = ({ open, setOpen, marketPlaces, setMarketPlaces,
                         {/* Marketplace cards grid */}
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
                             {marketPlaces && marketPlaces.map((mp) => {
-                                if (connections?.length > 0) {
+                                if (connections?.length > 0 || tiktokAuth?.length > 0) {
                                     mp.connections = mp.connections?.map(c => {
-                                        const conn = connections.find(conn => conn._id.toString() === c.toString())
-                                            ?? tiktokAuth.find(conn => conn._id.toString() === c.toString());
+                                        const id = c?._id?.toString() ?? c?.toString();
+                                        const conn = connections.find(conn => conn._id.toString() === id)
+                                            ?? tiktokAuth.find(conn => conn._id.toString() === id);
                                         return conn ?? c;
                                     });
                                 }

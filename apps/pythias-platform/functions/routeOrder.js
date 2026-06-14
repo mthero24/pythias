@@ -5,6 +5,7 @@ import {
     ProviderScore,
     RoutingLog,
     Organization,
+    PlatformBlank,
 } from "@pythias/mongo";
 import { sendOrderToProvider } from "@/functions/sendToProvider";
 import { recordApiNotification } from "@/lib/recordApiNotification";
@@ -91,12 +92,28 @@ function calcReliabilityScore(providerScore, avgLeadTimeDays) {
  * @returns {{ routingLog, providerId } | { unroutable: true, reason: string }}
  */
 export async function routeOrder(order, items, org) {
-    // Step 1 — Build the list of required SKUs from the order items
-    const required = items.map(item => ({
-        blankId:  item.blank?.toString()  ?? item.blankId?.toString(),
-        colorId:  item.color?.toString()  ?? item.colorId?.toString(),
-        size:     item.sizeName,
-    })).filter(r => r.blankId && r.colorId && r.size);
+    // Step 1 — Build the list of required SKUs from the order items.
+    // CC products are built on aliased "catalog blanks"; resolve alias → canonical
+    // provider blank so the ProviderCatalog match (keyed on the canonical blankId) works.
+    const itemBlankIds = [...new Set(items.map(i => i.blank?.toString()).filter(Boolean))];
+    const blankDocs = itemBlankIds.length
+        ? await PlatformBlank.find({ _id: { $in: itemBlankIds } }).select("type blanks").lean()
+        : [];
+    const canonicalOf = {};
+    for (const b of blankDocs) {
+        canonicalOf[b._id.toString()] = (b.type === "alias" && b.blanks?.length)
+            ? b.blanks[0].toString()
+            : b._id.toString();
+    }
+
+    const required = items.map(item => {
+        const raw = item.blank?.toString() ?? item.blankId?.toString();
+        return {
+            blankId:  canonicalOf[raw] ?? raw,
+            colorId:  item.color?.toString()  ?? item.colorId?.toString(),
+            size:     item.sizeName,
+        };
+    }).filter(r => r.blankId && r.colorId && r.size);
 
     if (!required.length) {
         return unroutable(org, order, "no_routable_items");

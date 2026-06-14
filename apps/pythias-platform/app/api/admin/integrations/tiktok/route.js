@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
-import { TikTokAuth } from "@pythias/mongo";
-import {
-    getAccessTokenFromRefreshToken,
-    getAuthorizedShops,
-    uploadProductImage,
-    getRecommendedCategory,
-    getWarehouses,
-    getAttributes,
-    createProduct,
-} from "@pythias/integrations";
+import { TikTokAuth, PlatformBlank } from "@pythias/mongo";
+import { getAccessTokenFromRefreshToken, getAuthorizedShops } from "@pythias/integrations";
+import { createTikTokListing, getTikTokAttributesForName } from "@/functions/tikTok";
 import { getToken } from "next-auth/jwt";
 
 const TOKEN_FIELDS = [
@@ -27,6 +20,8 @@ async function refreshCredentials(credId) {
     return credentials.save();
 }
 
+const hires = (url) => url?.replace(/(\?|&)width=\d+/, '$1width=2400') ?? url;
+
 export async function POST(req) {
     const token = await getToken({ req });
     if (!token?.orgId) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
@@ -34,15 +29,18 @@ export async function POST(req) {
     let body;
     try { body = await req.json(); } catch { return NextResponse.json({ error: true, msg: "Invalid body" }, { status: 400 }); }
 
-    const { product, connection } = body;
-    if (!product || !connection?._id) {
+    const { product: p, connection, marketplaceName = null } = body;
+    if (!p || !connection?._id) {
         return NextResponse.json({ error: true, msg: "Missing product or connection" }, { status: 400 });
     }
 
     let credentials = await TikTokAuth.findById(connection._id);
     if (!credentials) return NextResponse.json({ error: true, msg: "TikTok connection not found" }, { status: 404 });
+    if (String(credentials.orgId) !== String(token.orgId)) {
+        return NextResponse.json({ error: true, msg: "Connection does not belong to this organization" }, { status: 403 });
+    }
 
-    // Ensure shop_list is populated — required by all TikTok API calls
+    // Ensure shop_list is populated — required by all TikTok product API calls.
     if (!credentials.shop_list?.length) {
         let shopsRes = await getAuthorizedShops(credentials);
         if (shopsRes.error && shopsRes.msg === "refresh") {
@@ -57,134 +55,86 @@ export async function POST(req) {
     }
 
     try {
-        // Get category
-        let categories = await getRecommendedCategory(product.title, credentials);
-        if (categories?.error && categories.msg === "refresh") {
-            credentials = await refreshCredentials(credentials._id);
-            if (shopCipher) credentials.shop_cipher = shopCipher;
-            categories = await getRecommendedCategory(product.title, credentials);
-        }
-        const categoryId = categories?.categories?.find(c => c.is_leaf)?.id;
-        if (!categoryId) return NextResponse.json({ error: true, msg: "Could not determine TikTok category" }, { status: 400 });
-
-        // Get warehouses
-        let warehouses = await getWarehouses(credentials);
-        if (warehouses?.error && warehouses.msg === "refresh") {
-            credentials = await refreshCredentials(credentials._id);
-            if (shopCipher) credentials.shop_cipher = shopCipher;
-            warehouses = await getWarehouses(credentials);
-        }
-        const warehouse = warehouses?.warehouses?.find(w => w.is_default);
-        if (!warehouse) return NextResponse.json({ error: true, msg: "No default TikTok warehouse found" }, { status: 400 });
-
-        // Collect unique main images across all variants (max 9)
-        const mainImageUrls = [];
-        for (const v of (product.variantsArray ?? [])) {
-            for (const img of [v.image, ...(v.images ?? [])].filter(Boolean)) {
-                if (!mainImageUrls.includes(img) && mainImageUrls.length < 9) mainImageUrls.push(img);
-            }
-        }
-
-        // Upload main images
-        const mainImages = [];
-        for (const url of mainImageUrls) {
-            const res = await uploadProductImage(url, credentials, "MAIN_IMAGE");
-            if (!res.error) mainImages.push({ uri: res.uri });
-        }
-
-        // Build SKUs from variants
-        const skus = [];
-        for (const v of (product.variantsArray ?? [])) {
-            const colorName = v.color?.name ?? v.colorName ?? "";
-            const sizeName = typeof v.size === "string" ? v.size : (v.size?.name ?? "");
-            const attributes = [];
-
-            // Upload variant image
-            let mainImage;
-            const varImgUrls = [v.image, ...(v.images ?? [])].filter(Boolean).slice(0, 3);
-            for (const imgUrl of varImgUrls) {
-                const res = await uploadProductImage(imgUrl, credentials, "MAIN_IMAGE");
-                if (!res.error && !mainImage) mainImage = { uri: res.uri };
-            }
-
-            if (colorName) attributes.push({ name: "Color", value_name: colorName, ...(mainImage ? { sku_img: mainImage } : {}) });
-            if (sizeName) attributes.push({ name: "Size", value_name: sizeName });
-
-            const sku = {
-                sales_attributes: attributes,
-                inventory: [{ warehouse_id: warehouse.id, quantity: 1000 }],
-                seller_sku: v.sku,
-                price: { amount: `${(v.price ?? 0).toFixed(2)}`, currency: "USD" },
-            };
-            if (v.upc) sku.identifier_code = { code: v.upc, type: "UPC" };
-            skus.push(sku);
-        }
-
-        // Get category attributes for required compliance fields
-        let attributesRes = await getAttributes(categoryId, credentials);
-        if (attributesRes?.error && attributesRes.msg === "refresh") {
-            credentials = await refreshCredentials(credentials._id);
-            if (shopCipher) credentials.shop_cipher = shopCipher;
-            attributesRes = await getAttributes(categoryId, credentials);
-        }
-        const productAttributes = [];
-        if (attributesRes?.attributes) {
-            const caCarcinogens = attributesRes.attributes.find(a => a.name === "CA Prop 65: Carcinogens");
-            const caRepro = attributesRes.attributes.find(a => a.name === "CA Prop 65: Repro. Chems");
-            if (caCarcinogens) productAttributes.push({ id: caCarcinogens.id, values: [{ id: "1000059", name: "No" }] });
-            if (caRepro) productAttributes.push({ id: caRepro.id, values: [{ id: "1000059", name: "No" }] });
-
-            const regionOfOrigin = attributesRes.attributes.find(a => a.id === "100336" || a.name === "Region Of Origin");
-            if (regionOfOrigin) {
-                const usValue = regionOfOrigin.values?.find(v =>
-                    /united states/i.test(v.name) || /\bus\b/i.test(v.name) || /\busa\b/i.test(v.name)
-                );
-                const value = usValue ?? regionOfOrigin.values?.[0];
-                if (value) productAttributes.push({ id: regionOfOrigin.id, values: [{ id: value.id, name: value.name }] });
-            }
-
-            const recommendedAge = attributesRes.attributes.find(a => a.id === "100433" || a.name === "Recommended Age");
-            if (recommendedAge) {
-                const kidsValue = recommendedAge.values?.find(v =>
-                    /2.?14/i.test(v.name) || /3.?14/i.test(v.name) || /kids/i.test(v.name) || /child/i.test(v.name)
-                );
-                const value = kidsValue ?? recommendedAge.values?.[0];
-                if (value) {
-                    console.log("[TikTok] Recommended Age attribute values:", recommendedAge.values?.map(v => `${v.id}:${v.name}`));
-                    productAttributes.push({ id: recommendedAge.id, values: [{ id: value.id, name: value.name }] });
+        // Fetch the full blank from DB, then overlay any marketplace overrides / bullet points
+        // the user set in the modal but didn't persist to the Blank document — otherwise the
+        // DB copy silently discards those fresh selections.
+        const blankId = p.blanks?.[0]?._id ?? p.blanks?.[0];
+        const fullBlank = blankId ? await PlatformBlank.findById(blankId).lean() : null;
+        const sentBlank = p.blanks?.[0] && typeof p.blanks[0] === "object" ? p.blanks[0] : null;
+        const baseBlank = fullBlank ?? sentBlank;
+        if (!baseBlank) return NextResponse.json({ error: true, msg: "Product blank not found" }, { status: 400 });
+        const blankData = {
+            ...baseBlank,
+            marketPlaceOverrides: (() => {
+                const dbOv = baseBlank.marketPlaceOverrides ?? {};
+                const sentOv = sentBlank?.marketPlaceOverrides ?? {};
+                const merged = { ...dbOv };
+                for (const [mp, vals] of Object.entries(sentOv)) {
+                    merged[mp] = { ...(dbOv[mp] ?? {}), ...(vals ?? {}) };
                 }
-            }
-        }
-
-        const tiktokProduct = {
-            save_mode: "LISTING",
-            title: product.title,
-            description: product.description || product.title,
-            is_cod_allowed: false,
-            package_dimensions: { length: "13", height: "1", width: "10", unit: "INCH" },
-            package_weight: { value: "0.50", unit: "POUND" },
-            main_images: mainImages,
-            skus,
-            category_id: categoryId,
-            category_version: "v2",
-            idempotency_key: product.sku || product._id?.toString(),
-            product_attributes: productAttributes,
+                return merged;
+            })(),
+            bulletPoints: (sentBlank?.bulletPoints?.length ? sentBlank.bulletPoints : baseBlank.bulletPoints),
+            sizeGuide: baseBlank.sizeGuide
+                ? { ...baseBlank.sizeGuide, images: (baseBlank.sizeGuide.images ?? []).map(hires) }
+                : undefined,
         };
 
-        let result = await createProduct({ tiktokProduct, credentials });
-        if (result?.error && result.msg === "refresh") {
-            credentials = await refreshCredentials(credentials._id);
-            if (shopCipher) credentials.shop_cipher = shopCipher;
-            result = await createProduct({ tiktokProduct, credentials });
-        }
+        // Resolve the product-level marketplace values for this TikTok marketplace.
+        const tiktokMp = (p.marketPlacesArray ?? []).find(m =>
+            (m.name ?? "").toLowerCase() === (marketplaceName ?? "").toLowerCase()
+        );
+        const tiktokMpId = tiktokMp?._id?.toString() ?? tiktokMp?.toString();
+        const marketplaceValues = (tiktokMpId && p.marketplaceValues?.[tiktokMpId])
+            ? p.marketplaceValues[tiktokMpId]
+            : {};
 
-        if (result?.error) {
-            return NextResponse.json({ error: true, msg: result.msg ?? "TikTok product creation failed" }, { status: 400 });
-        }
+        const product = {
+            name:          p.title,
+            brand:         p.brand ?? null,
+            description:   p.description,
+            tags:          p.tags ?? [],
+            design:        p.design,
+            blank:         blankData,
+            images:        (p.productImages ?? []).map(pi => hires(pi.image)).filter(Boolean),
+            variants:      (p.variantsArray ?? []).map(v => ({
+                color:  v.color,
+                size:   v.size?.name ?? v.size,
+                sku:    v.sku,
+                upc:    v.upc,
+                price:  v.price,
+                images: [v.image, ...(v.images ?? [])].filter(Boolean).map(hires),
+            })),
+            marketplaceValues,
+            packageLength: p.packageLength ?? null,
+            packageWidth:  p.packageWidth  ?? null,
+            packageHeight: p.packageHeight ?? null,
+        };
 
-        return NextResponse.json({ error: false, tiktokProductId: result?.product?.product_id });
+        const result = await createTikTokListing({ product, credentials, marketplaceName });
+        return NextResponse.json({ error: false, tiktokProductId: result?.tiktokProductId, warning: result?.warning ?? null });
     } catch (e) {
         console.error("[TikTok listing]", e);
         return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
     }
+}
+
+// Powers the "TikTok Attribute Reference" dialog in the shared MarketPlaceModal.
+export async function GET(req) {
+    const token = await getToken({ req });
+    if (!token?.orgId) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
+
+    const { searchParams } = new URL(req.url);
+    const productName = searchParams.get("productName") || "t-shirt";
+
+    let credentials = await TikTokAuth.findOne({ orgId: token.orgId });
+    if (!credentials) return NextResponse.json({ error: true, msg: "No TikTok connection found for this organization" }, { status: 404 });
+
+    let result = await getTikTokAttributesForName(productName, credentials);
+    if (result.error && result.msg === "refresh") {
+        credentials = await refreshCredentials(credentials._id);
+        result = await getTikTokAttributesForName(productName, credentials);
+    }
+    if (result.error) return NextResponse.json({ error: true, msg: result.msg }, { status: 400 });
+    return NextResponse.json(result);
 }

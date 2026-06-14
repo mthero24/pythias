@@ -15,6 +15,24 @@ const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token",
 
 const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "")
 
+// Merge every attribute group TikTok returns (attributes, compliance_attributes,
+// packaging_attributes, etc.) into one deduped list, matching what the modal shows.
+const mergeTikTokAttributes = (attributes) => {
+    const raw = attributes?.rawData ?? {}
+    const all = Object.entries(raw)
+        .filter(([, v]) => Array.isArray(v))
+        .flatMap(([, v]) => v)
+        .filter(a => a && (a.id || a.name))
+    const seen = new Set()
+    const merged = all.filter(a => {
+        const k = String(a.id ?? a.name)
+        if (seen.has(k)) return false
+        seen.add(k)
+        return true
+    })
+    return merged.length ? merged : (attributes?.attributes ?? [])
+}
+
 // Maps normalized user-supplied compliance strings to hints for finding TikTok's accepted enum value.
 // Used to pre-normalize attribute values before sending so TikTok doesn't reject them.
 const COMPLIANCE_HINTS = [
@@ -167,9 +185,24 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
         ? await getOrCreateBrandTikTok(product.brand, credentials, credentials.shop_list[0].shop_cipher)
         : null;
 
+    // TikTok's Create Product API has no native bullet-point/highlights field, so render
+    // the blank's bullet points as an HTML list appended to the description (where TikTok
+    // actually displays feature lists). Escape user-supplied text to keep the HTML valid.
+    const escapeHtml = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const bulletItems = (product.blank.bulletPoints ?? [])
+        .slice(0, 5)
+        .map(bp => [bp.title, bp.description].filter(Boolean).map(escapeHtml).join(": "))
+        .filter(Boolean);
+    // TikTok has no tags/keywords field — append product tags as a discrete trailing line in
+    // the description so they're indexed for search.
+    const tagItems = (product.tags ?? []).map(t => String(t ?? "").trim()).filter(Boolean).map(escapeHtml);
+    let description = product.description ?? "";
+    if (bulletItems.length) description += `<ul>${bulletItems.map(b => `<li>${b}</li>`).join("")}</ul>`;
+    if (tagItems.length) description += `<p>Tags: ${tagItems.join(", ")}</p>`;
+
     let tiktokProduct = {
         save_mode: "LISTING",
-        description: product.description,
+        description,
         title: product.name,
         ...(brand_id ? { brand_id } : {}),
         is_cod_allowed: false,
@@ -187,20 +220,16 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
         skus: [],
         category_version: "v2",
         idempotency_key: `${product.design.sku}_${product.blank.code}`,
-        ...(product.blank.bulletPoints?.length ? {
-            product_highlights: product.blank.bulletPoints
-                .slice(0, 5)
-                .map(bp => [bp.title, bp.description].filter(Boolean).join(": "))
-                .filter(Boolean),
-        } : {}),
     }
-    let categories = await getRecommendedCategory(product.name, credentials)
-    console.log(categories)
+    // Use the blank name (not the full design+blank title) for category recommendation so the
+    // category matches the one the modal used when the user selected attributes — otherwise the
+    // recommended leaf category differs and the selected attributes get skipped at send time.
+    const categoryQuery = product.blank?.name || product.name
+    let categories = await getRecommendedCategory(categoryQuery, credentials)
     if(categories.error && categories.msg == "refresh"){
         credentials = await refresh(credentials);
-        categories = await getRecommendedCategory(product.name, credentials)
+        categories = await getRecommendedCategory(categoryQuery, credentials)
     }
-    //console.log(categories)
     tiktokProduct.category_id = categories.categories.filter(c=> c.is_leaf == true)[0].id
     let warehouses = await getWarehouses(credentials)
     if(warehouses.error && warehouses.msg == "refresh"){
@@ -265,30 +294,23 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
         credentials = await refresh(credentials);
         attributes = await getAttributes(tiktokProduct.category_id, credentials)
     }
+    // Build the full attribute list across ALL groups TikTok returns (attributes,
+    // compliance_attributes, packaging_attributes, etc.). The modal lets users pick from
+    // this merged set, so matching overrides only against the flat `attributes` array
+    // misses compliance/packaging attributes and sends the attribute NAME as the id —
+    // which TikTok rejects with "Id ... must be convertible to Int64".
+    const catAttrs = mergeTikTokAttributes(attributes)
+    const unresolvedAttributes = []
     let attrs = []
     if(product.design.season){
-        attrs.push({
-            id: attributes.attributes.filter(a=> a.name == "Season")[0].id,
-            values: [{
-                name: product.design.season
-            }]
-        })
+        const seasonAttr = catAttrs.find(a=> a.name == "Season")
+        if (seasonAttr) attrs.push({ id: String(seasonAttr.id), values: [{ name: product.design.season }] })
     }
-    attrs.push({
-        id: attributes.attributes.filter(a=> a.name == "CA Prop 65: Carcinogens")[0].id,
-        values: [{
-            id: "1000059",
-            name: "No"
-        }]
-    })
-    attrs.push({
-        id: attributes.attributes.filter(a=> a.name == "CA Prop 65: Repro. Chems")[0].id,
-        values:[ {
-            id: "1000059",
-            name: "No"
-        }]
-    })
-    console.log(attributes.attributes.filter(a=> a.is_requried == true))
+    const carcAttr = catAttrs.find(a=> a.name == "CA Prop 65: Carcinogens")
+    if (carcAttr) attrs.push({ id: String(carcAttr.id), values: [{ id: "1000059", name: "No" }] })
+    const reproAttr = catAttrs.find(a=> a.name == "CA Prop 65: Repro. Chems")
+    if (reproAttr) attrs.push({ id: String(reproAttr.id), values: [{ id: "1000059", name: "No" }] })
+
     // Apply blank.marketPlaceOverrides keyed by attribute name OR attribute ID.
     // Name keys ("Dangerous Goods") are preferred over numeric ID keys for readability.
     // Use the actual marketplace name passed in; fall back to a case-insensitive TikTok search.
@@ -298,11 +320,13 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
         : (Object.entries(allOverrides).find(([k]) => k.toLowerCase().includes("tiktok") || k.toLowerCase() === "tik tok")?.[1] ?? {});
     for (const [key, value] of Object.entries(mpOverrides)) {
         if (!value) continue;
-        // Match by name first, then fall back to numeric ID (backward compat)
-        const tikAttr = (attributes.attributes ?? []).find(a =>
+        // Match by name first, then accept a numeric ID key (backward compat). If the key is
+        // neither a known attribute name nor numeric, skip it — sending a name as the id fails.
+        const tikAttr = catAttrs.find(a =>
             a.name?.toLowerCase() === key.toLowerCase() || String(a.id) === String(key)
         );
-        const attrId = tikAttr ? String(tikAttr.id) : String(key);
+        const attrId = tikAttr ? String(tikAttr.id) : (/^\d+$/.test(String(key)) ? String(key) : null);
+        if (!attrId) { unresolvedAttributes.push(key); continue; }
         const idx = attrs.findIndex(a => String(a.id) === attrId);
         const entry = { id: attrId, values: [{ name: value }] };
         if (idx >= 0) attrs[idx] = entry;
@@ -316,7 +340,7 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
     for (const [key, value] of Object.entries(product.marketplaceValues ?? {})) {
         if (!value || key === 'name' || key === 'titleGenerator') continue;
         if (PACKAGE_DIMENSION_KEYS.has(key.toLowerCase())) continue;
-        const tikAttr = (attributes.attributes ?? []).find(a =>
+        const tikAttr = catAttrs.find(a =>
             a.name?.toLowerCase() === key.toLowerCase() || String(a.id) === String(key)
         );
         if (!tikAttr) continue;
@@ -334,14 +358,20 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
     for (const attr of attrs) {
         if (!attr.values?.[0]?.name) continue
         if (attr.values[0].id) continue  // already has a valid TikTok value id
-        const tikAttr = (attributes.attributes ?? []).find(a => String(a.id) === String(attr.id))
+        const tikAttr = catAttrs.find(a => String(a.id) === String(attr.id))
         const validValues = tikAttr?.values ?? []
         if (!validValues.length) continue
         const resolved = normalizeAttrValuePreSend(attr.values[0].name, validValues)
         if (resolved) attr.values = [{ id: resolved.id, name: resolved.name }]
     }
 
-    console.log(attrs)
+    // Final safety net: drop any attribute whose id isn't a numeric TikTok attribute id.
+    attrs = attrs.filter(a => /^\d+$/.test(String(a.id)))
+
+    console.log("[TikTok] category", tiktokProduct.category_id,
+        "| override keys:", Object.keys(mpOverrides),
+        "| attributes sent:", attrs.map(a => a.id),
+        "| skipped (no matching attribute in this category):", unresolvedAttributes)
 
     tiktokProduct.product_attributes = attrs
     //console.log(product.blank.sizeGuide)
@@ -416,6 +446,7 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
     const warningParts = []
     if (fixedAttributes.length) warningParts.push(`Attribute values auto-corrected to match TikTok's accepted values: ${fixedAttributes.join('; ')}.`)
     if (droppedAttributes.length) warningParts.push(`Attributes removed because no matching TikTok value was found: ${droppedAttributes.join('; ')}.`)
+    if (unresolvedAttributes.length) warningParts.push(`Attributes skipped because they don't match a TikTok attribute for this category: ${unresolvedAttributes.join('; ')}.`)
     const warning = warningParts.length ? warningParts.join(' ') : null
     return { tiktokProductId: res.product?.product_id, warning }
 }

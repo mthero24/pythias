@@ -10,7 +10,8 @@ const schema = new mongoose.Schema({
     blankId:        { type: mongoose.Schema.Types.ObjectId, ref: "Blank", required: true },
     colorId:        { type: mongoose.Schema.Types.ObjectId, ref: "Color", required: true },
     size:           { type: String, required: true },           // e.g. "S", "M", "L", "XL"
-    wholesalePrice: { type: Number, required: true },           // in USD cents
+    wholesalePrice: { type: Number, required: true },           // in USD cents — what the provider sells the blank for
+    retailPrice:    { type: Number },                           // in USD cents — provider's suggested/default retail
     currency:       { type: String, default: "USD" },           // ISO 4217 (for international providers)
     leadTimeDays:   { type: Number, default: 3 },               // estimated days to ship after order received
     active:         { type: Boolean, default: true, index: true },

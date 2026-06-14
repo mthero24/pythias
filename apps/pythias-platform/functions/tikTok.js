@@ -9,6 +9,7 @@ import {
   createProduct,
   getOrdersTikTok,
   generatePieceID,
+  getOrCreateBrandTikTok,
 } from "@pythias/integrations";
 const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
 const refresh = async (creds, cipher) => {
@@ -588,4 +589,364 @@ export const processOrders = async (orders)=>{
         }
     }
     return {error: false}
+}
+
+// ----------------------------------------------------------------------------
+// Org-scoped TikTok product/attribute creator.
+// Mirrors apps/premier-printing/functions/tikTok.js but credential-injected so
+// the multi-tenant platform can pass the org's own TikTok connection instead of
+// hardcoding a provider. Applies blank.marketPlaceOverrides + product.marketplaceValues
+// to product_attributes, renders bullet points into the description, and auto-corrects
+// custom attribute values to TikTok's accepted enum values.
+// ----------------------------------------------------------------------------
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "")
+
+// Merge every attribute group TikTok returns into one deduped list, matching what the
+// modal shows — so compliance/packaging attributes can be matched to a numeric id.
+const mergeTikTokAttributes = (attributes) => {
+    const raw = attributes?.rawData ?? {}
+    const all = Object.entries(raw)
+        .filter(([, v]) => Array.isArray(v))
+        .flatMap(([, v]) => v)
+        .filter(a => a && (a.id || a.name))
+    const seen = new Set()
+    const merged = all.filter(a => {
+        const k = String(a.id ?? a.name)
+        if (seen.has(k)) return false
+        seen.add(k)
+        return true
+    })
+    return merged.length ? merged : (attributes?.attributes ?? [])
+}
+
+const COMPLIANCE_HINTS = [
+    {
+        inputs: new Set(["none","no","na","notapplicable","nodangerousgoods","nodangerousgood",
+                         "nohazardousmaterials","nohazardousmaterial","nohazmat","nohazard",
+                         "notdangerous","nondangerous","notahazardousmaterial","notahazard",
+                         "notahazardousgood","notadangerousgood","false","0","notdangerousgoods"]),
+        hints: ["none", "no"]
+    },
+    {
+        inputs: new Set(["lithiumbattery","lithiumbatteries","liion","lipo","lithiumion",
+                         "lithiumionbattery","lithiumionbatteries"]),
+        hints: ["lithium", "battery", "batteries"]
+    },
+    { inputs: new Set(["flammable","flammableliquid","flammableliquids"]), hints: ["flammable"] },
+    { inputs: new Set(["aerosol","aerosols"]), hints: ["aerosol"] },
+]
+
+function normalizeAttrValuePreSend(customValue, validValues) {
+    if (!validValues?.length) return null
+    const normCustom = norm(customValue)
+    let match = validValues.find(v => norm(v.name) === normCustom)
+    if (match) return match
+    for (const rule of COMPLIANCE_HINTS) {
+        if (rule.inputs.has(normCustom)) {
+            const hintMatch = validValues.find(v => rule.hints.some(h => norm(v.name).includes(h)))
+            if (hintMatch) return hintMatch
+        }
+    }
+    match = validValues.find(v => norm(v.name).includes(normCustom) || normCustom.includes(norm(v.name)))
+    if (match) return match
+    return null
+}
+
+// Upload an image using the supplied (org) credentials, refreshing tokens once on expiry.
+async function uploadImageWithCreds(image, type, credentials) {
+    let res = await uploadProductImage(image, credentials, type)
+    if (res.error && (res.msg === "refresh" || res.error?.msg === "refresh")) {
+        credentials = await refresh(credentials)
+        res = await uploadProductImage(image, credentials, type)
+    }
+    return res
+}
+
+// Ensure the connection has a populated shop_list (required by all product API calls).
+async function ensureShopList(credentials) {
+    if (credentials.shop_list?.length) return credentials
+    let shop = await getAuthorizedShops(credentials)
+    if (shop?.error) {
+        credentials = await refresh(credentials)
+        shop = await getAuthorizedShops(credentials)
+    }
+    if (shop?.shop_list?.length) {
+        credentials.shop_list = shop.shop_list
+        await credentials.save()
+    } else {
+        throw new Error("TikTok shop_list is empty — no authorized shops found")
+    }
+    return credentials
+}
+
+// Fetch the merged TikTok attribute list for a product name, using the org's credentials.
+// Powers the "TikTok Attribute Reference" dialog in the shared MarketPlaceModal.
+export async function getTikTokAttributesForName(productName = "t-shirt", credentials) {
+    if (!credentials) return { error: true, msg: "No TikTok credentials found" }
+    credentials = await ensureShopList(credentials)
+    let categories = await getRecommendedCategory(productName, credentials)
+    if (categories.error && categories.msg === "refresh") {
+        credentials = await refresh(credentials)
+        categories = await getRecommendedCategory(productName, credentials)
+    }
+    if (categories.error || !categories.categories?.length) {
+        return { error: true, msg: categories.msg ?? "No categories found" }
+    }
+    const category = categories.categories.find(c => c.is_leaf)
+    if (!category) return { error: true, msg: "No leaf category found" }
+    let attributes = await getAttributes(category.id, credentials)
+    if (attributes.error && attributes.msg === "refresh") {
+        credentials = await refresh(credentials)
+        attributes = await getAttributes(category.id, credentials)
+    }
+    if (attributes.error) return { error: true, msg: attributes.msg }
+
+    const raw = attributes.rawData ?? {}
+    const allAttrs = Object.entries(raw)
+        .filter(([, v]) => Array.isArray(v))
+        .flatMap(([, v]) => v)
+        .filter(a => a && (a.id || a.name))
+    const seen = new Set()
+    const merged = allAttrs.filter(a => {
+        const key = String(a.id ?? a.name)
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+    })
+
+    return {
+        error: false,
+        categoryId: category.id,
+        categoryName: category.local_name,
+        attributes: merged.length ? merged : (attributes.attributes ?? [])
+    }
+}
+
+// Create a TikTok product listing for the org, applying selected attributes + bullet points.
+export async function createTikTokListing({ product, credentials, marketplaceName = null }) {
+    if (!credentials) throw new Error("No TikTok credentials provided")
+    credentials = await ensureShopList(credentials)
+
+    const brand_id = product.brand
+        ? await getOrCreateBrandTikTok(product.brand, credentials, credentials.shop_list[0].shop_cipher)
+        : null
+
+    // TikTok has no native bullet-point field — render bullets into the description HTML.
+    const escapeHtml = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    const bulletItems = (product.blank.bulletPoints ?? [])
+        .slice(0, 5)
+        .map(bp => [bp.title, bp.description].filter(Boolean).map(escapeHtml).join(": "))
+        .filter(Boolean)
+    // TikTok has no tags/keywords field — append product tags as a discrete trailing line.
+    const tagItems = (product.tags ?? []).map(t => String(t ?? "").trim()).filter(Boolean).map(escapeHtml)
+    let description = product.description ?? ""
+    if (bulletItems.length) description += `<ul>${bulletItems.map(b => `<li>${b}</li>`).join("")}</ul>`
+    if (tagItems.length) description += `<p>Tags: ${tagItems.join(", ")}</p>`
+
+    let tiktokProduct = {
+        save_mode: "LISTING",
+        description,
+        title: product.name,
+        ...(brand_id ? { brand_id } : {}),
+        is_cod_allowed: false,
+        package_dimensions: {
+            length: String(product.packageLength ?? product.marketplaceValues?.["Package Length"] ?? "13"),
+            width:  String(product.packageWidth  ?? product.marketplaceValues?.["Package Width"]  ?? "10"),
+            height: String(product.packageHeight ?? product.marketplaceValues?.["Package Height"] ?? "1"),
+            unit: "INCH"
+        },
+        package_weight: {
+            value: (((product.blank.sizes?.[0]?.weight ?? 8) / 16)).toFixed(2),
+            unit: "POUND"
+        },
+        main_images: [],
+        skus: [],
+        category_version: "v2",
+        idempotency_key: `${product.design?.sku ?? product.name}_${product.blank.code}`,
+    }
+
+    // Use the blank name (not the full design+blank title) for category recommendation so the
+    // category matches the one the modal used when the user selected attributes.
+    const categoryQuery = product.blank?.name || product.name
+    let categories = await getRecommendedCategory(categoryQuery, credentials)
+    if (categories.error && categories.msg === "refresh") {
+        credentials = await refresh(credentials)
+        categories = await getRecommendedCategory(categoryQuery, credentials)
+    }
+    tiktokProduct.category_id = categories.categories.filter(c => c.is_leaf == true)[0].id
+
+    let warehouses = await getWarehouses(credentials)
+    if (warehouses.error && warehouses.msg === "refresh") {
+        credentials = await refresh(credentials)
+        warehouses = await getWarehouses(credentials)
+    }
+    let warehouse = warehouses.warehouses.filter(w => w.is_default)[0]
+
+    for (let im of (product.images ?? [])) {
+        let res = await uploadImageWithCreds(im, "MAIN_IMAGE", credentials)
+        if (!res.error) tiktokProduct.main_images.push({ uri: res.uri })
+    }
+
+    for (let v of product.variants) {
+        let attributes = []
+        let mainImage
+        let identifier_code
+        for (let im of (v.images ?? [])) {
+            let res = await uploadImageWithCreds(im, "MAIN_IMAGE", credentials)
+            if (!res.error && mainImage == undefined) mainImage = { uri: res.uri }
+        }
+        if (v.upc) identifier_code = { code: v.upc, type: "UPC" }
+        attributes.push({ name: "Color", value_name: v.color?.name ?? v.colorName, sku_img: mainImage })
+        attributes.push({ name: "Size", value_name: typeof v.size === "string" ? v.size : v.size?.name })
+        if (v.threadColor && v.threadColor.length > 0) {
+            attributes.push({ name: "Thread Color", value_name: v.threadColor.name })
+        }
+        tiktokProduct.skus.push({
+            sales_attributes: attributes,
+            inventory: [{ warehouse_id: warehouse.id, quantity: 1000 }],
+            seller_sku: v.sku,
+            identifier_code,
+            price: { amount: `${(v.price ?? 0).toFixed(2)}`, currency: "USD" },
+        })
+    }
+
+    let attributes = await getAttributes(tiktokProduct.category_id, credentials)
+    if (attributes.error && attributes.msg === "refresh") {
+        credentials = await refresh(credentials)
+        attributes = await getAttributes(tiktokProduct.category_id, credentials)
+    }
+    // Merge all attribute groups so compliance/packaging selections map to a numeric id.
+    const catAttrs = mergeTikTokAttributes(attributes)
+    const unresolvedAttributes = []
+    let attrs = []
+    if (product.design?.season) {
+        const seasonAttr = catAttrs.find(a => a.name == "Season")
+        if (seasonAttr) attrs.push({ id: String(seasonAttr.id), values: [{ name: product.design.season }] })
+    }
+    const carcAttr = catAttrs.find(a => a.name == "CA Prop 65: Carcinogens")
+    if (carcAttr) attrs.push({ id: String(carcAttr.id), values: [{ id: "1000059", name: "No" }] })
+    const reproAttr = catAttrs.find(a => a.name == "CA Prop 65: Repro. Chems")
+    if (reproAttr) attrs.push({ id: String(reproAttr.id), values: [{ id: "1000059", name: "No" }] })
+
+    // Apply blank.marketPlaceOverrides keyed by attribute name OR id.
+    const allOverrides = product.blank.marketPlaceOverrides ?? {}
+    const mpOverrides = (marketplaceName && allOverrides[marketplaceName])
+        ? allOverrides[marketplaceName]
+        : (Object.entries(allOverrides).find(([k]) => k.toLowerCase().includes("tiktok") || k.toLowerCase() === "tik tok")?.[1] ?? {})
+    for (const [key, value] of Object.entries(mpOverrides)) {
+        if (!value) continue
+        // Match by name first, then accept a numeric ID key. Never send a name as the id.
+        const tikAttr = catAttrs.find(a =>
+            a.name?.toLowerCase() === key.toLowerCase() || String(a.id) === String(key)
+        )
+        const attrId = tikAttr ? String(tikAttr.id) : (/^\d+$/.test(String(key)) ? String(key) : null)
+        if (!attrId) { unresolvedAttributes.push(key); continue }
+        const idx = attrs.findIndex(a => String(a.id) === attrId)
+        const entry = { id: attrId, values: [{ name: value }] }
+        if (idx >= 0) attrs[idx] = entry
+        else attrs.push(entry)
+    }
+
+    // Apply product-specific TikTok attributes from product.marketplaceValues.
+    const PACKAGE_DIMENSION_KEYS = new Set(["package length", "package width", "package height"])
+    for (const [key, value] of Object.entries(product.marketplaceValues ?? {})) {
+        if (!value || key === 'name' || key === 'titleGenerator') continue
+        if (PACKAGE_DIMENSION_KEYS.has(key.toLowerCase())) continue
+        const tikAttr = catAttrs.find(a =>
+            a.name?.toLowerCase() === key.toLowerCase() || String(a.id) === String(key)
+        )
+        if (!tikAttr) continue
+        const attrId = String(tikAttr.id)
+        const idx = attrs.findIndex(a => String(a.id) === attrId)
+        const entry = { id: attrId, values: [{ name: value }] }
+        if (idx >= 0) attrs[idx] = entry
+        else attrs.push(entry)
+    }
+
+    // Pre-send normalization: resolve plain custom value names to TikTok value ids.
+    for (const attr of attrs) {
+        if (!attr.values?.[0]?.name) continue
+        if (attr.values[0].id) continue
+        const tikAttr = catAttrs.find(a => String(a.id) === String(attr.id))
+        const validValues = tikAttr?.values ?? []
+        if (!validValues.length) continue
+        const resolved = normalizeAttrValuePreSend(attr.values[0].name, validValues)
+        if (resolved) attr.values = [{ id: resolved.id, name: resolved.name }]
+    }
+
+    // Final safety net: drop any attribute whose id isn't a numeric TikTok attribute id.
+    attrs = attrs.filter(a => /^\d+$/.test(String(a.id)))
+
+    console.log("[TikTok] category", tiktokProduct.category_id,
+        "| override keys:", Object.keys(mpOverrides),
+        "| attributes sent:", attrs.map(a => a.id),
+        "| skipped (no matching attribute in this category):", unresolvedAttributes)
+
+    tiktokProduct.product_attributes = attrs
+
+    if (product.blank.sizeGuide?.images?.[0]) {
+        let res = await uploadImageWithCreds(product.blank.sizeGuide.images[0], "SIZE_CHART_IMAGE", credentials)
+        if (!res.error) tiktokProduct.size_chart = { image: { uri: res.uri } }
+    }
+
+    let res = await createProduct({ tiktokProduct, credentials })
+    if (res.error && res.msg === "refresh") {
+        credentials = await refresh(credentials)
+        res = await createProduct({ tiktokProduct, credentials })
+    }
+
+    // TikTok error 12052247 — attribute does not support custom value names.
+    const fixedAttributes = []
+    const droppedAttributes = []
+    while (res.error && res.msg?.includes('Custom names are not supported')) {
+        const attrIdMatch = res.msg.match(/\(ID:\s*(\d+)\)/)
+        if (!attrIdMatch) break
+        const attrId = attrIdMatch[1]
+        const attrNameMatch = res.msg.match(/attribute\s+([\w][\w\s]*?)\s+\(ID:/)
+        const attrLabel = attrNameMatch?.[1]?.trim() ?? `ID ${attrId}`
+
+        const badAttr = (tiktokProduct.product_attributes ?? []).find(a => String(a.id) === attrId)
+        const customValue = badAttr?.values?.[0]?.name ?? ""
+
+        let validAttrs = await getAttributes(tiktokProduct.category_id, credentials)
+        if (validAttrs.error && validAttrs.msg === "refresh") {
+            credentials = await refresh(credentials)
+            validAttrs = await getAttributes(tiktokProduct.category_id, credentials)
+        }
+        const validAttr = (validAttrs.attributes ?? []).find(a => String(a.id) === attrId)
+        const validValues = validAttr?.values ?? []
+
+        const normCustom = norm(customValue)
+        const match = validValues.find(v => norm(v.name) === normCustom)
+            ?? validValues.find(v => norm(v.name).includes(normCustom) || normCustom.includes(norm(v.name)))
+            ?? validValues.find(v => {
+                const words = normCustom.split(/\s+/).filter(w => w.length > 2)
+                return words.some(w => norm(v.name).includes(w))
+            })
+
+        if (match) {
+            tiktokProduct.product_attributes = (tiktokProduct.product_attributes ?? []).map(a =>
+                String(a.id) === attrId ? { ...a, values: [{ id: match.id, name: match.name }] } : a
+            )
+            fixedAttributes.push(`${attrLabel} ("${customValue}" → "${match.name}")`)
+        } else {
+            tiktokProduct.product_attributes = (tiktokProduct.product_attributes ?? []).filter(a => String(a.id) !== attrId)
+            droppedAttributes.push(`${attrLabel} ("${customValue}" had no matching valid value)`)
+        }
+
+        res = await createProduct({ tiktokProduct, credentials })
+        if (res.error && res.msg === "refresh") {
+            credentials = await refresh(credentials)
+            res = await createProduct({ tiktokProduct, credentials })
+        }
+    }
+
+    if (res.error) throw new Error(res.msg ?? "TikTok product creation failed")
+
+    const warningParts = []
+    if (fixedAttributes.length) warningParts.push(`Attribute values auto-corrected to match TikTok's accepted values: ${fixedAttributes.join('; ')}.`)
+    if (droppedAttributes.length) warningParts.push(`Attributes removed because no matching TikTok value was found: ${droppedAttributes.join('; ')}.`)
+    if (unresolvedAttributes.length) warningParts.push(`Attributes skipped because they don't match a TikTok attribute for this category: ${unresolvedAttributes.join('; ')}.`)
+    const warning = warningParts.length ? warningParts.join(' ') : null
+    return { tiktokProductId: res.product?.product_id, warning }
 }

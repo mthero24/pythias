@@ -171,6 +171,7 @@ function buildCommerceSections(base) {
         {
             label: "Catalog",
             items: [
+                { label: "Garment Catalog",  path: "catalog",                icon: <CheckroomIcon fontSize="small" /> },
                 { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
                 { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
                 { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },

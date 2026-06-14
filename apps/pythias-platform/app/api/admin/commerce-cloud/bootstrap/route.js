@@ -145,9 +145,13 @@ export async function POST(req) {
                 for (const size of blank.sizes) {
                     if (!size?.name || size.hidden) continue;
 
-                    const wholesalePrice = size.wholesaleCost > 0
-                        ? Math.round(size.wholesaleCost * 100) // stored as dollars, convert to cents
-                        : DEFAULT_WHOLESALE_CENTS;
+                    // wholesalePrice (what the provider sells the blank for) is the CC cost basis,
+                    // NOT wholesaleCost (what the provider pays). Fall back to cost, then default.
+                    const wholesalePrice = size.wholesalePrice > 0
+                        ? Math.round(size.wholesalePrice * 100)
+                        : size.wholesaleCost > 0
+                            ? Math.round(size.wholesaleCost * 100)
+                            : DEFAULT_WHOLESALE_CENTS;
 
                     try {
                         const existing = await ProviderCatalog.findOne({

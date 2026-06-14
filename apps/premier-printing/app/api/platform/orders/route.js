@@ -16,12 +16,18 @@ async function uniquePieceId() {
     return id;
 }
 
-// Resolve a Premier blank (+ color/size refs) from the style code & names the platform sent.
-async function resolveLocalBlank(styleCode, colorName, sizeName) {
-    if (!styleCode) return {};
-    const blank = await Blank.findOne({ code: String(styleCode).trim() })
+// Resolve a Premier blank (+ color/size refs) from the garment identity the platform sent.
+// Prefer the MANUFACTURER STYLE (provider-agnostic) and fall back to the style code.
+async function resolveLocalBlank(manufacturerStyle, styleCode, colorName, sizeName) {
+    const mfr  = manufacturerStyle ? String(manufacturerStyle).trim() : null;
+    const code = styleCode ? String(styleCode).trim() : null;
+    if (!mfr && !code) return {};
+    const or = [];
+    if (mfr)  or.push({ manufacturerStyle: mfr });
+    if (code) or.push({ code });
+    const blank = await Blank.findOne({ $or: or })
         .populate("colors", "name sku")
-        .select("code colors sizes")
+        .select("code manufacturerStyle colors sizes")
         .lean();
     if (!blank) return {};
     const color = (blank.colors ?? []).find((c) => eq(c.name, colorName) || eq(c.sku, colorName)) ?? null;
@@ -86,7 +92,7 @@ export async function POST(request) {
     const itemIds = [];
     for (const line of data.items) {
         const qty = Math.max(1, parseInt(line.quantity) || 1);
-        const local = await resolveLocalBlank(line.styleCode, line.colorName, line.sizeName);
+        const local = await resolveLocalBlank(line.manufacturerStyle, line.styleCode, line.colorName, line.sizeName);
         for (let u = 0; u < qty; u++) {
             const item = new Item({
                 pieceId:     await uniquePieceId(),
