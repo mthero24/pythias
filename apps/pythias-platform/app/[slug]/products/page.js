@@ -1,4 +1,4 @@
-import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Seasons, Genders, SportUsedFor, Brands, PlatformMarketPlace as MarketPlaces, Themes, PlatformEditData, PlatformLicenseHolder as LicenseHolders } from "@pythias/mongo";
+import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Brands, PlatformMarketPlace as MarketPlaces, PlatformEditData, PlatformLicenseHolder as LicenseHolders } from "@pythias/mongo";
 import { ProductsMain as Main, serialize } from "@pythias/backend";
 import { CreateSku } from "@/functions/CreateSku";
 import { getServerSession } from "next-auth";
@@ -16,21 +16,24 @@ export default async function ProductsPage(req) {
     const orgId = session?.user?.orgId;
     const orgSlug = session?.user?.orgSlug;
 
-    const [blanks, seasons, genders, sportsUsedFor, platformBrands, marketplaces, themes, colors, printTypes, licenses, totalProducts] = await Promise.all([
+    // One-off taxonomy + print types are org-scoped in PlatformEditData — for Commerce Cloud
+    // these are inherited from Premier by the catalog sync (no per-seller Edit Data screen).
+    // Print types carry a price that flows into product build pricing.
+    const [blanks, editData, platformBrands, marketplaces, colors, licenses, totalProducts] = await Promise.all([
         Blanks.find(orgId ? { orgId } : {}).populate("colors").lean(),
-        Seasons.find().lean(),
-        Genders.find().lean(),
-        SportUsedFor.find().lean(),
+        orgId ? PlatformEditData.find({ orgId }).lean() : [],
         orgId ? Brands.find({ orgId }).sort({ name: 1 }).lean() : [],
         MarketPlaces.find(orgId ? { orgId } : {}).lean(),
-        Themes.find().lean(),
         Color.find(orgId ? { orgId } : {}).lean(),
-        // Print types are org-scoped and seller-editable (PlatformEditData) — same store the
-        // Edit Data UI and design pages use. Carries each print type's price into product build.
-        orgId ? PlatformEditData.find({ orgId, type: "printTypes" }).lean() : [],
         LicenseHolders.find(orgId ? { orgId } : {}).lean(),
         orgId ? PlatformProduct.countDocuments({ orgId }) : Promise.resolve(0),
     ]);
+    const byType = (t) => editData.filter((d) => d.type === t);
+    const seasons = byType("seasons");
+    const genders = byType("genders");
+    const sportsUsedFor = byType("sportUsedFor");
+    const themes = byType("themes");
+    const printTypes = byType("printTypes");
 
     const canManageMarketplaces = Boolean(session?.user?.permissions?.marketplaces) || ["admin", "owner"].includes(session?.user?.role);
 

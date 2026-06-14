@@ -175,30 +175,43 @@ async function main() {
     }
     console.log(`Drift deactivated — blanks: ${deactBlanks}, catalog rows: ${deactCatalog}` + (drifted.length ? ` (codes: ${drifted.map(b => b.code).join(", ")})` : ""));
 
-    // ── 5c. Seed Premier print types into each Commerce Cloud seller's edit-data ─
-    // Print types live in PlatformEditData (collection "editdatas"), org-scoped and
-    // seller-editable. Seed Premier's set with default prices; never clobber a price a
-    // seller has already set (only fill when missing/zero). Product build adds the
-    // print-type price onto both wholesale and retail.
-    const premierPrintTypes = await src.collection("PrintTypes").find({}).toArray();
-    const ptDefs = premierPrintTypes
-        .filter(p => p.name)
-        .map(p => ({ name: String(p.name).trim(), price: Number(p.price) || 0 }));
+    // ── 5c. Inherit Premier settings → each Commerce Cloud seller's edit-data ────
+    // Commerce Cloud has no Edit Data screen; sellers inherit Premier's settings. Seed
+    // Premier's one-offs into each commerce org's PlatformEditData ("editdatas", org-scoped).
+    // Print types carry a price (seller can override on the Garment Catalog) — never clobber a
+    // seller-set price; only fill when missing. Other types are name-only taxonomy.
     const commerceOrgs = await orgsCol.find({ orgType: "commerce" }).project({ _id: 1, slug: 1 }).toArray();
     const editCol = plat.collection("editdatas");
-    let ptSeeded = 0, ptFilled = 0;
-    for (const o of commerceOrgs) {
-        for (const pt of ptDefs) {
-            const existing = await editCol.findOne({ orgId: o._id, type: "printTypes", name: pt.name });
-            if (!existing) {
-                await editCol.insertOne({ orgId: o._id, type: "printTypes", name: pt.name, price: pt.price });
-                ptSeeded++;
-            } else if (existing.price == null || existing.price === 0) {
-                if (pt.price > 0) { await editCol.updateOne({ _id: existing._id }, { $set: { price: pt.price } }); ptFilled++; }
+    // Premier source collection → PlatformEditData `type`
+    const EDITDATA_TYPES = [
+        { coll: "PrintTypes",     type: "printTypes",     priced: true },
+        { coll: "PrintLocations", type: "printLocations", priced: false },
+        { coll: "Categories",     type: "categories",     priced: false },
+        { coll: "Departments",    type: "departments",    priced: false },
+        { coll: "Seasons",        type: "seasons",        priced: false },
+        { coll: "Genders",        type: "genders",        priced: false },
+        { coll: "Themes",         type: "themes",         priced: false },
+        { coll: "SportUsedFor",   type: "sportUsedFor",   priced: false },
+    ];
+    let edSeeded = 0, edFilled = 0;
+    for (const { coll, type, priced } of EDITDATA_TYPES) {
+        const defs = (await src.collection(coll).find({}).toArray())
+            .filter(d => d.name)
+            .map(d => ({ name: String(d.name).trim(), price: Number(d.price) || 0 }));
+        for (const o of commerceOrgs) {
+            for (const d of defs) {
+                const existing = await editCol.findOne({ orgId: o._id, type, name: d.name });
+                if (!existing) {
+                    await editCol.insertOne({ orgId: o._id, type, name: d.name, ...(priced ? { price: d.price } : {}) });
+                    edSeeded++;
+                } else if (priced && (existing.price == null || existing.price === 0) && d.price > 0) {
+                    await editCol.updateOne({ _id: existing._id }, { $set: { price: d.price } });
+                    edFilled++;
+                }
             }
         }
     }
-    console.log(`Print types — seeded: ${ptSeeded}, prices filled: ${ptFilled}, across ${commerceOrgs.length} commerce org(s) (defs: ${ptDefs.map(p => `${p.name}=$${p.price}`).join(", ")})`);
+    console.log(`Settings inherited — seeded: ${edSeeded}, print prices filled: ${edFilled}, across ${commerceOrgs.length} commerce org(s)`);
 
     // ── 5d. Re-price existing seller catalog aliases from current source pricing ─
     // Keeps every seller's catalog in sync when Premier changes wholesale/retail. Cost basis

@@ -178,7 +178,8 @@ function buildCommerceSections(base) {
                 { label: "Converters",       path: "admin/converters",       icon: <CompareArrowsIcon fontSize="small" /> },
                 { label: "Downloads",        path: "admin/downloads",        icon: <DownloadIcon fontSize="small" /> },
                 { label: "Brands",           path: "admin/brands",           icon: <SellIcon fontSize="small" /> },
-                { label: "Edit Data",        path: "admin/edit-data",        icon: <TuneIcon fontSize="small" /> },
+                // Edit Data removed for Commerce Cloud — taxonomy & print settings are inherited
+                // from Premier (seeded by the catalog sync). Print-type pricing is set on the Garment Catalog.
             ],
         },
         {

@@ -119,6 +119,30 @@ export async function POST(req) {
     return NextResponse.json({ error: false, blank: { _id: created._id.toString(), code, manufacturerStyle: mfr } }, { status: 201 });
 }
 
+// PUT /api/commerce/catalog-blanks — update a catalog garment's retail price.
+// Body: { id, retailPrice }  (retailPrice in dollars; applied to every size)
+export async function PUT(req) {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const orgId = session.user.orgId;
+
+    const body = await req.json().catch(() => null);
+    const id = body?.id;
+    const price = Number(body?.retailPrice);
+    if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+    if (isNaN(price) || price < 0) return NextResponse.json({ error: "Valid retailPrice required" }, { status: 400 });
+
+    const blank = await PlatformBlank.findOne({ _id: id, orgId, catalogBlank: true }).select("_id").lean();
+    if (!blank) return NextResponse.json({ error: "Garment not found in your catalog" }, { status: 404 });
+
+    // Apply to all sizes and flag as seller-overridden so the Premier sync won't reset it.
+    await PlatformBlank.updateOne(
+        { _id: blank._id, orgId, catalogBlank: true },
+        { $set: { "sizes.$[].retailPrice": price, retailOverridden: true } }
+    );
+    return NextResponse.json({ error: false });
+}
+
 // DELETE /api/commerce/catalog-blanks?id=<aliasBlankId> — remove a garment from the seller's catalog
 export async function DELETE(req) {
     const session = await getServerSession(authOptions);

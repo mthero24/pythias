@@ -10,6 +10,8 @@ import CheckroomIcon from "@mui/icons-material/Checkroom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import EditIcon from "@mui/icons-material/Edit";
 
 const CARD_SHADOW = "0px 0px 10px rgba(0,0,0,.1)";
 const ACCENT = "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)";
@@ -222,8 +224,134 @@ function ImportDialog({ garment, onClose, onImported }) {
     );
 }
 
+// ── Edit retail price of a garment already in the catalog ────────────────────
+function EditRetailDialog({ blank, onClose, onSaved }) {
+    const [retail, setRetail] = useState("");
+    const [saving, setSaving] = useState(false);
+    const [error, setError]   = useState(null);
+
+    useEffect(() => {
+        if (!blank) return;
+        const current = (blank.sizes ?? []).reduce((mx, s) => Math.max(mx, s.retailPrice ?? 0), 0);
+        setRetail(current > 0 ? current.toFixed(2) : "");
+        setError(null);
+    }, [blank]);
+
+    if (!blank) return null;
+
+    const save = async () => {
+        const price = Number(retail);
+        if (isNaN(price) || price <= 0) return setError("Enter a valid retail price.");
+        setSaving(true);
+        setError(null);
+        try {
+            const res = await fetch("/api/commerce/catalog-blanks", {
+                method: "PUT", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: blank._id, retailPrice: price }),
+            });
+            const d = await res.json();
+            if (d.error) { setError(typeof d.error === "string" ? d.error : "Could not save"); return; }
+            onSaved(blank._id, price);
+        } catch (e) {
+            setError(e.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <Dialog open={!!blank} onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
+            <DialogTitle sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                Retail price
+                <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 400 }}>{blank.name} — applied to all sizes</Typography>
+            </DialogTitle>
+            <DialogContent>
+                <TextField fullWidth size="small" autoFocus value={retail} onChange={e => setRetail(e.target.value)}
+                    label="Retail price" sx={{ mt: 1 }}
+                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }} />
+                {error && <Alert severity="error" sx={{ mt: 1.5 }}>{error}</Alert>}
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button onClick={onClose} disabled={saving} sx={{ color: "#6b7280", textTransform: "none" }}>Cancel</Button>
+                <Button onClick={save} disabled={saving} variant="contained"
+                    startIcon={saving ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : null}
+                    sx={{ background: ACCENT, boxShadow: "none", textTransform: "none", "&:hover": { background: ACCENT, opacity: 0.92, boxShadow: "none" } }}>
+                    {saving ? "Saving…" : "Save"}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
+// ── Print pricing: seller overrides per print type (added to wholesale + retail) ──
+function PrintPricingDialog({ open, onClose, onSaved }) {
+    const [rows, setRows]     = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        if (!open) return;
+        setLoading(true);
+        fetch("/api/commerce/print-pricing")
+            .then(r => r.json())
+            .then(d => { if (!d.error) setRows(d.printTypes.map(p => ({ ...p, price: String(p.price ?? 0) }))); })
+            .finally(() => setLoading(false));
+    }, [open]);
+
+    const setPrice = (id, v) => setRows(rs => rs.map(r => r._id === id ? { ...r, price: v } : r));
+
+    const save = async () => {
+        setSaving(true);
+        const prices = Object.fromEntries(rows.map(r => [r._id, Number(r.price) || 0]));
+        try {
+            const res = await fetch("/api/commerce/print-pricing", {
+                method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prices }),
+            });
+            const d = await res.json();
+            if (!d.error) { onSaved?.(); onClose(); }
+        } finally { setSaving(false); }
+    };
+
+    return (
+        <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
+            <DialogTitle sx={{ fontWeight: 700, color: "#1a1a2e" }}>
+                Print Pricing
+                <Typography sx={{ fontSize: "0.75rem", color: "#6b7280", fontWeight: 400 }}>
+                    Added to each product&apos;s wholesale &amp; retail price by print type
+                </Typography>
+            </DialogTitle>
+            <DialogContent>
+                {loading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}><CircularProgress size={22} /></Box>
+                ) : rows.length === 0 ? (
+                    <Typography sx={{ color: "#9ca3af", py: 2, fontSize: "0.85rem" }}>No print types yet.</Typography>
+                ) : (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mt: 1 }}>
+                        {rows.map(r => (
+                            <Box key={r._id} sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                <Typography sx={{ flex: 1, fontSize: "0.85rem", color: "#374151", fontWeight: 600 }}>{r.name}</Typography>
+                                <TextField size="small" value={r.price} onChange={e => setPrice(r._id, e.target.value)}
+                                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                                    sx={{ width: 120 }} />
+                            </Box>
+                        ))}
+                    </Box>
+                )}
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+                <Button onClick={onClose} disabled={saving} sx={{ color: "#6b7280", textTransform: "none" }}>Cancel</Button>
+                <Button onClick={save} disabled={saving || loading} variant="contained"
+                    startIcon={saving ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : null}
+                    sx={{ background: ACCENT, boxShadow: "none", textTransform: "none", "&:hover": { background: ACCENT, opacity: 0.92, boxShadow: "none" } }}>
+                    {saving ? "Saving…" : "Save"}
+                </Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
 // ── My Catalog: imported garments ────────────────────────────────────────────
-function MyCatalogCard({ blank, onRemove, removing }) {
+function MyCatalogCard({ blank, onEdit, onRemove, removing }) {
     const img = blank.images?.[0]?.image ?? null;
     const retail = (blank.sizes ?? []).reduce((mx, s) => Math.max(mx, s.retailPrice ?? 0), 0);
     return (
@@ -240,8 +368,15 @@ function MyCatalogCard({ blank, onRemove, removing }) {
                 </Box>
                 <Box sx={{ textAlign: "right" }}>
                     <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af" }}>cost {dollars(blank.platformPrice)}</Typography>
-                    {retail > 0 && <Typography sx={{ fontSize: "0.82rem", color: "#16a34a", fontWeight: 700 }}>${retail.toFixed(2)}</Typography>}
+                    <Typography sx={{ fontSize: "0.7rem", color: "#9ca3af" }}>retail</Typography>
+                    <Typography sx={{ fontSize: "0.82rem", color: "#16a34a", fontWeight: 700 }}>{retail > 0 ? `$${retail.toFixed(2)}` : "—"}</Typography>
                 </Box>
+                <Tooltip title="Edit retail price">
+                    <IconButton size="small" onClick={() => onEdit(blank)}
+                        sx={{ color: "#9ca3af", "&:hover": { color: "#1a1a2e", bgcolor: "rgba(0,0,0,0.04)" } }}>
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
                 <Tooltip title="Remove from catalog">
                     <span>
                         <IconButton size="small" disabled={removing} onClick={() => onRemove(blank)}
@@ -263,6 +398,8 @@ export default function CommerceCatalogPage() {
     const [search, setSearch]       = useState("");
     const [importing, setImporting] = useState(null);
     const [removingId, setRemovingId] = useState(null);
+    const [editing, setEditing]     = useState(null);
+    const [pricingOpen, setPricingOpen] = useState(false);
     const [toast, setToast]         = useState(null);
     const [error, setError]         = useState(null);
 
@@ -286,6 +423,14 @@ export default function CommerceCatalogPage() {
         setImporting(null);
         setToast("Added to your catalog");
         loadCatalog();
+    };
+
+    const onRetailSaved = (id, price) => {
+        setCatalog(cs => cs.map(b => b._id === id
+            ? { ...b, sizes: (b.sizes ?? []).map(s => ({ ...s, retailPrice: price })) }
+            : b));
+        setEditing(null);
+        setToast("Retail price updated");
     };
 
     const onRemove = async (blank) => {
@@ -327,12 +472,16 @@ export default function CommerceCatalogPage() {
                 <Box sx={{ width: 36, height: 36, borderRadius: 2, background: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <CheckroomIcon sx={{ color: "#fff", fontSize: 20 }} />
                 </Box>
-                <Box>
+                <Box sx={{ flex: 1 }}>
                     <Typography variant="h5" fontWeight={700} sx={{ color: "#1a1a2e" }}>Garment Catalog</Typography>
                     <Typography variant="caption" sx={{ color: "#6b7280" }}>
                         Browse blanks available across the fulfillment network and add them to your catalog to build products on
                     </Typography>
                 </Box>
+                <Button variant="outlined" size="small" startIcon={<LocalOfferIcon />} onClick={() => setPricingOpen(true)}
+                    sx={{ textTransform: "none", borderColor: "#e5e7eb", color: "#374151", "&:hover": { borderColor: "#cbd5e1", bgcolor: "#f9fafb" } }}>
+                    Print Pricing
+                </Button>
             </Box>
 
             <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, minHeight: 40, "& .MuiTab-root": { textTransform: "none", minHeight: 40 } }}>
@@ -366,12 +515,16 @@ export default function CommerceCatalogPage() {
                     </Typography>
                 ) : (
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                        {catalog.map(b => <MyCatalogCard key={b._id} blank={b} onRemove={onRemove} removing={removingId === b._id} />)}
+                        {catalog.map(b => <MyCatalogCard key={b._id} blank={b} onEdit={setEditing} onRemove={onRemove} removing={removingId === b._id} />)}
                     </Box>
                 )
             )}
 
             <ImportDialog garment={importing} onClose={() => setImporting(null)} onImported={onImported} />
+
+            <EditRetailDialog blank={editing} onClose={() => setEditing(null)} onSaved={onRetailSaved} />
+
+            <PrintPricingDialog open={pricingOpen} onClose={() => setPricingOpen(false)} onSaved={() => setToast("Print pricing saved")} />
 
             <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)}
                 anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
