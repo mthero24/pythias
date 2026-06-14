@@ -77,6 +77,8 @@ export default function CommerceCloudAdminPage() {
     const [loading, setLoading]   = useState(true);
     const [running, setRunning]   = useState(false);
     const [result, setResult]     = useState(null);
+    const [syncing, setSyncing]   = useState(false);
+    const [syncMsg, setSyncMsg]   = useState(null);
 
     const load = useCallback(() => {
         setLoading(true);
@@ -100,6 +102,20 @@ export default function CommerceCloudAdminPage() {
             setResult({ error: true, msg: e.message });
         } finally {
             setRunning(false);
+        }
+    };
+
+    const runSync = async () => {
+        setSyncing(true);
+        setSyncMsg(null);
+        try {
+            const res = await fetch("/api/admin/commerce-cloud/sync", { method: "POST" });
+            const data = await res.json();
+            setSyncMsg(data.error ? (data.msg || "Sync failed to start") : (data.msg || "Sync started"));
+        } catch (e) {
+            setSyncMsg(e.message);
+        } finally {
+            setSyncing(false);
         }
     };
 
@@ -183,6 +199,28 @@ export default function CommerceCloudAdminPage() {
                     Safe to run multiple times. Creates providers if missing, skips existing catalog entries, and adds any new blank × color × size combinations.
                 </Typography>
             </Box>
+
+            {/* Sync Premier catalog (pricing, blanks, settings) on demand */}
+            <Box sx={{ display: "flex", gap: 2, mb: 3, alignItems: "center" }}>
+                <Button
+                    variant="outlined"
+                    size="large"
+                    startIcon={syncing ? <CircularProgress size={18} sx={{ color: "#6366f1" }} /> : <RefreshIcon />}
+                    onClick={runSync}
+                    disabled={syncing}
+                    sx={{ borderColor: "#6366f1", color: "#a5b4fc", "&:hover": { borderColor: "#4f46e5", bgcolor: "rgba(99,102,241,0.08)" } }}
+                >
+                    {syncing ? "Starting sync…" : "Sync Premier Catalog Now"}
+                </Button>
+                <Typography variant="caption" sx={{ color: "#555", alignSelf: "center", maxWidth: 380 }}>
+                    Pulls Premier's latest blanks, pricing, and settings into Commerce Cloud. Runs automatically every 12 hours.
+                </Typography>
+            </Box>
+            {syncMsg && (
+                <Alert severity="info" sx={{ mb: 3, bgcolor: "rgba(99,102,241,0.1)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.3)", "& .MuiAlert-icon": { color: "#a5b4fc" } }}>
+                    {syncMsg}
+                </Alert>
+            )}
 
             {/* Bootstrap result */}
             {result && (

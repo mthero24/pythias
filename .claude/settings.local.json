@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:developer.walmart.com)"
+      "WebFetch(domain:developer.walmart.com)",
+      "Bash(node -e ' *)"
     ]
   }
 }

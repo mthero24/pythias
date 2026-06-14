@@ -22,6 +22,9 @@ const schema = new mongoose.Schema({
     billingEmail: { type: String },
     stripeCustomerId: { type: String },
     stripeSubscriptionId: { type: String },
+    // Comp account: free SaaS subscription (no Stripe sub / no monthly tier billing).
+    // Fulfillment is still paid normally — the wallet is charged for wholesale/shipping/handling.
+    comp: { type: Boolean, default: false },
     // snapshot of current limits — set from TIERS on tier change
     limits: {
         ordersPerMonth: { type: Number, default: 500 },
