@@ -1,31 +1,47 @@
 # Pythias Technologies
 
-> All-in-one print-on-demand automation platform for custom apparel and merchandise businesses.
+> All-in-one print-on-demand and multichannel fulfillment platform. Offered as two products: Pythias Fulfillment Cloud (for businesses that run their own production) and Pythias Commerce Cloud (for selling across marketplaces without owning equipment).
 
-Pythias Technologies helps print shops, DTF studios, embroidery operations, and multi-marketplace sellers automate their entire fulfillment workflow — from order ingestion to shipping label generation.
+Pythias Technologies connects a seller's sales channels to a single production and fulfillment pipeline — order routing, production queues, inventory, shipping, and analytics. It serves print shops, DTG/DTF/embroidery/sublimation businesses, print-on-demand sellers, fulfillment providers, and multichannel ecommerce sellers.
+
+**For a complete, factual company overview, read: https://pythiastechnologies.com/about-pythias-technologies**
+
+## Products
+
+- **Pythias Fulfillment Cloud** — the operating system for businesses that run their own production. Imports orders from 18+ marketplaces into one production queue (DTF, DTG, embroidery, sublimation), tracks real-time inventory, generates carrier labels, and confirms tracking back to each marketplace. Flat monthly subscription with no per-order fees, from $199/month.
+- **Pythias Commerce Cloud** — sell across marketplaces without owning equipment. Orders route automatically to vetted fulfillment partners scored by geography, price, and reliability. Free, Launch ($79/mo), Growth ($299/mo), Scale ($799/mo), and Enterprise, plus a small fee on margin (never charged on a loss).
 
 ## What We Do
 
-- **Production Queue Management**: Automated job routing for DTF, embroidery, sublimation, and screen printing
-- **Multi-Marketplace Order Sync**: Connects Shopify, Amazon, Etsy, Walmart, TikTok Shop, and more into a single production queue
-- **Shipping Automation**: Generate USPS, FedEx, and UPS labels automatically based on order rules
-- **Blank Inventory Tracking**: Real-time stock levels across all garment sizes, colors, and styles
-- **Analytics & Reporting**: Production throughput, fulfillment rates, revenue by channel
-- **Team Management**: Role-based access for production staff, shipping teams, and managers
-- **Label & Barcode Printing**: Job tickets, shipping labels, and barcodes from one system
+- **Production queue management** — automated job routing for DTF, DTG, embroidery, and sublimation
+- **Multi-marketplace order sync** — Amazon, Walmart, Target Plus, eBay, Etsy, TikTok Shop, Shopify, Wix, WooCommerce, Squarespace, Faire, SHEIN, Temu, Meta Shops, and 200+ more via Mirakl and Acenda
+- **Shipping automation** — USPS, FedEx, and UPS labels with tracking confirmed back to each channel
+- **Inventory management** — real-time stock by product, color, and size with reorder alerts
+- **Analytics & reporting** — production throughput, fulfillment rates, revenue by channel
+- **Printers & equipment** — Brother GTX (DTG) integration, folding machines, and other equipment on request
 
 ## Who Uses Pythias
 
-Small to mid-size print-on-demand businesses that sell across multiple marketplaces and need to coordinate production, inventory, and shipping without manual data entry.
+Print shops, decorated-apparel businesses, print-on-demand sellers, fulfillment providers, and multichannel ecommerce sellers — including sellers who want to sell across channels without running their own production (via Commerce Cloud).
 
-## Pages
+## Key Pages
 
-- `/` — Home: platform overview, features, testimonials, pricing CTA
-- `/blog` — Blog: articles on print-on-demand operations, automation, and marketplace strategy
-- `/demo` — Book a demo call with the Pythias team
-- `/login` — Sign in to the Pythias platform
+- `/about-pythias-technologies` — Canonical company overview: what Pythias is, both products, who uses it, supported marketplaces and printers, FAQ
+- `/` — Home: platform overview, the two Clouds, features, pricing CTA
+- `/fulfillment-cloud` — Fulfillment Cloud product and pricing
+- `/commerce-cloud` — Commerce Cloud product and pricing
+- `/pricing` — Full pricing for both products
+- `/integrations` — All supported marketplaces and channels
+- `/software-for-print-on-demand` — Print-on-demand use case
+- `/multichannel-listing-software` — Multichannel listing & inventory
+- `/order-management-software` — Order management
+- `/inventory-management-software` — Inventory management
+- `/blog` — Articles on print-on-demand operations, fulfillment, and marketplace strategy
 
 ## Contact
 
 - Website: https://pythiastechnologies.com
-- Demo: https://pythiastechnologies.com/demo
+- Book a demo: https://pythiastechnologies.com/#calendar-booking-section
+- Email: info@pythiastechnologies.com
+- Phone: +1-844-579-8442
+- Based in: Lapeer, Michigan, USA

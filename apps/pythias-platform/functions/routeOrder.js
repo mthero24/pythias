@@ -89,9 +89,15 @@ function calcReliabilityScore(providerScore, avgLeadTimeDays) {
  * @param {object} order   - Saved PlatformOrder document
  * @param {object[]} items - Saved PlatformItem documents for this order
  * @param {object} org     - Commerce Cloud Organization document (must include _id, wallet.balance)
+ * @param {object} [options]
+ * @param {boolean} [options.skipWalletCharge] - Don't gate on / deduct the CC wallet. Used for
+ *   storefront-sourced orders: the buyer already paid retail and the provider wholesale is netted
+ *   out of the seller's payout (see lib/payouts settleOrderPayout), so charging the wallet too
+ *   would double-count. Defaults to true when order.source === "storefront".
  * @returns {{ routingLog, providerId } | { unroutable: true, reason: string }}
  */
-export async function routeOrder(order, items, org) {
+export async function routeOrder(order, items, org, options = {}) {
+    const skipWallet = options.skipWalletCharge ?? (order.source === "storefront");
     // Step 1 — Build the list of required SKUs from the order items.
     // CC products are built on aliased "catalog blanks"; resolve alias → canonical
     // provider blank so the ProviderCatalog match (keyed on the canonical blankId) works.
@@ -209,14 +215,17 @@ export async function routeOrder(order, items, org) {
 
     const best = scored[0];
 
-    // Step 6 — Verify the commerce org wallet has enough funds
-    let availableBalance = org.wallet?.balance ?? 0;
-    if (availableBalance < best.totalWholesale) {
-        // Try auto-recharge (off-session) before giving up.
-        availableBalance = await ensureWalletFunds(org._id, best.totalWholesale);
-    }
-    if (availableBalance < best.totalWholesale) {
-        return unroutable(org, order, "insufficient_wallet_balance");
+    // Step 6 — Verify the commerce org wallet has enough funds.
+    // Storefront orders skip this: the buyer already paid and wholesale is netted from the payout.
+    if (!skipWallet) {
+        let availableBalance = org.wallet?.balance ?? 0;
+        if (availableBalance < best.totalWholesale) {
+            // Try auto-recharge (off-session) before giving up.
+            availableBalance = await ensureWalletFunds(org._id, best.totalWholesale);
+        }
+        if (availableBalance < best.totalWholesale) {
+            return unroutable(org, order, "insufficient_wallet_balance");
+        }
     }
 
     // Step 7 — Persist routing log
@@ -242,18 +251,21 @@ export async function routeOrder(order, items, org) {
     }).save();
 
     // Step 8 — Side effects (non-blocking failures are logged, not fatal)
-    await Promise.allSettled([
+    const sideEffects = [
         // Increment provider's daily count
         ProviderCapacity.updateOne(
             { providerId: best.providerId },
             { $inc: { currentDailyCount: 1 } }
         ),
-        // Deduct wholesale cost from commerce org wallet
-        Organization.updateOne(
+    ];
+    if (!skipWallet) {
+        // Deduct wholesale cost from commerce org wallet (skipped for storefront orders).
+        sideEffects.push(Organization.updateOne(
             { _id: org._id },
             { $inc: { "wallet.balance": -best.totalWholesale } }
-        ),
-    ]);
+        ));
+    }
+    await Promise.allSettled(sideEffects);
 
     // Step 9 — Hand off to the provider's production system.
     // Auto-accept (internal) providers get the order immediately; external providers

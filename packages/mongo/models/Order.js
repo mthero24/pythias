@@ -189,7 +189,28 @@ const schema = new mongoose.Schema({
   taxRate:         { type: Number, default: 0 },
   embroideryFiles: [{ location: String, dst: String }],
   inStorePickup:   { type: Boolean, default: false },
+  // ── Storefront (Commerce Cloud) order fields ──────────────────────
+  source:               { type: String },                 // e.g. "storefront"
+  paymentRef:           { type: String, sparse: true },   // Stripe PaymentIntent id — webhook idempotency key
+  taxAmountCents:       { type: Number, default: 0 },      // Stripe Tax amount actually charged
+  rewardsRedeemedCents: { type: Number, default: 0 },      // store credit applied at checkout
+  giftCardRedeemedCents: { type: Number, default: 0 },     // gift-card balance applied at checkout
+  giftCardCode:          { type: String },
+  storefrontCustomerId: { type: mongoose.Schema.Types.ObjectId },
+  // Inputs for the seller payout, captured at payment time (the Stripe fee can't be
+  // recovered later). The transfer fires at fulfillment-ship settlement.
+  // net = subtotalCents − wholesaleCents − (stripeFeeCents + 1% of subtotalCents)
+  storefrontPayout: {
+    subtotalCents:  { type: Number },
+    wholesaleCents: { type: Number },
+    stripeFeeCents: { type: Number },
+    status:         { type: String, enum: ["pending", "paid", "skipped"], default: "pending" },
+    transferId:     { type: String },
+    paidAt:         { type: Date },
+  },
 });
+// Idempotency: at most one order per Stripe PaymentIntent.
+schema.index({ orgId: 1, paymentRef: 1 }, { unique: true, sparse: true });
 
 // schema.pre("save", async function (next) {
 //   if (this.isNew) {

@@ -25,6 +25,10 @@ import PaletteIcon from "@mui/icons-material/Palette";
 import EditIcon from "@mui/icons-material/Edit";
 import SyncAltIcon from "@mui/icons-material/SyncAlt";
 import StorefrontIcon from "@mui/icons-material/Storefront";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
+import CategoryIcon from "@mui/icons-material/Category";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import CheckroomIcon from "@mui/icons-material/Checkroom";
 import BrushIcon from "@mui/icons-material/Brush";
@@ -103,6 +107,18 @@ const NAV_SECTIONS = [
       { label: "Fix UPC",  href: "/admin/fix-upc",    icon: <QrCode2Icon fontSize="small" />,  showCSV: false },
       { label: "AI Blacklist", href: "/admin/ai-blacklist", icon: <BlockIcon fontSize="small" />, showCSV: false },
       { label: "Music Tracks", href: "/admin/music",       icon: <MusicNoteIcon fontSize="small" />, showCSV: false },
+    ],
+  },
+  {
+    label: "Storefront",
+    items: [
+      { label: "Store Builder",  href: "/admin/store",            icon: <StorefrontIcon fontSize="small" />,  showCSV: false },
+      { label: "Collections",    href: "/admin/store/collections",icon: <CategoryIcon fontSize="small" />,    showCSV: false },
+      { label: "Discounts",      href: "/admin/store/discounts",  icon: <LocalOfferIcon fontSize="small" />,  showCSV: false },
+      { label: "Marketing",      href: "/admin/store/marketing",  icon: <CampaignIcon fontSize="small" />,    showCSV: false },
+      { label: "Site Analytics", href: "/admin/store/analytics",  icon: <QueryStatsIcon fontSize="small" />,  showCSV: false },
+      { label: "SEO Pages",      href: "/admin/store/seo-pages",  icon: <MenuBookIcon fontSize="small" />,    showCSV: false },
+      { label: "Payouts",        href: "/admin/store/payouts",    icon: <AttachMoneyIcon fontSize="small" />, showCSV: false },
     ],
   },
   {

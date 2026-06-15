@@ -19,6 +19,7 @@ import TierBadge from "./TierBadge";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import LanguageIcon from "@mui/icons-material/Language";
 import CheckroomIcon from "@mui/icons-material/Checkroom";
 import BrushIcon from "@mui/icons-material/Brush";
 import InventoryIcon from "@mui/icons-material/Inventory";
@@ -45,6 +46,10 @@ import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import DesignServicesIcon from "@mui/icons-material/DesignServices";
 import DownloadIcon from "@mui/icons-material/Download";
 import StorefrontIcon from "@mui/icons-material/Storefront";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
+import CategoryIcon from "@mui/icons-material/Category";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
@@ -172,6 +177,12 @@ function buildCommerceSections(base) {
             label: "Catalog",
             items: [
                 { label: "Garment Catalog",  path: "catalog",                icon: <CheckroomIcon fontSize="small" /> },
+                { label: "Storefront",       path: "storefront",             icon: <LanguageIcon fontSize="small" /> },
+                { label: "Collections",      path: "collections",            icon: <CategoryIcon fontSize="small" /> },
+                { label: "Discounts",        path: "discounts",              icon: <LocalOfferIcon fontSize="small" /> },
+                { label: "Marketing",        path: "marketing",              icon: <CampaignIcon fontSize="small" /> },
+                { label: "Site Analytics",   path: "analytics",              icon: <QueryStatsIcon fontSize="small" /> },
+                { label: "SEO Pages",        path: "seo-pages",              icon: <MenuBookIcon fontSize="small" /> },
                 { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
                 { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
                 { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },
@@ -198,6 +209,7 @@ function buildCommerceSections(base) {
                 { label: "Provider Catalog",  path: "fulfillment/catalog",  icon: <HubIcon fontSize="small" /> },
                 { label: "Routing Status",    path: "fulfillment/routing",  icon: <AltRouteIcon fontSize="small" /> },
                 { label: "Wallet",            path: "fulfillment/wallet",   icon: <AccountBalanceWalletIcon fontSize="small" /> },
+                { label: "Payouts",           path: "payouts",              icon: <PaymentIcon fontSize="small" /> },
             ],
         },
         {

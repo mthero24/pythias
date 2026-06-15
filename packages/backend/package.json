@@ -6,6 +6,7 @@
     "exports": {
         ".": "./exports",
         "./server": "./server",
+        "./storefront": "./components/storefront/index.js",
         "./functions": "./functions/index.js",
         "./lib/labelConstants.js": "./lib/labelConstants.js"
     },
@@ -18,6 +19,7 @@
         "@emotion/styled": "^11.14.0",
         "@mui/material": "^6.4.0",
         "@pythias/repull": "^1.0.0",
+        "@pythias/storefront": "*",
         "axios": "^1.7.9",
         "next": "^15.1.4",
         "react": "^19.0.0",

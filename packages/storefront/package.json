@@ -1,0 +1,19 @@
+{
+  "name": "@pythias/storefront",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./exports.js",
+    "./server": "./server.js",
+    "./themes": "./themes/presets.js"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*",
+    "mongoose": "*"
+  },
+  "dependencies": {
+    "@pythias/mongo": "*"
+  }
+}

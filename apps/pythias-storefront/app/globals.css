@@ -1,0 +1,27 @@
+:root {
+  /* Defaults — overridden per-site via the style attribute on the storefront root */
+  --sf-primary: #1a1a2e;
+  --sf-secondary: #e94560;
+  --sf-bg: #ffffff;
+  --sf-text: #111111;
+  --sf-accent: #f59e0b;
+  --sf-font-heading: Inter, system-ui, sans-serif;
+  --sf-font-body: Inter, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--sf-bg);
+  color: var(--sf-text);
+  font-family: var(--sf-font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { font-family: var(--sf-font-heading); }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+.sf-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }

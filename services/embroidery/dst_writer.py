@@ -51,6 +51,6 @@ def stitches_to_dst(color_layers, output_path):
         pattern.add_command(pyembroidery.TRIM)
 
     pattern.add_command(pyembroidery.END)
-    with open(output_path, "wb") as f:
-        pyembroidery.write_embroidery("dst", pattern, f)
+    # write_dst handles DST encoding and opens the file itself (path string or stream).
+    pyembroidery.write_dst(pattern, output_path)
     return output_path

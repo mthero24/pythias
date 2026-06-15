@@ -1,0 +1,63 @@
+export const dynamic = "force-dynamic";
+import { NextResponse } from "next/server";
+import { StorefrontCustomer, StorefrontSite } from "@pythias/mongo";
+import { assertInternal } from "@/lib/internal";
+import { enqueueAbandonedCart, enqueueAbandonedSession } from "@/lib/emailFlows";
+
+// POST /api/internal/marketing/lifecycle (run hourly by PM2) — enqueues abandoned-cart and
+// abandoned-session nudges. Marketing category, so only opted-in + non-suppressed contacts get
+// them (enforced at enqueue + send). Idempotency comes from the message dedupeKey.
+const HOUR = 3600 * 1000, DAY = 24 * HOUR;
+
+// Load each org's site once.
+async function siteMap(orgIds) {
+    const sites = await StorefrontSite.find({ orgId: { $in: orgIds } }).lean();
+    return Object.fromEntries(sites.map((s) => [String(s.orgId), s]));
+}
+
+export async function POST(req) {
+    const gate = assertInternal(req);
+    if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
+
+    const now = Date.now();
+    let cart = 0, session = 0;
+
+    // ── Abandoned cart: non-empty cart, idle 1h–72h, email-consented. ──
+    const cartCandidates = await StorefrontCustomer.find({
+        email: { $exists: true, $ne: null },
+        "marketingConsent.email.optedIn": true,
+        "cart.0": { $exists: true },
+        cartUpdatedAt: { $lte: new Date(now - 1 * HOUR), $gte: new Date(now - 72 * HOUR) },
+    }).limit(300).lean();
+
+    if (cartCandidates.length) {
+        const sites = await siteMap([...new Set(cartCandidates.map((c) => String(c.orgId)))]);
+        for (const c of cartCandidates) {
+            const site = sites[String(c.orgId)];
+            if (!site) continue;
+            const msg = await enqueueAbandonedCart(site, c).catch(() => null);
+            if (msg) { cart++; await StorefrontCustomer.updateOne({ _id: c._id }, { $set: { abandonedCartSentAt: new Date() } }); }
+        }
+    }
+
+    // ── Abandoned session: recently seen, empty cart, no nudge in 14 days. ──
+    const sessCandidates = await StorefrontCustomer.find({
+        email: { $exists: true, $ne: null },
+        "marketingConsent.email.optedIn": true,
+        $or: [{ cart: { $size: 0 } }, { cart: { $exists: false } }],
+        lastSeenAt: { $lte: new Date(now - 2 * HOUR), $gte: new Date(now - 72 * HOUR) },
+        $and: [{ $or: [{ abandonedSessionSentAt: { $exists: false } }, { abandonedSessionSentAt: { $lt: new Date(now - 14 * DAY) } }] }],
+    }).limit(300).lean();
+
+    if (sessCandidates.length) {
+        const sites = await siteMap([...new Set(sessCandidates.map((c) => String(c.orgId)))]);
+        for (const c of sessCandidates) {
+            const site = sites[String(c.orgId)];
+            if (!site) continue;
+            const msg = await enqueueAbandonedSession(site, c).catch(() => null);
+            if (msg) { session++; await StorefrontCustomer.updateOne({ _id: c._id }, { $set: { abandonedSessionSentAt: new Date() } }); }
+        }
+    }
+
+    return NextResponse.json({ abandonedCart: cart, abandonedSession: session });
+}

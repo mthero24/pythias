@@ -25,6 +25,13 @@ const schema = new mongoose.Schema({
     // Comp account: free SaaS subscription (no Stripe sub / no monthly tier billing).
     // Fulfillment is still paid normally — the wallet is charged for wholesale/shipping/handling.
     comp: { type: Boolean, default: false },
+    // Storefront marketplace payouts — the seller's Stripe Connect Express account (on the
+    // SEPARATE marketplace Stripe account). Pythias collects buyer payments + transfers net here.
+    storefrontConnect: {
+        accountId:   { type: String },   // acct_...
+        status:      { type: String, enum: ["none", "pending", "active"], default: "none" },
+        onboardedAt: { type: Date },
+    },
     // snapshot of current limits — set from TIERS on tier change
     limits: {
         ordersPerMonth: { type: Number, default: 500 },

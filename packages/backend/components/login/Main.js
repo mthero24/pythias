@@ -19,6 +19,20 @@ const FEATURES = [
     "Team collaboration and activity logs",
 ];
 
+// Google registration conversion. LoginMain is shared across apps, so this only fires for
+// an app that opts in by setting NEXT_PUBLIC_REGISTER_CONVERSION_LABEL in its env (and that
+// already loads gtag). Other apps leave it unset and nothing fires.
+const GOOGLE_ADS_ID  = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+const REG_CONV_LABEL = process.env.NEXT_PUBLIC_REGISTER_CONVERSION_LABEL;
+function fireRegistrationConversion() {
+    if (typeof window === "undefined" || !window.gtag) return;
+    if (!REG_CONV_LABEL) return; // app hasn't opted in
+    window.gtag("event", "sign_up", { method: "credentials" });
+    if (GOOGLE_ADS_ID) {
+        window.gtag("event", "conversion", { send_to: `${GOOGLE_ADS_ID}/${REG_CONV_LABEL}` });
+    }
+}
+
 export function Main({ type, name = "Premier Printing", initials = "PP", tagline = "Production Management", logo, redirectTo = "/account", notFoundRedirect, onSuccess }) {
     const isRegister = type === "register";
 
@@ -42,6 +56,7 @@ export function Main({ type, name = "Premier Printing", initials = "PP", tagline
             if (isRegister) {
                 const res = await axios.post("/api/auth/register", { ...data });
                 if (res.data.success) {
+                    fireRegistrationConversion();
                     setSuccess(`Account for "${data.userName}" was created successfully.`);
                     setData({ userName: "", password: "", email: "", firstName: "", lastName: "" });
                 } else {

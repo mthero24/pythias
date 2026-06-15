@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { RoutingLog, PlatformOrder as Order, ProviderCapacity, Organization } from "@pythias/mongo";
 import { notifyPartner } from "@/lib/notifyPartner";
 import { shapeOrder } from "@/lib/partnerShape";
+import { settleStorefrontPayout } from "@/lib/settleStorefrontPayout";
+import { notifyStorefrontOrderEvent } from "@/lib/notifyStorefrontOrderEvent";
 
 // Provider → platform status callback. A provider (e.g. Premier) calls this as it
 // works a routed Commerce Cloud order so the platform can update the seller's order
@@ -54,6 +56,12 @@ export async function POST(req) {
     order.status = ORDER_STATUS[status];
     log.fulfillmentStatus = status;
 
+    // Storefront orders settle the seller via Stripe Connect (marketplace), not the wallet:
+    // wholesale was NOT charged to the wallet at routing, and provider costs are covered by
+    // Pythias from the retained retail. So we skip the seller wallet charge and instead fire
+    // the Stripe payout (net = subtotal − wholesale − (stripe fee + 1%)) when it ships.
+    const isStorefront = order.source === "storefront";
+
     let walletCharge = 0; // applied AFTER the saves so a failed save can't charge without persisting settlement
     if (status === "shipped") {
         const shippingPaid = Math.max(0, Math.round(Number(body.shippingCost ?? 0)) || 0); // cents
@@ -74,8 +82,9 @@ export async function POST(req) {
         log.carrier              = body.carrier;
         log.shippedAt            = new Date();
 
-        // Seller pays shipping + handling now (wholesale was charged at routing).
-        walletCharge = shippingPaid + handling;
+        // Wallet-based CC orders: seller pays shipping + handling now (wholesale was charged
+        // at routing). Storefront orders settle via Stripe Connect instead — no wallet charge.
+        walletCharge = isStorefront ? 0 : (shippingPaid + handling);
 
         if (body.trackingNumber) {
             order.shippingInfo = order.shippingInfo ?? {};
@@ -96,6 +105,20 @@ export async function POST(req) {
     await Promise.all([order.save(), log.save()]);
     if (walletCharge > 0) {
         await Organization.updateOne({ _id: log.commerceOrgId }, { $inc: { "wallet.balance": -walletCharge } });
+    }
+
+    // Storefront order shipped → pay the seller via Stripe Connect (idempotent in the storefront).
+    if (status === "shipped" && isStorefront) {
+        const payout = await settleStorefrontPayout(order._id);
+        if (!payout.ok) console.error(`[provider-callback] payout failed for ${order._id}:`, payout.error);
+        else if (payout.status && payout.status !== "paid" && payout.status !== "already_paid") {
+            console.warn(`[provider-callback] payout ${order._id}: ${payout.status}`);
+        }
+    }
+
+    // Storefront orders: email the buyer about the status change (storefront owns the email).
+    if (isStorefront) {
+        notifyStorefrontOrderEvent({ orderId: order._id, status }).catch(() => {});
     }
 
     // Notify the seller's storefront.

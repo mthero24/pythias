@@ -1,4 +1,8 @@
-﻿const BASE = "https://pythiastechnologies.com";
+﻿import { Article } from "@pythias/mongo";
+
+export const revalidate = 3600; // refresh hourly so new blog posts appear
+
+const BASE = "https://pythiastechnologies.com";
 
 const ROUTES = [
     { url: "/",                          priority: 1.0,  changeFrequency: "weekly" },
@@ -44,6 +48,16 @@ const ROUTES = [
     { url: "/services/image-creation",       priority: 0.8,  changeFrequency: "monthly" },
     { url: "/services/product-creation-ai", priority: 0.8,  changeFrequency: "monthly" },
     { url: "/pricing",                                              priority: 0.95, changeFrequency: "monthly" },
+    { url: "/multichannel-listing-software",                      priority: 0.92, changeFrequency: "monthly" },
+    { url: "/order-management-software",                          priority: 0.92, changeFrequency: "monthly" },
+    { url: "/inventory-management-software",                      priority: 0.92, changeFrequency: "monthly" },
+    { url: "/software-for-amazon-sellers",                        priority: 0.92, changeFrequency: "monthly" },
+    { url: "/software-for-shopify-sellers",                       priority: 0.92, changeFrequency: "monthly" },
+    { url: "/software-for-ebay-sellers",                          priority: 0.92, changeFrequency: "monthly" },
+    { url: "/software-for-walmart-sellers",                       priority: 0.92, changeFrequency: "monthly" },
+    { url: "/software-for-woocommerce-stores",                    priority: 0.92, changeFrequency: "monthly" },
+    { url: "/software-for-screen-printing-shops",                 priority: 0.92, changeFrequency: "monthly" },
+    { url: "/software-for-sublimation-businesses",                priority: 0.92, changeFrequency: "monthly" },
     { url: "/software-for-dtf-shops",                             priority: 0.92, changeFrequency: "monthly" },
     { url: "/software-for-dtg-shops",                             priority: 0.92, changeFrequency: "monthly" },
     { url: "/software-for-embroidery-businesses",                 priority: 0.92, changeFrequency: "monthly" },
@@ -54,6 +68,13 @@ const ROUTES = [
     { url: "/compare/pythias-vs-shipstation",                     priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/pythias-vs-shopify",                         priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/pythias-vs-printify",                        priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/pythias-vs-sellbrite",                       priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/pythias-vs-order-desk",                      priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/pythias-vs-printful",                        priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/pythias-vs-linnworks",                       priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/pythias-vs-printavo",                        priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/pythias-vs-sellercloud",                     priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/pythias-vs-zentail",                         priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/best-dtf-fulfillment-software",              priority: 0.88, changeFrequency: "monthly" },
     { url: "/compare/best-print-on-demand-automation-software",   priority: 0.88, changeFrequency: "monthly" },
     { url: "/testimonials",                                       priority: 0.85, changeFrequency: "weekly" },
@@ -61,6 +82,7 @@ const ROUTES = [
     { url: "/blog",                      priority: 0.85, changeFrequency: "weekly" },
     { url: "/tutorials",                 priority: 0.7,  changeFrequency: "weekly" },
     { url: "/about",                     priority: 0.75, changeFrequency: "monthly" },
+    { url: "/about-pythias-technologies", priority: 0.85, changeFrequency: "monthly" },
     { url: "/contact",                   priority: 0.75, changeFrequency: "yearly" },
     { url: "/privacy",                   priority: 0.3,  changeFrequency: "yearly" },
     { url: "/privacy/ebay",              priority: 0.2,  changeFrequency: "yearly" },
@@ -76,11 +98,34 @@ const ROUTES = [
     { url: "/policies/data-deletion",            priority: 0.3, changeFrequency: "yearly" },
 ];
 
-export default function sitemap() {
-    return ROUTES.map(({ url, priority, changeFrequency }) => ({
+export default async function sitemap() {
+    const staticRoutes = ROUTES.map(({ url, priority, changeFrequency }) => ({
         url:              `${BASE}${url}`,
         lastModified:     new Date(),
         changeFrequency,
         priority,
     }));
+
+    // Append published blog articles from the DB. Wrapped so a DB hiccup at build/request
+    // time degrades to the static routes instead of breaking the whole sitemap.
+    let blogRoutes = [];
+    try {
+        const articles = await Article.find({ published: true })
+            .select("slug updatedAt publishedAt")
+            .sort({ publishedAt: -1 })
+            .limit(1000)
+            .lean();
+        blogRoutes = articles
+            .filter((a) => a.slug)
+            .map((a) => ({
+                url:              `${BASE}/blog/${a.slug}`,
+                lastModified:     a.updatedAt || a.publishedAt || new Date(),
+                changeFrequency:  "monthly",
+                priority:         0.7,
+            }));
+    } catch {
+        // DB unavailable — fall back to static routes only.
+    }
+
+    return [...staticRoutes, ...blogRoutes];
 }

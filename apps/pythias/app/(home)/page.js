@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import HeroSection from "./HeroSection";
 import CloudsSection from "./CloudsSection";
+import SeoAuthoritySection from "./SeoAuthoritySection";
 import CommunitySection from "./CommunitySection";
 import OutcomesSection from "./OutcomesSection";
 import HowItWorksSection from "./HowItWorksSection";
@@ -92,6 +93,22 @@ const faqSchema = {
   ],
 };
 
+export const metadata = {
+  title: { absolute: "Pythias Fulfillment Cloud & Commerce Cloud | Print-on-Demand, Fulfillment & Marketplace Automation" },
+  description:
+    "Pythias is print-on-demand, fulfillment, inventory management, marketplace management, warehouse, and ecommerce operations software in one platform — automate production, orders, inventory, and shipping across 18+ marketplaces.",
+  keywords:
+    "print-on-demand software, fulfillment software, inventory management software, marketplace management software, warehouse software, ecommerce operations software, multichannel fulfillment, order management software",
+  alternates: { canonical: "https://pythiastechnologies.com" },
+  openGraph: {
+    title: "Pythias Fulfillment Cloud & Commerce Cloud — Print-on-Demand, Fulfillment & Marketplace Automation",
+    description:
+      "One platform for print-on-demand, fulfillment, inventory, marketplace management, and ecommerce operations — automate production, orders, and shipping across 18+ marketplaces.",
+    url: "https://pythiastechnologies.com",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Pythias Fulfillment Cloud & Commerce Cloud" }],
+  },
+};
+
 export default function Home() {
   return (
     <>
@@ -101,6 +118,7 @@ export default function Home() {
       <HeroSection />
       <OutcomesSection />
       <CloudsSection />
+      <SeoAuthoritySection />
       <CommunitySection />
       <HowItWorksSection />
       <FeaturesSection />

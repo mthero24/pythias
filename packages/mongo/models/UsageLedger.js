@@ -15,6 +15,11 @@ const schema = new mongoose.Schema({
     overageDesignsCharge: { type: Number, default: 0 },
     extraUsers: { type: Number, default: 0 },
     extraUsersCharge: { type: Number, default: 0 },
+    // Storefront marketing — billed per email block + per SMS block sent.
+    emailsSent: { type: Number, default: 0 },
+    overageEmailsCharge: { type: Number, default: 0 },
+    smsSent: { type: Number, default: 0 },
+    overageSmsCharge: { type: Number, default: 0 },
     totalOverageCharge: { type: Number, default: 0 },
     invoiced: { type: Boolean, default: false },
     stripeInvoiceId: { type: String },

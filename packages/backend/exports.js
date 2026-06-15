@@ -4,6 +4,7 @@ export { isSingleItem, isShipped, canceled } from "./functions/itemFunctions.js"
 export { upscaleImage } from "./functions/upscale.js";
 export { createImage } from "./functions/image.js";
 export { CreateSku } from "./functions/CreateSku.js";
+export { generateArticle, generateArticleIdeas } from "./functions/contentGenerator.js";
 
 export {Main as UsersMain} from "./components/users/Main";
 export {Main as LoginMain} from "./components/login/Main";
@@ -14,6 +15,11 @@ export {Blank as BlankMain} from "./components/blanks/Blank";
 export {Search} from "./components/design/Search";
 export {Footer} from "./components/reusable/Footer";
 export {serialize} from "./functions/serialize";
+export {default as StorefrontEditor} from "./components/storefront/StorefrontEditor";
+export {default as MarketingClient} from "./components/storefront/MarketingClient";
+export {default as AnalyticsClient} from "./components/storefront/AnalyticsClient";
+export {default as SeoPagesClient} from "./components/storefront/SeoPagesClient";
+export {default as PayoutsClient} from "./components/storefront/PayoutsClient";
 export {Uploader} from "./components/reusable/uploader";
 export {UpscaleButton} from "./components/reusable/UpscaleButton";
 export {default as LoaderOverlay} from "./components/reusable/LoaderOverlay";

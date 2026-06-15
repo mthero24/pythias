@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     serverExternalPackages: ["@pythias/mongo", "@pythias/sublimation", "sharp", "canvas", "pdfkit", "@napi-rs/canvas", "@pythias/shipping", "@pythias/dtf", "fluent-ffmpeg", "ffmpeg-static"],
-    transpilePackages: ["@pythias/backend", "@pythias/labels", "@pythias/roq-folder"],
+    transpilePackages: ["@pythias/backend", "@pythias/labels", "@pythias/roq-folder", "@pythias/storefront"],
     images: {
         remotePatterns: [
             { protocol: "https", hostname: "images1.pythiastechnologies.com" },

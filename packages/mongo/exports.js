@@ -102,3 +102,24 @@ export { default as ProviderLocation }  from "./models/ProviderLocation";
 export { default as ProviderCapacity }  from "./models/ProviderCapacity";
 export { default as ProviderScore }     from "./models/ProviderScore";
 export { default as RoutingLog }        from "./models/RoutingLog";
+
+// ── Storefront Cloud ─────────────────────────────────────────────────────────
+export { default as StorefrontSite }        from "./models/StorefrontSite";
+export { default as StorefrontCustomer }    from "./models/StorefrontCustomer";
+export { default as StorefrontSuppression } from "./models/StorefrontSuppression";
+export { default as StorefrontSupportThread } from "./models/StorefrontSupportThread";
+export { default as RewardLedger }            from "./models/RewardLedger";
+export { default as StorefrontCheckoutSession } from "./models/StorefrontCheckoutSession";
+export { default as StorefrontMessage }       from "./models/StorefrontMessage";
+export { default as StorefrontCampaign }      from "./models/StorefrontCampaign";
+export { default as StorefrontDiscount }      from "./models/StorefrontDiscount";
+export { default as StorefrontSession }       from "./models/StorefrontSession";
+export { default as StorefrontPathStat }      from "./models/StorefrontPathStat";
+export { default as StorefrontProductStat }   from "./models/StorefrontProductStat";
+export { default as StorefrontReview }        from "./models/StorefrontReview";
+export { default as StorefrontReviewSummary } from "./models/StorefrontReviewSummary";
+export { default as StorefrontPage }          from "./models/StorefrontPage";
+export { default as StorefrontCollection }    from "./models/StorefrontCollection";
+export { default as StorefrontGiftCard }      from "./models/StorefrontGiftCard";
+export { default as StorefrontSegment }       from "./models/StorefrontSegment";
+export { default as StorefrontFlow }          from "./models/StorefrontFlow";
