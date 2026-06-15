@@ -71,7 +71,69 @@ function OrderDetail({ id }) {
                 </div>
             )}
 
+            <RequestReturn order={order} />
             <ContactSeller orderId={order.id} poNumber={order.poNumber} />
+        </div>
+    );
+}
+
+const REASONS = [["wrong_size", "Wrong size"], ["defective", "Defective / damaged"], ["not_as_described", "Not as described"], ["changed_mind", "Changed my mind"], ["arrived_late", "Arrived late"], ["other", "Other"]];
+
+// Buyer-initiated return/exchange request.
+function RequestReturn({ order }) {
+    const [open, setOpen] = useState(false);
+    const [picked, setPicked] = useState({});           // index → true
+    const [resolution, setResolution] = useState("refund");
+    const [note, setNote] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [done, setDone] = useState(null);
+    const [error, setError] = useState(null);
+
+    const lines = order.lines || [];
+    const toggle = (i) => setPicked((p) => ({ ...p, [i]: !p[i] }));
+
+    const submit = async () => {
+        const items = lines.filter((_, i) => picked[i]).map((l) => ({ styleCode: l.styleCode, colorName: l.colorName, sizeName: l.sizeName, qty: l.qty, reason: REASONS[0][0] }));
+        if (!items.length) { setError("Pick at least one item."); return; }
+        setBusy(true); setError(null);
+        try {
+            const r = await fetch("/api/account/returns", {
+                method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
+                body: JSON.stringify({ orderId: order.id, items, resolution, note }),
+            });
+            const d = await r.json();
+            if (d.error) throw new Error(d.error);
+            setDone(d.return);
+        } catch (e) { setError(e.message); }
+        finally { setBusy(false); }
+    };
+
+    if (done) return <div style={{ ...card, color: "#166534", background: "#dcfce7", border: "none" }}>Return <b>{done.rmaNumber}</b> requested — track it under <a href="/account/returns" style={{ color: "#166534", fontWeight: 700 }}>Returns</a>.</div>;
+
+    return (
+        <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ margin: 0, fontSize: "1rem" }}>Need to return something?</h3>
+                {!open && <button onClick={() => setOpen(true)} style={ghostBtn}>Request a return</button>}
+            </div>
+            {open && (
+                <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                    {lines.map((l, i) => (
+                        <label key={i} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: "0.9rem", cursor: "pointer" }}>
+                            <input type="checkbox" checked={!!picked[i]} onChange={() => toggle(i)} />
+                            {[l.styleCode, l.colorName, l.sizeName].filter(Boolean).join(" · ")} × {l.qty}
+                        </label>
+                    ))}
+                    <label style={{ fontSize: "0.85rem", color: "#475569" }}>Resolution
+                        <select value={resolution} onChange={(e) => setResolution(e.target.value)} style={{ ...inputSx, marginTop: 4 }}>
+                            <option value="refund">Refund</option><option value="store_credit">Store credit</option><option value="exchange">Exchange</option>
+                        </select>
+                    </label>
+                    <textarea style={{ ...inputSx, minHeight: 70 }} placeholder="What went wrong? (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
+                    {error && <div style={{ color: "#dc2626", fontSize: "0.88rem" }}>{error}</div>}
+                    <button onClick={submit} disabled={busy} style={primaryBtn}>{busy ? "Submitting…" : "Submit return request"}</button>
+                </div>
+            )}
         </div>
     );
 }

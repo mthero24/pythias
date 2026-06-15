@@ -13,6 +13,7 @@ const LINKS = [
     { label: "Blog",          href: "/blog" },
     { label: "Tutorials",     href: "/tutorials" },
     { label: "About Us",      href: "/about" },
+    { label: "About Pythias", href: "/about-pythias-technologies" },
     { label: "Contact Us",    href: "/contact" },
     { label: "Privacy Policy",  href: "/privacy" },
     { label: "Data Protection", href: "/data-protection" },

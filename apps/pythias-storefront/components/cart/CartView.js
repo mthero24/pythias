@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
-
-const money = (cents) => `$${((cents || 0) / 100).toFixed(2)}`;
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 // Free-shipping progress bar — nudges buyers toward the seller's free-shipping threshold.
 function FreeShipBar({ subtotalCents }) {
+    const { price: money, t } = useI18n();
     const [cfg, setCfg] = useState(null);
     useEffect(() => { fetch("/api/site/shipping").then((r) => r.json()).then(setCfg).catch(() => {}); }, []);
     if (!cfg || cfg.freeShipping || !(cfg.freeOverCents > 0)) return null;
@@ -23,6 +23,7 @@ function FreeShipBar({ subtotalCents }) {
 
 export default function CartView() {
     const { items, savedForLater, ready, setQty, remove, saveForLater, moveToCart, removeSaved, subtotalCents, lineKey } = useCart();
+    const { price: money } = useI18n();
     if (!ready) return null;
 
     if (!items.length && !savedForLater.length) {
@@ -83,6 +84,7 @@ export default function CartView() {
 }
 
 function SavedSection({ saved, moveToCart, removeSaved, lineKey }) {
+    const { price: money } = useI18n();
     if (!saved.length) return null;
     return (
         <div style={{ marginTop: 40 }}>

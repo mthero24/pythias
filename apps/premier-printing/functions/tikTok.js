@@ -827,3 +827,14 @@ export const processOrders = async (orders)=>{
     }
     return {error: false}
 }
+
+// Convenience entry point: pull + process orders for every premierPrinting TikTok shop
+// in one call. Wired into the main pullOrders() cron flow so TikTok orders land alongside
+// the ShipStation/direct-connection orders instead of requiring a separate trigger.
+export async function pullTikTokOrders() {
+    const auths = await TikTokAuth.find({ provider: "premierPrinting" });
+    if (!auths.length) return { error: false, pulled: 0 };
+    const orders = await getOrders(auths);
+    await processOrders(orders);
+    return { error: false, pulled: orders.length };
+}

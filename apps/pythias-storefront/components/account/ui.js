@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { useCustomer } from "./CustomerProvider";
+import ConciergeWidget from "./ConciergeWidget";
 
 export const money = (c) => `$${((c || 0) / 100).toFixed(2)}`;
 export const fmtDate = (d) => (d ? new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "");
@@ -24,6 +25,8 @@ export function StatusBadge({ status }) {
 const TABS = [
     { href: "/account", label: "Overview" },
     { href: "/account/orders", label: "Orders" },
+    { href: "/account/subscriptions", label: "Subscriptions" },
+    { href: "/account/returns", label: "Returns" },
     { href: "/account/messages", label: "Messages" },
 ];
 
@@ -64,6 +67,7 @@ export function AccountShell({ active, children }) {
             </nav>
 
             {children}
+            <ConciergeWidget />
         </section>
     );
 }

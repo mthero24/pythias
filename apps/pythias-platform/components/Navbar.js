@@ -50,6 +50,10 @@ import CampaignIcon from "@mui/icons-material/Campaign";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import ScienceIcon from "@mui/icons-material/Science";
+import RateReviewIcon from "@mui/icons-material/RateReview";
+import PaidIcon from "@mui/icons-material/Paid";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
@@ -178,11 +182,19 @@ function buildCommerceSections(base) {
             items: [
                 { label: "Garment Catalog",  path: "catalog",                icon: <CheckroomIcon fontSize="small" /> },
                 { label: "Storefront",       path: "storefront",             icon: <LanguageIcon fontSize="small" /> },
+                { label: "Autopilot",        path: "autopilot",              icon: <AutoFixHighIcon fontSize="small" /> },
                 { label: "Collections",      path: "collections",            icon: <CategoryIcon fontSize="small" /> },
                 { label: "Discounts",        path: "discounts",              icon: <LocalOfferIcon fontSize="small" /> },
+                { label: "Returns",          path: "returns",                icon: <AssignmentReturnIcon fontSize="small" /> },
+                { label: "Subscriptions",    path: "subscriptions",          icon: <AutorenewIcon fontSize="small" /> },
+                { label: "A/B Testing",      path: "experiments",            icon: <ScienceIcon fontSize="small" /> },
+                { label: "Reviews",          path: "reviews",                icon: <RateReviewIcon fontSize="small" /> },
                 { label: "Marketing",        path: "marketing",              icon: <CampaignIcon fontSize="small" /> },
+                { label: "Automations",      path: "automations",            icon: <AltRouteIcon fontSize="small" /> },
                 { label: "Site Analytics",   path: "analytics",              icon: <QueryStatsIcon fontSize="small" /> },
+                { label: "Profit",           path: "profit",                 icon: <PaidIcon fontSize="small" /> },
                 { label: "SEO Pages",        path: "seo-pages",              icon: <MenuBookIcon fontSize="small" /> },
+                { label: "International",     path: "international",           icon: <LanguageIcon fontSize="small" /> },
                 { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
                 { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
                 { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },

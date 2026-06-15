@@ -16,13 +16,20 @@ export function computeShipping(site, subtotalCents) {
 
 // Single source of truth for cart totals — used by summary, payment intent, and placement.
 // taxCents is 0 in the cart/summary and the real Stripe Tax amount at the payment step.
-export async function quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, taxCents = 0 }) {
+export async function quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0 }) {
     const { lines, subtotalCents, wholesaleTotalCents, errors } = await validateCart(orgId, items);
 
-    // Discount: an explicit code wins; otherwise the best AUTOMATIC (codeless) discount applies.
-    const promo = promoCode ? await validateDiscount(orgId, promoCode, subtotalCents) : await bestAutomaticDiscount(orgId, subtotalCents);
-    const discountCents = promo.ok ? promo.discountCents : 0;
-    const freeShipping = !!(promo.ok && promo.freeShipping);
+    // Subscribe & save replaces other code/automatic discounts; otherwise an explicit code wins,
+    // else the best AUTOMATIC (codeless) discount applies.
+    let promo = { ok: false }, discountCents = 0, freeShipping = false, subscribeDiscount = false;
+    if (subscribe && site?.subscriptions?.enabled) {
+        discountCents = Math.round((subtotalCents * (site.subscriptions.discountPercent || 0)) / 100);
+        subscribeDiscount = true;
+    } else {
+        promo = promoCode ? await validateDiscount(orgId, promoCode, subtotalCents) : await bestAutomaticDiscount(orgId, subtotalCents);
+        discountCents = promo.ok ? promo.discountCents : 0;
+        freeShipping = !!(promo.ok && promo.freeShipping);
+    }
 
     const rewardsApplied = customer ? computeRedeemable(site, customer.rewardsBalance || 0, subtotalCents, redeemCents) : 0;
     const shippingCents = freeShipping ? 0 : computeShipping(site, subtotalCents);
@@ -39,7 +46,7 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
     return {
         lines, subtotalCents, wholesaleTotalCents, shippingCents, taxCents, rewardsApplied,
         discountCents, discountCode: promo.ok ? (promo.code || null) : null,
-        discountTitle: promo.ok && promo.automatic ? (promo.title || "Discount") : null,
+        discountTitle: subscribeDiscount ? "Subscribe & save" : (promo.ok && promo.automatic ? (promo.title || "Discount") : null),
         freeShipping, discountError: promoCode && !promo.ok ? promo.reason : null,
         giftCardApplied, giftCardCode: giftCardCodeOut, giftCardBalance,
         totalCents, errors,
@@ -52,14 +59,14 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
 //
 // NOTE: payment must be confirmed BEFORE calling this (next increment: Stripe webhook
 // gates it). It's idempotent-friendly via `paymentRef` (skips if an order already exists).
-export async function placeOrder({ orgId, site, customer, items, shippingAddress, email, redeemCents, promoCode, giftCardCode, taxCents = 0, stripeFeeCents = 0, paymentRef }) {
+export async function placeOrder({ orgId, site, customer, items, shippingAddress, email, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0, stripeFeeCents = 0, paymentRef }) {
     if (paymentRef) {
         const existing = await PlatformOrder.findOne({ orgId, paymentRef }).select("_id poNumber").lean();
         if (existing) return { orderId: String(existing._id), poNumber: existing.poNumber, duplicate: true };
     }
 
     const { lines, subtotalCents, wholesaleTotalCents, shippingCents, rewardsApplied: redeemApplied, discountCents, discountCode, giftCardApplied, giftCardCode: gcCode, totalCents } =
-        await quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, taxCents });
+        await quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, subscribe, taxCents });
     if (!lines.length) throw new Error("Cart is empty or unavailable");
 
     // Normalize the shipping address to the Order schema (required: name, address1, city, country).

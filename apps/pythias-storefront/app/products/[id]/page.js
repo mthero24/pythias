@@ -65,9 +65,21 @@ export default async function ProductDetailPage({ params }) {
         jsonLd.aggregateRating = { "@type": "AggregateRating", ratingValue: summary.avg, reviewCount: summary.count };
     }
 
+    // Organization + breadcrumb structured data (richer search results).
+    const origin = `https://${h.get("host")}`;
+    const brand = site.businessInfo?.legalName || site.name || "Store";
+    const orgLd = { "@context": "https://schema.org", "@type": "Organization", name: brand, url: origin, ...(site.theme?.logoUrl ? { logo: site.theme.logoUrl } : {}) };
+    const breadcrumbLd = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: origin },
+        { "@type": "ListItem", position: 2, name: "Shop", item: `${origin}/products` },
+        { "@type": "ListItem", position: 3, name: product.title, item: `${origin}/products/${product._id}` },
+    ] };
+
     return (
         <SiteFrame site={site}>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
             <section style={{ padding: "40px 0" }}>
                 <div className="sf-container" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 48, alignItems: "start" }}>
                     <div>

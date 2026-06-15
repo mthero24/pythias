@@ -69,12 +69,14 @@ function CampaignRow({ c, onChange }) {
 }
 
 function Composer({ onDone, onCancel }) {
-    const [f, setF] = useState({ channel: "email", name: "", audience: "all", subject: "", html: "", body: "" });
+    const [f, setF] = useState({ channel: "email", name: "", audience: "all", segmentId: "", subject: "", html: "", body: "" });
+    const [segments, setSegments] = useState([]);
     const [aiPrompt, setAiPrompt] = useState("");
     const [aiBusy, setAiBusy] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+    useEffect(() => { fetch("/api/storefront/segments").then((r) => r.json()).then((d) => !d.error && setSegments(d.segments)).catch(() => {}); }, []);
 
     const aiDraft = async () => {
         if (!aiPrompt.trim()) return;
@@ -112,7 +114,14 @@ function Composer({ onDone, onCancel }) {
                     <option value="all">All subscribers</option>
                     <option value="customers">Customers (with account)</option>
                     <option value="leads">Leads (popup signups)</option>
+                    <option value="segment">Specific segment…</option>
                 </select>
+                {f.audience === "segment" && (
+                    <select value={f.segmentId} onChange={set("segmentId")} style={{ ...input, flex: 1 }}>
+                        <option value="">Pick a segment</option>
+                        {segments.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                    </select>
+                )}
             </div>
             <input style={input} placeholder="Campaign name (internal)" value={f.name} onChange={set("name")} />
 

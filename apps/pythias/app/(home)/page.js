@@ -93,6 +93,8 @@ const faqSchema = {
   ],
 };
 
+export const revalidate = 300; // refresh so Video Library / hero changes appear without a rebuild
+
 export const metadata = {
   title: { absolute: "Pythias Fulfillment Cloud & Commerce Cloud | Print-on-Demand, Fulfillment & Marketplace Automation" },
   description:

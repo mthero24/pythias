@@ -226,9 +226,14 @@ const breadcrumbSchema = {
 
 export default async function FulfillmentCloudPage() {
     let walkthrough = null;
+    let heroVideo = null;
     try {
         walkthrough = await Tutorial.findOne({ videoType: "walkthrough", targetPage: "/fulfillment-cloud", published: true })
             .select("videoUrl title description thumbnailUrl")
+            .lean();
+        heroVideo = await Tutorial.findOne({ videoType: "page-video", targetPage: "/fulfillment-cloud", placement: "Hero", published: true })
+            .sort({ order: 1, createdAt: -1 })
+            .select("videoUrl thumbnailUrl")
             .lean();
     } catch { /* db unavailable — skip the section */ }
 
@@ -267,6 +272,19 @@ export default async function FulfillmentCloudPage() {
                         <div className={s.stat}><div className={s.statNum}>24/7</div><div className={s.statLabel}>Support included</div></div>
                         <div className={s.stat}><div className={s.statNum}>$0</div><div className={s.statLabel}>Per-transaction fees</div></div>
                     </div>
+                    {heroVideo?.videoUrl && (
+                        <video
+                            src={heroVideo.videoUrl}
+                            poster={heroVideo.thumbnailUrl || undefined}
+                            autoPlay
+                            muted
+                            loop
+                            controls
+                            playsInline
+                            preload="metadata"
+                            style={{ width: "auto", maxWidth: "100%", maxHeight: 360, height: "auto", borderRadius: 12, display: "block", margin: "40px auto 0" }}
+                        />
+                    )}
                 </div>
             </section>
 

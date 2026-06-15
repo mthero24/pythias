@@ -94,17 +94,32 @@ function ReviewCard({ r, onHelpful }) {
 
 function ReviewForm({ productId, customer, onDone }) {
     const [f, setF] = useState({ rating: 0, title: "", body: "", authorName: customer?.name || "", email: customer?.email || "" });
+    const [photos, setPhotos] = useState([]);
+    const [uploading, setUploading] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
     const input = { width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.18)", fontSize: "0.92rem", boxSizing: "border-box" };
+
+    const addPhoto = async (e) => {
+        const file = e.target.files?.[0]; e.target.value = "";
+        if (!file || photos.length >= 4) return;
+        setUploading(true); setError(null);
+        try {
+            const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+            const d = await (await fetch("/api/reviews/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl }) })).json();
+            if (d.error) throw new Error(d.error);
+            setPhotos((p) => [...p, d.url]);
+        } catch (err) { setError(err.message); }
+        finally { setUploading(false); }
+    };
 
     const submit = async () => {
         if (!f.rating) { setError("Please pick a star rating."); return; }
         if (!f.authorName) { setError("Please add your name."); return; }
         setBusy(true); setError(null);
         try {
-            const d = await (await fetch(`/api/products/${productId}/reviews`, { method: "POST", headers: { "Content-Type": "application/json", ...(typeof window !== "undefined" && localStorage.getItem("sf_token") ? { Authorization: `Bearer ${localStorage.getItem("sf_token")}` } : {}) }, body: JSON.stringify(f) })).json();
+            const d = await (await fetch(`/api/products/${productId}/reviews`, { method: "POST", headers: { "Content-Type": "application/json", ...(typeof window !== "undefined" && localStorage.getItem("sf_token") ? { Authorization: `Bearer ${localStorage.getItem("sf_token")}` } : {}) }, body: JSON.stringify({ ...f, photos }) })).json();
             if (d.error) throw new Error(d.error);
             onDone();
         } catch (e) { setError(e.message); }
@@ -118,6 +133,15 @@ function ReviewForm({ productId, customer, onDone }) {
             {!customer && <input style={input} placeholder="Email" value={f.email} onChange={set("email")} />}
             <input style={input} placeholder="Title (optional)" value={f.title} onChange={set("title")} />
             <textarea style={{ ...input, minHeight: 90 }} placeholder="Share your experience" value={f.body} onChange={set("body")} />
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                {photos.map((p, i) => (
+                    <div key={i} style={{ position: "relative" }}>
+                        <img src={p} alt="" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8 }} />
+                        <button onClick={() => setPhotos((s) => s.filter((_, j) => j !== i))} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 999, border: "none", background: "#dc2626", color: "#fff", cursor: "pointer", fontSize: 12, lineHeight: 1 }}>×</button>
+                    </div>
+                ))}
+                {photos.length < 4 && <label style={{ width: 56, height: 56, borderRadius: 8, border: "1px dashed rgba(0,0,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#94a3b8", fontSize: "0.75rem" }}>{uploading ? "…" : "+ Photo"}<input type="file" accept="image/*" onChange={addPhoto} style={{ display: "none" }} /></label>}
+            </div>
             {error && <div style={{ color: "#dc2626", fontSize: "0.86rem" }}>{error}</div>}
             <button onClick={submit} disabled={busy} style={{ padding: "11px", borderRadius: 9, border: "none", background: "var(--sf-accent, #f59e0b)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>{busy ? "Submitting…" : "Submit review"}</button>
         </div>

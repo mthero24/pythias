@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useCustomer } from "@/components/account/CustomerProvider";
+import { useExperiment } from "@/components/experiments/ExperimentProvider";
 
 // Seller-configurable signup popup for visitors who aren't signed in. Collects email (+ optional
 // phone) with marketing consent, in exchange for the configured discount. Dismissal + success
@@ -9,6 +10,7 @@ const DISMISS_KEY = "sf_popup_v1";
 
 export default function SitePopup() {
     const { customer, ready } = useCustomer();
+    const { configFor } = useExperiment();
     const [cfg, setCfg] = useState(null);
     const [show, setShow] = useState(false);
     const [f, setF] = useState({ email: "", phone: "", emailOptIn: true, smsOptIn: false });
@@ -48,6 +50,8 @@ export default function SitePopup() {
     };
 
     if (!show || !cfg) return null;
+    // A/B variant overrides (headline/body/buttonText) when a "popup" experiment is running.
+    const A = { ...cfg, ...configFor("popup") };
 
     return (
         <div onClick={close} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -66,8 +70,8 @@ export default function SitePopup() {
                     </div>
                 ) : (
                     <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
-                        <h2 style={{ margin: "0 0 2px", fontSize: "1.4rem" }}>{cfg.headline}</h2>
-                        {cfg.body && <p style={{ margin: 0, color: "#475569", fontSize: "0.92rem" }}>{cfg.body}</p>}
+                        <h2 style={{ margin: "0 0 2px", fontSize: "1.4rem" }}>{A.headline}</h2>
+                        {A.body && <p style={{ margin: 0, color: "#475569", fontSize: "0.92rem" }}>{A.body}</p>}
                         <input type="email" required placeholder="Email address" value={f.email} onChange={set("email")}
                             style={{ padding: "11px 13px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.18)", fontSize: "0.95rem" }} />
                         {cfg.collectPhone && (
@@ -86,7 +90,7 @@ export default function SitePopup() {
                         )}
                         {error && <div style={{ color: "#dc2626", fontSize: "0.85rem" }}>{error}</div>}
                         <button type="submit" disabled={busy} style={{ padding: "13px", borderRadius: 10, border: "none", background: "var(--sf-accent, #f59e0b)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.95rem" }}>
-                            {busy ? "…" : (cfg.buttonText || "Sign up")}
+                            {busy ? "…" : (A.buttonText || "Sign up")}
                         </button>
                         <button type="button" onClick={close} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "0.82rem" }}>No thanks</button>
                     </form>

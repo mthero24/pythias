@@ -1,6 +1,7 @@
 import { Design, Items as Item, Blank, Order, Products, Inventory, InventoryOrders, ProductInventory, Converters, ApiKeyIntegrations } from "@pythias/mongo";
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda, getOrdersEbay } from "@pythias/integrations";
 import { logActivity } from "@pythias/backend/server";
+import { pullTikTokOrders } from "./tikTok";
 
 
 // ── SKU resolution helpers ────────────────────────────────────────────────────
@@ -816,6 +817,18 @@ export async function pullOrders(){
             await order.save()
         }
     }
+
+    // Pull TikTok Shop orders via the dedicated TikTok API (its own integration, not the
+    // ShipStation pipe or ApiKeyIntegrations connections). Runs before the inventory
+    // recompute so TikTok items get stock attached alongside everything else. Isolated in
+    // try/catch so a TikTok failure never blocks the rest of the pull.
+    try {
+        const tikTokResult = await pullTikTokOrders();
+        console.log(`[pullOrders] TikTok pulled ${tikTokResult.pulled} order(s)`);
+    } catch (e) {
+        console.error("[pullOrders] TikTok pull failed:", e.message);
+    }
+
     await updateInventory();
     await recomputeStockStatus();
 }

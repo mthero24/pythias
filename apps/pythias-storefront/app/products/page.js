@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { resolveSite } from "@/lib/resolveSite";
-import { PlatformProduct } from "@pythias/mongo";
+import { PlatformProduct, StorefrontReviewSummary } from "@pythias/mongo";
 import { SiteFrame, ProductCard } from "@pythias/storefront";
 import NoSite from "@/components/NoSite";
 import FavoriteHeart from "@/components/favorites/FavoriteHeart";
@@ -40,6 +40,13 @@ export default async function ProductsPage() {
         products = [];
     }
 
+    // Star ratings for social proof on the cards.
+    let ratings = {};
+    try {
+        const sums = await StorefrontReviewSummary.find({ orgId: site.orgId, productId: { $in: products.map((p) => p._id) }, count: { $gt: 0 } }).select("productId avg count").lean();
+        ratings = Object.fromEntries(sums.map((s) => [String(s.productId), { avg: s.avg, count: s.count }]));
+    } catch { ratings = {}; }
+
     return (
         <SiteFrame site={site}>
             <section style={{ padding: "48px 0" }}>
@@ -52,7 +59,7 @@ export default async function ProductsPage() {
                             {products.map((p) => (
                                 <div key={p._id} style={{ position: "relative" }}>
                                     <FavoriteHeart overlay product={favOf(p)} />
-                                    <ProductCard product={p} />
+                                    <ProductCard product={p} rating={ratings[String(p._id)]} />
                                 </div>
                             ))}
                         </div>

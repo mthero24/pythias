@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { StorefrontCustomer, StorefrontSite } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
 import { enqueueAbandonedCart, enqueueAbandonedSession } from "@/lib/emailFlows";
+import { enrollFlows } from "@/lib/flows";
 
 // POST /api/internal/marketing/lifecycle (run hourly by PM2) — enqueues abandoned-cart and
 // abandoned-session nudges. Marketing category, so only opted-in + non-suppressed contacts get
@@ -37,6 +38,8 @@ export async function POST(req) {
             if (!site) continue;
             const msg = await enqueueAbandonedCart(site, c).catch(() => null);
             if (msg) { cart++; await StorefrontCustomer.updateOne({ _id: c._id }, { $set: { abandonedCartSentAt: new Date() } }); }
+            // Also enroll any abandoned-cart automation flows (token = cart snapshot time).
+            await enrollFlows({ orgId: c.orgId, site, customer: c, trigger: "abandoned_cart", token: c.cartUpdatedAt ? new Date(c.cartUpdatedAt).getTime().toString() : "x" }).catch(() => {});
         }
     }
 
@@ -59,5 +62,24 @@ export async function POST(req) {
         }
     }
 
-    return NextResponse.json({ abandonedCart: cart, abandonedSession: session });
+    // ── Win-back: customers who haven't ordered in 60–120 days, not nudged yet. ──
+    let winBack = 0;
+    const winCandidates = await StorefrontCustomer.find({
+        email: { $exists: true, $ne: null },
+        "marketingConsent.email.optedIn": true,
+        ordersCount: { $gte: 1 },
+        lastOrderAt: { $lte: new Date(now - 60 * DAY), $gte: new Date(now - 120 * DAY) },
+        $or: [{ winBackSentAt: { $exists: false } }, { winBackSentAt: { $lt: new Date(now - 60 * DAY) } }],
+    }).limit(300).lean();
+    if (winCandidates.length) {
+        const sites = await siteMap([...new Set(winCandidates.map((c) => String(c.orgId)))]);
+        for (const c of winCandidates) {
+            const site = sites[String(c.orgId)];
+            if (!site) continue;
+            const n = await enrollFlows({ orgId: c.orgId, site, customer: c, trigger: "win_back", token: new Date(c.lastOrderAt).getTime().toString() }).catch(() => 0);
+            if (n) { winBack++; await StorefrontCustomer.updateOne({ _id: c._id }, { $set: { winBackSentAt: new Date() } }); }
+        }
+    }
+
+    return NextResponse.json({ abandonedCart: cart, abandonedSession: session, winBack });
 }

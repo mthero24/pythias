@@ -136,6 +136,41 @@ const schema = new mongoose.Schema({
         smsConsentText:   { type: String, default: "I agree to receive marketing texts. Msg & data rates may apply. Reply STOP to opt out." },
     },
 
+    // ── Internationalization ──────────────────────────────────────────────────
+    // Prices are stored in the base currency (USD cents); `currencies[].rate` = units per 1 base
+    // for DISPLAY conversion. Languages drive the AI-translated UI dictionary + content.
+    i18n: {
+        defaultCurrency: { type: String, default: "USD" },
+        currencies: { type: [{ code: String, symbol: String, rate: { type: Number, default: 1 } }], default: [] },
+        defaultLang:  { type: String, default: "en" },
+        languages:    { type: [String], default: [] },   // extra languages beyond default
+    },
+
+    // ── Subscriptions (subscribe & save) ───────────────────────────────────────
+    subscriptions: {
+        enabled:         { type: Boolean, default: false },
+        discountPercent: { type: Number, default: 10 },    // off recurring orders
+        intervals: { type: [{ label: String, days: Number }], default: [{ label: "Every month", days: 30 }, { label: "Every 2 months", days: 60 }, { label: "Every 3 months", days: 90 }] },
+    },
+
+    // ── Returns / RMA ────────────────────────────────────────────────────────
+    returns: {
+        enabled:      { type: Boolean, default: true },
+        windowDays:   { type: Number, default: 30 },     // days after order to allow a return
+        instructions: { type: String, default: "Tell us what's wrong and we'll make it right." },
+    },
+
+    // ── Autopilot (scheduled autonomous optimization) ───────────────────────
+    // When `autonomous` is on, the daily cron runs autopilot for this store without a
+    // click. With `autoApply` on, it also applies ZERO-RISK actions automatically
+    // (UI translation, popup A/B test) — money/sending actions (discounts, flows,
+    // campaigns) are always left as one-click recommendations for the seller to review.
+    autopilot: {
+        autonomous: { type: Boolean, default: false },
+        autoApply:  { type: Boolean, default: false },
+        lastRunAt:  { type: Date },
+    },
+
     // ── Site-level SEO defaults (per-page seo overrides these) ───────────────
     seo: {
         title:       { type: String },

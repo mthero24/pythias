@@ -1,7 +1,12 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { StorefrontSession, StorefrontPathStat, StorefrontProductStat } from "@pythias/mongo";
+import { StorefrontSession, StorefrontPathStat, StorefrontProductStat, StorefrontExperimentStat } from "@pythias/mongo";
+
+const bumpExperiment = (orgId, experimentId, variant, inc) => {
+    if (!experimentId || !mongoose.Types.ObjectId.isValid(experimentId) || !variant) return null;
+    return StorefrontExperimentStat.updateOne({ orgId, experimentId: new mongoose.Types.ObjectId(experimentId), variant }, { $inc: inc }, { upsert: true });
+};
 import { resolveSite } from "@/lib/resolveSite";
 import { dayKey, deviceFromUA, domainOf, cleanPath } from "@/lib/analytics";
 
@@ -54,6 +59,12 @@ export async function POST(req) {
             return QUIET();
         }
 
+        // A/B test: a visitor was bucketed into a variant.
+        if (b.type === "experiment_exposure") {
+            await bumpExperiment(orgId, b.experimentId, b.variant, { exposures: 1 });
+            return QUIET();
+        }
+
         // Product analytics: a product detail view.
         if (b.type === "event" && b.event === "product_view") {
             await bumpProduct(orgId, dayKey(now), b.productId, { views: 1 });
@@ -93,6 +104,10 @@ export async function POST(req) {
                 if (b.event === "add_to_cart") await bumpProduct(orgId, date, b.productId, { addToCart: 1 });
                 if (b.event === "purchase" && Array.isArray(b.items)) {
                     for (const it of b.items) await bumpProduct(orgId, date, it.productId, { purchasedUnits: Math.max(1, Number(it.qty) || 1) });
+                }
+                // A/B conversion: credit each experiment the buyer was bucketed into.
+                if (b.event === "purchase" && Array.isArray(b.experiments)) {
+                    for (const e of b.experiments) await bumpExperiment(orgId, e.id, e.variant, { conversions: 1 });
                 }
             }
             return QUIET();

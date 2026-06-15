@@ -9,7 +9,8 @@ const schema = new mongoose.Schema({
     name:    { type: String, required: true },
 
     // Audience: who (among opted-in, non-suppressed contacts) receives it.
-    audience: { type: String, enum: ["all", "email_subscribers", "sms_subscribers", "customers", "leads"], default: "all" },
+    audience: { type: String, enum: ["all", "email_subscribers", "sms_subscribers", "customers", "leads", "segment"], default: "all" },
+    segmentId: { type: mongoose.Schema.Types.ObjectId, ref: "StorefrontSegment" },   // when audience = "segment"
 
     subject: { type: String },   // email
     html:    { type: String },   // email body (AI-assisted)

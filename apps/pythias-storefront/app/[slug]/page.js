@@ -9,7 +9,7 @@ import { siteMetadata } from "@/lib/siteMeta";
 export const dynamic = "force-dynamic";
 
 // Reserved top-level paths owned by real routes — never treated as custom pages.
-const RESERVED = new Set(["products", "cart", "checkout", "account", "favorites", "feed", "api"]);
+const RESERVED = new Set(["products", "cart", "checkout", "account", "favorites", "feed", "api", "search", "collections", "gift-card-balance"]);
 
 async function loadPage(host, slug) {
     if (RESERVED.has(slug)) return { site: null, page: null };

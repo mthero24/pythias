@@ -2,6 +2,8 @@ import "./globals.css";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CustomerProvider } from "@/components/account/CustomerProvider";
 import { FavoritesProvider } from "@/components/favorites/FavoritesProvider";
+import { I18nProvider } from "@/components/i18n/I18nProvider";
+import { ExperimentProvider } from "@/components/experiments/ExperimentProvider";
 import HeaderControls from "@/components/HeaderControls";
 import SitePopup from "@/components/SitePopup";
 import AnalyticsTracker from "@/components/analytics/tracker";
@@ -24,6 +26,8 @@ export default function RootLayout({ children }) {
                 <link rel="stylesheet" href={FONTS_HREF} />
             </head>
             <body>
+                <I18nProvider>
+                <ExperimentProvider>
                 <CustomerProvider>
                     <FavoritesProvider>
                         <CartProvider>
@@ -34,6 +38,8 @@ export default function RootLayout({ children }) {
                         </CartProvider>
                     </FavoritesProvider>
                 </CustomerProvider>
+                </ExperimentProvider>
+                </I18nProvider>
             </body>
         </html>
     );

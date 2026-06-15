@@ -35,7 +35,10 @@ function beacon(payload) {
 // Public helper for ecommerce events: add_to_cart | begin_checkout | purchase.
 export function track(event, data = {}) {
     if (typeof window === "undefined") return;
-    beacon({ type: "event", event, sessionId: getSessionId(), visitorId: getVisitorId(), ...data });
+    // Attribute A/B conversions: attach the visitor's experiment assignments on purchase.
+    let experiments;
+    if (event === "purchase") { try { experiments = JSON.parse(localStorage.getItem("sf_experiments") || "[]"); } catch { /* ignore */ } }
+    beacon({ type: "event", event, sessionId: getSessionId(), visitorId: getVisitorId(), ...(experiments?.length ? { experiments } : {}), ...data });
 }
 
 export default function AnalyticsTracker() {

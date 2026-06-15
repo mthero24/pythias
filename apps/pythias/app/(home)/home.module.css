@@ -183,24 +183,38 @@
 .btnWhiteOutline:hover { border-color: #fff; background: rgba(255,255,255,0.06); }
 
 .heroStats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  row-gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 16px;
+  text-align: center;
 }
-@media (min-width: 900px) { .heroStats { justify-content: flex-start; } }
 .heroStat {
-  padding: 0 24px;
-  border-right: 1px solid rgba(255,255,255,0.1);
+  padding: 0;
+  border-right: none;
 }
-.heroStat:first-child { padding-left: 0; }
-.heroStat:last-child { border-right: none; }
+@media (min-width: 900px) {
+  .heroStats {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0;
+    row-gap: 16px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .heroStat {
+    padding: 0 16px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .heroStat:first-child { padding-left: 0; }
+  .heroStat:last-child { border-right: none; }
+}
 .heroStatVal {
   font-size: 1.5rem;
   font-weight: 800;
   color: #D3A73D;
   line-height: 1;
   display: block;
+  white-space: nowrap;
 }
 .heroStatLabel {
   font-size: 0.75rem;

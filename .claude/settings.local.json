@@ -68,7 +68,19 @@
       "Bash(node --check \"apps/pythias/app/\\(home\\)/page.js\")",
       "Bash(node --check \"apps/pythias/app/\\(home\\)/SeoAuthoritySection.js\")",
       "Bash(node --check apps/pythias/app/sitemap.js)",
-      "Bash(node --check \"apps/pythias/app/about-pythias-technologies/page.js\")"
+      "Bash(node --check \"apps/pythias/app/about-pythias-technologies/page.js\")",
+      "Bash(node --check apps/pythias/componants/Footer.js)",
+      "Bash(grep -iE \"\\\\.\\(mp4|webm|mov|ogg\\)$\")",
+      "Bash(echo \"platform exit=$?\")",
+      "Bash(npx next *)",
+      "Read(//tmp/**)",
+      "Bash(node --check \"apps/pythias/app/\\(home\\)/HeroSection.js\")",
+      "Bash(echo \"premier exit=$?\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(ls apps/pythias-platform/scripts/)",
+      "Bash(ls apps/pythias-platform/ecosystem* ecosystem*)",
+      "Bash(find . -maxdepth 3 -name \"ecosystem*.js\" -not -path \"*/node_modules/*\")",
+      "Bash(ls apps/pythias-platform/app/api/internal/)"
     ]
   }
 }

@@ -2,12 +2,12 @@
 import { useState } from "react";
 import { useFavorites } from "@/components/favorites/FavoritesProvider";
 import { useCart } from "@/components/cart/CartProvider";
-
-const money = (c) => `$${((c || 0) / 100).toFixed(2)}`;
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 export default function FavoritesView() {
     const { favorites, ready, remove } = useFavorites();
     const { add } = useCart();
+    const { price: money } = useI18n();
     const [added, setAdded] = useState(null);
 
     if (!ready) return null;

@@ -12,6 +12,7 @@ const schema = new mongoose.Schema({
     redeemCents:     { type: Number, default: 0 },
     promoCode:       { type: String },
     giftCardCode:    { type: String },
+    subscribe:       { type: mongoose.Schema.Types.Mixed },   // { intervalDays, intervalLabel, discountPercent } when subscribing
     taxCents:        { type: Number, default: 0 },
     taxCalcId:       { type: String },   // Stripe Tax calculation id → recorded as a transaction on success
     amountCents:     { type: Number, required: true },

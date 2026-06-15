@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import FavoriteHeart from "@/components/favorites/FavoriteHeart";
 import { track } from "@/components/analytics/tracker";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 // Variant selector + price + add-to-cart.
 export default function BuyBox({ productId, title, images = [], variants = [] }) {
     const { add } = useCart();
+    const { price: fmtPrice, t } = useI18n();
     const colors = useMemo(() => [...new Set(variants.map((v) => v.color).filter(Boolean))], [variants]);
     const sizes  = useMemo(() => [...new Set(variants.map((v) => v.size).filter(Boolean))], [variants]);
 
@@ -22,7 +24,7 @@ export default function BuyBox({ productId, title, images = [], variants = [] })
     ), [variants, colors, sizes, color, size]);
 
     const price = match?.price ?? Math.min(...variants.map((v) => v.price ?? Infinity).filter((n) => n > 0));
-    const priceLabel = Number.isFinite(price) ? `$${price.toFixed(2)}` : "—";
+    const priceLabel = Number.isFinite(price) ? fmtPrice(Math.round(price * 100)) : "—";
 
     const selectSx = { padding: "8px 12px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.15)", fontSize: "0.95rem", minWidth: 140 };
 
@@ -66,7 +68,7 @@ export default function BuyBox({ productId, title, images = [], variants = [] })
                     padding: "14px 32px", borderRadius: 10, border: "none", cursor: "pointer",
                     background: "var(--sf-accent)", color: "#fff", fontWeight: 700, fontSize: "1rem",
                 }}>
-                    {added ? "Added ✓" : "Add to cart"}
+                    {added ? `${t("product.added", "Added")} ✓` : t("product.addToCart", "Add to cart")}
                 </button>
                 <FavoriteHeart size={28} product={{
                     productId, title,

@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { StorefrontSite, StorefrontCustomer, StorefrontCheckoutSession } from "@pythias/mongo";
+import { StorefrontSite, StorefrontCustomer, StorefrontCheckoutSession, StorefrontSubscription } from "@pythias/mongo";
 import { placeOrder } from "@/lib/checkout";
 import { routeOrderViaPlatform } from "@/lib/routing";
+import { enqueueSubscriptionStarted } from "@/lib/emailFlows";
 import { storefrontStripe, STOREFRONT_WEBHOOK_SECRET } from "@/lib/stripe";
 
 // POST /api/checkout/webhook — Stripe → us. On payment success, turn the pending checkout
@@ -55,6 +56,23 @@ export async function POST(req) {
                 session.status = "completed";
                 session.orderId = result.orderId;
                 await session.save();
+
+                // Subscribe & save: save the card off-session + create the recurring subscription.
+                if (!result.duplicate && session.subscribe?.intervalDays && session.customerId && pi.payment_method) {
+                    try {
+                        await stripe.paymentMethods.attach(pi.payment_method, { customer: pi.customer }).catch(() => {});
+                        await stripe.customers.update(pi.customer, { invoice_settings: { default_payment_method: pi.payment_method } }).catch(() => {});
+                        await StorefrontSubscription.create({
+                            orgId: session.orgId, customerId: session.customerId, customerEmail: session.email,
+                            items: session.items, shippingAddress: session.shippingAddress,
+                            intervalDays: session.subscribe.intervalDays, intervalLabel: session.subscribe.intervalLabel, discountPercent: session.subscribe.discountPercent || 0,
+                            stripeCustomerId: pi.customer, stripePaymentMethodId: pi.payment_method,
+                            status: "active", nextBillingAt: new Date(Date.now() + session.subscribe.intervalDays * 864e5),
+                            lastOrderId: result.orderId, cyclesBilled: 1,
+                        });
+                        await enqueueSubscriptionStarted(site, { orgId: session.orgId, email: session.email, customerId: session.customerId, intervalLabel: session.subscribe.intervalLabel, nextBillingAt: new Date(Date.now() + session.subscribe.intervalDays * 864e5) }).catch(() => {});
+                    } catch (e) { console.error("[storefront webhook] subscription create failed:", e.message); }
+                }
 
                 // Hand the order to the platform routing engine → fulfillment provider.
                 // Best-effort: payment is captured and the order exists; if routing fails the

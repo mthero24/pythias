@@ -47,6 +47,11 @@ import FolderIcon from "@mui/icons-material/Folder";
 import StorageIcon from "@mui/icons-material/Storage";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import AssignmentReturnIcon from "@mui/icons-material/AssignmentReturn";
+import TranslateIcon from "@mui/icons-material/Translate";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import ScienceIcon from "@mui/icons-material/Science";
+import RateReviewIcon from "@mui/icons-material/RateReview";
+import PaidIcon from "@mui/icons-material/Paid";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -113,10 +118,18 @@ const NAV_SECTIONS = [
     label: "Storefront",
     items: [
       { label: "Store Builder",  href: "/admin/store",            icon: <StorefrontIcon fontSize="small" />,  showCSV: false },
+      { label: "Autopilot",      href: "/admin/store/autopilot",  icon: <AutoFixHighIcon fontSize="small" />, showCSV: false },
       { label: "Collections",    href: "/admin/store/collections",icon: <CategoryIcon fontSize="small" />,    showCSV: false },
       { label: "Discounts",      href: "/admin/store/discounts",  icon: <LocalOfferIcon fontSize="small" />,  showCSV: false },
+      { label: "Returns",        href: "/admin/store/returns",    icon: <AssignmentReturnIcon fontSize="small" />, showCSV: false },
+      { label: "International",   href: "/admin/store/international",icon: <TranslateIcon fontSize="small" />,  showCSV: false },
+      { label: "Subscriptions",  href: "/admin/store/subscriptions",icon: <AutorenewIcon fontSize="small" />,  showCSV: false },
+      { label: "A/B Testing",    href: "/admin/store/experiments", icon: <ScienceIcon fontSize="small" />,    showCSV: false },
+      { label: "Reviews",        href: "/admin/store/reviews",    icon: <RateReviewIcon fontSize="small" />, showCSV: false },
       { label: "Marketing",      href: "/admin/store/marketing",  icon: <CampaignIcon fontSize="small" />,    showCSV: false },
+      { label: "Automations",    href: "/admin/store/automations",icon: <CampaignIcon fontSize="small" />,    showCSV: false },
       { label: "Site Analytics", href: "/admin/store/analytics",  icon: <QueryStatsIcon fontSize="small" />,  showCSV: false },
+      { label: "Profit",         href: "/admin/store/profit",     icon: <PaidIcon fontSize="small" />,        showCSV: false },
       { label: "SEO Pages",      href: "/admin/store/seo-pages",  icon: <MenuBookIcon fontSize="small" />,    showCSV: false },
       { label: "Payouts",        href: "/admin/store/payouts",    icon: <AttachMoneyIcon fontSize="small" />, showCSV: false },
     ],

@@ -1,9 +1,10 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { StorefrontCampaign, StorefrontCustomer, StorefrontSite } from "@pythias/mongo";
+import { StorefrontCampaign, StorefrontCustomer, StorefrontSite, StorefrontSegment } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
 import { baseTemplate } from "@/lib/email";
 import { enqueueMessage, unsubscribeUrl } from "@/lib/marketing";
+import { buildSegmentFilter } from "@/lib/segments";
 
 // POST /api/internal/marketing/campaign-send  (triggered by the platform "Send" action)
 // Fans a campaign out into the outbox, one message per opted-in/non-suppressed recipient,
@@ -30,6 +31,10 @@ export async function POST(req) {
     const q = { orgId: camp.orgId, [consentField]: true, [contactField]: { $exists: true, $ne: null } };
     if (camp.audience === "customers") q.passwordHash = { $exists: true, $ne: null };
     else if (camp.audience === "leads") q.isLead = true;
+    else if (camp.audience === "segment" && camp.segmentId) {
+        const seg = await StorefrontSegment.findOne({ _id: camp.segmentId, orgId: camp.orgId }).lean();
+        if (seg) Object.assign(q, buildSegmentFilter(seg));
+    }
 
     const recipients = await StorefrontCustomer.find(q).select(`_id ${contactField}`).limit(50000).lean();
 

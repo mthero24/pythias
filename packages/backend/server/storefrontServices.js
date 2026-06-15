@@ -6,7 +6,10 @@ import mongoose from "mongoose";
 import crypto from "crypto";
 import {
     StorefrontSite, StorefrontCampaign, StorefrontPage, StorefrontSession, StorefrontPathStat, StorefrontProductStat, StorefrontCollection,
-    StorefrontDiscount, StorefrontGiftCard, Organization, PlatformProduct,
+    StorefrontDiscount, StorefrontGiftCard, StorefrontSegment, StorefrontFlow, StorefrontReturn, StorefrontTranslation, StorefrontSubscription,
+    StorefrontExperiment, StorefrontExperimentStat, StorefrontReview, StorefrontReviewSummary, StorefrontAutopilotRun,
+    StorefrontInventory, StorefrontRestockTask, StorefrontDemandCache,
+    PlatformOrder, Organization, PlatformProduct,
 } from "@pythias/mongo";
 import { generateArticle, generateArticleIdeas } from "../functions/contentGenerator.js";
 const randomCode = (prefix = "") => `${prefix}${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
@@ -55,7 +58,7 @@ export async function listCampaigns(orgId) {
 export async function createCampaign(orgId, b, createdBy) {
     if (!b?.name || !b?.channel) throw httpError(400, "name and channel are required");
     return StorefrontCampaign.create({
-        orgId, channel: b.channel, name: b.name, audience: b.audience || "all",
+        orgId, channel: b.channel, name: b.name, audience: b.audience || "all", segmentId: b.segmentId || undefined,
         subject: b.subject, html: b.html, body: b.body, status: "draft", createdBy,
     });
 }
@@ -470,6 +473,55 @@ export async function updateGiftCard(orgId, id, b) {
     return gc;
 }
 
+// ── Segments ─────────────────────────────────────────────────────────────────
+export async function listSegments(orgId) {
+    return StorefrontSegment.find({ orgId }).sort({ createdAt: -1 }).limit(500).lean();
+}
+export async function createSegment(orgId, b) {
+    if (!b?.name) throw httpError(400, "name is required");
+    return StorefrontSegment.create({ orgId, name: b.name, description: b.description, rules: b.rules || { match: "all", conditions: [] } });
+}
+export async function updateSegment(orgId, id, b) {
+    const set = {};
+    for (const k of ["name", "description", "rules"]) if (k in b) set[k] = b[k];
+    const s = await StorefrontSegment.findOneAndUpdate({ _id: id, orgId }, { $set: set }, { new: true });
+    if (!s) throw httpError(404, "Not found");
+    return s;
+}
+export async function deleteSegment(orgId, id) { await StorefrontSegment.deleteOne({ _id: id, orgId }); }
+export async function aiSegment({ prompt }) {
+    if (!prompt) throw httpError(400, "prompt is required");
+    const client = await anthropic();
+    const instruction = `Turn this audience description into segment rules: "${prompt}". Allowed fields: emailConsent,smsConsent,isLead,emailVerified,ordersCount,totalSpentCents(cents),lastOrderDaysAgo,signupDaysAgo,rewardsBalance(cents). Ops: is(boolean fields),gte,lte,eq. STRICT JSON only: {"name":"...","description":"...","rules":{"match":"all|any","conditions":[{"field":"ordersCount","op":"gte","value":1}]}}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 700, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
+    return parseJson(textOf(msg));
+}
+
+// ── Flows (automations) ──────────────────────────────────────────────────────
+const FLOW_FIELDS = ["name", "trigger", "active", "segmentId", "steps"];
+export async function listFlows(orgId) {
+    return StorefrontFlow.find({ orgId }).sort({ createdAt: -1 }).limit(200).lean();
+}
+export async function createFlow(orgId, b) {
+    if (!b?.name || !b?.trigger) throw httpError(400, "name and trigger are required");
+    const set = {}; for (const k of FLOW_FIELDS) if (k in b) set[k] = b[k];
+    return StorefrontFlow.create({ orgId, ...set });
+}
+export async function updateFlow(orgId, id, b) {
+    const set = {}; for (const k of FLOW_FIELDS) if (k in b) set[k] = b[k];
+    const f = await StorefrontFlow.findOneAndUpdate({ _id: id, orgId }, { $set: set }, { new: true });
+    if (!f) throw httpError(404, "Not found");
+    return f;
+}
+export async function deleteFlow(orgId, id) { await StorefrontFlow.deleteOne({ _id: id, orgId }); }
+export async function aiFlow({ prompt, brand = "our store" }) {
+    if (!prompt) throw httpError(400, "prompt is required");
+    const client = await anthropic();
+    const instruction = `Design a marketing automation for "${brand}": "${prompt}". Triggers: signup,first_purchase,any_purchase,abandoned_cart,win_back. Each step has delayHours (from enrollment), channel "email", subject, and html (inline-styled inner content). STRICT JSON only: {"name":"...","trigger":"signup","steps":[{"delayHours":0,"channel":"email","subject":"...","html":"..."}]}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
+    return parseJson(textOf(msg));
+}
+
 // ── Payouts (Stripe Connect via storefront internal endpoints) ───────────────
 async function callStorefront(path, body) {
     const key = INTERNAL_KEY();
@@ -483,4 +535,354 @@ export async function payoutStatus(orgId) { return callStorefront("/api/internal
 export async function payoutOnboard(orgId, returnUrl) {
     if (!returnUrl) throw httpError(400, "returnUrl is required");
     return callStorefront("/api/internal/payouts/onboard", { orgId: String(orgId), returnUrl });
+}
+
+// ── Internationalization ──────────────────────────────────────────────────────
+// Canonical UI strings to translate (must mirror the storefront's lib/i18nStrings.js BASE_STRINGS).
+const BASE_UI_STRINGS = {
+    "nav.search": "Search…", "nav.signin": "Sign in",
+    "cart.title": "Cart", "cart.empty": "Your cart is empty", "cart.continueShopping": "Continue shopping",
+    "cart.subtotal": "Subtotal", "cart.checkout": "Checkout", "cart.saveForLater": "Save for later",
+    "cart.remove": "Remove", "cart.savedForLater": "Saved for later", "cart.moveToCart": "Move to cart",
+    "cart.freeShipProgress": "Add {amount} more for free shipping", "cart.freeShipUnlocked": "You've unlocked free shipping!",
+    "product.addToCart": "Add to cart", "product.added": "Added", "product.viewCart": "View cart",
+    "product.reviews": "Reviews", "product.writeReview": "Write a review",
+    "checkout.title": "Checkout", "checkout.continue": "Continue to payment", "checkout.pay": "Pay now",
+    "checkout.shipping": "Shipping", "checkout.tax": "Tax", "checkout.total": "Total", "checkout.promo": "Promo code", "checkout.apply": "Apply",
+    "search.placeholder": "Search products…", "search.results": "Results", "collections.title": "Collections",
+    "account.favorites": "Favorites", "account.orders": "Orders", "account.signOut": "Sign out",
+};
+const I18N_FIELDS = ["defaultCurrency", "currencies", "defaultLang", "languages"];
+export async function getI18nConfig(orgId) {
+    const site = await StorefrontSite.findOne({ orgId }).select("i18n").lean();
+    return site?.i18n || {};
+}
+export async function saveI18nConfig(orgId, b) {
+    const set = {};
+    for (const k of I18N_FIELDS) if (k in b) set[`i18n.${k}`] = b[k];
+    await StorefrontSite.updateOne({ orgId }, { $set: set });
+}
+// AI-translate the UI string set into a language and store each (the "beat" — built-in, no app).
+export async function aiTranslate(orgId, lang) {
+    if (!lang || lang === "en") throw httpError(400, "Pick a non-English language");
+    const client = await anthropic();
+    const msg = await client.messages.create({
+        model: "claude-opus-4-8", max_tokens: 2000, thinking: { type: "adaptive" },
+        messages: [{ role: "user", content: `Translate these e-commerce UI strings to language code "${lang}". Keep placeholders like {amount} intact. Return STRICT JSON: the same keys with translated values, nothing else.\n\n${JSON.stringify(BASE_UI_STRINGS)}` }],
+    });
+    const out = parseJson(textOf(msg));
+    let n = 0;
+    for (const [key, value] of Object.entries(out)) {
+        if (typeof value !== "string") continue;
+        await StorefrontTranslation.updateOne({ orgId, lang, key }, { $set: { value } }, { upsert: true });
+        n++;
+    }
+    // Ensure the language is listed on the site.
+    await StorefrontSite.updateOne({ orgId }, { $addToSet: { "i18n.languages": lang } });
+    return { translated: n, lang };
+}
+
+// ── True profit analytics (landed-cost P&L) ────────────────────────────────────
+// Real net profit per storefront order from stored fields: revenue − COGS(wholesale) −
+// payment fees(Stripe + 1%) − refunds. Shopify shows revenue; this shows margin. The BEAT.
+export async function profitAnalytics(orgIdStr, range = "30d") {
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const days = RANGES[range] || 30;
+    const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const [agg] = await PlatformOrder.aggregate([
+        { $match: { orgId, source: "storefront", date: { $gte: start } } },
+        { $project: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+            subtotal:  { $ifNull: ["$storefrontPayout.subtotalCents", 0] },
+            wholesale: { $ifNull: ["$storefrontPayout.wholesaleCents", 0] },
+            stripeFee: { $ifNull: ["$storefrontPayout.stripeFeeCents", 0] },
+            discount:  { $add: [{ $multiply: [{ $ifNull: ["$discountAmount", 0] }, 100] }, { $ifNull: ["$rewardsRedeemedCents", 0] }, { $ifNull: ["$giftCardRedeemedCents", 0] }] },
+        } },
+        { $project: {
+            day: 1, subtotal: 1, wholesale: 1, discount: 1,
+            netSales: { $subtract: ["$subtotal", "$discount"] },
+            fees: { $add: ["$stripeFee", { $round: [{ $multiply: ["$subtotal", 0.01] }, 0] }] },
+        } },
+        { $project: { day: 1, netSales: 1, wholesale: 1, fees: 1, discount: 1, profit: { $subtract: ["$netSales", { $add: ["$wholesale", "$fees"] }] } } },
+        { $facet: {
+            totals: [{ $group: { _id: null, orders: { $sum: 1 }, revenue: { $sum: "$netSales" }, cogs: { $sum: "$wholesale" }, fees: { $sum: "$fees" }, discounts: { $sum: "$discount" }, profit: { $sum: "$profit" } } }],
+            trend:  [{ $group: { _id: "$day", profit: { $sum: "$profit" }, revenue: { $sum: "$netSales" } } }, { $sort: { _id: 1 } }],
+        } },
+    ]);
+    const t = agg.totals[0] || {};
+    const refundAgg = await StorefrontReturn.aggregate([{ $match: { orgId, status: "refunded", updatedAt: { $gte: start } } }, { $group: { _id: null, refunds: { $sum: "$refundCents" } } }]);
+    const refunds = refundAgg[0]?.refunds || 0;
+    const revenue = t.revenue || 0, orders = t.orders || 0;
+    const profit = (t.profit || 0) - refunds;
+    return {
+        range,
+        totals: {
+            orders, revenueCents: revenue, cogsCents: t.cogs || 0, feesCents: t.fees || 0, discountsCents: t.discounts || 0, refundsCents: refunds, profitCents: profit,
+            marginPct: revenue ? Math.round((profit / revenue) * 1000) / 10 : 0,
+            aovCents: orders ? Math.round(revenue / orders) : 0,
+            profitPerOrderCents: orders ? Math.round(profit / orders) : 0,
+        },
+        trend: (agg.trend || []).map((d) => ({ date: d._id, profitCents: d.profit, revenueCents: d.revenue })),
+    };
+}
+
+// ── AI Store Autopilot (closed-loop optimization) ─────────────────────────────
+// Reads the store's signals → proposes prioritized actions it can ACTUALLY apply (by calling
+// the services below). Beyond suggestion tools: acts across analytics + marketing + i18n. The BEAT.
+export async function autopilotRecommendations(orgId) {
+    const client = await anthropic();
+    const [a, p, i18n] = await Promise.all([
+        analyticsSummary(orgId, "30d").catch(() => null),
+        profitAnalytics(orgId, "30d").catch(() => null),
+        getI18nConfig(orgId).catch(() => ({})),
+    ]);
+    const signals = [];
+    if (a) {
+        signals.push(`Visitors ${a.overview.visitors}, conversion ${a.overview.conversionRate}%, bounce ${a.overview.bounceRate}%, AOV $${((p?.totals?.aovCents || 0) / 100).toFixed(2)}.`);
+        signals.push(`Funnel: ${a.funnel.sessions} visited → ${a.funnel.addedToCart} cart → ${a.funnel.startedCheckout} checkout → ${a.funnel.converted} bought.`);
+        if (a.exitPages?.length) signals.push(`Top exit pages: ${a.exitPages.slice(0, 3).map((e) => e.label).join(", ")}.`);
+        if (a.referrers?.length) signals.push(`Top sources: ${a.referrers.slice(0, 3).map((r) => `${r.label}(${r.count})`).join(", ")}.`);
+        if (a.vitals?.lcp) signals.push(`Page speed LCP ${a.vitals.lcp}ms${a.slowestPages?.length ? `; slowest: ${a.slowestPages[0].path} ${a.slowestPages[0].lcp}ms` : ""}.`);
+    }
+    if (p) signals.push(`Net profit (30d) $${(p.totals.profitCents / 100).toFixed(2)} at ${p.totals.marginPct}% margin on ${p.totals.orders} orders.`);
+    signals.push(`Languages enabled: en${(i18n.languages || []).length ? ", " + i18n.languages.join(", ") : " only"}.`);
+    if (!a || a.overview.sessions === 0) return { recommendations: [], note: "Not enough traffic yet — autopilot needs visitors to learn from." };
+
+    const schema = `Allowed action types (use EXACTLY these):
+- {"type":"automatic_discount","params":{"discountType":"percent|fixed|free_shipping","value":<percent or cents; 0 for free_shipping>,"title":"shopper label","minSubtotalCents":<0 ok>}}
+- {"type":"create_flow","params":{"trigger":"signup|abandoned_cart|win_back|first_purchase","prompt":"what the email series should say"}}
+- {"type":"create_campaign","params":{"channel":"email","audience":"all|customers|leads","prompt":"what the campaign announces"}}
+- {"type":"translate","params":{"lang":"es|fr|de|it|pt|ja"}}
+- {"type":"popup_experiment","params":{"prompt":"describe an alternative signup-popup variant to A/B test"}}`;
+    const prompt = `You are the autopilot for an online store. Based on these signals, propose 3-5 high-impact actions to grow profit/conversions. Prefer the biggest lever first. ${schema}\n\nSIGNALS:\n${signals.join("\n")}\n\nSTRICT JSON only: {"recommendations":[{"title":"short","why":"1 sentence tied to a signal","impact":"high|medium|low","action":{...one allowed action...}}]}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 1500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: prompt }] });
+    const out = parseJson(textOf(msg));
+    return { recommendations: (out.recommendations || []).slice(0, 6), signals };
+}
+
+// Execute one approved autopilot action by calling the relevant service.
+export async function applyAutopilotAction(orgId, action, createdBy) {
+    const t = action?.type, params = action?.params || {};
+    if (t === "automatic_discount") {
+        const d = await createDiscount(orgId, { automatic: true, type: params.discountType || "percent", value: Number(params.value) || 0, title: params.title || "Special offer", minSubtotalCents: Number(params.minSubtotalCents) || 0, active: true });
+        return { ok: true, message: `Automatic discount "${d.title}" is live.` };
+    }
+    if (t === "create_flow") {
+        const flow = await aiFlow({ prompt: params.prompt || "engagement series" });
+        const created = await createFlow(orgId, { name: flow.name || "Automation", trigger: params.trigger || flow.trigger || "signup", active: true, steps: flow.steps || [] });
+        return { ok: true, message: `Automation "${created.name}" created and activated.` };
+    }
+    if (t === "create_campaign") {
+        const draft = await aiDraft({ channel: params.channel || "email", prompt: params.prompt || "news" });
+        const camp = await createCampaign(orgId, { name: (params.prompt || "Campaign").slice(0, 60), channel: params.channel || "email", audience: params.audience || "all", subject: draft.subject, html: draft.html, body: draft.body }, createdBy);
+        return { ok: true, message: `Draft campaign "${camp.name}" created — review & send in Marketing.` };
+    }
+    if (t === "translate") {
+        const r = await aiTranslate(orgId, params.lang);
+        return { ok: true, message: `Translated the store UI to ${String(params.lang).toUpperCase()} (${r.translated} strings).` };
+    }
+    if (t === "popup_experiment") {
+        const v = await aiVariant({ type: "popup", goal: params.prompt || "more signups" });
+        await createExperiment(orgId, { name: "Autopilot popup test", type: "popup", variants: [{ key: "A", label: "Control", weightPct: 50, config: {} }, { key: "B", label: "Variant", weightPct: 50, config: v }] });
+        return { ok: true, message: "Started a popup A/B test — see A/B Testing for results." };
+    }
+    throw httpError(400, "Unknown action");
+}
+
+// ── Scheduled / autonomous autopilot ───────────────────────────────────────────
+// Zero-risk action types safe to apply WITHOUT a human in the loop: they spend no money
+// and send nothing. Discounts/flows/campaigns always wait for the seller's one-click review.
+const SAFE_AUTO = new Set(["translate", "popup_experiment"]);
+
+// Run one store: generate recommendations, optionally auto-apply the zero-risk ones,
+// and persist the run (the seller's dashboard reads the latest). `apply` is gated by the
+// seller's autoApply config; a manual run passes apply=false (the seller is present).
+export async function runAutopilotForOrg(orgId, { apply = false, trigger = "manual", createdBy = "autopilot" } = {}) {
+    const { recommendations = [], note } = await autopilotRecommendations(orgId);
+    const applied = [], pending = [];
+    for (const r of recommendations) {
+        const type = r.action?.type;
+        if (apply && SAFE_AUTO.has(type)) {
+            try { const res = await applyAutopilotAction(orgId, r.action, createdBy); applied.push({ title: r.title, type, message: res.message }); }
+            catch { pending.push(r); }   // couldn't auto-apply → leave it for review
+        } else {
+            pending.push(r);
+        }
+    }
+    const run = await StorefrontAutopilotRun.create({ orgId, trigger, recommendations, applied, pending, note: note || "" });
+    await StorefrontSite.updateOne({ orgId }, { $set: { "autopilot.lastRunAt": new Date() } });
+    return run.toObject();
+}
+
+// Cron entry point: run autopilot for every published store that turned on autonomous mode.
+export async function runAutonomousAutopilot() {
+    const sites = await StorefrontSite.find({ "autopilot.autonomous": true, status: "published" }).select("orgId autopilot").limit(2000).lean();
+    let orgsRun = 0, applied = 0, pending = 0;
+    for (const site of sites) {
+        try {
+            const run = await runAutopilotForOrg(site.orgId, { apply: !!site.autopilot?.autoApply, trigger: "scheduled", createdBy: "autopilot" });
+            orgsRun++; applied += run.applied.length; pending += run.pending.length;
+        } catch { /* skip this org, continue the sweep */ }
+    }
+    return { orgsRun, applied, pending, sites: sites.length };
+}
+
+export async function getAutopilotState(orgId) {
+    const [site, lastRun] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("autopilot").lean(),
+        StorefrontAutopilotRun.findOne({ orgId }).sort({ createdAt: -1 }).lean(),
+    ]);
+    return { config: site?.autopilot || { autonomous: false, autoApply: false }, lastRun: lastRun || null };
+}
+
+export async function saveAutopilotConfig(orgId, { autonomous, autoApply } = {}) {
+    const set = {};
+    if (autonomous !== undefined) set["autopilot.autonomous"] = !!autonomous;
+    if (autoApply !== undefined) set["autopilot.autoApply"] = !!autoApply;
+    if (Object.keys(set).length) await StorefrontSite.updateOne({ orgId }, { $set: set });
+    return getAutopilotState(orgId);
+}
+
+// ── Reviews moderation (seller) ────────────────────────────────────────────────
+export async function listSellerReviews(orgId, status) {
+    const q = { orgId };
+    if (status) q.status = status;
+    return StorefrontReview.find(q).sort({ createdAt: -1 }).limit(500).lean();
+}
+// Recompute the cached rating rollup from published reviews (counts only; AI summary is
+// regenerated storefront-side on new reviews).
+async function recomputeReviewSummary(orgId, productId) {
+    const [a] = await StorefrontReview.aggregate([
+        { $match: { orgId: new mongoose.Types.ObjectId(orgId), productId: new mongoose.Types.ObjectId(productId), status: "published" } },
+        { $group: { _id: null, count: { $sum: 1 }, sum: { $sum: "$rating" },
+            d1: { $sum: { $cond: [{ $eq: ["$rating", 1] }, 1, 0] } }, d2: { $sum: { $cond: [{ $eq: ["$rating", 2] }, 1, 0] } },
+            d3: { $sum: { $cond: [{ $eq: ["$rating", 3] }, 1, 0] } }, d4: { $sum: { $cond: [{ $eq: ["$rating", 4] }, 1, 0] } }, d5: { $sum: { $cond: [{ $eq: ["$rating", 5] }, 1, 0] } } } },
+    ]);
+    const count = a?.count || 0;
+    await StorefrontReviewSummary.updateOne({ orgId, productId }, { $set: {
+        avg: count ? Math.round((a.sum / count) * 10) / 10 : 0, count,
+        distribution: { 1: a?.d1 || 0, 2: a?.d2 || 0, 3: a?.d3 || 0, 4: a?.d4 || 0, 5: a?.d5 || 0 },
+    } }, { upsert: true });
+}
+export async function replyToReview(orgId, id, body) {
+    const r = await StorefrontReview.findOneAndUpdate({ _id: id, orgId }, { $set: { sellerReply: { body: String(body || "").slice(0, 2000), at: new Date() } } }, { new: true });
+    if (!r) throw httpError(404, "Not found");
+    return r;
+}
+export async function moderateReview(orgId, id, status) {
+    if (!["published", "rejected", "pending"].includes(status)) throw httpError(400, "bad status");
+    const r = await StorefrontReview.findOneAndUpdate({ _id: id, orgId }, { $set: { status } }, { new: true });
+    if (!r) throw httpError(404, "Not found");
+    await recomputeReviewSummary(orgId, r.productId).catch(() => {});
+    return r;
+}
+
+// ── A/B testing ────────────────────────────────────────────────────────────────
+export async function listExperiments(orgId) {
+    const exps = await StorefrontExperiment.find({ orgId }).sort({ createdAt: -1 }).limit(200).lean();
+    const stats = await StorefrontExperimentStat.find({ orgId }).lean();
+    const byExp = {};
+    for (const s of stats) (byExp[String(s.experimentId)] ||= {})[s.variant] = s;
+    return exps.map((e) => ({
+        ...e,
+        results: (e.variants || []).map((v) => {
+            const st = byExp[String(e._id)]?.[v.key] || {};
+            const exposures = st.exposures || 0, conversions = st.conversions || 0;
+            return { key: v.key, label: v.label, exposures, conversions, convRate: exposures ? Math.round((conversions / exposures) * 1000) / 10 : 0 };
+        }),
+    }));
+}
+export async function createExperiment(orgId, b) {
+    if (!b?.name || !b?.variants?.length) throw httpError(400, "name and variants are required");
+    return StorefrontExperiment.create({ orgId, name: b.name, type: b.type || "popup", status: "running", variants: b.variants });
+}
+export async function updateExperiment(orgId, id, b) {
+    const set = {};
+    for (const k of ["name", "type", "status", "variants", "winner"]) if (k in b) set[k] = b[k];
+    const e = await StorefrontExperiment.findOneAndUpdate({ _id: id, orgId }, { $set: set }, { new: true });
+    if (!e) throw httpError(404, "Not found");
+    return e;
+}
+export async function deleteExperiment(orgId, id) {
+    await StorefrontExperiment.deleteOne({ _id: id, orgId });
+    await StorefrontExperimentStat.deleteMany({ orgId, experimentId: id });
+}
+// Promote a variant to the winner: stop the test and, for popup tests, apply the winning copy live.
+export async function promoteExperimentWinner(orgId, id, variantKey) {
+    const exp = await StorefrontExperiment.findOne({ _id: id, orgId });
+    if (!exp) throw httpError(404, "Not found");
+    const win = exp.variants.find((v) => v.key === variantKey);
+    if (!win) throw httpError(400, "Unknown variant");
+    exp.winner = variantKey; exp.status = "stopped"; await exp.save();
+    if (exp.type === "popup" && win.config) {
+        const set = {};
+        for (const k of ["headline", "body", "buttonText"]) if (win.config[k] != null) set[`popup.${k}`] = win.config[k];
+        if (Object.keys(set).length) await StorefrontSite.updateOne({ orgId }, { $set: set });
+    }
+    return { winner: variantKey, applied: exp.type === "popup" };
+}
+export async function aiVariant({ type = "popup", goal = "more signups" }) {
+    const client = await anthropic();
+    const fields = type === "popup" ? `{"headline":"...","body":"...","buttonText":"..."}` : `{"headline":"...","subheadline":"..."}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: `Write a punchy alternative ${type} variant to A/B test for "${goal}". STRICT JSON only: ${fields}` }] });
+    return parseJson(textOf(msg));
+}
+
+// ── Subscriptions (subscribe & save) ──────────────────────────────────────────
+const SUB_FIELDS = ["enabled", "discountPercent", "intervals"];
+export async function getSubscriptionsData(orgId) {
+    const site = await StorefrontSite.findOne({ orgId }).select("subscriptions").lean();
+    const subscriptions = await StorefrontSubscription.find({ orgId }).sort({ createdAt: -1 }).limit(500)
+        .select("status intervalLabel intervalDays discountPercent nextBillingAt cyclesBilled customerEmail items").lean();
+    return { config: site?.subscriptions || { enabled: false }, subscriptions };
+}
+export async function saveSubsConfig(orgId, b) {
+    const set = {};
+    for (const k of SUB_FIELDS) if (k in b) set[`subscriptions.${k}`] = b[k];
+    await StorefrontSite.updateOne({ orgId }, { $set: set });
+}
+// AI churn prediction: summarize subscription health + retention actions (the "beat").
+export async function subscriptionChurnInsights(orgId) {
+    const oid = new mongoose.Types.ObjectId(orgId);
+    const rows = await StorefrontSubscription.aggregate([
+        { $match: { orgId: oid } },
+        { $group: { _id: "$status", count: { $sum: 1 }, withFailed: { $sum: { $cond: [{ $gt: ["$failedAttempts", 0] }, 1, 0] } }, avgCycles: { $avg: "$cyclesBilled" } } },
+    ]);
+    const total = rows.reduce((s, r) => s + r.count, 0);
+    if (!total) return { atRisk: 0, insights: [] };
+    const by = Object.fromEntries(rows.map((r) => [r._id, r]));
+    const atRisk = (by.paused?.count || 0) + (by.active?.withFailed || 0);
+    const client = await anthropic();
+    const ctx = `Subscriptions: ${by.active?.count || 0} active (${by.active?.withFailed || 0} with a failed charge), ${by.paused?.count || 0} paused, ${by.canceled?.count || 0} canceled. Avg deliveries before issues ~${Math.round(by.active?.avgCycles || 0)}.`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 700, thinking: { type: "adaptive" }, messages: [{ role: "user", content: `${ctx}\nGive 3-4 SHORT, concrete retention actions to reduce subscription churn. STRICT JSON only: {"insights":[{"title":"...","detail":"...","action":"..."}]}` }] });
+    return { atRisk, ...parseJson(textOf(msg)) };
+}
+
+// ── Returns / RMA ────────────────────────────────────────────────────────────
+export async function listReturns(orgId, status) {
+    const q = { orgId };
+    if (status) q.status = status;
+    return StorefrontReturn.find(q).sort({ createdAt: -1 }).limit(500).lean();
+}
+// Seller action — money/fulfillment runs in the storefront (marketplace Stripe + rewards + routing).
+export async function processReturn(orgId, returnId, body = {}) {
+    const ret = await StorefrontReturn.findOne({ _id: returnId, orgId }).select("_id").lean();
+    if (!ret) throw httpError(404, "Return not found");
+    return callStorefront("/api/internal/returns/process", { returnId: String(returnId), action: body.action, amountCents: body.amountCents, sellerNote: body.sellerNote });
+}
+// AI: why are products being returned + what to do (the "beat" — feeds product improvements).
+export async function returnsInsights(orgId) {
+    const agg = await StorefrontReturn.aggregate([
+        { $match: { orgId: new mongoose.Types.ObjectId(orgId) } },
+        { $unwind: "$items" },
+        { $group: { _id: { reason: "$items.reason", style: "$items.styleCode" }, count: { $sum: 1 } } },
+        { $sort: { count: -1 } }, { $limit: 60 },
+    ]);
+    if (!agg.length) return { insights: [] };
+    const client = await anthropic();
+    const rows = agg.map((a) => `${a._id.style || "?"}: ${a._id.reason} ×${a.count}`).join("\n");
+    const prompt = `These are a store's product return reasons (style: reason × count). Give 3-5 SHORT insights on WHY items are returned + a concrete fix (sizing chart, photos, QA, description). STRICT JSON only: {"insights":[{"title":"...","detail":"...","action":"..."}]}\n\n${rows}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 800, thinking: { type: "adaptive" }, messages: [{ role: "user", content: prompt }] });
+    return parseJson(textOf(msg));
 }

@@ -4,8 +4,8 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useCart } from "@/components/cart/CartProvider";
 import { track } from "@/components/analytics/tracker";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
-const money = (c) => `$${((c || 0) / 100).toFixed(2)}`;
 const authHeaders = () => {
     const t = typeof window !== "undefined" && localStorage.getItem("sf_token");
     return t ? { Authorization: `Bearer ${t}` } : {};
@@ -16,6 +16,7 @@ const inputSx = { width: "100%", padding: "10px 12px", borderRadius: 8, border: 
 
 export default function CheckoutView() {
     const { items, ready, clear } = useCart();
+    const { price: money } = useI18n();
     const [form, setForm] = useState({ email: "", name: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" });
     const [totals, setTotals] = useState(null);
     const [rewards, setRewards] = useState(null);       // { balance, applied, eligible }
@@ -26,6 +27,8 @@ export default function CheckoutView() {
     const [giftInput, setGiftInput] = useState("");
     const [giftCardCode, setGiftCardCode] = useState("");
     const [giftCard, setGiftCard] = useState(null);     // { code, applied, balance, error }
+    const [subInfo, setSubInfo] = useState(null);       // { enabled, discountPercent, intervals }
+    const [subscribe, setSubscribe] = useState(null);   // { intervalDays, intervalLabel } when subscribing
     const [step, setStep] = useState("form");           // form | pay
     const [pay, setPay] = useState(null);               // { clientSecret, publishableKey }
     const [busy, setBusy] = useState(false);
@@ -37,9 +40,9 @@ export default function CheckoutView() {
     // Live totals (shipping/rewards/discount/tax come from the server).
     useEffect(() => {
         if (!ready || !items.length) return;
-        fetch("/api/checkout/summary", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ items: apiItems(items), redeemCents: redeemCents(), promoCode, giftCardCode }) })
-            .then((r) => r.json()).then((d) => { if (!d.error) { setTotals(d.totals); setRewards(d.rewards); setDiscount(d.discount); setGiftCard(d.giftCard); } }).catch(() => {});
-    }, [ready, items, applyRewards, promoCode, giftCardCode]);
+        fetch("/api/checkout/summary", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ items: apiItems(items), redeemCents: redeemCents(), promoCode, giftCardCode, subscribe: subscribe ? true : undefined }) })
+            .then((r) => r.json()).then((d) => { if (!d.error) { setTotals(d.totals); setRewards(d.rewards); setDiscount(d.discount); setGiftCard(d.giftCard); setSubInfo(d.subscriptions); } }).catch(() => {});
+    }, [ready, items, applyRewards, promoCode, giftCardCode, subscribe]);
 
     const applyPromo = () => setPromoCode(promoInput.trim().toUpperCase());
     const applyGift = () => setGiftCardCode(giftInput.trim().toUpperCase());
@@ -60,7 +63,7 @@ export default function CheckoutView() {
         try {
             const res = await fetch("/api/checkout/intent", {
                 method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
-                body: JSON.stringify({ items: apiItems(items), email: form.email, shippingAddress: form, redeemCents: redeemCents(), promoCode, giftCardCode }),
+                body: JSON.stringify({ items: apiItems(items), email: form.email, shippingAddress: form, redeemCents: redeemCents(), promoCode, giftCardCode, subscribe: subscribe || undefined }),
             });
             const d = await res.json();
             if (d.error) { setError(typeof d.error === "string" ? d.error : "Could not start checkout"); return; }
@@ -96,6 +99,21 @@ export default function CheckoutView() {
                             <a href="/account/login" style={{ color: "var(--sf-secondary, #16a34a)", fontWeight: 600 }}>Sign in</a> to use rewards
                         </div>
                     )}
+                    {/* Subscribe & save (logged-in buyers) */}
+                    {subInfo?.enabled && rewards?.eligible && (
+                        <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "10px 12px", margin: "6px 0" }}>
+                            <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: "0.9rem", fontWeight: 600, cursor: "pointer" }}>
+                                <input type="checkbox" checked={!!subscribe} onChange={(e) => setSubscribe(e.target.checked ? { intervalDays: subInfo.intervals?.[0]?.days || 30, intervalLabel: subInfo.intervals?.[0]?.label || "Every month" } : null)} />
+                                Subscribe &amp; save {subInfo.discountPercent}%
+                            </label>
+                            {subscribe && subInfo.intervals?.length > 0 && (
+                                <select value={subscribe.intervalDays} onChange={(e) => { const it = subInfo.intervals.find((x) => x.days === Number(e.target.value)); setSubscribe({ intervalDays: it.days, intervalLabel: it.label }); }} style={{ ...inputSx, marginTop: 8, fontSize: "0.85rem" }}>
+                                    {subInfo.intervals.map((it) => <option key={it.days} value={it.days}>{it.label}</option>)}
+                                </select>
+                            )}
+                        </div>
+                    )}
+
                     {/* Promo code */}
                     <div style={{ display: "flex", gap: 8, padding: "8px 0", alignItems: "center" }}>
                         <input value={promoInput} onChange={(e) => setPromoInput(e.target.value)} placeholder="Promo code"

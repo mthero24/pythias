@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Logo from "../../public/logo_vertical.png";
 import s from "./home.module.css";
+import { Tutorial } from "@pythias/mongo";
 
 const STATS = [
     { value: "18",      label: "Marketplace Integrations" },
@@ -9,7 +10,24 @@ const STATS = [
     { value: "< 2 wks", label: "Onboarding" },
 ];
 
-export default function HeroSection() {
+// Pull the homepage hero video from the backend Video Library (a "Page Video" with
+// target page "/" and placement "Hero"). Falls back to the logo if none is published.
+async function getHeroVideo() {
+    try {
+        return await Tutorial.findOne({
+            videoType: "page-video",
+            targetPage: "/",
+            placement: "Hero",
+            published: true,
+        }).sort({ order: 1, createdAt: -1 }).lean();
+    } catch {
+        return null;
+    }
+}
+
+export default async function HeroSection() {
+    const heroVideo = await getHeroVideo();
+
     return (
         <section className={s.hero}>
             <div className={s.heroGlow1} />
@@ -49,14 +67,28 @@ export default function HeroSection() {
                     </div>
                     <div className={s.heroVisual}>
                         <div className={s.heroCard}>
-                            <Image
-                                src={Logo}
-                                alt="Pythias Technologies"
-                                width={260}
-                                height={320}
-                                priority
-                                style={{ width: "100%", maxWidth: 260, height: "auto" }}
-                            />
+                            {heroVideo?.videoUrl ? (
+                                <video
+                                    src={heroVideo.videoUrl}
+                                    poster={heroVideo.thumbnailUrl || undefined}
+                                    autoPlay
+                                    muted
+                                    loop
+                                    controls
+                                    playsInline
+                                    preload="metadata"
+                                    style={{ width: "100%", maxWidth: 420, height: "auto", borderRadius: 12, display: "block" }}
+                                />
+                            ) : (
+                                <Image
+                                    src={Logo}
+                                    alt="Pythias Technologies"
+                                    width={260}
+                                    height={320}
+                                    priority
+                                    style={{ width: "100%", maxWidth: 260, height: "auto" }}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

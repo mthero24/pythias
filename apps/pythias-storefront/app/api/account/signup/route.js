@@ -6,6 +6,7 @@ import { resolveOrg } from "@/lib/resolveOrg";
 import { hashPassword, signToken, clientIp, publicCustomer } from "@/lib/auth";
 import { grantSignupBonus } from "@/lib/rewards";
 import { enqueueWelcome, enqueueVerification } from "@/lib/emailFlows";
+import { enrollFlows } from "@/lib/flows";
 
 // Build a per-channel consent record with proof (when/where/IP + exact opt-in text).
 function consentBlock(input, { source, ip }) {
@@ -70,6 +71,8 @@ export async function POST(req) {
     // Thank-you + verification emails (queued; the outbox sends them).
     await enqueueWelcome(ctx.site, customer).catch(() => {});
     await enqueueVerification(ctx.site, customer).catch(() => {});
+    // Enroll into signup automations (welcome series, etc.).
+    await enrollFlows({ orgId: ctx.orgId, site: ctx.site, customer, trigger: "signup", token: "signup" }).catch(() => {});
 
     const token = signToken({ customerId: customer._id, orgId: ctx.orgId });
     const fresh = await StorefrontCustomer.findById(customer._id).lean();

@@ -13,7 +13,8 @@ export async function POST(req) {
     const body = await req.json().catch(() => null);
     const auth = await getAuthedCustomer(req).catch(() => null);
 
-    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer: auth?.customer ?? null, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode });
+    const subEnabled = !!(ctx.site?.subscriptions?.enabled && body?.subscribe && auth);
+    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer: auth?.customer ?? null, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode, subscribe: subEnabled });
 
     return NextResponse.json({
         error: false,
@@ -23,5 +24,6 @@ export async function POST(req) {
         rewards: { balance: auth?.customer?.rewardsBalance || 0, applied: q.rewardsApplied, eligible: !!auth },
         discount: { code: q.discountCode, title: q.discountTitle, cents: q.discountCents || 0, freeShipping: q.freeShipping, error: q.discountError },
         giftCard: { code: q.giftCardCode, applied: q.giftCardApplied || 0, balance: q.giftCardBalance || 0, error: body?.giftCardCode && !q.giftCardCode ? "invalid" : null },
+        subscriptions: ctx.site?.subscriptions?.enabled ? { enabled: true, discountPercent: ctx.site.subscriptions.discountPercent || 0, intervals: ctx.site.subscriptions.intervals || [] } : { enabled: false },
     });
 }

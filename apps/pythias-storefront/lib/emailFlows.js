@@ -113,6 +113,39 @@ export async function enqueueReviewRequest(site, { orgId, orderId, email, custom
 // Tiny HTML escaper for interpolated values above.
 function esc(s) { return String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])); }
 
+// Return status update (transactional).
+const RETURN_COPY = {
+    approved:  { title: "Your return is approved", body: "Send the item back and we'll process your refund/exchange." },
+    rejected:  { title: "Update on your return", body: "Unfortunately we couldn't approve this return. Reply to your order email with questions." },
+    received:  { title: "We received your return", body: "Thanks — we've received your item and are processing it." },
+    refunded:  { title: "Your refund is on the way 💸", body: "We've issued your refund. It may take a few days to appear." },
+    credited:  { title: "Store credit added", body: "We've added store credit to your account — use it at checkout." },
+    exchanged: { title: "Your replacement is on the way 📦", body: "We've sent a replacement for your return." },
+};
+export async function enqueueReturnStatus(site, { orgId, rmaNumber, email, customerId, status }) {
+    const copy = RETURN_COPY[status];
+    if (!email || !copy) return null;
+    const brand = brandOf(site);
+    const html = baseTemplate({ brand, title: copy.title, contentHtml: `<p>${copy.body}</p><p style="font-size:13px;color:#94a3b8">Return ${esc(rmaNumber)}</p>`, footerHtml: transactionalFooter(brand) });
+    return enqueueMessage({ orgId, channel: "email", to: email, customerId, type: "order_status", category: "transactional", subject: `${brand}: ${copy.title}`, html, dedupeKey: `return_status:${rmaNumber}:${status}` });
+}
+
+// Subscription started (transactional).
+export async function enqueueSubscriptionStarted(site, { orgId, email, customerId, intervalLabel, nextBillingAt }) {
+    if (!email) return null;
+    const brand = brandOf(site);
+    const html = baseTemplate({ brand, title: "Your subscription is active 🔁", contentHtml: `<p>Thanks for subscribing! You'll get a new order <b>${esc(intervalLabel || "regularly")}</b>${nextBillingAt ? ` — next on ${new Date(nextBillingAt).toLocaleDateString()}` : ""}.</p><p>Manage, pause, or cancel anytime in <a href="${storeBaseUrl(site)}/account/subscriptions">your account</a>.</p>`, footerHtml: transactionalFooter(brand) });
+    return enqueueMessage({ orgId, channel: "email", to: email, customerId, type: "welcome", category: "transactional", subject: `Your ${brand} subscription is active`, html, dedupeKey: `sub_started:${customerId}:${nextBillingAt ? new Date(nextBillingAt).getTime() : Date.now()}` });
+}
+
+// Subscription payment failed (dunning, transactional).
+export async function enqueueSubscriptionFailed(site, { orgId, email, customerId, attempt }) {
+    if (!email) return null;
+    const brand = brandOf(site);
+    const html = baseTemplate({ brand, title: "We couldn't process your subscription payment", contentHtml: `<p>Your card was declined for your latest ${brand} subscription order. Please update your payment method to avoid interruption.</p><p style="margin:16px 0">${btn(`${storeBaseUrl(site)}/account/subscriptions`, "Update payment")}</p>`, footerHtml: transactionalFooter(brand) });
+    return enqueueMessage({ orgId, channel: "email", to: email, customerId, type: "order_status", category: "transactional", subject: `Action needed: ${brand} subscription payment failed`, html, dedupeKey: `sub_failed:${customerId}:${attempt}` });
+}
+
 // ── Lifecycle (marketing) ────────────────────────────────────────────────────
 
 export async function enqueueAbandonedCart(site, customer, { discountCode } = {}) {

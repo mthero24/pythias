@@ -123,3 +123,12 @@ export { default as StorefrontCollection }    from "./models/StorefrontCollectio
 export { default as StorefrontGiftCard }      from "./models/StorefrontGiftCard";
 export { default as StorefrontSegment }       from "./models/StorefrontSegment";
 export { default as StorefrontFlow }          from "./models/StorefrontFlow";
+export { default as StorefrontReturn }        from "./models/StorefrontReturn";
+export { default as StorefrontTranslation }   from "./models/StorefrontTranslation";
+export { default as StorefrontSubscription }  from "./models/StorefrontSubscription";
+export { default as StorefrontExperiment }    from "./models/StorefrontExperiment";
+export { default as StorefrontExperimentStat } from "./models/StorefrontExperimentStat";
+export { default as StorefrontAutopilotRun }  from "./models/StorefrontAutopilotRun";
+export { default as StorefrontInventory }     from "./models/StorefrontInventory";
+export { default as StorefrontRestockTask }   from "./models/StorefrontRestockTask";
+export { default as StorefrontDemandCache }   from "./models/StorefrontDemandCache";

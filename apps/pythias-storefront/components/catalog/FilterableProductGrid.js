@@ -1,13 +1,24 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import FavoriteHeart from "@/components/favorites/FavoriteHeart";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
-const money = (c) => `$${((c || 0) / 100).toFixed(2)}`;
 const uniq = (arr) => [...new Set(arr)].sort();
+const Stars = ({ avg }) => <span style={{ color: "#f59e0b", fontSize: "0.8rem" }}>{"★★★★★".slice(0, Math.round(avg))}{"☆☆☆☆☆".slice(0, 5 - Math.round(avg))}</span>;
 
 // Faceted, sortable product grid. Filtering runs client-side on the provided result set, so
 // facets always reflect what's actually shown. Used by /search and /collections/[slug].
 export default function FilterableProductGrid({ products = [], emptyText = "No products found." }) {
+    const { price: money } = useI18n();
+    const [ratings, setRatings] = useState({});
+
+    // Fetch star ratings for the shown products (social proof on cards).
+    useEffect(() => {
+        const ids = products.map((p) => p.id).filter(Boolean);
+        if (!ids.length) return;
+        fetch("/api/products/ratings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) })
+            .then((r) => r.json()).then((d) => !d.error && setRatings(d.ratings || {})).catch(() => {});
+    }, [products]);
     const [colors, setColors] = useState([]);
     const [sizes, setSizes] = useState([]);
     const [brands, setBrands] = useState([]);
@@ -91,6 +102,7 @@ export default function FilterableProductGrid({ products = [], emptyText = "No p
                                         {p.image && <img src={p.image} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                                     </div>
                                     <div style={{ marginTop: 10, fontWeight: 600, fontSize: "0.95rem" }}>{p.title}</div>
+                                    {ratings[p.id] && <div><Stars avg={ratings[p.id].avg} /> <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>({ratings[p.id].count})</span></div>}
                                     {p.priceCents > 0 && <div style={{ color: "var(--sf-secondary)", fontWeight: 700, marginTop: 2 }}>{money(p.priceCents)}</div>}
                                 </a>
                             </div>

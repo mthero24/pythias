@@ -21,7 +21,9 @@ export async function POST(req) {
     const customer = auth?.customer ?? null;
     const email = body?.email || customer?.email;
 
-    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode });
+    // Subscribe & save (logged-in buyers only — we need a saved card for recurring billing).
+    const subEnabled = !!(ctx.site?.subscriptions?.enabled && body?.subscribe?.intervalDays && customer);
+    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode, subscribe: subEnabled });
     if (!q.lines.length) return NextResponse.json({ error: "Cart is empty or unavailable" }, { status: 400 });
 
     // Sales tax (Stripe Tax) on items + shipping, at the buyer's address. Rewards + promo
@@ -43,6 +45,7 @@ export async function POST(req) {
     const session = await StorefrontCheckoutSession.create({
         orgId: ctx.orgId, customerId: customer?._id, items: body?.items ?? [],
         shippingAddress: body?.shippingAddress, email, redeemCents: q.rewardsApplied, promoCode: q.discountCode, giftCardCode: q.giftCardCode,
+        subscribe: subEnabled ? { intervalDays: body.subscribe.intervalDays, intervalLabel: body.subscribe.intervalLabel, discountPercent: ctx.site.subscriptions.discountPercent || 0 } : undefined,
         taxCents, taxCalcId: calcId, amountCents: totalCents,
     });
 
@@ -61,6 +64,7 @@ export async function POST(req) {
         ...(stripeCustomerId ? { customer: stripeCustomerId } : {}),
         ...(email ? { receipt_email: email } : {}),
         automatic_payment_methods: { enabled: true },
+        ...(subEnabled ? { setup_future_usage: "off_session" } : {}),   // save the card for recurring billing
         metadata: { sessionId: String(session._id), orgId: String(ctx.orgId), customerId: customer ? String(customer._id) : "" },
     });
     await StorefrontCheckoutSession.updateOne({ _id: session._id }, { $set: { paymentIntentId: pi.id } });
