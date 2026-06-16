@@ -24,6 +24,11 @@ function OrderCard({ o, editable, edit, orderEdit, setEdit, setOrderEdit, update
                 {o.dateExpected && (
                     <Chip label={`Expected: ${new Date(o.dateExpected).toLocaleDateString("en-US")}`} size="small" variant="outlined" color="info" />
                 )}
+                {(() => {
+                    const allItems = (o.locations ?? []).flatMap(l => l.items ?? []);
+                    const totalUnits = allItems.reduce((a, i) => a + (Number(i.quantity) || 0), 0);
+                    return <Chip label={`${allItems.length} items · ${totalUnits} units`} size="small" color="primary" />;
+                })()}
                 {o.received
                     ? <Chip icon={<CheckCircleIcon />} label="Received" size="small" color="success" />
                     : editable && (
@@ -45,7 +50,8 @@ function OrderCard({ o, editable, edit, orderEdit, setEdit, setOrderEdit, update
                             <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
                                 <Typography variant="body2" fontWeight={600}>{l.name.replace(/ /g, "")}</Typography>
                                 {l.received && <Chip icon={<CheckCircleIcon />} label="Received" size="small" color="success" />}
-                                <Chip label={`${l.items?.length ?? 0} items`} size="small" variant="outlined" sx={{ ml: "auto", mr: 1 }} />
+                                <Chip label={`${l.items?.length ?? 0} items`} size="small" variant="outlined" sx={{ ml: "auto", mr: 0.5 }} />
+                                <Chip label={`${(l.items ?? []).reduce((a, i) => a + (Number(i.quantity) || 0), 0)} units`} size="small" color="primary" variant="outlined" sx={{ mr: 1 }} />
                             </Stack>
                         </AccordionSummary>
                         <AccordionDetails sx={{ pt: 0 }}>
