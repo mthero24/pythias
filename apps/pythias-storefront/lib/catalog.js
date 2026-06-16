@@ -15,10 +15,11 @@ export function shapeProduct(p) {
         brand: p.brand || "",
         category: [].concat(p.category || [], p.department || []).filter(Boolean),
         colors, sizes,
+        designTemplateId: p.designTemplateId ? String(p.designTemplateId) : null,   // customizable?
     };
 }
 
-const SELECT = "title brand productImages variantsArray category department tags";
+const SELECT = "title brand productImages variantsArray category department tags designTemplateId";
 const POP = { path: "variantsArray.color", select: "name" };
 
 // On-site search: Mongo text index first; if thin, fall back to a tolerant regex across

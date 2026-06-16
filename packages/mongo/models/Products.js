@@ -87,6 +87,15 @@ const schema = new mongoose.Schema({
     brand: String,
     sku: { type: String},
     title: String,
+    // Multi-vertical: how this product is fulfilled. Default "pod" (print-on-demand) keeps
+    // every existing product unchanged. "dropship" ships from a supplier; "warehouse" is
+    // picked/packed from Pythias 3PL stock. One cart can mix all three.
+    vertical: { type: String, enum: ["pod", "dropship", "warehouse"], default: "pod" },
+    fulfillment: {
+        supplierName:  { type: String },
+        supplierEmail: { type: String },
+        warehouseSku:  { type: String },
+    },
     marketPlaces: Object,
     marketPlacesArray: [
         {

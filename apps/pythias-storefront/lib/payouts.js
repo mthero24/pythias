@@ -93,3 +93,20 @@ export async function settleOrderPayout(orderId) {
     await PlatformOrder.updateOne({ _id: orderId }, { $set: { "storefrontPayout.status": "paid", "storefrontPayout.transferId": transfer.id, "storefrontPayout.paidAt": new Date() } });
     return { status: "paid", transferId: transfer.id, amount: transfer.amount };
 }
+
+// Merchant-of-record clawback: on a LOST dispute, reverse the seller's payout transfer (Pythias
+// ate the chargeback as MoR; the seller's share is recovered). Idempotent + best-effort.
+export async function clawbackOrderPayout(orderId, reason = "dispute_lost") {
+    const order = await PlatformOrder.findById(orderId).select("storefrontPayout").lean();
+    const tid = order?.storefrontPayout?.transferId;
+    if (!tid || order.storefrontPayout.status === "clawed_back") return { status: "no_transfer" };
+    const stripe = storefrontStripe();
+    if (!stripe) return { status: "no_stripe" };
+    try {
+        await stripe.transfers.createReversal(tid, { metadata: { reason } });
+        await PlatformOrder.updateOne({ _id: orderId }, { $set: { "storefrontPayout.status": "clawed_back" } });
+        return { status: "clawed_back" };
+    } catch (e) {
+        return { status: "error", error: e.message };
+    }
+}

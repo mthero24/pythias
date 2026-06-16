@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { StorefrontMessage, StorefrontSuppression, StorefrontCustomer } from "@pythias/mongo";
+import { StorefrontMessage, StorefrontSuppression, StorefrontCustomer, isNetworkSuppressed } from "@pythias/mongo";
 
 const SECRET = process.env.STOREFRONT_JWT_SECRET || "dev-insecure-secret-change-me";
 
@@ -44,6 +44,9 @@ export function unsubscribeUrl(site, channel, value) {
 // ── Enqueue into the outbox (idempotent via dedupeKey) ───────────────────────
 // Returns the created message, or null if it was a duplicate / suppressed.
 export async function enqueueMessage(msg) {
+    // Network-wide suppression (hard bounce/complaint on ANY store) blocks ALL categories — a dead
+    // address should never be mailed again; it protects the shared sender reputation.
+    if (await isNetworkSuppressed(msg.channel, msg.to)) return null;
     // Marketing messages skip enqueue entirely if already suppressed (keeps the queue clean;
     // the drain re-checks suppression at send time as the authoritative gate).
     if (msg.category === "marketing" && await isSuppressed(msg.orgId, msg.channel, msg.to)) return null;

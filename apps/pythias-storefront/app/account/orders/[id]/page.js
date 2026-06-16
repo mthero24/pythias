@@ -8,6 +8,9 @@ export default function OrderDetailPage({ params }) {
     return <AccountShell active="/account/orders"><OrderDetail id={id} /></AccountShell>;
 }
 
+const FULFILLMENT_LABEL = { pod: "Made to order", dropship: "Shipped by supplier", warehouse: "From our warehouse" };
+const FULFILLMENT_STATUS = { routed: "In production", pending_supplier: "Preparing", pending_warehouse: "Picking", unroutable: "Processing" };
+
 function OrderDetail({ id }) {
     const [order, setOrder] = useState(undefined);   // undefined=loading, null=not found
 
@@ -31,6 +34,19 @@ function OrderDetail({ id }) {
                 </div>
                 <StatusBadge status={order.status} />
             </div>
+
+            {order.fulfillment && (
+                <div style={card}>
+                    <h3 style={{ margin: "0 0 10px", fontSize: "1rem" }}>Shipments</h3>
+                    <div style={{ color: "#64748b", fontSize: "0.84rem", marginBottom: 8 }}>This order ships in {order.fulfillment.length} parts from different fulfillment centers — you may receive them separately.</div>
+                    {order.fulfillment.map((g, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderTop: i ? "1px solid rgba(0,0,0,0.06)" : "none", fontSize: "0.9rem" }}>
+                            <span>{FULFILLMENT_LABEL[g.vertical] || "Fulfillment"} · {g.itemCount} item{g.itemCount === 1 ? "" : "s"}</span>
+                            <span style={{ color: "#64748b", fontSize: "0.8rem" }}>{FULFILLMENT_STATUS[g.status] || g.status}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {order.tracking?.length > 0 && (
                 <div style={card}>

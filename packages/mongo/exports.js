@@ -132,3 +132,10 @@ export { default as StorefrontAutopilotRun }  from "./models/StorefrontAutopilot
 export { default as StorefrontInventory }     from "./models/StorefrontInventory";
 export { default as StorefrontRestockTask }   from "./models/StorefrontRestockTask";
 export { default as StorefrontDemandCache }   from "./models/StorefrontDemandCache";
+export { default as NetworkFraudEntry }       from "./models/NetworkFraudEntry";
+export { default as NetworkSuppression }      from "./models/NetworkSuppression";
+export { default as StorefrontDispute }       from "./models/StorefrontDispute";
+export { default as StorefrontChannelConnection } from "./models/StorefrontChannelConnection";
+export { default as StorefrontChannelListing } from "./models/StorefrontChannelListing";
+export { default as StorefrontAdSpend }       from "./models/StorefrontAdSpend";
+export { screenOrder, reportNetworkFraud, isNetworkSuppressed, recordNetworkSuppression } from "./helpers/networkGuard";

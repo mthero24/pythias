@@ -19,6 +19,7 @@ export async function POST(req) {
     if (!body?.items?.length) return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
 
     try {
+        const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || req.headers.get("x-real-ip") || undefined;
         const result = await placeOrder({
             orgId: ctx.orgId,
             site: ctx.site,
@@ -27,6 +28,7 @@ export async function POST(req) {
             shippingAddress: body.shippingAddress,
             email: body.email,
             redeemCents: body.redeemCents,
+            ip,
         });
         return NextResponse.json({ error: false, ...result }, { status: 201 });
     } catch (e) {

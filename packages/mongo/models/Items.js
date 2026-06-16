@@ -136,6 +136,20 @@ const schema = new mongoose.Schema(
     discountName: { type: String },
     custom:  { type: Boolean, default: false },
     dstFile: { type: Object },  // { locationName: dstUrl } — one key per print location
+    // Buyer personalization (custom-text designs from a DesignTemplate). The buyer's field values
+    // are authoritative; production renders the final artwork server-side from template + values.
+    personalization: {
+        mode:       { type: String },   // "text" (template) | "upload" | "ai" | "studio"
+        templateId: { type: mongoose.Schema.Types.ObjectId, ref: "DesignTemplate" },
+        fields:     [{ id: String, label: String, value: String }],
+        artworkUrl: { type: String },   // composed/placed custom artwork (create-your-own)
+        side:       { type: String },   // front | back …
+        previewUrl: { type: String },   // buyer-facing preview thumbnail
+    },
+    // Multi-vertical routing: which fulfiller handles this line (default POD/print).
+    vertical: { type: String, enum: ["pod", "dropship", "warehouse"], default: "pod" },
+    dropshipSupplierEmail: { type: String },   // dropship: where the reorder/fulfillment notice goes
+    warehouseSku: { type: String },            // warehouse (FBP): the stocked SKU to pick/pack
   },
   { suppressWarning: true }
 );

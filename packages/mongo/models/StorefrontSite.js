@@ -43,7 +43,11 @@ const Theme = new mongoose.Schema({
 }, { _id: false });
 
 const schema = new mongoose.Schema({
-    orgId:  { type: mongoose.Schema.Types.ObjectId, ref: "Organization", required: true, unique: true },
+    // An org can run MULTIPLE storefronts (extra stores billed per the plan). The entitlement
+    // (plan + subscription) lives on the `primary` site; secondary sites share the org's catalog.
+    orgId:  { type: mongoose.Schema.Types.ObjectId, ref: "Organization", required: true, index: true },
+    name:   { type: String, default: "My store" },
+    primary:{ type: Boolean, default: true },   // the entitlement-bearing site
     status: { type: String, enum: ["draft", "published", "disabled"], default: "draft" },
     // "commerce" = storefront with products/cart/checkout.
     // "business" = brochure / lead-gen site for professionals (no cart) — gates which
@@ -62,6 +66,15 @@ const schema = new mongoose.Schema({
     // ── Plan / billing flags ─────────────────────────────────────────────────
     // Custom domain is bundled into the Storefront tier (gated by `plan`), not sold per-URL.
     plan:      { type: String, enum: ["none", "starter", "pro", "enterprise"], default: "none" },
+    // Storefront add-on subscription (separate from the org's platform tier). `plan !== "none"`
+    // is what unlocks the storefront tools in the menu — set by the billing webhook on payment.
+    subscription: {
+        stripeSubscriptionId: { type: String },
+        status:               { type: String },   // active | past_due | canceled
+        startedAt:            { type: Date },
+        canceledAt:           { type: Date },
+        extraStoreItemId:     { type: String },    // Stripe subscription-item id for billed extra stores
+    },
     aiEnabled: { type: Boolean, default: false },   // separate paid add-on — gates the AI editor
     appEnabled:{ type: Boolean, default: false },   // separate paid add-on — white-label mobile app
     // Identifies this storefront to its white-label mobile app build (mobile has no host

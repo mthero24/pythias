@@ -60,6 +60,11 @@ export default function CartView() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 600 }}>{i.title}</div>
                             <div style={{ fontSize: "0.82rem", opacity: 0.6 }}>{[i.color, i.size].filter(Boolean).join(" · ")}</div>
+                            {i.personalization?.fields?.length > 0 && (
+                                <div style={{ fontSize: "0.78rem", marginTop: 4, color: "var(--sf-secondary, #16a34a)" }}>
+                                    ✏️ Personalized — {i.personalization.fields.filter((f) => f.value).map((f) => `${f.label}: “${f.value}”`).join(", ")}
+                                </div>
+                            )}
                             <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
                                 <button onClick={() => saveForLater(k)} style={{ background: "none", border: "none", color: "var(--sf-secondary, #16a34a)", cursor: "pointer", padding: 0, fontSize: "0.8rem", fontWeight: 600 }}>Save for later</button>
                                 <button onClick={() => remove(k)} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", padding: 0, fontSize: "0.8rem" }}>Remove</button>

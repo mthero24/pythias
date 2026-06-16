@@ -13,7 +13,7 @@ export async function GET(req, { params }) {
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const order = await PlatformOrder.findOne({ _id: id, orgId: auth.orgId, customerEmail: auth.customer.email })
-        .select("poNumber date status paid shippingInfo shippingCost taxRate shippingAddress")
+        .select("poNumber date status paid shippingInfo shippingCost taxRate shippingAddress fulfillmentGroups")
         .lean();
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
@@ -48,6 +48,10 @@ export async function GET(req, { params }) {
             lines,
             totals: { subtotal, shipping, tax, total: subtotal + shipping + tax },
             tracking,
+            // Only surface fulfillment grouping when the order is split across >1 fulfiller.
+            fulfillment: (order.fulfillmentGroups?.length > 1)
+                ? order.fulfillmentGroups.map((g) => ({ vertical: g.vertical, itemCount: g.itemCount, status: g.status }))
+                : null,
         },
     });
 }

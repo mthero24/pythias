@@ -6,7 +6,7 @@ import { track } from "@/components/analytics/tracker";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 // Variant selector + price + add-to-cart.
-export default function BuyBox({ productId, title, images = [], variants = [] }) {
+export default function BuyBox({ productId, title, images = [], variants = [], getPersonalization }) {
     const { add } = useCart();
     const { price: fmtPrice, t } = useI18n();
     const colors = useMemo(() => [...new Set(variants.map((v) => v.color).filter(Boolean))], [variants]);
@@ -15,6 +15,7 @@ export default function BuyBox({ productId, title, images = [], variants = [] })
     const [color, setColor] = useState(colors[0] ?? "");
     const [size, setSize]   = useState(sizes[0] ?? "");
     const [added, setAdded] = useState(false);
+    const [err, setErr]     = useState("");
 
     // Product analytics: count a product view.
     useEffect(() => { track("product_view", { productId }); }, [productId]);
@@ -30,11 +31,21 @@ export default function BuyBox({ productId, title, images = [], variants = [] })
 
     const addToCart = () => {
         if (!match) return;
+        // Custom products capture the buyer's personalization; each gets a unique key so two
+        // differently-personalized items never merge into one cart line.
+        let personalization, customKey;
+        if (getPersonalization) {
+            const r = getPersonalization();
+            if (r?.error) { setErr(r.error); return; }
+            if (r) { personalization = r; customKey = `c${Date.now()}${Math.floor(Math.random() * 1000)}`; }
+        }
+        setErr("");
         add({
             productId, sku: match.sku, title,
             priceCents: Math.round((match.price || 0) * 100),
             color: match.color || "", size: match.size || "",
             image: match.image || images[0] || null,
+            ...(personalization ? { personalization, customKey } : {}),
         });
         setAdded(true);
         setTimeout(() => setAdded(false), 2500);
@@ -78,6 +89,7 @@ export default function BuyBox({ productId, title, images = [], variants = [] })
                 }} />
             </div>
             {added && <a href="/cart" style={{ marginLeft: 16, color: "var(--sf-secondary)", fontWeight: 600 }}>View cart →</a>}
+            {err && <div style={{ color: "#dc2626", fontSize: "0.88rem", marginTop: 10 }}>{err}</div>}
         </div>
     );
 }

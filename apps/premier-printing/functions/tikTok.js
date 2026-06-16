@@ -498,46 +498,56 @@ export async function getTikTokAttributes(productName = "t-shirt") {
 export const getOrders = async (auths)=>{
     let orders = []
     for(let a of auths){
-        if(a.pullOrders === false) continue  // user opted to pull via ShipStation instead
+        if(a.pullOrders === false) { console.log(`[tiktok getOrders] skipping ${a.seller_name || a._id} — pullOrders disabled`); continue }  // user opted to pull via ShipStation instead
+
+        // Lazy-fill shop_list if it was never populated — otherwise the loop below
+        // never runs and orders pull in silently as zero.
+        if (!a.shop_list?.length) {
+            console.log(`[tiktok getOrders] ${a.seller_name || a._id} has empty shop_list — fetching authorized shops`);
+            let shop = await getAuthorizedShops(a);
+            if (shop?.error && shop?.msg == "refresh") {
+                a = await refresh(a);
+                shop = await getAuthorizedShops(a);
+            }
+            if (shop?.shop_list?.length) {
+                a.shop_list = shop.shop_list;
+                await a.save();
+            } else {
+                console.error(`[tiktok getOrders] ${a.seller_name || a._id} — no authorized shops found, skipping`);
+                continue;
+            }
+        }
+
         for(let store of a.shop_list){
             let credentials = a
-            //console.log(store.shop_cipher);
             credentials.shop_cipher = store.shop_cipher
-            //console.log(credentials, "credentials");
             let res = await getOrdersTikTok({credentials});
-            //console.log(res.error && res.msg == "refresh");
             if (res.error && res.msg == "refresh") {
                 credentials = await refresh(credentials, store.shop_cipher);
                 res = await getOrdersTikTok({ credentials});
             }
-            console.log(!res.error, "res")
-            if(!res.error) {
-                let ords = [];
-                for (let o of res.orders) {
-                    o.tikTokShop = {
-                        sellerName: credentials.seller_name,
-                        sellerId: credentials._id,
-                        shopId: store.shop_id,
-                    };
-                    console.log(o)
-                    ords.push(o);
-                }
-                console.log(ords, "orders")
-                orders = orders.concat(ords)
+            if(res.error) {
+                console.error(`[tiktok getOrders] shop ${store.shop_id} fetch failed: ${res.msg}`);
+                continue;
             }
+            const ords = (res.orders || []).map(o => ({
+                ...o,
+                tikTokShop: { sellerName: credentials.seller_name, sellerId: credentials._id, shopId: store.shop_id },
+            }));
+            console.log(`[tiktok getOrders] shop ${store.shop_id}: ${ords.length} AWAITING_SHIPMENT order(s)`);
+            orders = orders.concat(ords)
         }
     }
-    console.log(orders)
+    console.log(`[tiktok getOrders] total fetched: ${orders.length}`);
     return orders
 }
 
 export const processOrders = async (orders)=>{
+    let created = 0, updated = 0, failed = 0;
     for(let o of orders){
-        let order = await Order.findOne({poNumber: o.id})
+      try {
+        let order = await Order.findOne({poNumber: o.id}).populate("items")
         if (!order) {
-            //console.log(o);
-            //console.log(o.recipient_address)
-            //console.log(o.recipient_address.district_info);
             order = new Order({
                 orderId: `${o.create_time}_${o.id}`,
                 poNumber: o.id,
@@ -806,6 +816,7 @@ export const processOrders = async (orders)=>{
             }
             order.items = items.map(i => i._id);
             await order.save();
+            created++;
         } else {
             order.status = o.orderStatus;
             if (order.status == "shipped") {
@@ -823,9 +834,15 @@ export const processOrders = async (orders)=>{
                 }));
             }
             await order.save();
+            updated++;
         }
+      } catch (e) {
+        failed++;
+        console.error(`[tiktok processOrders] order ${o?.id} failed: ${e.message}`);
+      }
     }
-    return {error: false}
+    console.log(`[tiktok processOrders] created: ${created}, updated: ${updated}, failed: ${failed}`);
+    return { error: false, created, updated, failed }
 }
 
 // Convenience entry point: pull + process orders for every premierPrinting TikTok shop
@@ -833,8 +850,11 @@ export const processOrders = async (orders)=>{
 // the ShipStation/direct-connection orders instead of requiring a separate trigger.
 export async function pullTikTokOrders() {
     const auths = await TikTokAuth.find({ provider: "premierPrinting" });
-    if (!auths.length) return { error: false, pulled: 0 };
+    if (!auths.length) {
+        console.log("[pullTikTokOrders] no TikTokAuth records for premierPrinting");
+        return { error: false, authCount: 0, pulled: 0, created: 0, updated: 0, failed: 0 };
+    }
     const orders = await getOrders(auths);
-    await processOrders(orders);
-    return { error: false, pulled: orders.length };
+    const result = await processOrders(orders);
+    return { error: false, authCount: auths.length, pulled: orders.length, ...result };
 }

@@ -191,6 +191,20 @@ const schema = new mongoose.Schema({
   inStorePickup:   { type: Boolean, default: false },
   // ── Storefront (Commerce Cloud) order fields ──────────────────────
   source:               { type: String },                 // e.g. "storefront"
+  // Multi-vertical fulfillment: one storefront cart can mix a POD shirt, a dropshipped
+  // electronic, and a warehoused supplement — each routed to its own fulfiller. The routing
+  // engine splits the order by item.vertical and records one group per fulfiller here.
+  fulfillmentGroups: [{
+    vertical:  { type: String },   // pod | dropship | warehouse
+    handler:   { type: String },   // provider | supplier | warehouse
+    status:    { type: String },   // routed | pending_supplier | pending_warehouse | unroutable
+    itemCount: { type: Number },
+    ref:       { type: String },   // providerId / supplier email / warehouse ref
+    reason:    { type: String },
+  }],
+  // Acquisition attribution — the channel/UTM of the session that placed this order (resolved at
+  // placement from the analytics session). Powers REAL per-order channel ROI.
+  attribution: { source: String, medium: String, campaign: String },
   paymentRef:           { type: String, sparse: true },   // Stripe PaymentIntent id — webhook idempotency key
   taxAmountCents:       { type: Number, default: 0 },      // Stripe Tax amount actually charged
   rewardsRedeemedCents: { type: Number, default: 0 },      // store credit applied at checkout
@@ -204,7 +218,7 @@ const schema = new mongoose.Schema({
     subtotalCents:  { type: Number },
     wholesaleCents: { type: Number },
     stripeFeeCents: { type: Number },
-    status:         { type: String, enum: ["pending", "paid", "skipped"], default: "pending" },
+    status:         { type: String, enum: ["pending", "paid", "skipped", "clawed_back"], default: "pending" },
     transferId:     { type: String },
     paidAt:         { type: Date },
   },

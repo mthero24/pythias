@@ -80,7 +80,22 @@
       "Bash(ls apps/pythias-platform/scripts/)",
       "Bash(ls apps/pythias-platform/ecosystem* ecosystem*)",
       "Bash(find . -maxdepth 3 -name \"ecosystem*.js\" -not -path \"*/node_modules/*\")",
-      "Bash(ls apps/pythias-platform/app/api/internal/)"
+      "Bash(ls apps/pythias-platform/app/api/internal/)",
+      "WebFetch(domain:developer.x.com)",
+      "Bash(grep -iE \"^\\(jszip|adm-zip|yauzl|unzipper|node-stream-zip\\)$\")",
+      "Bash(grep -n \"Auto-pull Microsoft\\\\|Auto-pull Meta\\\\|The daily cron \\(\\\\`storefront-adspend\\\\`\\)\" docs/channel-syndication-setup.md)",
+      "Bash(node apps/pythias-platform/scripts/goLiveCheck.js)",
+      "Bash(echo \"\\(exit $?\\)\")",
+      "Bash(echo \"storefront exit=$?\")",
+      "PowerShell(Get-NetTCPConnection -State Listen | Where-Object { $_.LocalPort -in 3000,3001,3002,3007,3010,3020 } | Select-Object LocalPort, OwningProcess | Sort-Object LocalPort -Unique | ForEach-Object { $p = \\(Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue\\); \"{0} -> PID {1} \\({2}\\)\" -f $_.LocalPort, $_.OwningProcess, $p.ProcessName })",
+      "PowerShell($pm2 = \\(Get-Command pm2 -ErrorAction SilentlyContinue\\); if \\($pm2\\) { pm2 jlist 2>$null | ConvertFrom-Json | Select-Object name, pid, @{n='port';e={$_.pm2_env.env.PORT}}, @{n='status';e={$_.pm2_env.status}} | Format-Table -Auto } else { \"pm2 not found on PATH\" }; \"--- PID 37868 \\(port 3007\\) ---\"; \\(Get-CimInstance Win32_Process -Filter \"ProcessId=37868\" -ErrorAction SilentlyContinue\\).CommandLine)",
+      "PowerShell(foreach \\($port in 3007,3010,3020\\) { $c = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue; foreach \\($conn in $c\\) { try { Stop-Process -Id $conn.OwningProcess -Force -ErrorAction Stop; \"killed PID $\\($conn.OwningProcess\\) on $port\" } catch { \"could not kill $\\($conn.OwningProcess\\): $_\" } } }; Start-Sleep -Seconds 5; \"--- after 5s ---\"; foreach \\($port in 3007,3010,3020\\) { $c = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue; if \\($c\\) { \"$port still LISTENING \\(PID $\\($c[0].OwningProcess\\)\\) — likely respawned by a supervisor\" } else { \"$port free\" } })",
+      "PowerShell(Start-Sleep -Seconds 6; foreach \\($port in 3010,3020\\) { $c = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue; if \\($c\\) { \"$port LISTENING \\(PID $\\($c[0].OwningProcess\\)\\) ✓\" } else { \"$port not up yet\" } })",
+      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force; \"stopped old storefront \\(PID $\\($c[0].OwningProcess\\)\\)\" } Start-Sleep -Seconds 2; \"3020 free: $\\(-not \\(Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue\\)\\)\")",
+      "PowerShell(Start-Sleep -Seconds 6; $c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { \"3020 LISTENING \\(PID $\\($c[0].OwningProcess\\)\\) ✓\" } else { \"not up\" })",
+      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force; \"stopped old storefront\" }; Start-Sleep -Seconds 2)",
+      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force; \"stopped\" }; Start-Sleep -Seconds 2)",
+      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force }; Start-Sleep -Seconds 2; \"stopped\")"
     ]
   }
 }

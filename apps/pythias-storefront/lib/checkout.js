@@ -1,4 +1,4 @@
-import { PlatformOrder, PlatformItem, StorefrontCustomer } from "@pythias/mongo";
+import { PlatformOrder, PlatformItem, StorefrontCustomer, StorefrontSession, screenOrder } from "@pythias/mongo";
 import { validateCart } from "@/lib/cart";
 import { enrollFlows } from "@/lib/flows";
 import { computeRedeemable, redeemForOrder, earnForOrder } from "@/lib/rewards";
@@ -59,7 +59,11 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
 //
 // NOTE: payment must be confirmed BEFORE calling this (next increment: Stripe webhook
 // gates it). It's idempotent-friendly via `paymentRef` (skips if an order already exists).
-export async function placeOrder({ orgId, site, customer, items, shippingAddress, email, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0, stripeFeeCents = 0, paymentRef }) {
+export async function placeOrder({ orgId, site, customer, items, shippingAddress, email, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0, stripeFeeCents = 0, paymentRef, ip, analyticsSessionId }) {
+    // Network fraud screening — a bad actor flagged by ANY store on the network is blocked here.
+    const screen = await screenOrder({ email: email || customer?.email, phone: shippingAddress?.phone, shippingAddress, ip }).catch(() => null);
+    if (screen?.level === "block") { const err = new Error("This order couldn't be completed. Please contact support."); err.code = "fraud_block"; throw err; }
+
     if (paymentRef) {
         const existing = await PlatformOrder.findOne({ orgId, paymentRef }).select("_id poNumber").lean();
         if (existing) return { orderId: String(existing._id), poNumber: existing.poNumber, duplicate: true };
@@ -78,11 +82,19 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
     };
     if (!addr.name || !addr.address1 || !addr.city) throw new Error("Shipping address is incomplete (name, address, city required)");
 
+    // Resolve acquisition channel from the analytics session (for real per-order channel ROI).
+    let attribution;
+    if (analyticsSessionId) {
+        const s = await StorefrontSession.findOne({ orgId, sessionId: analyticsSessionId }).select("utmSource utmMedium utmCampaign").lean().catch(() => null);
+        if (s) attribution = { source: s.utmSource || "direct", medium: s.utmMedium, campaign: s.utmCampaign };
+    }
+
     const poNumber = `SF${Date.now().toString(36).toUpperCase()}${Math.floor(Math.random() * 1000)}`;
     const order = await PlatformOrder.create({
         orgId,
         marketplace: "Commerce Cloud",
         source: "storefront",
+        ...(attribution ? { attribution } : {}),
         poNumber,
         orderId: poNumber,                 // required + unique
         shippingType: "shipping",          // CC storefront orders always ship
@@ -131,6 +143,12 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
                 type: l.printType || null,
                 name: l.title,
                 price: l.priceCents / 100, sku: l.sku || undefined, product: l.productId,
+                // Buyer personalization (custom-text design) — production renders artwork from this.
+                ...(l.personalization ? { personalization: l.personalization, custom: true } : {}),
+                // Multi-vertical routing tags (routeOrder splits the order by these).
+                vertical: l.vertical || "pod",
+                dropshipSupplierEmail: l.dropshipSupplierEmail || undefined,
+                warehouseSku: l.warehouseSku || undefined,
             });
         }
     }

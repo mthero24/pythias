@@ -64,6 +64,10 @@ import AppsIcon from "@mui/icons-material/Apps";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import LabelIcon from "@mui/icons-material/Label";
 import SellIcon from "@mui/icons-material/Sell";
+import ShieldIcon from "@mui/icons-material/Shield";
+import GavelIcon from "@mui/icons-material/Gavel";
+import HandshakeIcon from "@mui/icons-material/Handshake";
+import PodcastsIcon from "@mui/icons-material/Podcasts";
 
 const DRAWER_WIDTH = 268;
 
@@ -118,6 +122,7 @@ const NAV_SECTIONS = [
     label: "Storefront",
     items: [
       { label: "Store Builder",  href: "/admin/store",            icon: <StorefrontIcon fontSize="small" />,  showCSV: false },
+      { label: "Stores",         href: "/admin/store/stores",     icon: <StorefrontIcon fontSize="small" />,  showCSV: false },
       { label: "Autopilot",      href: "/admin/store/autopilot",  icon: <AutoFixHighIcon fontSize="small" />, showCSV: false },
       { label: "Collections",    href: "/admin/store/collections",icon: <CategoryIcon fontSize="small" />,    showCSV: false },
       { label: "Discounts",      href: "/admin/store/discounts",  icon: <LocalOfferIcon fontSize="small" />,  showCSV: false },
@@ -130,6 +135,11 @@ const NAV_SECTIONS = [
       { label: "Automations",    href: "/admin/store/automations",icon: <CampaignIcon fontSize="small" />,    showCSV: false },
       { label: "Site Analytics", href: "/admin/store/analytics",  icon: <QueryStatsIcon fontSize="small" />,  showCSV: false },
       { label: "Profit",         href: "/admin/store/profit",     icon: <PaidIcon fontSize="small" />,        showCSV: false },
+      { label: "Demand",         href: "/admin/store/demand",     icon: <TrendingUpIcon fontSize="small" />,  showCSV: false },
+      { label: "Network Protection", href: "/admin/store/network", icon: <ShieldIcon fontSize="small" />,    showCSV: false },
+      { label: "Merchant of Record", href: "/admin/store/mor",     icon: <GavelIcon fontSize="small" />,     showCSV: false },
+      { label: "Earn as Fulfiller",  href: "/admin/store/supplier", icon: <HandshakeIcon fontSize="small" />, showCSV: false },
+      { label: "Sales Channels",     href: "/admin/store/channels", icon: <PodcastsIcon fontSize="small" />,  showCSV: false },
       { label: "SEO Pages",      href: "/admin/store/seo-pages",  icon: <MenuBookIcon fontSize="small" />,    showCSV: false },
       { label: "Payouts",        href: "/admin/store/payouts",    icon: <AttachMoneyIcon fontSize="small" />, showCSV: false },
     ],

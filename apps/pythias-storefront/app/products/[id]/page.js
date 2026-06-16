@@ -5,6 +5,7 @@ import { PlatformProduct, StorefrontReviewSummary } from "@pythias/mongo";
 import { SiteFrame, productJsonLd } from "@pythias/storefront";
 import NoSite from "@/components/NoSite";
 import BuyBox from "@/components/BuyBox";
+import CustomizableBuyBox from "@/components/customizer/CustomizableBuyBox";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
 import { siteMetadata } from "@/lib/siteMeta";
 
@@ -27,7 +28,7 @@ export default async function ProductDetailPage({ params }) {
             // Scoped to the site's org so one storefront can't load another's product.
             product = await PlatformProduct.findOne({ _id: id, orgId: site.orgId, active: { $ne: false } })
                 .populate("variantsArray.color", "name")
-                .select("title description productImages variantsArray")
+                .select("title description productImages variantsArray designTemplateId")
                 .lean();
         } catch { product = null; }
     }
@@ -96,7 +97,9 @@ export default async function ProductDetailPage({ params }) {
                     </div>
                     <div>
                         <h1 style={{ fontSize: "1.9rem", margin: "0 0 16px" }}>{product.title}</h1>
-                        <BuyBox productId={String(product._id)} title={product.title} images={images} variants={variants} />
+                        {product.designTemplateId
+                            ? <CustomizableBuyBox productId={String(product._id)} title={product.title} images={images} variants={variants} templateId={String(product.designTemplateId)} />
+                            : <BuyBox productId={String(product._id)} title={product.title} images={images} variants={variants} />}
                         {product.description && (
                             <div style={{ marginTop: 28, lineHeight: 1.7, opacity: 0.9, whiteSpace: "pre-wrap" }}>{product.description}</div>
                         )}

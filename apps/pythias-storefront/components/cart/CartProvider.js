@@ -8,7 +8,7 @@ import { track } from "@/components/analytics/tracker";
 const CartCtx = createContext(null);
 const KEY = "sf_cart_v1";
 const SAVED_KEY = "sf_saved_v1";
-const lineKey = (i) => `${i.productId}::${i.sku || ""}`;
+const lineKey = (i) => `${i.productId || i.blankId || ""}::${i.sku || ""}::${i.customKey || ""}`;
 
 // Union two line lists by lineKey; for cart overlaps take the larger qty (avoids runaway
 // doubling when the same item was added on two devices).

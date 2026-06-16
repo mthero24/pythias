@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { StorefrontSite, StorefrontCustomer, StorefrontCheckoutSession, StorefrontSubscription } from "@pythias/mongo";
+import { StorefrontSite, StorefrontCustomer, StorefrontCheckoutSession, StorefrontSubscription, PlatformOrder, StorefrontDispute, reportNetworkFraud } from "@pythias/mongo";
 import { placeOrder } from "@/lib/checkout";
+import { clawbackOrderPayout } from "@/lib/payouts";
 import { routeOrderViaPlatform } from "@/lib/routing";
 import { enqueueSubscriptionStarted } from "@/lib/emailFlows";
 import { storefrontStripe, STOREFRONT_WEBHOOK_SECRET } from "@/lib/stripe";
@@ -47,6 +48,7 @@ export async function POST(req) {
                     taxCents: session.taxCents || 0,
                     stripeFeeCents,
                     paymentRef: pi.id,   // idempotency key
+                    analyticsSessionId: session.analyticsSessionId,
                 });
                 // Record the Stripe Tax transaction for filing (best-effort).
                 if (session.taxCalcId) {
@@ -88,6 +90,50 @@ export async function POST(req) {
                 return NextResponse.json({ error: "Order placement failed" }, { status: 500 });
             }
         }
+    }
+
+    // Chargeback opened → (1) network fraud blocklist, (2) record it in the MoR dispute ledger.
+    // Pythias is the merchant of record, so the dispute is ours to manage; the seller is shielded.
+    if (event.type === "charge.dispute.created") {
+        const dispute = event.data.object;
+        try {
+            const order = await PlatformOrder.findOne({ paymentRef: dispute.payment_intent, source: "storefront" }).select("orgId poNumber customerEmail shippingAddress").lean();
+            if (order) {
+                if (order.customerEmail) await reportNetworkFraud({ type: "email", value: order.customerEmail, reason: "chargeback", orgId: order.orgId, severity: 3 });
+                if (order.shippingAddress?.address1) await reportNetworkFraud({ type: "address", value: `${order.shippingAddress.address1}|${order.shippingAddress.zip || ""}`, reason: "chargeback", orgId: order.orgId, severity: 3 });
+                if (order.shippingAddress?.phone) await reportNetworkFraud({ type: "phone", value: order.shippingAddress.phone, reason: "chargeback", orgId: order.orgId, severity: 3 });
+
+                await StorefrontDispute.findOneAndUpdate(
+                    { stripeDisputeId: dispute.id },
+                    { $set: {
+                        orgId: order.orgId, orderId: order._id, poNumber: order.poNumber,
+                        chargeId: dispute.charge, paymentIntentId: dispute.payment_intent,
+                        amountCents: dispute.amount, currency: dispute.currency, reason: dispute.reason,
+                        status: dispute.status, state: "open", customerEmail: order.customerEmail,
+                        openedAt: new Date(dispute.created * 1000),
+                        dueBy: dispute.evidence_details?.due_by ? new Date(dispute.evidence_details.due_by * 1000) : undefined,
+                    } },
+                    { upsert: true }
+                );
+            }
+        } catch (e) { console.error("[storefront webhook] dispute.created handling failed:", e.message); }
+    }
+
+    // Chargeback resolved → update the ledger; on a loss, claw back the seller's payout (MoR ate it).
+    if (event.type === "charge.dispute.closed") {
+        const dispute = event.data.object;
+        try {
+            const won = dispute.status === "won";
+            const rec = await StorefrontDispute.findOneAndUpdate(
+                { stripeDisputeId: dispute.id },
+                { $set: { status: dispute.status, state: won ? "won" : "lost", resolvedAt: new Date() } },
+                { new: true }
+            );
+            if (rec && !won && rec.orderId) {
+                const r = await clawbackOrderPayout(rec.orderId, "dispute_lost");
+                if (r.status === "clawed_back") await StorefrontDispute.updateOne({ _id: rec._id }, { $set: { payoutClawedBack: true } });
+            }
+        } catch (e) { console.error("[storefront webhook] dispute.closed handling failed:", e.message); }
     }
 
     return NextResponse.json({ received: true });

@@ -25,6 +25,20 @@ const schema = new mongoose.Schema({
     allowOverflowOut:  { type: Boolean, default: false },
     // Threshold that triggers auto overflow-out: multiplier of average daily volume
     overflowThreshold: { type: Number, default: 2 },
+    // ── Seller-as-supplier KYC gate ──────────────────────────────────────────
+    // A seller enrolling as a network fulfiller must pass KYC before orders route to them.
+    // Until verified, acceptsCommerceCloud stays false so the routing engine skips them.
+    kycStatus: { type: String, enum: ["none", "submitted", "verified", "rejected"], default: "none" },
+    kyc: {
+        legalName:    { type: String },
+        taxId:        { type: String },   // EIN / SSN — store minimally
+        businessType: { type: String },
+        address:      { type: String },
+        contactEmail: { type: String },
+        submittedAt:  { type: Date },
+        reviewedAt:   { type: Date },
+        reason:       { type: String },   // rejection reason
+    },
 }, { timestamps: true });
 
 export default PlatformDB.model("ProviderCapacity", schema);

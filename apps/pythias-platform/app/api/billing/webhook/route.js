@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Organization, UsageLedger } from "@pythias/mongo";
+import { Organization, UsageLedger, StorefrontSite } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
 import { getStripe } from "@/lib/stripe";
 
@@ -21,6 +21,19 @@ export async function POST(req) {
             // Wallet top-up via Stripe Checkout — credit the wallet and save the card.
             case "checkout.session.completed": {
                 const s = event.data.object;
+                // Storefront add-on subscription → unlock the storefront tools (set the plan).
+                if (s.metadata?.kind === "storefront_subscription") {
+                    const plan = s.metadata.plan;
+                    if (s.metadata.orgId && plan) {
+                        await StorefrontSite.findOneAndUpdate(
+                            { orgId: s.metadata.orgId },
+                            { $set: { plan, "subscription.stripeSubscriptionId": s.subscription || null, "subscription.status": "active", "subscription.startedAt": new Date() }, $setOnInsert: { orgId: s.metadata.orgId } },
+                            { upsert: true }
+                        );
+                        if (s.customer) await Organization.findByIdAndUpdate(s.metadata.orgId, { $set: { stripeCustomerId: s.customer } });
+                    }
+                    break;
+                }
                 if (s.metadata?.kind !== "wallet_topup" || s.payment_status !== "paid") break;
                 const amount = parseInt(s.metadata.amountCents, 10) || 0;
                 const set = { "wallet.lastRechargedAt": new Date() };
@@ -67,6 +80,14 @@ export async function POST(req) {
 
             case "customer.subscription.deleted": {
                 const sub = event.data.object;
+                // Storefront add-on subscription canceled → re-lock the storefront tools.
+                if (sub.metadata?.kind === "storefront_subscription") {
+                    await StorefrontSite.findOneAndUpdate(
+                        { "subscription.stripeSubscriptionId": sub.id },
+                        { $set: { plan: "none", "subscription.status": "canceled", "subscription.canceledAt": new Date() } }
+                    );
+                    break;
+                }
                 const org = await Organization.findOne({ stripeCustomerId: sub.customer });
                 if (org) {
                     await Organization.findByIdAndUpdate(org._id, { status: 'cancelled' });

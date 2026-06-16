@@ -4,6 +4,7 @@ import { StorefrontMessage } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
 import { sendEmail } from "@/lib/email";
 import { sendSMS } from "@/lib/sms";
+import { isNetworkSuppressed } from "@pythias/mongo";
 import { isSuppressed, recordBlockUsage } from "@/lib/marketing";
 
 // POST /api/internal/outbox/drain  (run on a short interval by PM2)
@@ -30,6 +31,10 @@ export async function POST(req) {
         if (!msg) break;
         processed++;
 
+        // Network-wide suppression (hard bounce/complaint anywhere) — skip ALL categories.
+        if (await isNetworkSuppressed(msg.channel, msg.to)) {
+            msg.status = "skipped"; msg.error = "network-suppressed"; await msg.save(); skipped++; continue;
+        }
         // Marketing: honor opt-outs at send time.
         if (msg.category === "marketing" && await isSuppressed(msg.orgId, msg.channel, msg.to)) {
             msg.status = "skipped"; msg.error = "suppressed"; await msg.save(); skipped++; continue;

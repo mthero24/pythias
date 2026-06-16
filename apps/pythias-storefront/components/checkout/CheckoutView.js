@@ -10,11 +10,28 @@ const authHeaders = () => {
     const t = typeof window !== "undefined" && localStorage.getItem("sf_token");
     return t ? { Authorization: `Bearer ${t}` } : {};
 };
-const apiItems = (items) => items.map((i) => ({ productId: i.productId, sku: i.sku, qty: i.qty }));
+const apiItems = (items) => items.map((i) => (
+    i.blankId
+        ? { blankId: i.blankId, styleCode: i.styleCode, color: i.color, size: i.size, sku: i.sku, image: i.image, title: i.title, qty: i.qty, personalization: i.personalization, customKey: i.customKey }
+        : { productId: i.productId, sku: i.sku, qty: i.qty, ...(i.personalization ? { personalization: i.personalization, customKey: i.customKey } : {}) }
+));
 
 const inputSx = { width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.18)", fontSize: "0.95rem" };
 
-export default function CheckoutView() {
+// Merchant-of-record legal entity — env-configurable (must be NEXT_PUBLIC_ to read client-side).
+const MOR_ENTITY = process.env.NEXT_PUBLIC_MOR_ENTITY || "Pythias Technologies LLC";
+
+// Merchant-of-record disclosure — Pythias is the seller of record; the store is the brand.
+function MoRDisclosure({ storeName }) {
+    return (
+        <div style={{ fontSize: "0.74rem", color: "#94a3b8", textAlign: "center", lineHeight: 1.5, marginTop: 4 }}>
+            Sold by <b style={{ color: "#64748b" }}>{storeName || "this store"}</b> · Merchant of Record: {MOR_ENTITY}<br />
+            Your card statement will show <b style={{ color: "#64748b" }}>{MOR_ENTITY}</b>. Tax is collected and remitted by the merchant of record.
+        </div>
+    );
+}
+
+export default function CheckoutView({ storeName }) {
     const { items, ready, clear } = useCart();
     const { price: money } = useI18n();
     const [form, setForm] = useState({ email: "", name: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" });
@@ -63,7 +80,7 @@ export default function CheckoutView() {
         try {
             const res = await fetch("/api/checkout/intent", {
                 method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
-                body: JSON.stringify({ items: apiItems(items), email: form.email, shippingAddress: form, redeemCents: redeemCents(), promoCode, giftCardCode, subscribe: subscribe || undefined }),
+                body: JSON.stringify({ items: apiItems(items), email: form.email, shippingAddress: form, redeemCents: redeemCents(), promoCode, giftCardCode, subscribe: subscribe || undefined, analyticsSessionId: (typeof localStorage !== "undefined" && localStorage.getItem("sf_sid")) || undefined }),
             });
             const d = await res.json();
             if (d.error) { setError(typeof d.error === "string" ? d.error : "Could not start checkout"); return; }
@@ -156,12 +173,14 @@ export default function CheckoutView() {
                     <button onClick={startPayment} disabled={busy} style={{ padding: "14px", borderRadius: 10, border: "none", background: "var(--sf-accent)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
                         {busy ? "…" : "Continue to payment"}
                     </button>
+                    <MoRDisclosure storeName={storeName} />
                 </div>
             )}
 
             {step === "pay" && stripePromise && pay?.clientSecret && (
                 <Elements stripe={stripePromise} options={{ clientSecret: pay.clientSecret, appearance: { theme: "stripe" } }}>
                     <PaymentForm onPaid={() => { track("purchase", { revenueCents: totals?.totalCents, items: apiItems(items) }); clear(); window.location.href = "/checkout/success"; }} />
+                    <MoRDisclosure storeName={storeName} />
                 </Elements>
             )}
         </section>

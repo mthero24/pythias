@@ -67,6 +67,8 @@ import HubIcon from "@mui/icons-material/Hub";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AltRouteIcon from "@mui/icons-material/AltRoute";
 import HandshakeIcon from "@mui/icons-material/Handshake";
+import ShieldIcon from "@mui/icons-material/Shield";
+import PodcastsIcon from "@mui/icons-material/Podcasts";
 
 const DRAWER_WIDTH = 268;
 const SIDEBAR_BG = "#1a1f2e";
@@ -80,9 +82,24 @@ const SIDEBAR_ACTIVE_TEXT = "#fff";
 const SIDEBAR_ACCENT = "#6366f1";
 
 function buildSections(base, org) {
-    const sections = org?.orgType === "commerce"
+    let sections = org?.orgType === "commerce"
         ? buildCommerceSections(base)
         : buildFulfillmentSections(base);
+
+    // Gate the storefront product: if this org hasn't subscribed, hide every storefront-only
+    // item and surface a single "Learn about Storefront" link (→ welcome/signup page).
+    if (!org?.storefrontEnabled) {
+        sections = sections.map(section => {
+            if (!section.items.some(i => i.storefront)) return section;
+            const idx = section.items.findIndex(i => i.storefront);
+            const items = section.items.filter(i => !i.storefront);
+            items.splice(Math.min(idx, items.length), 0, {
+                label: "Learn about Storefront", path: "storefront/welcome",
+                icon: <StorefrontIcon fontSize="small" />, learn: true,
+            });
+            return { ...section, items };
+        });
+    }
 
     return sections.map(section => ({
         ...section,
@@ -181,20 +198,26 @@ function buildCommerceSections(base) {
             label: "Catalog",
             items: [
                 { label: "Garment Catalog",  path: "catalog",                icon: <CheckroomIcon fontSize="small" /> },
-                { label: "Storefront",       path: "storefront",             icon: <LanguageIcon fontSize="small" /> },
-                { label: "Autopilot",        path: "autopilot",              icon: <AutoFixHighIcon fontSize="small" /> },
-                { label: "Collections",      path: "collections",            icon: <CategoryIcon fontSize="small" /> },
-                { label: "Discounts",        path: "discounts",              icon: <LocalOfferIcon fontSize="small" /> },
-                { label: "Returns",          path: "returns",                icon: <AssignmentReturnIcon fontSize="small" /> },
-                { label: "Subscriptions",    path: "subscriptions",          icon: <AutorenewIcon fontSize="small" /> },
-                { label: "A/B Testing",      path: "experiments",            icon: <ScienceIcon fontSize="small" /> },
-                { label: "Reviews",          path: "reviews",                icon: <RateReviewIcon fontSize="small" /> },
-                { label: "Marketing",        path: "marketing",              icon: <CampaignIcon fontSize="small" /> },
-                { label: "Automations",      path: "automations",            icon: <AltRouteIcon fontSize="small" /> },
-                { label: "Site Analytics",   path: "analytics",              icon: <QueryStatsIcon fontSize="small" /> },
-                { label: "Profit",           path: "profit",                 icon: <PaidIcon fontSize="small" /> },
-                { label: "SEO Pages",        path: "seo-pages",              icon: <MenuBookIcon fontSize="small" /> },
-                { label: "International",     path: "international",           icon: <LanguageIcon fontSize="small" /> },
+                { label: "Storefront",       path: "storefront",             icon: <LanguageIcon fontSize="small" />,      storefront: true },
+                { label: "Stores",           path: "stores",                 icon: <StorefrontIcon fontSize="small" />,    storefront: true },
+                { label: "Autopilot",        path: "autopilot",              icon: <AutoFixHighIcon fontSize="small" />,   storefront: true },
+                { label: "Collections",      path: "collections",            icon: <CategoryIcon fontSize="small" />,      storefront: true },
+                { label: "Discounts",        path: "discounts",              icon: <LocalOfferIcon fontSize="small" />,    storefront: true },
+                { label: "Returns",          path: "returns",                icon: <AssignmentReturnIcon fontSize="small" />, storefront: true },
+                { label: "Subscriptions",    path: "subscriptions",          icon: <AutorenewIcon fontSize="small" />,     storefront: true },
+                { label: "A/B Testing",      path: "experiments",            icon: <ScienceIcon fontSize="small" />,       storefront: true },
+                { label: "Reviews",          path: "reviews",                icon: <RateReviewIcon fontSize="small" />,    storefront: true },
+                { label: "Network Protection", path: "network",              icon: <ShieldIcon fontSize="small" />,        storefront: true },
+                { label: "Merchant of Record", path: "mor",                  icon: <GavelIcon fontSize="small" />,         storefront: true },
+                { label: "Earn as Fulfiller",  path: "supplier",             icon: <HandshakeIcon fontSize="small" />,     storefront: true },
+                { label: "Marketing",        path: "marketing",              icon: <CampaignIcon fontSize="small" />,      storefront: true },
+                { label: "Automations",      path: "automations",            icon: <AltRouteIcon fontSize="small" />,      storefront: true },
+                { label: "Sales Channels",   path: "channels",               icon: <PodcastsIcon fontSize="small" />,      storefront: true },
+                { label: "Site Analytics",   path: "analytics",              icon: <QueryStatsIcon fontSize="small" />,    storefront: true },
+                { label: "Profit",           path: "profit",                 icon: <PaidIcon fontSize="small" />,          storefront: true },
+                { label: "Demand",           path: "demand",                 icon: <TrendingUpIcon fontSize="small" />,    storefront: true },
+                { label: "SEO Pages",        path: "seo-pages",              icon: <MenuBookIcon fontSize="small" />,      storefront: true },
+                { label: "International",     path: "international",           icon: <LanguageIcon fontSize="small" />,      storefront: true },
                 { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
                 { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
                 { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },
