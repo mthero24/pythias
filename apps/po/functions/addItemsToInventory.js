@@ -318,23 +318,41 @@ export const reconcileOrderedStatus = async ({ dryRun = false } = {}) => {
     const staleCount = await Items.countDocuments(staleFilter);
     const totalOrderedBefore = await Items.countDocuments({ stockStatus: "ordered" });
 
-    // Authoritative active-PO capacity (the "311") — sum of unreceived location quantities.
+    // Authoritative active-PO capacity — sum of unreceived location quantities. Also break it
+    // down per-PO so stale orders (physically received but never marked `received`) are visible.
     const activeOrders = await InventoryOrders.find(
-        { received: { $ne: true } }, "locations"
+        { received: { $ne: true } }, "poNumber vendor dateOrdered dateExpected received locations"
     ).lean();
     let activeCapacity = 0;
+    const perOrder = [];
     for (const po of activeOrders) {
+        let unreceivedQty = 0;
+        let locsTotal = 0, locsReceived = 0;
         for (const loc of po.locations || []) {
-            if (loc.received) continue;
-            for (const item of loc.items || []) activeCapacity += item.quantity ?? 0;
+            locsTotal++;
+            if (loc.received) { locsReceived++; continue; }
+            for (const item of loc.items || []) unreceivedQty += item.quantity ?? 0;
         }
+        activeCapacity += unreceivedQty;
+        perOrder.push({
+            poNumber: po.poNumber,
+            vendor: po.vendor,
+            dateOrdered: po.dateOrdered,
+            unreceivedQty,
+            locations: `${locsReceived}/${locsTotal} received`,
+        });
     }
+    // Oldest first — the long-stale ones at the top are the likely "never marked received" POs.
+    perOrder.sort((a, b) => new Date(a.dateOrdered || 0) - new Date(b.dateOrdered || 0));
 
     const report = {
         dryRun,
         totalOrderedBefore,
         staleOrderedToClear: staleCount,
         activePOCapacity: activeCapacity,
+        unreceivedOrderCount: activeOrders.length,
+        oldestUnreceived: perOrder[0]?.dateOrdered ?? null,
+        unreceivedOrders: perOrder,
     };
 
     if (dryRun) {
@@ -352,6 +370,72 @@ export const reconcileOrderedStatus = async ({ dryRun = false } = {}) => {
 
     report.totalOrderedAfter = await Items.countDocuments({ stockStatus: "ordered" });
     return report;
+};
+
+// Force-close stale inventory POs: orders left unreceived past a cutoff date that were
+// physically received long ago but never marked `received`. They inflate the active-PO
+// capacity, which makes the recompute legitimately flag items "ordered". Closing them (and
+// reversing their pending_quantity / inv.orders) drops the phantom capacity; the trailing
+// reconcile then re-buckets over-marked items back to "attached".
+// This does NOT restock inventory or print labels — it only closes the dead POs.
+//
+// dryRun=true reports what WOULD close without writing.
+export const closeStaleInventoryOrders = async ({ before, dryRun = false } = {}) => {
+    const cutoff = new Date(before);
+    if (isNaN(cutoff.getTime())) throw new Error(`invalid 'before' date: ${before}`);
+
+    const stale = await InventoryOrders.find({
+        received: { $ne: true },
+        dateOrdered: { $lt: cutoff },
+    });
+
+    let qtyToClose = 0;
+    const list = [];
+    for (const po of stale) {
+        let q = 0;
+        for (const loc of po.locations || []) {
+            if (loc.received) continue;
+            for (const it of loc.items || []) q += it.quantity ?? 0;
+        }
+        qtyToClose += q;
+        list.push({ poNumber: po.poNumber, vendor: po.vendor, dateOrdered: po.dateOrdered, unreceivedQty: q });
+    }
+    list.sort((a, b) => new Date(a.dateOrdered || 0) - new Date(b.dateOrdered || 0));
+
+    if (dryRun) {
+        return { dryRun: true, cutoff: before, ordersToClose: stale.length, qtyToClose, orders: list };
+    }
+
+    for (const po of stale) {
+        const invDelta = new Map(); // inventoryId -> unreceived qty being closed
+        for (const loc of po.locations || []) {
+            if (loc.received) continue;
+            for (const it of loc.items || []) {
+                const k = it.inventory?.toString();
+                if (k) invDelta.set(k, (invDelta.get(k) ?? 0) + (it.quantity ?? 0));
+            }
+            loc.received = true;
+        }
+        po.received = true;
+        po.markModified("locations");
+        po.markModified("received");
+        await po.save();
+
+        // Reverse the phantom pending + unlink this PO from each inventory.
+        for (const [invId, qty] of invDelta) {
+            const inv = await Inventory.findById(invId);
+            if (!inv) continue;
+            inv.pending_quantity = Math.max(0, (inv.pending_quantity ?? 0) - qty);
+            if (Array.isArray(inv.orders)) {
+                inv.orders = inv.orders.filter(o => o?.order?.toString() !== po._id.toString());
+            }
+            await inv.save();
+        }
+    }
+
+    // Re-bucket items now that the stale capacity is gone.
+    const reconcile = await reconcileOrderedStatus();
+    return { dryRun: false, cutoff: before, ordersClosed: stale.length, qtyClosed: qtyToClose, reconcile };
 };
 
 export async function tagBulkOrders() {
