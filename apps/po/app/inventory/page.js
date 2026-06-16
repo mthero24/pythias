@@ -2,7 +2,6 @@ import { Inventory } from "@pythias/mongo";
 import Blanks from "@/models/StyleV2";
 import { serialize } from "@pythias/backend";
 import { Main, getInv } from "@pythias/inventory";
-import ReconcileButton from "./ReconcileButton";
 
 export const dynamic = "force-dynamic";
 
@@ -30,19 +29,16 @@ export default async function InventoryPage({ searchParams }) {
     }, 0);
 
     return (
-        <>
-            <ReconcileButton />
-            <Main
-                bla={serialize(res.blanks)}
-                it={[]}
-                defaultLocation="Ohio"
-                binType="location"
-                pagination={true}
-                cou={res.count}
-                pa={page}
-                q={term}
-                totalValue={totalValue}
-            />
-        </>
+        <Main
+            bla={serialize(res.blanks)}
+            it={[]}
+            defaultLocation="Ohio"
+            binType="location"
+            pagination={true}
+            cou={res.count}
+            pa={page}
+            q={term}
+            totalValue={totalValue}
+        />
     );
 }
