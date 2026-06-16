@@ -1,6 +1,8 @@
-import { PlatformDesign as Design, PlatformItem as Item, PlatformBlank as Blank, PlatformOrder as Order, PlatformProduct as Products, PlatformInventory as Inventory, PlatformInventoryOrder as InventoryOrders, PlatformProductInventory as ProductInventory, Converters, ApiKeyIntegrations } from "@pythias/mongo";
+import { PlatformDesign as Design, PlatformItem as Item, PlatformBlank as Blank, PlatformOrder as Order, PlatformProduct as Products, PlatformInventory as Inventory, PlatformInventoryOrder as InventoryOrders, PlatformProductInventory as ProductInventory, Converters, ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda, getOrdersEbay } from "@pythias/integrations";
 import { logActivity } from "@pythias/backend/server";
+import { pullTikTokOrders } from "./tikTok";
+import { getOrgCreds } from "@/lib/getOrgCreds";
 
 
 // ── SKU resolution helpers ────────────────────────────────────────────────────
@@ -471,6 +473,7 @@ function normalizeFaireOrder(o, conn) {
         })),
         _marketplaceOrderId: o.id,
         _marketplaceConnectionId: conn._id,
+        _orgId: conn.orgId,
     };
 }
 
@@ -509,6 +512,7 @@ function normalizeWalmartOrder(o, conn) {
         items: lines,
         _marketplaceOrderId: o.purchaseOrderId,
         _marketplaceConnectionId: conn._id,
+        _orgId: conn.orgId,
     };
 }
 
@@ -543,6 +547,7 @@ function normalizeEtsyOrder(o, conn) {
         })),
         _marketplaceOrderId: String(o.receipt_id),
         _marketplaceConnectionId: conn._id,
+        _orgId: conn.orgId,
     };
 }
 
@@ -579,6 +584,7 @@ function normalizeAcendaOrder(o, conn) {
         ),
         _marketplaceOrderId: String(o.id),
         _marketplaceConnectionId: conn._id,
+        _orgId: conn.orgId,
     };
 }
 
@@ -617,14 +623,20 @@ function normalizeEbayOrder(o, conn) {
         items: lines,
         _marketplaceOrderId:    o.orderId,
         _marketplaceConnectionId: conn._id,
+        _orgId: conn.orgId,
         _ebayLineItemIds: (o.lineItems ?? []).map(li => li.lineItemId),
     };
 }
 
 // ─── Pull from active marketplace connections ──────────────────────────────────
-async function pullFromConnections() {
-    const connections = await ApiKeyIntegrations.find({ pullOrdersEnabled: true }).lean();
+// Pull every enabled connection for ONE org. ShipStation is pulled separately from the org's
+// own credentials in OrgIntegrations (the shipping/hardware settings) — only if that org has
+// stored SS creds. Direct-marketplace orders are normalized; SS orders are returned raw (the
+// main loop already understands the SS shape) and both are tagged with the org's id.
+async function pullFromConnections(orgId) {
+    const connections = await ApiKeyIntegrations.find({ pullOrdersEnabled: true, orgId }).lean();
     const orders = [];
+    const ssOrders = [];
     for (const conn of connections) {
         const type = conn.type?.toLowerCase();
         try {
@@ -657,10 +669,28 @@ async function pullFromConnections() {
                 if (!error) orders.push(...(raw ?? []).map(o => normalizeAcendaOrder(o, conn)));
             }
         } catch (e) {
-            console.error(`pullFromConnections error for ${type}:`, e.message);
+            console.error(`pullFromConnections error for ${type} (org ${orgId}):`, e.message);
         }
     }
-    return { orders, enabledTypes: new Set(connections.map(c => c.type?.toLowerCase()).filter(Boolean)) };
+
+    // ShipStation: pull only if the org has stored its own SS credentials in the
+    // shipping/hardware settings (OrgIntegrations.shipstation). No creds → skip SS entirely.
+    try {
+        const orgCreds = await getOrgCreds(orgId);
+        const ss = orgCreds?.shipstation;
+        if (ss?.apiKey && ss?.apiSecret) {
+            const raw = await getOrders({ auth: `${ss.apiKey}:${ss.apiSecret}` });
+            ssOrders.push(...(raw ?? []).map(o => ({ ...o, _orgId: orgId })));
+        }
+    } catch (e) {
+        console.error(`pullFromConnections ShipStation error (org ${orgId}):`, e.message);
+    }
+
+    // enabledTypes drives the SS dedup filter — only the direct-marketplace sources belong here.
+    const enabledTypes = new Set(
+        connections.map(c => c.type?.toLowerCase()).filter(Boolean)
+    );
+    return { orders, ssOrders, enabledTypes };
 }
 
 export async function pullOrders(){
@@ -681,20 +711,45 @@ export async function pullOrders(){
     if(skuConverterDoc && skuConverterDoc.converter) skuFixer = skuConverterDoc.converter? skuConverterDoc.converter: {};
     console.log("pulling orders")
 
-    // Pull directly from enabled marketplace connections
-    const { orders: marketplaceOrders, enabledTypes } = await pullFromConnections();
+    // Pull PER ORG (not all at once): each org's own connections + TikTok are pulled and
+    // ingested separately, scoped to that org and isolated so one org's failure can't block
+    // the others. ShipStation is pulled only for orgs that have their own SS connection.
+    const [connOrgIds, tiktokOrgIds] = await Promise.all([
+        ApiKeyIntegrations.distinct("orgId", { pullOrdersEnabled: true }),
+        TikTokAuth.distinct("orgId", {}),
+    ]);
+    const orgIds = [...new Set([...connOrgIds, ...tiktokOrgIds].filter(Boolean).map(String))];
+    console.log(`[pullOrders] pulling for ${orgIds.length} org(s)`);
 
-    // Pull from ShipStation, skipping sources handled by direct connections
-    const ssRaw = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}` });
-    const ssOrders = enabledTypes.size > 0
-        ? ssRaw.filter(o => {
-            const src = (o.advancedOptions?.source ?? o.billTo?.name ?? "").toLowerCase();
-            return !enabledTypes.has(src);
-        })
-        : ssRaw;
+    for (const orgId of orgIds) {
+      try {
+        // Direct-marketplace + per-org ShipStation connections for this org
+        const { orders: marketplaceOrders, ssOrders: ssRaw, enabledTypes } = await pullFromConnections(orgId);
 
-    const orders = [...marketplaceOrders, ...ssOrders]
+        // TikTok for this org (its own API). `active` => also filter TikTok out of this
+        // org's SS pull as a safety net against double-ingestion.
+        let tikTokActive = false;
+        try {
+            const tikTokResult = await pullTikTokOrders(orgId);
+            tikTokActive = tikTokResult.active;
+            console.log(`[pullOrders] org ${orgId}: TikTok pulled ${tikTokResult.pulled} order(s), active=${tikTokActive}`);
+        } catch (e) {
+            console.error(`[pullOrders] org ${orgId} TikTok pull failed:`, e.message);
+        }
+
+        // Filter this org's SS orders: drop sources already handled by its direct
+        // connections, and TikTok when it's pulled directly.
+        const ssOrders = (enabledTypes.size > 0 || tikTokActive)
+            ? ssRaw.filter(o => {
+                const src = (o.advancedOptions?.source ?? o.billTo?.name ?? "").toLowerCase();
+                if (tikTokActive && (src.includes("tiktok") || src.includes("tik tok"))) return false;
+                return !enabledTypes.has(src);
+            })
+            : ssRaw;
+
+        const orders = [...marketplaceOrders, ...ssOrders]
     for(let o of orders){
+        o._orgId = o._orgId ?? orgId;
         console.log(o.orderStatus, o.orderDate)
         let order = await Order.findOne({poNumber: o.orderNumber}).populate("items")
         if(!order){
@@ -717,6 +772,7 @@ export async function pullOrders(){
                 discountAmount: Math.max(0, (o.orderTotal ?? 0) - (o.amountPaid ?? o.orderTotal ?? 0)),
                 productCost: (o.amountPaid ?? o.orderTotal ?? 0) - (o.shippingAmount ?? 0) - (o.taxAmount ?? 0),
                 paid: true,
+                ...(o._orgId ? { orgId: o._orgId } : {}),
                 ...(o._marketplaceOrderId ? { marketplaceOrderId: o._marketplaceOrderId } : {}),
                 ...(o._marketplaceConnectionId ? { marketplaceConnectionId: o._marketplaceConnectionId } : {}),
             })
@@ -746,6 +802,7 @@ export async function pullOrders(){
             logActivity({ action: "order_received", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName: "system", provider: "premierPrinting" });
             items.map(async i => {
                 i.order = order._id
+                if (o._orgId) i.orgId = o._orgId
                 await i.save()
             })
         }else{
@@ -776,6 +833,10 @@ export async function pullOrders(){
             await order.save()
         }
     }
+      } catch (e) {
+        console.error(`[pullOrders] org ${orgId} failed:`, e.message);
+      }
+    }
     await updateInventory();
     await recomputeStockStatus();
 }
@@ -799,7 +860,11 @@ export async function repullOrderItems(poNumber) {
     const order = await Order.findOne({ poNumber });
     if (!order) throw new Error(`Order not found in DB: ${poNumber}`);
 
-    const ssOrders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: poNumber });
+    // Use the owning org's ShipStation credentials (shipping/hardware settings).
+    const orgCreds = order.orgId ? await getOrgCreds(order.orgId) : null;
+    const ss = orgCreds?.shipstation;
+    if (!ss?.apiKey || !ss?.apiSecret) throw new Error(`No ShipStation credentials for org ${order.orgId}`);
+    const ssOrders = await getOrders({ auth: `${ss.apiKey}:${ss.apiSecret}`, id: poNumber });
     if (!ssOrders?.length) throw new Error(`Order not found in ShipStation: ${poNumber}`);
     const o = ssOrders[0];
     console.log(`[repullOrderItems] ${poNumber}: SS order has ${o.items.length} line(s)`);
@@ -807,7 +872,7 @@ export async function repullOrderItems(poNumber) {
     const items = await buildItems(o, order, converters);
     order.items = items;
     await order.save();
-    await Promise.all(items.map(item => { item.order = order._id; return item.save(); }));
+    await Promise.all(items.map(item => { item.order = order._id; if (order.orgId) item.orgId = order.orgId; return item.save(); }));
     logActivity({ action: "order_items_repulled", entity: "order", entityId: order._id, entityName: poNumber, userName: "system", provider: "premierPrinting" });
 
     console.log(`[repullOrderItems] ${poNumber}: created ${items.length} items`);

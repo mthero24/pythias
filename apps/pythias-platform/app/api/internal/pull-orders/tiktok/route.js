@@ -1,23 +1,20 @@
 import { NextResponse } from "next/server";
-import { pullTikTokOrders, diagnoseTikTok } from "@/functions/tikTok";
+import { pullTikTokOrders } from "@/functions/tikTok";
 
-// Manual / diagnostic trigger for the TikTok order pull only.
-//   GET  /api/internal/pull-orders/tiktok            → read-only diagnosis (why orders aren't pulling)
-//   GET  /api/internal/pull-orders/tiktok?pull=1     → actually run the pull + return counts
-//   POST /api/internal/pull-orders/tiktok            → run the pull (with x-cron-secret)
+// Manual / diagnostic trigger for the TikTok order pull only. Returns the per-stage
+// counts (auths found, orders fetched, created/updated/failed) so we can see exactly
+// where the pull stops without digging through PM2 logs.
+//   GET  /api/internal/pull-orders/tiktok            (diagnostic, browser-friendly)
+//   POST /api/internal/pull-orders/tiktok            (with x-cron-secret)
 async function run() {
     const result = await pullTikTokOrders();
     console.log("[pull-orders/tiktok] result:", JSON.stringify(result));
     return result;
 }
 
-export async function GET(req) {
+export async function GET() {
     try {
-        const pull = new URL(req.url).searchParams.get("pull");
-        if (pull) return NextResponse.json(await run());
-        const report = await diagnoseTikTok();
-        console.log("[pull-orders/tiktok] diagnosis:", JSON.stringify(report));
-        return NextResponse.json(report);
+        return NextResponse.json(await run());
     } catch (e) {
         console.error("[pull-orders/tiktok] fatal:", e);
         return NextResponse.json({ error: true, msg: e.message, stack: e.stack }, { status: 500 });

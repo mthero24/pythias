@@ -29,8 +29,11 @@ export async function validateCart(orgId, items = []) {
             const b = blankById[String(it.blankId)];
             if (!b) { errors.push("Custom item unavailable"); continue; }
             const sz = (b.sizes || []).find((s) => s.name === it.size && !s.hidden);
-            const priceCents = Math.round((sz?.retailPrice || sz?.basePrice || 0) * 100);
-            if (!(priceCents > 0)) { errors.push(`${b.name}: size unavailable`); continue; }
+            const basePrice = Math.round((sz?.retailPrice || sz?.basePrice || 0) * 100);
+            if (!(basePrice > 0)) { errors.push(`${b.name}: size unavailable`); continue; }
+            // Second-side print surcharge: both front AND back designed → +$2 (matches the studio).
+            const views = new Set((it.personalization?.sides || []).filter((s) => s.artworkUrl).map((s) => s.view));
+            const priceCents = basePrice + (views.has("front") && views.has("back") ? 200 : 0);
             const wholesaleCents = Math.round((sz?.wholesaleCost || 0) * 100);
             subtotalCents += priceCents * qty; wholesaleTotalCents += wholesaleCents * qty;
             lines.push({

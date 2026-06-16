@@ -81,10 +81,42 @@ const SIDEBAR_ACTIVE_ICON = "#fff";
 const SIDEBAR_ACTIVE_TEXT = "#fff";
 const SIDEBAR_ACCENT = "#6366f1";
 
+// Storefront add-on menu items (shared) — flagged `storefront` so the gate below can collapse them
+// to a single "Learn about Storefront" link until the org subscribes.
+const STOREFRONT_ITEMS = [
+    { label: "Storefront",       path: "storefront",             icon: <LanguageIcon fontSize="small" />,      storefront: true },
+    { label: "Stores",           path: "stores",                 icon: <StorefrontIcon fontSize="small" />,    storefront: true },
+    { label: "Autopilot",        path: "autopilot",              icon: <AutoFixHighIcon fontSize="small" />,   storefront: true },
+    { label: "Collections",      path: "collections",            icon: <CategoryIcon fontSize="small" />,      storefront: true },
+    { label: "Discounts",        path: "discounts",              icon: <LocalOfferIcon fontSize="small" />,    storefront: true },
+    { label: "Returns",          path: "returns",                icon: <AssignmentReturnIcon fontSize="small" />, storefront: true },
+    { label: "Subscriptions",    path: "subscriptions",          icon: <AutorenewIcon fontSize="small" />,     storefront: true },
+    { label: "A/B Testing",      path: "experiments",            icon: <ScienceIcon fontSize="small" />,       storefront: true },
+    { label: "Reviews",          path: "reviews",                icon: <RateReviewIcon fontSize="small" />,    storefront: true },
+    { label: "Network Protection", path: "network",              icon: <ShieldIcon fontSize="small" />,        storefront: true },
+    { label: "Merchant of Record", path: "mor",                  icon: <GavelIcon fontSize="small" />,         storefront: true },
+    { label: "Earn as Fulfiller",  path: "supplier",             icon: <HandshakeIcon fontSize="small" />,     storefront: true },
+    { label: "Marketing",        path: "marketing",              icon: <CampaignIcon fontSize="small" />,      storefront: true },
+    { label: "Automations",      path: "automations",            icon: <AltRouteIcon fontSize="small" />,      storefront: true },
+    { label: "Sales Channels",   path: "channels",               icon: <PodcastsIcon fontSize="small" />,      storefront: true },
+    { label: "Site Analytics",   path: "analytics",              icon: <QueryStatsIcon fontSize="small" />,    storefront: true },
+    { label: "Profit",           path: "profit",                 icon: <PaidIcon fontSize="small" />,          storefront: true },
+    { label: "Demand",           path: "demand",                 icon: <TrendingUpIcon fontSize="small" />,    storefront: true },
+    { label: "SEO Pages",        path: "seo-pages",              icon: <MenuBookIcon fontSize="small" />,      storefront: true },
+    { label: "International",     path: "international",           icon: <LanguageIcon fontSize="small" />,      storefront: true },
+];
+
 function buildSections(base, org) {
     let sections = org?.orgType === "commerce"
         ? buildCommerceSections(base)
         : buildFulfillmentSections(base);
+
+    // Storefront is offered to every org. Commerce orgs embed the items in Catalog; for other org
+    // types, add a dedicated Storefront section so the gate (below) can surface it / its learn link.
+    if (!sections.some(s => s.items.some(i => i.storefront))) {
+        sections = [...sections];
+        sections.splice(Math.min(1, sections.length), 0, { label: "Storefront", items: [...STOREFRONT_ITEMS] });
+    }
 
     // Gate the storefront product: if this org hasn't subscribed, hide every storefront-only
     // item and surface a single "Learn about Storefront" link (→ welcome/signup page).
@@ -198,26 +230,7 @@ function buildCommerceSections(base) {
             label: "Catalog",
             items: [
                 { label: "Garment Catalog",  path: "catalog",                icon: <CheckroomIcon fontSize="small" /> },
-                { label: "Storefront",       path: "storefront",             icon: <LanguageIcon fontSize="small" />,      storefront: true },
-                { label: "Stores",           path: "stores",                 icon: <StorefrontIcon fontSize="small" />,    storefront: true },
-                { label: "Autopilot",        path: "autopilot",              icon: <AutoFixHighIcon fontSize="small" />,   storefront: true },
-                { label: "Collections",      path: "collections",            icon: <CategoryIcon fontSize="small" />,      storefront: true },
-                { label: "Discounts",        path: "discounts",              icon: <LocalOfferIcon fontSize="small" />,    storefront: true },
-                { label: "Returns",          path: "returns",                icon: <AssignmentReturnIcon fontSize="small" />, storefront: true },
-                { label: "Subscriptions",    path: "subscriptions",          icon: <AutorenewIcon fontSize="small" />,     storefront: true },
-                { label: "A/B Testing",      path: "experiments",            icon: <ScienceIcon fontSize="small" />,       storefront: true },
-                { label: "Reviews",          path: "reviews",                icon: <RateReviewIcon fontSize="small" />,    storefront: true },
-                { label: "Network Protection", path: "network",              icon: <ShieldIcon fontSize="small" />,        storefront: true },
-                { label: "Merchant of Record", path: "mor",                  icon: <GavelIcon fontSize="small" />,         storefront: true },
-                { label: "Earn as Fulfiller",  path: "supplier",             icon: <HandshakeIcon fontSize="small" />,     storefront: true },
-                { label: "Marketing",        path: "marketing",              icon: <CampaignIcon fontSize="small" />,      storefront: true },
-                { label: "Automations",      path: "automations",            icon: <AltRouteIcon fontSize="small" />,      storefront: true },
-                { label: "Sales Channels",   path: "channels",               icon: <PodcastsIcon fontSize="small" />,      storefront: true },
-                { label: "Site Analytics",   path: "analytics",              icon: <QueryStatsIcon fontSize="small" />,    storefront: true },
-                { label: "Profit",           path: "profit",                 icon: <PaidIcon fontSize="small" />,          storefront: true },
-                { label: "Demand",           path: "demand",                 icon: <TrendingUpIcon fontSize="small" />,    storefront: true },
-                { label: "SEO Pages",        path: "seo-pages",              icon: <MenuBookIcon fontSize="small" />,      storefront: true },
-                { label: "International",     path: "international",           icon: <LanguageIcon fontSize="small" />,      storefront: true },
+                ...STOREFRONT_ITEMS,
                 { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
                 { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
                 { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },

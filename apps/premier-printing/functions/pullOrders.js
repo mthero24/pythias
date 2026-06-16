@@ -2,6 +2,7 @@ import { Design, Items as Item, Blank, Order, Products, Inventory, InventoryOrde
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda, getOrdersEbay } from "@pythias/integrations";
 import { logActivity } from "@pythias/backend/server";
 import { pullTikTokOrders } from "./tikTok";
+import { getShippingCreds } from "@/lib/getShippingCreds";
 
 
 // ── SKU resolution helpers ────────────────────────────────────────────────────
@@ -723,11 +724,30 @@ export async function pullOrders(){
     // Pull directly from enabled marketplace connections
     const { orders: marketplaceOrders, enabledTypes } = await pullFromConnections();
 
-    // Pull from ShipStation, skipping sources handled by direct connections
-    const ssRaw = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}` });
-    const ssOrders = enabledTypes.size > 0
+    // Pull TikTok Shop orders via the dedicated TikTok API (its own integration, not the
+    // ShipStation pipe or ApiKeyIntegrations connections). Isolated in try/catch so a TikTok
+    // failure never blocks the rest of the pull. `active` means at least one shop is pulled
+    // directly — in that case TikTok orders are also filtered out of the ShipStation pull
+    // below as a safety net against double-ingestion.
+    let tikTokActive = false;
+    try {
+        const tikTokResult = await pullTikTokOrders();
+        tikTokActive = tikTokResult.active;
+        console.log(`[pullOrders] TikTok pulled ${tikTokResult.pulled} order(s), active=${tikTokActive}`);
+    } catch (e) {
+        console.error("[pullOrders] TikTok pull failed:", e.message);
+    }
+
+    // Pull from ShipStation, skipping sources handled by direct connections (and TikTok,
+    // when it's pulled directly — defensive, in case a TikTok order ever lands in SS).
+    // SS creds come from the shipping/hardware settings (with env fallback) so keys can be
+    // rotated from the UI without a redeploy.
+    const { shipstationAuth: ssAuth } = await getShippingCreds();
+    const ssRaw = await getOrders({ auth: ssAuth });
+    const ssOrders = (enabledTypes.size > 0 || tikTokActive)
         ? ssRaw.filter(o => {
             const src = (o.advancedOptions?.source ?? o.billTo?.name ?? "").toLowerCase();
+            if (tikTokActive && (src.includes("tiktok") || src.includes("tik tok"))) return false;
             return !enabledTypes.has(src);
         })
         : ssRaw;
@@ -818,17 +838,6 @@ export async function pullOrders(){
         }
     }
 
-    // Pull TikTok Shop orders via the dedicated TikTok API (its own integration, not the
-    // ShipStation pipe or ApiKeyIntegrations connections). Runs before the inventory
-    // recompute so TikTok items get stock attached alongside everything else. Isolated in
-    // try/catch so a TikTok failure never blocks the rest of the pull.
-    try {
-        const tikTokResult = await pullTikTokOrders();
-        console.log(`[pullOrders] TikTok pulled ${tikTokResult.pulled} order(s)`);
-    } catch (e) {
-        console.error("[pullOrders] TikTok pull failed:", e.message);
-    }
-
     await updateInventory();
     await recomputeStockStatus();
 }
@@ -844,6 +853,7 @@ export async function backfillShipByDate({ onProgress } = {}) {
     }).select("_id poNumber marketplaceConnectionId marketplace items").lean();
 
     console.log(`[backfillShipByDate] ${unshipped.length} orders to process`);
+    const { shipstationAuth: ssAuth } = await getShippingCreds();
     let updated = 0;
     let skipped = 0;
 
@@ -894,7 +904,7 @@ export async function backfillShipByDate({ onProgress } = {}) {
             }
 
             // ShipStation order — re-fetch by PO number
-            const ssOrders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: o.poNumber }).catch(() => []);
+            const ssOrders = await getOrders({ auth: ssAuth, id: o.poNumber }).catch(() => []);
             const ss = ssOrders?.[0];
             if (ss?.shipByDate) {
                 const shipByDate = new Date(ss.shipByDate);
@@ -939,6 +949,7 @@ export async function backfillDiscounts({ batch = 0 } = {}) {
         .lean();
 
     console.log(`[backfillDiscounts] batch ${batch}: ${orders.length} orders (${batch * BATCH_SIZE + 1}–${batch * BATCH_SIZE + orders.length} of ${total})`);
+    const { shipstationAuth: ssAuth } = await getShippingCreds();
     let updated = 0, skipped = 0;
 
     // Process CONCURRENCY orders at a time
@@ -946,7 +957,7 @@ export async function backfillDiscounts({ batch = 0 } = {}) {
         const chunk = orders.slice(i, i + CONCURRENCY);
         await Promise.all(chunk.map(async o => {
             try {
-                const ssOrders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: o.poNumber }).catch(() => []);
+                const ssOrders = await getOrders({ auth: ssAuth, id: o.poNumber }).catch(() => []);
                 const ss = ssOrders?.[0];
                 if (!ss) { skipped++; return; }
 
@@ -996,7 +1007,8 @@ export async function repullOrderItems(poNumber) {
     const order = await Order.findOne({ poNumber });
     if (!order) throw new Error(`Order not found in DB: ${poNumber}`);
 
-    const ssOrders = await getOrders({ auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, id: poNumber });
+    const { shipstationAuth: ssAuth } = await getShippingCreds();
+    const ssOrders = await getOrders({ auth: ssAuth, id: poNumber });
     if (!ssOrders?.length) throw new Error(`Order not found in ShipStation: ${poNumber}`);
     const o = ssOrders[0];
     console.log(`[repullOrderItems] ${poNumber}: SS order has ${o.items.length} line(s)`);

@@ -117,6 +117,7 @@ export { default as StorefrontSession }       from "./models/StorefrontSession";
 export { default as StorefrontPathStat }      from "./models/StorefrontPathStat";
 export { default as StorefrontProductStat }   from "./models/StorefrontProductStat";
 export { default as StorefrontReview }        from "./models/StorefrontReview";
+export { default as StorefrontSavedDesign }   from "./models/StorefrontSavedDesign";
 export { default as StorefrontReviewSummary } from "./models/StorefrontReviewSummary";
 export { default as StorefrontPage }          from "./models/StorefrontPage";
 export { default as StorefrontCollection }    from "./models/StorefrontCollection";

@@ -1,4 +1,4 @@
-import { TikTokAuth, Design, Order, SkuToUpc, Color as Colors, Blank as Blanks, Items as Item } from "@pythias/mongo";
+import { TikTokAuth, PlatformDesign as Design, PlatformOrder as Order, SkuToUpc, PlatformColor as Colors, PlatformBlank as Blanks, PlatformItem as Item } from "@pythias/mongo";
 import {
   getAuthorizedShops,
   getAccessTokenFromRefreshToken,
@@ -262,48 +262,61 @@ export async function createTikTokProduct({product}){
 export const getOrders = async (auths)=>{
     let orders = []
     for(let a of auths){
+        if(a.pullOrders === false) { console.log(`[tiktok getOrders] skipping ${a.seller_name || a._id} — pullOrders disabled`); continue }  // user opted to pull via ShipStation instead
+
+        // Lazy-fill shop_list if it was never populated — otherwise the loop below
+        // never runs and orders pull in silently as zero.
+        if (!a.shop_list?.length) {
+            console.log(`[tiktok getOrders] ${a.seller_name || a._id} has empty shop_list — fetching authorized shops`);
+            let shop = await getAuthorizedShops(a);
+            if (shop?.error && shop?.msg == "refresh") {
+                a = await refresh(a);
+                shop = await getAuthorizedShops(a);
+            }
+            if (shop?.shop_list?.length) {
+                a.shop_list = shop.shop_list;
+                await a.save();
+            } else {
+                console.error(`[tiktok getOrders] ${a.seller_name || a._id} — no authorized shops found, skipping`);
+                continue;
+            }
+        }
+
         for(let store of a.shop_list){
             let credentials = a
-            //console.log(store.shop_cipher);
             credentials.shop_cipher = store.shop_cipher
-            //console.log(credentials, "credentials");
             let res = await getOrdersTikTok({credentials});
-            //console.log(res.error && res.msg == "refresh");
             if (res.error && res.msg == "refresh") {
                 credentials = await refresh(credentials, store.shop_cipher);
                 res = await getOrdersTikTok({ credentials});
             }
-            console.log(!res.error, "res")
-            if(!res.error) {
-                let ords = [];
-                for (let o of res.orders) {
-                    o.tikTokShop = {
-                        sellerName: credentials.seller_name,
-                        sellerId: credentials._id,
-                        shopId: store.shop_id,
-                    };
-                    console.log(o)
-                    ords.push(o);
-                }
-                console.log(ords, "orders")
-                orders = orders.concat(ords)
+            if(res.error) {
+                console.error(`[tiktok getOrders] shop ${store.shop_id} fetch failed: ${res.msg}`);
+                continue;
             }
+            const ords = (res.orders || []).map(o => ({
+                ...o,
+                orgId: credentials.orgId,
+                tikTokShop: { sellerName: credentials.seller_name, sellerId: credentials._id, shopId: store.shop_id },
+            }));
+            console.log(`[tiktok getOrders] shop ${store.shop_id}: ${ords.length} AWAITING_SHIPMENT order(s)`);
+            orders = orders.concat(ords)
         }
     }
-    console.log(orders)
+    console.log(`[tiktok getOrders] total fetched: ${orders.length}`);
     return orders
 }
 
 export const processOrders = async (orders)=>{
+    let created = 0, updated = 0, failed = 0;
     for(let o of orders){
-        let order = await Order.findOne({poNumber: o.id})
+      try {
+        let order = await Order.findOne({poNumber: o.id}).populate("items")
         if (!order) {
-            //console.log(o);
-            //console.log(o.recipient_address)
-            //console.log(o.recipient_address.district_info);
             order = new Order({
                 orderId: `${o.create_time}_${o.id}`,
                 poNumber: o.id,
+                orgId: o.orgId,
                 email: o.buyer_email,
                 date: new Date(Date.now()),
                 status: o.orderStatus,
@@ -569,6 +582,9 @@ export const processOrders = async (orders)=>{
             }
             order.items = items.map(i => i._id);
             await order.save();
+            // Scope every item to the same org as the order (covers all SKU branches).
+            if (o.orgId) await Item.updateMany({ _id: { $in: order.items } }, { $set: { orgId: o.orgId } });
+            created++;
         } else {
             order.status = o.orderStatus;
             if (order.status == "shipped") {
@@ -586,9 +602,80 @@ export const processOrders = async (orders)=>{
                 }));
             }
             await order.save();
+            updated++;
         }
+      } catch (e) {
+        failed++;
+        console.error(`[tiktok processOrders] order ${o?.id} failed: ${e.message}`);
+      }
     }
-    return {error: false}
+    console.log(`[tiktok processOrders] created: ${created}, updated: ${updated}, failed: ${failed}`);
+    return { error: false, created, updated, failed }
+}
+
+// Convenience entry point: pull + process orders for EVERY org's TikTok connection in one
+// call. The platform is multi-tenant, so we iterate all TikTokAuth records and each order
+// is scoped to its connection's orgId (set in getOrders/processOrders). Wired into the main
+// pullOrders() cron flow so TikTok orders land alongside the ShipStation/direct-connection
+// orders. Counterpart to premier's single-tenant pullTikTokOrders (which scopes by provider).
+export async function pullTikTokOrders(orgId) {
+    // Scope to one org when an orgId is supplied (per-org cron pull); with no argument it
+    // pulls every connection (used by the diagnostic route).
+    const auths = await TikTokAuth.find(orgId ? { orgId } : {});
+    if (!auths.length) {
+        console.log(`[pullTikTokOrders] no TikTokAuth records found${orgId ? ` for org ${orgId}` : ""}`);
+        return { error: false, authCount: 0, active: false, pulled: 0, created: 0, updated: 0, failed: 0 };
+    }
+    // "active" = at least one shop is pulled via the TikTok API (pullOrders !== false).
+    // When active, TikTok orders should NOT also be ingested from the ShipStation pull.
+    const active = auths.some(a => a.pullOrders !== false);
+    const orders = await getOrders(auths);
+    const result = await processOrders(orders);
+    return { error: false, authCount: auths.length, active, pulled: orders.length, ...result };
+}
+
+// Read-only diagnostic for one org's TikTok connection(s): tokens present, pull flag,
+// shop_list, and per-shop fetch count or error. Creates nothing.
+export async function diagnoseTikTok(orgId) {
+    const auths = await TikTokAuth.find(orgId ? { orgId } : {});
+    const report = { authCount: auths.length, auths: [] };
+    for (let a of auths) {
+        const entry = {
+            sellerName: a.seller_name || null,
+            id: String(a._id),
+            orgId: a.orgId ? String(a.orgId) : null,
+            pullOrdersFlag: a.pullOrders,
+            hasAccessToken: !!a.access_token,
+            hasRefreshToken: !!a.refresh_token,
+            shopCount: a.shop_list?.length || 0,
+            shops: [],
+        };
+        try {
+            if (a.pullOrders === false) { entry.skipped = "pullOrders flag is false (set to pull via ShipStation)"; report.auths.push(entry); continue; }
+            if (!a.shop_list?.length) {
+                let shop = await getAuthorizedShops(a).catch(e => ({ error: true, msg: e.message }));
+                if (shop?.error && shop?.msg === "refresh") { a = await refresh(a); shop = await getAuthorizedShops(a).catch(e => ({ error: true, msg: e.message })); }
+                if (shop?.shop_list?.length) { a.shop_list = shop.shop_list; await a.save(); entry.shopListLazyFilled = shop.shop_list.length; }
+                else { entry.error = `no authorized shops (${shop?.msg ?? "unknown"})`; report.auths.push(entry); continue; }
+            }
+            for (let store of a.shop_list) {
+                let cred = a; cred.shop_cipher = store.shop_cipher;
+                let res = await getOrdersTikTok({ credentials: cred });
+                if (res.error && res.msg === "refresh") { cred = await refresh(cred, store.shop_cipher); res = await getOrdersTikTok({ credentials: cred }); }
+                entry.shops.push({
+                    shopId: store.shop_id,
+                    error: res.error || false,
+                    msg: res.msg ?? null,
+                    awaitingShipmentCount: res.orders?.length ?? 0,
+                    sampleOrderIds: (res.orders || []).slice(0, 5).map(o => o.id),
+                });
+            }
+        } catch (e) {
+            entry.error = e.message;
+        }
+        report.auths.push(entry);
+    }
+    return report;
 }
 
 // ----------------------------------------------------------------------------

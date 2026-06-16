@@ -142,9 +142,18 @@ const schema = new mongoose.Schema(
         mode:       { type: String },   // "text" (template) | "upload" | "ai" | "studio"
         templateId: { type: mongoose.Schema.Types.ObjectId, ref: "DesignTemplate" },
         fields:     [{ id: String, label: String, value: String }],
-        artworkUrl: { type: String },   // composed/placed custom artwork (create-your-own)
+        artworkUrl: { type: String },   // composed/placed custom artwork (create-your-own, single-side legacy)
         side:       { type: String },   // front | back …
         previewUrl: { type: String },   // buyer-facing preview thumbnail
+        // Create-your-own multi-side placements: one entry per printed side (front/back/sleeve).
+        // box is in the 400-reference frame the [...renderImages] compositor expects.
+        sides: [{
+            view:       { type: String },   // front | back | sleeve (UI grouping)
+            location:   { type: String },   // the blank's box key, e.g. "front" / "center" / "leftsleeve"
+            artworkUrl: { type: String },   // placed/exported artwork for this side
+            styleImage: { type: String },   // garment mockup the box belongs to
+            box:        { type: mongoose.Schema.Types.Mixed },   // { x, y, w, h, rotation } in 400 space
+        }],
     },
     // Multi-vertical routing: which fulfiller handles this line (default POD/print).
     vertical: { type: String, enum: ["pod", "dropship", "warehouse"], default: "pod" },

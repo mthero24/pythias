@@ -544,57 +544,59 @@ export const getOrders = async (auths)=>{
 
 export const processOrders = async (orders)=>{
     let created = 0, updated = 0, failed = 0;
+    const errors = [];
     for(let o of orders){
       try {
+        // TikTok returns `order_status` (uppercase); normalize to the internal convention
+        // used elsewhere (awaiting_shipment / shipped / cancelled). `status` is required on
+        // both Order and Item, so this must never be undefined.
+        const TT_STATUS = {
+            UNPAID: "awaiting_shipment",
+            AWAITING_SHIPMENT: "awaiting_shipment",
+            AWAITING_COLLECTION: "awaiting_shipment",
+            PARTIALLY_SHIPPING: "awaiting_shipment",
+            IN_TRANSIT: "shipped",
+            DELIVERED: "shipped",
+            COMPLETED: "shipped",
+            CANCELLED: "cancelled",
+        };
+        const normStatus = TT_STATUS[o.order_status] || o.orderStatus || "awaiting_shipment";
         let order = await Order.findOne({poNumber: o.id}).populate("items")
         if (!order) {
+            // Defensive: the orders/search payload doesn't always include every nested field
+            // (recipient_address / district_info / delivery_option_name / payment). Guard each
+            // so a missing field doesn't throw and drop the whole order.
+            const addr = o.recipient_address || {};
+            const district = Array.isArray(addr.district_info) ? addr.district_info : [];
+            const cityName = district.find(d => d.address_level_name == "City")?.address_name || "not provided";
+            const stateRaw = district.find(d => d.address_level_name == "State")?.address_name;
+            const stateVal = stateRaw ? (stateAbbreviations[stateRaw] || stateRaw) : "not provided";
+
             order = new Order({
                 orderId: `${o.create_time}_${o.id}`,
                 poNumber: o.id,
                 email: o.buyer_email,
                 date: new Date(Date.now()),
-                status: o.orderStatus,
+                status: normStatus,
                 uniquePo: `${o.id}-${o.create_time}-tik_tok`,
                 shippingAddress: {
-                name: o.recipient_address.name,
-                address1: o.recipient_address.address_line1,
-                address2: o.recipient_address.address_line2,
-                city: o.recipient_address.district_info.filter(
-                    (d) => d.address_level_name == "City"
-                )[0]
-                    ? o.recipient_address.district_info.filter(
-                        (d) => d.address_level_name == "City"
-                    )[0].address_name
-                    : "not provided",
-                zip: o.recipient_address.postal_code,
-                state: o.recipient_address.district_info.filter(
-                    (d) => d.address_level_name == "State"
-                )[0]
-                    ? stateAbbreviations[
-                        o.recipient_address.district_info.filter(
-                        (d) => d.address_level_name == "State"
-                        )[0].address_name
-                    ]
-                    ? stateAbbreviations[
-                        o.recipient_address.district_info.filter(
-                            (d) => d.address_level_name == "State"
-                        )[0].address_name
-                        ]
-                    : o.recipient_address.district_info.filter(
-                        (d) => d.address_level_name == "State"
-                        )[0].address_name
-                    : "not provided",
-                country: o.recipient_address.region_code,
+                    name: addr.name || "not provided",
+                    address1: addr.address_line1 || "not provided",
+                    address2: addr.address_line2 || "",
+                    city: cityName,
+                    zip: addr.postal_code || "not provided",
+                    state: stateVal,
+                    country: addr.region_code || "US",
                 },
-                shippingType: o.delivery_option_name.replace("Shipping", "").trim(),
+                shippingType: (o.delivery_option_name || "").replace("Shipping", "").trim() || "Standard",
                 marketplace: "tik tok",
-                total: o.payment.total_amount,
+                total: o.payment?.total_amount,
                 paid: true,
             });
             //console.log(order)
             //save order
             let items = [];
-            for (let i of o.line_items) {
+            for (let i of (o.line_items || [])) {
                 console.log(i.seller_sku, i);
                 let sku = await SkuToUpc.findOne({ sku: i.seller_sku });
                 let design;
@@ -818,7 +820,7 @@ export const processOrders = async (orders)=>{
             await order.save();
             created++;
         } else {
-            order.status = o.orderStatus;
+            order.status = normStatus;
             if (order.status == "shipped") {
                 await Promise.all(order.items.map(async (i) => {
                     i.status = order.status;
@@ -826,7 +828,7 @@ export const processOrders = async (orders)=>{
                     await i.save();
                 }));
             }
-            if (order.status == "CANCELLED") {
+            if (order.status == "cancelled") {
                 await Promise.all(order.items.map(async (i) => {
                     i.status = order.status;
                     i.canceled = true;
@@ -838,11 +840,12 @@ export const processOrders = async (orders)=>{
         }
       } catch (e) {
         failed++;
+        errors.push({ orderId: o?.id, error: e.message, at: e.stack?.split("\n")[1]?.trim() });
         console.error(`[tiktok processOrders] order ${o?.id} failed: ${e.message}`);
       }
     }
     console.log(`[tiktok processOrders] created: ${created}, updated: ${updated}, failed: ${failed}`);
-    return { error: false, created, updated, failed }
+    return { error: false, created, updated, failed, errors }
 }
 
 // Convenience entry point: pull + process orders for every premierPrinting TikTok shop
@@ -852,9 +855,58 @@ export async function pullTikTokOrders() {
     const auths = await TikTokAuth.find({ provider: "premierPrinting" });
     if (!auths.length) {
         console.log("[pullTikTokOrders] no TikTokAuth records for premierPrinting");
-        return { error: false, authCount: 0, pulled: 0, created: 0, updated: 0, failed: 0 };
+        return { error: false, authCount: 0, active: false, pulled: 0, created: 0, updated: 0, failed: 0 };
     }
+    // "active" = at least one shop is pulled via the TikTok API (pullOrders !== false).
+    // When active, TikTok orders should NOT also be ingested from the ShipStation pull.
+    const active = auths.some(a => a.pullOrders !== false);
     const orders = await getOrders(auths);
     const result = await processOrders(orders);
-    return { error: false, authCount: auths.length, pulled: orders.length, ...result };
+    return { error: false, authCount: auths.length, active, pulled: orders.length, ...result };
+}
+
+// Read-only diagnostic: walks every premierPrinting TikTok auth and reports exactly where
+// the pull would stop — token present? pullOrders flag? shop_list populated? per-shop fetch
+// result (order count or error). Creates nothing, so it's safe to run from a UI button.
+export async function diagnoseTikTok() {
+    const auths = await TikTokAuth.find({ provider: "premierPrinting" });
+    const report = { authCount: auths.length, auths: [] };
+    for (let a of auths) {
+        const entry = {
+            sellerName: a.seller_name || null,
+            id: String(a._id),
+            pullOrdersFlag: a.pullOrders,
+            hasAccessToken: !!a.access_token,
+            hasRefreshToken: !!a.refresh_token,
+            shopCount: a.shop_list?.length || 0,
+            shops: [],
+        };
+        try {
+            if (a.pullOrders === false) { entry.skipped = "pullOrders flag is false (set to pull via ShipStation)"; report.auths.push(entry); continue; }
+
+            if (!a.shop_list?.length) {
+                let shop = await getAuthorizedShops(a).catch(e => ({ error: true, msg: e.message }));
+                if (shop?.error && shop?.msg === "refresh") { a = await refresh(a); shop = await getAuthorizedShops(a).catch(e => ({ error: true, msg: e.message })); }
+                if (shop?.shop_list?.length) { a.shop_list = shop.shop_list; await a.save(); entry.shopListLazyFilled = shop.shop_list.length; }
+                else { entry.error = `no authorized shops (${shop?.msg ?? "unknown"})`; report.auths.push(entry); continue; }
+            }
+
+            for (let store of a.shop_list) {
+                let cred = a; cred.shop_cipher = store.shop_cipher;
+                let res = await getOrdersTikTok({ credentials: cred });
+                if (res.error && res.msg === "refresh") { cred = await refresh(cred, store.shop_cipher); res = await getOrdersTikTok({ credentials: cred }); }
+                entry.shops.push({
+                    shopId: store.shop_id,
+                    error: res.error || false,
+                    msg: res.msg ?? null,
+                    awaitingShipmentCount: res.orders?.length ?? 0,
+                    sampleOrderIds: (res.orders || []).slice(0, 5).map(o => o.id),
+                });
+            }
+        } catch (e) {
+            entry.error = e.message;
+        }
+        report.auths.push(entry);
+    }
+    return report;
 }

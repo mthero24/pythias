@@ -1,57 +1,28 @@
 import {Converters} from "@pythias/mongo"
 import {Converters as ConvertersComponent, serialize} from "@pythias/backend"
 export const dynamic = 'force-dynamic';
+
+// Load (and lazily create) a converter by type. Tolerates the DB being unreachable during build's
+// page-data collection — returns an empty converter so the build doesn't crash; real data loads at request.
+async function getConverter(type){
+    try{
+        let doc = await Converters.findOne({ type });
+        if(!doc){ doc = new Converters({ type, converter: {} }); await doc.save(); }
+        return serialize(doc);
+    }catch{
+        return { type, converter: {} };
+    }
+}
+
 export default async function ConverterPage(){
-    let designConverter = await Converters.findOne({type: "design"});
-    if(!designConverter){
-        designConverter = new Converters({
-            type: "design",
-            converter: {}
-        });
-        await designConverter.save();
-    }
-    let blankConverter = await Converters.findOne({type: "blank"});
-    if(!blankConverter){
-        blankConverter = new Converters({
-            type: "blank",
-            converter: {}
-        });
-        await blankConverter.save();
-    }
-    let colorConverter = await Converters.findOne({type: "color"});
-    if(!colorConverter){
-        colorConverter = new Converters({
-            type: "color",
-            converter: {}
-        });
-        await colorConverter.save();
-    }
-    let sizeConverter = await Converters.findOne({type: "size"});
-    if(!sizeConverter){
-        sizeConverter = new Converters({
-            type: "size",
-            converter: {}
-        });
-        await sizeConverter.save();
-    }
-    let skuConverter = await Converters.findOne({ type: "sku" });
-    if (!skuConverter) {
-        skuConverter = new Converters({
-            type: "sku",
-            converter: {}
-        });
-        await skuConverter.save();
-    }
-    designConverter = serialize(designConverter);
-    blankConverter = serialize(blankConverter);
-    colorConverter = serialize(colorConverter);
-    sizeConverter = serialize(sizeConverter);
-    skuConverter = serialize(skuConverter);
+    const [designConverter, blankConverter, colorConverter, sizeConverter, skuConverter] = await Promise.all([
+        getConverter("design"), getConverter("blank"), getConverter("color"), getConverter("size"), getConverter("sku"),
+    ]);
     return(
-        <ConvertersComponent 
-            designConverter={designConverter} 
-            blankConverter={blankConverter} 
-            colorConverter={colorConverter} 
+        <ConvertersComponent
+            designConverter={designConverter}
+            blankConverter={blankConverter}
+            colorConverter={colorConverter}
             sizeConverter={sizeConverter}
             skuConverter={skuConverter}
         />

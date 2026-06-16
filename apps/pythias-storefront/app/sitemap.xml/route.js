@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-import { PlatformProduct, StorefrontPage } from "@pythias/mongo";
+import { PlatformProduct, StorefrontPage, Blank } from "@pythias/mongo";
 import { resolveSite } from "@/lib/resolveSite";
 
 const esc = (s) => String(s).replace(/&/g, "&amp;");
@@ -11,6 +11,10 @@ export async function GET(req) {
     const origin = new URL(req.url).origin;
 
     const urls = [`${origin}/`, `${origin}/products`];
+    // The "create your own" design studio — only list it if there are customizable blanks.
+    try {
+        if (await Blank.exists({ orgId: site.orgId, active: { $ne: false } })) urls.push(`${origin}/create-your-own`);
+    } catch { /* ignore */ }
     try {
         const products = await PlatformProduct.find({ orgId: site.orgId, active: { $ne: false } }).select("_id").limit(5000).lean();
         for (const p of products) urls.push(`${origin}/products/${p._id}`);

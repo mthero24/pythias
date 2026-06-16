@@ -71,6 +71,9 @@ const schema = new mongoose.Schema({
     favorites:     { type: [CartLine], default: [] },   // wishlist (product-level; qty unused)
     cartUpdatedAt: { type: Date },
 
+    // Reusable "create your own" image library (uploaded + AI art), so it follows the buyer across visits.
+    designUploads: { type: [String], default: [] },
+
     marketingConsent: {
         email: { type: Consent, default: () => ({}) },
         sms:   { type: Consent, default: () => ({}) },

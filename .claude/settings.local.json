@@ -95,7 +95,23 @@
       "PowerShell(Start-Sleep -Seconds 6; $c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { \"3020 LISTENING \\(PID $\\($c[0].OwningProcess\\)\\) ✓\" } else { \"not up\" })",
       "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force; \"stopped old storefront\" }; Start-Sleep -Seconds 2)",
       "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force; \"stopped\" }; Start-Sleep -Seconds 2)",
-      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force }; Start-Sleep -Seconds 2; \"stopped\")"
+      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force }; Start-Sleep -Seconds 2; \"stopped\")",
+      "WebFetch(domain:tshirtpalace.com)",
+      "Bash(node --check apps/pythias-platform/functions/pullOrders.js)",
+      "Bash(node --check apps/pythias-platform/functions/tikTok.js)",
+      "Bash(node --check apps/premier-printing/functions/pullOrders.js)",
+      "Bash(node --check apps/premier-printing/functions/tikTok.js)",
+      "Bash(node --check apps/premier-printing/app/api/internal/pull-orders/tiktok/route.js)",
+      "PowerShell($p = Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -match 'premier-printing' -or $_.CommandLine -match '3006' } | Select-Object ProcessId, CommandLine; if \\($p\\) { $p | Format-List } else { \"No premier-printing dev node process found\" })",
+      "PowerShell(Stop-Process -Id 43560 -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 800; Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -match 'premier-printing' -or $_.CommandLine -match '3006' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; \"Stopped premier dev server\")",
+      "PowerShell($d = \"Z:\\\\GitHub\\\\pythias\\\\apps\\\\premier-printing\\\\.next\"; if \\(Test-Path $d\\) { try { Remove-Item -Recurse -Force $d -ErrorAction Stop; \"Deleted .next\" } catch { \"Retry after lock release...\"; Start-Sleep -Seconds 2; Remove-Item -Recurse -Force $d -ErrorAction Stop; \"Deleted .next on retry\" } } else { \".next already gone\" }; \"Exists now: $\\(Test-Path $d\\)\")",
+      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { $p = Get-Process -Id $c[0].OwningProcess; \"PID $\\($p.Id\\) started $\\($p.StartTime\\)  \\(now $\\(Get-Date\\)\\)\" } else { \"nothing on 3020\" }; \"--- other next/node servers ---\"; Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $_.LocalPort -in 3000,3007,3010,3020,3001 } | ForEach-Object { \"port $\\($_.LocalPort\\) pid $\\($_.OwningProcess\\)\" })",
+      "PowerShell($c = Get-NetTCPConnection -State Listen -LocalPort 3020 -ErrorAction SilentlyContinue; if \\($c\\) { Stop-Process -Id $c[0].OwningProcess -Force }; Start-Sleep -Seconds 2; cd z:\\\\GitHub\\\\pythias\\\\apps\\\\pythias-storefront; \"stopped\")",
+      "Bash(node --check apps/pythias-platform/functions/integrationDiagnostics.js)",
+      "Bash(node --check apps/pythias-platform/app/api/internal/integrations/diagnose/route.js)",
+      "Bash(node --check apps/premier-printing/functions/integrationDiagnostics.js)",
+      "Bash(node --check apps/premier-printing/app/api/internal/integrations/test-push/route.js)",
+      "Bash(awk '/function buildFulfillmentSections/,/^function buildCommerceSections/' apps/pythias-platform/components/Navbar.js)"
     ]
   }
 }

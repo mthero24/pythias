@@ -8,7 +8,7 @@ const input = { padding: "7px 9px", border: "1px solid #cbd5e1", borderRadius: 7
 const money = (c) => `$${((c || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 // Channels that consume the universal feed today (no OAuth) — shown so sellers know coverage.
-const FEED_CHANNELS = ["Google", "Microsoft / Bing", "Meta (Facebook/Instagram)", "Pinterest", "TikTok", "Reddit"];
+const FEED_CHANNELS = ["Google", "Microsoft / Bing", "Meta (Facebook/Instagram)", "Pinterest", "TikTok", "Snapchat", "Reddit"];
 
 export default function ChannelsClient() {
     const [data, setData] = useState(null);

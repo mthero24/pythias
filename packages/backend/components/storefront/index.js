@@ -2,6 +2,7 @@
 // "@pythias/backend/storefront" (not the big "@pythias/backend" barrel) so pages that mount
 // the storefront control panel don't pull the entire backend component graph into their bundle.
 export { default as StorefrontEditor } from "./StorefrontEditor";
+export { default as StorefrontWelcome } from "./StorefrontWelcome";
 export { default as MarketingClient } from "./MarketingClient";
 export { default as AnalyticsClient } from "./AnalyticsClient";
 export { default as SeoPagesClient } from "./SeoPagesClient";
