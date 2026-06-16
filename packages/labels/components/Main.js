@@ -18,6 +18,7 @@ import WarningAmberIcon   from "@mui/icons-material/WarningAmber";
 import ErrorIcon          from "@mui/icons-material/Error";
 import ReplayIcon         from "@mui/icons-material/Replay";
 import SyncIcon           from "@mui/icons-material/Sync";
+import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Sort } from "../functions/sort";
@@ -606,6 +607,13 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                                     {outCount > 0 && <Chip icon={<ErrorIcon sx={{ fontSize: "12px !important" }} />} label={`${outCount} out`} size="small"
                                                         onClick={() => setStockFilter(stockFilter === "attached" ? null : "attached")}
                                                         sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: stockFilter === "attached" ? "#dc2626" : "#fef2f2", color: stockFilter === "attached" ? "#fff" : "#dc2626", outline: stockFilter === "attached" ? "2px solid #dc2626" : "none" }} />}
+                                                    {outCount > 0 && source === "po" && (
+                                                        <Tooltip title="Order out-of-stock inventory">
+                                                            <IconButton size="small" component="a" href="/inventory?order=oos" target="_blank" rel="noopener" sx={{ p: 0.25, color: "#dc2626" }}>
+                                                                <AddShoppingCartIcon sx={{ fontSize: 15 }} />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
                                                     {noInvCount > 0 && <Chip icon={<WarningAmberIcon sx={{ fontSize: "12px !important" }} />} label={`${noInvCount} no inv`} size="small"
                                                         onClick={() => setStockFilter(stockFilter === "noInv" ? null : "noInv")}
                                                         sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: stockFilter === "noInv" ? "#6b7280" : "#f9fafb", color: stockFilter === "noInv" ? "#fff" : "#6b7280", outline: stockFilter === "noInv" ? "2px solid #6b7280" : "none" }} />}

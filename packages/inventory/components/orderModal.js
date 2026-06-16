@@ -53,9 +53,12 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
                 for (const inv of blank.inventories) {
                     const invWithSanmar = { ...inv, sanmarStyle: blank.blank.sanmarStyle || "", ssActivewearStyle: blank.blank.ssActivewearStyle || "" };
                     if (type === "Out Of Stock") {
-                        const attached = inv.attachedCount ?? 0;
-                        const alreadyOnOrder = inv.activeOnOrder ?? 0;
-                        const stillNeeded = attached - alreadyOnOrder;
+                        // attachedCount already EXCLUDES on-order items (the create-order route
+                        // filters stockStatus ∉ {inStock, ordered}), so these attached items are
+                        // genuinely out of stock AND not covered by any active PO. Order that many.
+                        // (Previously this subtracted activeOnOrder again — a double-subtraction
+                        // that under-ordered, e.g. showing 94 to order when 200 were out of stock.)
+                        const stillNeeded = inv.attachedCount ?? 0;
                         if (stillNeeded > 0) {
                             if (!bl.includes(inv.style_code)) bl.push(inv.style_code);
                             if (!cl.includes(inv.color_name)) cl.push(inv.color_name);

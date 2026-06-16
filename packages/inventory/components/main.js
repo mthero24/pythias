@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Box, Grid2, TextField, Accordion, AccordionSummary, AccordionDetails, Button, Typography, Card, Chip, Stack, InputAdornment, Pagination, PaginationItem, Tooltip } from "@mui/material";
 import axios from "axios";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -32,6 +32,16 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [inventoryToDelete, setInventoryToDelete] = useState(null);
     const debounceRefs = useRef({});
+
+    // Deep-link: /inventory?order=oos auto-opens the Out-of-Stock reorder (e.g. from the
+    // print-labels "out" chip), tying the two views together.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("order") === "oos") {
+            setOrderType("Out Of Stock");
+            setOpen(true);
+        }
+    }, []);
 
     const save = async (inventory) => {
         const res = await axios.post("/api/admin/inventory", { inventory });
