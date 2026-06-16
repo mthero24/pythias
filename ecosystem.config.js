@@ -155,6 +155,24 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
+      name: "inventory-maintenance-po",
+      cwd: "apps/po",
+      script: "scripts/runInventoryMaintenance.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "*/15 * * * *", // every 15 min — reconcile "ordered" flags + stock status to active-PO truth
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3001,
+      },
+      out_file: "logs/inventory-maintenance-po-out.log",
+      error_file: "logs/inventory-maintenance-po-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "tracking-po",
       cwd: "apps/po",
       script: "scripts/runTracking.js",

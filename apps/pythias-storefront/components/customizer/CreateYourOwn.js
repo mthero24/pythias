@@ -646,8 +646,8 @@ export default function CreateYourOwn({ blanks = [] }) {
             <div className="sf-container" style={{ maxWidth: "100%", overflowX: "hidden" }}>
                 <h1 style={{ fontSize: "2rem", margin: "0 0 4px", fontWeight: 800, letterSpacing: "-0.02em" }}>Design studio</h1>
                 <p style={{ opacity: 0.6, margin: "0 0 26px", fontSize: "0.95rem" }}>Make it yours — add text, upload art, or generate a design with AI. Drag it right where you want it.</p>
-                <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(420px,500px)", gap: 32, alignItems: "start" }}>
-                    <div style={{ width: "100%", maxWidth: 600, margin: "0 auto", position: "sticky", top: 16 }}>{canvasCard}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0,600px) minmax(380px,460px)", gap: 28, alignItems: "start", justifyContent: "center" }}>
+                    <div style={{ width: "100%", position: "sticky", top: 16 }}>{canvasCard}</div>
 
                     <div style={{ ...card, overflow: "hidden", width: "100%" }}>
                         <div style={{ display: "flex", borderBottom: "1px solid #eef2f7" }}>{TOOLS.map(tabBtn)}</div>

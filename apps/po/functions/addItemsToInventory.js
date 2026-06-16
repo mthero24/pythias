@@ -291,6 +291,69 @@ export const recomputeStockStatus = async () => {
     if (updateOps.length) await Items.bulkWrite(updateOps, { ordered: false });
 };
 
+// Reconcile the per-item `stockStatus: "ordered"` flag back to the authoritative PO truth.
+// The "ordered" flag drifts ABOVE the real unreceived-PO quantity because:
+//   1. items keep "ordered" after they're canceled / shipped / label-printed (recompute
+//      skips those, so it never resets them), and
+//   2. items can be flagged "ordered" with no inventory / beyond active PO capacity.
+// This pass clears the stale flags, then re-runs the capped recompute so active items are
+// re-bucketed against real capacity. After this, count(stockStatus="ordered") == sum of
+// unreceived PO line quantities.
+//
+// dryRun=true reports what WOULD change without writing — use it to preview 472 → 311.
+export const reconcileOrderedStatus = async ({ dryRun = false } = {}) => {
+    // Stale "ordered" flags on items that are out of the active pipeline. These should
+    // never count as "on order" — recompute's active-item query skips them, so clear here.
+    const staleFilter = {
+        stockStatus: "ordered",
+        $or: [
+            { canceled: true },
+            { shipped: true },
+            { labelPrinted: true },
+            { "inventory.inventory": { $in: [null, undefined] } },
+            { "inventory.inventory": { $exists: false } },
+        ],
+    };
+
+    const staleCount = await Items.countDocuments(staleFilter);
+    const totalOrderedBefore = await Items.countDocuments({ stockStatus: "ordered" });
+
+    // Authoritative active-PO capacity (the "311") — sum of unreceived location quantities.
+    const activeOrders = await InventoryOrders.find(
+        { received: { $ne: true } }, "locations"
+    ).lean();
+    let activeCapacity = 0;
+    for (const po of activeOrders) {
+        for (const loc of po.locations || []) {
+            if (loc.received) continue;
+            for (const item of loc.items || []) activeCapacity += item.quantity ?? 0;
+        }
+    }
+
+    const report = {
+        dryRun,
+        totalOrderedBefore,
+        staleOrderedToClear: staleCount,
+        activePOCapacity: activeCapacity,
+    };
+
+    if (dryRun) {
+        report.note = "No changes written. Run with dryRun=false to apply, then recompute caps active items at capacity.";
+        return report;
+    }
+
+    // Clear stale flags (set to null — these items are not in the active inventory pipeline).
+    if (staleCount > 0) {
+        await Items.updateMany(staleFilter, { $set: { stockStatus: null } });
+    }
+
+    // Re-bucket active items against real capacity (caps "ordered" at orderedCapacity).
+    await recomputeStockStatus();
+
+    report.totalOrderedAfter = await Items.countDocuments({ stockStatus: "ordered" });
+    return report;
+};
+
 export async function tagBulkOrders() {
     const bulkOrders = await Order.find({
         $expr: { $gt: [{ $size: "$items" }, 50] },
@@ -320,12 +383,8 @@ export async function tagBulkOrders() {
     ]);
 }
 
-setInterval(() => {
-    if (process.env.pm_id == 9 || process.env.pm_id == "9") {
-        tagBulkOrders()
-            .then(() => addItemsToInventory())
-            .then(() => recomputeStockStatus())
-            .then(() => reconcileAllocated())
-            .catch(err => console.error("background service error:", err));
-    }
-}, 1000 * 60 * 15);
+// NOTE: The background maintenance chain (tagBulkOrders → addItemsToInventory →
+// reconcileOrderedStatus → reconcileAllocated) previously ran here in an in-process
+// setInterval gated on `pm_id == 9` — fragile: it only ran if that one web worker was up.
+// It now runs as a dedicated PM2 service ("inventory-maintenance-po", every 15 min) that
+// hits /api/internal/inventory/maintenance, so it runs no matter which worker is alive.

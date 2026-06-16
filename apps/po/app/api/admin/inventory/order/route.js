@@ -7,6 +7,7 @@ import { Sort } from "@pythias/labels";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logChange, userFromToken } from "@pythias/backend/server";
+import { reconcileOrderedStatus } from "@/functions/addItemsToInventory";
 
 export async function GET(req) {
     const all = req.nextUrl.searchParams.get("all") === "true";
@@ -26,24 +27,13 @@ export async function GET(req) {
 
     const orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory");
 
-    // Fire-and-forget: backfill stockStatus for items already on open orders
-    ;(async () => {
-        try {
-            const openOrderIds = orders.map(o => o._id);
-            const invDocs = await Inventory.find({ "orders.order": { $in: openOrderIds } }, "orders").lean();
-            const itemIds = invDocs.flatMap(inv =>
-                (inv.orders || [])
-                    .filter(o => openOrderIds.some(id => id.toString() === o.order.toString()))
-                    .flatMap(o => o.items || [])
-            );
-            if (itemIds.length > 0) {
-                TspItems.updateMany(
-                    { _id: { $in: itemIds }, stockStatus: "attached" },
-                    { $set: { stockStatus: "ordered" } }
-                ).catch(() => {});
-            }
-        } catch {}
-    })();
+    // NOTE: Previously this GET did a fire-and-forget backfill that marked every item in
+    // inv.orders[].items as "ordered" with NO capacity cap and NO check that the PO line
+    // still existed. That over-marked items and was the main reason the "on order" count
+    // (count of stockStatus="ordered") floated above the real unreceived-PO quantity.
+    // Assignment now happens only where it's capped: the order POST (FIFO, limited to the
+    // ordered qty) and recomputeStockStatus/reconcileOrderedStatus (capped at active PO
+    // capacity). Do NOT reintroduce an uncapped backfill here.
 
     return NextResponse.json({ error: false, orders });
 }
@@ -115,6 +105,9 @@ export async function PUT(req = NextApiRequest) {
             order.markModified("locations");
             order.markModified("received");
             await order.save();
+            // Receiving removes this PO's capacity — reconcile the per-item "ordered" flags
+            // so nothing stays marked "ordered" beyond the remaining active-PO truth.
+            reconcileOrderedStatus().catch(e => console.error("[inventory/order receive] reconcile failed:", e.message));
             logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "receive", userName, email, provider: "po" });
             let orders = await InventoryOrders.find({ received: { $ne: true } }).populate("locations.items.inventory");
             return NextResponse.json({ error: false, orders });
