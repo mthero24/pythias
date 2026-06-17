@@ -764,6 +764,14 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                                         item.sizeName == undefined || item.blank == undefined);
 
                                                 const imageKeys = Object.keys(item.design ?? {}).filter(k => item.design[k] != undefined);
+                                                // Custom "create your own" items carry a normalized placement per side — pass it to
+                                                // renderImages so the thumbnail shows the art at the buyer's real position/size.
+                                                const placeQS = (key) => {
+                                                    const p = (item.personalization?.sides || []).find(s => s.location === key)?.place;
+                                                    return (p && p.wPct > 0 && p.hPct > 0)
+                                                        ? `&xPct=${p.xPct ?? 0}&yPct=${p.yPct ?? 0}&wPct=${p.wPct}&hPct=${p.hPct}`
+                                                        : "";
+                                                };
 
                                                 return (
                                                     <Box
@@ -786,7 +794,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                                                 <RetryImage
                                                                     src={source === "PO"
                                                                         ? `https://images4.tshirtpalace.com/images/productImages/SKU--${(item.colorName || "").toLowerCase()}-${(item.styleCode || "").toLowerCase()}-${imageKeys[0]}.webp?url=${item.design[imageKeys[0]]}&width=100`
-                                                                        : `/api/renderImages/${item.styleCode}-${item.colorName}-${imageKeys[0]}.jpg?blank=${item.styleCode}&colorName=${item.colorName}&design=${item.design[imageKeys[0]]}&width=100&side=${imageKeys[0]}`}
+                                                                        : `/api/renderImages/${item.styleCode}-${item.colorName}-${imageKeys[0]}.jpg?blank=${item.styleCode}&colorName=${item.colorName}&design=${item.design[imageKeys[0]]}&width=100&side=${imageKeys[0]}${placeQS(imageKeys[0])}`}
                                                                     alt={item.sku}
                                                                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
                                                                 />

@@ -18,7 +18,10 @@ export default function LoginPage() {
         setLoading(true);
         setError("");
         const res = await signIn("credentials", { email, password, redirect: false });
-        if (res?.error) {
+        // NextAuth can return error as the string "undefined" on success — trust `ok`, and ignore
+        // that sentinel so a successful sign-in isn't misread as a failure.
+        const failed = !res?.ok || (res?.error && res.error !== "undefined");
+        if (failed) {
             setError("Invalid email or password");
             setLoading(false);
         } else {

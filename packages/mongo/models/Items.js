@@ -159,6 +159,10 @@ const schema = new mongoose.Schema(
             //   render     = boxX + xPct*boxW , boxY + yPct*boxH  (preview)
             place:      { xPct: Number, yPct: Number, wPct: Number, hPct: Number },
             box:        { type: mongoose.Schema.Types.Mixed },   // legacy { x, y, w, h } 400-space (kept for back-compat)
+            // Cached server-rendered PLACEMENT PROOF (art composited on the garment at the exact
+            // placement) — what production sees at "DTF Find" so they know how it should look.
+            // The physical print stays size-only; this is a visual proof, generated lazily once.
+            proofUrl:   { type: String },
         }],
     },
     // Multi-vertical routing: which fulfiller handles this line (default POD/print).

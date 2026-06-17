@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Box, Tabs, Tab, Button, Card, CardContent, Typography, TextField, MenuItem,
     IconButton, Select, CircularProgress, Snackbar, Alert, Divider, Tooltip, Chip,
@@ -37,7 +37,6 @@ export default function StorefrontEditor({ viewUrl }) {
         }).finally(() => setLoading(false));
     }, []);
 
-    const home = useMemo(() => (work?.pages ?? []).find((p) => p.slug === "home") ?? work?.pages?.[0], [work]);
     const set = (updater) => setWork((w) => { const n = clone(w); updater(n); return n; });
 
     const save = async (publish) => {
@@ -75,7 +74,7 @@ export default function StorefrontEditor({ viewUrl }) {
             </Tabs>
 
             {tab === 0 && <DesignTab work={work} set={set} />}
-            {tab === 1 && <SectionsTab home={home} set={set} />}
+            {tab === 1 && <SectionsTab work={work} set={set} viewUrl={viewUrl} />}
             {tab === 2 && <SeoTab work={work} set={set} />}
 
             <Snackbar open={!!toast} autoHideDuration={3500} onClose={() => setToast(null)} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
@@ -132,26 +131,197 @@ function DesignTab({ work, set }) {
             </Box>
 
             <Typography fontWeight={700} sx={{ mb: 1 }}>Branding</Typography>
-            <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <TextField size="small" label="Logo URL" value={theme.logoUrl || ""} sx={{ minWidth: 320 }} onChange={(e) => set((w) => { w.theme.logoUrl = e.target.value; })} />
-                <TextField size="small" label="Favicon URL" value={theme.favicon || ""} sx={{ minWidth: 320 }} onChange={(e) => set((w) => { w.theme.favicon = e.target.value; })} />
+            <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                <ImageUploadField
+                    label="Logo"
+                    value={theme.logoUrl}
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    hint="Shown in your store header. PNG/SVG with transparency works best."
+                    onChange={(url) => set((w) => { w.theme.logoUrl = url; })}
+                />
+                <ImageUploadField
+                    label="Favicon"
+                    value={theme.favicon}
+                    accept="image/png,image/x-icon,image/svg+xml,image/webp"
+                    hint="The little icon in the browser tab. Square, 32×32 or larger."
+                    onChange={(url) => set((w) => { w.theme.favicon = url; })}
+                />
             </Box>
         </Box>
     );
 }
 
-// ── Sections: reorder / add / remove / edit settings (home page) ─────────────
-function SectionsTab({ home, set }) {
-    const sections = home?.sections ?? [];
-    const editHome = (fn) => set((w) => { const h = (w.pages ?? []).find((p) => p.slug === "home") ?? w.pages?.[0]; if (h) fn(h); });
-    const move = (i, d) => editHome((h) => { const j = i + d; if (j < 0 || j >= h.sections.length) return; const [s] = h.sections.splice(i, 1); h.sections.splice(j, 0, s); });
-    const remove = (i) => editHome((h) => h.sections.splice(i, 1));
-    const add = (type) => editHome((h) => h.sections.push({ type, settings: {} }));
-    const setField = (i, key, val) => editHome((h) => { h.sections[i].settings = { ...h.sections[i].settings, [key]: val }; });
+// Logo/favicon picker: preview + Upload/Replace/Remove. Uploads server-side to /api/admin/upload
+// (Wasabi) — present in BOTH platform and premier, so the shared editor works in either app.
+function ImageUploadField({ label, value, hint, accept, onChange }) {
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState("");
+    const inputId = `sf-upload-${label.toLowerCase()}`;
+    const upload = async (file) => {
+        if (!file) return;
+        setBusy(true); setErr("");
+        try {
+            const fd = new FormData();
+            fd.append("file", file);
+            fd.append("folder", "storefront");
+            const r = await fetch("/api/admin/upload", { method: "POST", body: fd });
+            const d = await r.json();
+            if (d.error || !d.url) throw new Error(d.msg || "Upload failed");
+            onChange(d.url);
+        } catch (e) {
+            setErr(e.message || "Upload failed");
+        } finally {
+            setBusy(false);
+        }
+    };
+    return (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 240 }}>
+            <Typography fontSize="0.82rem" fontWeight={600} color="text.secondary">{label}</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 64, height: 64, borderRadius: 1.5, border: "1px dashed", borderColor: "divider", bgcolor: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                    {value
+                        ? <img src={value} alt={label} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        : <Typography fontSize="0.62rem" color="text.disabled">None</Typography>}
+                </Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <input id={inputId} type="file" accept={accept} style={{ display: "none" }} onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
+                    <label htmlFor={inputId}>
+                        <Button component="span" size="small" variant="outlined" disabled={busy} startIcon={busy ? <CircularProgress size={14} /> : null}>
+                            {busy ? "Uploading…" : value ? "Replace" : "Upload"}
+                        </Button>
+                    </label>
+                    {value && <Button size="small" color="error" onClick={() => onChange("")}>Remove</Button>}
+                </Box>
+            </Box>
+            {hint && <Typography fontSize="0.68rem" color="text.disabled" sx={{ maxWidth: 240 }}>{hint}</Typography>}
+            {err && <Typography fontSize="0.68rem" color="error">{err}</Typography>}
+        </Box>
+    );
+}
+
+const slugifyClient = (s) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "page";
+
+// ── Sections: pick a page → reorder / add / remove / edit + AI suggest + live preview ──
+function SectionsTab({ work, set, viewUrl }) {
+    const pages = work.pages ?? [];
+    const [slug, setSlug] = useState(pages[0]?.slug || "home");
+    const page = pages.find((p) => p.slug === slug) || pages[0];
+    const sections = page?.sections ?? [];
+
+    const [adding, setAdding] = useState(false);
+    const [newTitle, setNewTitle] = useState("");
+    const [showPreview, setShowPreview] = useState(false);
+    const [previewKey, setPreviewKey] = useState(0);
+    const [aiOpen, setAiOpen] = useState(false);
+    const [aiPrompt, setAiPrompt] = useState("");
+    const [aiBusy, setAiBusy] = useState(false);
+    const [aiErr, setAiErr] = useState("");
+
+    const editPage = (fn) => set((w) => { const p = (w.pages ?? []).find((x) => x.slug === slug); if (p) { p.sections ??= []; fn(p); } });
+    const move = (i, d) => editPage((p) => { const j = i + d; if (j < 0 || j >= p.sections.length) return; const [s] = p.sections.splice(i, 1); p.sections.splice(j, 0, s); });
+    const remove = (i) => editPage((p) => p.sections.splice(i, 1));
+    const add = (type) => editPage((p) => p.sections.push({ type, settings: {} }));
+    const setField = (i, key, val) => editPage((p) => { p.sections[i].settings = { ...p.sections[i].settings, [key]: val }; });
+
+    const addPage = () => {
+        const title = newTitle.trim();
+        if (!title) return;
+        let s = slugifyClient(title);
+        if (pages.some((p) => p.slug === s)) s = `${s}-${pages.length}`;
+        set((w) => { (w.pages ??= []).push({ slug: s, title, sections: [] }); });
+        setSlug(s); setNewTitle(""); setAdding(false);
+    };
+    const deletePage = () => {
+        if (slug === "home") return;
+        if (!confirm(`Delete the "${page?.title || slug}" page and its sections?`)) return;
+        set((w) => { w.pages = (w.pages ?? []).filter((p) => p.slug !== slug); });
+        setSlug("home");
+    };
+
+    const runAi = async () => {
+        setAiBusy(true); setAiErr("");
+        try {
+            const brand = work.businessInfo?.legalName || work.seo?.title || work.businessInfo?.name || "our store";
+            const r = await fetch("/api/storefront/sections/ai", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brand, pageTitle: page?.title || "Home", prompt: aiPrompt.trim() }),
+            });
+            const d = await r.json();
+            if (d.error || !d.sections?.length) throw new Error(typeof d.error === "string" ? d.error : "No suggestions returned");
+            editPage((p) => { p.sections.push(...d.sections); });
+            setAiOpen(false); setAiPrompt("");
+        } catch (e) {
+            setAiErr(e.message || "AI suggestion failed");
+        } finally {
+            setAiBusy(false);
+        }
+    };
+
+    const base = (viewUrl || "").replace(/\/$/, "");
+    const previewPath = base ? (slug === "home" ? base : `${base}/${slug}`) : null;
+    // preview=1 makes the storefront render the saved DRAFT (so unpublished edits show).
+    const previewUrl = previewPath ? `${previewPath}?preview=1` : null;
 
     return (
         <Box>
-            {sections.length === 0 && <Typography color="text.secondary" sx={{ mb: 2 }}>No sections yet — add one below.</Typography>}
+            {/* Page selector + actions */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
+                <TextField select size="small" label="Page" value={slug} onChange={(e) => setSlug(e.target.value)} sx={{ minWidth: 200 }}>
+                    {pages.map((p) => <MenuItem key={p.slug} value={p.slug}>{p.title || p.slug}{p.slug === "home" ? " (home)" : ""}</MenuItem>)}
+                </TextField>
+                <Button size="small" startIcon={<AddIcon />} onClick={() => setAdding((v) => !v)} sx={{ textTransform: "none" }}>New page</Button>
+                {slug !== "home" && <Button size="small" color="error" startIcon={<DeleteOutlineIcon />} onClick={deletePage} sx={{ textTransform: "none" }}>Delete page</Button>}
+                <Box sx={{ flex: 1 }} />
+                {previewUrl && <Button size="small" variant={showPreview ? "contained" : "outlined"} onClick={() => setShowPreview((v) => !v)} sx={{ textTransform: "none" }}>{showPreview ? "Hide preview" : "Preview"}</Button>}
+            </Box>
+            {adding && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                    <TextField size="small" label="New page title" value={newTitle} autoFocus
+                        onChange={(e) => setNewTitle(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addPage(); }} sx={{ minWidth: 240 }} />
+                    <Button size="small" variant="contained" onClick={addPage} sx={{ textTransform: "none" }}>Add</Button>
+                    <Typography fontSize="0.72rem" color="text.disabled">URL: /{slugifyClient(newTitle || "page")}</Typography>
+                </Box>
+            )}
+
+            {/* Live preview */}
+            {showPreview && previewUrl && (
+                <Card variant="outlined" sx={{ mb: 2, overflow: "hidden" }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, borderBottom: "1px solid", borderColor: "divider", bgcolor: "#f8fafc" }}>
+                        <Typography fontSize="0.78rem" fontWeight={600} color="text.secondary" sx={{ flex: 1 }}>Live preview · /{slug === "home" ? "" : slug}</Typography>
+                        <Tooltip title="Refresh"><IconButton size="small" onClick={() => setPreviewKey((k) => k + 1)}><ArrowUpwardIcon fontSize="small" sx={{ transform: "rotate(45deg)" }} /></IconButton></Tooltip>
+                        <Button size="small" endIcon={<OpenInNewIcon />} href={previewUrl} target="_blank" sx={{ textTransform: "none" }}>Open</Button>
+                    </Box>
+                    <iframe key={previewKey} src={`${previewUrl}&_pv=${previewKey}`} title="preview"
+                        style={{ width: "100%", height: 540, border: "none", display: "block", background: "#fff" }} />
+                    <Typography fontSize="0.7rem" color="text.disabled" sx={{ px: 1.5, py: 0.75 }}>
+                        Preview reflects your latest <b>saved draft</b> — click <b>Save draft</b>, then <b>Refresh</b> to update it. (Visitors still see the published site until you Publish.)
+                    </Typography>
+                </Card>
+            )}
+
+            {/* AI suggestions */}
+            <Box sx={{ mb: 2 }}>
+                {!aiOpen ? (
+                    <Button size="small" variant="outlined" onClick={() => { setAiOpen(true); setAiErr(""); }} sx={{ textTransform: "none" }}>✨ AI suggest sections</Button>
+                ) : (
+                    <Card variant="outlined" sx={{ p: 1.5, bgcolor: "#faf7ff" }}>
+                        <Typography fontSize="0.82rem" fontWeight={700} sx={{ mb: 1 }}>✨ AI suggest sections for “{page?.title || "Home"}”</Typography>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
+                            <TextField size="small" placeholder="Optional: what's this page about / your goal" value={aiPrompt}
+                                onChange={(e) => setAiPrompt(e.target.value)} sx={{ flex: 1, minWidth: 280 }} disabled={aiBusy} />
+                            <Button size="small" variant="contained" onClick={runAi} disabled={aiBusy}
+                                startIcon={aiBusy ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : null} sx={{ textTransform: "none" }}>
+                                {aiBusy ? "Thinking…" : "Generate"}
+                            </Button>
+                            <Button size="small" onClick={() => setAiOpen(false)} disabled={aiBusy} sx={{ textTransform: "none" }}>Cancel</Button>
+                        </Box>
+                        <Typography fontSize="0.7rem" color="text.disabled" sx={{ mt: 0.75 }}>Adds suggested sections to this page — reorder or tweak them after.</Typography>
+                        {aiErr && <Typography fontSize="0.72rem" color="error" sx={{ mt: 0.5 }}>{aiErr}</Typography>}
+                    </Card>
+                )}
+            </Box>
+
+            {sections.length === 0 && <Typography color="text.secondary" sx={{ mb: 2 }}>No sections on this page yet — add one below or use AI.</Typography>}
             {sections.map((s, i) => {
                 const def = MANIFEST_BY_TYPE[s.type];
                 return (
@@ -173,7 +343,7 @@ function SectionsTab({ home, set }) {
                 );
             })}
             <Divider sx={{ my: 2 }} />
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                 <Typography fontWeight={700}>Add section:</Typography>
                 {SECTION_MANIFEST.map((m) => (
                     <Button key={m.type} size="small" variant="outlined" startIcon={<AddIcon />} onClick={() => add(m.type)} sx={{ textTransform: "none" }}>{m.label}</Button>
@@ -184,6 +354,9 @@ function SectionsTab({ home, set }) {
 }
 
 function SettingField({ field, value, onChange }) {
+    if (field.type === "image") {
+        return <ImageUploadField label={field.label} value={value} accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={onChange} />;
+    }
     if (field.type === "select") {
         return (
             <TextField select size="small" label={field.label} value={value || field.options?.[0] || ""} sx={{ minWidth: 160 }} onChange={(e) => onChange(e.target.value)}>

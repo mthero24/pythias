@@ -63,9 +63,19 @@ function OrderDetail({ id }) {
             <div style={card}>
                 <h3 style={{ margin: "0 0 10px", fontSize: "1rem" }}>Items</h3>
                 {(order.lines || []).map((l, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: i ? "1px solid rgba(0,0,0,0.06)" : "none", fontSize: "0.92rem" }}>
-                        <span>{[l.styleCode, l.colorName, l.sizeName].filter(Boolean).join(" · ")} × {l.qty}</span>
-                        <span>{money((l.price || 0) * 100 * l.qty)}</span>
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "8px 0", borderTop: i ? "1px solid rgba(0,0,0,0.06)" : "none", fontSize: "0.92rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                            <div style={{ width: 52, height: 52, flexShrink: 0, borderRadius: 8, overflow: "hidden", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(0,0,0,0.06)" }}>
+                                {l.image
+                                    ? <img src={`${l.image}${l.image.includes("?") ? "&" : "?"}width=150`} alt={l.name || l.styleCode || "item"} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                                    : <span style={{ fontSize: 20 }}>🧵</span>}
+                            </div>
+                            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                                {l.name ? <><b style={{ fontWeight: 600 }}>{l.name}</b><br /></> : null}
+                                {[l.styleCode, l.colorName, l.sizeName].filter(Boolean).join(" · ")} × {l.qty}
+                            </span>
+                        </div>
+                        <span style={{ whiteSpace: "nowrap" }}>{money((l.price || 0) * 100 * l.qty)}</span>
                     </div>
                 ))}
                 <div style={{ borderTop: "1px solid rgba(0,0,0,0.12)", marginTop: 10, paddingTop: 10, display: "grid", gap: 4, fontSize: "0.9rem" }}>

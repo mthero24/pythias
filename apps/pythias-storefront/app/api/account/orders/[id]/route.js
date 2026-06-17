@@ -1,8 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { PlatformOrder, PlatformItem } from "@pythias/mongo";
-import { getAuthedCustomer, trackingUrl } from "@/lib/account";
+import { PlatformOrder, PlatformItem, PlatformProduct } from "@pythias/mongo";
+import { getAuthedCustomer, trackingUrl, resolveLineImage } from "@/lib/account";
 
 // GET /api/account/orders/[id] — one of the customer's orders, with items + tracking.
 export async function GET(req, { params }) {
@@ -18,14 +18,29 @@ export async function GET(req, { params }) {
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     const items = await PlatformItem.find({ order: order._id, orgId: auth.orgId })
-        .select("styleCode colorName sizeName price").lean();
+        .select("styleCode colorName sizeName price design personalization product color name").lean();
+
+    // Resolve a representative image per item — product mockup for pre-made, placement proof/artwork
+    // for custom. Batch-load the referenced products once.
+    const productIds = [...new Set(items.map((i) => i.product).filter(Boolean).map(String))];
+    const products = productIds.length
+        ? await PlatformProduct.find({ _id: { $in: productIds }, orgId: auth.orgId }).select("image images variantsArray").lean()
+        : [];
+    const productMap = new Map(products.map((p) => [String(p._id), p]));
 
     // Group identical lines and total them up.
     const lines = [];
     const map = new Map();
     for (const it of items) {
         const key = `${it.styleCode}|${it.colorName}|${it.sizeName}|${it.price}`;
-        if (!map.has(key)) { const l = { styleCode: it.styleCode, colorName: it.colorName, sizeName: it.sizeName, price: it.price || 0, qty: 0 }; map.set(key, l); lines.push(l); }
+        if (!map.has(key)) {
+            const l = {
+                styleCode: it.styleCode, colorName: it.colorName, sizeName: it.sizeName,
+                price: it.price || 0, qty: 0, name: it.name || null,
+                image: resolveLineImage(it, productMap.get(String(it.product))),
+            };
+            map.set(key, l); lines.push(l);
+        }
         map.get(key).qty += 1;
     }
     const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);

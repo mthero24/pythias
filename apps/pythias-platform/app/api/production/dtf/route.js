@@ -4,6 +4,7 @@ import { PlatformItem } from "@pythias/mongo";
 import { setConfig, createImage } from "@pythias/dtf";
 import { getToken } from "next-auth/jwt";
 import { getOrgCreds } from "@/lib/getOrgCreds";
+import { ensureItemProofs } from "@/lib/printProof";
 
 // Same model as Premier: print size (inches) comes from the blank ENVELOPE for the item's size +
 // location, NOT from a design SKU (custom "create your own" orders have no design SKU). Custom items
@@ -27,7 +28,7 @@ export async function GET(req) {
     if (!pieceID) return NextResponse.json({ error: true, msg: "pieceID required" });
 
     const item = await PlatformItem.findOne({ orgId, pieceId: pieceID })
-        .populate("blank", "code sizes printLocations")
+        .populate("blank", "code sizes printLocations images")
         .populate("designRef", "sku");
 
     if (!item) return NextResponse.json({ error: true, msg: "Item not found" });
@@ -38,6 +39,10 @@ export async function GET(req) {
     item.status = "DTF Find";
     item.steps = item.steps ?? [];
     item.steps.push({ status: "DTF Find", date: new Date() });
+    // Custom "create your own" item → render/cache placement proofs so the operator sees how it
+    // should look (art on garment at the buyer's exact placement). Non-fatal.
+    let proofs = null;
+    try { proofs = await ensureItemProofs(item); } catch (e) { console.error("proof render failed:", e.message); }
     await item.save();
 
     return NextResponse.json({
@@ -47,6 +52,7 @@ export async function GET(req) {
         styleCode: item.blank?.code,
         colorName: item.colorName,
         item: JSON.parse(JSON.stringify(item)),
+        proofs,
         designSku: item.designRef?.sku,
         source: "PLATFORM",
     });

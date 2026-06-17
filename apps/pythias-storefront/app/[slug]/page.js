@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { resolveSite } from "@/lib/resolveSite";
+import { previewAllowed, withDraft } from "@/lib/preview";
 import { StorefrontPage } from "@pythias/mongo";
 import { SiteFrame, SectionRenderer } from "@pythias/storefront";
 import { resolveSectionData } from "@pythias/storefront/server";
@@ -11,25 +12,32 @@ export const dynamic = "force-dynamic";
 // Reserved top-level paths owned by real routes — never treated as custom pages.
 const RESERVED = new Set(["products", "cart", "checkout", "account", "favorites", "feed", "api", "search", "collections", "gift-card-balance"]);
 
-async function loadPage(host, slug) {
+async function loadPage(host, slug, preview) {
     if (RESERVED.has(slug)) return { site: null, page: null };
-    const site = await resolveSite(host);
-    if (!site) return { site: null, page: null };
-    const page = await StorefrontPage.findOne({ orgId: site.orgId, slug: slug.toLowerCase(), status: "published" }).lean();
+    const live = await resolveSite(host);
+    if (!live) return { site: null, page: null };
+    const site = withDraft(live, preview);
+    // In preview, a builder page from the draft (the editor's per-page sections) wins so the seller
+    // can preview unpublished pages; otherwise serve the published SEO landing page.
+    const builderPage = preview ? (site.pages ?? []).find((p) => p.slug === slug.toLowerCase()) : null;
+    const page = builderPage
+        || await StorefrontPage.findOne({ orgId: live.orgId, slug: slug.toLowerCase(), status: "published" }).lean();
     return { site, page };
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
     const { slug } = await params;
-    const { page } = await loadPage((await headers()).get("host"), slug);
+    const preview = previewAllowed(await searchParams);
+    const { page } = await loadPage((await headers()).get("host"), slug, preview);
     if (!page) return siteMetadata();
     return siteMetadata({ title: page.seo?.title || page.title, description: page.seo?.description });
 }
 
-export default async function CustomPage({ params }) {
+export default async function CustomPage({ params, searchParams }) {
     const { slug } = await params;
+    const preview = previewAllowed(await searchParams);
     const h = await headers();
-    const { site, page } = await loadPage(h.get("host"), slug);
+    const { site, page } = await loadPage(h.get("host"), slug, preview);
     if (!site) return <NoSite />;
 
     if (!page) {

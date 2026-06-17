@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { resolveSite } from "@/lib/resolveSite";
+import { previewAllowed, withDraft } from "@/lib/preview";
 import { SiteFrame, SectionRenderer } from "@pythias/storefront";
 import { resolveSectionData } from "@pythias/storefront/server";
 import NoSite from "@/components/NoSite";
@@ -11,10 +12,12 @@ export async function generateMetadata() {
     return siteMetadata();
 }
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }) {
+    const preview = previewAllowed(await searchParams);
     const h = await headers();
-    const site = await resolveSite(h.get("host"));
-    if (!site) return <NoSite />;
+    const live = await resolveSite(h.get("host"));
+    if (!live) return <NoSite />;
+    const site = withDraft(live, preview);
 
     const home = (site.pages ?? []).find((p) => p.slug === "home") ?? (site.pages ?? [])[0] ?? { sections: [] };
     const data = await resolveSectionData(home.sections ?? [], { orgId: site.orgId });

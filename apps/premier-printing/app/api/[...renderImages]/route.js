@@ -141,6 +141,14 @@ export async function GET(req) {
         .filter(k => sides.includes(k))
         .map(k => ({ ...blankImage.boxes[k], side: k }));
 
+    // Custom "create your own" placement (0–1, within the print box) passed as query params — when
+    // present the art is positioned + sized inside the box instead of filling it (matches the studio).
+    const sp = req.nextUrl.searchParams;
+    if (["xPct", "yPct", "wPct", "hPct"].every(k => sp.get(k) != null)) {
+        const place = { xPct: parseFloat(sp.get("xPct")), yPct: parseFloat(sp.get("yPct")), wPct: parseFloat(sp.get("wPct")), hPct: parseFloat(sp.get("hPct")) };
+        box.forEach(b => { b.place = place; });
+    }
+
     const result = await createImage({ box, styleImage: blankImage.image, designImage, width });
     if (!result) return new NextResponse(null, { status: 500 });
 

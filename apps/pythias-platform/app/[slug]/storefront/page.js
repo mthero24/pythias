@@ -11,7 +11,13 @@ export default async function StorefrontPage() {
     const session = await getServerSession(authOptions);
     const org = session?.user?.orgId ? await Organization.findById(session.user.orgId).select("slug").lean() : null;
     const base = process.env.STOREFRONT_PUBLIC_BASE || "pythias.store";
-    const viewUrl = org?.slug ? `https://${org.slug}.${base}` : undefined;
+    // Preview/view target: in dev the public store domains aren't live, so point at the local
+    // storefront dev server (it resolves which store to show via DEV_SITE_SLUG). Override with
+    // STOREFRONT_PREVIEW_URL; in production this uses the real <slug>.<base> domain.
+    const viewUrl = process.env.STOREFRONT_PREVIEW_URL
+        || (process.env.NODE_ENV !== "production"
+            ? "http://localhost:3020"
+            : (org?.slug ? `https://${org.slug}.${base}` : undefined));
 
     return <StorefrontEditor viewUrl={viewUrl} />;
 }

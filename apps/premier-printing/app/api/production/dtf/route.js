@@ -7,6 +7,7 @@ import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 import { getShippingCreds } from "@/lib/getShippingCreds";
+import { ensureItemProofs } from "@/lib/printProof";
 
 // Print size (inches) for a side. Custom designs carry a normalized placement (0–1) within the
 // envelope, so the print is the ART's real size — not the full envelope (which is what blows a small
@@ -30,7 +31,7 @@ export async function GET(req) {
     let pieceID
     let item
     if( req.nextUrl.searchParams.get("pieceID")) pieceID = req.nextUrl.searchParams.get("pieceID")
-    if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("blank", "code sizes multiImages").populate("designRef", "sku")
+    if(pieceID) item = await Items.findOne({pieceId: pieceID}).populate("blank", "code sizes multiImages images").populate("designRef", "sku")
     console.log(item)
     if(item){
         console.log(item)
@@ -45,6 +46,10 @@ export async function GET(req) {
                 status: "DTF Find",
                 date: new Date(),
             });
+            // Custom "create your own" item → render/cache placement proofs so the operator sees
+            // how it should look (art on garment at the buyer's exact placement). Non-fatal.
+            let proofs = null;
+            try { proofs = await ensureItemProofs(item); } catch (e) { console.error("proof render failed:", e.message); }
             await item.save();
             logActivity({ action: "dtf_found", entity: "dtf", entityId: item._id, entityName: item.pieceId || "", userName, email });
 
@@ -53,10 +58,11 @@ export async function GET(req) {
             return NextResponse.json( {error: false,
                 msg: "here is the design",
                 pieceID: item.pieceId,
-                styleCode: item.blank.code, 
+                styleCode: item.blank.code,
                 colorName: item.colorName,
                 item,
                 images: item.design,
+                proofs,
                 designSku: item.designRef?.sku,
                 type: "new",
                 source: "PP",

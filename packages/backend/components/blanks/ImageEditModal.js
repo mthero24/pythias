@@ -307,12 +307,14 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
             const configured = new Set((printLocations || []).map(l => l.name));
             const DERIVED = ["center", "centermini", "pocket", "embfull", "centerfull"];
 
-            // Re-derive all other dependent boxes from front (skip the one just saved)
-            const frontBox = active === "front" ? box : boxes.front;
-            if (frontBox) {
-                DERIVED.filter(side => side !== active).forEach(side => {
-                    if (configured.has(side)) {
-                        const d = deriveFromFront(side, frontBox);
+            // Only when the FRONT box itself was just changed do we auto-fill the front-relative
+            // helper boxes — and ONLY ones that aren't set yet. Never overwrite a box the user already
+            // saved (that was the bug: saving any box re-derived helpers from front and reverted
+            // previously-customized boxes back to their default location).
+            if (active === "front") {
+                DERIVED.forEach(side => {
+                    if (configured.has(side) && !boxes[side]) {
+                        const d = deriveFromFront(side, box);
                         if (d) boxes[side] = d;
                     }
                 });

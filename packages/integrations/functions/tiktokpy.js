@@ -612,10 +612,14 @@ export const fulfillOrderTikTok = async (order_id, { line_item_ids, tracking_num
     const accessToken = credentials.access_token;
     const params = { app_key: config.app_key, shop_cipher, version: "202309" };
     const body = {
-        order_line_items: line_item_ids.map(id => ({ id })),
         tracking_number,
         shipping_provider_id,
     };
+    // Only scope to specific line items when we actually have their ids; otherwise TikTok
+    // packs every unfulfilled line item in the order into the package (the whole order ships).
+    if (Array.isArray(line_item_ids) && line_item_ids.length) {
+        body.order_line_items = line_item_ids.map(id => ({ id }));
+    }
     let signUrl = buildUrl(baseUrl, params);
     const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);
     params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { PlatformBin, PlatformOrder, PlatformItem, Manifest } from "@pythias/mongo";
+import { PlatformBin, PlatformOrder, PlatformItem, Manifest, ApiKeyIntegrations } from "@pythias/mongo";
 import { buyLabel, getRefund } from "@pythias/shipping";
-import { updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart } from "@pythias/integrations";
+import { updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart, shipOrderEbay, fulfillShipAdviceAcenda } from "@pythias/integrations";
 import { getToken } from "next-auth/jwt";
 import { getOrgCreds, buildShippingCreds } from "@/lib/getOrgCreds";
 import { createCEClient } from "@/functions/channelEngine";
+import { shipOrderTikTok } from "@/functions/tikTok";
 import axios from "axios";
 
 export async function POST(req) {
@@ -142,6 +143,46 @@ export async function POST(req) {
                 carrierCode: "usps",
                 trackingNumber: label.trackingNumber,
             }).catch(e => console.error("ShipStation update:", e.message));
+        }
+        if (marketplace === "ebay" && order.marketplaceOrderId && order.marketplaceConnectionId) {
+            // eBay connection lives in ApiKeyIntegrations (the source the order was pulled from).
+            try {
+                const ebayConn = await ApiKeyIntegrations.findById(order.marketplaceConnectionId);
+                if (ebayConn) {
+                    await shipOrderEbay(ebayConn, order.marketplaceOrderId, {
+                        trackingNumber: label.trackingNumber,
+                        carrier: data.selectedShipping?.provider,
+                        lineItemIds: order.ebayLineItemIds ?? [],
+                    });
+                }
+            } catch (e) { console.error("eBay shipment:", e.message); }
+        }
+        // Directly-pulled TikTok orders (marketplace "tik tok", uniquePo ending in "tik_tok") have
+        // no ShipStation/marketplaceConnection — push the package/tracking back via the TikTok API.
+        if ((marketplace === "tik tok" || marketplace === "tiktok") && (order.uniquePo || "").endsWith("tik_tok")) {
+            const res = await shipOrderTikTok({
+                order,
+                items: order.items ?? [],
+                trackingNumber: label.trackingNumber,
+                provider: data.selectedShipping?.provider,
+            }).catch(e => ({ error: true, msg: e.message }));
+            if (res?.error) console.error("TikTok shipment:", res.msg);
+        }
+        if (marketplace === "acenda" && order.marketplaceOrderId && order.marketplaceConnectionId) {
+            try {
+                const acendaConn = await ApiKeyIntegrations.findById(order.marketplaceConnectionId);
+                if (acendaConn) {
+                    const ACENDA_CARRIER = { usps: "USPS", ups: "UPS", fedex: "FedEx", dhl: "DHL" };
+                    await fulfillShipAdviceAcenda({
+                        clientId: acendaConn.apiKey,
+                        clientSecret: acendaConn.apiSecret,
+                        organization: acendaConn.organization,
+                        id: order.marketplaceOrderId,
+                        carrier: ACENDA_CARRIER[data.selectedShipping?.provider?.toLowerCase()] ?? data.selectedShipping?.provider ?? "USPS",
+                        trackingNumber: label.trackingNumber,
+                    });
+                }
+            } catch (e) { console.error("Acenda shipment:", e.message); }
         }
 
         // Print all labels on local printer

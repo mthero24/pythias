@@ -324,6 +324,27 @@ export async function aiPage({ keyword, brand = "our store" }) {
     return { title: a.title || keyword, slug: slugify(keyword), seo: { title: a.metaTitle || a.title, description: a.metaDescription || "" }, keywords: Array.isArray(a.keywords) ? a.keywords.slice(0, 6) : [keyword], sections };
 }
 
+// AI section suggestions for the storefront EDITOR — returns the editor's {type, settings} shape,
+// constrained to the section types the renderer + manifest actually support.
+export async function aiSections({ brand = "our store", pageTitle = "Home", prompt = "" } = {}) {
+    const client = await anthropic();
+    const ask = `You are designing the "${pageTitle}" page for the online store "${brand}".${prompt ? ` The merchant's goal: "${prompt}".` : ""}
+Compose an ordered list of page sections using ONLY these section types:
+- "hero" — settings: { "headline", "subheadline", "ctaText", "ctaLink" (default "/products"), "align": "left"|"center"|"right" }
+- "featuredProducts" — settings: { "heading", "limit" (integer 4-12) }
+- "richText" — settings: { "heading", "body" (use \\n\\n between paragraphs), "align": "left"|"center"|"right" }
+Write compelling, on-brand copy — no lorem/placeholder text, no keyword stuffing. Choose 2-5 sections that fit THIS page and lead with a hero.
+Respond with STRICT JSON only: {"sections":[{"type":"hero","settings":{...}}, ...]}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 1500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: ask }] });
+    const out = parseJson(textOf(msg));
+    const allowed = new Set(["hero", "featuredProducts", "richText"]);
+    const sections = (Array.isArray(out?.sections) ? out.sections : [])
+        .filter((s) => s && allowed.has(s.type))
+        .map((s) => ({ type: s.type, settings: (s.settings && typeof s.settings === "object") ? s.settings : {} }));
+    if (!sections.length) throw httpError(502, "AI returned no usable sections");
+    return { sections };
+}
+
 // ── AI blog/article generator (paid add-on, gated by site.aiEnabled) ──────────
 // Reuses the shared, guardrailed generateArticle/generateArticleIdeas core but grounds
 // it in the seller's own store (StorefrontSite + products). Saves results as StorefrontPage

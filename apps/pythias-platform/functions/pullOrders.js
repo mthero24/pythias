@@ -775,6 +775,7 @@ export async function pullOrders(){
                 ...(o._orgId ? { orgId: o._orgId } : {}),
                 ...(o._marketplaceOrderId ? { marketplaceOrderId: o._marketplaceOrderId } : {}),
                 ...(o._marketplaceConnectionId ? { marketplaceConnectionId: o._marketplaceConnectionId } : {}),
+                ...(o._ebayLineItemIds?.length ? { ebayLineItemIds: o._ebayLineItemIds } : {}),
             })
             if(o.customerNotes){
                 console.log(o.customerNotes.split("<br/>"))

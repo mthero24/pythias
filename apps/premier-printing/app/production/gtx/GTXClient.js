@@ -3,6 +3,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 const POLL_MS = 5000;
 
+// Cached server-rendered placement proofs (art on garment at the buyer's exact placement) for a
+// custom create-your-own item — keyed by print location. Empty for normal (pre-made-design) items.
+const proofsOf = (item) =>
+    (item?.personalization?.sides || [])
+        .filter((sd) => sd?.proofUrl && sd?.location)
+        .reduce((m, sd) => ({ ...m, [sd.location]: sd.proofUrl }), {});
+
 const s = {
     page: { minHeight: "100vh", background: "#0f1117", color: "#e2e8f0", fontFamily: "'Inter', sans-serif", padding: "0" },
     topBar: { background: "#1a1d2e", borderBottom: "1px solid #2d3148", padding: "12px 20px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", position: "sticky", top: 0, zIndex: 10 },
@@ -194,6 +201,20 @@ export default function GTXClient({ printers = ["printer1", "printer2", "printer
                                     </div>
                                 </div>
                             </div>
+                            {Object.keys(proofsOf(onPrinter)).length > 0 && (
+                                <div style={{ marginTop: "16px" }}>
+                                    <div style={{ ...s.sectionLabel, color: "#60a5fa" }}>How it should look</div>
+                                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                                        {Object.entries(proofsOf(onPrinter)).map(([loc, url]) => (
+                                            <div key={loc} style={{ textAlign: "center" }}>
+                                                <img src={`${url}?width=320&height=320`} alt={`${loc} proof`}
+                                                    style={{ width: "180px", height: "180px", objectFit: "contain", background: "#fff", borderRadius: "8px", border: "1px solid #2d3148" }} />
+                                                <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px", textTransform: "capitalize" }}>{loc}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             <div style={{ marginTop: "20px" }}>
                                 <button style={s.btnDryer} onClick={() => api({ action: "send-to-dryer" })}>
                                     ✓ Send to Dryer

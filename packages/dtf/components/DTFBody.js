@@ -62,6 +62,32 @@ export function DTFBody({ auto, setAuto, printer, type, onAction }) {
                 </Box>
             )}
 
+            {/* Custom "create your own" placement proof — how the finished piece should look
+                (art on the garment at the buyer's exact placement). Shown for any item that has one. */}
+            {submitted?.proofs && Object.keys(submitted.proofs).length > 0 && (
+                <Box sx={{ px: { xs: 1, sm: "2%", md: "5%" }, mb: 3 }}>
+                    <SectionLabel>How it should look</SectionLabel>
+                    <Grid2 container spacing={2}>
+                        {Object.keys(submitted.proofs).map(loc => (
+                            <Grid2 key={loc} size={{ xs: 12, sm: 6, md: 4 }}>
+                                <Card variant="outlined" sx={{ borderRadius: 2, overflow: "hidden", borderColor: "primary.light" }}>
+                                    <Box sx={{ px: 1.5, py: 0.75, borderBottom: "1px solid", borderColor: "divider", bgcolor: "#eef6ff" }}>
+                                        <Typography variant="caption" sx={{ fontWeight: 700, color: "primary.main", textTransform: "capitalize" }}>{loc}</Typography>
+                                    </Box>
+                                    <Box sx={{ bgcolor: "#fff", p: 2, display: "flex", justifyContent: "center" }}>
+                                        <img
+                                            width={500} height={500} alt={`${loc} proof`}
+                                            style={{ width: "100%", height: "auto", maxWidth: 500, objectFit: "contain" }}
+                                            src={`${submitted.proofs[loc]}?width=500&height=500`}
+                                        />
+                                    </Box>
+                                </Card>
+                            </Grid2>
+                        ))}
+                    </Grid2>
+                </Box>
+            )}
+
             {/* Standard item — raw designs + garment previews */}
             {submitted?.type === undefined && submitted?.item && (
                 <Box sx={{ px: { xs: 1, sm: "2%", md: "5%" } }}>

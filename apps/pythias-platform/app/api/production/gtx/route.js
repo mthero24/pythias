@@ -5,6 +5,7 @@ import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 import { getShippingCreds } from "@/lib/getShippingCreds";
+import { ensureItemProofs } from "@/lib/printProof";
 
 function internalHeaders(key) {
     return { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
@@ -156,13 +157,17 @@ export async function POST(req) {
             for (const id of ids) {
                 try {
                     const item = await Items.findOne({ pieceId: id.toUpperCase().trim(), orgId })
-                        .populate("blank", "code envelopes")
+                        .populate("blank", "code envelopes images")
                         .populate("order", "poNumber items notes")
                         .populate("color", "category name color_type");
                     if (!item) throw new Error("Item not found");
                     if (item.canceled) throw new Error("Item canceled");
                     if (item.shipped) throw new Error("Item already shipped");
                     if (!item.design?.front && !item.design?.back) throw new Error("No design on item");
+
+                    // Custom create-your-own → render/cache placement proofs so the operator sees how
+                    // it should look (art on garment at the buyer's exact placement). Non-fatal.
+                    try { await ensureItemProofs(item); } catch (e) { console.error("proof render failed:", e.message); }
 
                     const job = buildGTXJob(item);
                     const onPrinterNow = await Items.findOne({ onPrinter: true, "printerQue.printer": printer, orgId });

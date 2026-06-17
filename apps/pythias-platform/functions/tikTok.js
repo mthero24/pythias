@@ -10,6 +10,8 @@ import {
   getOrdersTikTok,
   generatePieceID,
   getOrCreateBrandTikTok,
+  getShippingProvidersTikTok,
+  fulfillOrderTikTok,
 } from "@pythias/integrations";
 const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
 const refresh = async (creds, cipher) => {
@@ -23,6 +25,84 @@ const refresh = async (creds, cipher) => {
     if (cipher) credentials.shop_cipher = cipher;
     return credentials;
 }
+
+// Map a free-form carrier/provider string to the matching TikTok shipping provider id.
+// TikTok provider names look like "USPS", "UPS", "FedEx", "DHL eCommerce", etc.
+const matchTikTokProvider = (providers, provider) => {
+    if (!providers?.length) return null;
+    const p = (provider || "").toLowerCase();
+    const carrier =
+        p.includes("ups") && !p.includes("usps") ? "ups" :
+        p.includes("fedex") ? "fedex" :
+        p.includes("dhl") ? "dhl" :
+        p.includes("usps") || p.includes("postal") ? "usps" : p;
+    const exact = providers.find(o => (o.name || "").toLowerCase() === p);
+    if (exact) return exact.id;
+    const loose = providers.find(o => {
+        const n = (o.name || "").toLowerCase();
+        return carrier && (n.includes(carrier) || carrier.includes(n));
+    });
+    return (loose || providers[0])?.id ?? null;
+};
+
+/**
+ * Push a shipment/tracking back to TikTok for a directly-pulled TikTok order (created by
+ * pullTikTokOrders — poNumber === the TikTok order id, marketplace "tik tok"). Multi-tenant:
+ * scopes credentials to the order's orgId. Mirrors premier's shipOrderTikTok.
+ * @returns {{error:boolean, msg?:string}}
+ */
+export async function shipOrderTikTok({ order, items, trackingNumber, provider }) {
+    if (!trackingNumber) return { error: true, msg: "No tracking number" };
+
+    let credentials = await TikTokAuth.findOne(order.orgId ? { orgId: order.orgId } : { provider: "premierPrinting" });
+    if (!credentials) return { error: true, msg: "No TikTok credentials found" };
+
+    if (!credentials.shop_list?.length) {
+        let shop = await getAuthorizedShops(credentials);
+        if (shop?.error && shop?.msg === "refresh") {
+            credentials = await refresh(credentials);
+            shop = await getAuthorizedShops(credentials);
+        }
+        if (shop?.shop_list?.length) {
+            credentials.shop_list = shop.shop_list;
+            await credentials.save();
+        }
+    }
+    const shopCipher = credentials.shop_list?.[0]?.shop_cipher;
+    if (!shopCipher) return { error: true, msg: "No TikTok shop cipher available" };
+
+    let provRes = await getShippingProvidersTikTok(credentials, shopCipher);
+    if (provRes?.error && provRes?.msg === "refresh") {
+        credentials = await refresh(credentials, shopCipher);
+        provRes = await getShippingProvidersTikTok(credentials, shopCipher);
+    }
+    if (provRes?.error) return { error: true, msg: `Could not load TikTok shipping providers (${provRes.msg})` };
+    const shippingProviderId = matchTikTokProvider(provRes.providers, provider);
+    if (!shippingProviderId) return { error: true, msg: "No matching TikTok shipping provider" };
+
+    const line_item_ids = (items || [])
+        .map(i => i.orderItemId)
+        .filter(Boolean);
+
+    let res = await fulfillOrderTikTok(
+        order.poNumber,
+        { line_item_ids, tracking_number: trackingNumber, shipping_provider_id: shippingProviderId },
+        credentials,
+        shopCipher
+    );
+    if (res?.error && res?.msg === "refresh") {
+        credentials = await refresh(credentials, shopCipher);
+        res = await fulfillOrderTikTok(
+            order.poNumber,
+            { line_item_ids, tracking_number: trackingNumber, shipping_provider_id: shippingProviderId },
+            credentials,
+            shopCipher
+        );
+    }
+    if (res?.error) return { error: true, msg: res.msg };
+    return { error: false };
+}
+
 const stateAbbreviations = {
     Alabama: "AL",
     Alaska: "AK",
@@ -417,7 +497,7 @@ export const processOrders = async (orders)=>{
                         paid: true,
                         sku: i.sku,
                         upc: i.upc,
-                        orderItemId: i.orderItemId,
+                        orderItemId: i.id || i.orderItemId,
                         blank: sb,
                         styleCode: sb?.code,
                         sizeName: size?.name,
@@ -438,7 +518,7 @@ export const processOrders = async (orders)=>{
                         paid: true,
                         sku: i.sku,
                         upc: i.upc,
-                        orderItemId: i.orderItemId,
+                        orderItemId: i.id || i.orderItemId,
                         blank,
                         styleCode: blank?.code,
                         sizeName: size?.name,
@@ -465,7 +545,7 @@ export const processOrders = async (orders)=>{
                         paid: true,
                         sku: i.sku,
                         upc: i.upc,
-                        orderItemId: i.orderItemId,
+                        orderItemId: i.id || i.orderItemId,
                         blank: sb,
                         styleCode: sb?.code,
                         sizeName: size?.name,
@@ -486,7 +566,7 @@ export const processOrders = async (orders)=>{
                         paid: true,
                         sku: i.sku,
                         upc: i.upc,
-                        orderItemId: i.orderItemId,
+                        orderItemId: i.id || i.orderItemId,
                         blank,
                         styleCode: blank?.code,
                         sizeName: size?.name,
@@ -513,7 +593,7 @@ export const processOrders = async (orders)=>{
                         paid: true,
                         sku: i.sku,
                         upc: i.upc,
-                        orderItemId: i.orderItemId,
+                        orderItemId: i.id || i.orderItemId,
                         blank: sb,
                         styleCode: sb?.code,
                         sizeName: size?.name,
@@ -534,7 +614,7 @@ export const processOrders = async (orders)=>{
                         paid: true,
                         sku: i.sku,
                         upc: i.upc,
-                        orderItemId: i.orderItemId,
+                        orderItemId: i.id || i.orderItemId,
                         blank,
                         styleCode: blank?.code,
                         sizeName: size?.name,
@@ -560,7 +640,7 @@ export const processOrders = async (orders)=>{
                         paid: true,
                         sku: i.sku,
                         upc: i.upc,
-                        orderItemId: i.orderItemId,
+                        orderItemId: i.id || i.orderItemId,
                         blank,
                         styleCode: blank?.code,
                         sizeName: size?.name,

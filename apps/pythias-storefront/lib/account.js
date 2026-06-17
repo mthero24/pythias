@@ -15,6 +15,28 @@ export async function getAuthedCustomer(req) {
     return { orgId: ctx.orgId, customer };
 }
 
+// Pick the best representative image URL for an order line (the storefront has no renderImages
+// compositor, so we use absolute URLs already on the item). For custom "create your own" items we
+// prefer the placement proof / buyer preview / artwork; pre-made products use the product mockup.
+export function resolveLineImage(item, product) {
+    const p = item.personalization;
+    if (p) {
+        const proof = (p.sides || []).find((s) => s.proofUrl)?.proofUrl;
+        if (proof) return proof;
+        if (p.previewUrl) return p.previewUrl;
+        const art = (p.sides || []).find((s) => s.artworkUrl)?.artworkUrl || p.artworkUrl;
+        if (art) return art;
+    }
+    if (product) {
+        const variant = (product.variantsArray || []).find((v) => String(v.color) === String(item.color))
+            || (product.variantsArray || [])[0];
+        const img = variant?.image || variant?.images?.[0] || product.image || (product.images || [])[0];
+        if (img) return img;
+    }
+    const designVals = Object.values(item.design || {}).filter(Boolean);
+    return designVals[0] || null;
+}
+
 // Carrier tracking URL for the UI (best effort).
 export function trackingUrl(carrier, num) {
     if (!num) return null;

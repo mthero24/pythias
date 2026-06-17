@@ -284,6 +284,15 @@ export function Main({ ord, blanks, source }) {
                                         const missing = isItemMissing(i);
                                         const isExpanded = !!expandedItems[i._id];
                                         const imageKeys = Object.keys(i.design ?? {}).filter(k => i.design[k] != undefined);
+                                        // Custom "create your own" items carry a normalized placement per side — pass it
+                                        // to renderImages so the order-page mockup shows the art at the buyer's real
+                                        // position/size (not filling the whole print box). Empty for pre-made designs.
+                                        const placeQS = (key) => {
+                                            const p = (i.personalization?.sides || []).find(s => s.location === key)?.place;
+                                            return (p && p.wPct > 0 && p.hPct > 0)
+                                                ? `&xPct=${p.xPct ?? 0}&yPct=${p.yPct ?? 0}&wPct=${p.wPct}&hPct=${p.hPct}`
+                                                : "";
+                                        };
                                         const blankObj = blanks.filter(b => b._id === i.blank)[0];
                                         const blankImage = i.isBlank && i.blank && i.color
                                             ? blankObj?.images?.filter(im => im.color === i.color)[0]?.image?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")
@@ -314,7 +323,7 @@ export function Main({ ord, blanks, source }) {
                                                             <RetryImage
                                                                 src={source === "PO"
                                                                     ? `https://images4.tshirtpalace.com/images/productImages/SKU--${(i.colorName || "").toLowerCase()}-${(i.styleCode || "").toLowerCase()}-${imageKeys[0]}.webp?url=${i.design[imageKeys[0]]}&width=150`
-                                                                    : `/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}`}
+                                                                    : `/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}${placeQS(imageKeys[0])}`}
                                                                 alt={i.sku}
                                                                 width={72}
                                                                 height={72}

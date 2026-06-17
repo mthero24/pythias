@@ -4,8 +4,9 @@ import {getRefund} from "@pythias/shipping"
 import { Order, Manifest as manifest } from "@pythias/mongo";
 import axios from "axios"
 import { Bin } from "@pythias/mongo";
-import {updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart} from "@pythias/integrations";
+import {updateOrder, createReceiptShipment, shipOrderFaire, shipOrderWalmart, getOrderWalmart, shipOrderEbay, fulfillShipAdviceAcenda} from "@pythias/integrations";
 import { createShipment as ceCreateShipment } from "@/functions/channelEngine";
+import { shipOrderTikTok } from "@/functions/tikTok";
 import {ApiKeyIntegrations, Item as Items} from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
@@ -124,6 +125,39 @@ export async function POST(req= NextApiRequest){
                 const lines = (order.items ?? []).map((item, idx) => ({ MerchantProductNo: item.sku || item.pieceId || String(idx + 1), Quantity: 1, ShipmentLineNo: String(idx + 1) }));
                 await ceCreateShipment({ MerchantOrderNo: `CE-${order.marketplaceOrderId}`, Lines: lines, TrackTraceNo: primaryLabel.trackingNumber, Method: CE_CARRIER[data.selectedShipping.provider?.toLowerCase()] ?? data.selectedShipping.provider ?? "Other", ShippedAt: new Date().toISOString() });
             } catch (e) { console.error("Failed to update ChannelEngine shipment:", e.message); }
+        }
+        if (order.marketplace?.toLowerCase() === "ebay" && order.marketplaceOrderId) {
+            try {
+                const ebayConn = await ApiKeyIntegrations.findById(order.marketplaceConnectionId) ?? await ApiKeyIntegrations.findOne({ type: "ebay" });
+                if (ebayConn) {
+                    await shipOrderEbay(ebayConn, order.marketplaceOrderId, {
+                        trackingNumber: primaryLabel.trackingNumber,
+                        carrier: data.selectedShipping.provider,
+                        lineItemIds: order.ebayLineItemIds ?? [],
+                    });
+                }
+            } catch (e) { console.error("Failed to update eBay shipment:", e.message); }
+        }
+        // Directly-pulled TikTok order — push the package/tracking back via the TikTok API.
+        if (["tik tok", "tiktok"].includes(order.marketplace?.toLowerCase()) && (order.uniquePo || "").endsWith("tik_tok")) {
+            const res = await shipOrderTikTok({ order, items: order.items ?? [], trackingNumber: primaryLabel.trackingNumber, provider: data.selectedShipping.provider }).catch(e => ({ error: true, msg: e.message }));
+            if (res?.error) console.error("Failed to update TikTok shipment:", res.msg);
+        }
+        if (order.marketplace?.toLowerCase() === "acenda" && order.marketplaceOrderId && order.marketplaceConnectionId) {
+            try {
+                const acendaConn = await ApiKeyIntegrations.findById(order.marketplaceConnectionId);
+                if (acendaConn) {
+                    const ACENDA_CARRIER = { usps: "USPS", ups: "UPS", fedex: "FedEx", dhl: "DHL" };
+                    await fulfillShipAdviceAcenda({
+                        clientId: acendaConn.apiKey,
+                        clientSecret: acendaConn.apiSecret,
+                        organization: acendaConn.organization,
+                        id: order.marketplaceOrderId,
+                        carrier: ACENDA_CARRIER[data.selectedShipping.provider?.toLowerCase()] ?? data.selectedShipping.provider ?? "USPS",
+                        trackingNumber: primaryLabel.trackingNumber,
+                    });
+                }
+            } catch (e) { console.error("Failed to update Acenda shipment:", e.message); }
         }
         // Commerce Cloud order — report shipment + actual label cost back to the platform
         if (order.marketplace === "Commerce Cloud") {

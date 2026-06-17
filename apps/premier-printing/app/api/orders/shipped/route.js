@@ -2,7 +2,16 @@ import { NextResponse } from "next/server";
 import { Order, Items, ApiKeyIntegrations } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
-import { updateOrder, shipOrderEbay, shipOrderWalmart } from "@pythias/integrations";
+import { updateOrder, shipOrderEbay, shipOrderWalmart, createReceiptShipment, shipOrderFaire, fulfillShipAdviceAcenda } from "@pythias/integrations";
+import { shipOrderTikTok } from "@/functions/tikTok";
+
+// A directly-pulled TikTok order has no marketplaceConnectionId/ShipStation id — it's created by
+// pullTikTokOrders with marketplace "tik tok" and uniquePo ending in "tik_tok" (poNumber === the
+// TikTok order id). Those need the tracking pushed back via the TikTok API, not ShipStation.
+function isDirectTikTokOrder(order) {
+    const mk = (order.marketplace || "").toLowerCase().replace(/[^a-z]/g, "");
+    return mk === "tiktok" && (order.uniquePo || "").endsWith("tik_tok");
+}
 
 function toCarrierCode(provider) {
     if (!provider) return "usps";
@@ -59,6 +68,19 @@ export async function POST(req) {
 
     if (!trackingNumber) {
         warning = "No tracking number found — marketplace was not updated. Please update the marketplace manually.";
+    } else if (isDirectTikTokOrder(order)) {
+        // TikTok Shop order pulled directly via the TikTok API — push the package/tracking back.
+        try {
+            const res = await shipOrderTikTok({ order, items: order.items ?? [], trackingNumber, provider });
+            if (res?.error) {
+                warning = `TikTok shipment update failed: ${res.msg}. Please update TikTok manually.`;
+            } else {
+                marketplaceNotified = true;
+            }
+        } catch (e) {
+            console.error("[orders/shipped] TikTok update error:", e);
+            warning = `TikTok shipment update failed: ${e.message}`;
+        }
     } else if (order.marketplaceConnectionId) {
         // Direct marketplace connection (Faire, Etsy, Walmart, eBay, Acenda…)
         try {
@@ -92,6 +114,30 @@ export async function POST(req) {
                 } else {
                     warning = "Walmart line numbers could not be resolved — please update Walmart manually.";
                 }
+            } else if (type === "etsy") {
+                // createReceiptShipment refreshes + saves the token, so it needs a live (non-lean) doc.
+                const liveConn = await ApiKeyIntegrations.findById(order.marketplaceConnectionId);
+                await createReceiptShipment(liveConn, order.marketplaceOrderId, trackingNumber, provider);
+                marketplaceNotified = true;
+            } else if (type === "faire") {
+                const FAIRE_CARRIER = { usps: "USPS", ups: "UPS", fedex: "FEDEX", dhl: "DHL_EXPRESS" };
+                await shipOrderFaire({
+                    apiKey: conn.apiKey,
+                    orderId: order.marketplaceOrderId,
+                    shipments: [{ carrier: FAIRE_CARRIER[provider?.toLowerCase()] ?? "OTHER", tracking_code: trackingNumber }],
+                });
+                marketplaceNotified = true;
+            } else if (type === "acenda") {
+                const ACENDA_CARRIER = { usps: "USPS", ups: "UPS", fedex: "FedEx", dhl: "DHL" };
+                await fulfillShipAdviceAcenda({
+                    clientId: conn.apiKey,
+                    clientSecret: conn.apiSecret,
+                    organization: conn.organization,
+                    id: order.marketplaceOrderId,
+                    carrier: ACENDA_CARRIER[provider?.toLowerCase()] ?? provider ?? "USPS",
+                    trackingNumber,
+                });
+                marketplaceNotified = true;
             } else {
                 warning = `${type ? type.charAt(0).toUpperCase() + type.slice(1) : "Marketplace"} does not support automatic shipment updates — please update manually.`;
             }
