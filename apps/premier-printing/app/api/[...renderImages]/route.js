@@ -29,12 +29,22 @@ const createImage = async (data) => {
             if (!data.designImage[box.side]) continue;
             if (!box.boxWidth) box.boxWidth = box.width;
             if (!box.boxHeight) box.boxHeight = box.height;
-            let x = box.x * multiplier;
-            let y = box.y * multiplier;
+            // Custom designs carry a normalized placement (0–1) within the print box. When present, the
+            // box is the print AREA and the (already-cropped) art is positioned + sized inside it; without
+            // it, the art fills the box (original pre-made-design behavior).
+            let bx = box.x, by = box.y, bw = box.boxWidth, bh = box.boxHeight;
+            if (box.place) {
+                bx = box.x + (box.place.xPct || 0) * box.boxWidth;
+                by = box.y + (box.place.yPct || 0) * box.boxHeight;
+                bw = (box.place.wPct || 1) * box.boxWidth;
+                bh = (box.place.hPct || 1) * box.boxHeight;
+            }
+            let x = bx * multiplier;
+            let y = by * multiplier;
             let designBuf;
             let originalSize;
             try {
-                const designImg = await readImage(`${CDN(data.designImage[box.side])}?width=${parseInt(box.boxWidth * multiplier)}&height=${parseInt(box.boxHeight * multiplier)}`);
+                const designImg = await readImage(`${CDN(data.designImage[box.side])}?width=${parseInt(bw * multiplier)}&height=${parseInt(bh * multiplier)}`);
                 if (!designImg) continue;
                 originalSize = await designImg.metadata();
                 if (box.rotation && box.rotation !== 0) {
@@ -51,7 +61,7 @@ const createImage = async (data) => {
                     designBuf = await designImg.toBuffer();
                 }
             } catch (e) { continue; }
-            const offset = (originalSize.width - box.boxWidth * multiplier) / 2;
+            const offset = (originalSize.width - bw * multiplier) / 2;
             composits.push({ input: designBuf, blend: "atop", top: parseInt(y), left: parseInt(x - offset) });
         }
         if (composits.length === 0) {

@@ -26,13 +26,28 @@ function loadFabric() {
 const REF = 400;
 const W = 560, H = 560;
 const SCALE = W / REF;
-const PAD400 = 12;
-const DEFAULT_BOX = { x: 120, y: 110, w: 160, h: 200, rotation: 0 };   // fallback if a side has no box
+const PAD400 = 12;   // breathing room so the print box sits inset from the garment edges/collar
+const DEFAULT_BOX = { x: 120, y: 110, w: 160, h: 200, rotation: 0 };   // fallback if a side has no envelope
+const DEFAULT_ASPECT = DEFAULT_BOX.w / DEFAULT_BOX.h;
+const CY_FRAC = 0.46;   // vertical center of the print area on the garment (chest)
 const SECOND_SIDE_CENTS = 200;   // surcharge when both front AND back are designed
+
+// Build a centered 400-space print box from the envelope's aspect ratio (width/height), so what the
+// buyer designs maps to inches without distortion. Fit it into a comfortable area of the garment.
+function boxFromAspect(aspect) {
+    const a = aspect > 0 ? aspect : DEFAULT_ASPECT;
+    const maxW = 0.62 * REF, maxH = 0.66 * REF;
+    let w = maxW, h = w / a;
+    if (h > maxH) { h = maxH; w = h * a; }
+    return { x: (REF - w) / 2, y: Math.max(0, CY_FRAC * REF - h / 2), w, h, rotation: 0 };
+}
 const btn = { padding: "10px 16px", borderRadius: 9, border: "none", background: "var(--sf-accent, #635bff)", color: "#fff", fontWeight: 700, cursor: "pointer" };
 const ghost = { ...btn, background: "#f1f5f9", color: "#334155" };
 const money = (c) => `$${((c || 0) / 100).toFixed(2)}`;
 const sideKey = (colorName, idx) => `${colorName}::${idx}`;
+// Load CDN images through our same-origin proxy so the canvas stays clean (untainted) and toDataURL
+// works — for both the production artwork export and the cart mockup.
+const proxied = (u) => (u && /^https?:\/\//i.test(u) ? `/api/img?u=${encodeURIComponent(u)}` : u);
 // Web-safe fonts + a few popular Google fonts (loaded on mount) the buyer can set their text in.
 const GOOGLE_FONTS = ["Anton", "Bebas Neue", "Oswald", "Montserrat", "Pacifico", "Lobster", "Permanent Marker", "Caveat"];
 const FONTS = ["Arial", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS", "Impact", "Comic Sans MS", ...GOOGLE_FONTS];
@@ -155,20 +170,26 @@ export default function CreateYourOwn({ blanks = [] }) {
         if (dx || dy) { obj.left += dx; obj.top += dy; obj.setCoords(); }
     };
 
-    // Show a side: swap the dashed (rotated) zone + garment background and re-attach that side's art.
+    // The print box uses the envelope's aspect ratio (so the design maps to inches without distortion).
+    const aspectForSide = (sideName) => {
+        const e = (blank?.envelopes || []).find((x) => x.side === sideName);
+        return e ? e.width / e.height : DEFAULT_ASPECT;
+    };
+
+    // Show a side: swap the dashed zone + garment background and re-attach that side's art.
     const mountSide = (colorObj, idx) => {
         const F = window.fabric, c = fcRef.current; if (!F || !c || !colorObj) return;
         const sd = colorObj.sides?.[idx]; if (!sd) return;
         c.getObjects().slice().forEach((o) => { if (o !== bgRef.current && o !== zoneRef.current) c.remove(o); });
         const z = zoneFromBox(sd.box); curZoneRef.current = z;
         if (zoneRef.current) { zoneRef.current.set({ left: z.cx, top: z.cy, width: z.w, height: z.h, angle: z.angle, visible: true }); zoneRef.current.setCoords(); }
-        const url = `${sd.image}${sd.image.includes("?") ? "&" : "?"}width=${W}&height=${H}`;
+        const url = proxied(`${sd.image}${sd.image.includes("?") ? "&" : "?"}width=${W}&height=${H}`);
         F.Image.fromURL(url, (img) => {
             if (!fcRef.current || !img.width) return;
             img.set({ selectable: false, evented: false, scaleX: W / img.width, scaleY: H / img.height, left: 0, top: 0 });
             if (bgRef.current) c.remove(bgRef.current);
             bgRef.current = img; c.add(img); c.sendToBack(img); c.renderAll();
-        });   // no crossOrigin: the garment CDN may not send CORS headers; bg is hidden on export anyway
+        });   // via same-origin proxy → canvas stays clean so toDataURL works
         (artRef.current[sideKey(colorObj.color, idx)] || []).forEach((o) => c.add(o));
         c.renderAll();
     };
@@ -223,7 +244,7 @@ export default function CreateYourOwn({ blanks = [] }) {
 
     const addArt = (url) => {
         const F = window.fabric, c = fcRef.current, z = curZoneRef.current; if (!F || !c || !z) return;
-        F.Image.fromURL(url, (img) => {
+        F.Image.fromURL(proxied(url), (img) => {
             const s = Math.min(z.w / img.width, z.h / img.height) * 0.9;
             img.set({
                 originX: "center", originY: "center", left: z.cx, top: z.cy, angle: z.angle, scaleX: s, scaleY: s,
@@ -301,8 +322,16 @@ export default function CreateYourOwn({ blanks = [] }) {
         c.remove(o); c.renderAll(); touch();
     };
 
-    // Export every side that has artwork (transparent PNG of the rotated zone's bounding box, 3× for
-    // print res). Rotation is baked into the pixels, so the order box is axis-aligned (rotation 0).
+    // Tight union bounding box (canvas px) of a set of fabric objects.
+    const unionBounds = (objs) => {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        objs.forEach((o) => { o.setCoords(); const b = o.getBoundingRect(true, true); minX = Math.min(minX, b.left); minY = Math.min(minY, b.top); maxX = Math.max(maxX, b.left + b.width); maxY = Math.max(maxY, b.top + b.height); });
+        return { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
+    };
+
+    // Export every designed side: a CROPPED, high-res transparent PNG (tight to the art — no blank
+    // space, no wasted print media) PLUS the art's placement normalized (0–1) within the print box.
+    // Production maps that placement to the per-size envelope (inches); rotation is baked into the PNG.
     const exportAllSides = () => {
         const c = fcRef.current; if (!c) return [];
         const out = [];
@@ -310,22 +339,85 @@ export default function CreateYourOwn({ blanks = [] }) {
             const arr = artRef.current[sideKey(color.color, i)] || [];
             if (!arr.length) continue;
             const sd = sides[i];
-            const z = zoneFromBox(sd.box), a = z.aabb;
+            const z = zoneFromBox(sd.box);
+            const boxLeft = z.cx - z.w / 2, boxTop = z.cy - z.h / 2;
             c.getObjects().slice().forEach((o) => { if (o !== bgRef.current && o !== zoneRef.current) c.remove(o); });
             arr.forEach((o) => c.add(o));
             if (bgRef.current) bgRef.current.visible = false;
             if (zoneRef.current) zoneRef.current.visible = false;
             c.discardActiveObject(); c.renderAll();
+            const ab = unionBounds(arr);
+            // normalized placement of the art within the print box (clamped to 0–1)
+            const clamp01 = (n) => Math.max(0, Math.min(1, n));
+            const place = {
+                xPct: clamp01((ab.left - boxLeft) / z.w), yPct: clamp01((ab.top - boxTop) / z.h),
+                wPct: clamp01(ab.width / z.w), hPct: clamp01(ab.height / z.h),
+            };
+            const mult = Math.max(4, Math.min(12, 3000 / Math.max(ab.width, ab.height, 1)));
             let dataUrl = null;
-            try { dataUrl = c.toDataURL({ format: "png", left: a.x, top: a.y, width: a.w, height: a.h, multiplier: 3 }); }
+            try { dataUrl = c.toDataURL({ format: "png", left: ab.left, top: ab.top, width: ab.width, height: ab.height, multiplier: mult }); }
             catch { /* cross-origin taint — production re-composites from the stored art */ }
-            const box = { x: a.x / SCALE, y: a.y / SCALE, w: a.w / SCALE, h: a.h / SCALE, rotation: 0 };
-            out.push({ view: sd.side, location: sd.location, dataUrl, box, styleImage: sd.image });
+            out.push({ view: sd.side, location: sd.side, dataUrl, place, styleImage: sd.image });
         }
         if (bgRef.current) bgRef.current.visible = true;
         if (zoneRef.current) zoneRef.current.visible = true;
         mountSide(color, sideIdx);   // restore the active side
         return out;
+    };
+
+    // Capture one side's full-canvas mockup (garment + that side's art); loads the side's bg fresh.
+    const captureSideMockup = (idx) => new Promise((resolve) => {
+        const c = fcRef.current, F = window.fabric, sd = color?.sides?.[idx];
+        if (!c || !F || !sd) return resolve(null);
+        c.getObjects().slice().forEach((o) => { if (o !== bgRef.current && o !== zoneRef.current) c.remove(o); });
+        (artRef.current[sideKey(color.color, idx)] || []).forEach((o) => c.add(o));
+        if (zoneRef.current) zoneRef.current.visible = false;
+        c.discardActiveObject();
+        F.Image.fromURL(proxied(`${sd.image}?width=${W}&height=${H}`), (img) => {
+            if (img && img.width) {
+                img.set({ selectable: false, evented: false, scaleX: W / img.width, scaleY: H / img.height, left: 0, top: 0 });
+                if (bgRef.current) c.remove(bgRef.current); bgRef.current = img; c.add(img); c.sendToBack(img);
+            }
+            c.renderAll();
+            let url = null;
+            try { url = c.toDataURL({ format: "png", multiplier: 1 }); } catch { /* taint */ }
+            resolve(url);
+        });
+    });
+
+    // Front mockup (big) + back mockup (small, bottom-right corner) → one combined cart thumbnail.
+    const composeFrontBack = (frontUrl, backUrl) => new Promise((resolve) => {
+        const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+        const ctx = cv.getContext("2d");
+        const f = new window.Image();
+        f.onload = () => {
+            ctx.drawImage(f, 0, 0, W, H);
+            const b = new window.Image();
+            const finish = () => { try { resolve(cv.toDataURL("image/jpeg", 0.85)); } catch { resolve(frontUrl); } };
+            b.onload = () => {
+                const bw = W * 0.4, bh = H * 0.4, bx = W - bw - 12, by = H - bh - 12;
+                ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.3)"; ctx.shadowBlur = 10; ctx.fillStyle = "#fff";
+                ctx.fillRect(bx - 5, by - 5, bw + 10, bh + 10); ctx.restore();
+                ctx.drawImage(b, bx, by, bw, bh);
+                ctx.lineWidth = 2; ctx.strokeStyle = "rgba(15,23,42,0.2)"; ctx.strokeRect(bx - 5, by - 5, bw + 10, bh + 10);
+                finish();
+            };
+            b.onerror = finish; b.src = backUrl;
+        };
+        f.onerror = () => resolve(null); f.src = frontUrl;
+    });
+
+    // Cart thumbnail: both sides (front big + back corner) when both are designed, else the single side.
+    const buildCartImage = async () => {
+        const fi = sides.findIndex((s) => s.side === "front");
+        const bi = sides.findIndex((s) => s.side === "back");
+        const hasFront = fi >= 0 && (artRef.current[sideKey(color.color, fi)] || []).length;
+        const hasBack = bi >= 0 && (artRef.current[sideKey(color.color, bi)] || []).length;
+        const frontUrl = hasFront ? await captureSideMockup(fi) : null;
+        const backUrl = hasBack ? await captureSideMockup(bi) : null;
+        mountSide(color, sideIdx);   // restore the side the user was on
+        if (frontUrl && backUrl) return composeFrontBack(frontUrl, backUrl);
+        return frontUrl || backUrl || null;
     };
 
     const addToCart = async () => {
@@ -334,17 +426,21 @@ export default function CreateYourOwn({ blanks = [] }) {
         if (!hasArt) { setMsg("Add a design first — upload one or generate with AI."); return; }
         setBusy("cart"); setMsg("");
         try {
+            // Cart/order thumbnail: real mockup(s) — front + back corner if both designed — else blank.
+            let cartImage = color?.image || null;
+            const mockup = await buildCartImage();
+            if (mockup) { const d = await (await fetch("/api/customizer/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl: mockup }) })).json(); if (!d.error) cartImage = d.url; }
             const exported = exportAllSides();
             const sidesOut = [];
             for (const s of exported) {
                 let artworkUrl = null;
                 if (s.dataUrl) { const d = await (await fetch("/api/customizer/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl: s.dataUrl }) })).json(); if (!d.error) artworkUrl = d.url; }
-                sidesOut.push({ view: s.view, location: s.location, artworkUrl, box: s.box, styleImage: s.styleImage });
+                sidesOut.push({ view: s.view, location: s.location, artworkUrl, place: s.place, styleImage: s.styleImage });
             }
             add({
                 blankId: blank.id, styleCode: blank.code, title: blank.name,
                 color: color?.color || "", size: size.name, sku: size.sku || `${blank.code}-${color?.color || ""}-${size.name}`,
-                priceCents: unitCents, wholesaleCents: size.wholesaleCents, image: color?.image || null,
+                priceCents: unitCents, wholesaleCents: size.wholesaleCents, image: cartImage,
                 personalization: { mode: "studio", side: sidesOut[0]?.view || "front", artworkUrl: sidesOut[0]?.artworkUrl || null, sides: sidesOut },
                 customKey: `cy${Date.now()}${Math.floor(Math.random() * 1000)}`,
             }, Math.max(1, qty));
@@ -373,7 +469,7 @@ export default function CreateYourOwn({ blanks = [] }) {
             const done = (img) => res(img);
             el.onload = () => { const img = new F.Image(el); const rest = { ...o }; delete rest.type; delete rest.src; delete rest.crossOrigin; img.set(rest); img.setCoords(); done(img); };
             el.onerror = () => done(null);
-            el.src = o.src;
+            el.src = proxied(o.src);   // same-origin → canvas stays clean for export
         } else {
             try { F.util.enlivenObjects([{ ...o, crossOrigin: undefined }], (list) => res(list && list[0]), "fabric"); }
             catch { res(null); }

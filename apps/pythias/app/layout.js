@@ -61,7 +61,9 @@ const orgSchema = {
     width: 512,
     height: 512,
   },
-  description: "All-in-one print-on-demand automation platform for custom apparel businesses.",
+  description: "Veteran-owned and operated all-in-one print-on-demand and multichannel fulfillment platform for custom apparel businesses — veterans helping veterans build self-sufficient businesses.",
+  slogan: "Veteran-owned. Veterans helping veterans build self-sufficient businesses.",
+  knowsAbout: ["Veteran-owned business", "Print on demand", "Order fulfillment", "Ecommerce"],
   address: {
     "@type": "PostalAddress",
     streetAddress: "1421 Hidden View Drive",

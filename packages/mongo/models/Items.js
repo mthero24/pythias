@@ -149,10 +149,16 @@ const schema = new mongoose.Schema(
         // box is in the 400-reference frame the [...renderImages] compositor expects.
         sides: [{
             view:       { type: String },   // front | back | sleeve (UI grouping)
-            location:   { type: String },   // the blank's box key, e.g. "front" / "center" / "leftsleeve"
-            artworkUrl: { type: String },   // placed/exported artwork for this side
+            location:   { type: String },   // the print location / envelope placement key, e.g. "front" / "back"
+            artworkUrl: { type: String },   // CROPPED (tight, no blank space) high-res artwork for this side
             styleImage: { type: String },   // garment mockup the box belongs to
-            box:        { type: mongoose.Schema.Types.Mixed },   // { x, y, w, h, rotation } in 400 space
+            // Normalized placement of the cropped artwork within the print area (envelope), 0–1.
+            // rotation is baked into artworkUrl. Every print path derives its own units from this:
+            //   DTF size   = wPct*envelope.width × hPct*envelope.height (inches)
+            //   GTX offset = horizoffset + xPct*width , vertoffset + yPct*height (inches, from left/top)
+            //   render     = boxX + xPct*boxW , boxY + yPct*boxH  (preview)
+            place:      { xPct: Number, yPct: Number, wPct: Number, hPct: Number },
+            box:        { type: mongoose.Schema.Types.Mixed },   // legacy { x, y, w, h } 400-space (kept for back-compat)
         }],
     },
     // Multi-vertical routing: which fulfiller handles this line (default POD/print).

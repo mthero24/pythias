@@ -36,12 +36,21 @@ const createImage = async (data) => {
             if (!box.boxWidth) box.boxWidth = box.width;
             if (!box.boxHeight) box.boxHeight = box.height;
 
-            let x = box.x * multiplier;
-            let y = box.y * multiplier;
+            // Custom designs carry a normalized placement (0–1) within the print box; the box is then
+            // the print AREA and the cropped art is positioned/sized inside it. No place → fills the box.
+            let bx = box.x, by = box.y, bw = box.boxWidth, bh = box.boxHeight;
+            if (box.place) {
+                bx = box.x + (box.place.xPct || 0) * box.boxWidth;
+                by = box.y + (box.place.yPct || 0) * box.boxHeight;
+                bw = (box.place.wPct || 1) * box.boxWidth;
+                bh = (box.place.hPct || 1) * box.boxHeight;
+            }
+            let x = bx * multiplier;
+            let y = by * multiplier;
             let designBuf;
             let originalSize;
 
-            const designUrl = `${CDN(data.designImage[box.side])}?width=${parseInt(box.boxWidth * multiplier)}&height=${parseInt(box.boxHeight * multiplier)}`;
+            const designUrl = `${CDN(data.designImage[box.side])}?width=${parseInt(bw * multiplier)}&height=${parseInt(bh * multiplier)}`;
 
             try {
                 const rawDesignBuf = await fetchBuf(designUrl);
@@ -72,7 +81,7 @@ const createImage = async (data) => {
                 continue;
             }
 
-            const offset = (originalSize.width - box.boxWidth * multiplier) / 2;
+            const offset = (originalSize.width - bw * multiplier) / 2;
             composits.push({
                 input: designBuf,
                 blend: "atop",

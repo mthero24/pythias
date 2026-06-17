@@ -135,10 +135,14 @@ function buildSpecialCaseZPL(item, i, sc, template, totalQuantity, poNumber) {
         "^XA",
         `^PW${widthDots}`,
         `^LL${heightDots}`,
+        // Locked header — PO# + Piece always print at the top (matches the standard label + the creator).
+        `^LH6,6^CFS,30,6^AXN,22,30^FO10,15^FDPO#: ${item.order?.poNumber ?? poNumber ?? ""}^FS`,
+        `^LH6,6^CFS,30,6^AXN,22,30^FO10,35^FDPiece: ${item.pieceId ?? ""}^FS`,
         `^FO${barcodePos.x},${barcodePos.y}^BY2^BC,100,N,N,N,A^FD${barcodeValue}^FS`,
     ];
 
     for (const key of (sc.fields ?? [])) {
+        if (key === "poNumber" || key === "pieceId") continue;   // already rendered as the locked header
         const text = fieldText(key, item, i, totalQuantity, poNumber);
         if (!text) continue;
         const pos = positions[key] ?? { x: 10, y: 175, size: "sm", rotation: "N" };

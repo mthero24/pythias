@@ -139,7 +139,11 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
                 blank: l.blankId || null,
                 color: l.colorId || null,
                 designRef: l.designRef || null,
-                design: l.design || {},
+                // Pre-made products carry a design map; "create your own" custom lines build it from
+                // the per-side artwork so production (DTF/GTX) has a design keyed by print location.
+                design: (l.design && Object.keys(l.design).length)
+                    ? l.design
+                    : Object.fromEntries((l.personalization?.sides || []).filter((s) => s.artworkUrl && s.location).map((s) => [s.location, s.artworkUrl])),
                 type: l.printType || null,
                 name: l.title,
                 price: l.priceCents / 100, sku: l.sku || undefined, product: l.productId,

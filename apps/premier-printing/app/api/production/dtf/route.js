@@ -7,6 +7,17 @@ import axios from "axios";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 import { getShippingCreds } from "@/lib/getShippingCreds";
+
+// Print size (inches) for a side. Custom designs carry a normalized placement (0–1) within the
+// envelope, so the print is the ART's real size — not the full envelope (which is what blows a small
+// placed design up to full width). Pre-made designs (no placement) fill the envelope as before.
+const dtfSize = (envelope, item, key) => {
+    const place = item?.personalization?.sides?.find((s) => s.location === key)?.place;
+    const w = place?.wPct > 0 ? envelope.width * place.wPct : envelope.width;
+    const h = place?.hPct > 0 ? envelope.height * place.hPct : envelope.height;
+    return `${Math.round(w * 100) / 100}x${Math.round(h * 100) / 100}`;
+};
+
 export async function GET(req) {
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
@@ -82,7 +93,7 @@ export async function POST(req = NextApiRequest) {
                     url: item.design[key],
                     pieceID: `${item.pieceId}-${key}`,
                     horizontal: false,
-                    size: `${envelopes[0].width}x${envelopes[0].height}`,
+                    size: dtfSize(envelopes[0], item, key),
                     offset: envelopes[0].vertoffset,
                     style: item.blank.code,
                     styleSize: item.sizeName,
@@ -159,7 +170,7 @@ export async function PUT(req = NextApiRequest) {
                             url: item.design[key],
                             pieceID: `${item.pieceId}-${key}`,
                             horizontal: false,
-                            size: `${envelope.width}x${envelope.height}`,
+                            size: dtfSize(envelope, item, key),
                             offset: envelope.vertoffset,
                             style: item.blank.code,
                             styleSize: item.sizeName,

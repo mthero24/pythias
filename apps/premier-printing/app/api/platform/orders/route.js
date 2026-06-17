@@ -93,12 +93,19 @@ export async function POST(request) {
     for (const line of data.items) {
         const qty = Math.max(1, parseInt(line.quantity) || 1);
         const local = await resolveLocalBlank(line.manufacturerStyle, line.styleCode, line.colorName, line.sizeName);
+        // "Create your own" custom artwork: build the per-location design map from the placement sides
+        // when no pre-made design map was sent. The per-side `place` (normalized) drives DTF/GTX sizing.
+        const sides = line.personalization?.sides || [];
+        const designMap = (line.design && Object.keys(line.design).length)
+            ? line.design
+            : Object.fromEntries(sides.filter((s) => s.artworkUrl && s.location).map((s) => [s.location, s.artworkUrl]));
+        const isCustom = !local.blank || sides.length > 0;
         for (let u = 0; u < qty; u++) {
             const item = new Item({
                 pieceId:     await uniquePieceId(),
                 status:      "awaiting_shipment",
                 paid:        true,
-                custom:      !local.blank,            // no local blank match → treat as custom artwork
+                custom:      isCustom,
                 order:       order._id,
                 orderId,
                 poNumber:    data.poNumber,
@@ -113,7 +120,8 @@ export async function POST(request) {
                 discount:    line.discount ?? 0,
                 quantity:    "1",
                 type:        line.printType || "",
-                design:      line.design && Object.keys(line.design).length ? line.design : undefined,
+                design:      designMap && Object.keys(designMap).length ? designMap : undefined,
+                personalization: line.personalization || undefined,   // carries per-side normalized placement
                 designRef:   null,
                 date:        now,
                 shipByDate:  data.shipByDate ? new Date(data.shipByDate) : null,

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { useSession } from "next-auth/react";
 import {
     Box, Typography, Stack, Button, Alert, Container,
-    FormControl, InputLabel, Select, MenuItem, Paper,
+    FormControl, InputLabel, Select, MenuItem, Paper, TextField, InputAdornment,
     Switch, FormControlLabel, Divider, Tabs, Tab, Chip, Avatar,
 } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
@@ -331,6 +331,7 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
     const [msg, setMsg]           = useState(null);
     const [selected, setSelected] = useState(null);
     const [tab, setTab]           = useState("design");
+    const [customSize, setCustomSize] = useState(false);   // manual width/height entry on the size picker
     const [activeCase, setActiveCase]       = useState(null); // marketplace key
     const [specialSelected, setSpecialSelected] = useState(null);
     const [brands, setBrands] = useState([]);
@@ -669,21 +670,45 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
                         <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>Label Settings</Typography>
                             <Stack spacing={1.5}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Size</InputLabel>
-                                    <Select
-                                        label="Size"
-                                        value={`${template.width}x${template.height}`}
-                                        onChange={e => {
-                                            const sz = LABEL_SIZES.find(s => `${s.width}x${s.height}` === e.target.value) ?? LABEL_SIZES[0];
-                                            setTemplate(t => ({ ...t, width: sz.width, height: sz.height }));
-                                        }}
-                                    >
-                                        {LABEL_SIZES.map(s => (
-                                            <MenuItem key={`${s.width}x${s.height}`} value={`${s.width}x${s.height}`}>{s.label}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                {(() => {
+                                    const isPreset = LABEL_SIZES.some(s => `${s.width}x${s.height}` === `${template.width}x${template.height}`);
+                                    const showCustom = customSize || !isPreset;
+                                    const clampIn = (v) => Math.max(0.5, Math.min(12, Math.round((Number(v) || 0) * 100) / 100));
+                                    return (
+                                        <>
+                                            <FormControl size="small" fullWidth>
+                                                <InputLabel>Size</InputLabel>
+                                                <Select
+                                                    label="Size"
+                                                    value={showCustom ? "custom" : `${template.width}x${template.height}`}
+                                                    onChange={e => {
+                                                        if (e.target.value === "custom") { setCustomSize(true); return; }
+                                                        setCustomSize(false);
+                                                        const sz = LABEL_SIZES.find(s => `${s.width}x${s.height}` === e.target.value) ?? LABEL_SIZES[0];
+                                                        setTemplate(t => ({ ...t, width: sz.width, height: sz.height }));
+                                                    }}
+                                                >
+                                                    {LABEL_SIZES.map(s => (
+                                                        <MenuItem key={`${s.width}x${s.height}`} value={`${s.width}x${s.height}`}>{s.label}</MenuItem>
+                                                    ))}
+                                                    <MenuItem value="custom">Custom size…</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                            {showCustom && (
+                                                <Stack direction="row" spacing={1}>
+                                                    <TextField size="small" type="number" label="Width" value={template.width}
+                                                        onChange={e => setTemplate(t => ({ ...t, width: clampIn(e.target.value) }))}
+                                                        InputProps={{ endAdornment: <InputAdornment position="end">in</InputAdornment> }}
+                                                        inputProps={{ min: 0.5, max: 12, step: 0.1 }} fullWidth />
+                                                    <TextField size="small" type="number" label="Height" value={template.height}
+                                                        onChange={e => setTemplate(t => ({ ...t, height: clampIn(e.target.value) }))}
+                                                        InputProps={{ endAdornment: <InputAdornment position="end">in</InputAdornment> }}
+                                                        inputProps={{ min: 0.5, max: 12, step: 0.1 }} fullWidth />
+                                                </Stack>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                                 <FormControl size="small" fullWidth>
                                     <InputLabel>Format</InputLabel>
                                     <Select label="Format" value={template.format} onChange={e => set("format", e.target.value)}>

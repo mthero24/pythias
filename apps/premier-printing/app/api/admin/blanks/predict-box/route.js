@@ -117,7 +117,7 @@ const downloadImage = async (url) => {
 };
 
 export async function POST(req) {
-    const { imageUrl, side, examples = [] } = await req.json();
+    const { imageUrl, side, examples = [], classify } = await req.json();
     if (!imageUrl) return NextResponse.json({ error: "imageUrl required" }, { status: 400 });
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -127,6 +127,27 @@ export async function POST(req) {
     let mainImg;
     try { mainImg = await downloadImage(imageUrl); }
     catch (e) { return NextResponse.json({ error: `Image fetch failed: ${e.message}` }, { status: 400 }); }
+
+    // Classify mode: which view of the garment is this? Drives auto-placing the right boxes.
+    if (classify) {
+        const r = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+            body: JSON.stringify({
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 16,
+                messages: [{ role: "user", content: [
+                    { type: "image", source: { type: "base64", media_type: mainImg.mediaType, data: mainImg.buf.toString("base64") } },
+                    { type: "text", text: 'Which view of this garment is shown? Reply with ONE word only: "front", "back", "sleeve", "hood", or "leg". A chest/flat/folded view = front. Default to front if unsure.' },
+                ] }],
+            }),
+        });
+        if (!r.ok) return NextResponse.json({ error: await r.text() }, { status: 502 });
+        const d = await r.json();
+        const raw = (d?.content?.[0]?.text || "").toLowerCase();
+        const view = ["back", "sleeve", "hood", "leg"].find((v) => raw.includes(v)) || "front";
+        return NextResponse.json({ view });
+    }
 
     // Download example images (silently skip any that fail)
     const exampleImgs = (await Promise.all(

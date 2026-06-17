@@ -55,6 +55,9 @@ export async function sendOrderToProvider(providerSlug, order, items) {
             colorName: i.colorName,
             sizeName:  i.sizeName,
             design:    i.design,
+            // Buyer "create your own" artwork + per-side normalized placement; the provider builds the
+            // design map + print placement from this when there's no pre-made design.
+            personalization: i.personalization || undefined,
             printType: i.type,
             price:     i.price,
             discount:  i.discount,

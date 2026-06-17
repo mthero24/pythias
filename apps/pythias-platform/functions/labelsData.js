@@ -45,7 +45,9 @@ export async function LabelsData(orgId) {
                 const order = orderMap.get(item.order?.toString());
                 if (!order) return null;
                 const type = item.type ?? item.designRef?.printType ?? "DTF";
-                return { ...item, order, type };
+                // Whether the OOS image was already printed — lets labels be split from un-imaged items.
+                const oosImagePrinted = (item.steps || []).some(st => st.status === "OOS Image Sent");
+                return { ...item, order, type, oosImagePrinted };
             })
             .filter(Boolean);
         rePulls += labels[k].filter(l => l.repull).length;

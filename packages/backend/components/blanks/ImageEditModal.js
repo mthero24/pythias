@@ -130,6 +130,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
     // ── save state ────────────────────────────────────────────────────────────
     const [saving, setSaving]       = useState(false);
     const [saveError, setSaveError] = useState("");
+    // Unsaved print-box changes — boxes only persist when the image is saved; warn before losing them.
+    const [dirty, setDirty]         = useState(false);
 
     // ── misc ──────────────────────────────────────────────────────────────────
     const [copyBoxesOpen, setCopyBoxesOpen] = useState(false);
@@ -161,7 +163,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         setSublimPoints([]);
         setActive(""); setRectangles([]); setStep("");
         setAddImage(null); setOverlayImg(null); setCropAdd(false);
-        setSaveError(""); setPan(false);
+        setSaveError(""); setPan(false); setDirty(false);
     }, [open, selectedImageSrc, color?._id]);
 
     // ── transformer sync ──────────────────────────────────────────────────────
@@ -237,6 +239,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         const y = Math.round(e.target.y());
         setRectangles(prev => prev.map(r => r.id === e.target.id() ? { ...r, x, y } : r));
         setActiveBox(prev => ({ ...prev, x, y }));
+        setDirty(true);
     };
 
     const handleTransformEnd = (e) => {
@@ -249,6 +252,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         node.width(w); node.height(h);
         setRectangles(prev => prev.map(r => r.id === node.id() ? { ...r, width: w, height: h, rotation: rot } : r));
         setActiveBox(prev => ({ ...prev, width: w, height: h, rotation: rot }));
+        setDirty(true);
     };
 
     const handleWheel = (e) => {
@@ -290,6 +294,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         const num = parseInt(val) || 0;
         setActiveBox(prev => ({ ...prev, [field]: num }));
         setRectangles(prev => prev.map(r => r.id === active ? { ...r, [field]: num } : r));
+        setDirty(true);
     };
 
     const handleSaveLocation = () => {
@@ -318,6 +323,7 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         setRectangles([]);
         setStep("");
         setActive("");
+        setDirty(true);
     };
 
     const handleRemoveLocation = () => {
@@ -326,7 +332,69 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
             delete boxes[active];
             return { ...prev, boxes };
         });
+        setDirty(true);
         setActive(""); setRectangles([]); setStep("");
+    };
+
+    // Map a print-location name to the garment view it lives on (for AI auto-placement).
+    const viewOfLocation = (name) => {
+        const n = (name || "").toLowerCase();
+        if (/back/.test(n)) return "back";
+        if (/sleeve|arm/.test(n)) return "sleeve";
+        if (/hood/.test(n)) return "hood";
+        if (/leg|thigh|pant/.test(n)) return "leg";
+        return "front";
+    };
+
+    // Predict one location's box (with sibling few-shot examples). Returns the box or null.
+    const predictSide = async (side) => {
+        const examples = (blank.images || [])
+            .filter(img => img.image && img.image !== image.image && img.boxes?.[side])
+            .slice(0, 3)
+            .map(img => ({ imageUrl: img.image, box: {
+                x: img.boxes[side].x / CANVAS, y: img.boxes[side].y / CANVAS,
+                width: img.boxes[side].width / CANVAS, height: img.boxes[side].height / CANVAS,
+                rotation: img.boxes[side].rotation ?? 0,
+            } }));
+        const res = await fetch("/api/admin/blanks/predict-box", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageUrl: image.image, side, examples }),
+        });
+        const data = await res.json();
+        if (data.error) return null;
+        return { x: data.x, y: data.y, width: data.width, height: data.height, rotation: data.rotation ?? 0 };
+    };
+
+    // One-click: detect the garment view (front/back/sleeve…) and auto-place every matching box.
+    const handleAutoPlace = async () => {
+        if (!image.image) return;
+        setAiLoading(true); setSaveError("");
+        try {
+            const cls = await fetch("/api/admin/blanks/predict-box", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ imageUrl: image.image, classify: true }),
+            }).then(r => r.json());
+            const view = cls.view || "front";
+            const DERIVED = ["center", "centermini", "pocket", "embfull", "centerfull"];
+            const want = (printLocations || []).map(l => l.name).filter(n => viewOfLocation(n) === view);
+            if (!want.length) { setSaveError(`This is a "${view}" image, but no ${view} print locations are configured for this product.`); return; }
+            const boxes = { ...(image.boxes || {}) };
+            for (const sideName of want.filter(n => !DERIVED.includes(n))) {
+                const b = await predictSide(sideName); if (b) boxes[sideName] = b;
+            }
+            for (const sideName of want.filter(n => DERIVED.includes(n))) {
+                if (boxes.front) { const d = deriveFromFront(sideName, boxes.front); if (d) boxes[sideName] = d; }
+                else { const b = await predictSide(sideName); if (b) boxes[sideName] = b; }
+            }
+            setImage(prev => ({ ...prev, boxes }));
+            setDirty(true);
+            setActive(""); setRectangles([]); setStep("");
+        } catch (e) {
+            console.error("[AI auto-place]", e);
+            setSaveError("AI auto-place failed — set the boxes manually.");
+        } finally {
+            setAiLoading(false);
+        }
     };
 
     const handleAiPredict = async () => {
@@ -501,7 +569,8 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
             else b.images.push(finalImage);
             setBlank(b);
             await update({ blank: b, action: existingIdx !== -1 ? "blank_image_edit" : "blank_image_add" });
-            handleClose();
+            setDirty(false);   // persisted
+            handleClose(true);
         } catch (e) {
             setSaveError(e.message || "Failed to save image");
         } finally {
@@ -509,7 +578,18 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
         }
     };
 
-    const handleClose = () => { setSelectedImageSrc(null); onClose(); };
+    // `saved` skips the warning (called right after a successful save). Otherwise warn on unsaved boxes.
+    const handleClose = (saved) => {
+        if (saved !== true && dirty && !window.confirm('You have unsaved print-box changes. Click "Save Image" to keep them — they will be lost otherwise.\n\nClose anyway?')) return;
+        setDirty(false); setSelectedImageSrc(null); onClose();
+    };
+
+    // Safety net: warn if leaving/closing the page with unsaved box changes.
+    useEffect(() => {
+        const onBeforeUnload = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ""; } };
+        window.addEventListener("beforeunload", onBeforeUnload);
+        return () => window.removeEventListener("beforeunload", onBeforeUnload);
+    }, [dirty]);
 
     // ── mode description ──────────────────────────────────────────────────────
     const modeHint = {
@@ -929,6 +1009,12 @@ export function ImageEditModal({ open, onClose, blank, setBlank, update, color, 
                     <Box>
                         <Typography variant="subtitle2" fontWeight={700} mb={1}>Tools</Typography>
                         <Stack spacing={1}>
+                            {image.image && (
+                                <Button size="small" variant="contained" color="secondary" startIcon={<AutoFixHighIcon />}
+                                    onClick={handleAutoPlace} disabled={aiLoading}>
+                                    {aiLoading ? "Auto-placing…" : "✨ AI Auto-place boxes"}
+                                </Button>
+                            )}
                             {image.image && (
                                 <Button size="small" variant="outlined" startIcon={<CropIcon />}
                                     onClick={startCrop} disabled={step === "crop"}>

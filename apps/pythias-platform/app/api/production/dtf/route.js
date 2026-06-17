@@ -5,6 +5,16 @@ import { setConfig, createImage } from "@pythias/dtf";
 import { getToken } from "next-auth/jwt";
 import { getOrgCreds } from "@/lib/getOrgCreds";
 
+// Same model as Premier: print size (inches) comes from the blank ENVELOPE for the item's size +
+// location, NOT from a design SKU (custom "create your own" orders have no design SKU). Custom items
+// carry a normalized placement (0–1) within the envelope → print the art at its REAL size.
+const dtfSize = (envelope, item, key) => {
+    const place = item?.personalization?.sides?.find((s) => s.location === key)?.place;
+    const w = place?.wPct > 0 ? envelope.width * place.wPct : envelope.width;
+    const h = place?.hPct > 0 ? envelope.height * place.hPct : envelope.height;
+    return `${Math.round(w * 100) / 100}x${Math.round(h * 100) / 100}`;
+};
+
 export async function GET(req) {
     const token = await getToken({ req });
     if (!token?.orgId) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
@@ -52,8 +62,8 @@ export async function POST(req) {
 
     const data = await req.json();
     const item = await PlatformItem.findOne({ orgId, pieceId: data.pieceId?.toUpperCase().trim() })
-        .populate("blank", "code printLocations sizes")
-        .populate("designRef", "sku images sublimationImages");
+        .populate("blank", "code envelopes sizes")
+        .populate("designRef", "sku");
 
     if (!item) return NextResponse.json({ error: true, msg: "item not found" });
     if (item.cancelled) return NextResponse.json({ error: true, msg: "item canceled" });
@@ -64,28 +74,27 @@ export async function POST(req) {
     }
 
     item.dtfScan = true;
-    const printLocations = item.blank?.printLocations ?? [];
-    const designImages = item.designRef?.images ?? {};
-
-    await Promise.all(
-        printLocations.map(async loc => {
-            const imageUrl = designImages[loc.code] ?? designImages[loc.name];
-            if (!imageUrl) return;
-            await createImage({
-                url: imageUrl,
-                pieceID: `${item.pieceId}-${loc.code ?? loc.name}`,
-                horizontal: false,
-                size: `${loc.width}x${loc.height}`,
-                offset: 0,
-                style: item.blank.code,
-                styleSize: item.sizeName,
-                color: item.colorName,
-                sku: item.sku ?? "",
-                shouldFitDesign: null,
-                printer: data.printer,
-            });
-        }),
-    );
+    // Print each designed location from the item's design map, sized to the envelope (+ placement).
+    await Promise.all(Object.keys(item.design || {}).map(async (key) => {
+        if (!key || !item.design[key]) return;
+        const envelope = (item.blank?.envelopes || []).find(
+            (e) => (e.size?.toString() === item.size?.toString() || e.sizeName === item.sizeName) && e.placement === key
+        );
+        if (!envelope) return;
+        await createImage({
+            url: item.design[key],
+            pieceID: `${item.pieceId}-${key}`,
+            horizontal: false,
+            size: dtfSize(envelope, item, key),
+            offset: envelope.vertoffset,
+            style: item.blank.code,
+            styleSize: item.sizeName,
+            color: item.colorName,
+            sku: item.sku ?? "",
+            shouldFitDesign: null,
+            printer: data.printer,
+        });
+    }));
 
     item.status = "DTF Load";
     item.steps = item.steps ?? [];
@@ -114,15 +123,15 @@ export async function PUT(req) {
     const data = await req.json();
     const items = await PlatformItem.find({
         orgId,
-        designRef: { $ne: null },
+        design: { $ne: null },
         colorName: { $ne: null },
         sizeName: { $ne: null },
         labelPrinted: false,
         cancelled: false,
         paid: true,
     })
-        .populate("designRef", "sku images")
-        .populate("blank", "code printLocations sizes");
+        .populate("designRef", "sku")
+        .populate("blank", "code envelopes sizes");
 
     const chunks = Math.ceil(items.length / (data.printers?.length || 1));
     const send = (data.printers ?? ["printer1"]).map((printer, i) => ({
@@ -136,26 +145,26 @@ export async function PUT(req) {
     await Promise.all(send.map(async ({ printer, items: printerItems }) => {
         await Promise.all(printerItems.map(async item => {
             if (!item || item.cancelled || item.dtfScan) return;
-            const designImages = item.designRef?.images ?? {};
-            await Promise.all(
-                (item.blank?.printLocations ?? []).map(async loc => {
-                    const imageUrl = designImages[loc.code] ?? designImages[loc.name];
-                    if (!imageUrl) return;
-                    await createImage({
-                        url: imageUrl,
-                        pieceID: `${item.pieceId}-${loc.code ?? loc.name}`,
-                        horizontal: false,
-                        size: `${loc.width}x${loc.height}`,
-                        offset: 0,
-                        style: item.blank.code,
-                        styleSize: item.sizeName,
-                        color: item.colorName,
-                        sku: item.sku ?? "",
-                        shouldFitDesign: null,
-                        printer,
-                    });
-                }),
-            );
+            await Promise.all(Object.keys(item.design || {}).map(async (key) => {
+                if (!key || !item.design[key]) return;
+                const envelope = (item.blank?.envelopes || []).find(
+                    (e) => (e.size?.toString() === item.size?.toString() || e.sizeName === item.sizeName) && e.placement === key
+                );
+                if (!envelope) return;
+                await createImage({
+                    url: item.design[key],
+                    pieceID: `${item.pieceId}-${key}`,
+                    horizontal: false,
+                    size: dtfSize(envelope, item, key),
+                    offset: envelope.vertoffset,
+                    style: item.blank.code,
+                    styleSize: item.sizeName,
+                    color: item.colorName,
+                    sku: item.sku ?? "",
+                    shouldFitDesign: null,
+                    printer,
+                });
+            }));
             bulkOps.push({
                 updateOne: {
                     filter: { _id: item._id, orgId },

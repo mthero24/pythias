@@ -24,8 +24,11 @@ export async function GET() {
                 }
             }
         ]),
+        // Reorder candidates: only when on-hand PLUS what's already on order (pending_quantity) is
+        // still at/below the reorder point. Without counting pending_quantity, a just-ordered item
+        // stays ≤ its reorder point (quantity doesn't rise until received) and wrongly reappears.
         Inventory.find(
-            { $expr: { $lte: ["$quantity", "$order_at_quantity"] } },
+            { $expr: { $lte: [{ $add: ["$quantity", { $ifNull: ["$pending_quantity", 0] }] }, "$order_at_quantity"] } },
             "_id"
         ).lean(),
     ]);

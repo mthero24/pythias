@@ -21,7 +21,7 @@ export default async function CreateYourOwnPage() {
 
     const docs = await Blank.find({ orgId: site.orgId, active: { $ne: false } })
         .populate("colors", "name hexcode")
-        .select("name code images sizes colors")
+        .select("name code images sizes colors envelopes")
         .sort({ sales: -1 }).limit(60).lean().catch(() => []);
 
     // Pretty color label + hex (images[].color may be a name or a Color id).
@@ -75,7 +75,14 @@ export default async function CreateYourOwnPage() {
         const sizes = (b.sizes || []).filter((s) => !s.hidden && s.name && (s.retailPrice || s.basePrice)).map((s) => ({
             name: s.name, sku: s.sku || "", priceCents: Math.round((s.retailPrice || s.basePrice || 0) * 100), wholesaleCents: Math.round((s.wholesaleCost || 0) * 100),
         }));
-        return { id: String(b._id), name: b.name, code: b.code, image: colors[0]?.image || null, colors, sizes };
+        // Print envelopes (physical print area, inches) per side + size — drives the studio box aspect
+        // (so the design isn't distorted) and the production print-size mapping.
+        const envelopes = (b.envelopes || []).map((e) => {
+            const def = classify(e.placement || "");
+            return def && e.width > 0 && e.height > 0
+                ? { side: def.side, sizeName: e.sizeName || "", width: e.width, height: e.height } : null;
+        }).filter(Boolean);
+        return { id: String(b._id), name: b.name, code: b.code, image: colors[0]?.image || null, colors, sizes, envelopes };
     }).filter((b) => b.colors.length && b.sizes.length);
 
     const name = site.name || "our store";

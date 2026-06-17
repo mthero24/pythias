@@ -10,10 +10,33 @@ function internalHeaders(key) {
     return { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
 }
 
+// Custom designs carry a normalized placement (0–1) within the envelope. Shrink + reposition the
+// envelope so GTX prints the cropped art at its real size/spot (horizoffset from left, vertoffset
+// from top). Pre-made designs (no placement) keep the full envelope.
+function applyPlace(env, place) {
+    if (!env || !place || !(place.wPct > 0) || !(place.hPct > 0)) return env;
+    const r2 = (n) => Math.round(n * 100) / 100;
+    return {
+        ...env,
+        width: r2(env.width * place.wPct),
+        height: r2(env.height * place.hPct),
+        horizoffset: r2((env.horizoffset || 0) + (place.xPct || 0) * env.width),
+        vertoffset: r2((env.vertoffset || 0) + (place.yPct || 0) * env.height),
+    };
+}
+const placeFor = (item, loc) => item?.personalization?.sides?.find((s) => s.location === loc)?.place;
+// Image per location — same source DTF uses (item.design[location]); for custom this is the cropped art.
+const artworkFor = (item, loc) => item?.design?.[loc] || undefined;
+
 function buildGTXJob(item, printAs) {
-    const envelope = item.blank?.envelopes?.find(
+    const baseFront = item.blank?.envelopes?.find(
         (e) => (e.size?.toString() === item.size?.toString() || e.sizeName === item.sizeName) && e.placement === "front"
     ) || item.blank?.envelopes?.[0] || {};
+    const baseBack = item.blank?.envelopes?.find(
+        (e) => (e.size?.toString() === item.size?.toString() || e.sizeName === item.sizeName) && e.placement === "back"
+    );
+    const envelope = applyPlace(baseFront, placeFor(item, "front"));
+    const backEnvelope = baseBack ? applyPlace(baseBack, placeFor(item, "back")) : undefined;
 
     const profile = {
         inkCombination: 2,
@@ -70,14 +93,15 @@ function buildGTXJob(item, printAs) {
         order: item.order,
         Profile: profile,
         Envelope: envelope,
+        ...(backEnvelope ? { BackEnvelope: backEnvelope } : {}),
         varient: {
             sku: item.sku,
             images: {
-                design_image: item.design?.front,
-                back_design_image: item.design?.back,
+                design_image: artworkFor(item, "front"),
+                back_design_image: artworkFor(item, "back"),
             },
         },
-        hasBack: !!item.design?.back,
+        hasBack: !!artworkFor(item, "back"),
         printedFront: item.frontPrinted,
         teeshirtprinted: item.printed,
     };

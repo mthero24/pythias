@@ -50,6 +50,20 @@ export default function Footer() {
                         <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.8rem", mt: 1.5, maxWidth: 280, lineHeight: 1.7 }}>
                             All-in-one print-on-demand automation platform for custom apparel businesses.
                         </Typography>
+                        {/* Veteran-owned badge — veterans helping veterans build self-sufficient businesses. */}
+                        <Box
+                            sx={{
+                                display: "inline-flex", alignItems: "center", gap: 1, mt: 2,
+                                px: 1.5, py: 0.75, borderRadius: 999,
+                                border: "1px solid rgba(211,167,61,0.5)", bgcolor: "rgba(211,167,61,0.10)",
+                            }}
+                            title="Pythias Technologies is a veteran-owned and operated business."
+                        >
+                            <Box component="span" aria-hidden sx={{ fontSize: "0.95rem", lineHeight: 1 }}>🎖️</Box>
+                            <Typography sx={{ color: "#E4C77A", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                                Veteran-Owned &amp; Operated
+                            </Typography>
+                        </Box>
                     </Box>
 
                     {/* Nav links */}

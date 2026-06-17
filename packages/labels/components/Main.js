@@ -49,6 +49,7 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
     const [marketplaces, setMarketplaces] = useState([]);
     const [confirmReturnToQue, setConfirmReturnToQue] = useState(false);
     const [stockFilter, setStockFilter]   = useState(null);
+    const [imageFilter, setImageFilter]   = useState(null);   // null | "printed" | "notPrinted" — OOS image already printed?
     const [selectedPrinter, setSelectedPrinter] = useState(printerList[0]?.name ?? "printer1");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo]     = useState("");
@@ -152,6 +153,26 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
         setFilter("");
     };
 
+    // Active list filters (stock status + OOS-image-printed + text search) — shared by the displayed
+    // list AND the column Print button, so printing only labels the currently-filtered items.
+    const matchesFilters = (s) => {
+        const isReturns = s.inventory?.inventoryType === "productInventory" && !!s.inventory?.productInventory;
+        if (stockFilter) {
+            if (stockFilter === "inStock"  && s.stockStatus !== "inStock" && !isReturns) return false;
+            if (stockFilter === "ordered"  && s.stockStatus !== "ordered")              return false;
+            if (stockFilter === "attached" && s.stockStatus !== "attached")             return false;
+            if (stockFilter === "noInv"    && (s.stockStatus || isReturns))            return false;
+        }
+        if (imageFilter === "printed"    && !s.oosImagePrinted) return false;
+        if (imageFilter === "notPrinted" &&  s.oosImagePrinted) return false;
+        if (!filter) return true;
+        return (
+            s.pieceId?.toLowerCase().includes(filter.toLowerCase()) ||
+            s.order?.poNumber?.toLowerCase().includes(filter.toLowerCase()) ||
+            s.styleCode?.toLowerCase().includes(filter.toLowerCase())
+        );
+    };
+
     const print = async (type) => {
         setLoading(true);
         let items = [];
@@ -162,10 +183,10 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
             items = gift;
         } else {
             if (source === "PP") {
-                items.push(...useLabels[type]);
+                items.push(...useLabels[type].filter(matchesFilters));
             } else {
                 for (let l of useLabels[type]) {
-                    if (l.stockStatus === "inStock" || (l.inventory?.inventoryType === "productInventory" && l.inventory?.productInventory)) items.push(l);
+                    if ((l.stockStatus === "inStock" || (l.inventory?.inventoryType === "productInventory" && l.inventory?.productInventory)) && matchesFilters(l)) items.push(l);
                 }
             }
             items = Sort(items, source);
@@ -570,22 +591,11 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                             const noInvCount = useLabels[l].filter(item =>
                                 !item.stockStatus && !(item.inventory?.inventoryType === "productInventory" && item.inventory?.productInventory)
                             ).length;
+                            // OOS image already printed vs not — so labels can be printed in two batches.
+                            const imgPrintedCount    = useLabels[l].filter(item => item.oosImagePrinted).length;
+                            const imgNotPrintedCount = useLabels[l].filter(item => !item.oosImagePrinted).length;
 
-                            const displayed = useLabels[l].filter(s => {
-                                const isReturns = s.inventory?.inventoryType === "productInventory" && !!s.inventory?.productInventory;
-                                if (stockFilter) {
-                                    if (stockFilter === "inStock"  && s.stockStatus !== "inStock" && !isReturns) return false;
-                                    if (stockFilter === "ordered"  && s.stockStatus !== "ordered")              return false;
-                                    if (stockFilter === "attached" && s.stockStatus !== "attached")             return false;
-                                    if (stockFilter === "noInv"    && (s.stockStatus || isReturns))            return false;
-                                }
-                                if (!filter) return true;
-                                return (
-                                    s.pieceId?.toLowerCase().includes(filter.toLowerCase()) ||
-                                    s.order?.poNumber?.toLowerCase().includes(filter.toLowerCase()) ||
-                                    s.styleCode?.toLowerCase().includes(filter.toLowerCase())
-                                );
-                            });
+                            const displayed = useLabels[l].filter(matchesFilters);
 
                             return (
                                 <Grid2 size={{ xs: 12, sm: source === "IM" ? 12 : 6 }} key={l}>
@@ -617,6 +627,12 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                                                     {noInvCount > 0 && <Chip icon={<WarningAmberIcon sx={{ fontSize: "12px !important" }} />} label={`${noInvCount} no inv`} size="small"
                                                         onClick={() => setStockFilter(stockFilter === "noInv" ? null : "noInv")}
                                                         sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: stockFilter === "noInv" ? "#6b7280" : "#f9fafb", color: stockFilter === "noInv" ? "#fff" : "#6b7280", outline: stockFilter === "noInv" ? "2px solid #6b7280" : "none" }} />}
+                                                    {imgPrintedCount > 0 && <Chip icon={<CheckCircleIcon sx={{ fontSize: "12px !important" }} />} label={`${imgPrintedCount} image printed`} size="small"
+                                                        onClick={() => setImageFilter(imageFilter === "printed" ? null : "printed")}
+                                                        sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: imageFilter === "printed" ? "#1d4ed8" : "#eff6ff", color: imageFilter === "printed" ? "#fff" : "#1d4ed8", outline: imageFilter === "printed" ? "2px solid #1d4ed8" : "none" }} />}
+                                                    {imgNotPrintedCount > 0 && <Chip icon={<ErrorIcon sx={{ fontSize: "12px !important" }} />} label={`${imgNotPrintedCount} no image`} size="small"
+                                                        onClick={() => setImageFilter(imageFilter === "notPrinted" ? null : "notPrinted")}
+                                                        sx={{ height: 20, fontSize: "0.68rem", cursor: "pointer", bgcolor: imageFilter === "notPrinted" ? "#7c3aed" : "#f5f3ff", color: imageFilter === "notPrinted" ? "#fff" : "#7c3aed", outline: imageFilter === "notPrinted" ? "2px solid #7c3aed" : "none" }} />}
                                                 </Stack>
                                             </Stack>
 
