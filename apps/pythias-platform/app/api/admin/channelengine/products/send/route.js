@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@pythias/backend/server";
 import { listProducts, updateOffers } from "@/functions/channelEngine";
 
 const SKIP_KEYS = new Set(["titleGenerator"]);
@@ -109,6 +110,7 @@ results.push(...items);
 
         return NextResponse.json({ error: false, channelEngineProductId: product.sku || product._id?.toString(), results });
     } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "POST /api/admin/channelengine/products/send", context: { channel: "channelengine", op: "send" } });
         console.error("[channelengine/products/send]", e.message);
         return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
     }

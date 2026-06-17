@@ -1,6 +1,6 @@
 import { Design, Items as Item, Blank, Order, Products, Inventory, InventoryOrders, ProductInventory, Converters, ApiKeyIntegrations } from "@pythias/mongo";
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda, getOrdersEbay } from "@pythias/integrations";
-import { logActivity } from "@pythias/backend/server";
+import { logActivity, logError } from "@pythias/backend/server";
 import { pullTikTokOrders } from "./tikTok";
 import { getShippingCreds } from "@/lib/getShippingCreds";
 
@@ -697,6 +697,7 @@ async function pullFromConnections() {
                 if (!error) orders.push(...(raw ?? []).map(o => normalizeAcendaOrder(o, conn)));
             }
         } catch (e) {
+            logError({ error: e, app: "premier", provider: "premierPrinting", source: "pullFromConnections", context: { type, connectionId: conn?._id?.toString() } });
             console.error(`pullFromConnections error for ${type}:`, e.message);
         }
     }
@@ -735,6 +736,7 @@ export async function pullOrders(){
         tikTokActive = tikTokResult.active;
         console.log(`[pullOrders] TikTok pulled ${tikTokResult.pulled} order(s), active=${tikTokActive}`);
     } catch (e) {
+        logError({ error: e, app: "premier", provider: "premierPrinting", source: "pullOrders", context: { stage: "tiktok-pull" } });
         console.error("[pullOrders] TikTok pull failed:", e.message);
     }
 
@@ -917,6 +919,7 @@ export async function backfillShipByDate({ onProgress } = {}) {
                 skipped++;
             }
         } catch (e) {
+            logError({ error: e, app: "premier", provider: "premierPrinting", source: "backfillShipByDate", context: { poNumber: o.poNumber, orderId: o._id?.toString(), marketplace: o.marketplace } });
             console.error(`[backfillShipByDate] ${o.poNumber}:`, e.message);
             skipped++;
         }
@@ -976,6 +979,7 @@ export async function backfillDiscounts({ batch = 0 } = {}) {
                 }
                 updated++;
             } catch (e) {
+                logError({ error: e, app: "premier", provider: "premierPrinting", source: "backfillDiscounts", context: { poNumber: o.poNumber, orderId: o._id?.toString() } });
                 console.error(`[backfillDiscounts] ${o.poNumber}:`, e.message);
                 skipped++;
             }

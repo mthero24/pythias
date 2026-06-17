@@ -5,6 +5,7 @@ import { assertInternal } from "@/lib/internal";
 import { storefrontStripe } from "@/lib/stripe";
 import { routeOrderViaPlatform } from "@/lib/routing";
 import { enqueueReturnStatus } from "@/lib/emailFlows";
+import { logError } from "@pythias/backend/server";
 
 // POST /api/internal/returns/process — seller action on a return (from platform/premier).
 // Body: { returnId, action: approve|reject|receive|refund|credit|exchange, amountCents?, sellerNote? }
@@ -69,6 +70,7 @@ export async function POST(req) {
         }
         return NextResponse.json({ ok: true, status: ret.status });
     } catch (e) {
+        logError({ error: e, app: "storefront", provider: "storefront", source: "api/internal/returns/process", route: "/api/internal/returns/process", method: "POST", status: 502, orgId: ret.orgId, email: ret.customerEmail, context: { returnId: String(returnId), action, orderId: ret.orderId ? String(ret.orderId) : undefined, rmaNumber: ret.rmaNumber } });
         return NextResponse.json({ error: e.message }, { status: 502 });
     }
 }

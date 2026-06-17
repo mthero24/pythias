@@ -1,9 +1,13 @@
 "use server";
 import { Main } from "@pythias/shipping";
 import { Settings, Bin as Bins } from "@pythias/mongo";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export default async function Shipping(req, res) {
     await Bins;
+    const session = await getServerSession(authOptions);
+    const trainingMode = !!session?.user?.permissions?.shipTraining;
 
     // Load stations from DB (Settings), fall back to env
     let stations = [];
@@ -28,5 +32,5 @@ export default async function Shipping(req, res) {
     let params = await req.searchParams
     let pieceId = params.pieceId
     let station = params.station
-    return <Main stations={stations} binCount={binCount} bins={{readyToShip, inUse}} pieceId={pieceId} stat={station} source={"PP"}/>
+    return <Main stations={stations} binCount={binCount} bins={{readyToShip, inUse}} pieceId={pieceId} stat={station} source={"PP"} trainingMode={trainingMode}/>
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PlatformProduct, PlatformInventory, SkuToUpc } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { createTempUpcs, updateTempUpc } from "@pythias/integrations";
-import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { logActivity, userFromToken, logChange, logError } from "@pythias/backend/server";
 import { notifyPartner } from "@/lib/notifyPartner";
 import { shapeProduct } from "@/lib/partnerShape";
 
@@ -274,6 +274,7 @@ export async function POST(req) {
             saved.forEach(p => notifyPartner(token.orgId, "product.updated", shapeProduct(p.toObject ? p.toObject() : p)));
             return NextResponse.json({ error: false, products: JSON.parse(JSON.stringify(saved)) });
         } catch (e) {
+            logError({ error: e, app: "platform", provider: "platform", source: "POST /api/admin/products", context: { op: "save", count: body.products?.length } });
             console.error("[products POST products]", e);
             return NextResponse.json({ error: true, msg: e.message?.includes("duplicate") ? "SKU already exists" : e.message });
         }
@@ -289,6 +290,7 @@ export async function POST(req) {
         notifyPartner(token.orgId, "product.updated", shapeProduct(saved.toObject ? saved.toObject() : saved));
         return NextResponse.json({ error: false, product: JSON.parse(JSON.stringify(saved)) });
     } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "POST /api/admin/products", context: { op: "save", sku: product?.sku } });
         console.error("[products POST product]", e);
         return NextResponse.json({ error: true, msg: e.message?.includes("duplicate") ? "SKU already exists" : e.message });
     }

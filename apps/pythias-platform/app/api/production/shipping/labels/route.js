@@ -6,6 +6,7 @@ import { getToken } from "next-auth/jwt";
 import { getOrgCreds, buildShippingCreds } from "@/lib/getOrgCreds";
 import { createCEClient } from "@/functions/channelEngine";
 import { shipOrderTikTok } from "@/functions/tikTok";
+import { logError } from "@pythias/backend/server";
 import axios from "axios";
 
 export async function POST(req) {
@@ -15,6 +16,18 @@ export async function POST(req) {
     const orgId = token.orgId;
     const data = await req.json();
     if (!data.address?.country) data.address.country = "US";
+
+    // Training-mode gate (server-side, can't be bypassed): a trainee must have scanned every item in
+    // the order before a shipping label will print. Set via the user's `permissions.shipTraining`.
+    if (token?.permissions?.shipTraining) {
+        const tItems = await PlatformItem.find({ orgId, order: data.orderId, cancelled: { $ne: true } }).select("pieceId").lean();
+        const required = tItems.map(i => String(i.pieceId || "").toUpperCase()).filter(Boolean);
+        const scannedSet = new Set((data.scannedPieceIds || []).map(p => String(p || "").toUpperCase()));
+        const missing = required.filter(p => !scannedSet.has(p));
+        if (!required.length || missing.length) {
+            return NextResponse.json({ error: true, msg: `Training mode: scan all ${required.length} item(s) before shipping — ${missing.length} not scanned.` });
+        }
+    }
 
     const creds = await getOrgCreds(orgId);
     const sc = buildShippingCreds(creds);
@@ -68,10 +81,12 @@ export async function POST(req) {
         }
         order.status = "Shipped";
 
-        const itemIds = order.items.map(i => i._id);
+        // Mark EVERY item belonging to this order (by order ref, not the populated order.items array
+        // which can be stale/incomplete — a missed piece leaves it shipped:false and the order looking
+        // unshipped). Keep the `shipped` boolean + `status` in sync; reports key off the boolean.
         await PlatformItem.updateMany(
-            { orgId, _id: { $in: itemIds } },
-            { $set: { shipped: true, shippedDate: new Date() }, $push: { steps: { status: "Shipped", date: new Date() } } },
+            { orgId, order: order._id, cancelled: { $ne: true } },
+            { $set: { shipped: true, shippedDate: new Date(), status: "Shipped" }, $push: { steps: { status: "Shipped", date: new Date() } } },
         );
         await order.save();
 
@@ -212,6 +227,7 @@ export async function POST(req) {
             bins: { readyToShip: JSON.parse(JSON.stringify(readyToShip)), inUse: JSON.parse(JSON.stringify(inUse)) },
         });
     } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "api/production/shipping/labels POST", context: { orgId, orderId: data?.orderId, provider: data?.selectedShipping?.provider } });
         console.error(e);
         return NextResponse.json({ error: true, msg: e.message ?? JSON.stringify(e) });
     }

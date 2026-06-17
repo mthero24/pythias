@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Organization, UsageLedger, StorefrontSite } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
 import { getStripe } from "@/lib/stripe";
+import { logError } from "@pythias/backend/server";
 
 export async function POST(req) {
     const stripe = getStripe();
@@ -42,7 +43,7 @@ export async function POST(req) {
                     try {
                         const pi = await stripe.paymentIntents.retrieve(s.payment_intent);
                         if (pi.payment_method) set["wallet.stripePaymentMethodId"] = pi.payment_method;
-                    } catch (e) { console.error("[billing/webhook] PI retrieve failed:", e.message); }
+                    } catch (e) { logError({ error: e, app: "platform", provider: "platform", source: "api/billing/webhook POST checkout.session.completed PI-retrieve", context: { orgId: s.metadata?.orgId, sessionId: s.id } }); console.error("[billing/webhook] PI retrieve failed:", e.message); }
                 }
                 if (s.metadata.orgId && amount > 0) {
                     await Organization.findByIdAndUpdate(s.metadata.orgId, {
@@ -115,6 +116,7 @@ export async function POST(req) {
             }
         }
     } catch (err) {
+        logError({ error: err, app: "platform", provider: "platform", source: "api/billing/webhook POST", context: { eventType: event?.type, eventId: event?.id } });
         console.error("[billing/webhook]", err);
         return NextResponse.json({ error: "Processing error" }, { status: 500 });
     }

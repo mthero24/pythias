@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { PlatformItem as Items } from "@pythias/mongo";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken } from "@pythias/backend/server";
+import { logActivity, userFromToken, logError } from "@pythias/backend/server";
 import { getShippingCreds } from "@/lib/getShippingCreds";
 import { ensureItemProofs } from "@/lib/printProof";
 
@@ -184,6 +184,7 @@ export async function POST(req) {
                     await item.save();
                     logActivity({ action: "gtx_scan", entity: "gtx", entityId: item._id, entityName: item.pieceId, userName, email });
                 } catch (e) {
+                    logError({ error: e, app: "platform", provider: "platform", source: "api/production/gtx POST scan", context: { orgId, pieceId: id, action } });
                     errors[id] = e.message;
                 }
             }
@@ -318,6 +319,7 @@ export async function POST(req) {
 
         return NextResponse.json({ error: true, msg: "Unknown action" });
     } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "api/production/gtx POST", context: { orgId, action, pieceID } });
         console.error("GTX route error:", e);
         return NextResponse.json({ error: true, msg: String(e) });
     }

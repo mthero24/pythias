@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { storefront } from "@pythias/backend/server";
+import { storefront, logError } from "@pythias/backend/server";
 import { sessionOrgId, svcError } from "@/lib/storefrontRoute";
 
 export async function GET(req) {
@@ -26,5 +26,8 @@ export async function POST(req) {
         if (b.op === "optimize") return NextResponse.json({ error: false, ...(await storefront.optimizeChannelListings(orgId, b.channel)) });
         if (b.op === "ad-spend") return NextResponse.json({ error: false, ...(await storefront.recordAdSpend(orgId, b)) });
         return NextResponse.json({ error: "Unknown op" }, { status: 400 });
-    } catch (e) { return svcError(e); }
+    } catch (e) {
+        if (b.op === "sync") logError({ error: e, app: "platform", provider: "platform", source: "POST /api/storefront/channels", context: { channel: b.channel, op: "sync" } });
+        return svcError(e);
+    }
 }

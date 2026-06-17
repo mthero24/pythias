@@ -66,6 +66,7 @@ export async function POST(req = NextApiRequest){
                     trackingInfo: ["Label Purchased"],
                 });
                 item.shipped = true
+                item.shippedDate = new Date()
                 item.status = "Shipped"
                 item.steps.push({
                     status: `Shipped`,
@@ -109,7 +110,16 @@ export async function POST(req = NextApiRequest){
                 }, headers
             ).catch(e=>{responseData = e.response?.data});
             item.folded = true
-            item.status = item.order.preShipped ? "Shipped" : "Folded";
+            if (item.order.preShipped) {
+                // Order's label is already bought (incl. reshipping one piece of an order that already
+                // shipped — the buy block above is skipped then). Keep the `shipped` boolean in sync
+                // with the status, or the piece/order shows "Shipped" but never counts as shipped.
+                item.status = "Shipped";
+                item.shipped = true;
+                if (!item.shippedDate) item.shippedDate = new Date();
+            } else {
+                item.status = "Folded";
+            }
             if (!item.steps) item.steps = [];
             item.steps.push({
                 status: "Folded",

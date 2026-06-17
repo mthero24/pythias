@@ -7,6 +7,7 @@ import { computeTax } from "@/lib/stripe";
 import { quoteCart, placeOrder } from "@/lib/checkout";
 import { routeOrderViaPlatform } from "@/lib/routing";
 import { enqueueSubscriptionFailed } from "@/lib/emailFlows";
+import { logError } from "@pythias/backend/server";
 
 // POST /api/internal/subscriptions/bill — charge due subscriptions off-session and place a
 // routed order for each cycle. Run a few times a day by PM2. Failures back off; 3 strikes pause.
@@ -56,6 +57,7 @@ export async function POST(req) {
             await advance(sub, { orderId: result.orderId });
             billed++;
         } catch (e) {
+            logError({ error: e, app: "storefront", provider: "storefront", source: "api/internal/subscriptions/bill", route: "/api/internal/subscriptions/bill", method: "POST", orgId: sub.orgId, email: sub.customerEmail, context: { subscriptionId: String(sub._id), customerId: String(sub.customerId) } });
             failed++;
             const fails = (sub.failedAttempts || 0) + 1;
             await StorefrontSubscription.updateOne({ _id: sub._id }, {

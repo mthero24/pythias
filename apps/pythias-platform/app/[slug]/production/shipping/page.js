@@ -11,6 +11,7 @@ export default async function Shipping(req) {
     if (!session) redirect("/login");
 
     const orgId = session.user.orgId;
+    const trainingMode = !!session.user?.permissions?.shipTraining;
     const creds = await getOrgCreds(orgId);
 
     const stations = creds.production?.shippingStations ?? [];
@@ -42,6 +43,7 @@ export default async function Shipping(req) {
             pieceId={pieceId}
             stat={station}
             source="PLATFORM"
+            trainingMode={trainingMode}
         />
     );
 }

@@ -6,6 +6,7 @@ import { clawbackOrderPayout } from "@/lib/payouts";
 import { routeOrderViaPlatform } from "@/lib/routing";
 import { enqueueSubscriptionStarted } from "@/lib/emailFlows";
 import { storefrontStripe, STOREFRONT_WEBHOOK_SECRET } from "@/lib/stripe";
+import { logError } from "@pythias/backend/server";
 
 // POST /api/checkout/webhook — Stripe → us. On payment success, turn the pending checkout
 // session into a real order (idempotent via paymentRef). This is what GATES order creation
@@ -73,7 +74,7 @@ export async function POST(req) {
                             lastOrderId: result.orderId, cyclesBilled: 1,
                         });
                         await enqueueSubscriptionStarted(site, { orgId: session.orgId, email: session.email, customerId: session.customerId, intervalLabel: session.subscribe.intervalLabel, nextBillingAt: new Date(Date.now() + session.subscribe.intervalDays * 864e5) }).catch(() => {});
-                    } catch (e) { console.error("[storefront webhook] subscription create failed:", e.message); }
+                    } catch (e) { logError({ error: e, app: "storefront", provider: "storefront", source: "api/checkout/webhook subscription_create", context: { orgId: session.orgId, sessionId: String(session._id), orderId: result.orderId, paymentRef: pi.id, email: session.email } }); console.error("[storefront webhook] subscription create failed:", e.message); }
                 }
 
                 // Hand the order to the platform routing engine → fulfillment provider.
@@ -86,6 +87,7 @@ export async function POST(req) {
                 }
             } catch (e) {
                 // Leave the session pending; payment succeeded but placement failed — alert/retry.
+                logError({ error: e, app: "storefront", provider: "storefront", source: "api/checkout/webhook placeOrder", route: "/api/checkout/webhook", method: "POST", status: 500, orgId: session.orgId, context: { sessionId: String(session._id), paymentRef: pi.id, email: session.email } });
                 console.error("[storefront webhook] placeOrder failed:", e.message);
                 return NextResponse.json({ error: "Order placement failed" }, { status: 500 });
             }
@@ -116,7 +118,7 @@ export async function POST(req) {
                     { upsert: true }
                 );
             }
-        } catch (e) { console.error("[storefront webhook] dispute.created handling failed:", e.message); }
+        } catch (e) { logError({ error: e, app: "storefront", provider: "storefront", source: "api/checkout/webhook dispute.created", route: "/api/checkout/webhook", method: "POST", context: { stripeDisputeId: dispute.id, paymentRef: dispute.payment_intent } }); console.error("[storefront webhook] dispute.created handling failed:", e.message); }
     }
 
     // Chargeback resolved → update the ledger; on a loss, claw back the seller's payout (MoR ate it).
@@ -133,7 +135,7 @@ export async function POST(req) {
                 const r = await clawbackOrderPayout(rec.orderId, "dispute_lost");
                 if (r.status === "clawed_back") await StorefrontDispute.updateOne({ _id: rec._id }, { $set: { payoutClawedBack: true } });
             }
-        } catch (e) { console.error("[storefront webhook] dispute.closed handling failed:", e.message); }
+        } catch (e) { logError({ error: e, app: "storefront", provider: "storefront", source: "api/checkout/webhook dispute.closed", route: "/api/checkout/webhook", method: "POST", context: { stripeDisputeId: dispute.id, paymentRef: dispute.payment_intent } }); console.error("[storefront webhook] dispute.closed handling failed:", e.message); }
     }
 
     return NextResponse.json({ received: true });

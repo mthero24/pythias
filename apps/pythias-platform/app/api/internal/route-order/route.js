@@ -4,6 +4,7 @@ import { PlatformOrder, PlatformItem, Organization } from "@pythias/mongo";
 import { routeOrder } from "@/functions/routeOrder";
 import { routeDropship, routeWarehouse } from "@/functions/routeAltVerticals";
 import { assertInternal } from "@/lib/internal";
+import { logError } from "@pythias/backend/server";
 
 // POST /api/internal/route-order  (server-to-server, from the storefront webhook)
 // Body: { orderId }  →  { routed, groups: [...] }
@@ -53,6 +54,7 @@ export async function POST(req) {
         const podGroup = groups.find((g) => g.vertical === "pod");
         return NextResponse.json({ routed: anyRouted, groups, providerId: podGroup?.ref || "", unroutable: groups.length === 1 && podGroup?.status === "unroutable", reason: podGroup?.reason });
     } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "api/internal/route-order POST", context: { orderId, orgId: order?.orgId?.toString() } });
         console.error(`[route-order] order ${orderId} failed:`, e.message);
         return NextResponse.json({ error: e.message }, { status: 500 });
     }

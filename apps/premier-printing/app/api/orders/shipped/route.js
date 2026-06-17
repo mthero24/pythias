@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Order, Items, ApiKeyIntegrations } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { logActivity, userFromToken, logChange, logError } from "@pythias/backend/server";
 import { updateOrder, shipOrderEbay, shipOrderWalmart, createReceiptShipment, shipOrderFaire, fulfillShipAdviceAcenda } from "@pythias/integrations";
 import { shipOrderTikTok } from "@/functions/tikTok";
 
@@ -78,6 +78,7 @@ export async function POST(req) {
                 marketplaceNotified = true;
             }
         } catch (e) {
+            logError({ error: e, app: "premier", provider: "premierPrinting", source: "api/orders/shipped", context: { orderId: order._id?.toString(), poNumber: order.poNumber, marketplace: order.marketplace, stage: "tiktok-update", trackingNumber } });
             console.error("[orders/shipped] TikTok update error:", e);
             warning = `TikTok shipment update failed: ${e.message}`;
         }
@@ -142,6 +143,7 @@ export async function POST(req) {
                 warning = `${type ? type.charAt(0).toUpperCase() + type.slice(1) : "Marketplace"} does not support automatic shipment updates — please update manually.`;
             }
         } catch (e) {
+            logError({ error: e, app: "premier", provider: "premierPrinting", source: "api/orders/shipped", context: { orderId: order._id?.toString(), poNumber: order.poNumber, marketplace: order.marketplace, marketplaceConnectionId: order.marketplaceConnectionId?.toString(), stage: "marketplace-update", trackingNumber } });
             console.error("[orders/shipped] marketplace update error:", e);
             warning = `Marketplace update failed: ${e.message}`;
         }
@@ -152,6 +154,7 @@ export async function POST(req) {
             await updateOrder({ auth: ssAuth, orderId: order.orderId, carrierCode: toCarrierCode(provider), trackingNumber });
             marketplaceNotified = true;
         } catch (e) {
+            logError({ error: e, app: "premier", provider: "premierPrinting", source: "api/orders/shipped", context: { orderId: order._id?.toString(), poNumber: order.poNumber, marketplace: order.marketplace, stage: "shipstation-update", trackingNumber } });
             console.error("[orders/shipped] ShipStation update error:", e);
             warning = `ShipStation update failed: ${e.message}`;
         }

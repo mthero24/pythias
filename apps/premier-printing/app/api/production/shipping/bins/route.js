@@ -1,6 +1,8 @@
 import { NextApiRequest, NextResponse } from "next/server";
 import { Bin as Bins } from "@pythias/mongo"
 import {add, subtract} from "@pythias/shipping"
+import { getToken } from "next-auth/jwt";
+import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
 export async function PUT(req = NextApiRequest) {
     //const defaultBin = {"number":10,"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null}
     let data = await req.json();
@@ -95,7 +97,22 @@ export async function PUT(req = NextApiRequest) {
 export async function DELETE(req = NextApiRequest) {
   try{
     let binNumber = req.nextUrl.searchParams.get("number")
+    // Capture what the bin held BEFORE clearing — this is the forensic trail for "the order looks
+    // mis-binned" calls (which are usually: a bin was manually cleared mid-order). Logs who cleared
+    // which bin, the order it held, and the pieces that were in it.
+    const prev = await Bins.findOne({ number: binNumber }).populate({ path: "order", select: "poNumber" }).lean();
     let bin = await Bins.findOneAndUpdate({number: binNumber}, {"items":[],"ready":false,"inUse":false,"order":null,"giftWrap":false,"readyToWrap":false,"wrapped":false,"wrapImage":null, lastCleared: Date.now()}, {new: true})
+    try {
+        const { userName, email } = userFromToken(await getToken({ req }));
+        const heldItems = (prev?.items ?? []).map((i) => (i?.pieceId ?? i?._id ?? i)?.toString?.() ?? String(i));
+        logActivity({ action: "bin_cleared", entity: "bin", entityId: bin?._id, entityName: `Bin ${binNumber}`, userName, email });
+        await logChange({
+            entityType: "bin", entityId: bin?._id, entityName: `Bin ${binNumber}`, action: "bin_cleared",
+            before: { number: binNumber, order: prev?.order?.poNumber ?? null, orderId: prev?.order?._id ?? prev?.order ?? null, ready: prev?.ready, inUse: prev?.inUse, pieceCount: heldItems.length, items: heldItems },
+            after: { number: binNumber, cleared: true },
+            userName, email, provider: "premierPrinting",
+        });
+    } catch (e) { console.error("bin_cleared log failed:", e.message); }
     return NextResponse.json({
       error: false,
       bins: {

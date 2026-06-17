@@ -1,4 +1,5 @@
 import { TikTokAuth, Design, Order, SkuToUpc, Color as Colors, Blank as Blanks, Items as Item } from "@pythias/mongo";
+import { logError } from "@pythias/backend/server";
 import {
   getAuthorizedShops,
   getAccessTokenFromRefreshToken,
@@ -251,7 +252,10 @@ export async function uploadTikTokImage({image,type}){
 }
 export async function createTikTokProduct({ product, marketplaceName = null }){
     let credentials = await TikTokAuth.findOne({provider: "premierPrinting"})
-    if (!credentials) throw new Error("No TikTok credentials found for premierPrinting");
+    if (!credentials) {
+        logError({ error: new Error("No TikTok credentials found for premierPrinting"), app: "premier", provider: "premierPrinting", source: "createTikTokProduct", context: { marketplace: marketplaceName, sku: product?.design?.sku, op: "listing-create" } });
+        throw new Error("No TikTok credentials found for premierPrinting");
+    }
     if (!credentials.shop_list?.length) {
         let shop = await getAuthorizedShops(credentials);
         if (shop?.error) {
@@ -262,6 +266,7 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
             credentials.shop_list = shop.shop_list;
             await credentials.save();
         } else {
+            logError({ error: new Error("TikTok shop_list is empty — no authorized shops found"), app: "premier", provider: "premierPrinting", source: "createTikTokProduct", context: { marketplace: marketplaceName, sku: product?.design?.sku, op: "listing-create" } });
             throw new Error("TikTok shop_list is empty — no authorized shops found");
         }
     }
@@ -527,6 +532,9 @@ export async function createTikTokProduct({ product, marketplaceName = null }){
     }
 
     console.log(res)
+    if (res?.error && res?.msg !== "refresh") {
+        logError({ error: new Error(res.msg || "TikTok createProduct failed"), app: "premier", provider: "premierPrinting", source: "createTikTokProduct", context: { marketplace: marketplaceName, sku: product?.design?.sku, categoryId: tiktokProduct?.category_id, op: "listing-create" } });
+    }
     const warningParts = []
     if (fixedAttributes.length) warningParts.push(`Attribute values auto-corrected to match TikTok's accepted values: ${fixedAttributes.join('; ')}.`)
     if (droppedAttributes.length) warningParts.push(`Attributes removed because no matching TikTok value was found: ${droppedAttributes.join('; ')}.`)
@@ -923,6 +931,7 @@ export const processOrders = async (orders)=>{
             updated++;
         }
       } catch (e) {
+        logError({ error: e, app: "premier", provider: "premierPrinting", source: "processOrders", context: { orderId: o?.id, marketplace: "tik tok" } });
         failed++;
         errors.push({ orderId: o?.id, error: e.message, at: e.stack?.split("\n")[1]?.trim() });
         console.error(`[tiktok processOrders] order ${o?.id} failed: ${e.message}`);

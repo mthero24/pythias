@@ -14,6 +14,7 @@ import CloseIcon            from "@mui/icons-material/Close";
 import Visibility           from "@mui/icons-material/Visibility";
 import VisibilityOff        from "@mui/icons-material/VisibilityOff";
 import BarChartIcon         from "@mui/icons-material/BarChart";
+import SchoolIcon           from "@mui/icons-material/School";
 import AppRegistrationIcon  from "@mui/icons-material/AppRegistration";
 import CardMembershipIcon   from "@mui/icons-material/CardMembership";
 import InventoryIcon        from "@mui/icons-material/Inventory";
@@ -46,6 +47,9 @@ const PERMISSIONS = [
     { key: "production",   label: "Production",   icon: <PrintIcon sx={{ fontSize: 14 }} /> },
     { key: "integrations",  label: "Integrations",  icon: <SyncAltIcon sx={{ fontSize: 14 }} /> },
     { key: "labelCreator",  label: "Label Creator", icon: <LabelIcon  sx={{ fontSize: 14 }} /> },
+    // Restriction (not a capability): when on, this user must scan every item in an order at the
+    // shipping station before a label will print — for new/trainee packers.
+    { key: "shipTraining",  label: "Shipping Training", icon: <SchoolIcon sx={{ fontSize: 14 }} />, restriction: true },
 ];
 
 const BLANK_USER = { userName: "", password: "", email: "", firstName: "", lastName: "", permissions: {} };
@@ -102,7 +106,8 @@ function displayName(u) {
     return u.userName;
 }
 
-const ALL_PERMISSIONS = Object.fromEntries(PERMISSIONS.map(p => [p.key, true]));
+// Owners implicitly hold every capability — but NOT restriction flags like training mode.
+const ALL_PERMISSIONS = Object.fromEntries(PERMISSIONS.filter(p => !p.restriction).map(p => [p.key, true]));
 
 function effectivePermissions(u) {
     return u.role === "owner" ? ALL_PERMISSIONS : (u.permissions ?? {});

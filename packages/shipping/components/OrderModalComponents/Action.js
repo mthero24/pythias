@@ -23,7 +23,7 @@ const IMAGE_MAP = {
 
 const getImage = (imageKey) => IMAGE_MAP[imageKey] ?? multiple;
 
-export function Actions({ bin, setBins, item, order, action, setAction, shippingPrices, setShippingPrices, timer, weight, setWeight, setGetWeight, getWeight, loadingWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source, onAction, multiBox, setMultiBox, boxes, setBoxes, addBox, setGetManualRates, blankWeight }) {
+export function Actions({ bin, setBins, item, order, action, setAction, shippingPrices, setShippingPrices, timer, weight, setWeight, setGetWeight, getWeight, loadingWeight, dimensions, setDimensions, close, station, closeTimer, setCloseTimer, setStopClose, stopClose, label, setLabel, source, onAction, multiBox, setMultiBox, boxes, setBoxes, addBox, setGetManualRates, blankWeight, trainingMode }) {
     const [shippingSelected, setShippingSelected] = useState({ name: "GroundAdvantage" });
     const [ignoreBadAddress, setIgnoreBadAddress] = useState(false);
     const [processing, setProcessing]             = useState(false);
@@ -37,7 +37,32 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
         }
     }, [shippingPrices]);
 
+    // ── Training mode: a trainee must scan every piece in the order before the label can print. ──
+    const [scanned, setScanned] = useState([]);
+    const [scanInput, setScanInput] = useState("");
+    const [scanErr, setScanErr] = useState("");
+    const requiredPieces = (order?.items || [])
+        .filter(i => !i.canceled && !i.cancelled && i.pieceId)
+        .map(i => String(i.pieceId).toUpperCase());
+    const scannedSet = new Set(scanned);
+    const scannedCount = requiredPieces.filter(p => scannedSet.has(p)).length;
+    const allScanned = requiredPieces.length > 0 && scannedCount === requiredPieces.length;
+    // Reset the checklist whenever the open order changes.
+    useEffect(() => { setScanned([]); setScanInput(""); setScanErr(""); }, [order?._id]);
+    const handleScan = (raw) => {
+        const code = String(raw || "").trim().toUpperCase();
+        setScanInput("");
+        if (!code) return;
+        if (!requiredPieces.includes(code)) {
+            setScanErr(`✕ ${code} is NOT part of this order — wrong item, do not pack it.`);
+            return;
+        }
+        setScanErr("");
+        setScanned(prev => prev.includes(code) ? prev : [...prev, code]);
+    };
+
     const ship = async () => {
+        if (trainingMode && !allScanned) { setScanErr("Scan every item before shipping."); return; }
         setProcessing(true);
         const currentBox = weight > 0 && dimensions ? [{ weight, dimensions }] : [];
         const packages = multiBox ? [...boxes, ...currentBox] : null;
@@ -53,6 +78,7 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
             shippingType: order.shippingType,
             station, ignoreBadAddress,
             marketplace: order.marketplace,
+            scannedPieceIds: scanned,
             items: order.items.map(i => ({
                 itemDescription: i.sku,
                 itemTotalValue: i.productCost,
@@ -186,6 +212,44 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
             {/* Ship flow */}
             {action === "ship" && !order?.inStorePickup && (
                 <Box sx={{ p: 3 }}>
+                    {trainingMode && (
+                        <Box sx={{ mb: 2, p: 2, borderRadius: 2, border: "2px solid", borderColor: allScanned ? "success.main" : "warning.main", bgcolor: allScanned ? "#f1f8f4" : "#fff8e1" }}>
+                            <Typography fontWeight={800} sx={{ mb: 0.25 }}>
+                                Training mode — scan every item ({scannedCount}/{requiredPieces.length})
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                                Scan each piece's barcode before packaging. The label won't print until every item in this order is scanned.
+                            </Typography>
+                            <TextField
+                                size="small" fullWidth autoFocus
+                                label="Scan item barcode"
+                                value={scanInput}
+                                onChange={(e) => setScanInput(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleScan(scanInput); } }}
+                                sx={{ mb: 1.5 }}
+                            />
+                            {scanErr && (
+                                <Box sx={{ mb: 1.5, p: 1, borderRadius: 1, bgcolor: "error.main", color: "#fff", fontWeight: 700, fontSize: "0.9rem" }}>{scanErr}</Box>
+                            )}
+                            <Stack spacing={0.75}>
+                                {requiredPieces.map((p) => {
+                                    const it = (order.items || []).find(i => String(i.pieceId).toUpperCase() === p);
+                                    const done = scannedSet.has(p);
+                                    return (
+                                        <Stack key={p} direction="row" alignItems="center" spacing={1} sx={{ p: 0.75, borderRadius: 1, bgcolor: done ? "#e8f5e9" : "#fafafa" }}>
+                                            {done ? <CheckCircleOutlineIcon fontSize="small" sx={{ color: "success.main" }} /> : <Box sx={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid #bbb", flexShrink: 0 }} />}
+                                            <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 700 }}>{p}</Typography>
+                                            <Typography variant="caption" color="text.secondary" sx={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {[it?.colorName, it?.sizeName, it?.sku || it?.styleCode].filter(Boolean).join(" · ")}
+                                            </Typography>
+                                            {done && <Chip size="small" color="success" label="Scanned" />}
+                                        </Stack>
+                                    );
+                                })}
+                            </Stack>
+                            {allScanned && <Typography sx={{ mt: 1, color: "success.main", fontWeight: 700 }}>✓ All items scanned — package &amp; ship.</Typography>}
+                        </Box>
+                    )}
                     <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                         <Typography variant="subtitle1" fontWeight={700}>
                             Shipping Type: {order.shippingType}
@@ -387,9 +451,9 @@ export function Actions({ bin, setBins, item, order, action, setAction, shipping
                                     size="large"
                                     fullWidth
                                     onClick={ship}
-                                    disabled={processing}
+                                    disabled={processing || (trainingMode && !allScanned)}
                                 >
-                                    Ship Order
+                                    {trainingMode && !allScanned ? `Scan all items (${scannedCount}/${requiredPieces.length})` : "Ship Order"}
                                 </Button>
                                 <FormControlLabel
                                     control={<Checkbox checked={ignoreBadAddress} onChange={(e) => setIgnoreBadAddress(e.target.checked)} size="small" />}

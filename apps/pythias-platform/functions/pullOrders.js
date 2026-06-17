@@ -1,6 +1,6 @@
 import { PlatformDesign as Design, PlatformItem as Item, PlatformBlank as Blank, PlatformOrder as Order, PlatformProduct as Products, PlatformInventory as Inventory, PlatformInventoryOrder as InventoryOrders, PlatformProductInventory as ProductInventory, Converters, ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda, getOrdersEbay } from "@pythias/integrations";
-import { logActivity } from "@pythias/backend/server";
+import { logActivity, logError } from "@pythias/backend/server";
 import { pullTikTokOrders } from "./tikTok";
 import { getOrgCreds } from "@/lib/getOrgCreds";
 
@@ -669,6 +669,7 @@ async function pullFromConnections(orgId) {
                 if (!error) orders.push(...(raw ?? []).map(o => normalizeAcendaOrder(o, conn)));
             }
         } catch (e) {
+            logError({ error: e, app: "platform", provider: "platform", source: "pullOrders.pullFromConnections", context: { orgId, type } });
             console.error(`pullFromConnections error for ${type} (org ${orgId}):`, e.message);
         }
     }
@@ -683,6 +684,7 @@ async function pullFromConnections(orgId) {
             ssOrders.push(...(raw ?? []).map(o => ({ ...o, _orgId: orgId })));
         }
     } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "pullOrders.pullFromConnections ShipStation", context: { orgId } });
         console.error(`pullFromConnections ShipStation error (org ${orgId}):`, e.message);
     }
 
@@ -734,6 +736,7 @@ export async function pullOrders(){
             tikTokActive = tikTokResult.active;
             console.log(`[pullOrders] org ${orgId}: TikTok pulled ${tikTokResult.pulled} order(s), active=${tikTokActive}`);
         } catch (e) {
+            logError({ error: e, app: "platform", provider: "platform", source: "pullOrders TikTok pull", context: { orgId } });
             console.error(`[pullOrders] org ${orgId} TikTok pull failed:`, e.message);
         }
 
@@ -835,6 +838,7 @@ export async function pullOrders(){
         }
     }
       } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "pullOrders", context: { orgId } });
         console.error(`[pullOrders] org ${orgId} failed:`, e.message);
       }
     }

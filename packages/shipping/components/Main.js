@@ -13,7 +13,7 @@ import axios from "axios";
 import { Repull } from "../../repull/exports";
 import { Footer } from "@pythias/backend";
 
-export function Main({ stations, binCount, bins, pieceId, stat, source }) {
+export function Main({ stations, binCount, bins, pieceId, stat, source, trainingMode }) {
     const [station, setStation]       = useState(stat ?? stationName(stations?.[0]) ?? "station1");
     const stationObj = stations?.find(s => stationName(s) === station);
     const hasScale = stationHasScale(stationObj ?? station);
@@ -124,6 +124,7 @@ export function Main({ stations, binCount, bins, pieceId, stat, source }) {
                     station={station} hasScale={hasScale} source={source}
                     weight={weight} setWeight={setWeight}
                     dimensions={dimensions} setDimensions={setDimensions} onAction={fetchStats}
+                    trainingMode={trainingMode}
                 />
             </Box>
             <Footer fixed={true} />

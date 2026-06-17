@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from "@pythias/backend/server";
 import { TikTokAuth, PlatformBlank } from "@pythias/mongo";
 import { getAccessTokenFromRefreshToken, getAuthorizedShops } from "@pythias/integrations";
 import { createTikTokListing, getTikTokAttributesForName } from "@/functions/tikTok";
@@ -48,6 +49,7 @@ export async function POST(req) {
             shopsRes = await getAuthorizedShops(credentials);
         }
         if (shopsRes.error || !shopsRes.shop_list?.length) {
+            logError({ error: new Error(shopsRes.msg || "No authorized TikTok shops found. Please reconnect."), app: "platform", provider: "platform", source: "POST /api/admin/integrations/tiktok", context: { marketplace: marketplaceName, connectionId: String(connection._id), op: "send" } });
             return NextResponse.json({ error: true, msg: "No authorized TikTok shops found. Please reconnect." }, { status: 400 });
         }
         credentials.shop_list = shopsRes.shop_list;
@@ -114,6 +116,7 @@ export async function POST(req) {
         const result = await createTikTokListing({ product, credentials, marketplaceName });
         return NextResponse.json({ error: false, tiktokProductId: result?.tiktokProductId, warning: result?.warning ?? null });
     } catch (e) {
+        logError({ error: e, app: "platform", provider: "platform", source: "POST /api/admin/integrations/tiktok", context: { marketplace: marketplaceName, connectionId: String(connection?._id ?? ""), sku: p?.sku, op: "send" } });
         console.error("[TikTok listing]", e);
         return NextResponse.json({ error: true, msg: e.message }, { status: 500 });
     }

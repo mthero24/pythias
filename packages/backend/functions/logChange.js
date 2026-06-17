@@ -68,17 +68,57 @@ function toStr(field, val) {
     return String(val);
 }
 
+// Compact print-box formatter for the change log, e.g. "(x:120, y:110, w:160, h:200, r:15)".
+const boxFmt = (b) => b
+    ? `(x:${Math.round(b.x ?? 0)}, y:${Math.round(b.y ?? 0)}, w:${Math.round(b.width ?? 0)}, h:${Math.round(b.height ?? 0)}${b.rotation ? `, r:${Math.round(b.rotation)}` : ""})`
+    : "—";
+const imgLabel = (img) => ((img?.image || img?.url || "").split("/").pop()?.split("?")[0]) || "image";
+
+// Granular image diff: one row per print-box that moved (so the log shows HOW boxes changed, not just
+// "image edited"), plus added/removed images. Images are matched by their URL (+color).
+function diffImages(beforeArr = [], afterArr = []) {
+    const rows = [];
+    const key = (img) => `${img?.image || img?.url || ""}|${img?.color || ""}`;
+    const bMap = new Map((beforeArr || []).map((i) => [key(i), i]));
+    const aMap = new Map((afterArr || []).map((i) => [key(i), i]));
+    for (const [k, aImg] of aMap) {
+        const bImg = bMap.get(k);
+        const label = imgLabel(aImg);
+        if (!bImg) { rows.push({ field: `image ${label}`, before: "—", after: "added" }); continue; }
+        const locs = new Set([...Object.keys(bImg.boxes || {}), ...Object.keys(aImg.boxes || {})]);
+        for (const loc of [...locs].sort()) {
+            const bs = boxFmt(bImg.boxes?.[loc]);
+            const as = boxFmt(aImg.boxes?.[loc]);
+            if (bs !== as) rows.push({ field: `${label} · ${loc} box`, before: bs, after: as });
+        }
+    }
+    for (const [k, bImg] of bMap) {
+        if (!aMap.has(k)) rows.push({ field: `image ${imgLabel(bImg)}`, before: "removed", after: "—" });
+    }
+    return rows;
+}
+
 function diffDocs(entityType, rawBefore, rawAfter) {
     const before = rawBefore?.toObject ? rawBefore.toObject() : rawBefore;
     const after  = rawAfter?.toObject  ? rawAfter.toObject()  : rawAfter;
-    return (TRACKED[entityType] || [])
-        .map(field => ({ field, before: toStr(field, before?.[field]), after: toStr(field, after?.[field]) }))
-        .filter(c => c.before !== c.after);
+    const rows = [];
+    for (const field of (TRACKED[entityType] || [])) {
+        if (field === "images" && (Array.isArray(before?.images) || Array.isArray(after?.images))) {
+            rows.push(...diffImages(before?.images, after?.images));   // per-box granularity
+            continue;
+        }
+        const b = toStr(field, before?.[field]);
+        const a = toStr(field, after?.[field]);
+        if (b !== a) rows.push({ field, before: b, after: a });
+    }
+    return rows;
 }
 
 export async function logChange({ entityType, entityId, entityName, action, before, after, userName, email, provider = "premierPrinting" }) {
     try {
-        const changes = (action === "update" && before && after) ? diffDocs(entityType, before, after) : [];
+        // Diff whenever we have both snapshots — not just action "update" — so image/box edits, which
+        // use action "blank_image_edit", still record exactly what changed.
+        const changes = (before && after) ? diffDocs(entityType, before, after) : [];
         console.log(`[logChange] ${action} ${entityType} "${entityName}" by ${userName} — ${changes.length} field(s) changed`, changes.map(c => c.field));
         await ChangeLog.create({
             entityType,

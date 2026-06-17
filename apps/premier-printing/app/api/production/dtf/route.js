@@ -5,7 +5,7 @@ import { Color } from "@pythias/mongo";
 import {setConfig, createImage} from "@pythias/dtf"
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken } from "@pythias/backend/server";
+import { logActivity, userFromToken, logError } from "@pythias/backend/server";
 import { getShippingCreds } from "@/lib/getShippingCreds";
 import { ensureItemProofs } from "@/lib/printProof";
 
@@ -205,6 +205,7 @@ export async function PUT(req = NextApiRequest) {
         logActivity({ action: "dtf_sent", entity: "dtf", count: bulkOps.length, userName, email });
         return NextResponse.json({ error: false, msg: `${bulkOps.length} sent to printers`, items: send });
     } catch (error) {
+        logError({ error, app: "premier", provider: "premierPrinting", source: "api/production/dtf:PUT", context: { printers: data?.printers } });
         console.error("Error in DTF PUT:", error);
         return NextResponse.json({ error: true, msg: "Error processing request" });
     }

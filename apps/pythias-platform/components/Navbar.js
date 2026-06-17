@@ -62,6 +62,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import TuneIcon from "@mui/icons-material/Tune";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import BugReportIcon from "@mui/icons-material/BugReport";
 import SellIcon from "@mui/icons-material/Sell";
 import HubIcon from "@mui/icons-material/Hub";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
@@ -197,6 +198,7 @@ function buildFulfillmentSections(base) {
                 { label: "Sales",               path: "admin/sales",         icon: <TrendingUpIcon fontSize="small" /> },
                 { label: "Integrations",        path: "integrations",        icon: <IntegrationInstructionsIcon fontSize="small" /> },
                 { label: "Track Labels",        path: "admin/track-labels",  icon: <TrackChangesIcon fontSize="small" /> },
+                { label: "Error Logs",          path: "errors",              icon: <BugReportIcon fontSize="small" /> },
                 { label: "Licenses",            path: "admin/license",       icon: <GavelIcon fontSize="small" /> },
                 { label: "Users",               path: "users",               icon: <PeopleIcon fontSize="small" /> },
                 { label: "Settings",            path: "settings",            icon: <SettingsIcon fontSize="small" /> },

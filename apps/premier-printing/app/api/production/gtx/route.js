@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { Item as Items } from "@pythias/mongo";
 import axios from "axios";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken } from "@pythias/backend/server";
+import { logActivity, userFromToken, logError } from "@pythias/backend/server";
 import { getShippingCreds } from "@/lib/getShippingCreds";
 import { ensureItemProofs } from "@/lib/printProof";
 
@@ -316,6 +316,7 @@ export async function POST(req) {
 
         return NextResponse.json({ error: true, msg: "Unknown action" });
     } catch (e) {
+        logError({ error: e, app: "premier", provider: "premierPrinting", source: "api/production/gtx:POST", context: { action, pieceID, printer } });
         console.error("GTX route error:", e);
         return NextResponse.json({ error: true, msg: String(e) });
     }

@@ -1,7 +1,3 @@
-export async function register() {
-    // DB connections are lazy-initialized on first use via @pythias/mongo
-}
-
 // Global server-error capture. Next calls this for every uncaught error in a route/render, so we
 // record it (route, method, stack, digest) without wrapping each handler. Never throws.
 export async function onRequestError(error, request, context) {
@@ -9,8 +5,8 @@ export async function onRequestError(error, request, context) {
         const { logError } = await import("@pythias/backend/server");
         await logError({
             error,
-            app: "platform",
-            provider: "platform",
+            app: "premier",
+            provider: "premierPrinting",
             route: request?.path || "",
             method: request?.method || "",
             source: context?.routePath || request?.path || "",
