@@ -740,8 +740,8 @@ export async function pullOrders(){
 
     // Pull from ShipStation, skipping sources handled by direct connections (and TikTok,
     // when it's pulled directly — defensive, in case a TikTok order ever lands in SS).
-    // SS creds come from the shipping/hardware settings (with env fallback) so keys can be
-    // rotated from the UI without a redeploy.
+    // SS creds come from the credentials saved in the DB (shipping/hardware settings), with an
+    // env fallback when Settings is incomplete, so keys can be rotated from the UI.
     const { shipstationAuth: ssAuth } = await getShippingCreds();
     const ssRaw = await getOrders({ auth: ssAuth });
     const ssOrders = (enabledTypes.size > 0 || tikTokActive)

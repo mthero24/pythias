@@ -93,7 +93,12 @@ export async function getShippingCreds() {
         credentialsShipStation: {
             apiKey: g(m, "shipstation.v2Key", process.env.ssV2),
         },
-        shipstationAuth: `${g(m, "shipstation.apiKey", process.env.ssApiKey)}:${g(m, "shipstation.apiSecret", process.env.ssApiSecret)}`,
+        // All-or-nothing: only use the Settings ShipStation creds when BOTH key and secret are
+        // present, otherwise fall back fully to env. A field-by-field merge could produce a
+        // mismatched settings-key:env-secret auth that silently 401s the order pull.
+        shipstationAuth: (m["shipstation.apiKey"] && m["shipstation.apiSecret"])
+            ? `${m["shipstation.apiKey"]}:${m["shipstation.apiSecret"]}`
+            : `${process.env.ssApiKey}:${process.env.ssApiSecret}`,
         credentialsDHL: {
             accountNumber: g(m, "dhl.accountNumber", process.env.dhlAccount),
             basic: (dhlClientId && dhlClientSecret)
