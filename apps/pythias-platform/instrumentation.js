@@ -9,7 +9,9 @@ export async function onRequestError(error, request, context) {
     // dead-code-eliminates the import from the edge bundle; the lightweight path avoids the pdfkit barrel.
     if (process.env.NEXT_RUNTIME !== "nodejs") return;
     try {
-        const { logError } = await import("@pythias/backend/logError");
+        // webpackIgnore: don't bundle the node-only logger (Mongo + crypto) — resolve it at runtime, so it
+        // never lands in the edge bundle (where "node:" / fs can't resolve). The guard above keeps it node-only.
+        const { logError } = await import(/* webpackIgnore: true */ "@pythias/backend/logError");
         await logError({
             error,
             app: "platform",
